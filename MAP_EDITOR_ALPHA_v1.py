@@ -22,6 +22,7 @@ def program_introduction(x):
 
 import os
 import re
+import csv
 import math
 import struct
 import shutil
@@ -32,35 +33,62 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
 
-# SETUP
+# SETUP I (mandatory)           Control + F    "city=="  to jump to The City Creation section
 city_name = "USER"                      # One word (no spaces)
 race_locale_name = "My First City"      # Can be multiple words
-destination_folder = r"C:\Users\Jan\Desktop\Midtown Madness 1"  
+destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc"  
 shortcut_or_exe_name = "Open1560.lnk"
-# destination_folder = os.getcwd()              --> current directory  
 
-# Control + F         "city=="  to jump to The City Creation section
 
-def notes(x):
-    """TO DO list
-            TexCoods --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
+# SETUP II (optional)
+num_blitz = 3      # max 15
+num_circuit = 3    # max 15
+num_checkpoint = 4 # max 12
+
+blitz_race_names = ["Just in Time", "Middle Town Race", "Grand Finale"]
+circuit_race_names = ["Litter Loop", "Trailer Jumping", "Ultimate Horsepower"]
+checkpoint_race_names = ["Unlucky Start", "Trouble in Chinatown", "Castle Switcher", "Rooftops and Bridges"]
+
+ambient_density = 0.2
+opponent_car = "vppanozgt" 
+
+randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
+
+anim_data = {
+    'plane': [
+        (250, 40.0, -250),
+        (250, 40.0, 250), 
+        (-250, 40.0, -250),
+        (-250, 40.0, 250)], 
+    'eltrain': [
+        (80, 25.0, -80),
+        (80, 25.0, 80), 
+        (-80, 25.0, -80),
+        (-80, 25.0, 80)], 
+}
+
+
+def to_do_list(x):
+    f"""TO DO list
+            TexCoods --> flip "repeated_horizontal" and flip "vertical". 
+                Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
             Remove  --> "if len(texture_indices) != len(shapes):" (?)
             Corners --> figure out Triangles
             Corners --> figure out Hills
-            Race --> fix MMRACEDATA for checkpoint races
             Cells --> investigate Cell types
             Cells --> automate Cell type setting
             Remove --> remove "show_label" and thus plt.legend()" (?)
-            Fix --> "output_folder_ext = os.path.join("SHOP", "CITY")" (path already exists?)
             Comment --> usage of "plot_polygons"
             BAI --> retrieve Center from all set Polygons
             BAI --> set / incorporate Street file template
-            HUDMAP --> fix hudmap enclosing box (no x's in rectangles)
             HUDMAP --> fix automate (correct) alignment
             HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass)
             USER --> add more Examples and Explanations
+            ANIM --> maybe remove "sorting coordinates" if users want a specific path (i.e. not following the 4 lines of a rectangle)
+            ANIM --> add Boolean, such that data doesn't have to be commented out
+            Simplify MM(type)DATA.csv ?
     """
     
     
@@ -296,19 +324,14 @@ class BMS:
             for indices_side in self.IndicesSides:
                 file.write(struct.pack('<' + str(len(indices_side)) + 'H', *indices_side))
       
-                
 ################################################################################################################               
 ################################################################################################################       
-
-randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL"]
-# randomize_string_names = ["FXLTGLOWRED", "FXLTGLOWAMBER", "FXLTGLOW"]
    
 # Do Not Change
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], [0.0, 0.0, 0.0, 0.0])
 vertices = []
 polys = [poly_filler]
 all_polygons_picture = []
-
 
 # Handle Texture Mapping for BMS files
 def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle_degrees=(45, 45), custom=None):
@@ -646,11 +669,12 @@ def create_folder_structure(city_name):
     os.makedirs(os.path.join("SHOP", "BND"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "CITY"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "TUNE"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "RACE", f"{city_name}"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}CITY"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}LM"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BND", f"{city_name}CITY"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BND", f"{city_name}LM"), exist_ok=True)
+    os.makedirs(os.path.join("SHOP", "CITY", f"{city_name}"), exist_ok=True)
+    os.makedirs(os.path.join("SHOP", "RACE", f"{city_name}"), exist_ok=True)
 
     with open(os.path.join("SHOP", "CITY", f"{city_name}.PTL"), "w") as f:
         pass
@@ -658,17 +682,20 @@ def create_folder_structure(city_name):
     with open(os.path.join("SHOP", "TUNE", f"{city_name}.CINFO"), "w") as f:
         localized_name = race_locale_name
         map_name = city_name.lower()
-        race_dir = city_name.lower()
+        race_dir = city_name.lower()        
         f.write(f"LocalizedName={localized_name}\n")
         f.write(f"MapName={map_name}\n")
         f.write(f"RaceDir={race_dir}\n")
-        f.write("BlitzCount=0\n")
-        f.write("CircuitCount=0\n")
-        f.write("CheckpointCount=0\n")
-        f.write("BlitzNames=none\n")
-        f.write("CircuitNames=none\n")
-        f.write("CheckpointNames=none\n")
-
+        f.write(f"BlitzCount={num_blitz}\n")
+        f.write(f"CircuitCount={num_circuit}\n")
+        f.write(f"CheckpointCount={num_checkpoint}\n")
+        blitz_race_names_str = '|'.join(blitz_race_names)
+        circuit_race_names_str = '|'.join(circuit_race_names)
+        checkpoint_race_names_str = '|'.join(checkpoint_race_names)
+        f.write(f"BlitzNames={blitz_race_names_str}\n")
+        f.write(f"CircuitNames={circuit_race_names_str}\n")
+        f.write(f"CheckpointNames={checkpoint_race_names_str}\n")
+        
 def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     bms_files = []
     bms_a2_files = set()
@@ -689,9 +716,9 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     shutil.move(bnd_hit_id, os.path.join("SHOP", "BND", bnd_hit_id))       
         
     # Create WAYPOINTS files
-    num_blitz = 0
-    num_circuit = 0
-    num_checkpoint = 0
+    race_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
+    if num_checkpoint > len(race_prefixes):
+        raise ValueError("Number of Checkpoint races cannot be more than 12")
     
     for race_type, race_description, prefix, num_files in [("BLITZ", "Blitz", "ABL", num_blitz), 
                                                            ("CIRCUIT", "Circuit", "CIR", num_circuit), 
@@ -703,7 +730,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
 
-        # Set MMDATA.CSV values
+        # Set MMDATA.CSV values             move?
         car_type, difficulty = 0, 1
         timeofday, weather = 1, 1
         opponent = 8
@@ -717,33 +744,42 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
         # Create MMDATA.CSV files
         mm_file_name = f"MM{race_type}DATA.CSV"
         with open(mm_file_name, "w") as f:
+            
             f.write("Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n")
+            
             for i in range(num_files):
                 if race_type == "BLITZ":
-                    race_data = f"{car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty}"
+                    race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty
 
                 elif race_type == "CIRCUIT":
-                    race_data = f"{car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_p, timelimit, difficulty}"
+                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_p, timelimit, difficulty
                     
                 elif race_type == "RACE":
-                    race_data = f"{car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty}"
-    
-                f.write(f"{prefix}{i},{race_data},{race_data}\n")
-        shutil.move(mm_file_name, os.path.join("SHOP", "RACE", f"{city_name}", mm_file_name))
+                    race_data = car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty
+                    
+                # Simplify       
+                if race_type == "RACE":
+                    race_data_str = ', '.join(map(str, race_data))
+                    f.write(f"{race_prefixes[i]}, {race_data_str}\n") 
+                else:
+                    race_data_str = ', '.join(map(str, race_data))
+                    f.write(f"{prefix}{i}, {race_data_str}\n") 
+                                    
+        destination_path = os.path.join("SHOP", "RACE", city_name, mm_file_name)
+        shutil.move(mm_file_name, destination_path)
 
     # Create COPSWAYPOINTS.CSV file
     with open("COPSWAYPOINTS.CSV", "w") as f:
         f.write("This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n")
-        f.write("#(example) 100,0.5,350,0,0,0,0,0,")
-        f.write("#(example) 500,0.5,200,0,0,0,0,0,")
-        f.write("#(example) 900,0.5,800,0,0,0,0,0,")
+        f.write("#(example) 100,0.5,350,0,0,0,0,0,\n")
+        f.write("#(example) 500,0.5,200,0,0,0,0,0,\n")
+        f.write("#(example) 900,0.5,800,0,0,0,0,0,\n")
         
     shutil.move("COPSWAYPOINTS.CSV", os.path.join("SHOP", "RACE", f"{city_name}", "COPSWAYPOINTS.CSV"))
 
     # Create OPPONENT files
     if all_races_files:
-        num_opponents = 8
-        opponent_car = "vppanozgt" # feel free to change, or make a list and randomize it
+        num_opponents = 8 # always generate 8 opponents for each race type and puts the opponent file names in the AIMAP_P files
         
         for race_type, prefix, num_files in [("BLITZ", "B", num_blitz), ("CIRCUIT", "C", num_circuit), ("RACE", "R", num_checkpoint)]:
             for race_index in range(num_files):
@@ -755,19 +791,18 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                     
                # Create AIMAP_P files
                 aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
-                ambient_density = 0.2
                 with open(aimap_file_name, "w") as f:
-                    f.write("# Ambient Traffic Density\n[Density]\n" + str(ambient_density) + "\n\n")
-                    f.write("# Default Road Speed Limit\n[Speed Limit]\n45\n\n")
-                    f.write("# Ambient Traffic Exceptions\n# Rd Id, Density, Speed Limit\n[Exceptions]\n0\n\n")
-                    f.write("# Police Init\n# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route\n[Police]\n0\n# vpcop 50.0 0.0 30.0 -90.0 0 4\n\n")
+                    f.write("# Ambient Traffic Density \n[Density] \n" + str(ambient_density) + "\n\n")
+                    f.write("# Default Road Speed Limit \n[Speed Limit] \n45 \n\n")
+                    f.write("# Ambient Traffic Exceptions\n# Rd Id, Density, Speed Limit \n[Exceptions] \n0 \n\n")
+                    f.write("# Police Init \n# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route \n")
+                    f.write("[Police] \n0 \n# vpcop 50.0 0.0 30.0 -90.0 0 4 \n\n")
                     
-                    # f.write("# Opponent Init\n# Geo File, WavePoint File\n# vpfer vpbug vpcaddie vpmtruck\n[Opponent]\n8\n")
-                    f.write("# Opponent Init\n# Geo File, WavePoint File\n# vpfer vpbug vpcaddie vpmtruck\n[Opponent]\n" 
-                            + str(num_opponents) + "\n")
+                    f.write("# Opponent Init\ n# Geo File, WavePoint File \n# vpfer vpbug vpcaddie vpmtruck \n[Opponent] \n") 
+                    f.write(str(num_opponents) + "\n")
                     
                     for opp_index in range(1, num_opponents + 1):
-                        f.write(f"{opponent_car}OPP{opp_index}{race_type}{race_index}.{prefix}{opp_index}\n")
+                        f.write(f"{opponent_car} OPP{opp_index}{race_type}{race_index}.{prefix}{opp_index}\n")
                         
                 shutil.move(aimap_file_name, os.path.join("SHOP", "RACE", f"{city_name}", aimap_file_name))
     
@@ -824,9 +859,38 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
         if file in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(os.path.join("angel", file), os.path.join("SHOP", file))
             
+            
+            
+# Create ANIM
+def create_anim(city_name, anim_data):
+    output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
+    main_anim_file = os.path.join(output_folder_anim, "ANIM.CSV")
+
+    # Create ANIM.CSV file and write anim names
+    with open(main_anim_file, 'w', newline='') as file:
+        writer = csv.writer(file)
+        for obj in anim_data.keys():
+            writer.writerow([f"anim_{obj}"])
+
+    # Create Individual ANIM files and write Coordinates
+    for obj, coordinates in anim_data.items():
+        file_name = os.path.join(output_folder_anim, f"ANIM_{obj.upper()}.CSV")
+        with open(file_name, 'w', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Keep this part for later!
+            # if coordinates:
+            #     for coordinate in coordinates:
+            #         writer.writerow(coordinate)
+                    
+            if coordinates:
+                coordinates = sort_coordinates(coordinates)
+                for coordinate in coordinates:
+                    writer.writerow(coordinate)
+                    
 # Create AR file
-def create_ar_file(city_name, destination_folder, create_ar=False):
-    if create_ar:
+def create_ar_file(city_name, destination_folder, create_plus_move_ar=False):
+    if create_plus_move_ar:
         os.chdir("SHOP")
         command = f"CMD.EXE /C run !!!!!{city_name}_City"
         subprocess.run(command, shell=True)
@@ -836,14 +900,15 @@ def create_ar_file(city_name, destination_folder, create_ar=False):
             if file.endswith(".ar") and file.startswith(f"!!!!!{city_name}_City"):
                 shutil.move(os.path.join("build", file), os.path.join(destination_folder, file))
                 
-        # delete build folder and any contents within it
-        try:
-            shutil.rmtree("build")
-        except Exception as e:
-            print(f"Failed to delete the build directory. Reason: {e}")
-        os.chdir("..")
+    # delete "build" folder and any files in it regardless of whether or not an AR file was created
+    try:
+        shutil.rmtree("build")
+    except Exception as e:
+        print(f"Failed to delete the build directory. Reason: {e}")
+    os.chdir("..")
             
-# Create JPG Picture of Shapes    
+
+# Create JPG Picture of Shapes (correct sorting)
 def plot_polygons(
     show_label=False, plot_picture=False, export_jpg=False, x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
     
@@ -853,6 +918,9 @@ def plot_polygons(
     hudmap_picture640 = city_name + "640.JPG"
     hudmap_picture320 = city_name + "320.JPG"
     hudmap_debug = city_name + "_DEBUG.JPG"
+    
+    # Declare all_polygons_picture as global
+    global all_polygons_picture
     
     def draw_polygon(ax, polygon, color, label=None):
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
@@ -866,6 +934,9 @@ def plot_polygons(
     if plot_picture or export_jpg:
         fig, ax = plt.subplots()
         ax.set_facecolor(background_color)
+
+        # Sort the vertex_coordinates in all_polygons_picture
+        all_polygons_picture = [sort_coordinates(polygon) for polygon in all_polygons_picture]
 
         for i, polygon in enumerate(all_polygons_picture):
             draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None) # note: do not remove "C" from "C{i}"
@@ -889,7 +960,8 @@ def plot_polygons(
                     
         if plot_picture:
             plt.show()
-        
+       
+
 # Create {city_name}.EXT file            
 def create_ext_file(city_name, polygonz):
     min_x = min(point[0] for polygon in polygonz for point in polygon)
@@ -897,7 +969,7 @@ def create_ext_file(city_name, polygonz):
     min_z = min(point[2] for polygon in polygonz for point in polygon)
     max_z = max(point[2] for polygon in polygonz for point in polygon)
 
-    output_folder_ext = os.path.join("SHOP", "CITY")        # fix, this path already exist
+    output_folder_ext = os.path.join("SHOP", "CITY")       
 
     ext_file = city_name + ".EXT"
     ext_file_path = os.path.join(output_folder_ext, ext_file)
@@ -917,23 +989,25 @@ def start_game(destination_folder, play_game=False):
 
 # Call FUNCTIONS
 print("\n===============================================")
-print("\nGenerating " + f"{city_name}'s City... \n")
+print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 create_folder_structure(city_name)
-distribute_generated_files(city_name, bnd_hit_id, all_races_files=False) # change to "True" to create ALL Opponent, AIMAP_P files
+distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent, AIMAP_P files
 create_ext_file(city_name, all_polygons_picture) 
+create_anim(city_name, anim_data)
 
 # Offset for Moronville (Testcity)
-#plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
+# plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
 
 # Offset needs to be specified for each map. Alignment Automation not implemented yet.
-plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=0.0, y_offset=0.0, line_width=1., background_color='black', debug=False)
+plot_polygons(
+    show_label=False, plot_picture=False, export_jpg=True, x_offset=0.0, y_offset=0.0, line_width=1., background_color='black', debug=False)
 
-create_ar_file(city_name, destination_folder, create_ar=True)
+create_ar_file(city_name, destination_folder, create_plus_move_ar=True)
 
 print("\n===============================================")
-print("\nSuccesfully CREATED " + f"{race_locale_name}! \n")
+print("\nSuccesfully CREATED " + f"{race_locale_name}!\n")
 print("===============================================\n")
 
-start_game(destination_folder, play_game=False)
+start_game(destination_folder, play_game=True)
