@@ -55,41 +55,37 @@ opponent_car = "vppanozgt"
 randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
 anim_data = {
-    'plane': [
-        (250, 40.0, -250),
-        (250, 40.0, 250), 
+    'plane': [                  # you can only use "plane" and "eltrain"
+        (250, 40.0, -250),      # other objects won't work
+        (250, 40.0, 250),       # you can not add multiple planes or trains
         (-250, 40.0, -250),
         (-250, 40.0, 250)], 
     'eltrain': [
         (80, 25.0, -80),
         (80, 25.0, 80), 
         (-80, 25.0, -80),
-        (-80, 25.0, 80)], 
-}
-
-
+        (-80, 25.0, 80)]}
+    
 def to_do_list(x):
-    f"""TO DO list
+            """
+            TO DO list
             TexCoods --> flip "repeated_horizontal" and flip "vertical". 
                 Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
-            Remove  --> "if len(texture_indices) != len(shapes):" (?)
             Corners --> figure out Triangles
             Corners --> figure out Hills
-            Cells --> investigate Cell types
-            Cells --> automate Cell type setting
+            Cells --> implement Cell type
             Remove --> remove "show_label" and thus plt.legend()" (?)
-            Comment --> usage of "plot_polygons"
             BAI --> retrieve Center from all set Polygons
             BAI --> set / incorporate Street file template
             HUDMAP --> fix automate (correct) alignment
-            HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass)
-            USER --> add more Examples and Explanations
+            HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
             ANIM --> maybe remove "sorting coordinates" if users want a specific path (i.e. not following the 4 lines of a rectangle)
-            ANIM --> add Boolean, such that data doesn't have to be commented out
-            Simplify MM(type)DATA.csv ?
-    """
+            IMPROVE --> split "distribute_generated_files" into smaller components
+            BLENDER --> experiment
+            DUCKY --> find any useful things for a 2D editor
+            """
     
     
 # VECTOR3 CLASS
@@ -419,20 +415,6 @@ def generate_bms(vertices, polys, texture_indices, string_names: List[str], text
     for poly in polys[1:]:  # Skip the first filler polygon
         vertex_coordinates = [vertices[idx] for idx in poly.vert_indices]
         shapes.append(vertex_coordinates)
-
-    #### REDUNDANT CODE??? ####
-    if len(texture_indices) != len(shapes):
-        raise ValueError(f"\n\nThe length of Texture Indices should be equal to the number of Shapes.\nYou passed {len(shapes)} shapes and {len(texture_indices)} texture indices.\n")
-
-    valid_texture_range = list(range(1, len(string_names) + 1))
-    for index in texture_indices:
-        if index not in valid_texture_range:
-            if index == 0:
-                print("\nWARNING:\n")
-                print("You passed the value 0 to Texture Indices list, this will result into your shape being white, please choose a different value (e.g. 1)\n")
-            else:
-                raise ValueError(f"\n\nInvalid Texture Index {index}. Allowed values are: {', '.join(map(str, valid_texture_range))}\n")
-    #### REDUNDANT CODE??? ####
     
     # DEFAULT BMS VALUES, do not change!
     magic, flags, radius, radiussq, bounding_box_radius = "3HSM", 3, 0.0, 0.0, 0.0  
@@ -568,7 +550,8 @@ def create_and_append_polygon(bound_number, material_index, vertex_coordinates, 
 # ==================CREATING YOUR CITY================== #
 
 def user_notes(x):
-    """ NOTES:
+    """ 
+    NOTES:
     
     Please find some example Polygons and BMS below this text.
     You can already run this the script with these Polygons and BMS to see how it works.
@@ -595,7 +578,8 @@ def user_notes(x):
 
     See below to Exclude random string name for specified Polygon, while randomizing the rest
     generate_and_save_bms_file(
-           string_names=["T_WALL"], exclude=True))"""
+           string_names=["T_WALL"], exclude=True))
+    """
            
 # Polygon 1 | Starting Area | Road
 create_and_append_polygon(
@@ -614,7 +598,7 @@ generate_and_save_bms_file(
 
 # Polygon 2 | Grass Area | Road
 create_and_append_polygon(
-    bound_number = 2,
+    bound_number = 50,
     material_index = 87,
     vertex_coordinates=[
         (35, 15.0, -30),
@@ -630,7 +614,7 @@ generate_and_save_bms_file(
 
 # Polygon 3 | Water Area | Road
 create_and_append_polygon(
-    bound_number = 3,
+    bound_number = 100,
     material_index = 91,
     vertex_coordinates=[
         (90, 15.0, -80),
@@ -730,7 +714,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
 
-        # Set MMDATA.CSV values             move?
+        # Set MMDATA.CSV values           
         car_type, difficulty = 0, 1
         timeofday, weather = 1, 1
         opponent = 8
@@ -757,7 +741,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                 elif race_type == "RACE":
                     race_data = car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty
                     
-                # Simplify       
+                # Race prefixes    
                 if race_type == "RACE":
                     race_data_str = ', '.join(map(str, race_data))
                     f.write(f"{race_prefixes[i]}, {race_data_str}\n") 
@@ -767,7 +751,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                                     
         destination_path = os.path.join("SHOP", "RACE", city_name, mm_file_name)
         shutil.move(mm_file_name, destination_path)
-
+        
     # Create COPSWAYPOINTS.CSV file
     with open("COPSWAYPOINTS.CSV", "w") as f:
         f.write("This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n")
@@ -798,7 +782,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                     f.write("# Police Init \n# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route \n")
                     f.write("[Police] \n0 \n# vpcop 50.0 0.0 30.0 -90.0 0 4 \n\n")
                     
-                    f.write("# Opponent Init\ n# Geo File, WavePoint File \n# vpfer vpbug vpcaddie vpmtruck \n[Opponent] \n") 
+                    f.write("# Opponent Init\ n# Geo File, WavePoint File \n[Opponent] \n") 
                     f.write(str(num_opponents) + "\n")
                     
                     for opp_index in range(1, num_opponents + 1):
@@ -822,28 +806,15 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                 row = f"{bound_number},32,4,{count_past_4th}"
             else:
                 row = f"{bound_number},8,0,{count_past_4th}"
-            
-            # TO DO, find more documentation or test find myself
+                
             '''
-            0x1 | Is Tunnel (Echo, No Lighting, No Reflections, No Ptx)
-            0x2 | Indoors
-            0x3 | ??? (bij 201-208, maar niet bij 209) -- ook bij: 365, 447 en ook 840, 841, 842,
-            0x4 | Moves if texture is "T_WATER"
-            0x8 | ???
-            0x16 | ??? (bij 685)
-            0x10 | ???
-            0x20 | ???
-            0x20 | ZEnable
-            0x40 | No Skids
-            0x80 | FogValue = 0.25
-            0x100 | ???
-            
-            memset(this->Meshes, 0, sizeof(this->Meshes));
-            this->Drawbridge = 0;
-            this->SlideData = 0;
-            this->VisitTagCount = 0;
-            this->VisitTags = 0;
-            
+            1 = tunnel          Is Tunnel (Echo, No Lighting, No Reflections, No Ptx) 
+            3 = tunnel v2?
+            2 = indoors
+            4 = water_move if _A2, buffer 32 and texture "T_WATER"
+            20 = Zenable            (?)
+            80 = FogValue = 0.25    (?)
+            200 = No Skids
             '''
             
             for num in remaining_bound_numbers:
@@ -858,14 +829,32 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     for file in os.listdir("angel"):
         if file in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(os.path.join("angel", file), os.path.join("SHOP", file))
-            
-            
-            
+                
 # Create ANIM
-def create_anim(city_name, anim_data):
+def create_anim(city_name, anim_data, no_anim=False):
+    if no_anim:
+        return
+    else:
+        output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
+        main_anim_file = os.path.join(output_folder_anim, "ANIM.CSV")
+
+        # Create ANIM.CSV file and write anim names
+        with open(main_anim_file, 'w', newline='') as file:
+            writer = csv.writer(file)
+            for obj in anim_data.keys():
+                writer.writerow([f"anim_{obj}"])
+
+        # Create Individual ANIM files and write Coordinates
+        for obj, coordinates in anim_data.items():
+            file_name = os.path.join(output_folder_anim, f"ANIM_{obj.upper()}.CSV")
+            with open(file_name, 'w', newline='') as file:
+                writer = csv.writer(file)
+                if coordinates:
+                    for coordinate in coordinates:
+                        writer.writerow(coordinate)
     output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
     main_anim_file = os.path.join(output_folder_anim, "ANIM.CSV")
-
+    
     # Create ANIM.CSV file and write anim names
     with open(main_anim_file, 'w', newline='') as file:
         writer = csv.writer(file)
@@ -888,8 +877,8 @@ def create_anim(city_name, anim_data):
                 for coordinate in coordinates:
                     writer.writerow(coordinate)
                     
-# Create AR file
-def create_ar_file(city_name, destination_folder, create_plus_move_ar=False):
+# Create AR file and delete folders
+def create_ar_file(city_name, destination_folder, create_plus_move_ar=False, delete_shop=False):
     if create_plus_move_ar:
         os.chdir("SHOP")
         command = f"CMD.EXE /C run !!!!!{city_name}_City"
@@ -900,18 +889,23 @@ def create_ar_file(city_name, destination_folder, create_plus_move_ar=False):
             if file.endswith(".ar") and file.startswith(f"!!!!!{city_name}_City"):
                 shutil.move(os.path.join("build", file), os.path.join(destination_folder, file))
                 
-    # delete "build" folder and any files in it regardless of whether or not an AR file was created
     try:
         shutil.rmtree("build")
     except Exception as e:
         print(f"Failed to delete the build directory. Reason: {e}")
-    os.chdir("..")
-            
+    
+    if delete_shop:
+        try:
+            shutil.rmtree("SHOP")
+        except Exception as e:
+            print(f"Failed to delete the SHOP directory. Reason: {e}")
+    
 
 # Create JPG Picture of Shapes (correct sorting)
 def plot_polygons(
     show_label=False, plot_picture=False, export_jpg=False, x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
     
+    # Setup
     output_folder_city = os.path.join("SHOP", "BMP16")
     output_folder_cwd = os.getcwd() 
     
@@ -922,14 +916,14 @@ def plot_polygons(
     # Declare all_polygons_picture as global
     global all_polygons_picture
     
-    def draw_polygon(ax, polygon, color, label=None):
+    def draw_polygon(ax, polygon, color, label=None, add_label=False):
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
         xs, ys = xs + (xs[0],), ys + (ys[0],)
         ax.plot(xs, ys, color=color, linewidth=line_width)
         
-        if debug: # call function with without x,y offset or set them both to 0
+        if add_label: # control label addition
             center = calculate_center_tuples(polygon)
-            ax.text(center[0], center[2], label, color='white', ha='center', va='center', fontsize=1.0)
+            ax.text(center[0], center[2], label, color='white', ha='center', va='center', fontsize=4.0)
 
     if plot_picture or export_jpg:
         fig, ax = plt.subplots()
@@ -939,14 +933,12 @@ def plot_polygons(
         all_polygons_picture = [sort_coordinates(polygon) for polygon in all_polygons_picture]
 
         for i, polygon in enumerate(all_polygons_picture):
-            draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None) # note: do not remove "C" from "C{i}"
+            draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=False) # note: do not remove "C" from "C{i}"
 
         ax.set_aspect('equal', 'box')
         
-        # Remove "show_label" and thus plt.legend()?
         if show_label:
             plt.legend()
-        # Remove "show_label" and thus plt.legend()?
         
         if export_jpg:
             ax.axis('off')
@@ -955,12 +947,17 @@ def plot_polygons(
                 line.set_transform(trans)
             plt.savefig(os.path.join(output_folder_city, hudmap_picture640), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
             plt.savefig(os.path.join(output_folder_city, hudmap_picture320), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
+
             if debug:
-                plt.savefig(os.path.join(output_folder_cwd, hudmap_debug), dpi=2500, bbox_inches='tight', pad_inches=0.01, facecolor='black')
+                # Draw polygons with labels for the debug image
+                ax.cla()  # Clear the plot
+                ax.set_facecolor(background_color)
+                for i, polygon in enumerate(all_polygons_picture):
+                    draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
+                plt.savefig(os.path.join(output_folder_cwd, hudmap_debug), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
                     
         if plot_picture:
             plt.show()
-       
 
 # Create {city_name}.EXT file            
 def create_ext_file(city_name, polygonz):
@@ -977,7 +974,7 @@ def create_ext_file(city_name, polygonz):
 
     with open(ext_file_path, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
-        
+  
 # Start GAME
 def start_game(destination_folder, play_game=False):
     game_path = os.path.join(destination_folder, shortcut_or_exe_name)
@@ -993,21 +990,21 @@ print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 create_folder_structure(city_name)
-distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent, AIMAP_P files
+distribute_generated_files(city_name, bnd_hit_id, all_races_files=False) # change to "True" to create ALL Opponent, AIMAP_P files
 create_ext_file(city_name, all_polygons_picture) 
-create_anim(city_name, anim_data)
+create_anim(city_name, anim_data, no_anim=False) # change to "True" if you don't want any ANIM
 
 # Offset for Moronville (Testcity)
 # plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
 
 # Offset needs to be specified for each map. Alignment Automation not implemented yet.
 plot_polygons(
-    show_label=False, plot_picture=False, export_jpg=True, x_offset=0.0, y_offset=0.0, line_width=1., background_color='black', debug=False)
+    show_label=True, plot_picture=False, export_jpg=True, x_offset=0.0, y_offset=0.0, line_width=1, background_color='black', debug=False)
 
-create_ar_file(city_name, destination_folder, create_plus_move_ar=True)
+create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=True)
 
 print("\n===============================================")
 print("\nSuccesfully CREATED " + f"{race_locale_name}!\n")
 print("===============================================\n")
 
-start_game(destination_folder, play_game=True)
+start_game(destination_folder, play_game=False)
