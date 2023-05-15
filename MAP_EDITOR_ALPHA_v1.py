@@ -54,6 +54,11 @@ opponent_car = "vppanozgt"
 
 randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
+start_position = "0.0,15.0,0.1,5.0,15.0,0,0,"            # don't add more checkpoints
+checkpoint_1 = "0.0,15.0,-30,5.0,15.0,0,0,"              # (x,y,z,rotation,width)
+checkpoint_2 = "0.0,15.0,-60,5.0,15.0,0,0,"
+finish_position = "0.0,15.0,-90,5.0,15.0,0,0,"
+
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain"
         (250, 40.0, -250),      # other objects won't work
@@ -85,6 +90,8 @@ def to_do_list(x):
             IMPROVE --> split "distribute_generated_files" into smaller components
             BLENDER --> experiment
             DUCKY --> find any useful things for a 2D editor
+            IMPROVE --> CnR, remove "example", have AIMAP_P + Roam created irrespectively, have filler values for WAYPOINT files
+            SPLIT --> Split "create cells" function
             """
     
     
@@ -598,7 +605,7 @@ generate_and_save_bms_file(
 
 # Polygon 2 | Grass Area | Road
 create_and_append_polygon(
-    bound_number = 50,
+    bound_number = 2,
     material_index = 87,
     vertex_coordinates=[
         (35, 15.0, -30),
@@ -614,8 +621,8 @@ generate_and_save_bms_file(
 
 # Polygon 3 | Water Area | Road
 create_and_append_polygon(
-    bound_number = 100,
-    material_index = 91,
+    bound_number = 200,
+    material_index = 0,
     vertex_coordinates=[
         (90, 15.0, -80),
         (90, 15.0, -120),	
@@ -624,8 +631,25 @@ create_and_append_polygon(
 
 # Polygon 3 | Water Area | Texture
 generate_and_save_bms_file(
+    string_names = ["R2"], 
+    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=25, repeat_y=10))
+
+
+# Polygon 4 | Water Area | Road
+create_and_append_polygon(
+    bound_number = 201,
+    material_index = 91,
+    vertex_coordinates=[
+        (90, 15.0, -120),
+        (90, 15.0, -220),	
+        (-80, 15.0, -120),
+        (-80, 15.0, -200)])
+
+# Polygon 4 | Water Area | Texture
+generate_and_save_bms_file(
     string_names = ["T_WATER"], 
     TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=15, repeat_y=15))
+
 
 ################################################################################################################               
 ################################################################################################################
@@ -689,7 +713,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
             bms_files.append(bound_number)
             if file.endswith("_A2.bms"):
                 bms_a2_files.add(bound_number)
-            if bound_number <= 200:
+            if bound_number < 200:
                 shutil.move(file, os.path.join("SHOP", "BMS", f"{city_name}LM", file))
             else:
                 shutil.move(file, os.path.join("SHOP", "BMS", f"{city_name}CITY", file))
@@ -712,6 +736,10 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
             with open(file_name, "w") as f:
                 ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[((n//10%10!=1)*(n%10<4)*n%10)::4])
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
+                f.write(start_position + "\n") 
+                f.write(checkpoint_1 + "\n")
+                f.write(checkpoint_2 + "\n")
+                f.write(finish_position + "\n" )              
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
 
         # Set MMDATA.CSV values           
@@ -722,7 +750,8 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
         cops_x, cops_m, cops_l = 0.0, 0.5, 1.0
         ambient_x, ambient_m, ambient_l = 0.0, 0.5, 1.0
         peds_x, peds_m, peds_l = 0.0, 0.5, 1.0
-        num_laps_a, num_laps_p, num_laps_blitz, num_laps_race = 2, 3, 4, 0
+        num_laps_a, num_laps_p, num_laps_blitz, num_laps_race, num_laps_blitz_test = 2, 3, 4, 0, 2 
+        # Game will crash if num(waypoints) < num_laps_blitz
         timelimit = 99
         
         # Create MMDATA.CSV files
@@ -733,7 +762,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
             
             for i in range(num_files):
                 if race_type == "BLITZ":
-                    race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty
+                    race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz_test, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz_test, timelimit, difficulty
 
                 elif race_type == "CIRCUIT":
                     race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_p, timelimit, difficulty
@@ -755,9 +784,13 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     # Create COPSWAYPOINTS.CSV file
     with open("COPSWAYPOINTS.CSV", "w") as f:
         f.write("This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n")
-        f.write("#(example) 100,0.5,350,0,0,0,0,0,\n")
-        f.write("#(example) 500,0.5,200,0,0,0,0,0,\n")
-        f.write("#(example) 900,0.5,800,0,0,0,0,0,\n")
+        f.write(start_position + "\n") 
+        f.write(checkpoint_1 + "\n")
+        f.write(finish_position + "\n" )  
+        ################################
+        f.write(start_position + "\n") 
+        f.write(checkpoint_1 + "\n")
+        f.write(finish_position + "\n" ) 
         
     shutil.move("COPSWAYPOINTS.CSV", os.path.join("SHOP", "RACE", f"{city_name}", "COPSWAYPOINTS.CSV"))
 
@@ -782,7 +815,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                     f.write("# Police Init \n# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route \n")
                     f.write("[Police] \n0 \n# vpcop 50.0 0.0 30.0 -90.0 0 4 \n\n")
                     
-                    f.write("# Opponent Init\ n# Geo File, WavePoint File \n[Opponent] \n") 
+                    f.write("# Opponent Init, Geo File, WavePoint File \n[Opponent] \n") 
                     f.write(str(num_opponents) + "\n")
                     
                     for opp_index in range(1, num_opponents + 1):
@@ -990,18 +1023,18 @@ print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 create_folder_structure(city_name)
-distribute_generated_files(city_name, bnd_hit_id, all_races_files=False) # change to "True" to create ALL Opponent, AIMAP_P files
+distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent, AIMAP_P files
 create_ext_file(city_name, all_polygons_picture) 
-create_anim(city_name, anim_data, no_anim=False) # change to "True" if you don't want any ANIM
+create_anim(city_name, anim_data, no_anim=True) # change to "True" if you don't want any ANIM
 
 # Offset for Moronville (Testcity)
 # plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
 
 # Offset needs to be specified for each map. Alignment Automation not implemented yet.
-plot_polygons(
-    show_label=True, plot_picture=False, export_jpg=True, x_offset=0.0, y_offset=0.0, line_width=1, background_color='black', debug=False)
+# plot_polygons(
+#     show_label=True, plot_picture=False, export_jpg=False, x_offset=0.0, y_offset=0.0, line_width=1, background_color='black', debug=False)
 
-create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=True)
+create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
 
 print("\n===============================================")
 print("\nSuccesfully CREATED " + f"{race_locale_name}!\n")
