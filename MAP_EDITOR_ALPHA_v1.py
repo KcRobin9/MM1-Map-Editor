@@ -33,21 +33,24 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
 
-# SETUP I (mandatory)           Control + F    "city=="  to jump to The City Creation section
+# SETUP I (mandatory)                   Control + F    "city=="  to jump to The City Creation section
 city_name = "USER"                      # One word (no spaces)
 race_locale_name = "My First City"      # Can be multiple words
+# destination_folder = r"C:\Users\ASUS\OneDrive\Pulpit\mm1 march"  
+# shortcut_or_exe_name = "Open1560"
+
+# User swap
 destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc"  
 shortcut_or_exe_name = "Open1560.lnk"
-
 
 # SETUP II (optional)
 num_blitz = 3      # max 15
 num_circuit = 3    # max 15
-num_checkpoint = 4 # max 12
+num_checkpoint = 3 # max 12
 
 blitz_race_names = ["Just in Time", "Middle Town Race", "Grand Finale"]
-circuit_race_names = ["Litter Loop", "Trailer Jumping", "Ultimate Horsepower"]
-checkpoint_race_names = ["Unlucky Start", "Trouble in Chinatown", "Castle Switcher", "Rooftops and Bridges"]
+circuit_race_names = ["Moronville Square", "Trailer Jumping", "Ultimate Horsepower"]
+checkpoint_race_names = ["Unlucky Start", "Trouble in Chinatown", "Castle Switcher"]
 
 ambient_density = 0.2
 opponent_car = "vppanozgt" 
@@ -56,8 +59,24 @@ randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION
 
 start_position = "0.0,15.0,0.1,5.0,15.0,0,0,"            # don't add more checkpoints
 checkpoint_1 = "0.0,15.0,-30,5.0,15.0,0,0,"              # (x,y,z,rotation,width)
-checkpoint_2 = "0.0,15.0,-60,5.0,15.0,0,0,"
+checkpoint_2 = "0.0,15.0,-60,5.0,15.0,0,0,"              # applies to the game modes Blitz, Checkpoint and Circuit
 finish_position = "0.0,15.0,-90,5.0,15.0,0,0,"
+
+# Cops and Robbers Waypoints
+cnr_waypoints = [                                     # set Cops and Robbers Waypoints manually and concisely
+    ## 1st set, Name: ... ## 
+    (50.0,1.0,31.0),                                     
+    (51.0,1.0,31.0),                                  
+    (52.0,2.0,32.0),
+    ## 2nd set, Name: ... ## 
+    (53.0,3.0,33.0),
+    (54.0,4.0,34.0),
+    (55.0,5.0,35.0),
+    ## 3rd set, Name: ... ##
+    (56.0,6.0,36.0),
+    (57.0,7.0,37.0),
+    (58.0,8.0,38.0)
+    ]
 
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain"
@@ -74,12 +93,11 @@ anim_data = {
 def to_do_list(x):
             """
             TO DO list
-            TexCoods --> flip "repeated_horizontal" and flip "vertical". 
-                Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
+            TexCoods --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
             Corners --> figure out Triangles
-            Corners --> figure out Hills
+            Corners --> figure out Hills                         # next up
             Cells --> implement Cell type
             Remove --> remove "show_label" and thus plt.legend()" (?)
             BAI --> retrieve Center from all set Polygons
@@ -90,8 +108,10 @@ def to_do_list(x):
             IMPROVE --> split "distribute_generated_files" into smaller components
             BLENDER --> experiment
             DUCKY --> find any useful things for a 2D editor
-            IMPROVE --> CnR, remove "example", have AIMAP_P + Roam created irrespectively, have filler values for WAYPOINT files
-            SPLIT --> Split "create cells" function
+            SPLIT --> split "create cells" function             # next up
+            GITHUB --> add Readme / other useful info
+            SCRIPT --> put everything into a PolygonHandler class? (to retain input data in functions)
+            SCRIPT --> split City Settings (coordinates) into separate file (?)
             """
     
     
@@ -356,7 +376,7 @@ def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
 
-
+    # Continue checking / polishing
     if mode == "horizontal":
         return [0, 0, 0, 1, 1, 1, 1, 0]
     elif mode == "horizontal_flipped":
@@ -519,10 +539,17 @@ def create_and_append_polygon(bound_number, material_index, vertex_coordinates, 
             corners = [-1, 0, 0, min(coord[0] for coord in vertex_coordinates)]
         elif wall_side == "inside":
             corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
+            
+    # hillzz          ...
+    # case 4: HILL with varying X, Y and Z coordinates      (1e 3e regels moet kloppen)
+    # elif (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
+          # max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
+          # max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
+
+        # corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
     
     # TO DO: 
-    # case 4: triangles
-    # case 5: hills
+    # case 5: triangles
     elif corners is None:
         raise ValueError("Corners method not implemented yet, please specify Corners manually")
     
@@ -588,69 +615,43 @@ def user_notes(x):
            string_names=["T_WALL"], exclude=True))
     """
            
-# Polygon 1 | Starting Area | Road
+# Polygon 1 | BND floor
 create_and_append_polygon(
     bound_number = 1,
     material_index = 0,
     vertex_coordinates=[
-        (15, 15.0, 20),
-        (15, 15.0, -30),	
-        (-25, 15.0, -30),
-        (-25, 15.0, 20)])
+        (-100, 0.0, -100),
+        (-100, 0.0, 100),	
+        (100, 0.0, -100),
+        (100, 0.0, 100)])
 
-# Polygon 1 | Starting Area | Texture
+# Polygon 1 | Texture
 generate_and_save_bms_file(
-    string_names = ["R6"], 
-    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=3, repeat_y=10))
-
-# Polygon 2 | Grass Area | Road
-create_and_append_polygon(
-    bound_number = 2,
-    material_index = 87,
-    vertex_coordinates=[
-        (35, 15.0, -30),
-        (35, 15.0, -80),	
-        (-45, 15.0, -30),
-        (-45, 15.0, -80)])
-
-# Polygon 2 | Grass Area | Texture
-generate_and_save_bms_file(
-    string_names = ["T_GRASS"], 
-    texture_darkness=[1,2,1,2],     # make the Corners of the Texture darker or lighter
-    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=15, repeat_y=15))
-
-# Polygon 3 | Water Area | Road
-create_and_append_polygon(
-    bound_number = 200,
-    material_index = 0,
-    vertex_coordinates=[
-        (90, 15.0, -80),
-        (90, 15.0, -120),	
-        (-80, 15.0, -80),
-        (-80, 15.0, -120)])
-
-# Polygon 3 | Water Area | Texture
-generate_and_save_bms_file(
-    string_names = ["R2"], 
-    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=25, repeat_y=10))
+    string_names = ["T_WALL"])
 
 
-# Polygon 4 | Water Area | Road
-create_and_append_polygon(
-    bound_number = 201,
-    material_index = 91,
-    vertex_coordinates=[
-        (90, 15.0, -120),
-        (90, 15.0, -220),	
-        (-80, 15.0, -120),
-        (-80, 15.0, -200)])
+#     # ========= TESTING ========= #
+#     # Polygon 2 | BND WALL1 1
+# create_and_append_polygon(
+#     bound_number = 2,
+#     material_index = 0,
+#     vertex_coordinates=[
+#         (-100, 0.0, -100),
+#         (100, 0.0, -100),
+#         (-100, 50.0, -400),	
+#         (100, 50.0, -400)], corners=[0.0, 1.0, -0.16667, 1800.0])       # y_diff = 50, z_diff = 300     is radians
 
-# Polygon 4 | Water Area | Texture
-generate_and_save_bms_file(
-    string_names = ["T_WATER"], 
-    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=15, repeat_y=15))
+#         (90, 15.0, -90),              
+#         (90, 4.0, -115),		
+#         (-90, 4.0, -115),
+#         (-90, 15.0, -90)], corners=[0.0, 1.0, -0.44, -54.6])          # example in Moronville
 
-
+#     # Generate BMS for Polygon 2 WALL1 1
+# generate_and_save_bms_file(
+#     string_names = ["R6"],
+#     texture_darkness=[2, 2, 2, 2], TexCoords =generate_tex_coords(mode="repeating_vertical", repeat_x=20, repeat_y=20))
+ 
+ 
 ################################################################################################################               
 ################################################################################################################
 
@@ -784,13 +785,10 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     # Create COPSWAYPOINTS.CSV file
     with open("COPSWAYPOINTS.CSV", "w") as f:
         f.write("This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n")
-        f.write(start_position + "\n") 
-        f.write(checkpoint_1 + "\n")
-        f.write(finish_position + "\n" )  
-        ################################
-        f.write(start_position + "\n") 
-        f.write(checkpoint_1 + "\n")
-        f.write(finish_position + "\n" ) 
+        for i in range(0, len(cnr_waypoints), 3):
+            f.write(", ".join(map(str, cnr_waypoints[i])) + ",0,0,0,0,0,\n") 
+            f.write(", ".join(map(str, cnr_waypoints[i+1])) + ",0,0,0,0,0,\n")
+            f.write(", ".join(map(str, cnr_waypoints[i+2])) + ",0,0,0,0,0,\n")
         
     shutil.move("COPSWAYPOINTS.CSV", os.path.join("SHOP", "RACE", f"{city_name}", "COPSWAYPOINTS.CSV"))
 
@@ -1028,7 +1026,7 @@ create_ext_file(city_name, all_polygons_picture)
 create_anim(city_name, anim_data, no_anim=True) # change to "True" if you don't want any ANIM
 
 # Offset for Moronville (Testcity)
-# plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
+plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
 
 # Offset needs to be specified for each map. Alignment Automation not implemented yet.
 # plot_polygons(
@@ -1037,7 +1035,7 @@ create_anim(city_name, anim_data, no_anim=True) # change to "True" if you don't 
 create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
 
 print("\n===============================================")
-print("\nSuccesfully CREATED " + f"{race_locale_name}!\n")
+print("\nSuccesfully created " + f"{race_locale_name}!\n")
 print("===============================================\n")
 
 start_game(destination_folder, play_game=False)
