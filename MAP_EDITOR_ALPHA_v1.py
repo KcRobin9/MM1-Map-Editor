@@ -53,31 +53,34 @@ circuit_race_names = ["Moronville Square", "Trailer Jumping", "Ultimate Horsepow
 checkpoint_race_names = ["Unlucky Start", "Trouble in Chinatown", "Castle Switcher"]
 
 ambient_density = 0.2
+num_opponents = 8 # generate 8 opponents for each race type, and put the created opponent file names in the respective AIMAP_P files
 opponent_car = "vppanozgt" 
 
-randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
+start_position = "0.0,0.0,0.1,5.0,15.0,0,0,"            # do not add or remove checkpoints, but feel free to change the coordinates
+waypoint_1 = "0.0,0.0,-20,5.0,15.0,0,0,"                # (x,y,z,rotation,width)
+waypoint_2 = "0.0,0.0,-40,5.0,15.0,0,0,"                # applies to the game modes Blitz, Checkpoint and Circuit
+waypoint_3 = "0.0,0.0,-60,5.0,15.0,0,0,"              
+finish_position = "0.0,0.0,-80,5.0,15.0,0,0,"   
 
-start_position = "0.0,15.0,0.1,5.0,15.0,0,0,"            # don't add more checkpoints
-checkpoint_1 = "0.0,15.0,-30,5.0,15.0,0,0,"              # (x,y,z,rotation,width)
-checkpoint_2 = "0.0,15.0,-60,5.0,15.0,0,0,"              # applies to the game modes Blitz, Checkpoint and Circuit
-finish_position = "0.0,15.0,-90,5.0,15.0,0,0,"
+randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]    
 
 # Cops and Robbers Waypoints
-cnr_waypoints = [                                     # set Cops and Robbers Waypoints manually and concisely
+cnr_waypoints = [                                        # set Cops and Robbers Waypoints manually and concisely
     ## 1st set, Name: ... ## 
-    (50.0,1.0,31.0),                                     
-    (51.0,1.0,31.0),                                  
-    (52.0,2.0,32.0),
+    (20.0,1.0,80.0),                                     # Bank or Blue Team Hideout
+    (80.0,1.0,20.0),                                     # Gold
+    (20.0,1.0,80.0),                                     # Robber or Red Team Hideout
     ## 2nd set, Name: ... ## 
-    (53.0,3.0,33.0),
-    (54.0,4.0,34.0),
-    (55.0,5.0,35.0),
+    (-90.0,1.0,-90.0),
+    (90.0,1.0,90.0),
+    (-90.0,1.0,-90.0),
     ## 3rd set, Name: ... ##
-    (56.0,6.0,36.0),
-    (57.0,7.0,37.0),
-    (58.0,8.0,38.0)
+    (50.0,1.0,-50.0),
+    (-10.0,1.0,10.0),
+    (50.0,1.0,-50.0)
     ]
 
+# ANIM
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain"
         (250, 40.0, -250),      # other objects won't work
@@ -89,15 +92,45 @@ anim_data = {
         (80, 25.0, 80), 
         (-80, 25.0, -80),
         (-80, 25.0, 80)]}
+
+# Bridges
+slim_bridge = "tpdrawbridge04"
+broad_bridge = "tpdrawbridge06"
+other_object = "" # you can pass any object here instead of a bridge, for example: vpmustang99
+
+filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99" # this is originally reserved for the yellow crossgates
+                                                                           # logic to align the crossgates to drawbridge is not         # implemented yet
+                                                                           
+# Set Bridges (offset, orientation, bridge number, object)
+# IMPORTANT I: only ONE bridge can be present in ONE cull room (otherwise the game will crash)
+# IMPORTANT II: Bridges only work in MULTIPLAYER, in SINGLEPLAYER the game will crash if you enable bridges
+# as a result, be cautious with changing 'create_bridges(bridges, create_bridges=False)' to True at the end of the script
+
+bridges = [
+    ((-50.0, 0.0, -150.0), "vertical", 3, slim_bridge)]
     
+#    example of how to add multiple bridges:
+#    ...data...),
+#    ((-200.0, 0.0, -200.0), "horizontal_east", 1, slim_bridge),
+#    ((-300.0, 0.0, -300.0), "south_west", 2, broad_bridge)]
+
+"possible orientations:"
+"vertical', 'vertical flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'"
+
+"Dimensions objects (your notes):"
+"slim_bridge"   # x: 30.0 y: 5.9 z: 32.5
+"broad_bridge"  # x: 40.0 y: 5.9 z: 32.5
+
+################################################################################################################               
+################################################################################################################     
+   
 def to_do_list(x):
             """
-            TO DO list
             TexCoods --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
             Corners --> figure out Triangles
-            Corners --> figure out Hills                         # next up
+            Corners --> figure out Hills                         
             Cells --> implement Cell type
             Remove --> remove "show_label" and thus plt.legend()" (?)
             BAI --> retrieve Center from all set Polygons
@@ -108,12 +141,14 @@ def to_do_list(x):
             IMPROVE --> split "distribute_generated_files" into smaller components
             BLENDER --> experiment
             DUCKY --> find any useful things for a 2D editor
-            SPLIT --> split "create cells" function             # next up
+            SPLIT --> split "create cells" function            
             GITHUB --> add Readme / other useful info
             SCRIPT --> put everything into a PolygonHandler class? (to retain input data in functions)
             SCRIPT --> split City Settings (coordinates) into separate file (?)
             """
-    
+            
+################################################################################################################               
+################################################################################################################        
     
 # VECTOR3 CLASS
 class Vector3:
@@ -586,7 +621,6 @@ def create_and_append_polygon(bound_number, material_index, vertex_coordinates, 
 def user_notes(x):
     """ 
     NOTES:
-    
     Please find some example Polygons and BMS below this text.
     You can already run this the script with these Polygons and BMS to see how it works.
     
@@ -615,7 +649,7 @@ def user_notes(x):
            string_names=["T_WALL"], exclude=True))
     """
            
-# Polygon 1 | BND floor
+# Polygon 1 | Start Area
 create_and_append_polygon(
     bound_number = 1,
     material_index = 0,
@@ -627,31 +661,22 @@ create_and_append_polygon(
 
 # Polygon 1 | Texture
 generate_and_save_bms_file(
-    string_names = ["T_WALL"])
+    string_names = ["T_WOOD"], TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=40, repeat_y=40))
 
+# Polygon 2 | Area 2
+create_and_append_polygon(
+    bound_number = 2,
+    material_index = 0,
+    vertex_coordinates=[
+        (-100, 0.0, -100),
+        (-100, 0.0, -200),	
+        (100, 0.0, -100),
+        (100, 0.0, -200)])
 
-#     # ========= TESTING ========= #
-#     # Polygon 2 | BND WALL1 1
-# create_and_append_polygon(
-#     bound_number = 2,
-#     material_index = 0,
-#     vertex_coordinates=[
-#         (-100, 0.0, -100),
-#         (100, 0.0, -100),
-#         (-100, 50.0, -400),	
-#         (100, 50.0, -400)], corners=[0.0, 1.0, -0.16667, 1800.0])       # y_diff = 50, z_diff = 300     is radians
+# Polygon 1 | Texture
+generate_and_save_bms_file(
+    string_names = ["T_WALL"], TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=40, repeat_y=40))
 
-#         (90, 15.0, -90),              
-#         (90, 4.0, -115),		
-#         (-90, 4.0, -115),
-#         (-90, 15.0, -90)], corners=[0.0, 1.0, -0.44, -54.6])          # example in Moronville
-
-#     # Generate BMS for Polygon 2 WALL1 1
-# generate_and_save_bms_file(
-#     string_names = ["R6"],
-#     texture_darkness=[2, 2, 2, 2], TexCoords =generate_tex_coords(mode="repeating_vertical", repeat_x=20, repeat_y=20))
- 
- 
 ################################################################################################################               
 ################################################################################################################
 
@@ -738,8 +763,9 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
                 ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[((n//10%10!=1)*(n%10<4)*n%10)::4])
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
                 f.write(start_position + "\n") 
-                f.write(checkpoint_1 + "\n")
-                f.write(checkpoint_2 + "\n")
+                f.write(waypoint_1 + "\n")
+                f.write(waypoint_2 + "\n")
+                f.write(waypoint_3 + "\n")
                 f.write(finish_position + "\n" )              
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
 
@@ -794,8 +820,6 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
 
     # Create OPPONENT files
     if all_races_files:
-        num_opponents = 8 # always generate 8 opponents for each race type and puts the opponent file names in the AIMAP_P files
-        
         for race_type, prefix, num_files in [("BLITZ", "B", num_blitz), ("CIRCUIT", "C", num_circuit), ("RACE", "R", num_checkpoint)]:
             for race_index in range(num_files):
                 for opp_index in range(1, num_opponents + 1):
@@ -933,8 +957,8 @@ def create_ar_file(city_name, destination_folder, create_plus_move_ar=False, del
     
 
 # Create JPG Picture of Shapes (correct sorting)
-def plot_polygons(
-    show_label=False, plot_picture=False, export_jpg=False, x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
+def plot_polygons(show_label=False, plot_picture=False, export_jpg=False, 
+                  x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
     
     # Setup
     output_folder_city = os.path.join("SHOP", "BMP16")
@@ -1005,7 +1029,47 @@ def create_ext_file(city_name, polygonz):
 
     with open(ext_file_path, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
-  
+       
+# Create Bridges       
+def create_bridges(all_bridges, create_bridges=False):
+    for bridge in all_bridges:
+        drawbridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
+        # Vertical
+        if bridge_orientation == "vertical":
+            drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2]]
+        elif bridge_orientation == "vertical flipped":
+            drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2]]
+        # Horizontal
+        elif bridge_orientation == "horizontal_east":
+            drawbridge_facing = [drawbridge_offset[0], drawbridge_offset[1], drawbridge_offset[2] + 10]
+        elif bridge_orientation == "horizontal_west":
+            drawbridge_facing = [drawbridge_offset[0], drawbridge_offset[1], drawbridge_offset[2] - 10]
+        # Diagonal North    
+        elif bridge_orientation == "north_east":
+            drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2] + 10]
+        elif bridge_orientation == "north_west":
+            drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2] - 10]
+        # Diagonal South   
+        elif bridge_orientation == "south_east":
+            drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2] + 10]
+        elif bridge_orientation == "south_west":
+            drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2] - 10]
+            
+        else:
+            print("Invalid Bridge Orientation. Please choose from 'vertical', 'vertical flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'.")
+            return
+
+        drawbridge_values = (bridge_object, 0) + drawbridge_offset + tuple(drawbridge_facing)
+        bridge_data = f"DrawBridge{bridge_number}\n" + '\t' + ','.join(map(str,drawbridge_values)) + '\n' + ('\t'+ filler_object_xyz + '\n') * 5 + f"DrawBridge{bridge_number}\n"
+                
+        if create_bridges:
+            bridge_file_path = os.path.join("SHOP", "CITY", f"{city_name}.GIZMO")
+            with open(bridge_file_path, "a") as f:
+                if bridge_data is not None:
+                    f.write(bridge_data)
+                else:
+                    pass
+
 # Start GAME
 def start_game(destination_folder, play_game=False):
     game_path = os.path.join(destination_folder, shortcut_or_exe_name)
@@ -1021,16 +1085,16 @@ print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 create_folder_structure(city_name)
-distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent, AIMAP_P files
+distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent and AIMAP_P files
 create_ext_file(city_name, all_polygons_picture) 
-create_anim(city_name, anim_data, no_anim=True) # change to "True" if you don't want any ANIM
+create_anim(city_name, anim_data, no_anim=True) # change to "False" if you want ANIM
+create_bridges(bridges, create_bridges=False)   # change to "True" if you want BRIDGES
 
-# Offset for Moronville (Testcity)
-plot_polygons(show_label=False, plot_picture=False, export_jpg=True, x_offset=-22.4, y_offset=-40.7, line_width=0.3, background_color='black', debug=False)
-
-# Offset needs to be specified for each map. Alignment Automation not implemented yet.
-# plot_polygons(
-#     show_label=True, plot_picture=False, export_jpg=False, x_offset=0.0, y_offset=0.0, line_width=1, background_color='black', debug=False)
+# Offset for Moronville
+# Offset needs to be specified for each map (start from 0.0,0.0). HUD alignment automation is not implemented yet
+plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
+              x_offset=-22.4, y_offset=-40.7, 
+              line_width=0.3, background_color='black', debug=False)
 
 create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
 
