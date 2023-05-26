@@ -28,7 +28,7 @@ import struct
 import shutil
 import random
 import subprocess
-from typing import Tuple, List
+from typing import List, Union, Tuple
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 
@@ -49,7 +49,7 @@ blitz_race_names = ["Just in Time", "The Great Escape"]
 circuit_race_names = ["Moronville Square"]
 checkpoint_race_names = ["Unlucky Start"]
 
-# If you set Names for your races, but don't set Waypoints for them, put the value to "0", otherwise use the len() function
+# If you set Names for your races, but don't set Waypoints for them, put the value to "0", otherwise use the len() variable
 num_blitz = len(blitz_race_names)  
 # num_circuit = len(circuit_race_names) 
 # num_checkpoint = len(checkpoint_race_names)
@@ -699,14 +699,14 @@ create_and_append_polygon(
     bound_number = 1,
     material_index = 0,
     vertex_coordinates=[
-        (-100, 0.0, -100),
-        (-100, 0.0, 100),	
-        (100, 0.0, 100),
-        (100, 0.0, -100)])
+        (-200, 0.0, -200),
+        (-200, 0.0, 200),	
+        (200, 0.0, 200),
+        (200, 0.0, -200)])
 
 # Polygon 1 | Texture
 generate_and_save_bms_file(
-    string_names = ["R2"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    string_names = ["24_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
 # Polygon 2 | Your Polygon...
 # Polygon 2 | Your Texture...
@@ -915,11 +915,8 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
             shutil.copy(os.path.join("angel", file), os.path.join("SHOP", file))
                 
 # Create ANIM
-def create_anim(city_name, anim_data, no_anim=False):
-    if no_anim:
-        return
-    
-    else:
+def create_anim(city_name, anim_data, set_anim=False):
+    if set_anim:
         output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
         main_anim_file = os.path.join(output_folder_anim, "ANIM.CSV")
 
@@ -937,24 +934,7 @@ def create_anim(city_name, anim_data, no_anim=False):
                 if coordinates:
                     for coordinate in coordinates:
                         writer.writerow(coordinate)
-    output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
-    main_anim_file = os.path.join(output_folder_anim, "ANIM.CSV")
-    
-    # Create ANIM.CSV file and write anim names
-    with open(main_anim_file, 'w', newline='') as file:
-        writer = csv.writer(file)
-        for obj in anim_data.keys():
-            writer.writerow([f"anim_{obj}"])
-
-    # Create Individual ANIM files and write Coordinates
-    for obj, coordinates in anim_data.items():
-        file_name = os.path.join(output_folder_anim, f"ANIM_{obj.upper()}.CSV")
-        with open(file_name, 'w', newline='') as file:
-            writer = csv.writer(file)    
-            if coordinates:
-                for coordinate in coordinates:
-                    writer.writerow(coordinate)
-                    
+              
 # Create AR file and delete folders
 def create_ar_file(city_name, destination_folder, create_plus_move_ar=False, delete_shop=False):
     if create_plus_move_ar:
@@ -1091,6 +1071,59 @@ def create_bridges(all_bridges, create_bridges=False):
                     f.write(bridge_data)
                 else:
                     pass
+                
+                  
+class BinaryBanger:
+    def __init__(self, start: Vector3, end: Vector3, name: str):
+        self.room = 4
+        self.flags = 0x800
+        self.start = start
+        self.end = end
+        self.name = name
+
+    def __repr__(self):
+        return 'BinaryBanger\n Room: {}\n Flags: {}\n Start: {}\n End: {}\n Name: {}\n\n'.format(
+            self.Room, self.Flags, self.Start, self.End, self.Name)
+        
+class BNGFileWriter:
+    def __init__(self, filename: str):
+        self.filename = filename
+        self.objects = []       
+        
+    def write_props(self, set_props: bool = False):
+        if set_props:
+            """Write object data to a file."""
+            with open(self.filename, mode="wb") as f:
+                f.write(struct.pack('<I', len(self.objects)))
+            
+                for obj in self.objects:
+                    f.write(struct.pack('<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z))
+
+                    for char in obj.name: 
+                        f.write(struct.pack('<s', bytes(char, encoding='utf8'))) 
+                    
+    def add_props(self, new_objects: List[Tuple[Union[int, float], ...]]):
+        """Add props to the object datalist.
+        Args:
+            new_objects: list of objects containing [start_x, start_y, start_z, end_x, end_y, end_z, name]
+        """
+        for obj in new_objects:
+            start_x, start_y, start_z, end_x, end_y, end_z, name = obj
+            start = Vector3(start_x, start_y, start_z)
+            end = Vector3(end_x, end_y, end_z)
+            self.objects.append(BinaryBanger(start, end, name + "\x00"))
+   
+bng_file_path = os.path.join("SHOP", "CITY", f"{city_name}.BNG")  
+writer = BNGFileWriter(bng_file_path)
+
+# SET PROPS
+writer.add_props([
+    [60, 0.1, 60, 500, 0.1, 500, "TPDRAWBRIDGE04"],
+    [-60, 0.1, -60, 500, 0.1, 500, "TPDRAWBRIDGE04"]])
+
+# OK
+for i in range(9):
+    writer.add_props([[50-i*3, 1+i*3, 50-i*3, 0, 0, 0, "TP_BARRICADE"]])
 
 # Start GAME
 def start_game(destination_folder, play_game=False):
@@ -1109,8 +1142,9 @@ print("===============================================\n")
 create_folder_structure(city_name)
 distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent and AIMAP_P files
 create_ext_file(city_name, all_polygons_picture) 
-create_anim(city_name, anim_data, no_anim=True)     # change to "False" if you want ANIM
-create_bridges(bridges, create_bridges=False)       # change to "True" if you want BRIDGES
+create_anim(city_name, anim_data, set_anim=False)   # change to "Tue" if you want ANIM
+create_bridges(bridges, create_bridges=False)       # change to "True" if you want BRIDGES (be cautious)
+writer.write_props(set_props=False)                 # change to "True" if you want PROPS
 
 # Offset for Moronville
 # Offset needs to be specified for each map (start from 0.0,0.0). HUD alignment automation is not implemented yet
