@@ -44,32 +44,55 @@ destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc"
 shortcut_or_exe_name = "Open1560.lnk"
 
 # SETUP II (optional)
-num_blitz = 3      # max 15
-num_circuit = 3    # max 15
-num_checkpoint = 3 # max 12
+# Max is 15 for Blitz & Circuit, and 12 for Checkpoint
+blitz_race_names = ["Just in Time", "The Great Escape"]
+circuit_race_names = ["Moronville Square"]
+checkpoint_race_names = ["Unlucky Start"]
 
-blitz_race_names = ["Just in Time", "Middle Town Race", "Grand Finale"]
-circuit_race_names = ["Moronville Square", "Trailer Jumping", "Ultimate Horsepower"]
-checkpoint_race_names = ["Unlucky Start", "Trouble in Chinatown", "Castle Switcher"]
+# If you set Names for your races, but don't set Waypoints for them, put the value to "0", otherwise use the len() function
+num_blitz = len(blitz_race_names)  
+# num_circuit = len(circuit_race_names) 
+# num_checkpoint = len(checkpoint_race_names)
+
+# num_blitz  = 0 
+num_circuit = 0   
+num_checkpoint = 0
+
 
 ambient_density = 0.2
 num_opponents = 8 # generate 8 opponents for each race type, and put the created opponent file names in the respective AIMAP_P files
 opponent_car = "vppanozgt" 
 
-start_position = "0.0,0.0,0.1,5.0,15.0,0,0,"            # do not add or remove checkpoints, but feel free to change the coordinates
-waypoint_1 = "0.0,0.0,-20,5.0,15.0,0,0,"                # (x,y,z,rotation,width)
-waypoint_2 = "0.0,0.0,-40,5.0,15.0,0,0,"                # applies to the game modes Blitz, Checkpoint and Circuit
-waypoint_3 = "0.0,0.0,-60,5.0,15.0,0,0,"              
-finish_position = "0.0,0.0,-80,5.0,15.0,0,0,"   
+# WAYPOINTS          Tabbing / spacing out the Coordinates is optional, but recommended for readability and editing
+# Blitz 0 WP         x:      y:      z:     rot:    width:  ,0,0, 
+blz_0_WP_start =    "0.0,   0.0,    0.1,    5.0,    15.0    ,0,0,"
+blz_0_WP_ch1 =      "0.0,   0.0,    -20,    5.0,    15.0    ,0,0,"
+blz_0_WP_ch2 =      "0.0,   0.0,    -40,    5.0,    15.0    ,0,0,"
+blz_0_WP_ch3 =      "0.0,   0.0,    -60,    5.0,    15.0    ,0,0,"
+blz_0_WP_ch4 =      "0.0,   0.0,    -80,    5.0,    15.0    ,0,0,"
+blz_0_WP_finish =   "0.0,   0.0,    -99,    5.0,    15.0    ,0,0,"
+blz_0_ALL = [blz_0_WP_start, blz_0_WP_ch1, blz_0_WP_ch2, blz_0_WP_ch3, blz_0_WP_ch4, blz_0_WP_finish]
 
-randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]    
+# Blitz 1 WP        x:       y:      z:      rot:     width:  ,0,0, 
+blz_1_WP_start =    "0.1,    0.0,    0.1,    90.0,    10.0    ,0,0,"
+blz_1_WP_ch1 =      "20.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
+blz_1_WP_ch2 =      "40.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
+blz_1_WP_ch3 =      "60.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
+blz_1_WP_ch4 =      "80.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
+blz_1_WP_finish =   "99.0,  0.0,    0.1,    90.0,    10.0    ,0,0,"
+blz_1_ALL = [blz_1_WP_start, blz_1_WP_ch1, blz_1_WP_ch2, blz_1_WP_ch3, blz_1_WP_ch4, blz_1_WP_finish]
 
-# Cops and Robbers Waypoints
-cnr_waypoints = [                                        # set Cops and Robbers Waypoints manually and concisely
+# Combine Waypoints files for Blitz, Circuit and Checkpoint
+blitz_waypoints = [blz_0_ALL, blz_1_ALL]
+circuit_waypoints = []
+checkpoint_waypoints= []
+
+# COPS AND ROBBERS
+cnr_waypoints = [                          # set Cops and Robbers Waypoints manually and concisely
     ## 1st set, Name: ... ## 
-    (20.0,1.0,80.0),                                     # Bank or Blue Team Hideout
-    (80.0,1.0,20.0),                                     # Gold
-    (20.0,1.0,80.0),                                     # Robber or Red Team Hideout
+    (20.0,1.0,80.0),                       # Bank or Blue Team Hideout
+    (80.0,1.0,20.0),                       # Gold
+    (20.0,1.0,80.0),                       # Robber or Red Team Hideout
     ## 2nd set, Name: ... ## 
     (-90.0,1.0,-90.0),
     (90.0,1.0,90.0),
@@ -77,15 +100,14 @@ cnr_waypoints = [                                        # set Cops and Robbers 
     ## 3rd set, Name: ... ##
     (50.0,1.0,-50.0),
     (-10.0,1.0,10.0),
-    (50.0,1.0,-50.0)
-    ]
+    (50.0,1.0,-50.0)]
 
 # ANIM
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain"
         (250, 40.0, -250),      # other objects won't work
         (250, 40.0, 250),       # you can not add multiple planes or trains
-        (-250, 40.0, -250),
+        (-250, 40.0, -250),     # you can set any number of vertices for your path
         (-250, 40.0, 250)], 
     'eltrain': [
         (80, 25.0, -80),
@@ -93,58 +115,75 @@ anim_data = {
         (-80, 25.0, -80),
         (-80, 25.0, 80)]}
 
-# Bridges
+# BRIDGES
 slim_bridge = "tpdrawbridge04"
 broad_bridge = "tpdrawbridge06"
 other_object = "" # you can pass any object here instead of a bridge, for example: vpmustang99
 
-filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99" # this is originally reserved for the yellow crossgates
-                                                                           # logic to align the crossgates to drawbridge is not         # implemented yet
+# this is originally reserved for the yellow crossgates, logic to align the crossgates to drawbridge is not implemented yet
+filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99" 
                                                                            
-# Set Bridges (offset, orientation, bridge number, object)
+# Set Bridges
 # IMPORTANT I: only ONE bridge can be present in ONE cull room (otherwise the game will crash)
 # IMPORTANT II: Bridges only work in MULTIPLAYER, in SINGLEPLAYER the game will crash if you enable bridges
-# as a result, be cautious with changing 'create_bridges(bridges, create_bridges=False)' to True at the end of the script
+# as a result, be cautious with changing with setting "create_bridges()" to True at the end of the script
 
+# (x,y,z, orientation, bridge number, object)
 bridges = [
-    ((-50.0, 0.0, -150.0), "vertical", 3, slim_bridge)]
+    ((-50.0, 0.0, -150.0), "vertical", 3, slim_bridge)] 
     
 #    example of how to add multiple bridges:
 #    ...data...),
 #    ((-200.0, 0.0, -200.0), "horizontal_east", 1, slim_bridge),
 #    ((-300.0, 0.0, -300.0), "south_west", 2, broad_bridge)]
 
-"possible orientations:"
-"vertical', 'vertical flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'"
+"Possible orientations:"
+"'vertical', 'vertical_flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'"
 
 "Dimensions objects (your notes):"
 "slim_bridge"   # x: 30.0 y: 5.9 z: 32.5
 "broad_bridge"  # x: 40.0 y: 5.9 z: 32.5
+
+# OTHER
+randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"] 
+common_textures_1 = []
+common_textures_2 = []
+common_textures_3 = []
 
 ################################################################################################################               
 ################################################################################################################     
    
 def to_do_list(x):
             """
-            TexCoods --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
+            TexCoords --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
             Corners --> figure out Triangles
             Corners --> figure out Hills                         
             Cells --> implement Cell type
-            Remove --> remove "show_label" and thus plt.legend()" (?)
             BAI --> retrieve Center from all set Polygons
             BAI --> set / incorporate Street file template
             HUDMAP --> fix automate (correct) alignment
             HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
-            ANIM --> maybe remove "sorting coordinates" if users want a specific path (i.e. not following the 4 lines of a rectangle)
             IMPROVE --> split "distribute_generated_files" into smaller components
-            BLENDER --> experiment
-            DUCKY --> find any useful things for a 2D editor
-            SPLIT --> split "create cells" function            
+            DUCKY --> find any useful things for a 2D editor     
             GITHUB --> add Readme / other useful info
             SCRIPT --> put everything into a PolygonHandler class? (to retain input data in functions)
-            SCRIPT --> split City Settings (coordinates) into separate file (?)
+            SCRIPT --> split City Settings (coordinates) into separate file
+            BRIDGE --> cont.
+            PHYSICS --> investigate physics.db more, "velocity"(?), duplicate snow-like bounds
+            PTL --> reinvestigate (at some point)
+            BMS --> export "cache_size" variable correctly
+            BMS --> add shifting texture (like the airport lights)
+            BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this)
+            FCD --> cont.
+            BNG --> add prop functionality
+            RACES --> why max 15?
+            CELLS --> # Max 256 characters per row --> add Error Handling
+            USER --> "gather" a folder with good to use textures from TEX16O / TEX16A
+            USER --> note/fix that for BMS setting the vertice should differ 0.01 if there's a wall (see Dading script)
+            BLENDER --> simplified interopt script (copy / paste and parse)
+            RENAME --> "repeating_horizontal_flipped" shorten (?)
             """
             
 ################################################################################################################               
@@ -172,7 +211,7 @@ class Vector3:
         else:
             return '{{{:f},{:f},{:f}}}'.format(self.x, self.y, self.z)
        
-        
+       
 # Calculate BND: center, radius, min and max      
 def calculate_max(vertices: List[Vector3]):
     max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
@@ -386,6 +425,8 @@ class BMS:
 ################################################################################################################       
    
 # Do Not Change
+bnd_hit_id = f"{city_name}_HITID.BND"
+bnd_hit_id_text = f"{city_name}_HITID.txt"
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], [0.0, 0.0, 0.0, 0.0])
 vertices = []
 polys = [poly_filler]
@@ -411,22 +452,23 @@ def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
 
-    # Continue checking / polishing
+    # Continue checking / polishin
+    # Horizontal
     if mode == "horizontal":
         return [0, 0, 0, 1, 1, 1, 1, 0]
     elif mode == "horizontal_flipped":
         return [0, 1, 0, 0, 1, 0, 1, 1]
-    
+   # Vertical 
     elif mode == "vertical":
         return [0, 0, 1, 0, 1, 1, 0, 1]    
     elif mode == "vertical_flipped":
         return [1, 0, 0, 0, 0, 1, 1, 1]
-    
+    # Horizontal Repeated
     elif mode == "repeating_horizontal":
         return [0, 0, 0, repeat_y, repeat_x, repeat_y, repeat_x, 0]
     elif mode == "repeating_horizontal_flipped":
         return [0, repeat_y, 0, 0, repeat_x, 0, repeat_x, repeat_y]
-
+    # Vertical Repeated
     elif mode == "repeating_vertical":
         return [0, 0, repeat_y, 0, repeat_y, repeat_x, 0, repeat_x]
     elif mode == "repeating_vertical_flipped":
@@ -494,7 +536,7 @@ def generate_bms(vertices, polys, texture_indices, string_names: List[str], text
     if TexCoords is None:
         TexCoords = [0.0 for _ in range(adjunct_count * 2)]
 
-    # CREATE LIST OF INDICES_SIDES, ONE FOR EACH SHAPE
+    # Create list of indices_sides, one for each shape
     indices_sides = []
     index_start = 0
     for shape in shapes:
@@ -510,7 +552,8 @@ def generate_bms(vertices, polys, texture_indices, string_names: List[str], text
 # Initialize BND   
 def initialize_bnd(vertices, polys):
     magic, width, row_count, height = b'2DNB\0', 0, 0, 0
-    num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, edge_count = 0, 0, 0, 0.0, 0.0, 0, 0.0, 0, 0
+    num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist = 0, 0, 0, 0.0, 0.0
+    num_indexs, height_scale, unk12, edge_count = 0, 0.0, 0, 0
     offset = Vector3(0.0, 0.0, 0.0)
     center = calculate_center(vertices)
     min_ = calculate_min(vertices)
@@ -545,7 +588,9 @@ def create_polygon(bound_number, material_index, flags, vert_indices, some_vecs,
     return Polygon(bound_number, material_index, flags, vert_indices, some_vecs, corners)
      
 # Create and Append Polygon
-def create_and_append_polygon(bound_number, material_index, vertex_coordinates, corners=None, base_vertex_index=None, flags=None, vertices=vertices, polys=polys, wall_side="outside"):
+def create_and_append_polygon(
+    bound_number, material_index, vertex_coordinates, corners=None, base_vertex_index=None, flags=None, 
+    vertices=vertices, polys=polys, wall_side="outside"):
         
     if base_vertex_index is None:
         base_vertex_index = len(vertices)
@@ -610,7 +655,7 @@ def create_and_append_polygon(bound_number, material_index, vertex_coordinates, 
     poly = create_polygon(bound_number, material_index, flags, vert_indices, some_vecs, corners)
     polys.append(poly)
     
-    # Create Picture of all Shapes
+    # Create picture of all shapes
     all_polygons_picture.append(vertex_coordinates)
         
 ################################################################################################################               
@@ -649,50 +694,33 @@ def user_notes(x):
            string_names=["T_WALL"], exclude=True))
     """
            
-# Polygon 1 | Start Area
+# Polygon 1 | Grass Start
 create_and_append_polygon(
     bound_number = 1,
     material_index = 0,
     vertex_coordinates=[
         (-100, 0.0, -100),
         (-100, 0.0, 100),	
-        (100, 0.0, -100),
-        (100, 0.0, 100)])
+        (100, 0.0, 100),
+        (100, 0.0, -100)])
 
 # Polygon 1 | Texture
 generate_and_save_bms_file(
-    string_names = ["T_WOOD"], TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=40, repeat_y=40))
+    string_names = ["R2"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
-# Polygon 2 | Area 2
-create_and_append_polygon(
-    bound_number = 2,
-    material_index = 0,
-    vertex_coordinates=[
-        (-100, 0.0, -100),
-        (-100, 0.0, -200),	
-        (100, 0.0, -100),
-        (100, 0.0, -200)])
-
-# Polygon 1 | Texture
-generate_and_save_bms_file(
-    string_names = ["T_WALL"], TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=40, repeat_y=40))
+# Polygon 2 | Your Polygon...
+# Polygon 2 | Your Texture...
 
 ################################################################################################################               
 ################################################################################################################
 
-# Preparing to write BND file
-bnd_hit_id = f"{city_name}_HITID.BND"
-bnd_hit_id_text = f"{city_name}_HITID.txt"
+# Initialize and write BND file
 bnd = initialize_bnd(vertices, polys)
 
-# Write new BND file
 with open(bnd_hit_id, "wb") as f:
     bnd.to_file(f)
     # print(bnd)
-    # print("Successfully created BND file!")
-    
     # bnd.write_to_file(bnd_hit_id_text)
-    # print("Successfully created BND TEXT file!\n")
 
 # Create SHOP and FOLDER structure   
 def create_folder_structure(city_name):
@@ -754,21 +782,19 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     if num_checkpoint > len(race_prefixes):
         raise ValueError("Number of Checkpoint races cannot be more than 12")
     
-    for race_type, race_description, prefix, num_files in [("BLITZ", "Blitz", "ABL", num_blitz), 
-                                                           ("CIRCUIT", "Circuit", "CIR", num_circuit), 
-                                                           ("RACE", "Checkpoint", "RACE", num_checkpoint)]:
+    for race_type, race_description, prefix, num_files, race_waypoints in [("BLITZ", "Blitz", "ABL", num_blitz, blitz_waypoints), 
+                                                                           ("CIRCUIT", "Circuit", "CIR", num_circuit, circuit_waypoints), 
+                                                                           ("RACE", "Checkpoint", "RACE", num_checkpoint, checkpoint_waypoints)]:
+        
         for i in range(num_files):
             file_name = f"{race_type}{i}WAYPOINTS.CSV"
             with open(file_name, "w") as f:
                 ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[((n//10%10!=1)*(n%10<4)*n%10)::4])
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
-                f.write(start_position + "\n") 
-                f.write(waypoint_1 + "\n")
-                f.write(waypoint_2 + "\n")
-                f.write(waypoint_3 + "\n")
-                f.write(finish_position + "\n" )              
+                for waypoint in race_waypoints[i]:
+                    f.write(waypoint + "\n")
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
-
+            
         # Set MMDATA.CSV values           
         car_type, difficulty = 0, 1
         timeofday, weather = 1, 1
@@ -777,7 +803,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
         cops_x, cops_m, cops_l = 0.0, 0.5, 1.0
         ambient_x, ambient_m, ambient_l = 0.0, 0.5, 1.0
         peds_x, peds_m, peds_l = 0.0, 0.5, 1.0
-        num_laps_a, num_laps_p, num_laps_blitz, num_laps_race, num_laps_blitz_test = 2, 3, 4, 0, 2 
+        num_laps_a, num_laps_p, num_laps_blitz, num_laps_race, num_laps_blitz_test = 2, 3, 5, 0, 2 
         # Game will crash if num(waypoints) < num_laps_blitz
         timelimit = 99
         
@@ -789,7 +815,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
             
             for i in range(num_files):
                 if race_type == "BLITZ":
-                    race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz_test, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz_test, timelimit, difficulty
+                    race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty
 
                 elif race_type == "CIRCUIT":
                     race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_p, timelimit, difficulty
@@ -809,14 +835,15 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
         shutil.move(mm_file_name, destination_path)
         
     # Create COPSWAYPOINTS.CSV file
-    with open("COPSWAYPOINTS.CSV", "w") as f:
+    cnr_csv_file = "COPSWAYPOINTS.CSV"
+    with open(cnr_csv_file, "w") as f:
         f.write("This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n")
         for i in range(0, len(cnr_waypoints), 3):
             f.write(", ".join(map(str, cnr_waypoints[i])) + ",0,0,0,0,0,\n") 
             f.write(", ".join(map(str, cnr_waypoints[i+1])) + ",0,0,0,0,0,\n")
             f.write(", ".join(map(str, cnr_waypoints[i+2])) + ",0,0,0,0,0,\n")
         
-    shutil.move("COPSWAYPOINTS.CSV", os.path.join("SHOP", "RACE", f"{city_name}", "COPSWAYPOINTS.CSV"))
+    shutil.move(cnr_csv_file, os.path.join("SHOP", "RACE", f"{city_name}", cnr_csv_file))
 
     # Create OPPONENT files
     if all_races_files:
@@ -848,15 +875,17 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
     # Create CELLS file
     cells_file_path = os.path.join("SHOP", "CITY", f"{city_name}.CELLS")
     with open(cells_file_path, "w") as cells_file:
+        set_max_cell = 1000
         bms_count = len(bms_files)
         cells_file.write(f"{bms_count}\n")
-        cells_file.write("1000\n")
+        cells_file.write(str(set_max_cell) + "\n")
 
         sorted_bms_files = sorted(bms_files)
         for bound_number in sorted_bms_files:
             remaining_bound_numbers = [num for num in sorted_bms_files if num != bound_number]
             count_past_4th = len(remaining_bound_numbers)
             
+            # Implement Cell type here
             if bound_number in bms_a2_files:
                 row = f"{bound_number},32,4,{count_past_4th}"
             else:
@@ -889,6 +918,7 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
 def create_anim(city_name, anim_data, no_anim=False):
     if no_anim:
         return
+    
     else:
         output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
         main_anim_file = os.path.join(output_folder_anim, "ANIM.CSV")
@@ -920,15 +950,8 @@ def create_anim(city_name, anim_data, no_anim=False):
     for obj, coordinates in anim_data.items():
         file_name = os.path.join(output_folder_anim, f"ANIM_{obj.upper()}.CSV")
         with open(file_name, 'w', newline='') as file:
-            writer = csv.writer(file)
-            
-            # Keep this part for later!
-            # if coordinates:
-            #     for coordinate in coordinates:
-            #         writer.writerow(coordinate)
-                    
+            writer = csv.writer(file)    
             if coordinates:
-                coordinates = sort_coordinates(coordinates)
                 for coordinate in coordinates:
                     writer.writerow(coordinate)
                     
@@ -955,7 +978,7 @@ def create_ar_file(city_name, destination_folder, create_plus_move_ar=False, del
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
     
-
+    
 # Create JPG Picture of Shapes (correct sorting)
 def plot_polygons(show_label=False, plot_picture=False, export_jpg=False, 
                   x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
@@ -987,6 +1010,7 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
         # Sort the vertex_coordinates in all_polygons_picture
         all_polygons_picture = [sort_coordinates(polygon) for polygon in all_polygons_picture]
 
+        # Enumeration should be based on the bound_number
         for i, polygon in enumerate(all_polygons_picture):
             draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=False) # note: do not remove "C" from "C{i}"
 
@@ -1004,8 +1028,7 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
             plt.savefig(os.path.join(output_folder_city, hudmap_picture320), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
 
             if debug:
-                # Draw polygons with labels for the debug image
-                ax.cla()  # Clear the plot
+                ax.cla()
                 ax.set_facecolor(background_color)
                 for i, polygon in enumerate(all_polygons_picture):
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
@@ -1037,7 +1060,7 @@ def create_bridges(all_bridges, create_bridges=False):
         # Vertical
         if bridge_orientation == "vertical":
             drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2]]
-        elif bridge_orientation == "vertical flipped":
+        elif bridge_orientation == "vertical_flipped":
             drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2]]
         # Horizontal
         elif bridge_orientation == "horizontal_east":
@@ -1054,7 +1077,6 @@ def create_bridges(all_bridges, create_bridges=False):
             drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2] + 10]
         elif bridge_orientation == "south_west":
             drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2] - 10]
-            
         else:
             print("Invalid Bridge Orientation. Please choose from 'vertical', 'vertical flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'.")
             return
@@ -1087,14 +1109,19 @@ print("===============================================\n")
 create_folder_structure(city_name)
 distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent and AIMAP_P files
 create_ext_file(city_name, all_polygons_picture) 
-create_anim(city_name, anim_data, no_anim=True) # change to "False" if you want ANIM
-create_bridges(bridges, create_bridges=False)   # change to "True" if you want BRIDGES
+create_anim(city_name, anim_data, no_anim=True)     # change to "False" if you want ANIM
+create_bridges(bridges, create_bridges=False)       # change to "True" if you want BRIDGES
 
 # Offset for Moronville
 # Offset needs to be specified for each map (start from 0.0,0.0). HUD alignment automation is not implemented yet
+# plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
+#               x_offset=-22.4, y_offset=-40.7, 
+#               line_width=0.3, background_color='black', debug=False)
+
 plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
-              x_offset=-22.4, y_offset=-40.7, 
+              x_offset=-0.0, y_offset=-0.0, 
               line_width=0.3, background_color='black', debug=False)
+
 
 create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
 
