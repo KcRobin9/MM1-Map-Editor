@@ -44,24 +44,22 @@ destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc"
 shortcut_or_exe_name = "Open1560.lnk"
 
 # SETUP II (optional)
+# The three variables below apply to all races
+ambient_density = 0.2
+num_opponents = 8 # gen. 8 opponents all race types, and put the created opponent file names in the correct AIMAP_P files
+opponent_car = "vppanozgt" 
+
+# Do not change the four variables below
+morning, noon, evening, night = 0, 1, 2, 3
+clear, cloudy, rain, snow = 0, 1, 2, 3
+filler_WP = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"
+filler_ALL = [filler_WP, filler_WP]
+
+# =============== RACE EDITOR =============== #
 # Max is 15 for Blitz & Circuit, and 12 for Checkpoint
 blitz_race_names = ["Just in Time", "The Great Escape"]
-circuit_race_names = ["Moronville Square"]
-checkpoint_race_names = ["Unlucky Start"]
-
-# If you set Names for your races, but don't set Waypoints for them, put the value to "0", otherwise use the len() variable
-num_blitz = len(blitz_race_names)  
-# num_circuit = len(circuit_race_names) 
-# num_checkpoint = len(checkpoint_race_names)
-
-# num_blitz  = 0 
-num_circuit = 0   
-num_checkpoint = 0
-
-
-ambient_density = 0.2
-num_opponents = 8 # generate 8 opponents for each race type, and put the created opponent file names in the respective AIMAP_P files
-opponent_car = "vppanozgt" 
+circuit_race_names = ["Dading's Race"]
+checkpoint_race_names = ["filler_race"]
 
 # WAYPOINTS          Tabbing / spacing out the Coordinates is optional, but recommended for readability and editing
 # Blitz 0 WP         x:      y:      z:     rot:    width:  ,0,0, 
@@ -82,10 +80,27 @@ blz_1_WP_ch4 =      "80.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
 blz_1_WP_finish =   "99.0,  0.0,    0.1,    90.0,    10.0    ,0,0,"
 blz_1_ALL = [blz_1_WP_start, blz_1_WP_ch1, blz_1_WP_ch2, blz_1_WP_ch3, blz_1_WP_ch4, blz_1_WP_finish]
 
-# Combine Waypoints files for Blitz, Circuit and Checkpoint
-blitz_waypoints = [blz_0_ALL, blz_1_ALL]
-circuit_waypoints = []
-checkpoint_waypoints= []
+# Circuit 0 WP      x:           y:       z:          rot:       width:  ,0,0,
+cir_1_start =       "-101.5,    0.1,    0.01,         -180.0,     8.0     ,0,0,"
+cir_1_ch1 =         "0.01,      0.1,    101.5,        90,         8.0     ,0,0,"
+cir_1_ch2 =         "101.5,     0.1,    0.01,         0.01,       8.0     ,0,0,"
+cir_1_finish =      "0.01,      0.1,    -101.5,       -90,        8.0     ,0,0,"
+cir_1_ALL = [cir_1_start, cir_1_ch1, cir_1_ch2, cir_1_finish]
+
+# Blitz WP file, Time of Day, Weather, Time Limit, Number of Laps (5 arguments)
+blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1), 
+                   (blz_1_ALL, evening, rain, 40, len(blz_1_ALL)-1)]
+
+# Circuit WP file, Time of Day, Weather, Laps Amateur, Laps Pro (5 arguments)
+circuit_waypoints = [(cir_1_ALL, night, snow, 2, 3)]
+
+# Checkpoint WP file, Time of Day, Weather (3 arguments)
+checkpoint_waypoints = [(filler_ALL, noon, cloudy)] # feel free to change
+
+# Do not change
+num_blitz = len(blitz_waypoints)
+num_circuit = len(circuit_waypoints)
+num_checkpoint = len(checkpoint_waypoints)
 
 # COPS AND ROBBERS
 cnr_waypoints = [                          # set Cops and Robbers Waypoints manually and concisely
@@ -159,31 +174,32 @@ def to_do_list(x):
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
             Corners --> figure out Triangles
-            Corners --> figure out Hills                         
-            Cells --> implement Cell type
-            BAI --> retrieve Center from all set Polygons
-            BAI --> set / incorporate Street file template
+            Corners --> figure out Hills    
+            WALLS --> make sure you can do (80) and (80), then for the texture apply +0.01 or -0.01, such that the texture spanws  
+            BRIDGE --> cont.                   
             HUDMAP --> fix automate (correct) alignment
             HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
-            IMPROVE --> split "distribute_generated_files" into smaller components
-            DUCKY --> find any useful things for a 2D editor     
-            GITHUB --> add Readme / other useful info
+            SCRIPT --> split "distribute_generated_files" into smaller components    
             SCRIPT --> put everything into a PolygonHandler class? (to retain input data in functions)
             SCRIPT --> split City Settings (coordinates) into separate file
-            BRIDGE --> cont.
-            PHYSICS --> investigate physics.db more, "velocity"(?), duplicate snow-like bounds
-            PTL --> reinvestigate (at some point)
+            SCRIPT --> "repeating_horizontal_flipped" shorten (?)
+            BAI --> retrieve Center from all set Polygons
+            BAI --> set / incorporate Street file template
+            PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
-            BMS --> add shifting texture (like the airport lights)
+            BMS --> add shifting texture (like the airport lights, string_compare = "fxltglow")
             BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this)
-            FCD --> cont.
-            BNG --> add prop functionality
-            RACES --> why max 15?
-            CELLS --> # Max 256 characters per row --> add Error Handling
+            FCD --> cont. (?)
+            BNG --> improve prop functionality (facing)
+            BNG --> add prop list (+ description), where is my folder with all Prop Pictures??
+            CELLS --> implement Cell type
+            CELLS --> # Max 256 characters per row --> add Error Handling/warning
+            PHYSICS --> add "physics" editor
+            RACES --> investigate why max 15?
+            BLENDER --> [...]
             USER --> "gather" a folder with good to use textures from TEX16O / TEX16A
-            USER --> note/fix that for BMS setting the vertice should differ 0.01 if there's a wall (see Dading script)
-            BLENDER --> simplified interopt script (copy / paste and parse)
-            RENAME --> "repeating_horizontal_flipped" shorten (?)
+            GITHUB --> add Readme / other useful info
+            GITHUB --> add modified exe (blitz limit, cell limit)
             """
             
 ################################################################################################################               
@@ -424,7 +440,7 @@ class BMS:
 ################################################################################################################               
 ################################################################################################################       
    
-# Do Not Change
+# Do not change
 bnd_hit_id = f"{city_name}_HITID.BND"
 bnd_hit_id_text = f"{city_name}_HITID.txt"
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], [0.0, 0.0, 0.0, 0.0])
@@ -725,11 +741,7 @@ with open(bnd_hit_id, "wb") as f:
 # Create SHOP and FOLDER structure   
 def create_folder_structure(city_name):
     os.makedirs("build", exist_ok=True)
-    os.makedirs("SHOP", exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMP16"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BMS"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BND"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "CITY"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "TUNE"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}CITY"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}LM"), exist_ok=True)
@@ -758,7 +770,8 @@ def create_folder_structure(city_name):
         f.write(f"CircuitNames={circuit_race_names_str}\n")
         f.write(f"CheckpointNames={checkpoint_race_names_str}\n")
         
-def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
+def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True):
+
     bms_files = []
     bms_a2_files = set()
     for file in os.listdir():
@@ -788,25 +801,21 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
         
         for i in range(num_files):
             file_name = f"{race_type}{i}WAYPOINTS.CSV"
+            
             with open(file_name, "w") as f:
                 ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[((n//10%10!=1)*(n%10<4)*n%10)::4])
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
-                for waypoint in race_waypoints[i]:
+                
+                for waypoint in race_waypoints[i][0]:
                     f.write(waypoint + "\n")
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
             
         # Set MMDATA.CSV values           
-        car_type, difficulty = 0, 1
-        timeofday, weather = 1, 1
-        opponent = 8
-        timelimit = 99
+        car_type, difficulty, opponent, num_laps_race = 0, 1, 8, 99
         cops_x, cops_m, cops_l = 0.0, 0.5, 1.0
         ambient_x, ambient_m, ambient_l = 0.0, 0.5, 1.0
         peds_x, peds_m, peds_l = 0.0, 0.5, 1.0
-        num_laps_a, num_laps_p, num_laps_blitz, num_laps_race, num_laps_blitz_test = 2, 3, 5, 0, 2 
-        # Game will crash if num(waypoints) < num_laps_blitz
-        timelimit = 99
-        
+                
         # Create MMDATA.CSV files
         mm_file_name = f"MM{race_type}DATA.CSV"
         with open(mm_file_name, "w") as f:
@@ -815,12 +824,21 @@ def distribute_generated_files(city_name, bnd_hit_id, all_races_files=False):
             
             for i in range(num_files):
                 if race_type == "BLITZ":
+                    
+                    blitz_waypoints, timeofday, weather, timelimit, num_laps_blitz = race_waypoints[i]  
+                    
                     race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty
 
                 elif race_type == "CIRCUIT":
+                    
+                    circuit_waypoints, timeofday, weather, num_laps_a, num_laps_p = race_waypoints[i]  
+                    
                     race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_p, timelimit, difficulty
                     
                 elif race_type == "RACE":
+                    
+                    checkpoint_waypoints, timeofday, weather = race_waypoints[i] 
+                    
                     race_data = car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty
                     
                 # Race prefixes    
@@ -1121,7 +1139,7 @@ writer.add_props([
     [60, 0.1, 60, 500, 0.1, 500, "TPDRAWBRIDGE04"],
     [-60, 0.1, -60, 500, 0.1, 500, "TPDRAWBRIDGE04"]])
 
-# OK
+# Set multiple props at once with a separator
 for i in range(9):
     writer.add_props([[50-i*3, 1+i*3, 50-i*3, 0, 0, 0, "TP_BARRICADE"]])
 
@@ -1140,9 +1158,10 @@ print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 create_folder_structure(city_name)
-distribute_generated_files(city_name, bnd_hit_id, all_races_files=True) # change to "True" to create ALL Opponent and AIMAP_P files
+distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
+
 create_ext_file(city_name, all_polygons_picture) 
-create_anim(city_name, anim_data, set_anim=False)   # change to "Tue" if you want ANIM
+create_anim(city_name, anim_data, set_anim=False)   # change to "True" if you want ANIM
 create_bridges(bridges, create_bridges=False)       # change to "True" if you want BRIDGES (be cautious)
 writer.write_props(set_props=False)                 # change to "True" if you want PROPS
 
@@ -1154,7 +1173,7 @@ writer.write_props(set_props=False)                 # change to "True" if you wa
 
 plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
               x_offset=-0.0, y_offset=-0.0, 
-              line_width=0.3, background_color='black', debug=False)
+              line_width=0.5, background_color='black', debug=False)
 
 
 create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
