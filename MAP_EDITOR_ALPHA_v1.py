@@ -829,9 +829,9 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             
         # Set MMDATA.CSV values           
         car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 8, 99
-        cops_x = 0.0 # will be customizable later
-        ambient_x = 0.0 # will be customizable later
-        peds_x = 0.0 # will be customizable later
+        cops_x = 0.0        # will be customizable later
+        ambient_x = 0.0     # will be customizable later
+        peds_x = 0.0        # will be customizable later
                 
         # Create MMDATA.CSV files
         mm_file_name = f"MM{race_type}DATA.CSV"
@@ -841,19 +841,16 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             
             for i in range(num_files):
                 if race_type == "BLITZ":
-                    
                     blitz_waypoints, timeofday, weather, timelimit, num_laps_blitz = race_waypoints[i]  
                     
                     race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_blitz, timelimit, difficulty
 
                 elif race_type == "CIRCUIT":
-                    
                     circuit_waypoints, timeofday, weather, num_laps_a, num_laps_p = race_waypoints[i]  
                     
                     race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_p, timelimit, difficulty
                     
                 elif race_type == "RACE":
-                    
                     checkpoint_waypoints, timeofday, weather = race_waypoints[i] 
                     
                     race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_checkpoint, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_checkpoint, timelimit, difficulty
@@ -1160,7 +1157,6 @@ os.makedirs(physics_folder, exist_ok=True)
 input_physics_file = "input_PHYSICS.DB" # cwd
 output_physics_file = "physics.db"
 
-
 class MaterialEditor:
     def __init__(self, name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color):
         self.name = name
@@ -1260,13 +1256,22 @@ class MaterialEditor:
                 f"  velocity    = {self.velocity},\n"
                 f"  ptx_color   = {self.ptx_color}\n\n")
 
+
+# Write COMMANDLINE
+def write_commandline(create_file: bool, city_name: str, destination_folder: str):
+    if create_file:
+        city_name = city_name.lower()
+        cmd_file = "commandline.txt"
+        with open(cmd_file, "w") as file:
+            file.write(f"-allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}")
+            
+        shutil.move(cmd_file, os.path.join(destination_folder, cmd_file))
      
 # Start GAME
 def start_game(destination_folder, play_game=False):
     game_path = os.path.join(destination_folder, shortcut_or_exe_name)
     if play_game:
         subprocess.run(game_path, cwd=destination_folder, shell=True)
-
 
 ################################################################################################################               
 ################################################################################################################
@@ -1310,11 +1315,11 @@ MaterialEditor.change_physics_db(input_physics_file, output_physics_file, proper
 new_physics_path = os.path.join(physics_folder, output_physics_file)
 shutil.move(output_physics_file, new_physics_path)
 
-# The rest
+# The Main functions
 create_folder_structure(city_name)
 distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
-
 create_ext_file(city_name, all_polygons_picture) 
+
 create_anim(city_name, anim_data, set_anim=False)   # change to "True" if you want ANIM
 create_bridges(bridges, create_bridges=False)       # change to "True" if you want BRIDGES (be cautious)
 writer.write_props(set_props=False)                 # change to "True" if you want PROPS
@@ -1322,11 +1327,12 @@ writer.write_props(set_props=False)                 # change to "True" if you wa
 # Offset for Moronville is approximately, x_offset=-22.4, y_offset=-40.7
 # Automated HUD alignment is not implemented yet
 plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
-              x_offset=-0.0, y_offset=-0.0, 
-              line_width=0.7, background_color='black', debug=False)
+              x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
+              background_color='black', debug=False)
 
 
 create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=True)
+write_commandline(True, city_name, destination_folder)
 
 print("\n===============================================")
 print("\nSuccesfully created " + f"{race_locale_name}!\n")
