@@ -29,31 +29,22 @@ import shutil
 import random
 import subprocess
 from typing import List, Union, Tuple
-import matplotlib.pyplot as plt
-import matplotlib.transforms as mtransforms
+import matplotlib.pyplot as plt                 # python -m ensurepip --upgrade
+import matplotlib.transforms as mtransforms     # pip install matplotlib
 
 
 # SETUP I (mandatory)                   Control + F    "city=="  to jump to The City Creation section
-city_name = "USER"                      # One word (no spaces)
-race_locale_name = "My First City"      # Can be multiple words
-# destination_folder = r"C:\Users\ASUS\OneDrive\Pulpit\mm1 march"  
-# shortcut_or_exe_name = "Open1560"
+city_name = "USER"                      # One word (no spaces)  --- name of the .AR file
+race_locale_name = "My First City"      # Can be multiple words --- name of the city in Game Menu
 
-# User swap
-destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc"  
-shortcut_or_exe_name = "Open1560.lnk"
+# Change this to match your case
+destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc" # Path to your MM1 folder
+shortcut_or_exe_name = "Open1560.lnk" # or Open1560.exe or Midtown.exe
 
 # SETUP II (optional)
-# The three variables below apply to all races
-ambient_density = 0.2
-num_opponents = 8 # gen. 8 opponents all race types, and put the created opponent file names in the correct AIMAP_P files
-opponent_car = "vppanozgt" 
-
-# Do not change the four variables below
-morning, noon, evening, night = 0, 1, 2, 3
-clear, cloudy, rain, snow = 0, 1, 2, 3
-filler_WP = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"
-filler_ALL = [filler_WP, filler_WP]
+# Do not change the two variables below
+morning, noon, evening, night = 0, 1, 2, 3; clear, cloudy, rain, snow = 0, 1, 2, 3
+filler_WP = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"; filler_ALL = [filler_WP, filler_WP]
 
 # =============== RACE EDITOR =============== #
 # Max is 15 for Blitz & Circuit, and 12 for Checkpoint
@@ -62,6 +53,7 @@ circuit_race_names = ["Dading's Race"]
 checkpoint_race_names = ["filler_race"]
 
 # WAYPOINTS          Tabbing / spacing out the Coordinates is optional, but recommended for readability and editing
+# Maximum number of blue checkpoints for Blitzes is 11 (including the start and finish checkpoints)
 # Blitz 0 WP         x:      y:      z:     rot:    width:  ,0,0, 
 blz_0_WP_start =    "0.0,   0.0,    0.1,    5.0,    15.0    ,0,0,"
 blz_0_WP_ch1 =      "0.0,   0.0,    -20,    5.0,    15.0    ,0,0,"
@@ -88,19 +80,14 @@ cir_1_finish =      "0.01,      0.1,    -101.5,       -90,        8.0     ,0,0,"
 cir_1_ALL = [cir_1_start, cir_1_ch1, cir_1_ch2, cir_1_finish]
 
 # Blitz WP file, Time of Day, Weather, Time Limit, Number of Laps (5 arguments)
-blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1), 
-                   (blz_1_ALL, evening, rain, 40, len(blz_1_ALL)-1)]
+blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1),   
+                   (blz_1_ALL, night, snow, 40, len(blz_1_ALL)-1)]
 
 # Circuit WP file, Time of Day, Weather, Laps Amateur, Laps Pro (5 arguments)
 circuit_waypoints = [(cir_1_ALL, night, snow, 2, 3)]
 
 # Checkpoint WP file, Time of Day, Weather (3 arguments)
 checkpoint_waypoints = [(filler_ALL, noon, cloudy)] # feel free to change
-
-# Do not change
-num_blitz = len(blitz_waypoints)
-num_circuit = len(circuit_waypoints)
-num_checkpoint = len(checkpoint_waypoints)
 
 # COPS AND ROBBERS
 cnr_waypoints = [                          # set Cops and Robbers Waypoints manually and concisely
@@ -122,7 +109,7 @@ anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain"
         (250, 40.0, -250),      # other objects won't work
         (250, 40.0, 250),       # you can not add multiple planes or trains
-        (-250, 40.0, -250),     # you can set any number of vertices for your path
+        (-250, 40.0, -250),     # you can set any number of coordinates for your path
         (-250, 40.0, 250)], 
     'eltrain': [
         (80, 25.0, -80),
@@ -133,29 +120,24 @@ anim_data = {
 # BRIDGES
 slim_bridge = "tpdrawbridge04"
 broad_bridge = "tpdrawbridge06"
-other_object = "" # you can pass any object here instead of a bridge, for example: vpmustang99
+other_object = "vpmustang99" # you can pass any object here instead of a bridge, for example: vpmustang99
 
 # this is originally reserved for the yellow crossgates, logic to align the crossgates to drawbridge is not implemented yet
 filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99" 
                                                                            
-# Set Bridges
 # IMPORTANT I: only ONE bridge can be present in ONE cull room (otherwise the game will crash)
 # IMPORTANT II: Bridges only work in MULTIPLAYER, in SINGLEPLAYER the game will crash if you enable bridges
-# as a result, be cautious with changing with setting "create_bridges()" to True at the end of the script
+# as a result, be cautious with changing setting "create_bridges()" to True at the end of the script
 
-# (x,y,z, orientation, bridge number, object)
+# format: (x,y,z, orientation, bridge number, object)
 bridges = [
-    ((-50.0, 0.0, -150.0), "vertical", 3, slim_bridge)] 
-    
-#    example of how to add multiple bridges:
-#    ...data...),
-#    ((-200.0, 0.0, -200.0), "horizontal_east", 1, slim_bridge),
-#    ((-300.0, 0.0, -300.0), "south_west", 2, broad_bridge)]
+    ((-50.0, 0.0, -150.0), "vertical", 1, slim_bridge), 
+    ((-200.0, 0.0, -200.0), "horizontal_east", 2, broad_bridge)]
 
 "Possible orientations:"
 "'vertical', 'vertical_flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'"
 
-"Dimensions objects (your notes):"
+"Dimension of objects: (feel free to add data)"
 "slim_bridge"   # x: 30.0 y: 5.9 z: 32.5
 "broad_bridge"  # x: 40.0 y: 5.9 z: 32.5
 
@@ -165,6 +147,16 @@ common_textures_1 = []
 common_textures_2 = []
 common_textures_3 = []
 
+# Do not change
+num_blitz = len(blitz_waypoints)
+num_circuit = len(circuit_waypoints)
+num_checkpoint = len(checkpoint_waypoints)
+
+# Not applicable yet
+ambient_density = 0.2
+num_opponents = 8 # gen. 8 opponents all race types, and put the created opponent file names in the correct AIMAP_P files
+opponent_car = "vppanozgt" 
+
 ################################################################################################################               
 ################################################################################################################     
    
@@ -173,9 +165,12 @@ def to_do_list(x):
             TexCoords --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
+            TEXTURES --> add TEX16A and TEX16O from existing custom cities
+            TEXTURES --> enable custom textures or replace existing textures
+            TEXTURES --> will other textures also move if they contain "T_WATER..."?
             Corners --> figure out Triangles
             Corners --> figure out Hills    
-            WALLS --> make sure you can do (80) and (80), then for the texture apply +0.01 or -0.01, such that the texture spanws  
+            WALL --> is there a way to enable collision on both sides of the wall?
             BRIDGE --> cont.                   
             HUDMAP --> fix automate (correct) alignment
             HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
@@ -183,28 +178,38 @@ def to_do_list(x):
             SCRIPT --> put everything into a PolygonHandler class? (to retain input data in functions)
             SCRIPT --> split City Settings (coordinates) into separate file
             SCRIPT --> "repeating_horizontal_flipped" shorten (?)
+            SCRIPT --> add custom texture functionality
             BAI --> retrieve Center from all set Polygons
             BAI --> set / incorporate Street file template
             PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
             BMS --> add shifting texture (like the airport lights, string_compare = "fxltglow")
-            BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this)
+            BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this) (add type: facing direction)
             FCD --> cont. (?)
             BNG --> improve prop functionality (facing)
-            BNG --> add prop list (+ description), where is my folder with all Prop Pictures??
+            BNG --> add prop list (+ description), where is my folder with all Prop Pictures?
+            BNG --> create dataset with x,y,z (dimensions) of all props
             CELLS --> implement Cell type
             CELLS --> # Max 256 characters per row --> add Error Handling/warning
-            PHYSICS --> add "physics" editor
             RACES --> investigate why max 15?
             BLENDER --> [...]
             USER --> "gather" a folder with good to use textures from TEX16O / TEX16A
             GITHUB --> add Readme / other useful info
-            GITHUB --> add modified exe (blitz limit, cell limit)
+            OPEN1560 --> add (forked) updated Open1560
             """
             
 ################################################################################################################               
 ################################################################################################################        
-    
+
+# VECTOR2 CLASS
+class Vector2:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __repr__(self):
+        return f"x = {self.x}, y = {self.y})"
+
 # VECTOR3 CLASS
 class Vector3:
     def __init__(self, x, y, z):
@@ -636,7 +641,7 @@ def create_and_append_polygon(
         elif wall_side == "inside":
             corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
             
-    # hillzz          ...
+    # Hills (TO DO)
     # case 4: HILL with varying X, Y and Z coordinates      (1e 3e regels moet kloppen)
     # elif (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
           # max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
@@ -691,7 +696,7 @@ def user_notes(x):
         max_x,min_z 
         min_x,min_z 
         
-    Please note that the order of the coordinates is NOT important, as they will be sorted automatically by the script.
+    Please note that the order of the coordinates is NOT important, as they will be sorted automatically by the script (CHECK)
     
     Material Index: 0 = Road, 87 = Grass, 91 (Water, {Sleep with the Fishes})
 
@@ -713,7 +718,7 @@ def user_notes(x):
 # Polygon 1 | Grass Start
 create_and_append_polygon(
     bound_number = 1,
-    material_index = 0,
+    material_index = 87,
     vertex_coordinates=[
         (-200, 0.0, -200),
         (-200, 0.0, 200),	
@@ -724,11 +729,22 @@ create_and_append_polygon(
 generate_and_save_bms_file(
     string_names = ["24_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
-# Polygon 2 | Your Polygon...
-# Polygon 2 | Your Texture...
+# Polygon 2 |
+create_and_append_polygon(
+    bound_number = 2,
+    material_index = 98,        # custom material
+    vertex_coordinates=[
+        (-200, 0.0, -200),
+        (-200, 0.0, 200),	
+        (-300, 0.0, 200),
+        (-300, 0.0, -200)])
+
+# Polygon 2 | Texture
+generate_and_save_bms_file(
+    string_names = ["SNOW"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
 ################################################################################################################               
-################################################################################################################
+################################################################################################################ 
 
 # Initialize and write BND file
 bnd = initialize_bnd(vertices, polys)
@@ -770,7 +786,8 @@ def create_folder_structure(city_name):
         f.write(f"CircuitNames={circuit_race_names_str}\n")
         f.write(f"CheckpointNames={checkpoint_race_names_str}\n")
         
-def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True):
+def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
+                               circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True):
 
     bms_files = []
     bms_a2_files = set()
@@ -811,10 +828,10 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
             
         # Set MMDATA.CSV values           
-        car_type, difficulty, opponent, num_laps_race = 0, 1, 8, 99
-        cops_x, cops_m, cops_l = 0.0, 0.5, 1.0
-        ambient_x, ambient_m, ambient_l = 0.0, 0.5, 1.0
-        peds_x, peds_m, peds_l = 0.0, 0.5, 1.0
+        car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 8, 99
+        cops_x = 0.0 # will be customizable later
+        ambient_x = 0.0 # will be customizable later
+        peds_x = 0.0 # will be customizable later
                 
         # Create MMDATA.CSV files
         mm_file_name = f"MM{race_type}DATA.CSV"
@@ -827,19 +844,19 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
                     
                     blitz_waypoints, timeofday, weather, timelimit, num_laps_blitz = race_waypoints[i]  
                     
-                    race_data = car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_m, ambient_l, peds_m, num_laps_blitz, timelimit, difficulty
+                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_blitz, timelimit, difficulty
 
                 elif race_type == "CIRCUIT":
                     
                     circuit_waypoints, timeofday, weather, num_laps_a, num_laps_p = race_waypoints[i]  
                     
-                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_m, num_laps_p, timelimit, difficulty
+                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_p, timelimit, difficulty
                     
                 elif race_type == "RACE":
                     
                     checkpoint_waypoints, timeofday, weather = race_waypoints[i] 
                     
-                    race_data = car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_l, ambient_m, peds_l, num_laps_race, timelimit, difficulty
+                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_checkpoint, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_checkpoint, timelimit, difficulty
                     
                 # Race prefixes    
                 if race_type == "RACE":
@@ -1134,29 +1151,166 @@ class BNGFileWriter:
 bng_file_path = os.path.join("SHOP", "CITY", f"{city_name}.BNG")  
 writer = BNGFileWriter(bng_file_path)
 
-# SET PROPS
-writer.add_props([
-    [60, 0.1, 60, 500, 0.1, 500, "TPDRAWBRIDGE04"],
-    [-60, 0.1, -60, 500, 0.1, 500, "TPDRAWBRIDGE04"]])
+#################################################################################
+#################################################################################
 
-# Set multiple props at once with a separator
-for i in range(9):
-    writer.add_props([[50-i*3, 1+i*3, 50-i*3, 0, 0, 0, "TP_BARRICADE"]])
+physics_folder = os.path.join("SHOP", "MTL")
+os.makedirs(physics_folder, exist_ok=True)
 
+input_physics_file = "input_PHYSICS.DB" # cwd
+output_physics_file = "physics.db"
+
+
+class MaterialEditor:
+    def __init__(self, name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color):
+        self.name = name
+        self.friction = friction
+        self.elasticity = elasticity
+        self.drag = drag
+        self.bump_height = bump_height
+        self.bump_width = bump_width
+        self.bump_depth = bump_depth
+        self.sink_depth = sink_depth
+        self.type = type
+        self.sound = sound
+        self.velocity = velocity
+        self.ptx_color = ptx_color 
+
+    @staticmethod
+    def read_physics_db(file_name):
+        with open(file_name, 'rb') as file:
+            count_data = file.read(4)
+            count = struct.unpack(">I", count_data)[0]
+
+            agi_phys_parameters = []
+
+            for _ in range(count):
+                name_data = file.read(32)
+                name = name_data.decode("latin-1").rstrip('\x00')
+
+                params_data = file.read(36)
+                params = struct.unpack(">7f2I", params_data)
+
+                velocity_data = file.read(8)
+                velocity = Vector2(*struct.unpack(">2f", velocity_data))
+
+                ptx_color_data = file.read(12)
+                ptx_color = Vector3(*struct.unpack(">3f", ptx_color_data))
+
+                agi_phys_param = MaterialEditor(name, *params, velocity, ptx_color)
+                agi_phys_parameters.append(agi_phys_param)
+
+        return agi_phys_parameters
+
+    @classmethod
+    def read_binary(cls, file_name):
+        return cls.read_physics_db(file_name)
+
+    @staticmethod
+    def write_physics_db(file_name, agi_phys_parameters):
+        with open(file_name, 'wb') as file:
+            count = len(agi_phys_parameters)
+            count_data = struct.pack(">I", count)
+            file.write(count_data)
+
+            for param in agi_phys_parameters:
+                name_data = param.name.encode("latin-1").ljust(32, b'\x00')
+                file.write(name_data)
+
+                params_data = struct.pack(">7f2I", param.friction, param.elasticity, param.drag, param.bump_height, param.bump_width, param.bump_depth, param.sink_depth, param.type, param.sound)
+                file.write(params_data)
+
+                velocity_data = struct.pack(">2f", param.velocity.x, param.velocity.y)
+                file.write(velocity_data)
+
+                ptx_color_data = struct.pack(">3f", param.ptx_color.x, param.ptx_color.y, param.ptx_color.z)
+                file.write(ptx_color_data)
+
+    @classmethod
+    def change_physics_db(cls, input_file_name, output_file_name, properties, index=None):
+        agi_phys_parameters = cls.read_binary(input_file_name)
+
+        if index is not None:
+            for prop, value in properties.items():
+                setattr(agi_phys_parameters[index], prop, value)
+        else:
+            for param in agi_phys_parameters:
+                for prop, value in properties.items():
+                    setattr(param, prop, value)
+
+        cls.write_physics_db(output_file_name, agi_phys_parameters)
+
+    @staticmethod
+    def create_from_scratch(output_file_name, agi_phys_parameters):
+        MaterialEditor.write_physics_db(output_file_name, agi_phys_parameters)
+        
+    def __repr__(self):
+        cleaned_name = self.name.rstrip()
+        return (f"AgiPhysParameters(\n"
+                f"  name        = '{cleaned_name}',\n"
+                f"  friction    = {self.friction:.2f},\n"
+                f"  elasticity  = {self.elasticity:.2f},\n"
+                f"  drag        = {self.drag:.2f},\n"
+                f"  bump_height = {self.bump_height:.2f},\n"
+                f"  bump_width  = {self.bump_width:.2f},\n"
+                f"  bump_depth  = {self.bump_depth:.2f},\n"
+                f"  sink_depth  = {self.sink_depth:.2f},\n"
+                f"  type        = {self.type},\n"
+                f"  sound       = {self.sound},\n"
+                f"  velocity    = {self.velocity},\n"
+                f"  ptx_color   = {self.ptx_color}\n\n")
+
+     
 # Start GAME
 def start_game(destination_folder, play_game=False):
     game_path = os.path.join(destination_folder, shortcut_or_exe_name)
     if play_game:
         subprocess.run(game_path, cwd=destination_folder, shell=True)
 
+
 ################################################################################################################               
 ################################################################################################################
+
+# SET PROPS
+# x,y,z (offset), x,y,z (facing), name
+writer.add_props([
+    [-10, 0.1, -10, -10, 0.1, -10000, "tp_trailer"],
+    [10, 0.1, -10, 10, 0.1, -10000, "tp_trailer"]])
+
+# Set multiple props at once with a separator value
+for i in range(50):
+    writer.add_props([[-50 + (i*4), -30, 0, 0, 0, 0, "TP_BARRICADE"]])
+
+################################################################################################################     
+
+# SET MATERIALS
+# material ID you want to change. You can then use this number in 'material_index' in create_and_append_polygon()
+index = 98 
+# indices that you can use / are "free": 94, 95, 96, 97, 98
+# for more info, see: https://github.com/0x1F9F1/Open1560/commit/a8fea1ebb00bbe24bd501264cfe7596c9df0bfaf
+
+# other properties you can change: bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color  
+# (for more info see: "PHYSICS_DB_extracted.txt") --- velocity is likely not used by the game, the other variables have not been tested yet
+properties = {"friction": 0.01, 
+              "elasticity": 0.01, 
+              "drag": 0.01}
+
+################################################################################################################   
 
 # Call FUNCTIONS
 print("\n===============================================")
 print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
+# Material related
+materials = MaterialEditor.read_binary(input_physics_file) 
+index = index - 1
+MaterialEditor.change_physics_db(input_physics_file, output_physics_file, properties, index)
+
+new_physics_path = os.path.join(physics_folder, output_physics_file)
+shutil.move(output_physics_file, new_physics_path)
+
+# The rest
 create_folder_structure(city_name)
 distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
 
@@ -1165,18 +1319,14 @@ create_anim(city_name, anim_data, set_anim=False)   # change to "True" if you wa
 create_bridges(bridges, create_bridges=False)       # change to "True" if you want BRIDGES (be cautious)
 writer.write_props(set_props=False)                 # change to "True" if you want PROPS
 
-# Offset for Moronville
-# Offset needs to be specified for each map (start from 0.0,0.0). HUD alignment automation is not implemented yet
-# plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
-#               x_offset=-22.4, y_offset=-40.7, 
-#               line_width=0.3, background_color='black', debug=False)
-
+# Offset for Moronville is approximately, x_offset=-22.4, y_offset=-40.7
+# Automated HUD alignment is not implemented yet
 plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
               x_offset=-0.0, y_offset=-0.0, 
-              line_width=0.5, background_color='black', debug=False)
+              line_width=0.7, background_color='black', debug=False)
 
 
-create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
+create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=True)
 
 print("\n===============================================")
 print("\nSuccesfully created " + f"{race_locale_name}!\n")
