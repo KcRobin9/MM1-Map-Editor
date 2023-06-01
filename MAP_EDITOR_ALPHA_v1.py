@@ -36,10 +36,8 @@ import matplotlib.transforms as mtransforms     # pip install matplotlib
 # SETUP I (mandatory)                   Control + F    "city=="  to jump to The City Creation section
 city_name = "USER"                      # One word (no spaces)  --- name of the .AR file
 race_locale_name = "My First City"      # Can be multiple words --- name of the city in Game Menu
-
-# Change this to match your case
+shortcut_or_exe_name = "Open1560.lnk"   # or Open1560.exe or Midtown.exe
 destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc" # Path to your MM1 folder
-shortcut_or_exe_name = "Open1560.lnk" # or Open1560.exe or Midtown.exe
 
 # SETUP II (optional)
 # Do not change the two variables below
@@ -153,7 +151,7 @@ num_circuit = len(circuit_waypoints)
 num_checkpoint = len(checkpoint_waypoints)
 
 # Not applicable yet
-ambient_density = 0.2
+ambient_density = 0.0
 num_opponents = 8 # gen. 8 opponents all race types, and put the created opponent file names in the correct AIMAP_P files
 opponent_car = "vppanozgt" 
 
@@ -168,9 +166,11 @@ def to_do_list(x):
             TEXTURES --> add TEX16A and TEX16O from existing custom cities
             TEXTURES --> enable custom textures or replace existing textures
             TEXTURES --> will other textures also move if they contain "T_WATER..."?
+            TEXTURES --> allow mode for "rooftops" instead of surfaces
             Corners --> figure out Triangles
             Corners --> figure out Hills    
             WALL --> is there a way to enable collision on both sides of the wall?
+            WALL --> walls are infinite in height (fix this)
             BRIDGE --> cont.                   
             HUDMAP --> fix automate (correct) alignment
             HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
@@ -180,13 +180,14 @@ def to_do_list(x):
             SCRIPT --> "repeating_horizontal_flipped" shorten (?)
             SCRIPT --> add custom texture functionality
             BAI --> retrieve Center from all set Polygons
-            BAI --> set / incorporate Street file template
+            BAI --> improve []
             PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
             BMS --> add shifting texture (like the airport lights, string_compare = "fxltglow")
             BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this) (add type: facing direction)
-            FCD --> cont. (?)
+            FCD --> create FCD_Editor (e.g. create graphic rooftop)
             BNG --> improve prop functionality (facing)
+            BNG --> for 'for loops', add a start and endpoint (x,y,z) of the prop (+ separator value)
             BNG --> add prop list (+ description), where is my folder with all Prop Pictures?
             BNG --> create dataset with x,y,z (dimensions) of all props
             CELLS --> implement Cell type
@@ -194,7 +195,7 @@ def to_do_list(x):
             RACES --> investigate why max 15?
             BLENDER --> [...]
             USER --> "gather" a folder with good to use textures from TEX16O / TEX16A
-            GITHUB --> add Readme / other useful info
+            GITHUB --> add Readme / installation instructions
             OPEN1560 --> add (forked) updated Open1560
             """
             
@@ -714,16 +715,16 @@ def user_notes(x):
     generate_and_save_bms_file(
            string_names=["T_WALL"], exclude=True))
     """
-           
+
 # Polygon 1 | Grass Start
 create_and_append_polygon(
     bound_number = 1,
-    material_index = 87,
+    material_index = 0,
     vertex_coordinates=[
-        (-200, 0.0, -200),
-        (-200, 0.0, 200),	
-        (200, 0.0, 200),
-        (200, 0.0, -200)])
+        (-100, 0.0, -100),
+        (-100, 0.0, 100),	
+        (100, 0.0, 100),
+        (100, 0.0, -100)])
 
 # Polygon 1 | Texture
 generate_and_save_bms_file(
@@ -732,16 +733,30 @@ generate_and_save_bms_file(
 # Polygon 2 |
 create_and_append_polygon(
     bound_number = 2,
-    material_index = 98,        # custom material
+    material_index = 0,        
     vertex_coordinates=[
-        (-200, 0.0, -200),
-        (-200, 0.0, 200),	
-        (-300, 0.0, 200),
-        (-300, 0.0, -200)])
+        (-100, 0.0, -200),
+        (-100, 0.0, -100),	
+        (100, 0.0, -100),
+        (100, 0.0, -200)])
 
 # Polygon 2 | Texture
 generate_and_save_bms_file(
     string_names = ["SNOW"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+
+# Polygon 3 |
+create_and_append_polygon(
+    bound_number = 3,
+    material_index = 0,        
+    vertex_coordinates=[
+        (-100, 0.0, -300),
+        (-100, 0.0, -200),	
+        (100, 0.0, -200),
+        (100, 0.0, -300)])
+
+# Polygon 3 | Texture
+generate_and_save_bms_file(
+    string_names = ["T_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -1266,7 +1281,201 @@ def write_commandline(create_file: bool, city_name: str, destination_folder: str
             file.write(f"-allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}")
             
         shutil.move(cmd_file, os.path.join(destination_folder, cmd_file))
-     
+        
+###################################################################################################################
+###################################################################################################################
+
+class BAI_Editor:
+    def __init__(self, city_name, streets, write_on_init=True):
+        self.city_name = f"{city_name}"
+        self.streets = streets
+        self.filepath = os.path.join("SHOP", "CITY", self.city_name, self.city_name + ".map")
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+        
+        if write_on_init:
+            self.write_to_file()
+
+    def write_to_file(self):
+        with open(self.filepath, 'w') as file:
+            file.write(self.construct_template())
+
+    def construct_template(self):
+        tab = '\t'
+        template = 'mmMapData :0 {\n'
+        template += f'{tab}NumStreets {len(self.streets) + 5}\n'
+        template += f'{tab}Street [\n'
+        
+        for street in self.streets:
+            template += f'{tab*2}"{street}"\n'
+        template += f'{tab}]\n'
+        template += '}'
+        return template
+
+class StreetFileEditor:
+    def __init__(self, city_name, street_data, write_on_init=True):
+        self.street_name = street_data["street_name"]
+        self.vertices = street_data["vertices"]
+        self.intersection_types = street_data.get("intersection_types", [3, 3])
+        self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
+        self.stop_light_names = street_data.get("stop_light_names", ["tplttrafc", "tplttrafc"])
+        self.traffic_blocked = street_data.get("traffic_blocked", [0, 0])
+        self.ped_blocked = street_data.get("ped_blocked", [0, 0])
+        self.road_divided = street_data.get("road_divided", 0)
+        self.alley = street_data.get("alley", 0)
+        
+        self.filepath = os.path.join("SHOP", "CITY", city_name, self.street_name + ".road")
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+        
+        if write_on_init:
+            self.write_to_file()
+
+
+    def write_to_file(self):
+        with open(self.filepath, 'w') as file:
+            file.write(self.construct_template())
+
+    def construct_template(self):
+        tab = '\t'
+        template = 'mmRoadSect :0 {\n'
+        template += f'{tab}NumVertexs {len(self.vertices)}\n'
+        template += f'{tab}NumLanes[0] 1\n'
+        template += f'{tab}NumLanes[1] 0\n'
+        template += f'{tab}NumSidewalks[0] 0\n'
+        template += f'{tab}NumSidewalks[1] 0\n'
+        template += f'{tab}TotalVertexs {len(self.vertices)}\n'
+        template += f'{tab}Vertexs [\n'
+        
+        for vertex in self.vertices:
+            template += f'{tab*2}{vertex[0]} {vertex[1]} {vertex[2]}\n'
+            
+        template += f'{tab}]\n'
+        template += f'{tab}Normals [\n'
+        template += f'{tab*2}0.0 1.0 0.0\n' * len(self.vertices)
+        template += f'{tab}]\n'
+        
+        template += f'{tab}IntersectionType[0] {self.intersection_types[0]}\n'
+        template += f'{tab}IntersectionType[1] {self.intersection_types[1]}\n'
+            
+        for i, pos in enumerate(self.stop_light_positions):
+            template += f'{tab}StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}\n'
+            
+        template += f'{tab}Blocked[0] {self.traffic_blocked[0]}\n'
+        template += f'{tab}Blocked[1] {self.traffic_blocked[1]}\n'
+        template += f'{tab}PedBlocked[0] {self.ped_blocked[0]}\n'
+        template += f'{tab}PedBlocked[1] {self.ped_blocked[1]}\n'
+        
+        template += f'{tab}StopLightName [\n'
+        template += f'{tab*2}"{self.stop_light_names[0]}"\n'
+        template += f'{tab*2}"{self.stop_light_names[1]}"\n'
+        template += f'{tab}]\n'
+        
+        template += f'{tab}Divided {self.road_divided}\n'
+        template += f'{tab}Alley {self.alley}\n'
+        template += '}'
+        return template
+
+###################################################################################################################
+###################################################################################################################
+
+# Intersection Types: 
+# 0 = Stop, 1 = Traffic Light, 2 = Yield, 3 = Continue
+
+# Other Types:
+# 0 = No, 1 = Yes
+
+# --- POLYGONS FOR REFERENCE ONLY ---
+
+# # Polygon 1 | Grass Start
+# create_and_append_polygon(
+#     bound_number = 1,
+#     material_index = 0,
+#     vertex_coordinates=[
+#         (-100, 0.0, -100),
+#         (-100, 0.0, 100),	
+#         (100, 0.0, 100),
+#         (100, 0.0, -100)])
+
+# # Polygon 1 | Texture
+# generate_and_save_bms_file(
+#     string_names = ["24_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+
+# # Polygon 2 |
+# create_and_append_polygon(
+#     bound_number = 2,
+#     material_index = 0,        # custom material
+#     vertex_coordinates=[
+#         (-100, 0.0, -200),
+#         (-100, 0.0, -100),	
+#         (100, 0.0, -100),
+#         (100, 0.0, -200)])
+
+# # Polygon 2 | Texture
+# generate_and_save_bms_file(
+#     string_names = ["SNOW"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+
+# # Polygon 3 |
+# create_and_append_polygon(
+#     bound_number = 3,
+#     material_index = 0,        
+#     vertex_coordinates=[
+#         (-100, 0.0, -300),
+#         (-100, 0.0, -200),	
+#         (100, 0.0, -200),
+#         (100, 0.0, -300)])
+
+# # Polygon 3 | Texture
+# generate_and_save_bms_file(
+#     string_names = ["T_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+
+data_street_1 = {
+    "street_name": "shortcut1",
+    "vertices": [
+        (-20.0, 1.0, 80.0),
+        (-20.0, 1.0, 40.0),
+        (-20.0, 1.0, 0.0),
+        (-20.0, 1.0, -40.0),
+        (-20.0, 1.0, -80.0),
+        (-20.0, 1.0, -120.0)]}
+
+data_street_2 = {
+    "street_name": "shortcut2",
+    "vertices": [
+        (-20.0, 1.0, -120.0),
+        (-20.0, 1.0, -130.0),
+        (-20.0, 1.0, -140.0),
+        (-20.0, 1.0, -150.0),
+        (-20.0, 1.0, -160.0),
+        (-20.0, 1.0, -170.0),
+        (-20.0, 1.0, -180.0),
+        (-20.0, 1.0, -190.0),
+        (-20.0, 1.0, -210.0)]}
+
+# data_street_something = {
+#     "street_name": "highway_path_1",
+#     "vertices": [
+#         (-80.1, 11.2, 760.0),
+#         (-40.6, 9.8, 730.7),
+#         (-10.3, 10.1, 690.8),
+#         (5.5, 7.3, 650.6),
+#         (20.2, 6.0, 620.7)],
+#     "intersection_types": [1, 1],
+#     "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
+#     "stop_light_positions": [
+#         (-80.1, 11.2, 760.0),
+#         (-40.6, 9.8, 730.7),
+#         (-10.3, 10.1, 690.8),
+#         (5.5, 7.3, 650.6)],
+#         "traffic_blocked": [0, 0],
+#         "ped_blocked": [0, 0],
+#         "road_divided": 0,
+#         "alley": 0}
+
+# Put all your created Streets in this list
+street_data = [data_street_1, data_street_2]
+
+# Do not change    
+street_names = []
+
 # Start GAME
 def start_game(destination_folder, play_game=False):
     game_path = os.path.join(destination_folder, shortcut_or_exe_name)
@@ -1308,12 +1517,17 @@ print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 # Material related
-materials = MaterialEditor.read_binary(input_physics_file) 
 index = index - 1
+materials = MaterialEditor.read_binary(input_physics_file)
 MaterialEditor.change_physics_db(input_physics_file, output_physics_file, properties, index)
-
 new_physics_path = os.path.join(physics_folder, output_physics_file)
 shutil.move(output_physics_file, new_physics_path)
+
+# AI related (set either both to True or both to False)
+for data in street_data:
+    creator = StreetFileEditor(city_name, data, write_on_init=False)
+    street_names.append(data["street_name"])
+BAI_Editor(city_name, street_names, write_on_init=False)
 
 # The Main functions
 create_folder_structure(city_name)
@@ -1330,8 +1544,7 @@ plot_polygons(show_label=False, plot_picture=False, export_jpg=True,
               x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
               background_color='black', debug=False)
 
-
-create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=True)
+create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
 write_commandline(True, city_name, destination_folder)
 
 print("\n===============================================")
