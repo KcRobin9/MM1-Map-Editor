@@ -1,0 +1,73 @@
+==== INSTALLATION INSTRUCTIONS ====
+
+Welcome to this Installation Guide.
+Depending on your current situation, the setup for the Map Editor may take up to 30 minutes.
+
+1) Download Python
+https://www.python.org/downloads/
+
+2) Install Python
+Make sure to tick the boxes: 
+"add python.exe to PATH" &
+"use admin privileges when installing py.exe"
+Then click on "Install Now"
+
+3) Install Visual Studio Code (highly recommended)
+https://code.visualstudio.com/download
+
+4) Test Python
+Open "powershell.exe" in this folder, then in the black/blue box, type:
+
+
+python test_python.py
+
+
+and then press Enter
+
+If in the Powershell window you see that:
+"Python has been installed succesfully!" 
+
+then you have installed Python correctly. 
+This means you're almost ready to use the Map Editor
+
+5) Install Required Libraries
+Open "powershell.exe" again, then type:
+
+
+python -m ensurepip --upgrade
+
+
+and press Enter.
+
+Now Python will install pip, or it will tell you that: 
+"the requirement has already been satisfied". 
+Either works and is good.
+
+Then (while still in the powershell window), type:
+
+
+pip install matplotlib
+
+
+and press Enter.
+
+Now Python will install a library, which you will need to run the script.
+
+6) Configure the Map Editor
+Go to the main folder, and open "MAP_EDITOR_ALPHA_v1.py" with Visual Studio Code (use "open with")
+
+Go to line 36 and find "SETUP I (mandatory)".
+Here you must atleast set your MM1 folder path, and the executable or shortcut that you will be using.
+
+7) Generating your Custom City
+Open "powershell.exe" in the main directory.
+
+Then type:
+
+python MAP_EDITOR_ALPHA_v1.py
+
+
+and press Enter.
+(alternatively, you can also type: python m [and then press the Tab key], the sentence will then auto complete to "python MAP_EDITOR_ALPHA_v1.py" saving you time)
+
+8) Have fun building your Cities!
