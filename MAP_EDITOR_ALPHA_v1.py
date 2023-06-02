@@ -40,10 +40,6 @@ shortcut_or_exe_name = "Open1560.lnk"   # or Open1560.exe or Midtown.exe
 destination_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc" # Path to your MM1 folder
 
 # SETUP II (optional)
-# Do not change the two variables below
-morning, noon, evening, night = 0, 1, 2, 3; clear, cloudy, rain, snow = 0, 1, 2, 3
-filler_WP = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"; filler_ALL = [filler_WP, filler_WP]
-
 # =============== RACE EDITOR =============== #
 # Max is 15 for Blitz & Circuit, and 12 for Checkpoint
 blitz_race_names = ["Just in Time", "The Great Escape"]
@@ -71,11 +67,16 @@ blz_1_WP_finish =   "99.0,  0.0,    0.1,    90.0,    10.0    ,0,0,"
 blz_1_ALL = [blz_1_WP_start, blz_1_WP_ch1, blz_1_WP_ch2, blz_1_WP_ch3, blz_1_WP_ch4, blz_1_WP_finish]
 
 # Circuit 0 WP      x:           y:       z:          rot:       width:  ,0,0,
-cir_1_start =       "-101.5,    0.1,    0.01,         -180.0,     8.0     ,0,0,"
-cir_1_ch1 =         "0.01,      0.1,    101.5,        90,         8.0     ,0,0,"
-cir_1_ch2 =         "101.5,     0.1,    0.01,         0.01,       8.0     ,0,0,"
-cir_1_finish =      "0.01,      0.1,    -101.5,       -90,        8.0     ,0,0,"
+cir_1_start =       "0.0,       0.1,    0.0,         -180.0,     8.0     ,0,0,"
+cir_1_ch1 =         "0.0,       0.1,    50.0,        90,         8.0     ,0,0,"
+cir_1_ch2 =         "50.0,      0.1,    0.0,         0.01,       8.0     ,0,0,"
+cir_1_finish =      "0.0,      0.1,    -75.0,       -90,         8.0     ,0,0,"
 cir_1_ALL = [cir_1_start, cir_1_ch1, cir_1_ch2, cir_1_finish]
+
+#######################################################################################
+morning, noon, evening, night = 0, 1, 2, 3; clear, cloudy, rain, snow = 0, 1, 2, 3
+filler_WP = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"; filler_ALL = [filler_WP, filler_WP]
+#######################################################################################
 
 # Blitz WP file, Time of Day, Weather, Time Limit, Number of Laps (5 arguments)
 blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1),   
@@ -151,18 +152,19 @@ num_circuit = len(circuit_waypoints)
 num_checkpoint = len(checkpoint_waypoints)
 
 # Not applicable yet
-ambient_density = 0.0
+ambient_density = 0.5 # AIMAP_P
 num_opponents = 8 # gen. 8 opponents all race types, and put the created opponent file names in the correct AIMAP_P files
 opponent_car = "vppanozgt" 
 
 ################################################################################################################               
 ################################################################################################################     
-   
+ 
 def to_do_list(x):
             """
             TexCoords --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
             TexCoords --> check "rotating_repeating" (angles)
             TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
+            COLLISION --> can we set bounds only? (i.e. invisible roads/walls, and then use Facacdes for the visuals)
             TEXTURES --> add TEX16A and TEX16O from existing custom cities
             TEXTURES --> enable custom textures or replace existing textures
             TEXTURES --> will other textures also move if they contain "T_WATER..."?
@@ -179,8 +181,10 @@ def to_do_list(x):
             SCRIPT --> split City Settings (coordinates) into separate file
             SCRIPT --> "repeating_horizontal_flipped" shorten (?)
             SCRIPT --> add custom texture functionality
+            SCRIPT --> replace "destination_folder" to "mm1_folder"
+            SCRIPT --> {city_name} files in the dev folder should ideally be deleted after the folder has been moved
             BAI --> retrieve Center from all set Polygons
-            BAI --> improve []
+            BAI --> path conflicts, no functional AI yet
             PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
             BMS --> add shifting texture (like the airport lights, string_compare = "fxltglow")
@@ -190,6 +194,7 @@ def to_do_list(x):
             BNG --> for 'for loops', add a start and endpoint (x,y,z) of the prop (+ separator value)
             BNG --> add prop list (+ description), where is my folder with all Prop Pictures?
             BNG --> create dataset with x,y,z (dimensions) of all props
+            BNG --> investigate CustomProp_Editor (?)
             CELLS --> implement Cell type
             CELLS --> # Max 256 characters per row --> add Error Handling/warning
             RACES --> investigate why max 15?
@@ -718,7 +723,7 @@ def user_notes(x):
 
 # Polygon 1 | Grass Start
 create_and_append_polygon(
-    bound_number = 1,
+    bound_number = 901,
     material_index = 0,
     vertex_coordinates=[
         (-100, 0.0, -100),
@@ -732,8 +737,8 @@ generate_and_save_bms_file(
 
 # Polygon 2 |
 create_and_append_polygon(
-    bound_number = 2,
-    material_index = 0,        
+    bound_number = 902,
+    material_index = 98,        
     vertex_coordinates=[
         (-100, 0.0, -200),
         (-100, 0.0, -100),	
@@ -746,7 +751,7 @@ generate_and_save_bms_file(
 
 # Polygon 3 |
 create_and_append_polygon(
-    bound_number = 3,
+    bound_number = 903,
     material_index = 0,        
     vertex_coordinates=[
         (-100, 0.0, -300),
@@ -780,10 +785,10 @@ def create_folder_structure(city_name):
     os.makedirs(os.path.join("SHOP", "BND", f"{city_name}LM"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "CITY", f"{city_name}"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "RACE", f"{city_name}"), exist_ok=True)
-
+    
     with open(os.path.join("SHOP", "CITY", f"{city_name}.PTL"), "w") as f:
         pass
-
+    
     with open(os.path.join("SHOP", "TUNE", f"{city_name}.CINFO"), "w") as f:
         localized_name = race_locale_name
         map_name = city_name.lower()
@@ -801,6 +806,21 @@ def create_folder_structure(city_name):
         f.write(f"CircuitNames={circuit_race_names_str}\n")
         f.write(f"CheckpointNames={checkpoint_race_names_str}\n")
         
+        
+# Move contents of dev folder to mm1 folder      
+def move_dev(destination_folder):
+    current_folder = os.getcwd()
+    dev_folder_path = os.path.join(current_folder, 'dev')
+    
+    if os.path.exists(dev_folder_path):
+        destination_path = os.path.join(destination_folder, 'dev')
+        
+        if os.path.exists(destination_path):
+            shutil.rmtree(destination_path)
+            
+        shutil.copytree(dev_folder_path, destination_path)
+        
+# Distribute generated files
 def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
                                circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True):
 
@@ -844,9 +864,9 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             
         # Set MMDATA.CSV values           
         car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 8, 99
-        cops_x = 0.0        # will be customizable later
-        ambient_x = 0.0     # will be customizable later
-        peds_x = 0.0        # will be customizable later
+        cops_x = 1.0        # will be customizable later
+        ambient_x = 1.0     # will be customizable later
+        peds_x = 1.0        # will be customizable later
                 
         # Create MMDATA.CSV files
         mm_file_name = f"MM{race_type}DATA.CSV"
@@ -909,7 +929,7 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
                     f.write("# Default Road Speed Limit \n[Speed Limit] \n45 \n\n")
                     f.write("# Ambient Traffic Exceptions\n# Rd Id, Density, Speed Limit \n[Exceptions] \n0 \n\n")
                     f.write("# Police Init \n# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route \n")
-                    f.write("[Police] \n0 \n# vpcop 50.0 0.0 30.0 -90.0 0 4 \n\n")
+                    f.write("[Police] \n1 \nvpcop 50.0 0.0 30.0 -90.0 0 4 \n\n")
                     
                     f.write("# Opponent Init, Geo File, WavePoint File \n[Opponent] \n") 
                     f.write(str(num_opponents) + "\n")
@@ -993,7 +1013,6 @@ def create_ar_file(city_name, destination_folder, create_plus_move_ar=False, del
         for file in os.listdir("build"):
             if file.endswith(".ar") and file.startswith(f"!!!!!{city_name}_City"):
                 shutil.move(os.path.join("build", file), os.path.join(destination_folder, file))
-                
     try:
         shutil.rmtree("build")
     except Exception as e:
@@ -1004,8 +1023,8 @@ def create_ar_file(city_name, destination_folder, create_plus_move_ar=False, del
             shutil.rmtree("SHOP")
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
-    
-    
+                    
+
 # Create JPG Picture of Shapes (correct sorting)
 def plot_polygons(show_label=False, plot_picture=False, export_jpg=False, 
                   x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
@@ -1064,7 +1083,7 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
         if plot_picture:
             plt.show()
 
-# Create {city_name}.EXT file            
+# Create EXT file            
 def create_ext_file(city_name, polygonz):
     min_x = min(point[0] for polygon in polygonz for point in polygon)
     max_x = max(point[0] for polygon in polygonz for point in polygon)
@@ -1119,7 +1138,7 @@ def create_bridges(all_bridges, create_bridges=False):
                 else:
                     pass
                 
-                  
+                                 
 class BinaryBanger:
     def __init__(self, start: Vector3, end: Vector3, name: str):
         self.room = 4
@@ -1161,15 +1180,18 @@ class BNGFileWriter:
             self.objects.append(BinaryBanger(start, end, name + "\x00"))
    
 bng_file_path = os.path.join("SHOP", "CITY", f"{city_name}.BNG")  
+# find better name
 writer = BNGFileWriter(bng_file_path)
 
 #################################################################################
 #################################################################################
 
-physics_folder = os.path.join("SHOP", "MTL")
+# Physics prep.
+resources_folder = os.path.join(os.getcwd(), "RESOURCES")
+physics_folder = os.path.join(os.getcwd(), "SHOP", "MTL")
 os.makedirs(physics_folder, exist_ok=True)
 
-input_physics_file = "input_PHYSICS.DB" # cwd
+input_physics_file = os.path.join(resources_folder, "input_PHYSICS.DB")
 output_physics_file = "physics.db"
 
 class MaterialEditor:
@@ -1270,17 +1292,6 @@ class MaterialEditor:
                 f"  sound       = {self.sound},\n"
                 f"  velocity    = {self.velocity},\n"
                 f"  ptx_color   = {self.ptx_color}\n\n")
-
-
-# Write COMMANDLINE
-def write_commandline(create_file: bool, city_name: str, destination_folder: str):
-    if create_file:
-        city_name = city_name.lower()
-        cmd_file = "commandline.txt"
-        with open(cmd_file, "w") as file:
-            file.write(f"-allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}")
-            
-        shutil.move(cmd_file, os.path.join(destination_folder, cmd_file))
         
 ###################################################################################################################
 ###################################################################################################################
@@ -1289,9 +1300,11 @@ class BAI_Editor:
     def __init__(self, city_name, streets, write_on_init=True):
         self.city_name = f"{city_name}"
         self.streets = streets
-        self.filepath = os.path.join("SHOP", "CITY", self.city_name, self.city_name + ".map")
-        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         
+        # Handles custom city MAP file 
+        self.filepath = os.path.join("dev", "CITY", self.city_name, self.city_name + ".map")
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+                        
         if write_on_init:
             self.write_to_file()
 
@@ -1323,17 +1336,17 @@ class StreetFileEditor:
         self.road_divided = street_data.get("road_divided", 0)
         self.alley = street_data.get("alley", 0)
         
-        self.filepath = os.path.join("SHOP", "CITY", city_name, self.street_name + ".road")
+        # Handles custom city ROAD file
+        self.filepath = os.path.join("dev", "CITY", city_name, self.street_name + ".road")
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         
         if write_on_init:
             self.write_to_file()
 
-
     def write_to_file(self):
         with open(self.filepath, 'w') as file:
             file.write(self.construct_template())
-
+            
     def construct_template(self):
         tab = '\t'
         template = 'mmRoadSect :0 {\n'
@@ -1373,6 +1386,23 @@ class StreetFileEditor:
         template += f'{tab}Alley {self.alley}\n'
         template += '}'
         return template
+    
+    
+# Write COMMANDLINE
+def write_commandline(create_file: bool, city_name: str, destination_folder: str):
+    if create_file:
+        city_name = city_name.lower()
+        cmd_file = "commandline.txt"
+        with open(cmd_file, "w") as file:
+            file.write(f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}")
+            
+        shutil.move(cmd_file, os.path.join(destination_folder, cmd_file))
+        
+# Start GAME
+def start_game(destination_folder, play_game=False):
+    game_path = os.path.join(destination_folder, shortcut_or_exe_name)
+    if play_game:
+        subprocess.run(game_path, cwd=destination_folder, shell=True)
 
 ###################################################################################################################
 ###################################################################################################################
@@ -1383,50 +1413,6 @@ class StreetFileEditor:
 # Other Types:
 # 0 = No, 1 = Yes
 
-# --- POLYGONS FOR REFERENCE ONLY ---
-
-# # Polygon 1 | Grass Start
-# create_and_append_polygon(
-#     bound_number = 1,
-#     material_index = 0,
-#     vertex_coordinates=[
-#         (-100, 0.0, -100),
-#         (-100, 0.0, 100),	
-#         (100, 0.0, 100),
-#         (100, 0.0, -100)])
-
-# # Polygon 1 | Texture
-# generate_and_save_bms_file(
-#     string_names = ["24_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
-
-# # Polygon 2 |
-# create_and_append_polygon(
-#     bound_number = 2,
-#     material_index = 0,        # custom material
-#     vertex_coordinates=[
-#         (-100, 0.0, -200),
-#         (-100, 0.0, -100),	
-#         (100, 0.0, -100),
-#         (100, 0.0, -200)])
-
-# # Polygon 2 | Texture
-# generate_and_save_bms_file(
-#     string_names = ["SNOW"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
-
-# # Polygon 3 |
-# create_and_append_polygon(
-#     bound_number = 3,
-#     material_index = 0,        
-#     vertex_coordinates=[
-#         (-100, 0.0, -300),
-#         (-100, 0.0, -200),	
-#         (100, 0.0, -200),
-#         (100, 0.0, -300)])
-
-# # Polygon 3 | Texture
-# generate_and_save_bms_file(
-#     string_names = ["T_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
-
 data_street_1 = {
     "street_name": "shortcut1",
     "vertices": [
@@ -1435,6 +1421,9 @@ data_street_1 = {
         (-20.0, 1.0, 0.0),
         (-20.0, 1.0, -40.0),
         (-20.0, 1.0, -80.0),
+        (-20.0, 1.0, -90.0),
+        (-20.0, 1.0, -100.0),
+        (-20.0, 1.0, -110.0),
         (-20.0, 1.0, -120.0)]}
 
 data_street_2 = {
@@ -1448,8 +1437,28 @@ data_street_2 = {
         (-20.0, 1.0, -170.0),
         (-20.0, 1.0, -180.0),
         (-20.0, 1.0, -190.0),
-        (-20.0, 1.0, -210.0)]}
+        (-20.0, 1.0, -210.0),
+        (-20.0, 1.0, -230.0)]}
 
+data_street_3 = {
+    "street_name": "shortcut3",
+    "vertices": [
+        (-20.0, 1.0, -230.0),
+        (-10.0, 1.0, -230.0),
+        (0.0, 1.0, -230.0),
+        (10.0, 1.0, -230.0),
+        (20.0, 1.0, -230.0),
+        (20.0, 1.0, -210.0),
+        (20.0, 1.0, -180.0),
+        (20.0, 1.0, -170.0),
+        (20.0, 1.0, -140.0),
+        (20.0, 1.0, -120.0),
+        (10.0, 1.0, -120.0),
+        (0.0, 1.0, -120.0),
+        (-10.0, 1.0, -120.0),
+        (-20.0, 1.0, -120.0)]}
+
+# EXAMPLE of passing all parameters
 # data_street_something = {
 #     "street_name": "highway_path_1",
 #     "vertices": [
@@ -1471,16 +1480,10 @@ data_street_2 = {
 #         "alley": 0}
 
 # Put all your created Streets in this list
-street_data = [data_street_1, data_street_2]
+street_data = [data_street_1, data_street_2, data_street_3]
 
 # Do not change    
 street_names = []
-
-# Start GAME
-def start_game(destination_folder, play_game=False):
-    game_path = os.path.join(destination_folder, shortcut_or_exe_name)
-    if play_game:
-        subprocess.run(game_path, cwd=destination_folder, shell=True)
 
 ################################################################################################################               
 ################################################################################################################
@@ -1525,9 +1528,12 @@ shutil.move(output_physics_file, new_physics_path)
 
 # AI related (set either both to True or both to False)
 for data in street_data:
-    creator = StreetFileEditor(city_name, data, write_on_init=False)
+    creator = StreetFileEditor(city_name, data, write_on_init=True)
     street_names.append(data["street_name"])
-BAI_Editor(city_name, street_names, write_on_init=False)
+BAI_Editor(city_name, street_names, write_on_init=True)
+
+# Move dev
+move_dev(destination_folder)
 
 # The Main functions
 create_folder_structure(city_name)
@@ -1544,11 +1550,11 @@ plot_polygons(show_label=False, plot_picture=False, export_jpg=True,
               x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
               background_color='black', debug=False)
 
-create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=False)
+create_ar_file(city_name, destination_folder, create_plus_move_ar=True, delete_shop=True)
 write_commandline(True, city_name, destination_folder)
 
 print("\n===============================================")
 print("\nSuccesfully created " + f"{race_locale_name}!\n")
 print("===============================================\n")
 
-start_game(destination_folder, play_game=False)
+start_game(destination_folder, play_game=True)
