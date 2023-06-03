@@ -1,3 +1,8 @@
+/////////////////////////////////////////
+Velocity is (likely) not used by the game
+/////////////////////////////////////////
+
+
 [AgiPhysParameters(
   name        = 'BENCH ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
   friction    = 1.00,
