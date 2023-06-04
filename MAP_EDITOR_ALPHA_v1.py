@@ -28,7 +28,7 @@ import struct
 import shutil
 import random
 import subprocess
-from typing import List, Union, Tuple
+from typing import List, Dict, Union, Tuple
 import matplotlib.pyplot as plt                 
 import matplotlib.transforms as mtransforms     
 
@@ -47,8 +47,8 @@ set_anim=False                  # change to "True" if you want ANIM
 set_bridges=False               # change to "True" if you want BRIDGES (currently not recommended)
 set_props=False                 # change to "True" if you want PROPS
 
-ai_map=True
-ai_streets=True
+ai_map=False                    # change both to "True" if you want AI paths
+ai_streets=False                # change both to "True" if you want AI paths
 
 debug_facade=False              # change to "True" if you want to see the Facade Debug
 
@@ -141,7 +141,7 @@ bridges = [
     ((-200.0, 0.0, -200.0), "horizontal_east", 2, wide_bridge)]
 
 # Possible orientations
-# 'vertical', 'vertical_flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'"
+# 'vertical', 'vertical_flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'
 
 # Not applicable yet
 ambient_density = 0.5 # AIMAP_P
@@ -179,12 +179,14 @@ def to_do_list(x):
             SCRIPT --> "BND.write_to_file" should be a Boolean, similar to FCD Editor debug
             BAI --> retrieve Center from all set Polygons
             BAI --> path conflicts, no functional AI yet
+            BAI --> Map and Streets are still being created even if both functions are set to False
             PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
             BMS --> add shifting texture (like the airport lights, "fxltglow") see: GLOW AIRPORT.txt (didn't work so far)
             BMS --> BMS vertices should be sorted until the script is further improved
             BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this) (add type: facing direction)
-            FCD --> create FCD_Editor (in development)
+            FCD --> test and document flags
+            FCD --> enable diagonal Facade setting
             BNG --> improve prop functionality (facing)
             BNG --> for 'for loops', add a Start and Endpoint (+ separator value, similar to the FCD Editor)
             BNG --> add prop list (+ description) -- where is my folder with all Prop Pictures?
@@ -787,16 +789,6 @@ create_and_append_polygon(
 generate_and_save_bms_file(
     string_names = ["T_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
-# Polygon 4 | No Texture | Experimental
-create_and_append_polygon(
-    bound_number = 99,
-    material_index = 0,        
-    vertex_coordinates=[
-        (-100, 0.0, -400),
-        (-100, 0.0, -300),	
-        (100, 0.0, -300),
-        (100, 0.0, -400)])
-
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -854,7 +846,7 @@ def move_custom_textures():
             shutil.copy(source, destination)
         
 # Move contents of dev folder to MM1 destination folder      
-def move_dev(destination_folder):
+def move_dev(destination_folder, city_name):
     current_folder = os.getcwd()
     dev_folder_path = os.path.join(current_folder, 'dev')
     
@@ -865,6 +857,11 @@ def move_dev(destination_folder):
             shutil.rmtree(destination_path)
             
         shutil.copytree(dev_folder_path, destination_path)
+        
+    # Delete the city_name folder and its contents
+    city_folder_path = os.path.join(dev_folder_path, 'CITY', city_name)
+    if os.path.exists(city_folder_path):
+        shutil.rmtree(city_folder_path)
         
 # Distribute generated files
 def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
@@ -1069,7 +1066,7 @@ def create_ar_file(city_name, destination_folder, delete_shop=False):
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
                     
-# Create JPG Picture of Polygon hapes
+# Create JPG Picture of Polygon shapes
 def plot_polygons(show_label=False, plot_picture=False, export_jpg=False, 
                   x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
     
@@ -1194,7 +1191,17 @@ class BinaryBanger:
 class BNGFileWriter:
     def __init__(self, filename: str):
         self.filename = filename
-        self.objects = []       
+        self.objects = []
+        self.prop_data = self.load_prop_data()       
+        
+    def load_prop_data(self):
+        """Load prop dimensions from file."""
+        prop_data = {}
+        with open("Prop_Dimensions_Extracted.txt", "r") as f:
+            for line in f:
+                name, value_x, value_y, value_z = line.split()
+                prop_data[name] = Vector3(float(value_x), float(value_y), float(value_z))
+        return prop_data
         
     def write_props(self, set_props: bool = False):
         if set_props:
@@ -1207,14 +1214,55 @@ class BNGFileWriter:
 
                     for char in obj.name: 
                         f.write(struct.pack('<s', bytes(char, encoding='utf8'))) 
-                    
-    def add_props(self, new_objects: List[Tuple[Union[int, float], ...]]):
+                        
+    # IN DEVELOPMENT      
+    def add_props(self, new_objects: List[Dict[str, Union[int, float, str]]]):
         """Add props to the object datalist."""
         for obj in new_objects:
-            start_x, start_y, start_z, end_x, end_y, end_z, name = obj
-            start = Vector3(start_x, start_y, start_z)
-            end = Vector3(end_x, end_y, end_z)
-            self.objects.append(BinaryBanger(start, end, name + "\x00"))
+            offset = Vector3(obj['offset_x'], obj['offset_y'], obj['offset_z'])
+            face = Vector3(obj['face_x'], obj['face_y'], obj['face_z'])
+            name = obj['name']
+            rounding = obj.get('rounding', 'up')  # default is 'up' if 'rounding' not provided
+            separator = obj.get('separator', name)  # default is the name of the object itself if 'separator' not provided
+
+            if separator not in self.prop_data:
+                raise ValueError(f"Separator {separator} not found in prop data.")
+
+            self.objects.append(BinaryBanger(offset, face, name + "\x00"))
+
+            if name in self.prop_data:
+                if 'end_offset_x' in obj:
+                    num_props = (obj['end_offset_x'] - obj['offset_x']) / self.prop_data[separator].x
+                    num_props = math.ceil(num_props) if rounding == 'up' else int(num_props)
+                    for i in range(1, num_props):
+                        offset = Vector3(obj['offset_x'] + i * self.prop_data[separator].x, obj['offset_y'], obj['offset_z'])
+                        self.objects.append(BinaryBanger(offset, face, name + "\x00"))
+                if 'end_offset_y' in obj:
+                    num_props = (obj['end_offset_y'] - obj['offset_y']) / self.prop_data[separator].y
+                    num_props = math.ceil(num_props) if rounding == 'up' else int(num_props)
+                    for i in range(1, num_props):
+                        offset = Vector3(obj['offset_x'], obj['offset_y'] + i * self.prop_data[separator].y, obj['offset_z'])
+                        self.objects.append(BinaryBanger(offset, face, name + "\x00"))
+                if 'end_offset_z' in obj:
+                    num_props = (obj['end_offset_z'] - obj['offset_z']) / self.prop_data[separator].z
+                    num_props = math.ceil(num_props) if rounding == 'up' else int(num_props)
+                    for i in range(1, num_props):
+                        offset = Vector3(obj['offset_x'], obj['offset_y'], obj['offset_z'] + i * self.prop_data[separator].z)
+                        self.objects.append(BinaryBanger(offset, face, name + "\x00"))
+
+    def get_prop_dimension(self, prop_name: str, dimension: str) -> float:
+        """Get the dimension (x, y, or z) of a prop."""
+        if prop_name in self.prop_data:
+            if dimension == 'x':
+                return self.prop_data[prop_name].x
+            elif dimension == 'y':
+                return self.prop_data[prop_name].y
+            elif dimension == 'z':
+                return self.prop_data[prop_name].z
+            else:
+                raise ValueError("Invalid dimension: {}. Use 'x', 'y', or 'z'.".format(dimension))
+        else:
+            raise ValueError("Prop {} not found in prop data.".format(prop_name))
    
 bng_file_path = os.path.join("SHOP", "CITY", f"{city_name}.BNG")  
 bng_writer = BNGFileWriter(bng_file_path)
@@ -1222,6 +1270,7 @@ bng_writer = BNGFileWriter(bng_file_path)
 #################################################################################
 #################################################################################
 
+# MATERIALEDITOR CLASS
 class MaterialEditor:
     def __init__(self, name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color):
         self.name = name
@@ -1326,18 +1375,17 @@ class MaterialEditor:
 
 # BAI EDITOR CLASS
 class BAI_Editor:
-    def __init__(self, city_name, streets, ai_map=True):
+    def __init__(self, city_name, streets, ai_map=False):
         self.city_name = f"{city_name}"
         self.streets = streets
-        
-        # Handles custom city MAP file 
-        self.filepath = os.path.join("dev", "CITY", self.city_name, self.city_name + ".map")
-        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
-                        
+                       
         if ai_map:
             self.write_to_file()
 
     def write_to_file(self):
+        # Handles custom city MAP file
+        self.filepath = os.path.join("dev", "CITY", self.city_name, self.city_name + ".map")
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         with open(self.filepath, 'w') as file:
             file.write(self.construct_template())
 
@@ -1355,7 +1403,7 @@ class BAI_Editor:
 
 # Street File Editor CLASS
 class StreetFileEditor:
-    def __init__(self, city_name, street_data, ai_streets=True):
+    def __init__(self, city_name, street_data, ai_streets=False):
         self.street_name = street_data["street_name"]
         self.vertices = street_data["vertices"]
         self.intersection_types = street_data.get("intersection_types", [3, 3])
@@ -1365,15 +1413,14 @@ class StreetFileEditor:
         self.ped_blocked = street_data.get("ped_blocked", [0, 0])
         self.road_divided = street_data.get("road_divided", 0)
         self.alley = street_data.get("alley", 0)
-        
-        # Handles custom city ROAD file
-        self.filepath = os.path.join("dev", "CITY", city_name, self.street_name + ".road")
-        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
-        
+          
         if ai_streets:
             self.write_to_file()
 
     def write_to_file(self):
+        # Handles custom city ROAD file  
+        self.filepath = os.path.join("dev", "CITY", city_name, self.street_name + ".road")
+        os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         with open(self.filepath, 'w') as file:
             file.write(self.construct_template())
             
@@ -1539,7 +1586,7 @@ def start_game(destination_folder, play_game=False):
 # SET FCD
 fcd_one = {
 	'room': 1,
-	'flags': 1057,
+	'flags': 35,
 	'start': Vector3(-20, 0.0, -30.0),
 	'end': Vector3(20, 0.0, -30.0),
 	'sides': Vector3(28.465626,28.465626,0),
@@ -1650,15 +1697,43 @@ street_data = [data_street_1, data_street_2, data_street_3]
 
 ################################################################################################################               
 
-# SET PROPS
-# x,y,z (offset), x,y,z (facing), name
-bng_writer.add_props([
-    [-10, 0.1, -10, -10, 0.1, -10000, "tp_trailer"],
-    [10, 0.1, -10, 10, 0.1, -10000, "tp_trailer"]])
+# separator: tp_barricade.AXIS.....?
+# see: CHATGPT: PROP DIMENSIONS (chat)
 
-# Set multiple props at once with a separator value
-for i in range(50):
-    bng_writer.add_props([[-50 + (i*4), -30, 0, 0, 0, 0, "TP_BARRICADE"]])
+prop_1 = {'offset_x': -10, 
+          'offset_y': 0.1, 
+          'offset_z': -10, 
+          'face_x': -10, 
+          'face_y': 0.1, 
+          'face_z': -10000, 
+          'name': 'tp_trailer', 
+          'end_offset_x': 400, 
+          'rounding': 'down', 
+          'separator': 'tp_barricade'}
+
+prop_2 = {'offset_x': -10, 'offset_y': 0.1, 
+          'offset_z': -30, 
+          'face_x': -10, 
+          'face_y': 0.1, 
+          'face_z': -30000, 
+          'name': 'tp_trailer', 
+          'end_offset_x': 400, 
+          'rounding': 'down', 
+          'separator': 'tp_barricade'}
+
+prop_3 = {'offset_x': 10, 
+          'offset_y': 0.1, 
+          'offset_z': -50, 
+          'face_x': -10, 
+          'face_y': 0.1, 
+          'face_z': -30000, 
+          'name': 'tp_barricade'}
+
+prop_list = [prop_1, prop_2, prop_3]
+
+bng_writer.add_props(prop_list)
+bng_writer.write_props()
+
 
 ################################################################################################################     
 
@@ -1687,16 +1762,16 @@ shutil.move(output_physics_file, new_physics_path)
 # AI related
 street_names = []
 for data in street_data:
-    creator = StreetFileEditor(city_name, data)
+    creator = StreetFileEditor(city_name, data, ai_streets)
     street_names.append(data["street_name"])
-BAI_Editor(city_name, street_names)
+BAI_Editor(city_name, street_names, ai_map)
 
 # Main functions
 create_folder_structure(city_name)
 distribute_generated_files(city_name, bnd_hit_id, 
                            num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
 
-move_dev(mm1_folder)
+move_dev(mm1_folder, city_name)
 move_custom_textures()
 
 create_ext_file(city_name, all_polygons_picture) 
