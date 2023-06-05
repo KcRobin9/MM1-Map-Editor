@@ -43,18 +43,21 @@ mm1_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc" # Path to your MM1 folder
 play_game=True                  # boot the game immediately after the map is created
 delete_shop=True                # shop folder contains all the files that are used to create the .ar (gets deleted ONLY after the .ar is created)
 
+set_facade=True                 # change to "True" if you want FACADE
+set_props=True                  # change to "True" if you want PROPS
+
 set_anim=False                  # change to "True" if you want ANIM
 set_bridges=False               # change to "True" if you want BRIDGES (currently not recommended)
-set_props=False                 # change to "True" if you want PROPS
 
 ai_map=False                    # change both to "True" if you want AI paths
 ai_streets=False                # change both to "True" if you want AI paths
 
-debug_facade=False              # change to "True" if you want to see the Facade Debug
+debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
+debug_facade=False              # change to "True" if you want a Facade Debug text file
+debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
 
 # SETUP III (optional)
-# =============== RACE EDITOR =============== 
-# Race names | Max is 15 for Blitz & Circuit, and 12 for Checkpoint
+# RACE EDITOR | Race names (max is 15 for Blitz & Circuit, and 12 for Checkpoint)
 blitz_race_names = ["Just in Time", "The Great Escape"]
 circuit_race_names = ["Dading's Race"]
 checkpoint_race_names = ["filler_race"]
@@ -168,29 +171,23 @@ def to_do_list(x):
             WALL --> is there a way to enable collision on both sides of the wall?
             WALL --> walls are infinite in height (fix this)
             BRIDGE --> cont.                   
-            HUDMAP --> fix automate (correct) alignment
+            HUDMAP --> fix/automate (correct) alignment
             HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
             SCRIPT --> split "distribute_generated_files" into smaller components    
-            SCRIPT --> put everything into a PolygonHandler class? (to retain input data in functions)
             SCRIPT --> split City Settings (coordinates) into separate file
             SCRIPT --> "repeating_horizontal_flipped" shorten (?) (e.g. "rhf" or "r-hf)
-            SCRIPT --> {city_name} files in the dev folder should ideally be deleted after the folder has been moved
-            SCRIPT --> is Vector2 class really necessary?
-            SCRIPT --> "BND.write_to_file" should be a Boolean, similar to FCD Editor debug
+            SCRIPT --> is Vector2 class really necessary? (maybe remove it)
             BAI --> retrieve Center from all set Polygons
             BAI --> path conflicts, no functional AI yet
-            BAI --> Map and Streets are still being created even if both functions are set to False
             PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
             BMS --> add shifting texture (like the airport lights, "fxltglow") see: GLOW AIRPORT.txt (didn't work so far)
-            BMS --> BMS vertices should be sorted until the script is further improved
+            BMS --> BMS vertices should be sorted until the script is further improved (?)
             BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this) (add type: facing direction)
             FCD --> test and document flags
             FCD --> enable diagonal Facade setting
             BNG --> improve prop functionality (facing)
-            BNG --> for 'for loops', add a Start and Endpoint (+ separator value, similar to the FCD Editor)
             BNG --> add prop list (+ description) -- where is my folder with all Prop Pictures?
-            BNG --> create dataset with x,y,z (dimensions) of all props
             BNG --> investigate CustomProp_Editor (?)
             AIMAP --> allow cop & ambient setting for each individual race
             CELLS --> implement Cell type
@@ -220,6 +217,7 @@ class Vector3:
         self.x = x
         self.y = y
         self.z = z
+        self._data = {"x": x, "y": y, "z": z}
 
     @classmethod
     def from_file(cls, file):
@@ -235,6 +233,16 @@ class Vector3:
     
     def copy(self):
         return Vector3(self.x, self.y, self.z)
+    
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __setitem__(self, key, value):
+        if key in self._data:
+            self._data[key] = value
+            setattr(self, key, value)
+        else:
+            raise ValueError("Invalid key: {}. Use 'x', 'y', or 'z'.".format(key))
         
     def __repr__(self, round_values=True):
         if round_values:
@@ -397,9 +405,10 @@ class BND:
             poly.to_file(file)              
                 
     # Write BND TEXT data
-    def write_to_file(self, file_name):
-        with open(file_name, 'w') as f:
-            f.write(str(self))
+    def write_to_file(self, file_name, debug_bnd=False):
+        if debug_bnd:
+            with open(file_name, 'w') as f:
+                f.write(str(self))
                 
     def __repr__(self):
         return 'BND\n Magic: {}\n Offset: {}\n Width: {}\n Row_count: {}\n Height: {}\n Center: {}\n Radius: {}\n Radius_sqr: {}\n min: {}\n max: {}\n Num Verts: {}\n Num Polys: {}\n Num Hot Verts: {}\n Num Vertices Unk: {}\n Edge count: {}\n Scaled Dist. X: {}\n Z Dist.: {}\n Num Indexs: {}\n Height Scale: {}\n Unk12: {}\n Vertices: {}\n\n Polys: {}\n\n'.format(
@@ -434,7 +443,7 @@ class BMS:
             file.write(struct.pack('<fff', self.Radius, self.Radiussq, self.BoundingBoxRadius))
             file.write(struct.pack('<bb', self.TextureCount, self.Flags))
 
-            file.write(b'\x00' * 2)
+            file.write(b'\x00' * 2) 
             file.write(b'\x00' * 4)
 
             for StringName in self.StringName:
@@ -456,7 +465,6 @@ class BMS:
 ################################################################################################################       
    
 # INITIALIZATIONS | do not change
-
 # BND related
 bnd_hit_id = f"{city_name}_HITID.BND"
 bnd_hit_id_text = f"{city_name}_HITID.txt"
@@ -474,8 +482,7 @@ num_circuit = len(circuit_waypoints)
 num_checkpoint = len(checkpoint_waypoints)
 
 # FCD related
-fcd_extension = ".FCD"
-created_fcd_file = city_name + fcd_extension
+created_fcd_file = city_name + ".FCD"
 target_fcd_dir = os.path.join(os.getcwd(), "SHOP", "CITY")
 
 # Physics related
@@ -797,7 +804,7 @@ bnd = initialize_bnd(vertices, polys)
 
 with open(bnd_hit_id, "wb") as f:
     bnd.to_file(f)
-    # bnd.write_to_file(bnd_hit_id_text)
+    bnd.write_to_file(bnd_hit_id_text, debug_bnd)
 
 # Create SHOP and FOLDER structure   
 def create_folder_structure(city_name):
@@ -858,7 +865,7 @@ def move_dev(destination_folder, city_name):
             
         shutil.copytree(dev_folder_path, destination_path)
         
-    # Delete the city_name folder and its contents
+    # Delete Custom City .map and .roads files after they have been moved to the MM1 folder
     city_folder_path = os.path.join(dev_folder_path, 'CITY', city_name)
     if os.path.exists(city_folder_path):
         shutil.rmtree(city_folder_path)
@@ -906,7 +913,7 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
             
         # Set MMDATA.CSV values           
-        car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 8, 99
+        car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 99, 99
         cops_x = 0.0        # will be customizable later
         ambient_x = 1.0     # will be customizable later
         peds_x = 1.0        # will be customizable later
@@ -1068,7 +1075,7 @@ def create_ar_file(city_name, destination_folder, delete_shop=False):
                     
 # Create JPG Picture of Polygon shapes
 def plot_polygons(show_label=False, plot_picture=False, export_jpg=False, 
-                  x_offset=0, y_offset=0, line_width=1, background_color='black', debug=False):
+                  x_offset=0, y_offset=0, line_width=1, background_color='black', debug_hud=False):
     
     # Setup
     output_folder_city = os.path.join("SHOP", "BMP16")
@@ -1076,7 +1083,7 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
     
     hudmap_picture640 = city_name + "640.JPG"
     hudmap_picture320 = city_name + "320.JPG"
-    hudmap_debug = city_name + "_DEBUG.JPG"
+    hudmap_debug = city_name + "_HUD_DEBUG.JPG"
     
     global all_polygons_picture
     
@@ -1103,6 +1110,9 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
         
         if show_label:
             plt.legend()
+            
+        if plot_picture:
+            plt.show()
         
         if export_jpg:
             ax.axis('off')
@@ -1112,16 +1122,12 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
             plt.savefig(os.path.join(output_folder_city, hudmap_picture640), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
             plt.savefig(os.path.join(output_folder_city, hudmap_picture320), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
 
-            # rename
-            if debug:
+            if debug_hud:
                 ax.cla()
                 ax.set_facecolor(background_color)
                 for i, polygon in enumerate(all_polygons_picture):
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
                 plt.savefig(os.path.join(output_folder_cwd, hudmap_debug), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
-                    
-        if plot_picture:
-            plt.show()
 
 # Create EXT file            
 def create_ext_file(city_name, polygonz):
@@ -1192,12 +1198,14 @@ class BNGFileWriter:
     def __init__(self, filename: str):
         self.filename = filename
         self.objects = []
-        self.prop_data = self.load_prop_data()       
+        resources_folder = os.path.join(os.getcwd(), "RESOURCES")
+        self.prop_file_path = os.path.join(resources_folder, "Prop_Dimensions_Extracted.txt")
+        self.prop_data = self.load_prop_data()            
         
     def load_prop_data(self):
         """Load prop dimensions from file."""
         prop_data = {}
-        with open("Prop_Dimensions_Extracted.txt", "r") as f:
+        with open(self.prop_file_path, "r") as f:
             for line in f:
                 name, value_x, value_y, value_z = line.split()
                 prop_data[name] = Vector3(float(value_x), float(value_y), float(value_z))
@@ -1210,7 +1218,8 @@ class BNGFileWriter:
                 f.write(struct.pack('<I', len(self.objects)))
             
                 for obj in self.objects:
-                    f.write(struct.pack('<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z))
+                    f.write(struct.pack(
+                        '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z))
 
                     for char in obj.name: 
                         f.write(struct.pack('<s', bytes(char, encoding='utf8'))) 
@@ -1222,8 +1231,9 @@ class BNGFileWriter:
             offset = Vector3(obj['offset_x'], obj['offset_y'], obj['offset_z'])
             face = Vector3(obj['face_x'], obj['face_y'], obj['face_z'])
             name = obj['name']
-            rounding = obj.get('rounding', 'up')  # default is 'up' if 'rounding' not provided
+            
             separator = obj.get('separator', name)  # default is the name of the object itself if 'separator' not provided
+            axis = obj.get('axis', 'x')  # default is 'x' if 'axis' not provided
 
             if separator not in self.prop_data:
                 raise ValueError(f"Separator {separator} not found in prop data.")
@@ -1231,24 +1241,14 @@ class BNGFileWriter:
             self.objects.append(BinaryBanger(offset, face, name + "\x00"))
 
             if name in self.prop_data:
-                if 'end_offset_x' in obj:
-                    num_props = (obj['end_offset_x'] - obj['offset_x']) / self.prop_data[separator].x
-                    num_props = math.ceil(num_props) if rounding == 'up' else int(num_props)
+                if 'end_offset_' + axis in obj:
+                    num_props = int(abs(obj['end_offset_' + axis] - obj['offset_' + axis]) / self.prop_data[separator][axis])
+
                     for i in range(1, num_props):
-                        offset = Vector3(obj['offset_x'] + i * self.prop_data[separator].x, obj['offset_y'], obj['offset_z'])
-                        self.objects.append(BinaryBanger(offset, face, name + "\x00"))
-                if 'end_offset_y' in obj:
-                    num_props = (obj['end_offset_y'] - obj['offset_y']) / self.prop_data[separator].y
-                    num_props = math.ceil(num_props) if rounding == 'up' else int(num_props)
-                    for i in range(1, num_props):
-                        offset = Vector3(obj['offset_x'], obj['offset_y'] + i * self.prop_data[separator].y, obj['offset_z'])
-                        self.objects.append(BinaryBanger(offset, face, name + "\x00"))
-                if 'end_offset_z' in obj:
-                    num_props = (obj['end_offset_z'] - obj['offset_z']) / self.prop_data[separator].z
-                    num_props = math.ceil(num_props) if rounding == 'up' else int(num_props)
-                    for i in range(1, num_props):
-                        offset = Vector3(obj['offset_x'], obj['offset_y'], obj['offset_z'] + i * self.prop_data[separator].z)
-                        self.objects.append(BinaryBanger(offset, face, name + "\x00"))
+                        new_offset = Vector3(offset.x, offset.y, offset.z)  # create a new instance with the same coordinates
+                        new_offset[axis] = obj['offset_' + axis] + i * self.prop_data[separator][axis]
+                        self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
+
 
     def get_prop_dimension(self, prop_name: str, dimension: str) -> float:
         """Get the dimension (x, y, or z) of a prop."""
@@ -1383,7 +1383,6 @@ class BAI_Editor:
             self.write_to_file()
 
     def write_to_file(self):
-        # Handles custom city MAP file
         self.filepath = os.path.join("dev", "CITY", self.city_name, self.city_name + ".map")
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         with open(self.filepath, 'w') as file:
@@ -1418,7 +1417,6 @@ class StreetFileEditor:
             self.write_to_file()
 
     def write_to_file(self):
-        # Handles custom city ROAD file  
         self.filepath = os.path.join("dev", "CITY", city_name, self.street_name + ".road")
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         with open(self.filepath, 'w') as file:
@@ -1512,46 +1510,47 @@ class BinaryFacade:
         return 'BinaryFacade\n Room: {}\n Flags: {}\n Start: {}\n End: {}\n Sides: {}\n Scale: {}\n Name: {}\n\n'.format(
             self.room, self.flags, self.start, self.end, self.sides, self.scale, self.name)
 
-def create_facades(filename, facade_params, target_fcd_dir, debug_facade=False):
-    facades = []
+def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, debug_facade=False):
+    if set_facade:
+        facades = []
 
-    for params in facade_params:
-        num_facades = math.ceil(abs(getattr(params['end'], params['axis']) - getattr(params['start'], params['axis'])) / params['separator'])
+        for params in facade_params:
+            num_facades = math.ceil(abs(getattr(params['end'], params['axis']) - getattr(params['start'], params['axis'])) / params['separator'])
+            
+            for i in range(num_facades):
+                room = params['room']
+                flags = params['flags']
+                current_start = params['start'].copy()
+                current_end = params['end'].copy()
+
+                if params['axis'] == 'x':
+                    current_start.x = getattr(params['start'], params['axis']) + params['separator'] * i
+                    current_end.x = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
+                elif params['axis'] == 'y':
+                    current_start.y = getattr(params['start'], params['axis']) + params['separator'] * i
+                    current_end.y = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
+                elif params['axis'] == 'z':
+                    current_start.z = getattr(params['start'], params['axis']) + params['separator'] * i
+                    current_end.z = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
+
+                sides = params['sides']
+                scale = params['scale']
+                name = params['facade_name']
+
+                facade = BinaryFacade(room, flags, current_start, current_end, sides, scale, name)
+                facades.append(facade)
         
-        for i in range(num_facades):
-            room = params['room']
-            flags = params['flags']
-            current_start = params['start'].copy()
-            current_end = params['end'].copy()
-
-            if params['axis'] == 'x':
-                current_start.x = getattr(params['start'], params['axis']) + params['separator'] * i
-                current_end.x = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
-            elif params['axis'] == 'y':
-                current_start.y = getattr(params['start'], params['axis']) + params['separator'] * i
-                current_end.y = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
-            elif params['axis'] == 'z':
-                current_start.z = getattr(params['start'], params['axis']) + params['separator'] * i
-                current_end.z = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
-
-            sides = params['sides']
-            scale = params['scale']
-            name = params['facade_name']
-
-            facade = BinaryFacade(room, flags, current_start, current_end, sides, scale, name)
-            facades.append(facade)
-    
-    with open(filename, mode='wb') as f:
-        f.write(struct.pack('<I', len(facades)))
-        for facade in facades:
-            f.write(facade.to_bytes())
-    shutil.move(filename, os.path.join(target_fcd_dir, filename))
-    
-    if debug_facade:
-        debug_filename = filename.replace('.FCD', '_FCD_debug.txt')
-        with open(os.path.join(os.getcwd(), debug_filename), mode='w', encoding='utf-8') as f:
+        with open(filename, mode='wb') as f:
+            f.write(struct.pack('<I', len(facades)))
             for facade in facades:
-                f.write(str(facade))
+                f.write(facade.to_bytes())
+        shutil.move(filename, os.path.join(target_fcd_dir, filename))
+        
+        if debug_facade:
+            debug_filename = filename.replace('.FCD', '_FCD_debug.txt')
+            with open(os.path.join(os.getcwd(), debug_filename), mode='w', encoding='utf-8') as f:
+                for facade in facades:
+                    f.write(str(facade))
                         
 ##########################################################################################
 ################################################################################################################### 
@@ -1587,8 +1586,8 @@ def start_game(destination_folder, play_game=False):
 fcd_one = {
 	'room': 1,
 	'flags': 35,
-	'start': Vector3(-20, 0.0, -30.0),
-	'end': Vector3(20, 0.0, -30.0),
+	'start': Vector3(-60, 0.0, -30.0),
+	'end': Vector3(-25, 0.0, -30.0),
 	'sides': Vector3(28.465626,28.465626,0),
 	'separator': 10, 
 	'facade_name': "dfhotel01",
@@ -1597,9 +1596,9 @@ fcd_one = {
 
 fcd_two = {
 	'room': 1,
-	'flags': 1057,
-	'start': Vector3(-20, 0.0, -30.0),
-	'end': Vector3(-20, 0.0, -60.0),
+	'flags': 35,
+	'start': Vector3(10, 0.0, -30.0),
+	'end': Vector3(10, 0.0, -60.0),
 	'sides': Vector3(28.465626,28.465626,0),
 	'separator': 10, 
 	'facade_name': "ofbldg02",
@@ -1653,26 +1652,8 @@ data_street_2 = {
         (-20.0, 1.0, -210.0),
         (-20.0, 1.0, -230.0)]}
 
-data_street_3 = {
-    "street_name": "shortcut3",
-    "vertices": [
-        (-20.0, 1.0, -230.0),
-        (-10.0, 1.0, -230.0),
-        (0.0, 1.0, -230.0),
-        (10.0, 1.0, -230.0),
-        (20.0, 1.0, -230.0),
-        (20.0, 1.0, -210.0),
-        (20.0, 1.0, -180.0),
-        (20.0, 1.0, -170.0),
-        (20.0, 1.0, -140.0),
-        (20.0, 1.0, -120.0),
-        (10.0, 1.0, -120.0),
-        (0.0, 1.0, -120.0),
-        (-10.0, 1.0, -120.0),
-        (-20.0, 1.0, -120.0)]}
-
 # Put all your created Streets in this list
-street_data = [data_street_1, data_street_2, data_street_3]
+street_data = [data_street_1, data_street_2]
 
 # Example of passing all parameters
 # data_street_something = {
@@ -1697,43 +1678,46 @@ street_data = [data_street_1, data_street_2, data_street_3]
 
 ################################################################################################################               
 
-# separator: tp_barricade.AXIS.....?
-# see: CHATGPT: PROP DIMENSIONS (chat)
-
+# Multiple props, "tp_trailer"
 prop_1 = {'offset_x': -10, 
-          'offset_y': 0.1, 
+          'offset_y': 0.0, 
+          'offset_z': -40, 
+          'name': 'tp_trailer', 
+          
+          'end_offset_x': 40, 
+          'separator': 'tp_barricade', 
+          'axis': 'x',
+
+          'face_x': 10, 
+          'face_y': 0.0, 
+          'face_z': -40000}
+
+# Multiple props, "tp_barricade"
+prop_2 = {'offset_x': -30, 
+          'offset_y': 0.0, 
           'offset_z': -10, 
-          'face_x': -10, 
-          'face_y': 0.1, 
-          'face_z': -10000, 
-          'name': 'tp_trailer', 
-          'end_offset_x': 400, 
-          'rounding': 'down', 
-          'separator': 'tp_barricade'}
+          'name': 'tp_barricade', 
+          
+          'end_offset_z': -100, 
+          'separator': 'tp_trailer', 
+          'axis': 'z',
 
-prop_2 = {'offset_x': -10, 'offset_y': 0.1, 
-          'offset_z': -30, 
-          'face_x': -10, 
-          'face_y': 0.1, 
-          'face_z': -30000, 
-          'name': 'tp_trailer', 
-          'end_offset_x': 400, 
-          'rounding': 'down', 
-          'separator': 'tp_barricade'}
+          'face_x': 10, 
+          'face_y': 0.0, 
+          'face_z': -40000,
+          
+          'rounding': 'up'}
 
+# Single Prop (China Gate)
 prop_3 = {'offset_x': 10, 
-          'offset_y': 0.1, 
-          'offset_z': -50, 
-          'face_x': -10, 
-          'face_y': 0.1, 
-          'face_z': -30000, 
-          'name': 'tp_barricade'}
+          'offset_y': 0.0, 
+          'offset_z': -80, 
+          'face_x': 10000, 
+          'face_y': 0.0, 
+          'face_z': -80, 
+          'name': 'cpgate'}
 
 prop_list = [prop_1, prop_2, prop_3]
-
-bng_writer.add_props(prop_list)
-bng_writer.write_props()
-
 
 ################################################################################################################     
 
@@ -1776,14 +1760,15 @@ move_custom_textures()
 
 create_ext_file(city_name, all_polygons_picture) 
 create_anim(city_name, anim_data, set_anim)   
-create_bridges(bridges, set_bridges)       
-bng_writer.write_props(set_props)      
-create_facades(created_fcd_file, fcd_list, target_fcd_dir, debug_facade)
-           
+create_bridges(bridges, set_bridges) 
+create_facades(created_fcd_file, fcd_list, target_fcd_dir, set_facade, debug_facade)
+bng_writer.add_props(prop_list)
+bng_writer.write_props(set_props)        
+
 # HUD offset for Moronville is approx., x=-22.4, y=-40.7; automated alignment is not implemented yet
-plot_polygons(show_label=False, plot_picture=False, export_jpg=True, 
+plot_polygons(debug_hud=debug_hud, show_label=False, plot_picture=False, export_jpg=True, 
               x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
-              background_color='black', debug=False)
+              background_color='black')
 
 
 create_ar_file(city_name, mm1_folder, delete_shop)
