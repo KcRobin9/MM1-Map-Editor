@@ -36,15 +36,15 @@ import matplotlib.transforms as mtransforms
 # SETUP I (mandatory)                       Control + F    "city=="  to jump to The City Creation section
 city_name = "USER"                          # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"          # Can be multiple words --- name of the city in Game Menu
-shortcut_or_exe_name = "Open1560.lnk"       # or Open1560.exe or Midtown.exe
-mm1_folder = r"C:\Users\robin\Desktop\MM1 BETA-BAIcc" # Path to your MM1 folder
+shortcut_or_exe_name = "Open1560.exe"       # do not change
+mm1_folder = r"C:\Users\robin\Desktop\clean_MM1_BETA_BAIcc" # Path to your MM1 folder
 
 # SETUP II (handy)
 play_game=True                  # boot the game immediately after the map is created
 delete_shop=True                # shop folder contains all the files that are used to create the .ar (gets deleted ONLY after the .ar is created)
 
-set_facade=True                 # change to "True" if you want FACADE
-set_props=True                  # change to "True" if you want PROPS
+set_facade=False                 # change to "True" if you want FACADE
+set_props=False                  # change to "True" if you want PROPS
 
 set_anim=False                  # change to "True" if you want ANIM
 set_bridges=False               # change to "True" if you want BRIDGES (currently not recommended)
@@ -195,8 +195,12 @@ def to_do_list(x):
             RACES --> investigate why max 15?
             BLENDER --> [...]
             USER --> collect a folder with suitable TEX16O / TEX16A textures
-            GITHUB --> add Readme
+            GITHUB --> add Readme (+ limitations)
+            INSTALL --> add "installer.bat" that takes care of the one-time setup procedure
             OPEN1560 --> add (forked) updated Open1560
+            
+            now:
+            FCD --> enable "default" scale setting or omitting the variable
             """
             
 ################################################################################################################               
@@ -753,7 +757,7 @@ def user_notes(x):
     generate_and_save_bms_file(
            string_names=["T_WALL"], exclude=True))
     """
-
+    
 # Polygon 1 | Grass Start
 create_and_append_polygon(
     bound_number = 1,
@@ -869,7 +873,26 @@ def move_dev(destination_folder, city_name):
     city_folder_path = os.path.join(dev_folder_path, 'CITY', city_name)
     if os.path.exists(city_folder_path):
         shutil.rmtree(city_folder_path)
+                              
+def move_open1560(destination_folder):
+    current_folder = os.getcwd()
+    open1560_folder_path = os.path.join(current_folder, 'Installation_Instructions', 'Open1560')
+    
+    if os.path.exists(open1560_folder_path):
         
+        for file_name in os.listdir(open1560_folder_path):
+            source_file_path = os.path.join(open1560_folder_path, file_name)
+            destination_file_path = os.path.join(destination_folder, file_name)
+            
+            if os.path.isfile(source_file_path):
+                if os.path.isfile(destination_file_path):
+                    # Compare last modified time of source and mm1 folder
+                    if os.path.getmtime(source_file_path) != os.path.getmtime(destination_file_path):
+                        shutil.copy2(source_file_path, destination_file_path)
+                else:
+                    # If destination file does not exist, copy the file.
+                    shutil.copy2(source_file_path, destination_file_path)
+                                      
 # Distribute generated files
 def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
                                circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True):
@@ -1235,19 +1258,25 @@ class BNGFileWriter:
             separator = obj.get('separator', name)  # default is the name of the object itself if 'separator' not provided
             axis = obj.get('axis', 'x')  # default is 'x' if 'axis' not provided
 
-            if separator not in self.prop_data:
-                raise ValueError(f"Separator {separator} not found in prop data.")
+            # Check if separator is a string (object name) or a numeric value
+            if isinstance(separator, str):
+                if separator not in self.prop_data:
+                    raise ValueError(f"Separator {separator} not found in prop data.")
+                separator_value = self.prop_data[separator][axis]
+            else:
+                separator_value = separator  # separator is a numeric value
 
             self.objects.append(BinaryBanger(offset, face, name + "\x00"))
 
             if name in self.prop_data:
                 if 'end_offset_' + axis in obj:
-                    num_props = int(abs(obj['end_offset_' + axis] - obj['offset_' + axis]) / self.prop_data[separator][axis])
+                    num_props = int(abs(obj['end_offset_' + axis] - obj['offset_' + axis]) / separator_value)
 
                     for i in range(1, num_props):
                         new_offset = Vector3(offset.x, offset.y, offset.z)  # create a new instance with the same coordinates
-                        new_offset[axis] = obj['offset_' + axis] + i * self.prop_data[separator][axis]
+                        new_offset[axis] = obj['offset_' + axis] + i * separator_value
                         self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
+
 
 
     def get_prop_dimension(self, prop_name: str, dimension: str) -> float:
@@ -1685,7 +1714,7 @@ prop_1 = {'offset_x': -10,
           'name': 'tp_trailer', 
           
           'end_offset_x': 40, 
-          'separator': 'tp_barricade', 
+          'separator': 2, 
           'axis': 'x',
 
           'face_x': 10, 
@@ -1755,6 +1784,7 @@ create_folder_structure(city_name)
 distribute_generated_files(city_name, bnd_hit_id, 
                            num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
 
+move_open1560(mm1_folder)
 move_dev(mm1_folder, city_name)
 move_custom_textures()
 
