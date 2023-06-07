@@ -1,0 +1,1376 @@
+/////////////////////////////////////////
+Velocity is (likely) not used by the game
+/////////////////////////////////////////
+
+
+[AgiPhysParameters(
+  name        = 'BENCH ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF010_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF011_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF012_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF013_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF014_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF015_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF016_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF01_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF01_DS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF01_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF01_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF02_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF02_DS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF02_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF02_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF03_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF03_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF03_DS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF03_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF03_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF03_W ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF04_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF04_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF04_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF04_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF04_W ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF05_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF05_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF05_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF06 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF06_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF06_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF07_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BF07_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'BUSH ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'DIRT ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'FACADE_SF2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'FIREHY ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'FLAGSTONE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 4,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'GRASS1 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 0.50,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 2,
+  sound       = 2,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LANDMARK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.48,
+  bump_width  = 0.12,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LIGHT01 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LIGHT02 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LIGHTTP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LIGHTTS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LMOSQR_GRND ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.50,
+  bump_width  = 1.00,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 4,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'LMPARK_GRASS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 0.50,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 2,
+  sound       = 2,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'MBOX ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'NEW2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'P_BMAN ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'P_DINE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'P_TCOP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'P_TWAIT ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'P_WWMN ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'PMETER ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 4,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R1 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R2C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.18,
+  bump_width  = 0.40,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R2I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R4 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R6 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'R8 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RD1RR_TRACK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.10,
+  bump_width  = 0.50,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 3,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RD2LANE_COB ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.10,
+  bump_width  = 0.50,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 3,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RD2LANE_IND ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RD2LANEP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RD4LANEP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RD4LANEPI ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 5,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RF08 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RF10 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RFWY ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RINTER ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'RWALK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SDWLK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.20,
+  bump_width  = 2.00,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SGN_OW ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SGN_SL ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SGN_ST ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SGN_STP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SGN_XW ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SHRSE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SHRUB ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SIGN_CONST ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SIGN_DEADEND ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SIGN_STOP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'SIGN_STOPLIGHT ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'T_GRASS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 0.68,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.20,
+  bump_width  = 5.00,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 2,
+  sound       = 2,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'T_STEP_SIDE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'T_STEP_TOP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'T_WALK_ALLEY ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 1,
+  sound       = 1,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'T_WATER ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 666.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 0.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'TBPARK03GRASS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 0.50,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 2,
+  sound       = 2,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'TCANM ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'TEST1 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.20,
+  bump_width  = 2.00,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'TEST2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.50,
+  bump_width  = 5.00,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'TEST3 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 2.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'TEST4 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 0.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+, AgiPhysParameters(
+  name        = 'WPOBJ ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  friction    = 1.00,
+  elasticity  = 0.10,
+  drag        = 0.00,
+  bump_height = 0.00,
+  bump_width  = 0.05,
+  bump_depth  = 0.00,
+  sink_depth  = 1.00,
+  type        = 0,
+  sound       = 0,
+  velocity    = x = 0.0, y = 0.0),
+  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
