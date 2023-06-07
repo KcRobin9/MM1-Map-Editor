@@ -41,19 +41,21 @@ mm1_folder = r"C:\Users\robin\Desktop\clean_MM1_BETA_BAIcc" # Path to your MM1 f
 
 # SETUP II (handy)
 play_game=True                  # boot the game immediately after the map is created
-delete_shop=True                # shop folder contains all the files that are used to create the .ar (gets deleted ONLY after the .ar is created)
+delete_shop=True                # delete raw city files after .ar file has been created
 
-set_facade=False                 # change to "True" if you want FACADE
-set_props=False                  # change to "True" if you want PROPS
+set_facade=False                # change to "True" if you want FACADE
+set_props=False                 # change to "True" if you want PROPS
 
 set_anim=False                  # change to "True" if you want ANIM
 set_bridges=False               # change to "True" if you want BRIDGES (currently not recommended)
 
 ai_map=False                    # change both to "True" if you want AI paths
 ai_streets=False                # change both to "True" if you want AI paths
+cruise_start_position=          (30.0, 0.0, 30.0) # x, y, z // both ai_map and ai_streets must be "True"
 
 debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
 debug_facade=False              # change to "True" if you want a Facade Debug text file
+debug_bng=False                  # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
 
 # SETUP III (optional)
@@ -179,16 +181,20 @@ def to_do_list(x):
             SCRIPT --> is Vector2 class really necessary? (maybe remove it)
             BAI --> retrieve Center from all set Polygons
             BAI --> path conflicts, no functional AI yet
+            BAI --> add # lane 1 [], # lane 2 [], etc
             PTL --> reinvestigate at some point
             BMS --> export "cache_size" variable correctly
             BMS --> add shifting texture (like the airport lights, "fxltglow") see: GLOW AIRPORT.txt (didn't work so far)
             BMS --> BMS vertices should be sorted until the script is further improved (?)
             BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this) (add type: facing direction)
             FCD --> test and document flags
+            FCD --> add "default" scale setting or omitting the variable
+            FCD --> Useful Documents --> make a screenshot of each facade in the game for reference
             FCD --> enable diagonal Facade setting
             BNG --> improve prop functionality (facing)
-            BNG --> add prop list (+ description) -- where is my folder with all Prop Pictures?
+            BNG --> add more "pictures" (bridge, brigdebuild, etc)
             BNG --> investigate CustomProp_Editor (?)
+            BNG --> investigate breakable parts in .MMBANGERDATA (i.e. file creation, and then objects that should break)
             AIMAP --> allow cop & ambient setting for each individual race
             CELLS --> implement Cell type
             CELLS --> # Max 256 characters per row --> add Error Handling/warning
@@ -196,13 +202,10 @@ def to_do_list(x):
             BLENDER --> [...]
             USER --> collect a folder with suitable TEX16O / TEX16A textures
             GITHUB --> add Readme (+ limitations)
-            INSTALL --> add "installer.bat" that takes care of the one-time setup procedure
+            DEBUG --> add debug BMS (textures)
             OPEN1560 --> add (forked) updated Open1560
-            
-            now:
-            FCD --> enable "default" scale setting or omitting the variable
             """
-            
+                
 ################################################################################################################               
 ################################################################################################################        
 
@@ -471,7 +474,7 @@ class BMS:
 # INITIALIZATIONS | do not change
 # BND related
 bnd_hit_id = f"{city_name}_HITID.BND"
-bnd_hit_id_text = f"{city_name}_HITID.txt"
+bnd_hit_id_text = f"{city_name}_HITID_debug.txt"
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], [0.0, 0.0, 0.0, 0.0])
 vertices = []
 polys = [poly_filler]
@@ -784,7 +787,7 @@ create_and_append_polygon(
 
 # Polygon 2 | Texture
 generate_and_save_bms_file(
-    string_names = ["SNOW"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    string_names = ["T_WATER"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
 # Polygon 3 |
 create_and_append_polygon(
@@ -1106,7 +1109,7 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
     
     hudmap_picture640 = city_name + "640.JPG"
     hudmap_picture320 = city_name + "320.JPG"
-    hudmap_debug = city_name + "_HUD_DEBUG.JPG"
+    hudmap_debug = city_name + "_HUD_debug.jpg"
     
     global all_polygons_picture
     
@@ -1218,9 +1221,11 @@ class BinaryBanger:
             self.Room, self.Flags, self.Start, self.End, self.Name)
         
 class BNGFileWriter:
-    def __init__(self, filename: str):
+    def __init__(self, filename: str, city_name: str, debug_bng: bool = False):
         self.filename = filename
         self.objects = []
+        self.debug_bng = debug_bng  
+        self.debug_filename = f"{city_name}_BNG_debug.txt"
         resources_folder = os.path.join(os.getcwd(), "RESOURCES")
         self.prop_file_path = os.path.join(resources_folder, "Prop_Dimensions_Extracted.txt")
         self.prop_data = self.load_prop_data()            
@@ -1240,12 +1245,19 @@ class BNGFileWriter:
             with open(self.filename, mode="wb") as f:
                 f.write(struct.pack('<I', len(self.objects)))
             
-                for obj in self.objects:
-                    f.write(struct.pack(
-                        '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z))
+                for index, obj in enumerate(self.objects, 1):
+                    if self.debug_bng:
+                        with open(self.debug_filename, "a") as debug_f:
+                            debug_f.write(f"Prop {index} Data:\n"  
+                                        f"Start: {obj.start}\n"
+                                        f"End: {obj.end}\n"
+                                        f"Name: {obj.name}\n\n")
 
-                    for char in obj.name: 
-                        f.write(struct.pack('<s', bytes(char, encoding='utf8'))) 
+                        f.write(struct.pack(
+                            '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z))
+
+                        for char in obj.name: 
+                            f.write(struct.pack('<s', bytes(char, encoding='utf8'))) 
                         
     # IN DEVELOPMENT      
     def add_props(self, new_objects: List[Dict[str, Union[int, float, str]]]):
@@ -1277,8 +1289,6 @@ class BNGFileWriter:
                         new_offset[axis] = obj['offset_' + axis] + i * separator_value
                         self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
 
-
-
     def get_prop_dimension(self, prop_name: str, dimension: str) -> float:
         """Get the dimension (x, y, or z) of a prop."""
         if prop_name in self.prop_data:
@@ -1294,7 +1304,7 @@ class BNGFileWriter:
             raise ValueError("Prop {} not found in prop data.".format(prop_name))
    
 bng_file_path = os.path.join("SHOP", "CITY", f"{city_name}.BNG")  
-bng_writer = BNGFileWriter(bng_file_path)
+bng_writer = BNGFileWriter(bng_file_path, city_name, debug_bng) 
 
 #################################################################################
 #################################################################################
@@ -1636,13 +1646,7 @@ fcd_two = {
 
 fcd_list = [fcd_one, fcd_two]
 
-# Few examples:
-# ofbldg02
-# dt11_front
-# tunnel01
-# t_rail01
-# ramp01
-# tunnel02
+# Few examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
 
 ###################################################################################################################
 ###################################################################################################################
@@ -1655,57 +1659,44 @@ fcd_list = [fcd_one, fcd_two]
 # 0 = No, 1 = Yes
 
 data_street_1 = {
-    "street_name": "shortcut1",
+    "street_name": "path_1",
     "vertices": [
-        (-20.0, 1.0, 80.0),
-        (-20.0, 1.0, 40.0),
-        (-20.0, 1.0, 0.0),
-        (-20.0, 1.0, -40.0),
-        (-20.0, 1.0, -80.0),
-        (-20.0, 1.0, -90.0),
-        (-20.0, 1.0, -100.0),
-        (-20.0, 1.0, -110.0),
-        (-20.0, 1.0, -120.0)]}
+        cruise_start_position,
+        (30.0, 1.0, 15.0),
+        (30.0, 1.0, 0.0),
+        (30.0, 1.0, -40.0),
+        (30.0, 1.0, -80.0),
+        (30.0, 1.0, -90.0),
+        (30.0, 1.0, -100.0),
+        (30.0, 1.0, -110.0),
+        (30.0, 1.0, -120.0)]}
 
-data_street_2 = {
-    "street_name": "shortcut2",
+# EXAMPLE of setting ALL options (alpha)
+data_street_example = {
+    "street_name": "path_2",
     "vertices": [
-        (-20.0, 1.0, -120.0),
-        (-20.0, 1.0, -130.0),
-        (-20.0, 1.0, -140.0),
-        (-20.0, 1.0, -150.0),
-        (-20.0, 1.0, -160.0),
-        (-20.0, 1.0, -170.0),
-        (-20.0, 1.0, -180.0),
-        (-20.0, 1.0, -190.0),
-        (-20.0, 1.0, -210.0),
-        (-20.0, 1.0, -230.0)]}
+        (-40.0, 0.0, -20.0),
+        (-40.0, 0.0, -40.0),
+        (-40.0, 0.0, -60.0),
+        (-40.0, 0.0, -80.0)],
+    "intersection_types": [1, 1],
+    "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
+    "stop_light_positions": [
+        (-40.0, 0.0, -20.0),
+        (-40.0, 0.0, -20.1),
+        (35.0, 0.0, 10.0),
+        (35.1, 0.0, 10.0)],
+        "traffic_blocked": [0, 0],
+        "ped_blocked": [0, 0],
+        "road_divided": 0,
+        "alley": 0}
 
 # Put all your created Streets in this list
-street_data = [data_street_1, data_street_2]
-
-# Example of passing all parameters
-# data_street_something = {
-#     "street_name": "highway_path_1",
-#     "vertices": [
-#         (-80.1, 11.2, 760.0),
-#         (-40.6, 9.8, 730.7),
-#         (-10.3, 10.1, 690.8),
-#         (5.5, 7.3, 650.6),
-#         (20.2, 6.0, 620.7)],
-#     "intersection_types": [1, 1],
-#     "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
-#     "stop_light_positions": [
-#         (-80.1, 11.2, 760.0),
-#         (-40.6, 9.8, 730.7),
-#         (-10.3, 10.1, 690.8),
-#         (5.5, 7.3, 650.6)],
-#         "traffic_blocked": [0, 0],
-#         "ped_blocked": [0, 0],
-#         "road_divided": 0,
-#         "alley": 0}
+street_data = [data_street_1, data_street_example]
 
 ################################################################################################################               
+
+amplify = 1000 # to do
 
 # Multiple props, "tp_trailer"
 prop_1 = {'offset_x': -10, 
@@ -1713,9 +1704,9 @@ prop_1 = {'offset_x': -10,
           'offset_z': -40, 
           'name': 'tp_trailer', 
           
-          'end_offset_x': 40, 
-          'separator': 2, 
-          'axis': 'x',
+          'end_offset_z': 40, 
+          'separator': 5, 
+          'axis': 'z',
 
           'face_x': 10, 
           'face_y': 0.0, 
