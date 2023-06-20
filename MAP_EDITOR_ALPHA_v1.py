@@ -36,17 +36,17 @@ import matplotlib.transforms as mtransforms
 # SETUP I (mandatory)                       Control + F    "city=="  to jump to The City Creation section
 city_name = "USER"                          # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"          # Can be multiple words --- name of the city in Game Menu
-shortcut_or_exe_name = "Open1560.exe"       # do not change
-mm1_folder = r"C:\Users\robin\Desktop\clean_MM1_BETA_BAIcc" # Path to your MM1 folder
+mm1_exe = "Open1560.exe"                    # Do not change, "Open1560.exe" is copied to your MM1 folder automatically
+mm1_folder = r"C:\Users\robin\Desktop\store_v1_MM1" # Path to your MM1 folder
 
 # SETUP II (handy)
-play_game=True                  # boot the game immediately after the map is created
-delete_shop=True                # delete raw city files after .ar file has been created
+play_game=True                  # boot the game immediately after the Map is created
+delete_shop=True                # delete the raw city files after .ar file has been created
 
 set_facade=False                # change to "True" if you want FACADE
-set_props=False                 # change to "True" if you want PROPS
+set_props=False                 # change to "True" if you want PROPS // currently CRASHES (do not use)
 
-set_anim=False                  # change to "True" if you want ANIM
+set_anim=False                  # change to "True" if you want ANIM (plane and eltrain
 set_bridges=False               # change to "True" if you want BRIDGES (currently not recommended)
 
 ai_map=False                    # change both to "True" if you want AI paths
@@ -55,8 +55,12 @@ cruise_start_position=          (30.0, 0.0, 30.0) # x, y, z // both ai_map and a
 
 debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
 debug_facade=False              # change to "True" if you want a Facade Debug text file
-debug_bng=False                  # change to "True" if you want a BNG Debug text file
+debug_bng=False                 # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
+
+global randomize_textures
+randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for selection)
+randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
 # SETUP III (optional)
 # RACE EDITOR | Race names (max is 15 for Blitz & Circuit, and 12 for Checkpoint)
@@ -64,8 +68,8 @@ blitz_race_names = ["Just in Time", "The Great Escape"]
 circuit_race_names = ["Dading's Race"]
 checkpoint_race_names = ["filler_race"]
 
-# WAYPOINTS          Tabbing / spacing out the Coordinates is optional, but recommended for readability and editing
-# Maximum number of blue checkpoints for Blitzes is 11 (including the start and finish checkpoints)
+# WAYPOINTS | Tabbing / spacing the Coordinates is optional, but recommended for readability and editing
+# Maximum number of checkpoints for Blitzes is 11 (including the start and finish checkpoints)
 # Blitz 0 WP         x:      y:      z:     rot:    width:  ,0,0, 
 blz_0_WP_start =    "0.0,   0.0,    0.1,    5.0,    15.0    ,0,0,"
 blz_0_WP_ch1 =      "0.0,   0.0,    -20,    5.0,    15.0    ,0,0,"
@@ -98,7 +102,7 @@ filler_ALL = [filler_WP_1, filler_WP_2]
 #######################################################################################
 
 # Blitz WP file, Time of Day, Weather, Time Limit, Number of Checkpoints (5 arguments)
-blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1),   
+blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1),  
                    (blz_1_ALL, night, snow, 40, len(blz_1_ALL)-1)]
 
 # Circuit WP file, Time of Day, Weather, Laps Amateur, Laps Pro (5 arguments)
@@ -122,7 +126,7 @@ cnr_waypoints = [                          # set Cops and Robbers Waypoints manu
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain". other objects won't work
         (250, 40.0, -250),      # you can only have one Plane and one Eltrain
-        (250, 40.0, 250),       # you can set any number of coordinates for your path
+        (250, 40.0, 250),       # you can set any number of coordinates for your path(s)
         (-250, 40.0, -250),     
         (-250, 40.0, 250)], 
     'eltrain': [
@@ -131,7 +135,7 @@ anim_data = {
         (-80, 25.0, -80),
         (-80, 25.0, 80)]}
 
-# BRIDGES
+# BRIDGES (experimental)
 slim_bridge = "tpdrawbridge04"  # dimension: x: 30.0 y: 5.9 z: 32.5
 wide_bridge = "tpdrawbridge06"  # dimension: x: 40.0 y: 5.9 z: 32.5
 other_object = "..." # you can pass any object, for example: vpmustang99
@@ -140,7 +144,7 @@ other_object = "..." # you can pass any object, for example: vpmustang99
 # II: Bridges currently only work in MULTIPLAYER, in SINGLEPLAYER the game will crash if you enable bridges
 # Therefore, be cautious with changing setting "create_bridges()" to True at the end of the script
 
-# format: (x,y,z, orientation, bridge number, object)
+# Format: (x,y,z, orientation, bridge number, object)
 bridges = [
     ((-50.0, 0.0, -150.0), "vertical", 1, slim_bridge), 
     ((-200.0, 0.0, -200.0), "horizontal_east", 2, wide_bridge)]
@@ -150,59 +154,53 @@ bridges = [
 
 # Not applicable yet
 ambient_density = 0.5 # AIMAP_P
-num_opponents = 8 # gen. 8 opponents all race types, and put the created opponent file names in the correct AIMAP_P files
+num_opponents = 8 # gen. 8 opponents for all race types, plus put the created opponent file names in the correct AIMAP_P files
 opponent_car = "vppanozgt" 
-
-# OTHER
-randomize_string_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"] 
-common_textures_1 = []
 
 ################################################################################################################               
 ################################################################################################################     
  
 def to_do_list(x):
             """
-            TexCoords --> flip "repeated_horizontal" and flip "vertical". Because tested "R2" example is actually at x=0, y=-200 (and not y=200)
-            TexCoords --> check "rotating_repeating" (angles)
-            TexCoords --> find way to account for Walls (is the opposite for flat surfaces?)
-            TEXTURES --> add TEX16A and TEX16O from existing custom cities
-            TEXTURES --> replacing textures with custom ones works, adding textures crashes for unknown reasons
-            TEXTURES --> will other textures also move if they contain "T_WATER..."? | code implemented, needs to be tested
-            Corners --> figure out Triangles
-            Corners --> figure out Hills    
-            WALL --> is there a way to enable collision on both sides of the wall?
-            WALL --> walls are infinite in height (fix this)
-            BRIDGE --> cont.                   
-            HUDMAP --> fix/automate (correct) alignment
-            HUDMAP --> color fill some Polygons (e.g. Blue for Water, Green for Grass), need to correctly retrieve/match Bound Number first (hard)
-            SCRIPT --> split "distribute_generated_files" into smaller components    
-            SCRIPT --> split City Settings (coordinates) into separate file
-            SCRIPT --> "repeating_horizontal_flipped" shorten (?) (e.g. "rhf" or "r-hf)
-            SCRIPT --> is Vector2 class really necessary? (maybe remove it)
-            BAI --> retrieve Center from all set Polygons
-            BAI --> path conflicts, no functional AI yet
-            BAI --> add # lane 1 [], # lane 2 [], etc
-            PTL --> reinvestigate at some point
+            TEXCOORDS --> investigate/improve "rotating_repeating" (angles)
+            TEXCOORDS --> fix wall textures not appearing in game (add +0.01 or -0.01 to one of the x or z coordinates)
+            TEXTURES --> add TEX16A and TEX16O from existing custom cities and create a folder with suitable/common textures
+            TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
+            TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
+            CORNERS --> figure out Triangles (under development via DLP file)
+            CORNERS --> figure out Hills (under development via DLP file)    
+            WALL --> is there a way to enable collision on both sides of a wall? (probably not)
+            WALL --> walls are currently infinite in height (under development via DLP file)
+            BRIDGE --> continue/fix Bridge setting                   
+            HUDMAP --> fix/automate (correct) polygon alignment
+            HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
+            HUDMAP --> debug JPG should be based on the Bound Number
+            SCRIPT --> split function "distribute_generated_files" into smaller components    
+            SCRIPT --> shorten "repeating_horizontal_flipped" (and others) to (e.g. "rhf" or "r-hf)
+            SCRIPT --> is the Vector2 class really necessary? (can we remove it?)
+            BAI --> retrieve Center position (x,y,z) from all set Polygons by the user
+            BAI --> path currently conflict according to the game, hence there is no functional AI yet
+            BAI --> add # lane 1 [], # lane 2 [], etc, to enable more paths in one "Street file"
+            BAI --> transform words to value, i.e. the user should be able to set "stop" for an intersection type which equals the value "3"
+            PTL --> reinvestigate Portal setting file, this will be hopeful when cities reach 80+ polygons
             BMS --> export "cache_size" variable correctly
-            BMS --> add shifting texture (like the airport lights, "fxltglow") see: GLOW AIRPORT.txt (didn't work so far)
-            BMS --> BMS vertices should be sorted until the script is further improved (?)
-            BMS --> walls are invisible, user must +/- 0.01 to make them visible (fix this) (add type: facing direction)
-            FCD --> test and document flags
-            FCD --> add "default" scale setting or omitting the variable
-            FCD --> Useful Documents --> make a screenshot of each facade in the game for reference
+            BMS --> add flashing texturs (e.g. airport lights at Meigs Field, "fxltglow") see notes: GLOW AIRPORT.txt (didn't work so far)
+            FCD --> test and document flag behavior
+            FCD --> add function that automatically retrieves the vanilla Scale, such that it can be omitted (if desired)
+            FCD --> add function that automatically retrieves the vanilla Sides, such that it can be omitted (if desired)
+            FCD --> Useful Documents/ make a screenshot of each facade in the game for reference
             FCD --> enable diagonal Facade setting
-            BNG --> improve prop functionality (facing)
-            BNG --> add more "pictures" (bridge, brigdebuild, etc)
-            BNG --> investigate CustomProp_Editor (?)
-            BNG --> investigate breakable parts in .MMBANGERDATA (i.e. file creation, and then objects that should break)
-            AIMAP --> allow cop & ambient setting for each individual race
-            CELLS --> implement Cell type
-            CELLS --> # Max 256 characters per row --> add Error Handling/warning
-            RACES --> investigate why max 15?
-            BLENDER --> [...]
-            USER --> collect a folder with suitable TEX16O / TEX16A textures
-            GITHUB --> add Readme (+ limitations)
+            BNG --> improve prop functionality (i.e. facing of props)
+            BNG --> add more prop pictures in Useful Documents (e.g. bridge04, brigdebuild, etc)
+            BNG --> investigate/create CustomProp Editor (DLP -> BND needs to be automated first)
+            BNG --> investigate breakable parts in .MMBANGERDATA
+            AIMAP --> enable user to set cop and ambient setting for each individual race
+            CELLS --> implement Cell type (default, tunnel, no skid, etc)
+            CELLS --> currently the row is truncated if the row length is 255 or larger --> add Error Handling
+            RACES --> the current max number of races per type is 15, can we increase this?
+            GITHUB --> improve readme file
             DEBUG --> add debug BMS (textures)
+            BLENDER --> export (poly) vertices to text file, and automatically create a Blender file (where the Map is modelled)
             OPEN1560 --> add (forked) updated Open1560
             """
                 
@@ -258,7 +256,7 @@ class Vector3:
             return '{{{:f},{:f},{:f}}}'.format(self.x, self.y, self.z)
        
        
-# Calculate BND: center, radius, min and max      
+# Calculate BND center, min, max, radius, radius squared    
 def calculate_max(vertices: List[Vector3]):
     max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
     for vertex in vertices:
@@ -344,7 +342,8 @@ class Polygon:
         else:
             corners_str = '[{}]'.format(', '.join(['{:f}'.format(corner) for corner in self.corners]))
 
-        return '\n Polygon \n Bound number: {}\n Material Index: {}\n Flags: {}\n Vertices Indices: {}\n Vertices Coordinates: {}\n Directional Coordinates: {}\n Corners: {}\n'.format(self.word0, self.mtl_index, self.flags, self.vert_indices, vertices_coordinates, self.some_vecs, corners_str)
+        return '\n Polygon \n Bound number: {}\n Material Index: {}\n Flags: {}\n Vertices Indices: {}\n Vertices Coordinates: {}\n Directional Coordinates: {}\n Corners: {}\n'.format(
+            self.word0, self.mtl_index, self.flags, self.vert_indices, vertices_coordinates, self.some_vecs, corners_str)
     
 
 # BND CLASS    
@@ -451,7 +450,7 @@ class BMS:
             file.write(struct.pack('<bb', self.TextureCount, self.Flags))
 
             file.write(b'\x00' * 2) 
-            file.write(b'\x00' * 4)
+            file.write(b'\x00' * 4) 
 
             for StringName in self.StringName:
                 file.write(struct.pack('<32s', StringName.encode('utf-8').ljust(32, b'\x00')))
@@ -481,7 +480,7 @@ polys = [poly_filler]
 all_polygons_picture = []
 
 # Bridge related
-filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99" # Bridge related
+filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99"
 
 # Race related
 num_blitz = len(blitz_waypoints)
@@ -556,14 +555,14 @@ def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle
 
 # HELPER BMS
 def generate_and_save_bms_file(
-    string_names, texture_indices=[1], vertices=vertices, polys=polys, texture_darkness=None, TexCoords=None, randomized_string_name=False, exclude=False, tex_coord_mode=None, tex_coord_params=None):
+    string_names, texture_indices=[1], vertices=vertices, polys=polys, texture_darkness=None, TexCoords=None, exclude=False, tex_coord_mode=None, tex_coord_params=None):
     
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.word0
     
-    # Randomize BMS/Graphic Strings
-    if randomized_string_name and not exclude:
-        string_names = [random.choice(randomize_string_names)]
+    # Randomize Textures (optional)
+    if randomize_textures and not exclude:
+        string_names = [random.choice(randomize_texture_names)]
     
     # Create correct Water BMS
     # if "T_WATER" is (partially) in string_names:
@@ -580,7 +579,7 @@ def generate_and_save_bms_file(
     single_poly = [poly_filler, poly]
     bms = generate_bms(vertices, single_poly, texture_indices, string_names, texture_darkness, TexCoords)
     bms.to_file(bms_filename)
-    # print(f"Successfully created BMS file: {bms_filename}")
+    # print(f"Successfully created BMS file: {bms_filename}") // debugging
              
 # GENERATE BMS         
 def generate_bms(vertices, polys, texture_indices, string_names: List[str], texture_darkness=None, TexCoords=None):
@@ -601,7 +600,7 @@ def generate_bms(vertices, polys, texture_indices, string_names: List[str], text
 
     # Texture Darkness and TexCoords        
     if texture_darkness is None:
-        texture_darkness = [2] * adjunct_count
+        texture_darkness = [2] * adjunct_count # 2 is normal texture brightness 
     if TexCoords is None:
         TexCoords = [0.0 for _ in range(adjunct_count * 2)]
 
@@ -658,9 +657,10 @@ def create_polygon(bound_number, material_index, flags, vert_indices, some_vecs,
      
 # Create and Append Polygon
 def create_and_append_polygon(
-    bound_number, material_index, vertex_coordinates, corners=None, base_vertex_index=None, flags=None, 
-    vertices=vertices, polys=polys, wall_side="outside"):
-        
+    bound_number, material_index, vertex_coordinates, 
+    some_vecs=None, corners=None, base_vertex_index=None, flags=None, 
+    vertices=vertices, polys=polys, wall_side="outside", sort_vertices=True):
+    
     if base_vertex_index is None:
         base_vertex_index = len(vertices)
 
@@ -689,16 +689,9 @@ def create_and_append_polygon(
         elif wall_side == "inside":
             corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
             
-    # Hills (TO DO)
-    # case 4: HILL with varying X, Y and Z coordinates      (1e 3e regels moet kloppen)
-    # elif (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
-          # max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
-          # max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
-
-        # corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
+    # Hills (under construction via DLP files)
+    # ...
     
-    # TO DO: 
-    # case 5: triangles
     elif corners is None:
         raise ValueError("Corners method not implemented yet, please specify Corners manually")
     
@@ -706,25 +699,32 @@ def create_and_append_polygon(
     num_vertex_coordinates = len(vertex_coordinates)
     if flags is None:
         if num_vertex_coordinates == 4:
-            flags = 6           # flag 4 and 5 should also work for rectangles
+            flags = 6           
         elif num_vertex_coordinates == 3:
-            flags = 3           # flag 0, 1, 2, 8, 9, 10 should also work for triangles
-            print("WARNING: Triangles are not supported yet")
+            flags = 3           
+            print("WARNING: Triangles are not supported yet, this is under construction")
         else:
-            raise ValueError("Unsupported number of coordinates in 'vertex_coordinates'")
+            raise ValueError("Unsupported number of coordinates in 'vertex_coordinates', to fix you must set 4 coordinates")
     
-    sorted_vertex_coordinates = sort_coordinates(vertex_coordinates)
+    if sort_vertices:   # If sorting is desired
+        sorted_vertex_coordinates = sort_coordinates(vertex_coordinates)
+    else:               # If sorting is not desired
+        sorted_vertex_coordinates = vertex_coordinates  # Use original order
+        
     new_vertices = [Vector3(*coord) for coord in sorted_vertex_coordinates]
     vertices.extend(new_vertices)
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
 
-    directional_vectors = calculate_directional_coordinates(sorted_vertex_coordinates)
-    some_vecs = [Vector3(*vec) for vec in directional_vectors]
+    if some_vecs is None:  # If some_vecs is not provided
+        directional_vectors = calculate_directional_coordinates(sorted_vertex_coordinates)
+        some_vecs = [Vector3(*vec) for vec in directional_vectors]  # Calculate some_vecs as before
+    else:
+        some_vecs = [Vector3(*vec) for vec in some_vecs]  # Use provided some_vecs
 
     poly = create_polygon(bound_number, material_index, flags, vert_indices, some_vecs, corners)
     polys.append(poly)
     
-    # Create picture of all shapes
+    # Create JPG picture of all polygon shapes
     all_polygons_picture.append(vertex_coordinates)
         
 ################################################################################################################               
@@ -734,7 +734,6 @@ def create_and_append_polygon(
 
 def user_notes(x):
     """ 
-    NOTES:
     Please find some example Polygons and BMS below this text.
     You can already run this the script with these Polygons and BMS to see how it works.
     
@@ -743,22 +742,14 @@ def user_notes(x):
         min_x,max_z 
         max_x,min_z 
         min_x,min_z 
-            
-    Material Index: 0 = Road, 87 = Grass, 91 (Water, {Sleep with the Fishes})
+    
+    For the Material Index, keep in mind: 0 = Road, 87 = Grass, 91 (Water, {Sleep with the Fishes})        
+    Note that you can also set custom Materials
 
-    Usage examples of TexCoods:
+    Texture (UV) mapping examples:
     TexCoords=generate_tex_coords(mode="vertical")
     TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=4, repeat_y=2))
-    TexCoords=generate_tex_coords(mode="rotating_repeating", repeat_x=3, repeat_y=3, angle_degrees=(45, 45))) {unfinished}
-    
-    Usage example of Randomize String Names
-    In the function DEFINITION (roughly line 364), i.e. "def generate_and_save_bms_file()" you can:
-    Set "randomized_string_name=False" to disable
-    Set "randomized_string_name=True" to enable (for all Strings)
-
-    See below to Exclude random string name for specified Polygon, while randomizing the rest
-    generate_and_save_bms_file(
-           string_names=["T_WALL"], exclude=True))
+    TexCoords=generate_tex_coords(mode="rotating_repeating", repeat_x=3, repeat_y=3, angle_degrees=(45, 45))) // unfinished
     """
     
 # Polygon 1 | Grass Start
@@ -766,42 +757,45 @@ create_and_append_polygon(
     bound_number = 1,
     material_index = 0,
     vertex_coordinates=[
-        (-100, 0.0, -100),
-        (-100, 0.0, 100),	
-        (100, 0.0, 100),
-        (100, 0.0, -100)])
+        (-100, 0, -100),
+        (-100, 0, 200),	
+        (100, 0, 200),
+        (100, 0, -100)])
 
 # Polygon 1 | Texture
 generate_and_save_bms_file(
-    string_names = ["24_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    string_names = ["24_GRASS"], 
+    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
-# Polygon 2 |
+# Polygon 2 | Water Area
 create_and_append_polygon(
     bound_number = 2,
     material_index = 98,        
     vertex_coordinates=[
-        (-100, 0.0, -200),
-        (-100, 0.0, -100),	
-        (100, 0.0, -100),
-        (100, 0.0, -200)])
+        (-100, 0, -200),
+        (-100, 0, -100),	
+        (100, 0, -100),
+        (100, 0, -200)])
 
 # Polygon 2 | Texture
 generate_and_save_bms_file(
-    string_names = ["T_WATER"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    string_names = ["T_WATER"], 
+    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
 # Polygon 3 |
 create_and_append_polygon(
     bound_number = 3,
     material_index = 0,        
     vertex_coordinates=[
-        (-100, 0.0, -300),
-        (-100, 0.0, -200),	
-        (100, 0.0, -200),
-        (100, 0.0, -300)])
+        (-100, 0, -300),
+        (-100, 0, -200),	
+        (100, 0, -200),
+        (100, 0, -300)])
 
 # Polygon 3 | Texture
 generate_and_save_bms_file(
-    string_names = ["T_GRASS"], TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    string_names = ["T_GRASS"], 
+    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -826,7 +820,7 @@ def create_folder_structure(city_name):
     os.makedirs(os.path.join("SHOP", "CITY", f"{city_name}"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "RACE", f"{city_name}"), exist_ok=True)
     
-    with open(os.path.join("SHOP", "CITY", f"{city_name}.PTL"), "w") as f:
+    with open(os.path.join("SHOP", "CITY", f"{city_name}.PTL"), "w") as f: # the game requires a PTL file to work
         pass
     
     with open(os.path.join("SHOP", "TUNE", f"{city_name}.CINFO"), "w") as f:
@@ -859,7 +853,7 @@ def move_custom_textures():
             destination = os.path.join(destination_tex16o_path, custom_texs)
             shutil.copy(source, destination)
         
-# Move contents of dev folder to MM1 destination folder      
+# Move contents of the DEV folder to specified mm1 folder     
 def move_dev(destination_folder, city_name):
     current_folder = os.getcwd()
     dev_folder_path = os.path.join(current_folder, 'dev')
@@ -872,11 +866,12 @@ def move_dev(destination_folder, city_name):
             
         shutil.copytree(dev_folder_path, destination_path)
         
-    # Delete Custom City .map and .roads files after they have been moved to the MM1 folder
+    # Delete .map and .roads files of the Map after they have been moved to the mm1 folder
     city_folder_path = os.path.join(dev_folder_path, 'CITY', city_name)
     if os.path.exists(city_folder_path):
         shutil.rmtree(city_folder_path)
-                              
+
+# Move Open1560 files to specified mm1 folder                              
 def move_open1560(destination_folder):
     current_folder = os.getcwd()
     open1560_folder_path = os.path.join(current_folder, 'Installation_Instructions', 'Open1560')
@@ -889,6 +884,7 @@ def move_open1560(destination_folder):
             
             if os.path.isfile(source_file_path):
                 if os.path.isfile(destination_file_path):
+                    
                     # Compare last modified time of source and mm1 folder
                     if os.path.getmtime(source_file_path) != os.path.getmtime(destination_file_path):
                         shutil.copy2(source_file_path, destination_file_path)
@@ -1038,8 +1034,8 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             1 = tunnel      Is Tunnel (Echo, No Lighting, No Reflections, No Ptx) 
             2 = indoors     (?)
             3 = tunnel      (same as 1?)
-            4 = water       (water will "move") if we we make BMS_A2, add a buffer of 32, and the name of the texture is (or starts with (?)) "T_WATER"
-            20 = Zenable    (?)
+            4 = water       (water will "move") if we we make BMS_A2, add a buffer of 32, and the name of the texture is, or contains "T_WATER"
+            20 = Z enable    (?)
             80 = FogValue wll be 0.25   (?)
             200 = No Skids              (actually: any value above (?) will disable skids)
             '''
@@ -1048,7 +1044,6 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
                 row += f",{num}"
             row += "\n"
             
-            # Max 256 characters per row
             row = row[:256]
             cells_file.write(row)
     
@@ -1057,7 +1052,7 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
         if file in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(os.path.join("angel", file), os.path.join("SHOP", file))
                 
-# Create ANIM
+# Create ANIM (plane and eltrain)
 def create_anim(city_name, anim_data, set_anim=False):
     if set_anim:
         output_folder_anim = os.path.join("SHOP", "CITY", f"{city_name}")
@@ -1268,9 +1263,9 @@ class BNGFileWriter:
             name = obj['name']
             
             separator = obj.get('separator', name)  # default is the name of the object itself if 'separator' not provided
-            axis = obj.get('axis', 'x')  # default is 'x' if 'axis' not provided
+            axis = obj.get('axis', 'x')             # default is 'x' if 'axis' not provided
 
-            # Check if separator is a string (object name) or a numeric value
+            # Check if Separator is a string (object name) or a numeric value
             if isinstance(separator, str):
                 if separator not in self.prop_data:
                     raise ValueError(f"Separator {separator} not found in prop data.")
@@ -1554,7 +1549,8 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
         facades = []
 
         for params in facade_params:
-            num_facades = math.ceil(abs(getattr(params['end'], params['axis']) - getattr(params['start'], params['axis'])) / params['separator'])
+            num_facades = math.ceil(
+                abs(getattr(params['end'], params['axis']) - getattr(params['start'], params['axis'])) / params['separator'])
             
             for i in range(num_facades):
                 room = params['room']
@@ -1591,8 +1587,8 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
                 for facade in facades:
                     f.write(str(facade))
                         
-##########################################################################################
-################################################################################################################### 
+###################################################################################################################
+###################################################################################################################  
 
 # Write COMMANDLINE
 def write_commandline(city_name: str, destination_folder: str):
@@ -1605,21 +1601,23 @@ def write_commandline(city_name: str, destination_folder: str):
         
 # Start GAME
 def start_game(destination_folder, play_game=False):
-    game_path = os.path.join(destination_folder, shortcut_or_exe_name)
+    game_path = os.path.join(destination_folder, mm1_exe)
     if play_game:
         subprocess.run(game_path, cwd=destination_folder, shell=True)
         
-##########################################################################################  
+################################################################################################################### 
 
 # FACADE NOTES
 # The "room" should match the bound_number in which the Facade is located.
 # Separator: (max_x - min_x) / separator(value) = number of facades
 # Sides: unknown, but leave it as is
-# Scale: unknown, stretch each facade or thin it oute
+# Scale: unknown value, behavior: stretch each facade or thin it out
 # Facade_name: name of the facade in the game files
 
 # For a list of facades, check out the /__Useful Documents/CHICAGO_unique_FCD_SCALES.txt
 # Here you will also find the Scale values for each facade that was used in the original game.
+
+# Few Facade name examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
    
 # SET FCD
 fcd_one = {
@@ -1646,9 +1644,6 @@ fcd_two = {
 
 fcd_list = [fcd_one, fcd_two]
 
-# Few examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
-
-###################################################################################################################
 ###################################################################################################################
 
 # AI PATH NOTES
@@ -1658,6 +1653,7 @@ fcd_list = [fcd_one, fcd_two]
 # Other Types:
 # 0 = No, 1 = Yes
 
+# Example of a "simple" street
 data_street_1 = {
     "street_name": "path_1",
     "vertices": [
@@ -1671,7 +1667,7 @@ data_street_1 = {
         (30.0, 1.0, -110.0),
         (30.0, 1.0, -120.0)]}
 
-# EXAMPLE of setting ALL options (alpha)
+# Example of a "complex" street (alpha version)
 data_street_example = {
     "street_name": "path_2",
     "vertices": [
@@ -1698,8 +1694,18 @@ street_data = [data_street_1, data_street_example]
 
 amplify = 1000 # to do
 
-# Multiple props, "tp_trailer"
-prop_1 = {'offset_x': -10, 
+# SET PROPS
+# Single Prop (China Gate)
+prop_1 = {'offset_x': 10, 
+          'offset_y': 0.0, 
+          'offset_z': -80, 
+          'face_x': 10000, 
+          'face_y': 0.0, 
+          'face_z': -80, 
+          'name': 'cpgate'}
+
+# Multiple props (TP Trailer)
+prop_2 = {'offset_x': -10, 
           'offset_y': 0.0, 
           'offset_z': -40, 
           'name': 'tp_trailer', 
@@ -1712,32 +1718,8 @@ prop_1 = {'offset_x': -10,
           'face_y': 0.0, 
           'face_z': -40000}
 
-# Multiple props, "tp_barricade"
-prop_2 = {'offset_x': -30, 
-          'offset_y': 0.0, 
-          'offset_z': -10, 
-          'name': 'tp_barricade', 
-          
-          'end_offset_z': -100, 
-          'separator': 'tp_trailer', 
-          'axis': 'z',
-
-          'face_x': 10, 
-          'face_y': 0.0, 
-          'face_z': -40000,
-          
-          'rounding': 'up'}
-
-# Single Prop (China Gate)
-prop_3 = {'offset_x': 10, 
-          'offset_y': 0.0, 
-          'offset_z': -80, 
-          'face_x': 10000, 
-          'face_y': 0.0, 
-          'face_z': -80, 
-          'name': 'cpgate'}
-
-prop_list = [prop_1, prop_2, prop_3]
+# Put all your created Props in this list
+prop_list = [prop_1, prop_2]
 
 ################################################################################################################     
 
