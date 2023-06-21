@@ -24,13 +24,15 @@ import os
 import re
 import csv
 import math
+import glob
 import struct
 import shutil
 import random
 import subprocess
+from collections import defaultdict
 from typing import List, Dict, Union, Tuple
 import matplotlib.pyplot as plt                 
-import matplotlib.transforms as mtransforms     
+import matplotlib.transforms as mtransforms   
 
 
 # SETUP I (mandatory)                       Control + F    "city=="  to jump to The City Creation section
@@ -57,6 +59,10 @@ debug_bnd=False                 # change to "True" if you want a BND/collision D
 debug_facade=False              # change to "True" if you want a Facade Debug text file
 debug_bng=False                 # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
+
+blender_folder = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe"
+export_blender=debug_bnd=False  # change to "True" if you want to export BND vertices 
+run_blender=False               # change to "True" if you want to run Blender after BND vertices export
 
 global randomize_textures
 randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for selection)
@@ -200,7 +206,6 @@ def to_do_list(x):
             RACES --> the current max number of races per type is 15, can we increase this?
             GITHUB --> improve readme file
             DEBUG --> add debug BMS (textures)
-            BLENDER --> export (poly) vertices to text file, and automatically create a Blender file (where the Map is modelled)
             OPEN1560 --> add (forked) updated Open1560
             """
                 
@@ -497,6 +502,10 @@ physics_folder = os.path.join(os.getcwd(), "SHOP", "MTL")
 os.makedirs(physics_folder, exist_ok=True)
 input_physics_file = os.path.join(resources_folder, "input_PHYSICS.DB")
 output_physics_file = "physics.db"
+
+# OTHER
+bnd_blender_data = "BLENDER_MODEL_BND_text.txt"             # hardcoded
+# bnd_blender_data = f'BLENDER_{city_name}_BND_text.txt'    # dynamic
 
 ################################################################################################################               
  
@@ -1586,7 +1595,61 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
             with open(os.path.join(os.getcwd(), debug_filename), mode='w', encoding='utf-8') as f:
                 for facade in facades:
                     f.write(str(facade))
-                        
+                    
+###################################################################################################################
+################################################################################################################### 
+
+blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe"
+                            
+def export_bnd_vertices(input_bnd: str, output_file_name: str, export_blender: bool = False, run_blender: bool = False) -> None:
+    if export_blender: 
+        pattern_flags = r"Flags: (\d+)"
+        pattern_coords = r"Vertices Coordinates: \[{.*?}\]"
+
+        def all_identical(coords):
+            return all(coord == coords[0] for coord in coords)
+
+        flag_counter = defaultdict(int)
+
+        with open(output_file_name, "w") as output_file:
+            for txt_file in glob.glob(input_bnd):
+                
+                with open(txt_file, "r") as input_file:
+                    lines = input_file.readlines()
+
+                    flag_value = None
+
+                    for i, line in enumerate(lines):
+                        match_flags = re.search(pattern_flags, line)
+                        if match_flags:
+                            flag_value = int(match_flags.group(1))
+                        else:
+                            match_coords = re.search(pattern_coords, line)
+                            if match_coords:
+                                coords = re.findall(r"{.*?}", match_coords.group(0))
+
+                                if flag_value in (0, 1, 2, 8, 9, 10):
+                                    coords = coords[:3]
+                                elif flag_value in (4, 5, 6):
+                                    coords = coords[:4]
+                                else:
+                                    flag_counter[flag_value] += 1
+                                    flag_value = None
+                                    continue
+
+                                if not all_identical(coords):
+                                    new_line = f"Vertices Coordinates: {', '.join(coords)}"
+                                    output_file.write(new_line + "\n")
+                                flag_value = None    
+        if run_blender:                  
+            # After the loop, look for a .blend file in the cwd
+            for file in os.listdir():
+                if file.endswith(".blend"):
+                    print(f"Opening {file} with Blender...")
+                    subprocess.run([blender_exe, file])
+                    break
+            else:
+                print("No Blender file found in the current directory.")
 ###################################################################################################################
 ###################################################################################################################  
 
@@ -1766,13 +1829,14 @@ create_anim(city_name, anim_data, set_anim)
 create_bridges(bridges, set_bridges) 
 create_facades(created_fcd_file, fcd_list, target_fcd_dir, set_facade, debug_facade)
 bng_writer.add_props(prop_list)
-bng_writer.write_props(set_props)        
+bng_writer.write_props(set_props)    
+
+export_bnd_vertices(bnd_hit_id_text, bnd_blender_data, export_blender, run_blender)     
 
 # HUD offset for Moronville is approx., x=-22.4, y=-40.7; automated alignment is not implemented yet
 plot_polygons(debug_hud=debug_hud, show_label=False, plot_picture=False, export_jpg=True, 
               x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
               background_color='black')
-
 
 create_ar_file(city_name, mm1_folder, delete_shop)
 write_commandline(city_name, mm1_folder)
