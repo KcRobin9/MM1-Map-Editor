@@ -39,7 +39,7 @@ import matplotlib.transforms as mtransforms
 city_name = "USER"                          # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"          # Can be multiple words --- name of the city in Game Menu
 mm1_exe = "Open1560.exe"                    # Do not change, "Open1560.exe" is copied to your MM1 folder automatically
-mm1_folder = r"C:\Users\robin\Desktop\store_v1_MM1" # Path to your MM1 folder
+mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder
 
 # SETUP II (handy)
 play_game=True                  # boot the game immediately after the Map is created
@@ -53,7 +53,7 @@ set_bridges=False               # change to "True" if you want BRIDGES (currentl
 
 ai_map=False                    # change both to "True" if you want AI paths
 ai_streets=False                # change both to "True" if you want AI paths
-cruise_start_position=          (30.0, 0.0, 30.0) # x, y, z // both ai_map and ai_streets must be "True"
+cruise_start_position=          (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True"
 
 debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
 debug_facade=False              # change to "True" if you want a Facade Debug text file
@@ -63,6 +63,7 @@ debug_hud=False                 # change to "True" if you want a HUD Debug jpg f
 blender_folder = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe"
 export_blender=debug_bnd=False  # change to "True" if you want to export BND vertices 
 run_blender=False               # change to "True" if you want to run Blender after BND vertices export
+bnd_blender_data = "BLENDER_IMPORT_coordinates.txt" 
 
 global randomize_textures
 randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for selection)
@@ -503,10 +504,6 @@ os.makedirs(physics_folder, exist_ok=True)
 input_physics_file = os.path.join(resources_folder, "input_PHYSICS.DB")
 output_physics_file = "physics.db"
 
-# OTHER
-bnd_blender_data = "BLENDER_MODEL_BND_text.txt"             # hardcoded
-# bnd_blender_data = f'BLENDER_{city_name}_BND_text.txt'    # dynamic
-
 ################################################################################################################               
  
 # Handle Texture Mapping for BMS files
@@ -761,50 +758,49 @@ def user_notes(x):
     TexCoords=generate_tex_coords(mode="rotating_repeating", repeat_x=3, repeat_y=3, angle_degrees=(45, 45))) // unfinished
     """
     
-# Polygon 1 | Grass Start
+# Start_Area
 create_and_append_polygon(
-    bound_number = 1,
-    material_index = 0,
-    vertex_coordinates=[
-        (-100, 0, -100),
-        (-100, 0, 200),	
-        (100, 0, 200),
-        (100, 0, -100)])
+	bound_number = 1,
+	material_index = 0,
+	vertex_coordinates=[
+		(-60.00, 0.00, 100.00),
+		(140.00, 0.00, 100.00),
+		(140.00, 0.00, -100.00),
+		(-60.00, 0.00, -100.00)])
 
-# Polygon 1 | Texture
 generate_and_save_bms_file(
-    string_names = ["24_GRASS"], 
-    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    string_names = ["R6"], 
+    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
 
-# Polygon 2 | Water Area
+
+# Water
 create_and_append_polygon(
-    bound_number = 2,
-    material_index = 98,        
-    vertex_coordinates=[
-        (-100, 0, -200),
-        (-100, 0, -100),	
-        (100, 0, -100),
-        (100, 0, -200)])
+	bound_number = 2,
+	material_index = 91,
+	vertex_coordinates=[
+		(-242.16, 0.00, 297.87),
+		(-142.16, 0.00, 297.87),
+		(-142.16, 0.00, -302.13),
+		(-242.16, 0.00, -302.13)])
 
-# Polygon 2 | Texture
 generate_and_save_bms_file(
     string_names = ["T_WATER"], 
-    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
 
-# Polygon 3 |
-create_and_append_polygon(
-    bound_number = 3,
-    material_index = 0,        
-    vertex_coordinates=[
-        (-100, 0, -300),
-        (-100, 0, -200),	
-        (100, 0, -200),
-        (100, 0, -300)])
 
-# Polygon 3 | Texture
-generate_and_save_bms_file(
-    string_names = ["T_GRASS"], 
-    TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+
+# FOR REFERENCE
+# generate_and_save_bms_file(
+#     string_names = ["24_GRASS"], 
+#     TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
+
+# generate_and_save_bms_file(
+#     string_names = ["R6"], 
+#     TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
+
+# generate_and_save_bms_file(
+#     string_names = ["T_WATER"], 
+#     TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
 
 ################################################################################################################               
 ################################################################################################################ 
