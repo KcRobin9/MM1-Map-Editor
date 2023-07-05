@@ -1,24 +1,24 @@
-def program_introduction(x):
-    """
-    =====================================================================
-    ================= Midtown Madness 1 Map Editor Alpha ================
-    
-    This Map Editor allows users to create new maps for Midtown Madness 1
-                                             Copyright (C) May 2023 Robin
 
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
+    #! =====================================================================
+    #! ================= Midtown Madness 1 Map Editor Alpha ================
+    #? 
+    #? This Map Editor allows users to create new maps for Midtown Madness 1
+    #                                           Copyright (C) May 2023 Robin
+    #? 
+    #? This program is free software: you can redistribute it and/or modify
+    #? it under the terms of the GNU General Public License as published by
+    #? the Free Software Foundation, either version 3 of the License, or
+    #? (at your option) any later version.
+    #? 
+    #? This program is distributed in the hope that it will be useful, but
+    #? WITHOUT ANY WARRANTY; without even the implied warranty of
+    #? MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
+    #? General Public License for more details.
+    #? 
+    #? For more information about GNU see <http://www.gnu.org/licenses/>.
+    #! =====================================================================
+    #! =====================================================================
 
-    This program is distributed in the hope that it will be useful, but
-    WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU 
-    General Public License for more details.
-
-    For more information about GNU see <http://www.gnu.org/licenses/>.
-    =====================================================================
-    """
 
 import os
 import re
@@ -28,6 +28,7 @@ import glob
 import struct
 import shutil
 import random
+import textwrap
 import subprocess
 from collections import defaultdict
 from typing import List, Dict, Union, Tuple
@@ -35,72 +36,67 @@ import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms   
 
 
-# SETUP I (mandatory)                       Control + F    "city=="  to jump to The City Creation section
-city_name = "USER"                          # One word (no spaces)  --- name of the .ar file
-race_locale_name = "My First City"          # Can be multiple words --- name of the city in Game Menu
-mm1_exe = "Open1560.exe"                    # Do not change, "Open1560.exe" is copied to your MM1 folder automatically
-mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder
+#! SETUP I (mandatory)                          Control + F    "city=="  to jump to The City Creation section
+city_name = "USER"                              # One word (no spaces)  --- name of the .ar file
+race_locale_name = "My First City"              # Can be multiple words --- name of the city in Race Locale Menu
+mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1560 is automatically copied to this folder)
 
-# SETUP II (handy)
+#* SETUP II (optional, Map Creation)
 play_game=True                  # boot the game immediately after the Map is created
-delete_shop=True                # delete the raw city files after .ar file has been created
+delete_shop=True                # delete the raw city files after the .ar file has been created
 
-set_facade=False                # change to "True" if you want FACADE
-set_props=False                 # change to "True" if you want PROPS // currently CRASHES (do not use)
+set_facade=False                # change to "True" if you want FACADES
+set_props=False                 # change to "True" if you want PROPS // (currently broken)
 
 set_anim=False                  # change to "True" if you want ANIM (plane and eltrain
-set_bridges=False               # change to "True" if you want BRIDGES (currently not recommended)
+set_bridges=False               # change to "True" if you want BRIDGES // (currently broken)
 
 ai_map=False                    # change both to "True" if you want AI paths
 ai_streets=False                # change both to "True" if you want AI paths
-cruise_start_position=          (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True"
+cruise_start_pos=               (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True"
 
 debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
 debug_facade=False              # change to "True" if you want a Facade Debug text file
 debug_bng=False                 # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
 
-blender_folder = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe"
-export_blender=debug_bnd=False  # change to "True" if you want to export BND vertices 
-run_blender=False               # change to "True" if you want to run Blender after BND vertices export
-bnd_blender_data = "BLENDER_IMPORT_coordinates.txt" 
+#* SETUP III (optional, Blender)
+export_blender=debug_bnd=False  
+run_blender=False               # change to "True" if you want to run Blender after Map vertices have been exported
+bnd_blender_data = "SCRIPT_EXPORT_vertices.txt" 
+blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # change if necessary
 
+#* SETUP IV (optional, Randomize Textures)
 global randomize_textures
-randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for selection)
+randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for a selection)
 randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
-# SETUP III (optional)
-# RACE EDITOR | Race names (max is 15 for Blitz & Circuit, and 12 for Checkpoint)
-blitz_race_names = ["Just in Time", "The Great Escape"]
+#* SETUP V (optional, Race Editor: max is 15 for Blitzes & Circuits, and 12 for Checkpoints)
+blitz_race_names = ["Just in Time"]
 circuit_race_names = ["Dading's Race"]
 checkpoint_race_names = ["filler_race"]
 
+wp_filler = ",0,0," #  will be automated later, do not change
+
 # WAYPOINTS | Tabbing / spacing the Coordinates is optional, but recommended for readability and editing
 # Maximum number of checkpoints for Blitzes is 11 (including the start and finish checkpoints)
-# Blitz 0 WP         x:      y:      z:     rot:    width:  ,0,0, 
-blz_0_WP_start =    "0.0,   0.0,    0.1,    5.0,    15.0    ,0,0,"
-blz_0_WP_ch1 =      "0.0,   0.0,    -20,    5.0,    15.0    ,0,0,"
-blz_0_WP_ch2 =      "0.0,   0.0,    -40,    5.0,    15.0    ,0,0,"
-blz_0_WP_ch3 =      "0.0,   0.0,    -60,    5.0,    15.0    ,0,0,"
-blz_0_WP_ch4 =      "0.0,   0.0,    -80,    5.0,    15.0    ,0,0,"
-blz_0_WP_finish =   "0.0,   0.0,    -99,    5.0,    15.0    ,0,0,"
-blz_0_ALL = [blz_0_WP_start, blz_0_WP_ch1, blz_0_WP_ch2, blz_0_WP_ch3, blz_0_WP_ch4, blz_0_WP_finish]
+# Structure: (x, y, z, rotation, width, filler)
 
-# Blitz 1 WP        x:       y:      z:      rot:     width:  ,0,0, 
-blz_1_WP_start =    "0.1,    0.0,    0.1,    90.0,    10.0    ,0,0,"
-blz_1_WP_ch1 =      "20.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
-blz_1_WP_ch2 =      "40.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
-blz_1_WP_ch3 =      "60.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
-blz_1_WP_ch4 =      "80.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
-blz_1_WP_finish =   "99.0,   0.0,    0.1,    90.0,    10.0    ,0,0,"
-blz_1_ALL = [blz_1_WP_start, blz_1_WP_ch1, blz_1_WP_ch2, blz_1_WP_ch3, blz_1_WP_ch4, blz_1_WP_finish]
+# Blitz 0 WP        METHOD 1: write the data like a text file       
+blz_0_ALL = f"""
+0.0,   0.0,    0.1,    5.0,    15.0 {wp_filler} 
+0.0,   0.0,    -20,    5.0,    15.0 {wp_filler}
+0.0,   0.0,    -40,    5.0,    15.0 {wp_filler}    
+0.0,   0.0,    -60,    5.0,    15.0 {wp_filler}    
+0.0,   0.0,    -80,    5.0,    15.0 {wp_filler}    
+0.0,   0.0,    -99,    5.0,    15.0 {wp_filler}"""
 
-# Circuit 0 WP      x:           y:       z:          rot:       width:  ,0,0,
-cir_1_start =       "0.0,       0.1,    0.0,         -180.0,     8.0     ,0,0,"
-cir_1_ch1 =         "0.0,       0.1,    50.0,        90,         8.0     ,0,0,"
-cir_1_ch2 =         "50.0,      0.1,    0.0,         0.01,       8.0     ,0,0,"
-cir_1_finish =      "0.0,      0.1,    -75.0,       -90,         8.0     ,0,0,"
-cir_1_ALL = [cir_1_start, cir_1_ch1, cir_1_ch2, cir_1_finish]
+# Circuit 0 WP      METHOD 2: write each row into a separate variable           
+cir_1_WP_start =       "20.0,      0.0,    0.0,         180.0,      8.0     ,0,0,"
+cir_1_WP_ch1 =         "0.0,       0.0,    50.0,        90,         8.0     ,0,0,"
+cir_1_WP_ch2 =         "50.0,      0.0,    0.0,         0.01,       8.0     ,0,0,"
+cir_1_WP_finish =      "0.0,       0.0,    -75.0,       -90,        8.0     ,0,0,"
+cir_1_ALL = [cir_1_WP_start, cir_1_WP_ch1, cir_1_WP_ch2, cir_1_WP_finish]
 
 #######################################################################################
 morning, noon, evening, night = 0, 1, 2, 3; clear, cloudy, rain, snow = 0, 1, 2, 3
@@ -108,22 +104,21 @@ filler_WP_1 = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"; filler_WP_2 = "0.0, 0.0, 50.0, 
 filler_ALL = [filler_WP_1, filler_WP_2]
 #######################################################################################
 
-# Blitz WP file, Time of Day, Weather, Time Limit, Number of Checkpoints (5 arguments)
-blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1),  
-                   (blz_1_ALL, night, snow, 40, len(blz_1_ALL)-1)]
+# Blitz WP file, Time of Day, Weather, Time Limit (s), Number of Checkpoints (5 arguments)
+blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1)]
 
 # Circuit WP file, Time of Day, Weather, Laps Amateur, Laps Pro (5 arguments)
 circuit_waypoints = [(cir_1_ALL, night, snow, 2, 3)]
 
 # Checkpoint WP file, Time of Day, Weather (3 arguments)
-checkpoint_waypoints = [(filler_ALL, noon, cloudy)] # feel free to change
+checkpoint_waypoints = [(filler_ALL, noon, cloudy)]
 
 # COPS AND ROBBERS
 cnr_waypoints = [                          # set Cops and Robbers Waypoints manually and concisely
     ## 1st set, Name: ... ## 
-    (20.0,1.0,80.0),                       # Bank / Blue Team Hideout
-    (80.0,1.0,20.0),                       # Gold
-    (20.0,1.0,80.0),                       # Robber / Red Team Hideout
+    (20.0,1.0,80.0),                       #? Bank / Blue Team Hideout
+    (80.0,1.0,20.0),                       #? Gold
+    (20.0,1.0,80.0),                       #? Robber / Red Team Hideout
     ## 2nd set, Name: ... ## 
     (-90.0,1.0,-90.0),
     (90.0,1.0,90.0),
@@ -131,8 +126,8 @@ cnr_waypoints = [                          # set Cops and Robbers Waypoints manu
 
 # ANIM
 anim_data = {
-    'plane': [                  # you can only use "plane" and "eltrain". other objects won't work
-        (250, 40.0, -250),      # you can only have one Plane and one Eltrain
+    'plane': [                  # you can only use "plane" and "eltrain", other objects won't work
+        (250, 40.0, -250),      # you can only have one Plane and/or one Eltrain
         (250, 40.0, 250),       # you can set any number of coordinates for your path(s)
         (-250, 40.0, -250),     
         (-250, 40.0, 250)], 
@@ -143,26 +138,28 @@ anim_data = {
         (-80, 25.0, 80)]}
 
 # BRIDGES (experimental)
-slim_bridge = "tpdrawbridge04"  # dimension: x: 30.0 y: 5.9 z: 32.5
-wide_bridge = "tpdrawbridge06"  # dimension: x: 40.0 y: 5.9 z: 32.5
-other_object = "..." # you can pass any object, for example: vpmustang99
+slim_bridge = "tpdrawbridge04"  #* dimension: x: 30.0 y: 5.9 z: 32.5
+wide_bridge = "tpdrawbridge06"  #* dimension: x: 40.0 y: 5.9 z: 32.5
+new_bridge_object = "..."       # you can pass any object, for example: vpmustang99
 
-# I: only ONE bridge can be present in ONE cull room (otherwise the game will crash)
-# II: Bridges currently only work in MULTIPLAYER, in SINGLEPLAYER the game will crash if you enable bridges
-# Therefore, be cautious with changing setting "create_bridges()" to True at the end of the script
+#! I: only ONE bridge can be present in ONE cull room (otherwise the game will crash)
+#! II: Bridges currently only work in MULTIPLAYER, in SINGLEPLAYER the game will crash if you enable bridges (will be fixed later)
 
-# Format: (x,y,z, orientation, bridge number, object)
+# Structure: (x,y,z, orientation, bridge_number, bridge_object)
 bridges = [
-    ((-50.0, 0.0, -150.0), "vertical", 1, slim_bridge), 
-    ((-200.0, 0.0, -200.0), "horizontal_east", 2, wide_bridge)]
+    ((-50.0, 0.0, -150.0), "V", 1, slim_bridge),  
+    ((-200.0, 0.0, -200.0), "H.E.", 2, wide_bridge)] 
 
 # Possible orientations
-# 'vertical', 'vertical_flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'
+f"""    Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
+        Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East."""
 
-# Not applicable yet
-ambient_density = 0.5 # AIMAP_P
-num_opponents = 8 # gen. 8 opponents for all race types, plus put the created opponent file names in the correct AIMAP_P files
-opponent_car = "vppanozgt" 
+# AIMAP data (applies to all races, will be improved later)
+aimap_ambient_density = 0.5
+aimap_num_opponents = 8 
+aimap_opponent_car = "vppanozgt" 
+aimap_cop_car = "vpcop"
+aimap_cop_data = "-30.1 0.0 30.0 0.0 2 0"
 
 ################################################################################################################               
 ################################################################################################################     
@@ -174,44 +171,45 @@ def to_do_list(x):
             TEXTURES --> add TEX16A and TEX16O from existing custom cities and create a folder with suitable/common textures
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
-            CORNERS --> figure out Triangles (under development via DLP file)
-            CORNERS --> figure out Hills (under development via DLP file)    
             WALL --> is there a way to enable collision on both sides of a wall? (probably not)
             WALL --> walls are currently infinite in height (under development via DLP file)
-            BRIDGE --> continue/fix Bridge setting                   
+            BRIDGE --> fix Bridge setting                   
             HUDMAP --> fix/automate (correct) polygon alignment
             HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
-            HUDMAP --> debug JPG should be based on the Bound Number
-            SCRIPT --> split function "distribute_generated_files" into smaller components    
-            SCRIPT --> shorten "repeating_horizontal_flipped" (and others) to (e.g. "rhf" or "r-hf)
-            SCRIPT --> is the Vector2 class really necessary? (can we remove it?)
-            BAI --> retrieve Center position (x,y,z) from all set Polygons by the user
-            BAI --> path currently conflict according to the game, hence there is no functional AI yet
+            HUDMAP --> debug JPG should be based on the Bound Number, not on standard enumeration
+            SCRIPT --> make "create_cells"  
+            BAI --> fix AI, path setting is working, but AI (cops, traffic, etc) still does not spawn/work (Open1560 related)
             BAI --> add # lane 1 [], # lane 2 [], etc, to enable more paths in one "Street file"
-            BAI --> transform words to value, i.e. the user should be able to set "stop" for an intersection type which equals the value "3"
-            PTL --> reinvestigate Portal setting file, this will be hopeful when cities reach 80+ polygons
+            BAI --> improve general use, e.g. the user should be able to set "stop" for an intersection type instead of passing the value "3"
             BMS --> export "cache_size" variable correctly
             BMS --> add flashing texturs (e.g. airport lights at Meigs Field, "fxltglow") see notes: GLOW AIRPORT.txt (didn't work so far)
             FCD --> test and document flag behavior
-            FCD --> add function that automatically retrieves the vanilla Scale, such that it can be omitted (if desired)
-            FCD --> add function that automatically retrieves the vanilla Sides, such that it can be omitted (if desired)
-            FCD --> Useful Documents/ make a screenshot of each facade in the game for reference
+            FCD --> add function that automatically retrieves the vanilla Scale and Sides, such that it can be omitted (if desired)
+            FCD --> make a screenshot of each facade in the game for reference for the Useful Documents folder
             FCD --> enable diagonal Facade setting
-            BNG --> improve prop functionality (i.e. facing of props)
+            BNG --> fix prop setting (currently broken for whatever reason)
             BNG --> add more prop pictures in Useful Documents (e.g. bridge04, brigdebuild, etc)
-            BNG --> investigate/create CustomProp Editor (DLP -> BND needs to be automated first)
+            BNG --> investigate Custom Prop Editor (DLP -> BND needs to be automated first)
             BNG --> investigate breakable parts in .MMBANGERDATA
             AIMAP --> enable user to set cop and ambient setting for each individual race
             CELLS --> implement Cell type (default, tunnel, no skid, etc)
-            CELLS --> currently the row is truncated if the row length is 255 or larger --> add Error Handling
             RACES --> the current max number of races per type is 15, can we increase this?
-            GITHUB --> improve readme file
+            GITHUB --> improve readme file (add Credits and Build)
             DEBUG --> add debug BMS (textures)
             OPEN1560 --> add (forked) updated Open1560
-            """
-                
+            CORNERS --> figure out Triangles (under development via DLP file)
+            CORNERS --> figure out Hills (under development via DLP file)  
+            """               
 ################################################################################################################               
 ################################################################################################################        
+
+# Simplify Struct Library Usage
+def read_unpack(file, fmt):
+    return struct.unpack(fmt, file.read(struct.calcsize(fmt)))
+
+def write_pack(file, fmt, *args):
+    file.write(struct.pack(fmt, *args))
+
 
 # VECTOR2 CLASS
 class Vector2:
@@ -219,8 +217,59 @@ class Vector2:
         self.x = x
         self.y = y
 
+    def read(file):
+        return Vector2(*read_unpack(file, '<2f'))
+
+    def readn(file, count):
+        return [Vector2.read(file) for _ in range(count)]
+
+    def write(self, file):
+        write_pack(file, '<2f', self.x, self.y)
+
     def __repr__(self):
-        return f"x = {self.x}, y = {self.y})"
+        return '{{{:f},{:f}}}'.format(self.x, self.y)
+
+    def __add__(self, other):
+        return Vector2(self.x + other.x, self.y + other.y)
+
+    def __sub__(self, other):
+        return Vector2(self.x - other.x, self.y - other.y)
+
+    def __mul__(self, other):
+        return Vector2(self.x * other, self.y * other)
+
+    def __truediv__(self, other):
+        return Vector2(self.x / other, self.y / other)
+
+    def __eq__(self, other):
+        return (self.x, self.y) == (other.x, other.y)
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
+    def tuple(self):
+        return (self.x, self.y)
+
+    def Cross(self, rhs=None):
+        if rhs is None:
+            return Vector2(self.y, -self.x)
+
+        return (self.x*rhs.y) - (self.y*rhs.x)
+
+    def Dot(self, rhs):
+        return (self.x * rhs.x) + (self.y * rhs.y)
+
+    def Mag2(self):
+        return (self.x * self.x) + (self.y * self.y)
+
+    def Normalize(self):
+        return self * (self.Mag2() ** -0.5)
+
+    def Dist2(self, other):
+        return (other - self).Mag2()
+
+    def Dist(self, other):
+        return self.Dist2(other) ** 0.5
 
 # VECTOR3 CLASS
 class Vector3:
@@ -229,15 +278,15 @@ class Vector3:
         self.y = y
         self.z = z
         self._data = {"x": x, "y": y, "z": z}
+        
+    def read(file):
+        return Vector3(*read_unpack(file, '<3f'))
 
-    @classmethod
-    def from_file(cls, file):
-        x, y, z = struct.unpack('<3f', file.read(12))
-        return cls(x, y, z)
-    
-    def to_file(self, file):
-        data = struct.pack('<3f', self.x, self.y, self.z)
-        file.write(data)
+    def readn(file, count):
+        return [Vector3.read(file) for _ in range(count)]
+
+    def write(self, file):
+        write_pack(file, '<3f', self.x, self.y, self.z)
         
     def to_bytes(self):
         return struct.pack('<3f', self.x, self.y, self.z)
@@ -260,6 +309,45 @@ class Vector3:
             return '{{{:.2f},{:.2f},{:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
         else:
             return '{{{:f},{:f},{:f}}}'.format(self.x, self.y, self.z)
+
+    def __add__(self, other):
+        return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
+
+    def __sub__(self, other):
+        return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
+
+    def __mul__(self, other):
+        return Vector3(self.x * other, self.y * other, self.z * other)
+
+    def __truediv__(self, other):
+        return Vector3(self.x / other, self.y / other, self.z / other)
+
+    def __eq__(self, other):
+        return (self.x, self.y, self.z) == (other.x, other.y, other.z)
+
+    def __hash__(self):
+        return hash((self.x, self.y, self.z))
+
+    def tuple(self):
+        return (self.x, self.y, self.z)
+
+    def Cross(self, rhs):
+        return Vector3(self.y * rhs.z - self.z * rhs.y, self.z * rhs.x - self.x * rhs.z, self.x * rhs.y - self.y * rhs.x)
+
+    def Dot(self, rhs):
+        return (self.x * rhs.x) + (self.y * rhs.y) + (self.z * rhs.z)
+
+    def Mag2(self):
+        return (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
+
+    def Normalize(self):
+        return self * (self.Mag2() ** -0.5)
+
+    def Dist2(self, other):
+        return (other - self).Mag2()
+
+    def Dist(self, other):
+        return self.Dist2(other) ** 0.5
        
        
 # Calculate BND center, min, max, radius, radius squared    
@@ -321,40 +409,39 @@ class Polygon:
 
     @classmethod
     def from_file(cls, file):
-        word0, mtl_index, flags, *vert_indices = struct.unpack('<HBB4H', file.read(12))
-        some_vecs = [Vector3.from_file(file) for _ in range(4)]
-        corners = list(struct.unpack('<4f', file.read(16)))
-        
+        word0, mtl_index, flags, *vert_indices = read_unpack(file, '<HBB4H')
+        some_vecs = Vector3.readn(file, 4)
+        corners = list(read_unpack(file, '<4f'))
         return cls(word0, mtl_index, flags, vert_indices, some_vecs, corners)
-    
-    def to_file(self, file):
-        data = struct.pack('<HBB4H', self.word0, self.mtl_index, self.flags, *self.vert_indices)
-        file.write(data)
-    
-        for vec in self.some_vecs: 
-            data = struct.pack('<3f', vec.x, vec.y, vec.z)
-            file.write(data)
- 
-        data = struct.pack('<4f', self.corners[0], self.corners[1], self.corners[2], self.corners[3])
-        file.write(data)
         
+    def to_file(self, file):
+        write_pack(file, '<HBB4H', self.word0, self.mtl_index, self.flags, *self.vert_indices)
+        
+        for vec in self.some_vecs:     
+            vec.write(file)           
+        write_pack(file, '<4f', *self.corners)
+                
     def __repr__(self, round_values=True):
-        vertices_coordinates = []
-        for index in self.vert_indices:
-            vertices_coordinates.append(bnd.vertices[index])
+        vertices_coordinates = [bnd.vertices[index] for index in self.vert_indices]
+        corners_str = ', '.join(f'{round(corner, 2):.2f}' if round_values else f'{corner:f}' for corner in self.corners)
 
-        if round_values:
-            corners_str = '[{}]'.format(', '.join(['{:.2f}'.format(round(corner, 2)) for corner in self.corners]))
-        else:
-            corners_str = '[{}]'.format(', '.join(['{:f}'.format(corner) for corner in self.corners]))
+        return f'''
+    Polygon
+    Bound number: {self.word0}
+    Material Index: {self.mtl_index}
+    Flags: {self.flags}
+    Vertices Indices: {self.vert_indices}
+    Vertices Coordinates: {vertices_coordinates}
+    Directional Coordinates: {self.some_vecs}
+    Corners: [{corners_str}]
+        '''
 
-        return '\n Polygon \n Bound number: {}\n Material Index: {}\n Flags: {}\n Vertices Indices: {}\n Vertices Coordinates: {}\n Directional Coordinates: {}\n Corners: {}\n'.format(
-            self.word0, self.mtl_index, self.flags, self.vert_indices, vertices_coordinates, self.some_vecs, corners_str)
-    
 
 # BND CLASS    
 class BND:
-    def __init__(self, magic, offset, width, row_count, height, center, radius, radius_sqr, min_, max_, num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys):
+    def __init__(self, magic, offset, width, row_count, height, 
+                 center, radius, radius_sqr, min_, max_, 
+                 num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys):
         self.magic = magic
         self.offset = offset    
         self.width = width
@@ -380,38 +467,35 @@ class BND:
 
     @classmethod
     def from_file(cls, file):
-        magic = struct.unpack('<4s', file.read(4))[0]
-        offset = Vector3.from_file(file)
-        width, row_count, height = struct.unpack('<3l', file.read(12)) 
-        center = Vector3.from_file(file)
-        radius, radius_sqr = struct.unpack('<2f', file.read(8))
-        min_ = Vector3.from_file(file)
-        max_ = Vector3.from_file(file)
-        num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count = struct.unpack('<5l', file.read(20))
-        scaled_dist_x, z_dist, num_indexs, height_scale, unk12 = struct.unpack('<fflfl', file.read(20))
-        vertices = [Vector3.from_file(file) for _ in range(num_verts)]
+        magic = read_unpack(file, '<4s')[0]
+        offset = Vector3.read(file)
+        width, row_count, height = read_unpack(file, '<3l')
+        center = Vector3.read(file)
+        radius, radius_sqr = read_unpack(file, '<2f')
+        min_ = Vector3.read(file)
+        max_ = Vector3.read(file)
+        num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count = read_unpack(file, '<5l')
+        scaled_dist_x, z_dist, num_indexs, height_scale, unk12 = read_unpack(file, '<fflfl')
+        vertices = [Vector3.read(file) for _ in range(num_verts)]
         polys = [Polygon.from_file(file) for _ in range(num_polys + 1)] 
 
-        return cls(magic, offset, width, row_count, height, center, radius, radius_sqr, min_, max_, num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys)
+        return cls(magic, offset, width, row_count, height, 
+                   center, radius, radius_sqr, min_, max_, 
+                   num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys)
     
     def to_file(self, file):
-        data = struct.pack('<4s', self.magic)
-        file.write(data)
-        self.offset.to_file(file)         
-        data = struct.pack('<3l', self.width, self.row_count, self.height)
-        file.write(data)     
-        self.center.to_file(file) 
-        data = struct.pack('<ff', self.radius, self.radius_sqr)
-        file.write(data)
-        self.min.to_file(file)
-        self.max.to_file(file)
-        data = struct.pack('<5l', self.num_verts, self.num_polys, self.num_hot_verts, self.num_vertices_unk, self.edge_count)
-        file.write(data)
-        data = struct.pack('<fflfl', self.scaled_dist_x, self.z_dist, self.num_indexs, self.height_scale, self.unk12)
-        file.write(data)
+        write_pack(file, '<4s', self.magic)
+        self.offset.write(file)         
+        write_pack(file, '<3l', self.width, self.row_count, self.height)
+        self.center.write(file) 
+        write_pack(file, '<2f', self.radius, self.radius_sqr)
+        self.min.write(file)
+        self.max.write(file)
+        write_pack(file, '<5l', self.num_verts, self.num_polys, self.num_hot_verts, self.num_vertices_unk, self.edge_count)
+        write_pack(file, '<fflfl', self.scaled_dist_x, self.z_dist, self.num_indexs, self.height_scale, self.unk12)
 
         for vertex in self.vertices:       
-            vertex.to_file(file)            
+            vertex.write(file)            
 
         for poly in self.polys:           
             poly.to_file(file)              
@@ -423,13 +507,38 @@ class BND:
                 f.write(str(self))
                 
     def __repr__(self):
-        return 'BND\n Magic: {}\n Offset: {}\n Width: {}\n Row_count: {}\n Height: {}\n Center: {}\n Radius: {}\n Radius_sqr: {}\n min: {}\n max: {}\n Num Verts: {}\n Num Polys: {}\n Num Hot Verts: {}\n Num Vertices Unk: {}\n Edge count: {}\n Scaled Dist. X: {}\n Z Dist.: {}\n Num Indexs: {}\n Height Scale: {}\n Unk12: {}\n Vertices: {}\n\n Polys: {}\n\n'.format(
-            self.magic, self.offset, self.width, self.row_count, self.height, self.center, self.radius, self.radius_sqr, self.min, self.max, self.num_verts, self.num_polys, self.num_hot_verts, self.num_vertices_unk, self.edge_count, self.scaled_dist_x, self.z_dist, self.num_indexs, self.height_scale, self.unk12, self.vertices, self.polys)
+        return f'''
+BND
+Magic: {self.magic}
+Offset: {self.offset}
+Width: {self.width}
+Row_count: {self.row_count}
+Height: {self.height}
+Center: {self.center}
+Radius: {self.radius}
+Radius_sqr: {self.radius_sqr}
+min: {self.min}
+max: {self.max}
+Num Verts: {self.num_verts}
+Num Polys: {self.num_polys}
+Num Hot Verts: {self.num_hot_verts}
+Num Vertices Unk: {self.num_vertices_unk}
+Edge count: {self.edge_count}
+Scaled Dist. X: {self.scaled_dist_x}
+Z Dist.: {self.z_dist}
+Num Indexs: {self.num_indexs}
+Height Scale: {self.height_scale}
+Unk12: {self.unk12}
+Vertices: {self.vertices}
+Polys: {self.polys}
+    '''
 
 
 # BMS CLASS  
 class BMS:
-    def __init__(self, Magic, VertexCount, AdjunctCount, SurfaceCount, IndicesCount, Radius, Radiussq, BoundingBoxRadius, TextureCount, Flags, StringName, Coordinates, TextureDarkness, TexCoords, enclosed_shape, SurfaceSides, IndicesSides):
+    def __init__(self, Magic, VertexCount, AdjunctCount, SurfaceCount, IndicesCount, 
+                 Radius, Radiussq, BoundingBoxRadius, 
+                 TextureCount, Flags, StringName, Coordinates, TextureDarkness, TexCoords, enclosed_shape, SurfaceSides, IndicesSides):
         self.Magic = Magic
         self.VertexCount = VertexCount
         self.AdjunctCount = AdjunctCount
@@ -449,44 +558,44 @@ class BMS:
         self.IndicesSides = IndicesSides
         
     def to_file(self, file_name: str) -> None:
-        with open(file_name, 'wb') as file:
-            file.write(struct.pack('<16s', self.Magic.encode('utf-8').ljust(16, b'\x00')))
-            file.write(struct.pack('<IIII', self.VertexCount, self.AdjunctCount, self.SurfaceCount, self.IndicesCount))
-            file.write(struct.pack('<fff', self.Radius, self.Radiussq, self.BoundingBoxRadius))
-            file.write(struct.pack('<bb', self.TextureCount, self.Flags))
+        with open(file_name, 'wb') as f:
+            write_pack(f, '16s', self.Magic.encode('utf-8').ljust(16, b'\x00'))
+            write_pack(f, 'IIII', self.VertexCount, self.AdjunctCount, self.SurfaceCount, self.IndicesCount)
+            write_pack(f, 'fff', self.Radius, self.Radiussq, self.BoundingBoxRadius)
+            write_pack(f, 'bb', self.TextureCount, self.Flags)
 
-            file.write(b'\x00' * 2) 
-            file.write(b'\x00' * 4) 
+            f.write(b'\x00' * 2) 
+            f.write(b'\x00' * 4) 
 
             for StringName in self.StringName:
-                file.write(struct.pack('<32s', StringName.encode('utf-8').ljust(32, b'\x00')))
-                file.write(b'\x00' * (4 * 4))
+                write_pack(f, '32s', StringName.encode('utf-8').ljust(32, b'\x00'))
+                f.write(b'\x00' * (4 * 4))
 
             for coordinate in self.Coordinates:
-                file.write(struct.pack('<3f', coordinate.x, coordinate.y, coordinate.z))
+                write_pack(f, 'fff', coordinate.x, coordinate.y, coordinate.z)
 
-            file.write(struct.pack('<' + str(self.AdjunctCount) + 'b', *self.TextureDarkness))
-            file.write(struct.pack('<' + str(self.AdjunctCount + self.AdjunctCount) + 'f', *self.TexCoords))            
-            file.write(struct.pack('<' + str(self.AdjunctCount) + 'H', *self.enclosed_shape))
-            file.write(struct.pack('<' + str(self.SurfaceCount) + 'b', *self.SurfaceSides))
+            write_pack(f, str(self.AdjunctCount) + 'b', *self.TextureDarkness)
+            write_pack(f, str(self.AdjunctCount * 2) + 'f', *self.TexCoords)            
+            write_pack(f, str(self.AdjunctCount) + 'H', *self.enclosed_shape)
+            write_pack(f, str(self.SurfaceCount) + 'b', *self.SurfaceSides)
 
             for indices_side in self.IndicesSides:
-                file.write(struct.pack('<' + str(len(indices_side)) + 'H', *indices_side))
-      
+                write_pack(f, str(len(indices_side)) + 'H', *indices_side)
+
 ################################################################################################################               
 ################################################################################################################       
    
-# INITIALIZATIONS | do not change
+#! INITIALIZATIONS | do not change
 # BND related
 bnd_hit_id = f"{city_name}_HITID.BND"
 bnd_hit_id_text = f"{city_name}_HITID_debug.txt"
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], [0.0, 0.0, 0.0, 0.0])
-vertices = []
 polys = [poly_filler]
+vertices = []
 all_polygons_picture = []
 
 # Bridge related
-filler_object_xyz = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99"
+bridge_filler = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99"
 
 # Race related
 num_blitz = len(blitz_waypoints)
@@ -507,7 +616,7 @@ output_physics_file = "physics.db"
 ################################################################################################################               
  
 # Handle Texture Mapping for BMS files
-def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle_degrees=(45, 45), custom=None):
+def generate_tex_coords(mode="H", repeat_x=1, repeat_y=1, tilt=0, angle_degrees=(45, 45), custom=None):
     
     def tex_coords_rotating_repeating(repeat_x, repeat_y, angle_degrees):
         angle_radians = [math.radians(angle) for angle in angle_degrees]
@@ -525,30 +634,33 @@ def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle
 
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
-
+    
     # Horizontal
-    if mode == "horizontal":
+    if mode == "H" or mode == "horizontal":
         return [0, 0, 0, 1, 1, 1, 1, 0]
-    elif mode == "horizontal_flipped":
+    elif mode == "H.f" or mode == "horizontal_flipped":
         return [0, 1, 0, 0, 1, 0, 1, 1]
-   # Vertical 
-    elif mode == "vertical":
-        return [0, 0, 1, 0, 1, 1, 0, 1]    
-    elif mode == "vertical_flipped":
+    
+    # Vertical
+    elif mode == "V" or mode == "vertical":
+        return [0, 0, 1, 0, 1, 1, 0, 1]
+    elif mode == "V.f" or mode == "vertical_flipped":
         return [1, 0, 0, 0, 0, 1, 1, 1]
+    
     # Horizontal Repeated
-    elif mode == "repeating_horizontal":
+    elif mode == "r.H" or mode == "repeating_horizontal":
         return [0, 0, 0, repeat_y, repeat_x, repeat_y, repeat_x, 0]
-    elif mode == "repeating_horizontal_flipped":
+    elif mode == "r.H.f" or mode == "repeating_horizontal_flipped":
         return [0, repeat_y, 0, 0, repeat_x, 0, repeat_x, repeat_y]
+    
     # Vertical Repeated
-    elif mode == "repeating_vertical":
+    elif mode == "r.V" or mode == "repeating_vertical":
         return [0, 0, repeat_y, 0, repeat_y, repeat_x, 0, repeat_x]
-    elif mode == "repeating_vertical_flipped":
+    elif mode == "r.V.f" or mode == "repeating_vertical_flipped":
         return [repeat_y, 0, 0, 0, 0, repeat_x, repeat_y, repeat_x]
-
+    
     # Check
-    elif mode == "rotating_repeating":
+    elif mode == "r.r" or mode == "rotating_repeating":
         return tex_coords_rotating_repeating(repeat_x, repeat_y, angle_degrees)
     elif mode == "custom":
         if custom is None:
@@ -557,11 +669,20 @@ def generate_tex_coords(mode="horizontal", repeat_x=1, repeat_y=1, tilt=0, angle
     elif mode == "combined":
         return [0, 0, 1, 0, 1, 1 + tilt, 0, 2]
     else:
-        raise ValueError(f"Invalid mode '{mode}'. Allowed values are 'horizontal', 'vertical', 'horizontal_flipped', 'vertical_flipped', 'repeating_horizontal', 'repeating_vertical', 'repeating_horizontal_flipped', 'repeating_vertical_flipped', 'rotating_repeating', 'custom', and 'combined'")
-
+        raise ValueError(f"""
+                         Invalid mode '{mode}'.
+                         Allowed values are: 
+                         'H', 'horizontal', 'H.f', 'horizontal_flipped',
+                         'V', 'vertical', 'V.f', 'vertical_flipped', 'r.H', 'repeating_horizontal',
+                         'r.H.f', 'repeating_horizontal_flipped', 'r.V', 'repeating_vertical',
+                         'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
+                         'custom', and 'combined'
+                         """)
+        
 # HELPER BMS
 def generate_and_save_bms_file(
-    string_names, texture_indices=[1], vertices=vertices, polys=polys, texture_darkness=None, TexCoords=None, exclude=False, tex_coord_mode=None, tex_coord_params=None):
+    string_names, texture_indices=[1], vertices=vertices, polys=polys, 
+    texture_darkness=None, TexCoords=None, exclude=False, tex_coord_mode=None, tex_coord_params=None):
     
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.word0
@@ -618,7 +739,9 @@ def generate_bms(vertices, polys, texture_indices, string_names: List[str], text
         indices_sides.append(shape_indices)
         index_start += len(shape)
         
-    return BMS(magic, vertex_count, adjunct_count, surface_count, indices_count, radius, radiussq, bounding_box_radius, texture_count, flags, string_names, coordinates, texture_darkness, TexCoords, enclosed_shape, texture_indices, indices_sides)
+    return BMS(magic, vertex_count, adjunct_count, surface_count, indices_count, 
+               radius, radiussq, bounding_box_radius, 
+               texture_count, flags, string_names, coordinates, texture_darkness, TexCoords, enclosed_shape, texture_indices, indices_sides)
 
 ################################################################################################################               
 ################################################################################################################  
@@ -635,7 +758,9 @@ def initialize_bnd(vertices, polys):
     radius = calculate_radius(vertices, center)
     radius_sqr = radius ** 2
 
-    return BND(magic, offset, width, row_count, height, center, radius, radius_sqr, min_, max_, len(vertices), len(polys) - 1, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys)
+    return BND(magic, offset, width, row_count, height, 
+               center, radius, radius_sqr, min_, max_, 
+               len(vertices), len(polys) - 1, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys)
     
 # Sort BND Vertices Coordinates
 def sort_coordinates(vertex_coordinates):
@@ -710,7 +835,7 @@ def create_and_append_polygon(
             flags = 3           
             print("WARNING: Triangles are not supported yet, this is under construction")
         else:
-            raise ValueError("Unsupported number of coordinates in 'vertex_coordinates', to fix you must set 4 coordinates")
+            raise ValueError("Unsupported number of coordinates in 'vertex_coordinates', to fix you must set 3 or 4 coordinates")
     
     if sort_vertices:   # If sorting is desired
         sorted_vertex_coordinates = sort_coordinates(vertex_coordinates)
@@ -736,10 +861,10 @@ def create_and_append_polygon(
 ################################################################################################################               
 ################################################################################################################ 
 
-# ==================CREATING YOUR CITY================== #
+#? ==================CREATING YOUR CITY================== #?
 
 def user_notes(x):
-    """ 
+    f""" 
     Please find some example Polygons and BMS below this text.
     You can already run this the script with these Polygons and BMS to see how it works.
     
@@ -749,13 +874,22 @@ def user_notes(x):
         max_x,min_z 
         min_x,min_z 
     
-    For the Material Index, keep in mind: 0 = Road, 87 = Grass, 91 (Water, {Sleep with the Fishes})        
-    Note that you can also set custom Materials
+    For the Material Index, keep in mind: 0 = Road, 87 = Grass, 91 (Water)        
+    Note that you can also set custom Materials properties elsewhere in the script
+    
+    "String_name" is the name of the Texture (.DDS file) you want to use for your Polygon.
 
     Texture (UV) mapping examples:
-    TexCoords=generate_tex_coords(mode="vertical")
-    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=4, repeat_y=2))
-    TexCoords=generate_tex_coords(mode="rotating_repeating", repeat_x=3, repeat_y=3, angle_degrees=(45, 45))) // unfinished
+    TexCoords=generate_tex_coords(mode="v")
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=4, repeat_y=2))
+    TexCoords=generate_tex_coords(mode="r.r", repeat_x=3, repeat_y=3, angle_degrees=(45, 45))) // unfinished
+    
+    Allowed values are: 
+    'H', 'horizontal', 'H.f', 'horizontal_flipped',
+    'V', 'vertical', 'V.f', 'vertical_flipped', 'r.H', 'repeating_horizontal',
+    'r.H.f', 'repeating_horizontal_flipped', 'r.V', 'repeating_vertical',
+    'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
+    'custom', and 'combined'
     """
     
 # Start_Area
@@ -763,44 +897,84 @@ create_and_append_polygon(
 	bound_number = 1,
 	material_index = 0,
 	vertex_coordinates=[
-		(-60.00, 0.00, 100.00),
-		(140.00, 0.00, 100.00),
-		(140.00, 0.00, -100.00),
-		(-60.00, 0.00, -100.00)])
+		(-50.0, 0.0, 70.0),
+		(50.0, 0.0, 70.0),
+		(50.0, 0.0, -70.0),
+		(-50.0, 0.0, -70.0)])
 
 generate_and_save_bms_file(
     string_names = ["R6"], 
-    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
 
-
-# Water
+# Grass_Area    
 create_and_append_polygon(
 	bound_number = 2,
+	material_index = 87,
+	vertex_coordinates=[
+		(-50.0, 0.0, -70.0),
+		(50.0, 0.0, -70.0),
+		(50.0, 0.0, -140.0),
+		(-50.0, 0.0, -140.0)])
+
+generate_and_save_bms_file(
+    string_names = ["24_GRASS"], 
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
+
+# No_Friction
+create_and_append_polygon(
+	bound_number = 3,
+	material_index = 98,
+	vertex_coordinates=[
+		(-50.0, 0.0, -140.0),
+		(50.0, 0.0, -140.0),
+		(50.0, 0.0, -210.0),
+		(-50.0, 0.0, -210.0)])
+
+generate_and_save_bms_file(
+    string_names = ["SNOW"], 
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
+
+# Wood_Area
+create_and_append_polygon(
+	bound_number = 4,
+	material_index = 0,
+	vertex_coordinates=[
+		(-50.0, 0.0, 70.0),
+		(-140.0, 0.0, 70.0),
+		(-140.0, 0.0, -70.0),
+		(-50.0, 0.0, -70.0)])
+
+generate_and_save_bms_file(
+    string_names = ["T_WOOD"], 
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
+
+# Barricades_Area  
+create_and_append_polygon(
+	bound_number = 5,
+	material_index = 0,
+	vertex_coordinates=[
+		(-50.0, 0.0, -70.0),
+		(-140.0, 0.0, -70.0),
+		(-140.0, 0.0, -140.0),
+		(-50.0, 0.0, -140.0)])
+
+generate_and_save_bms_file(
+    string_names = ["T_BARRICADE"], 
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=50, repeat_y=50))
+
+# Water_Area
+create_and_append_polygon(
+	bound_number = 6,
 	material_index = 91,
 	vertex_coordinates=[
-		(-242.16, 0.00, 297.87),
-		(-142.16, 0.00, 297.87),
-		(-142.16, 0.00, -302.13),
-		(-242.16, 0.00, -302.13)])
+		(-50.0, 0.0, -140.0),
+		(-140.0, 0.0, -140.0),
+		(-140.0, 0.0, -210.0),
+		(-50.0, 0.0, -210.0)])
 
 generate_and_save_bms_file(
     string_names = ["T_WATER"], 
-    TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
-
-
-
-# FOR REFERENCE
-# generate_and_save_bms_file(
-#     string_names = ["24_GRASS"], 
-#     TexCoords=generate_tex_coords(mode="repeating_horizontal", repeat_x=20, repeat_y=20))
-
-# generate_and_save_bms_file(
-#     string_names = ["R6"], 
-#     TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
-
-# generate_and_save_bms_file(
-#     string_names = ["T_WATER"], 
-#     TexCoords=generate_tex_coords(mode="repeating_vertical", repeat_x=10, repeat_y=10))
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -813,7 +987,7 @@ with open(bnd_hit_id, "wb") as f:
     bnd.write_to_file(bnd_hit_id_text, debug_bnd)
 
 # Create SHOP and FOLDER structure   
-def create_folder_structure(city_name):
+def create_folders(city_name):
     os.makedirs("build", exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMP16"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "TEX16O"), exist_ok=True)
@@ -825,9 +999,7 @@ def create_folder_structure(city_name):
     os.makedirs(os.path.join("SHOP", "CITY", f"{city_name}"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "RACE", f"{city_name}"), exist_ok=True)
     
-    with open(os.path.join("SHOP", "CITY", f"{city_name}.PTL"), "w") as f: # the game requires a PTL file to work
-        pass
-    
+    # Write City Info file
     with open(os.path.join("SHOP", "TUNE", f"{city_name}.CINFO"), "w") as f:
         localized_name = race_locale_name
         map_name = city_name.lower()
@@ -858,7 +1030,7 @@ def move_custom_textures():
             destination = os.path.join(destination_tex16o_path, custom_texs)
             shutil.copy(source, destination)
         
-# Move contents of the DEV folder to specified mm1 folder     
+# Move contents of 'dev' folder to user's MM1 folder     
 def move_dev(destination_folder, city_name):
     current_folder = os.getcwd()
     dev_folder_path = os.path.join(current_folder, 'dev')
@@ -871,12 +1043,12 @@ def move_dev(destination_folder, city_name):
             
         shutil.copytree(dev_folder_path, destination_path)
         
-    # Delete .map and .roads files of the Map after they have been moved to the mm1 folder
+    # Delete City's AI .map and .roads files after they have been moved to the user's MM1 folder
     city_folder_path = os.path.join(dev_folder_path, 'CITY', city_name)
     if os.path.exists(city_folder_path):
         shutil.rmtree(city_folder_path)
 
-# Move Open1560 files to specified mm1 folder                              
+# Move Open1560 files to the user's MM1 folder                       
 def move_open1560(destination_folder):
     current_folder = os.getcwd()
     open1560_folder_path = os.path.join(current_folder, 'Installation_Instructions', 'Open1560')
@@ -898,7 +1070,7 @@ def move_open1560(destination_folder):
                     shutil.copy2(source_file_path, destination_file_path)
                                       
 # Distribute generated files
-def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
+def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
                                circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True):
 
     bms_files = []
@@ -941,15 +1113,16 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
             
         # Set MMDATA.CSV values           
         car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 99, 99
-        cops_x = 0.0        # will be customizable later
+        cops_x = 1.0        # will be customizable later // just add as a parameter in e.g. "blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1)]"
         ambient_x = 1.0     # will be customizable later
         peds_x = 1.0        # will be customizable later
                 
-        # Create MMDATA.CSV files
+        # Create MM_type_DATA.CSV files
         mm_file_name = f"MM{race_type}DATA.CSV"
+        mm_data_comment_line = "Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n"
+        
         with open(mm_file_name, "w") as f:
-            
-            f.write("Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n")
+            f.write(mm_data_comment_line)
             
             for i in range(num_files):
                 if race_type == "BLITZ":
@@ -980,12 +1153,14 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
         
     # Create COPSWAYPOINTS.CSV file
     cnr_csv_file = "COPSWAYPOINTS.CSV"
+    cnr_comment_line = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
+    cnr_filler = ",0,0,0,0,0,\n"
     with open(cnr_csv_file, "w") as f:
-        f.write("This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n")
+        f.write(cnr_comment_line)
         for i in range(0, len(cnr_waypoints), 3):
-            f.write(", ".join(map(str, cnr_waypoints[i])) + ",0,0,0,0,0,\n") 
-            f.write(", ".join(map(str, cnr_waypoints[i+1])) + ",0,0,0,0,0,\n")
-            f.write(", ".join(map(str, cnr_waypoints[i+2])) + ",0,0,0,0,0,\n")
+            f.write(", ".join(map(str, cnr_waypoints[i])) + cnr_filler) 
+            f.write(", ".join(map(str, cnr_waypoints[i+1])) + cnr_filler)
+            f.write(", ".join(map(str, cnr_waypoints[i+2])) + cnr_filler)
         
     shutil.move(cnr_csv_file, os.path.join("SHOP", "RACE", f"{city_name}", cnr_csv_file))
 
@@ -993,64 +1168,65 @@ def distribute_generated_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints
     if all_races_files:
         for race_type, prefix, num_files in [("BLITZ", "B", num_blitz), ("CIRCUIT", "C", num_circuit), ("RACE", "R", num_checkpoint)]:
             for race_index in range(num_files):
-                for opp_index in range(1, num_opponents + 1):
+                for opp_index in range(1, aimap_num_opponents + 1):
                     opp_file_name = f"OPP{opp_index}{race_type}{race_index}.{prefix}{race_index}"
+                    
+                    opp_comment_line = f"# This is your Opponent file for opponent number {opp_index}, in race {race_type}{race_index}"
                     with open(opp_file_name, "w") as f:
-                        f.write("# This your Opponent file for opponent number #..., in race ...")
+                        f.write(opp_comment_line)
                     shutil.move(opp_file_name, os.path.join("SHOP", "RACE", f"{city_name}", opp_file_name)) 
                     
                # Create AIMAP_P files
                 aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
                 with open(aimap_file_name, "w") as f:
-                    f.write("# Ambient Traffic Density \n[Density] \n" + str(ambient_density) + "\n\n")
-                    f.write("# Default Road Speed Limit \n[Speed Limit] \n45 \n\n")
-                    f.write("# Ambient Traffic Exceptions\n# Rd Id, Density, Speed Limit \n[Exceptions] \n0 \n\n")
-                    f.write("# Police Init \n# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route \n")
-                    f.write("[Police] \n1 \nvpcop 50.0 0.0 30.0 -90.0 0 4 \n\n")
                     
-                    f.write("# Opponent Init, Geo File, WavePoint File \n[Opponent] \n") 
-                    f.write(str(num_opponents) + "\n")
+                    aimap_content = f"""
+                    # Ambient Traffic Density 
+                    [Density] 
+                    {aimap_ambient_density}
+
+                    # Default Road Speed Limit 
+                    [Speed Limit] 
+                    45 
+
+                    # Ambient Traffic Exceptions
+                    # Rd Id, Density, Speed Limit 
+                    [Exceptions] 
+                    0 
+
+                    # Police Init 
+                    # Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route 
+                    [Police] 
+                    1 
+                    {aimap_cop_car} {aimap_cop_data}
+
+                    # Opponent Init, Geo File, WavePoint File 
+                    [Opponent] 
+                    {aimap_num_opponents}
+                    """
+
+                    f.write(aimap_content.strip())
                     
-                    for opp_index in range(1, num_opponents + 1):
-                        f.write(f"{opponent_car} OPP{opp_index}{race_type}{race_index}.{prefix}{opp_index}\n")
+                    for opp_index in range(1, aimap_num_opponents + 1):
+                        f.write(f"{aimap_opponent_car} OPP{opp_index}{race_type}{race_index}.{prefix}{opp_index}\n")
                         
                 shutil.move(aimap_file_name, os.path.join("SHOP", "RACE", f"{city_name}", aimap_file_name))
     
     # Create CELLS file
-    cells_file_path = os.path.join("SHOP", "CITY", f"{city_name}.CELLS")
-    with open(cells_file_path, "w") as cells_file:
-        set_max_cell = 1000
-        bms_count = len(bms_files)
-        cells_file.write(f"{bms_count}\n")
-        cells_file.write(str(set_max_cell) + "\n")
+    cells_file = os.path.join("SHOP", "CITY", f"{city_name}.CELLS")
+    with open(cells_file, "w") as f:
+        f.write(f"{len(bms_files)}\n")              # total number of cells
+        f.write(str(max(bms_files) + 1000) + "\n")  # max cell number + 1000 (mandatory)
 
         sorted_bms_files = sorted(bms_files)
         for bound_number in sorted_bms_files:
-            remaining_bound_numbers = [num for num in sorted_bms_files if num != bound_number]
-            count_past_4th = len(remaining_bound_numbers)
             
-            # Implement Cell type here
+            # Write CELLS data
             if bound_number in bms_a2_files:
-                row = f"{bound_number},32,4,{count_past_4th}"
+                row = f"{bound_number},32,4,0\n"
             else:
-                row = f"{bound_number},8,0,{count_past_4th}"
-                
-            '''
-            1 = tunnel      Is Tunnel (Echo, No Lighting, No Reflections, No Ptx) 
-            2 = indoors     (?)
-            3 = tunnel      (same as 1?)
-            4 = water       (water will "move") if we we make BMS_A2, add a buffer of 32, and the name of the texture is, or contains "T_WATER"
-            20 = Z enable    (?)
-            80 = FogValue wll be 0.25   (?)
-            200 = No Skids              (actually: any value above (?) will disable skids)
-            '''
-            
-            for num in remaining_bound_numbers:
-                row += f",{num}"
-            row += "\n"
-            
-            row = row[:256]
-            cells_file.write(row)
+                row = f"{bound_number},8,0,0\n"
+            f.write(row)
     
     # Copy CMD.exe, RUN.bat, and SHIP.bat to SHOP folder
     for file in os.listdir("angel"):
@@ -1079,20 +1255,23 @@ def create_anim(city_name, anim_data, set_anim=False):
                         writer.writerow(coordinate)
               
 # Create AR file and delete folders
-def create_ar_file(city_name, destination_folder, delete_shop=False):
+def create_ar(city_name, destination_folder, delete_shop=False):
     os.chdir("SHOP")
-    command = f"CMD.EXE /C run !!!!!{city_name}_City"
-    subprocess.run(command, shell=True)
+    ar_command = f"CMD.EXE /C run !!!!!{city_name}_City"
+    subprocess.run(ar_command, shell=True)
     os.chdir("..")  
     
     for file in os.listdir("build"):
         if file.endswith(".ar") and file.startswith(f"!!!!!{city_name}_City"):
             shutil.move(os.path.join("build", file), os.path.join(destination_folder, file))
+            
+    # Delete the build folder
     try:
         shutil.rmtree("build")
     except Exception as e:
         print(f"Failed to delete the build directory. Reason: {e}")
     
+    # Delete the SHOP folder
     if delete_shop:
         try:
             shutil.rmtree("SHOP")
@@ -1155,8 +1334,10 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
                 plt.savefig(os.path.join(output_folder_cwd, hudmap_debug), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
 
+# create_ext_file(city_name, all_polygons_picture) 
+
 # Create EXT file            
-def create_ext_file(city_name, polygonz):
+def create_ext(city_name, polygonz):
     min_x = min(point[0] for polygon in polygonz for point in polygon)
     max_x = max(point[0] for polygon in polygonz for point in polygon)
     min_z = min(point[2] for polygon in polygonz for point in polygon)
@@ -1173,40 +1354,56 @@ def create_ext_file(city_name, polygonz):
 # Create Bridges       
 def create_bridges(all_bridges, set_bridges=False):
     for bridge in all_bridges:
-        drawbridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
+        bridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
         # Vertical
-        if bridge_orientation == "vertical":
-            drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2]]
-        elif bridge_orientation == "vertical_flipped":
-            drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2]]
+        if bridge_orientation == "V":
+            bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2]]
+        elif bridge_orientation == "V.F":
+            bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2]]
         # Horizontal
-        elif bridge_orientation == "horizontal_east":
-            drawbridge_facing = [drawbridge_offset[0], drawbridge_offset[1], drawbridge_offset[2] + 10]
-        elif bridge_orientation == "horizontal_west":
-            drawbridge_facing = [drawbridge_offset[0], drawbridge_offset[1], drawbridge_offset[2] - 10]
+        elif bridge_orientation == "H.E":
+            bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] + 10]
+        elif bridge_orientation == "H.W":
+            bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] - 10]
         # Diagonal North    
-        elif bridge_orientation == "north_east":
-            drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2] + 10]
-        elif bridge_orientation == "north_west":
-            drawbridge_facing = [drawbridge_offset[0] + 10, drawbridge_offset[1], drawbridge_offset[2] - 10]
+        elif bridge_orientation == "N.E":
+            bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] + 10]
+        elif bridge_orientation == "N.W":
+            bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] - 10]
         # Diagonal South   
-        elif bridge_orientation == "south_east":
-            drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2] + 10]
-        elif bridge_orientation == "south_west":
-            drawbridge_facing = [drawbridge_offset[0] - 10, drawbridge_offset[1], drawbridge_offset[2] - 10]
+        elif bridge_orientation == "S.E":
+            bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] + 10]
+        elif bridge_orientation == "S.W":
+            bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] - 10]
         else:
-            print("Invalid Bridge Orientation. Please choose from 'vertical', 'vertical flipped', 'horizontal_east', 'horizontal_west', 'north_east', 'north_west', 'south_east', or 'south_west'.")
+            ValueError(f"""
+                  Invalid Bridge Orientation. 
+                  Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
+                  Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
+                  """)
             return
+        
+        drawbridge_values = f"""
+{bridge_object}, 0, {bridge_offset[0]}, {bridge_offset[1]}, {bridge_offset[2]}, {bridge_facing[0]}, {bridge_facing[1]}, {bridge_facing[2]})
+        """
 
-        drawbridge_values = (bridge_object, 0) + drawbridge_offset + tuple(drawbridge_facing)
-        bridge_data = f"DrawBridge{bridge_number}\n" + '\t' + ','.join(map(str,drawbridge_values)) + '\n' + ('\t'+ filler_object_xyz + '\n') * 5 + f"DrawBridge{bridge_number}\n"
-                
+        bridge_data = f"""
+DrawBridge{bridge_number}
+{','.join(map(str, drawbridge_values))}
+    {bridge_filler}
+    {bridge_filler}
+    {bridge_filler}
+    {bridge_filler}
+    {bridge_filler}
+DrawBridge{bridge_number}
+        """
+        
         if set_bridges:
             bridge_file_path = os.path.join("SHOP", "CITY", f"{city_name}.GIZMO")
             with open(bridge_file_path, "a") as f:
                 if bridge_data is not None:
                     f.write(bridge_data)
-  
+                
 # BINARYBANGER CLASS                            
 class BinaryBanger:
     def __init__(self, start: Vector3, end: Vector3, name: str):
@@ -1215,11 +1412,17 @@ class BinaryBanger:
         self.start = start
         self.end = end
         self.name = name
-
-    def __repr__(self):
-        return 'BinaryBanger\n Room: {}\n Flags: {}\n Start: {}\n End: {}\n Name: {}\n\n'.format(
-            self.Room, self.Flags, self.Start, self.End, self.Name)
         
+    def __repr__(self):
+        return f'''
+    BinaryBanger
+    Room: {self.Room}
+    Flags: {self.Flags}
+    Start: {self.Start}
+    End: {self.End}
+    Name: {self.Name}
+    '''
+  
 class BNGFileWriter:
     def __init__(self, filename: str, city_name: str, debug_bng: bool = False):
         self.filename = filename
@@ -1231,7 +1434,6 @@ class BNGFileWriter:
         self.prop_data = self.load_prop_data()            
         
     def load_prop_data(self):
-        """Load prop dimensions from file."""
         prop_data = {}
         with open(self.prop_file_path, "r") as f:
             for line in f:
@@ -1241,27 +1443,25 @@ class BNGFileWriter:
         
     def write_props(self, set_props: bool = False):
         if set_props:
-            """Write object data to a file."""
             with open(self.filename, mode="wb") as f:
-                f.write(struct.pack('<I', len(self.objects)))
+                write_pack(f, '<I', len(self.objects))
             
                 for index, obj in enumerate(self.objects, 1):
                     if self.debug_bng:
                         with open(self.debug_filename, "a") as debug_f:
-                            debug_f.write(f"Prop {index} Data:\n"  
-                                        f"Start: {obj.start}\n"
-                                        f"End: {obj.end}\n"
-                                        f"Name: {obj.name}\n\n")
-
-                        f.write(struct.pack(
-                            '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z))
+                            debug_f.write(f'''
+        Prop {index} Data:
+        Start: {obj.start}
+        End: {obj.end}
+        Name: {obj.name}
+        ''')
+                        write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
 
                         for char in obj.name: 
-                            f.write(struct.pack('<s', bytes(char, encoding='utf8'))) 
+                            write_pack(f, '<s', bytes(char, encoding='utf8')) 
                         
     # IN DEVELOPMENT      
     def add_props(self, new_objects: List[Dict[str, Union[int, float, str]]]):
-        """Add props to the object datalist."""
         for obj in new_objects:
             offset = Vector3(obj['offset_x'], obj['offset_y'], obj['offset_z'])
             face = Vector3(obj['face_x'], obj['face_y'], obj['face_z'])
@@ -1290,7 +1490,6 @@ class BNGFileWriter:
                         self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
 
     def get_prop_dimension(self, prop_name: str, dimension: str) -> float:
-        """Get the dimension (x, y, or z) of a prop."""
         if prop_name in self.prop_data:
             if dimension == 'x':
                 return self.prop_data[prop_name].x
@@ -1326,30 +1525,29 @@ class MaterialEditor:
         self.ptx_color = ptx_color 
 
     @staticmethod
+    def from_file(f):
+        name = f.read(32).decode("latin-1").rstrip('\x00')
+        params = read_unpack(f, '>7f2I')
+        velocity = Vector2.read(f)
+        ptx_color = Vector3.read(f)
+
+        return MaterialEditor(name, *params, velocity, ptx_color)
+
+    @staticmethod
+    def readn(f, count):
+        return [MaterialEditor.from_file(f) for _ in range(count)]
+
+    def to_file(self, f):
+        write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
+        write_pack(f, '>7f2I', self.friction, self.elasticity, self.drag, self.bump_height, self.bump_width, self.bump_depth, self.sink_depth, self.type, self.sound)
+        self.velocity.write(f)
+        self.ptx_color.write(f)
+
+    @staticmethod
     def read_physics_db(file_name):
         with open(file_name, 'rb') as file:
-            count_data = file.read(4)
-            count = struct.unpack(">I", count_data)[0]
-
-            agi_phys_parameters = []
-
-            for _ in range(count):
-                name_data = file.read(32)
-                name = name_data.decode("latin-1").rstrip('\x00')
-
-                params_data = file.read(36)
-                params = struct.unpack(">7f2I", params_data)
-
-                velocity_data = file.read(8)
-                velocity = Vector2(*struct.unpack(">2f", velocity_data))
-
-                ptx_color_data = file.read(12)
-                ptx_color = Vector3(*struct.unpack(">3f", ptx_color_data))
-
-                agi_phys_param = MaterialEditor(name, *params, velocity, ptx_color)
-                agi_phys_parameters.append(agi_phys_param)
-
-        return agi_phys_parameters
+            count = read_unpack(file, '>I')[0]
+            return MaterialEditor.readn(file, count)
 
     @classmethod
     def read_binary(cls, file_name):
@@ -1357,57 +1555,28 @@ class MaterialEditor:
 
     @staticmethod
     def write_physics_db(file_name, agi_phys_parameters):
-        with open(file_name, 'wb') as file:
-            count = len(agi_phys_parameters)
-            count_data = struct.pack(">I", count)
-            file.write(count_data)
-
+        with open(file_name, 'wb') as f:
+            write_pack(f, '>I', len(agi_phys_parameters))
             for param in agi_phys_parameters:
-                name_data = param.name.encode("latin-1").ljust(32, b'\x00')
-                file.write(name_data)
-
-                params_data = struct.pack(">7f2I", param.friction, param.elasticity, param.drag, param.bump_height, param.bump_width, param.bump_depth, param.sink_depth, param.type, param.sound)
-                file.write(params_data)
-
-                velocity_data = struct.pack(">2f", param.velocity.x, param.velocity.y)
-                file.write(velocity_data)
-
-                ptx_color_data = struct.pack(">3f", param.ptx_color.x, param.ptx_color.y, param.ptx_color.z)
-                file.write(ptx_color_data)
-
-    @classmethod
-    def change_physics_db(cls, input_file_name, output_file_name, properties, index=None):
-        agi_phys_parameters = cls.read_binary(input_file_name)
-
-        if index is not None:
-            for prop, value in properties.items():
-                setattr(agi_phys_parameters[index], prop, value)
-        else:
-            for param in agi_phys_parameters:
-                for prop, value in properties.items():
-                    setattr(param, prop, value)
-
-        cls.write_physics_db(output_file_name, agi_phys_parameters)
-
-    @staticmethod
-    def create_from_scratch(output_file_name, agi_phys_parameters):
-        MaterialEditor.write_physics_db(output_file_name, agi_phys_parameters)
-        
+                param.to_file(f)
+                
     def __repr__(self):
         cleaned_name = self.name.rstrip()
-        return (f"AgiPhysParameters(\n"
-                f"  name        = '{cleaned_name}',\n"
-                f"  friction    = {self.friction:.2f},\n"
-                f"  elasticity  = {self.elasticity:.2f},\n"
-                f"  drag        = {self.drag:.2f},\n"
-                f"  bump_height = {self.bump_height:.2f},\n"
-                f"  bump_width  = {self.bump_width:.2f},\n"
-                f"  bump_depth  = {self.bump_depth:.2f},\n"
-                f"  sink_depth  = {self.sink_depth:.2f},\n"
-                f"  type        = {self.type},\n"
-                f"  sound       = {self.sound},\n"
-                f"  velocity    = {self.velocity},\n"
-                f"  ptx_color   = {self.ptx_color}\n\n")
+        return f"""
+AgiPhysParameters
+    name        = '{cleaned_name}',
+    friction    = {self.friction:.2f},
+    elasticity  = {self.elasticity:.2f},
+    drag        = {self.drag:.2f},
+    bump_height = {self.bump_height:.2f},
+    bump_width  = {self.bump_width:.2f},
+    bump_depth  = {self.bump_depth:.2f},
+    sink_depth  = {self.sink_depth:.2f},
+    type        = {self.type},
+    sound       = {self.sound},
+   velocity    = {self.velocity},
+    ptx_color   = {self.ptx_color}
+        """
         
 ###################################################################################################################
 ###################################################################################################################
@@ -1424,27 +1593,37 @@ class BAI_Editor:
     def write_to_file(self):
         self.filepath = os.path.join("dev", "CITY", self.city_name, self.city_name + ".map")
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+        
         with open(self.filepath, 'w') as file:
             file.write(self.construct_template())
-
+    
     def construct_template(self):
-        tab = '\t'
-        template = 'mmMapData :0 {\n'
-        template += f'{tab}NumStreets {len(self.streets) + 5}\n'
-        template += f'{tab}Street [\n'
-        
-        for street in self.streets:
-            template += f'{tab*2}"{street}"\n'
-        template += f'{tab}]\n'
-        template += '}'
-        return template
+        streets_representation = '\n\t\t'.join([f'"{street}"' for street in self.streets])
 
+        bai_map_template = f"""
+mmMapData :0 {{
+    NumStreets {len(self.streets)}
+    Street [
+        {streets_representation}
+    ]
+}}
+        """
+        return textwrap.dedent(bai_map_template).strip()
+    
+    
 # Street File Editor CLASS
 class StreetFileEditor:
-    def __init__(self, city_name, street_data, ai_streets=False):
+    def __init__(self, city_name, street_data, ai_streets=False, reverse=False):
         self.street_name = street_data["street_name"]
-        self.vertices = street_data["vertices"]
-        self.intersection_types = street_data.get("intersection_types", [3, 3])
+        self.original_vertices = street_data["vertices"]
+        
+        self.reverse = reverse
+        if self.reverse:
+            self.vertices = self.original_vertices + self.original_vertices[::-1]  # append reversed vertices to original vertices
+        else:
+            self.vertices = self.original_vertices
+            
+        self.intersection_types = street_data.get("intersection_types", [1, 3])
         self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
         self.stop_light_names = street_data.get("stop_light_names", ["tplttrafc", "tplttrafc"])
         self.traffic_blocked = street_data.get("traffic_blocked", [0, 0])
@@ -1460,47 +1639,44 @@ class StreetFileEditor:
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         with open(self.filepath, 'w') as file:
             file.write(self.construct_template())
-            
+                
     def construct_template(self):
-        tab = '\t'
-        template = 'mmRoadSect :0 {\n'
-        template += f'{tab}NumVertexs {len(self.vertices)}\n'
-        template += f'{tab}NumLanes[0] 1\n'
-        template += f'{tab}NumLanes[1] 0\n'
-        template += f'{tab}NumSidewalks[0] 0\n'
-        template += f'{tab}NumSidewalks[1] 0\n'
-        template += f'{tab}TotalVertexs {len(self.vertices)}\n'
-        template += f'{tab}Vertexs [\n'
-        
-        for vertex in self.vertices:
-            template += f'{tab*2}{vertex[0]} {vertex[1]} {vertex[2]}\n'
-            
-        template += f'{tab}]\n'
-        template += f'{tab}Normals [\n'
-        template += f'{tab*2}0.0 1.0 0.0\n' * len(self.vertices)
-        template += f'{tab}]\n'
-        
-        template += f'{tab}IntersectionType[0] {self.intersection_types[0]}\n'
-        template += f'{tab}IntersectionType[1] {self.intersection_types[1]}\n'
-            
-        for i, pos in enumerate(self.stop_light_positions):
-            template += f'{tab}StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}\n'
-            
-        template += f'{tab}Blocked[0] {self.traffic_blocked[0]}\n'
-        template += f'{tab}Blocked[1] {self.traffic_blocked[1]}\n'
-        template += f'{tab}PedBlocked[0] {self.ped_blocked[0]}\n'
-        template += f'{tab}PedBlocked[1] {self.ped_blocked[1]}\n'
-        
-        template += f'{tab}StopLightName [\n'
-        template += f'{tab*2}"{self.stop_light_names[0]}"\n'
-        template += f'{tab*2}"{self.stop_light_names[1]}"\n'
-        template += f'{tab}]\n'
-        
-        template += f'{tab}Divided {self.road_divided}\n'
-        template += f'{tab}Alley {self.alley}\n'
-        template += '}'
-        return template
-    
+        normal = "0.0 1.0 0.0"
+        vertex_string = '\n\t\t'.join(f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in self.vertices)
+        normals_string = '\n\t\t'.join(f'{normal}' for _ in self.original_vertices)
+        stop_light_positions_strings = '\n\t'.join(f'StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}' for i, pos in enumerate(self.stop_light_positions))
+
+        street_template = f"""
+mmRoadSect :0 {{
+    NumVertexs {len(self.original_vertices)}
+    NumLanes[0] 1
+    NumLanes[1] {1 if self.reverse else 0}
+    NumSidewalks[0] 0
+    NumSidewalks[1] 0
+    TotalVertexs {len(self.vertices)}
+    Vertexs [
+        {vertex_string}
+    ]
+    Normals [
+        {normals_string}
+    ]
+    IntersectionType[0] {self.intersection_types[0]}
+    IntersectionType[1] {self.intersection_types[1]}
+    {stop_light_positions_strings}
+    Blocked[0] {self.traffic_blocked[0]}
+    Blocked[1] {self.traffic_blocked[1]}
+    PedBlocked[0] {self.ped_blocked[0]}
+    PedBlocked[1] {self.ped_blocked[1]}
+    StopLightName [
+        "{self.stop_light_names[0]}"
+        "{self.stop_light_names[1]}"
+    ]
+    Divided {self.road_divided}
+    Alley {self.alley}
+    }}
+        """
+        return textwrap.dedent(street_template).strip()
+
 ###################################################################################################################
 ################################################################################################################### 
 
@@ -1516,38 +1692,44 @@ class BinaryFacade:
         self.name = name
 
     @classmethod
-    def from_file(cls, file):
-        room, flags = struct.unpack('<2H', file.read(4))
-        start = Vector3.from_file(file)
-        end = Vector3.from_file(file)
-        sides = Vector3.from_file(file)
-        scale = struct.unpack('<f', file.read(4))[0]
+    def from_file(cls, f):
+        room, flags = read_unpack(f, '2H')
+        start = Vector3.read(f)
+        end = Vector3.read(f)
+        sides = Vector3.read(f)
+        scale = read_unpack(f, 'f')[0]
 
-        out = bytearray()
+        name_data = bytearray()
         while True:
-            c = file.read(1)
-            if c == b'\x00':
+            char = f.read(1)
+            if char == b'\x00':
                 break
-            out.extend(c)
+            name_data.extend(char)
 
-        name = out.decode('utf-8')
+        name = name_data.decode('utf-8')
         return cls(room, flags, start, end, sides, scale, name)
 
-    def to_bytes(self):
-        b_room = struct.pack('<H', self.room)
-        b_flags = struct.pack('<H', self.flags)
-        b_start = self.start.to_bytes()
-        b_end = self.end.to_bytes()
-        b_sides = self.sides.to_bytes()
-        b_scale = struct.pack('<f', self.scale)
-        b_name = self.name.encode('utf-8')
-        b_null = struct.pack('<B', 0)
+    def to_file(self, f):
+        write_pack(f, '2H', self.room, self.flags)
+        self.start.write(f)
+        self.end.write(f)
+        self.sides.write(f)
+        write_pack(f, 'f', self.scale)
+        f.write(self.name.encode('utf-8'))
+        f.write(b'\x00')
 
-        return b_room + b_flags + b_start + b_end + b_sides + b_scale + b_name + b_null
-    
+        
     def __repr__(self):
-        return 'BinaryFacade\n Room: {}\n Flags: {}\n Start: {}\n End: {}\n Sides: {}\n Scale: {}\n Name: {}\n\n'.format(
-            self.room, self.flags, self.start, self.end, self.sides, self.scale, self.name)
+        return f"""
+BinaryFacade
+    Room: {self.room}
+    Flags: {self.flags}
+    Start: {self.start}
+    End: {self.end}
+    Sides: {self.sides}
+    Scale: {self.scale}
+    Name: {self.name}
+    """
 
 def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, debug_facade=False):
     if set_facade:
@@ -1555,23 +1737,17 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
 
         for params in facade_params:
             num_facades = math.ceil(
-                abs(getattr(params['end'], params['axis']) - getattr(params['start'], params['axis'])) / params['separator'])
-            
+                abs(params['end'][params['axis']] - params['start'][params['axis']]) / params['separator'])
+
             for i in range(num_facades):
                 room = params['room']
                 flags = params['flags']
                 current_start = params['start'].copy()
                 current_end = params['end'].copy()
 
-                if params['axis'] == 'x':
-                    current_start.x = getattr(params['start'], params['axis']) + params['separator'] * i
-                    current_end.x = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
-                elif params['axis'] == 'y':
-                    current_start.y = getattr(params['start'], params['axis']) + params['separator'] * i
-                    current_end.y = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
-                elif params['axis'] == 'z':
-                    current_start.z = getattr(params['start'], params['axis']) + params['separator'] * i
-                    current_end.z = getattr(params['start'], params['axis']) + params['separator'] * (i + 1)
+                shift = params['separator'] * i
+                current_start[params['axis']] += shift
+                current_end[params['axis']] += shift
 
                 sides = params['sides']
                 scale = params['scale']
@@ -1579,23 +1755,22 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
 
                 facade = BinaryFacade(room, flags, current_start, current_end, sides, scale, name)
                 facades.append(facade)
-        
+
         with open(filename, mode='wb') as f:
-            f.write(struct.pack('<I', len(facades)))
+            write_pack(f, '<I', len(facades))
             for facade in facades:
-                f.write(facade.to_bytes())
+                facade.to_file(f)
+
         shutil.move(filename, os.path.join(target_fcd_dir, filename))
-        
+
         if debug_facade:
             debug_filename = filename.replace('.FCD', '_FCD_debug.txt')
             with open(os.path.join(os.getcwd(), debug_filename), mode='w', encoding='utf-8') as f:
                 for facade in facades:
                     f.write(str(facade))
-                    
+   
 ###################################################################################################################
 ################################################################################################################### 
-
-blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe"
                             
 def export_bnd_vertices(input_bnd: str, output_file_name: str, export_blender: bool = False, run_blender: bool = False) -> None:
     if export_blender: 
@@ -1638,7 +1813,7 @@ def export_bnd_vertices(input_bnd: str, output_file_name: str, export_blender: b
                                     output_file.write(new_line + "\n")
                                 flag_value = None    
         if run_blender:                  
-            # After the loop, look for a .blend file in the cwd
+            # After the loop, look for any Blender file in the cwd
             for file in os.listdir():
                 if file.endswith(".blend"):
                     print(f"Opening {file} with Blender...")
@@ -1646,37 +1821,40 @@ def export_bnd_vertices(input_bnd: str, output_file_name: str, export_blender: b
                     break
             else:
                 print("No Blender file found in the current directory.")
+                
 ###################################################################################################################
 ###################################################################################################################  
 
 # Write COMMANDLINE
-def write_commandline(city_name: str, destination_folder: str):
+def create_commandline(city_name: str, destination_folder: str):
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
+    cmd_params = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}"
     with open(cmd_file, "w") as file:
-        file.write(f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}")
+        file.write(cmd_params)
 
     shutil.move(cmd_file, os.path.join(destination_folder, cmd_file))
         
 # Start GAME
 def start_game(destination_folder, play_game=False):
+    mm1_exe = "Open1560.exe"
     game_path = os.path.join(destination_folder, mm1_exe)
     if play_game:
         subprocess.run(game_path, cwd=destination_folder, shell=True)
         
 ################################################################################################################### 
 
-# FACADE NOTES
-# The "room" should match the bound_number in which the Facade is located.
-# Separator: (max_x - min_x) / separator(value) = number of facades
-# Sides: unknown, but leave it as is
-# Scale: unknown value, behavior: stretch each facade or thin it out
-# Facade_name: name of the facade in the game files
+#* FACADE NOTES
+#* The "room" should match the bound_number in which the Facade is located.
+#* Separator: (max_x - min_x) / separator(value) = number of facades
+#* Sides: unknown, but leave it as is
+#* Scale: unknown value, behavior: stretch each facade or thin it out
+#* Facade_name: name of the facade in the game files
 
-# For a list of facades, check out the /__Useful Documents/CHICAGO_unique_FCD_SCALES.txt
-# Here you will also find the Scale values for each facade that was used in the original game.
+#* For a list of facades, check out the /__Useful Documents/CHICAGO_unique_FCD_SCALES.txt
+#* Here you will also find the Scale values for each facade that was used in the original game.
 
-# Few Facade name examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
+#* Few Facade name examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
    
 # SET FCD
 fcd_one = {
@@ -1712,46 +1890,44 @@ fcd_list = [fcd_one, fcd_two]
 # Other Types:
 # 0 = No, 1 = Yes
 
-# Example of a "simple" street
-data_street_1 = {
+street_1 = {
     "street_name": "path_1",
     "vertices": [
-        cruise_start_position,
-        (30.0, 1.0, 15.0),
-        (30.0, 1.0, 0.0),
-        (30.0, 1.0, -40.0),
-        (30.0, 1.0, -80.0),
-        (30.0, 1.0, -90.0),
-        (30.0, 1.0, -100.0),
-        (30.0, 1.0, -110.0),
-        (30.0, 1.0, -120.0)]}
-
-# Example of a "complex" street (alpha version)
-data_street_example = {
-    "street_name": "path_2",
-    "vertices": [
-        (-40.0, 0.0, -20.0),
-        (-40.0, 0.0, -40.0),
-        (-40.0, 0.0, -60.0),
-        (-40.0, 0.0, -80.0)],
-    "intersection_types": [1, 1],
-    "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
-    "stop_light_positions": [
-        (-40.0, 0.0, -20.0),
-        (-40.0, 0.0, -20.1),
-        (35.0, 0.0, 10.0),
-        (35.1, 0.0, 10.0)],
-        "traffic_blocked": [0, 0],
-        "ped_blocked": [0, 0],
-        "road_divided": 0,
-        "alley": 0}
-
+        (-30.0, 1.0, 75.0),
+        (-30.0, 1.0, 70.0),
+        (-30.0, 1.0, 40.0),
+        (-30.0, 1.0, 10.0),
+        (-30.0, 1.0, -20.0),
+        (-30.0, 1.0, -50.0),
+        (-30.0, 1.0, -80.0),
+        (-30.0, 1.0, -110.0),
+        (-30.0, 1.0, -140.0),
+        (-30.0, 1.0, -145.0)]}
+ 
 # Put all your created Streets in this list
-street_data = [data_street_1, data_street_example]
+street_data = [street_1]
+
+# # Example of a "complex" street (alpha version)
+# data_street_example = {
+#     "street_name": "path_2",
+#     "vertices": [
+#         (-40.0, 0.0, -20.0),
+#         (-40.0, 0.0, -40.0),
+#         (-40.0, 0.0, -60.0),
+#         (-40.0, 0.0, -80.0)],
+#     "intersection_types": [1, 1],
+#     "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
+#     "stop_light_positions": [
+#         (-40.0, 0.0, -20.0),
+#         (-40.0, 0.0, -20.1),
+#         (35.0, 0.0, 10.0),
+#         (35.1, 0.0, 10.0)],
+#         "traffic_blocked": [0, 0],
+#         "ped_blocked": [0, 0],
+#         "road_divided": 0,
+#         "alley": 0}
 
 ################################################################################################################               
-
-amplify = 1000 # to do
 
 # SET PROPS
 # Single Prop (China Gate)
@@ -1782,14 +1958,15 @@ prop_list = [prop_1, prop_2]
 
 ################################################################################################################     
 
-# SET MATERIALS
-# Set Material Index (available numbers: 94, 95, 96, 97, 98), also see: https://tinyurl.com/y2d56pa6
+# SET MATERIAL PROPERTIES
+# available numbers: 94, 95, 96, 97, 98, also see: https://tinyurl.com/y2d56pa6
 set_material_index = 98
 
-# See folder: /Useful documents/PHYSICS.DB_extracted.txt for more information
-properties = {"friction": 0.01, 
-              "elasticity": 0.01, 
-              "drag": 0.01}
+# See: /Useful documents/PHYSICS.DB_extracted.txt for more information
+new_properties = {
+    "friction": 0.01, 
+    "elasticity": 0.01, 
+    "drag": 0.01}
 
 ################################################################################################################   
 
@@ -1799,34 +1976,37 @@ print("\nGenerating " + f"{race_locale_name}... \n")
 print("===============================================\n")
 
 # Material related
-materials = MaterialEditor.read_binary(input_physics_file)
-MaterialEditor.change_physics_db(input_physics_file, output_physics_file, properties, set_material_index - 1)
-new_physics_path = os.path.join(physics_folder, output_physics_file)
-shutil.move(output_physics_file, new_physics_path)
+read_materials = MaterialEditor.read_binary(input_physics_file)
+for prop in ["friction", "elasticity", "drag"]:
+    setattr(read_materials[set_material_index - 1], prop, new_properties[prop])
+MaterialEditor.write_physics_db(output_physics_file, read_materials)
+shutil.move(output_physics_file, os.path.join(physics_folder, output_physics_file))
 
 # AI related
 street_names = []
 for data in street_data:
-    creator = StreetFileEditor(city_name, data, ai_streets)
+    creator = StreetFileEditor(city_name, data, ai_streets, reverse=True)
     street_names.append(data["street_name"])
 BAI_Editor(city_name, street_names, ai_map)
 
 # Main functions
-create_folder_structure(city_name)
-distribute_generated_files(city_name, bnd_hit_id, 
-                           num_blitz, blitz_waypoints, num_circuit, circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
+create_folders(city_name)
+distribute_files(city_name, bnd_hit_id, 
+                           num_blitz, blitz_waypoints, num_circuit, 
+                           circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
 
 move_open1560(mm1_folder)
 move_dev(mm1_folder, city_name)
 move_custom_textures()
 
-create_ext_file(city_name, all_polygons_picture) 
+create_ext(city_name, all_polygons_picture) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_facades(created_fcd_file, fcd_list, target_fcd_dir, set_facade, debug_facade)
 bng_writer.add_props(prop_list)
 bng_writer.write_props(set_props)    
 
+# Blender
 export_bnd_vertices(bnd_hit_id_text, bnd_blender_data, export_blender, run_blender)     
 
 # HUD offset for Moronville is approx., x=-22.4, y=-40.7; automated alignment is not implemented yet
@@ -1834,8 +2014,320 @@ plot_polygons(debug_hud=debug_hud, show_label=False, plot_picture=False, export_
               x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
               background_color='black')
 
-create_ar_file(city_name, mm1_folder, delete_shop)
-write_commandline(city_name, mm1_folder)
+
+#*########### Code by 0x1F9F1 / Brick ############*
+class mmPolygon:
+    def __init__(self, cell_id, mtl_id, flags, vert_indices, plane_edges, plane_n, plane_d):
+        self.cell_id = cell_id
+        self.mtl_id = mtl_id
+        self.flags = flags
+        self.vert_indices = vert_indices
+        self.plane_edges = plane_edges
+        self.plane_n = plane_n
+        self.plane_d = plane_d
+
+    @property
+    def is_quad(self):
+        return bool(self.flags & 4)
+
+    @property
+    def num_verts(self):
+        return 4 if self.is_quad else 3
+
+    def read(file):
+        cell_id, mtl_id, flags = read_unpack(file, '<HBB')
+        vert_indices = read_unpack(file, '<4H')
+        plane_edges = Vector3.readn(file, 4)
+        plane_n = Vector3.read(file)
+        plane_d, = read_unpack(file, '<f')
+        return mmPolygon(cell_id, mtl_id, flags, vert_indices, plane_edges, plane_n, plane_d)
+
+    def readn(file, count):
+        return [mmPolygon.read(file) for _ in range(count)]
+    
+MERGE_COLINEAR = True
+RADIUS_FUDGE = 1
+TANGENT_ANGLE_FUDGE = 0.999
+TANGENT_DIST_FUDGE = 0.1
+CORNER_FUDGE = 0.1
+LENGTH_FUDGE = 1
+STRICT_EDGES = False
+
+if MERGE_COLINEAR:
+    assert not STRICT_EDGES
+
+# Read 
+
+with open(f'SHOP/BND/{city_name}_HITID.BND', 'rb') as f:
+    magic, = read_unpack(f, '<I')
+    assert magic == 0x424E4432 # 2BND
+
+    offset = Vector3.read(f)
+    assert offset == Vector3(0, 0, 0)
+
+    width, row_count, height = read_unpack(f, '<III')
+    center = Vector3.read(f)
+    radius, radius_sqr = read_unpack(f, '<ff')
+    bb_min, bb_max = Vector3.readn(f, 2)
+    num_verts, num_polys = read_unpack(f, '<II')
+    num_hot_verts_1, num_hot_verts_2 = read_unpack(f, '<II')
+    num_edges, = read_unpack(f, '<I')
+    x_scale, z_scale, num_indices, y_scale = read_unpack(f, '<ffIf')
+    cache_size = read_unpack(f, '<I')
+
+    vertices = Vector3.readn(f, num_verts)
+    polys = mmPolygon.readn(f, num_polys + 1)
+
+    hot_verts = Vector3.readn(f, num_hot_verts_2)
+    edges_0 = read_unpack(f, '<{}I'.format(num_edges))
+    edges_1 = read_unpack(f, '<{}I'.format(num_edges))
+    edge_normals = Vector3.readn(f, num_edges)
+    edge_floats = read_unpack(f, '<{}f'.format(num_edges))
+
+    if width and row_count:
+        row_offsets = read_unpack(f, '<{}I'.format(height))
+        row_shorts = read_unpack(f, '<{}H'.format(width * height))
+        row_indices = read_unpack(f, '<{}H'.format(num_indices))
+        row_heights = read_unpack(f, '<{}B'.format(width * height))
+
+class Edge:
+    def __init__(self, v1, v2):
+        A = Vector2(v1.y - v2.y, v2.x - v1.x)
+        assert A == (v1 - v2).Cross()
+
+        c = A.Dot(v1)
+        d = A.Mag2()
+
+        if d > 0.00001:
+            line = Vector3(A.x, A.y, -c) * (d ** -0.5)
+        else:
+            line = Vector3(0, 0, 1000000)
+
+        self.v1 = v1
+        self.v2 = v2
+
+        self.line = line
+
+        self.v1p = self.line_pos(self.v1, 0)
+        self.v2p = self.line_pos(self.v2, 0)
+
+        assert self.v1p < self.v2p
+
+        self.length = d ** 0.5
+
+        assert abs(self.length - self.v1.Dist(self.v2)) < 0.0001
+        delta = self.v1p + self.length - self.v2p
+        assert abs(delta) < 0.0001, delta
+
+    # Distance tangential to the line
+    def tangent_dist(self, point):
+        return (point.x * self.line.x) + (point.y * self.line.y) + self.line.z
+
+    # Distance along the line
+    def line_pos(self, point, dist):
+        x = point.x + self.line.x * dist
+        y = point.y + self.line.y * dist
+        return (x * self.line.y) - (y * self.line.x)
+
+    def pos_to_point(self, pos):
+        return Vector2(
+             (self.line.y * pos) - (self.line.x * self.line.z),
+            -(self.line.x * pos) - (self.line.y * self.line.z))
+
+
+COLINEAR_FUDGE = 0.00001
+
+class Cell:
+    def __init__(self, id):
+        self.id = id
+        self.edges = []
+
+    def add_edge(self, v1, v2):
+        # Discard the Y (height) coordinate
+        v1 = Vector2(v1.x, v1.z)
+        v2 = Vector2(v2.x, v2.z)
+
+        if v1.Dist2(v2) < 0.00001:
+            return
+
+        self.edges.append(Edge(v1, v2))
+
+    def merge_colinear(self):
+        i = 0
+
+        while i < len(self.edges):
+            edge1 = self.edges[i]
+
+            j = i + 1
+
+            while j < len(self.edges):
+                edge2 = self.edges[j]
+                j += 1
+
+                angle = (edge1.line.x * edge2.line.x) + (edge1.line.y * edge2.line.y)
+
+                if abs(angle) < 0.999:
+                    continue
+
+                v1p = edge1.tangent_dist(edge2.v1)
+                if abs(v1p) > COLINEAR_FUDGE:
+                    continue
+
+                v2p = edge1.tangent_dist(edge2.v2)
+                if abs(v2p) > COLINEAR_FUDGE:
+                    continue
+
+                v1p = edge1.line_pos(edge2.v1, v1p)
+                v2p = edge1.line_pos(edge2.v2, v2p)
+
+                v1p, v2p = min(v1p, v2p), max(v1p, v2p)
+
+                if (v2p < edge1.v1p + CORNER_FUDGE) or (v1p > edge1.v2p - CORNER_FUDGE):
+                    continue
+
+                edge1.v1p = min(edge1.v1p, v1p)
+                edge1.v2p = max(edge1.v2p, v2p)
+
+                edge1.v1 = edge1.pos_to_point(edge1.v1p)
+                edge1.v2 = edge1.pos_to_point(edge1.v2p)
+
+                del self.edges[j - 1]
+                j = i + 1
+
+            i += 1
+
+    def process(self):
+        if MERGE_COLINEAR:
+            self.merge_colinear()
+
+        bb_min = Vector2( 10000000,  10000000)
+        bb_max = Vector2(-10000000, -10000000)
+
+        for edge in self.edges:
+            for vert in (edge.v1,edge.v2):
+                bb_min.x = min(bb_min.x, vert.x)
+                bb_min.y = min(bb_min.y, vert.y)
+
+                bb_max.x = max(bb_max.x, vert.x)
+                bb_max.y = max(bb_max.y, vert.y)
+
+        self.bb_min = bb_min
+        self.bb_max = bb_max
+        self.center = (self.bb_min + self.bb_max) * 0.5
+        self.radius = (self.bb_min.Dist(self.bb_max) * 0.5)
+
+    def check_radius(self, other, fudge):
+        return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
+
+cells = {}
+
+for poly in polys:
+    if poly.cell_id in cells: # Important
+        cell = cells[poly.cell_id]
+    else:
+        cell = Cell(poly.cell_id)
+        cells[poly.cell_id] = cell
+
+    for i in range(poly.num_verts):
+        j = (i + 1) % poly.num_verts
+
+        cell.add_edge(vertices[poly.vert_indices[i]], vertices[poly.vert_indices[j]]) # Important
+
+for cell in cells.values():
+    cell.process()
+
+portals = set()
+
+cell_vs_cell = 0
+edge_vs_edge = 0
+
+for cell1 in cells.values():
+    for cell2 in cells.values():
+        if cell1.id >= cell2.id:
+            continue
+
+        if not cell1.check_radius(cell2, RADIUS_FUDGE):
+            continue
+
+        cell_vs_cell += 1
+
+        for edge1 in cell1.edges:
+            for edge2 in cell2.edges:
+                edge_vs_edge += 1
+
+                # angle = (edge1.line.x * edge2.line.x) + (edge1.line.y * edge2.line.y)
+
+                # if abs(angle) < TANGENT_ANGLE_FUDGE:
+                #     continue
+
+                v1p = edge1.tangent_dist(edge2.v1)
+                if abs(v1p) > TANGENT_DIST_FUDGE:
+                    continue
+
+                v2p = edge1.tangent_dist(edge2.v2)
+                if abs(v2p) > TANGENT_DIST_FUDGE:
+                    continue
+
+                v1p = edge1.line_pos(edge2.v1, v1p)
+                v2p = edge1.line_pos(edge2.v2, v2p)
+
+                v1p, v2p = min(v1p, v2p), max(v1p, v2p)
+
+                # Check whether any parts of the two edges are touching
+                if (v2p < edge1.v1p + CORNER_FUDGE) or (v1p > edge1.v2p - CORNER_FUDGE):
+                    continue
+
+                if STRICT_EDGES:
+                    # Check whether these two edges match
+                    if (abs((v1p - edge1.v1p)) > CORNER_FUDGE) or (abs(v2p - edge1.v2p) > CORNER_FUDGE):
+                        continue
+                else:
+                    if (v2p - v1p) < LENGTH_FUDGE:
+                        continue
+                    pass
+
+                v1p = max(edge1.v1p, v1p)
+                v2p = min(edge1.v2p, v2p)
+
+                assert v1p < v2p
+
+                # TODO: Preserve y-height
+                p1 = edge1.pos_to_point(v1p)
+                p2 = edge1.pos_to_point(v2p)
+
+                portals.add((cell1.id, cell2.id, p1, p2))
+
+MIN_Y = -20
+MAX_Y = 50
+
+# Write PTL (Portal) file
+with open(f'SHOP/CITY/{city_name}.PTL', 'wb') as f:
+    write_pack(f, '<I', 0)
+    write_pack(f, '<I', len(portals))
+
+    for cell_1, cell_2, v1, v2 in portals:
+        # 0x1: Active (Implicit)
+
+        # Flags 0x2 and 0x4 disable groups
+        # 0x2: Reset Clip MinX, MaxX, MinY, MaxY | Open Area?
+        # 0x4: Reset MinX or MaxX depending on direction | Half-Open Area?
+        # 0x8: Must be infront (or behind?) portal plane
+        flags = 0x2
+        edge_count = 2
+        write_pack(f, '<BB', flags, edge_count)
+        write_pack(f, '<H', 101)
+        write_pack(f, '<HH', cell_2, cell_1)
+
+        # TODO: Change height
+        height = MAX_Y - MIN_Y
+        write_pack(f, '<f', height)
+
+        Vector3(v1.x, 0, v1.y).write(f)
+        Vector3(v2.x, 0, v2.y).write(f)
+#*########### Code by 0x1F9F1 / Brick ############*
+
+create_ar(city_name, mm1_folder, delete_shop)
+create_commandline(city_name, mm1_folder)
 
 print("\n===============================================")
 print("\nSuccesfully created " + f"{race_locale_name}!\n")
