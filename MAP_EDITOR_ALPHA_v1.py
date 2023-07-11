@@ -30,10 +30,11 @@ import shutil
 import random
 import textwrap
 import subprocess
-from collections import defaultdict
-from typing import List, Dict, Union, Tuple
+import numpy as np
 import matplotlib.pyplot as plt                 
-import matplotlib.transforms as mtransforms   
+import matplotlib.transforms as mtransforms  
+from collections import defaultdict
+from typing import List, Dict, Union, Tuple 
 
 
 #! SETUP I (mandatory)                          Control + F    "city=="  to jump to The City Creation section
@@ -61,7 +62,7 @@ debug_bng=False                 # change to "True" if you want a BNG Debug text 
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
 
 #* SETUP III (optional, Blender)
-export_blender=debug_bnd=False  
+export_blender=debug_bnd=False  # change to "True" if you want to export the Map vertices to Blender
 run_blender=False               # change to "True" if you want to run Blender after Map vertices have been exported
 bnd_blender_data = "SCRIPT_EXPORT_vertices.txt" 
 blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # change if necessary
@@ -73,7 +74,7 @@ randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSIO
 
 #* SETUP V (optional, Race Editor: max is 15 for Blitzes & Circuits, and 12 for Checkpoints)
 blitz_race_names = ["Just in Time"]
-circuit_race_names = ["Dading's Race"]
+circuit_race_names = ["Dading's Circuit"]
 checkpoint_race_names = ["filler_race"]
 
 wp_filler = ",0,0," #  will be automated later, do not change
@@ -151,8 +152,8 @@ bridges = [
     ((-200.0, 0.0, -200.0), "H.E.", 2, wide_bridge)] 
 
 # Possible orientations
-f"""    Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
-        Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East."""
+f"""Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
+    Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East."""
 
 # AIMAP data (applies to all races, will be improved later)
 aimap_ambient_density = 0.5
@@ -172,33 +173,29 @@ def to_do_list(x):
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
             WALL --> is there a way to enable collision on both sides of a wall? (probably not)
-            WALL --> walls are currently infinite in height (under development via DLP file)
+            WALL --> are they still infinite in height with the new plane implementation?
             BRIDGE --> fix Bridge setting                   
             HUDMAP --> fix/automate (correct) polygon alignment
             HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
             HUDMAP --> debug JPG should be based on the Bound Number, not on standard enumeration
-            SCRIPT --> make "create_cells"  
             BAI --> fix AI, path setting is working, but AI (cops, traffic, etc) still does not spawn/work (Open1560 related)
             BAI --> add # lane 1 [], # lane 2 [], etc, to enable more paths in one "Street file"
             BAI --> improve general use, e.g. the user should be able to set "stop" for an intersection type instead of passing the value "3"
             BMS --> export "cache_size" variable correctly
             BMS --> add flashing texturs (e.g. airport lights at Meigs Field, "fxltglow") see notes: GLOW AIRPORT.txt (didn't work so far)
             FCD --> test and document flag behavior
-            FCD --> add function that automatically retrieves the vanilla Scale and Sides, such that it can be omitted (if desired)
+            FCD --> investigate Sides and Scales effect
             FCD --> make a screenshot of each facade in the game for reference for the Useful Documents folder
             FCD --> enable diagonal Facade setting
-            BNG --> fix prop setting (currently broken for whatever reason)
+            BNG --> fix prop setting (currently broken)
             BNG --> add more prop pictures in Useful Documents (e.g. bridge04, brigdebuild, etc)
-            BNG --> investigate Custom Prop Editor (DLP -> BND needs to be automated first)
+            BNG --> investigate Custom Prop Editor
             BNG --> investigate breakable parts in .MMBANGERDATA
             AIMAP --> enable user to set cop and ambient setting for each individual race
             CELLS --> implement Cell type (default, tunnel, no skid, etc)
             RACES --> the current max number of races per type is 15, can we increase this?
-            GITHUB --> improve readme file (add Credits and Build)
             DEBUG --> add debug BMS (textures)
             OPEN1560 --> add (forked) updated Open1560
-            CORNERS --> figure out Triangles (under development via DLP file)
-            CORNERS --> figure out Hills (under development via DLP file)  
             """               
 ################################################################################################################               
 ################################################################################################################        
@@ -397,108 +394,119 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
     return radius_sqr ** 0.5
 
 
-# POLYGON CLASS [BND]
+# POLYGON CLASS
 class Polygon:
-    def __init__(self, word0, mtl_index, flags, vert_indices, some_vecs, corners):
-        self.word0 = word0
-        self.mtl_index = mtl_index  
-        self.flags = flags          
+    def __init__(self, cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d):
+        self.cell_id = cell_id
+        self.mtl_index = mtl_index
+        self.flags = flags
         self.vert_indices = vert_indices
-        self.some_vecs = some_vecs
-        self.corners = corners
-
+        self.plane_edges = plane_edges
+        self.plane_n = plane_n
+        
+        if isinstance(plane_d, list) and len(plane_d) == 1:
+            plane_d = plane_d[0]
+        elif isinstance(plane_d, np.float64):
+            plane_d = float(plane_d)
+        else:
+            raise TypeError(f"plane_d must be a float or a list containing one float, not {type(plane_d)}")
+        self.plane_d = plane_d
+          
     @classmethod
-    def from_file(cls, file):
-        word0, mtl_index, flags, *vert_indices = read_unpack(file, '<HBB4H')
-        some_vecs = Vector3.readn(file, 4)
-        corners = list(read_unpack(file, '<4f'))
-        return cls(word0, mtl_index, flags, vert_indices, some_vecs, corners)
-        
-    def to_file(self, file):
-        write_pack(file, '<HBB4H', self.word0, self.mtl_index, self.flags, *self.vert_indices)
-        
-        for vec in self.some_vecs:     
-            vec.write(file)           
-        write_pack(file, '<4f', *self.corners)
-                
+    def from_file(cls, f):
+        cell_id, mtl_index, flags, *vert_indices = read_unpack(f, '<HBB4H')
+        plane_edges = [Vector3.read(f) for _ in range(4)]
+        plane_n = Vector3.read(f)
+        plane_d = read_unpack(f, '<f')[0]
+        return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
+            
+    def to_file(self, f):
+        write_pack(f, '<HBB4H', self.cell_id, self.mtl_index, self.flags, *self.vert_indices)
+
+        for edge in self.plane_edges:
+            edge.write(f)
+            
+        self.plane_n.write(f)
+        write_pack(f, '<f', self.plane_d)
+   
     def __repr__(self, round_values=True):
         vertices_coordinates = [bnd.vertices[index] for index in self.vert_indices]
-        corners_str = ', '.join(f'{round(corner, 2):.2f}' if round_values else f'{corner:f}' for corner in self.corners)
+        plane_d_str = f'{round(self.plane_d, 2):.2f}' if round_values else f'{self.plane_d:f}'
 
         return f'''
-    Polygon
-    Bound number: {self.word0}
+    mmPolygon
+    Cell ID: {self.cell_id}
     Material Index: {self.mtl_index}
     Flags: {self.flags}
     Vertices Indices: {self.vert_indices}
     Vertices Coordinates: {vertices_coordinates}
-    Directional Coordinates: {self.some_vecs}
-    Corners: [{corners_str}]
+    Plane Edges: {self.plane_edges}
+    Plane N: {self.plane_n}
+    Plane D: [{plane_d_str}]
         '''
 
 
-# BND CLASS    
 class BND:
-    def __init__(self, magic, offset, width, row_count, height, 
-                 center, radius, radius_sqr, min_, max_, 
-                 num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys):
+    def __init__(self, magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
+                 num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
+                 x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys):
         self.magic = magic
         self.offset = offset    
-        self.width = width
-        self.row_count = row_count
-        self.height = height
+        self.x_dim = x_dim
+        self.y_dim = y_dim
+        self.z_dim = z_dim
         self.center = center    
         self.radius = radius
         self.radius_sqr = radius_sqr
-        self.min = min_         
-        self.max = max_        
+        self.bb_min = bb_min         
+        self.bb_max = bb_max        
         self.num_verts = num_verts
         self.num_polys = num_polys
-        self.num_hot_verts = num_hot_verts
-        self.num_vertices_unk = num_vertices_unk
-        self.edge_count = edge_count
-        self.scaled_dist_x = scaled_dist_x
-        self.z_dist = z_dist
-        self.num_indexs = num_indexs
+        self.num_hot_verts1 = num_hot_verts1
+        self.num_hot_verts2 = num_hot_verts2
+        self.num_edges = num_edges
+        self.x_scale = x_scale
+        self.z_scale = z_scale
+        self.num_indices = num_indices
         self.height_scale = height_scale
-        self.unk12 = unk12
+        self.cache_size = cache_size
         self.vertices = vertices              
         self.polys = polys                      
 
-    @classmethod
-    def from_file(cls, file):
-        magic = read_unpack(file, '<4s')[0]
-        offset = Vector3.read(file)
-        width, row_count, height = read_unpack(file, '<3l')
-        center = Vector3.read(file)
-        radius, radius_sqr = read_unpack(file, '<2f')
-        min_ = Vector3.read(file)
-        max_ = Vector3.read(file)
-        num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count = read_unpack(file, '<5l')
-        scaled_dist_x, z_dist, num_indexs, height_scale, unk12 = read_unpack(file, '<fflfl')
-        vertices = [Vector3.read(file) for _ in range(num_verts)]
-        polys = [Polygon.from_file(file) for _ in range(num_polys + 1)] 
+    def from_file(cls, f):
+        magic = read_unpack(f, '<4s')[0]
+        offset = Vector3.read(f)
+        x_dim, y_dim, z_dim = read_unpack(f, '<3l')
+        center = Vector3.read(f)
+        radius, radius_sqr = read_unpack(f, '<2f')
+        bb_min = Vector3.read(f)
+        bb_max = Vector3.read(f)
+        num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<5l')
+        x_scale, z_scale, num_indices, height_scale, cache_size = read_unpack(f, '<2f3l')
+        vertices = [Vector3.read(f) for _ in range(num_verts)]
+        polys = [Polygon.from_file(f) for _ in range(num_polys + 1)] 
 
-        return cls(magic, offset, width, row_count, height, 
-                   center, radius, radius_sqr, min_, max_, 
-                   num_verts, num_polys, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys)
+        return cls(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
+                   num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
+                   x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys)
     
-    def to_file(self, file):
-        write_pack(file, '<4s', self.magic)
-        self.offset.write(file)         
-        write_pack(file, '<3l', self.width, self.row_count, self.height)
-        self.center.write(file) 
-        write_pack(file, '<2f', self.radius, self.radius_sqr)
-        self.min.write(file)
-        self.max.write(file)
-        write_pack(file, '<5l', self.num_verts, self.num_polys, self.num_hot_verts, self.num_vertices_unk, self.edge_count)
-        write_pack(file, '<fflfl', self.scaled_dist_x, self.z_dist, self.num_indexs, self.height_scale, self.unk12)
-
+    def to_file(self, f):
+        write_pack(f, '<4s', self.magic)
+        self.offset.write(f)         
+        write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
+        self.center.write(f) 
+        write_pack(f, '<2f', self.radius, self.radius_sqr)
+        self.bb_min.write(f)
+        self.bb_max.write(f)
+        write_pack(f, '<5l', self.num_verts, self.num_polys, self.num_hot_verts1, self.num_hot_verts2, self.num_edges)
+        write_pack(f, '<2f', self.x_scale, self.z_scale)
+        write_pack(f, '<3l', self.num_indices, self.height_scale, self.cache_size)
+ 
         for vertex in self.vertices:       
-            vertex.write(file)            
+            vertex.write(f)            
 
         for poly in self.polys:           
-            poly.to_file(file)              
+            poly.to_file(f)              
                 
     # Write BND TEXT data
     def write_to_file(self, file_name, debug_bnd=False):
@@ -508,27 +516,28 @@ class BND:
                 
     def __repr__(self):
         return f'''
+
 BND
 Magic: {self.magic}
 Offset: {self.offset}
-Width: {self.width}
-Row_count: {self.row_count}
-Height: {self.height}
+XDim: {self.x_dim}
+YDim: {self.y_dim}
+ZDim: {self.z_dim}
 Center: {self.center}
 Radius: {self.radius}
 Radius_sqr: {self.radius_sqr}
-min: {self.min}
-max: {self.max}
+BBMin: {self.bb_min}
+BBMax: {self.bb_max}
 Num Verts: {self.num_verts}
 Num Polys: {self.num_polys}
-Num Hot Verts: {self.num_hot_verts}
-Num Vertices Unk: {self.num_vertices_unk}
-Edge count: {self.edge_count}
-Scaled Dist. X: {self.scaled_dist_x}
-Z Dist.: {self.z_dist}
-Num Indexs: {self.num_indexs}
+Num Hot Verts1: {self.num_hot_verts1}
+Num Hot Verts2: {self.num_hot_verts2}
+Num Edges: {self.num_edges}
+XScale: {self.x_scale}
+ZScale: {self.z_scale}
+Num Indices: {self.num_indices}
 Height Scale: {self.height_scale}
-Unk12: {self.unk12}
+Cache Size: {self.cache_size}
 Vertices: {self.vertices}
 Polys: {self.polys}
     '''
@@ -589,7 +598,8 @@ class BMS:
 # BND related
 bnd_hit_id = f"{city_name}_HITID.BND"
 bnd_hit_id_text = f"{city_name}_HITID_debug.txt"
-poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], [0.0, 0.0, 0.0, 0.0])
+poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0])
+
 polys = [poly_filler]
 vertices = []
 all_polygons_picture = []
@@ -685,7 +695,7 @@ def generate_and_save_bms_file(
     texture_darkness=None, TexCoords=None, exclude=False, tex_coord_mode=None, tex_coord_params=None):
     
     poly = polys[-1]  # Get the last polygon added
-    bound_number = poly.word0
+    bound_number = poly.cell_id
     
     # Randomize Textures (optional)
     if randomize_textures and not exclude:
@@ -706,7 +716,6 @@ def generate_and_save_bms_file(
     single_poly = [poly_filler, poly]
     bms = generate_bms(vertices, single_poly, texture_indices, string_names, texture_darkness, TexCoords)
     bms.to_file(bms_filename)
-    # print(f"Successfully created BMS file: {bms_filename}") // debugging
              
 # GENERATE BMS         
 def generate_bms(vertices, polys, texture_indices, string_names: List[str], texture_darkness=None, TexCoords=None):
@@ -748,19 +757,24 @@ def generate_bms(vertices, polys, texture_indices, string_names: List[str], text
 
 # Initialize BND   
 def initialize_bnd(vertices, polys):
-    magic, width, row_count, height = b'2DNB\0', 0, 0, 0
-    num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist = 0, 0, 0, 0.0, 0.0
-    num_indexs, height_scale, unk12, edge_count = 0, 0.0, 0, 0
+    magic = b'2DNB\0'
     offset = Vector3(0.0, 0.0, 0.0)
+    x_dim, y_dim, z_dim = 0, 0, 0
     center = calculate_center(vertices)
-    min_ = calculate_min(vertices)
-    max_ = calculate_max(vertices)
     radius = calculate_radius(vertices, center)
     radius_sqr = radius ** 2
+    min_ = calculate_min(vertices)
+    max_ = calculate_max(vertices)
+    num_hot_verts_1, num_hot_verts_2, num_edges = 0, 0, 0
+    x_scale, z_scale = 0.0, 0.0
+    num_indices, height_scale, cache_size = 0, 0, 0
 
-    return BND(magic, offset, width, row_count, height, 
+    return BND(magic, offset, x_dim, y_dim, z_dim, 
                center, radius, radius_sqr, min_, max_, 
-               len(vertices), len(polys) - 1, num_hot_verts, num_vertices_unk, edge_count, scaled_dist_x, z_dist, num_indexs, height_scale, unk12, vertices, polys)
+               len(vertices), len(polys) - 1,
+               num_hot_verts_1, num_hot_verts_2, num_edges, 
+               x_scale, z_scale, 
+               num_indices, height_scale, cache_size, vertices, polys)
     
 # Sort BND Vertices Coordinates
 def sort_coordinates(vertex_coordinates):
@@ -773,91 +787,72 @@ def sort_coordinates(vertex_coordinates):
 
     return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
 
-# Sort BND Directional Coordinates
-def calculate_directional_coordinates(vertex_coordinates):
-    dir_coord_1 = (-1, 0, -vertex_coordinates[0][0])
-    dir_coord_2 = (0, 1, vertex_coordinates[1][2])
-    dir_coord_3 = (1, 0, vertex_coordinates[2][0])
-    dir_coord_4 = (0, -1, -vertex_coordinates[3][2])
+def compute_plane_edges(vertex_coordinates):
+    dir_coord_1 = Vector3(-1, 0, -vertex_coordinates[0][0])
+    dir_coord_2 = Vector3(0, 1, vertex_coordinates[1][2])
+    dir_coord_3 = Vector3(1, 0, vertex_coordinates[2][0])
+    dir_coord_4 = Vector3(0, -1, -vertex_coordinates[3][2])
 
     return [dir_coord_1, dir_coord_2, dir_coord_3, dir_coord_4]
 
+def compute_plane_params(p1, p2, p3, p4):
+    v1 = np.subtract(p2, p1)
+    v2 = np.subtract(p3, p1)
+
+    planeN = np.cross(v1, v2)
+    planeN = planeN / np.linalg.norm(planeN)
+    
+    planeD = -np.dot(planeN, p1)
+
+    planeN = np.round(planeN, 3)
+    planeD = round(planeD, 3)
+
+    return planeN, planeD
+
 # Create Polygon       
-def create_polygon(bound_number, material_index, flags, vert_indices, some_vecs, corners):
-    return Polygon(bound_number, material_index, flags, vert_indices, some_vecs, corners)
-     
+def create_polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d):
+    return Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d)
+
+#TODO re-implement WALL_SIDE
 # Create and Append Polygon
 def create_and_append_polygon(
     bound_number, material_index, vertex_coordinates, 
-    some_vecs=None, corners=None, base_vertex_index=None, flags=None, 
-    vertices=vertices, polys=polys, wall_side="outside", sort_vertices=True):
+    plane_edges=None, plane_n=None, plane_d=None, base_vertex_index=None, flags=None, 
+    vertices=vertices, polys=polys, sort_vertices=True):
     
     if base_vertex_index is None:
         base_vertex_index = len(vertices)
-
-    # Handle CORNERS                
-    # case 1: FLAT Surface
-    if all(vertex[1] == vertex_coordinates[0][1] for vertex in vertex_coordinates):
-        corners = [0.0, 1.0, 0.0, -vertex_coordinates[0][1]]
     
-    # case 2: WALL with varying X and Y coordinates
-    elif (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
-          max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
-          abs(max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates)) <= 0.15):
-        
-        if wall_side == "outside":
-            corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
-        elif wall_side == "inside":
-            corners = [0, 0, 1, -max(coord[2] for coord in vertex_coordinates)]
+    # Plana parameters
+    plane_n, plane_d = compute_plane_params(*vertex_coordinates[:4])
+    plane_n = Vector3(*plane_n)
     
-    # case 3: WALL with varying Z and Y coordinates                               
-    elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
-          max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
-          max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
-                
-        if wall_side == "outside":
-            corners = [-1, 0, 0, min(coord[0] for coord in vertex_coordinates)]
-        elif wall_side == "inside":
-            corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
-            
-    # Hills (under construction via DLP files)
-    # ...
-    
-    elif corners is None:
-        raise ValueError("Corners method not implemented yet, please specify Corners manually")
-    
-    # Handle FLAGS    
-    num_vertex_coordinates = len(vertex_coordinates)
+    # Flags
     if flags is None:
-        if num_vertex_coordinates == 4:
-            flags = 6           
-        elif num_vertex_coordinates == 3:
-            flags = 3           
-            print("WARNING: Triangles are not supported yet, this is under construction")
-        else:
-            raise ValueError("Unsupported number of coordinates in 'vertex_coordinates', to fix you must set 3 or 4 coordinates")
-    
+        flags = 6 if len(vertex_coordinates) == 4 else (3 if len(vertex_coordinates) == 3 else None)
+        if flags is None:
+            raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
+        elif flags == 3:
+            raise ValueError("Triangles are not supported yet. This feature is currently under construction.")
+
     if sort_vertices:   # If sorting is desired
-        sorted_vertex_coordinates = sort_coordinates(vertex_coordinates)
+        sorted_vertices = sort_coordinates(vertex_coordinates)
     else:               # If sorting is not desired
-        sorted_vertex_coordinates = vertex_coordinates  # Use original order
-        
-    new_vertices = [Vector3(*coord) for coord in sorted_vertex_coordinates]
+        sorted_vertices = vertex_coordinates  # Use original order
+
+    new_vertices = [Vector3(*coord) for coord in sorted_vertices]
     vertices.extend(new_vertices)
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
-
-    if some_vecs is None:  # If some_vecs is not provided
-        directional_vectors = calculate_directional_coordinates(sorted_vertex_coordinates)
-        some_vecs = [Vector3(*vec) for vec in directional_vectors]  # Calculate some_vecs as before
-    else:
-        some_vecs = [Vector3(*vec) for vec in some_vecs]  # Use provided some_vecs
-
-    poly = create_polygon(bound_number, material_index, flags, vert_indices, some_vecs, corners)
+    
+    if plane_edges is None:
+        plane_edges = compute_plane_edges(sorted_vertices)
+         
+    poly = create_polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d)
     polys.append(poly)
     
     # Create JPG picture of all polygon shapes
     all_polygons_picture.append(vertex_coordinates)
-        
+       
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -939,10 +934,10 @@ create_and_append_polygon(
 	bound_number = 4,
 	material_index = 0,
 	vertex_coordinates=[
-		(-50.0, 0.0, 70.0),
-		(-140.0, 0.0, 70.0),
-		(-140.0, 0.0, -70.0),
-		(-50.0, 0.0, -70.0)])
+		(50.0, 0.0, 70.0),
+		(140.0, 0.0, 70.0),
+		(140.0, 0.0, -70.0),
+		(50.0, 0.0, -70.0)])
 
 generate_and_save_bms_file(
     string_names = ["T_WOOD"], 
@@ -953,10 +948,10 @@ create_and_append_polygon(
 	bound_number = 5,
 	material_index = 0,
 	vertex_coordinates=[
-		(-50.0, 0.0, -70.0),
-		(-140.0, 0.0, -70.0),
-		(-140.0, 0.0, -140.0),
-		(-50.0, 0.0, -140.0)])
+		(50.0, 0.0, -70.0),
+		(140.0, 0.0, -70.0),
+		(140.0, 0.0, -140.0),
+		(50.0, 0.0, -140.0)])
 
 generate_and_save_bms_file(
     string_names = ["T_BARRICADE"], 
@@ -967,14 +962,28 @@ create_and_append_polygon(
 	bound_number = 6,
 	material_index = 91,
 	vertex_coordinates=[
-		(-50.0, 0.0, -140.0),
-		(-140.0, 0.0, -140.0),
-		(-140.0, 0.0, -210.0),
-		(-50.0, 0.0, -210.0)])
+		(50.0, 0.0, -140.0),
+		(140.0, 0.0, -140.0),
+		(140.0, 0.0, -210.0),
+		(50.0, 0.0, -210.0)])
 
 generate_and_save_bms_file(
     string_names = ["T_WATER"], 
     TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
+
+# Hill
+create_and_append_polygon(
+	bound_number = 7,
+	material_index = 0,
+	vertex_coordinates=[
+		(-50.0, 0.0, -210.0),
+		(50.0, 0.0, -210.0),
+		(50.0, 100.0, -1000.0),
+		(-50.0, 100.0, -1000.0)])
+
+generate_and_save_bms_file(
+    string_names = ["T_WATER"], 
+    TexCoords=generate_tex_coords(mode="r.V", repeat_x=10, repeat_y=100))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -1333,8 +1342,6 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
                 for i, polygon in enumerate(all_polygons_picture):
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
                 plt.savefig(os.path.join(output_folder_cwd, hudmap_debug), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
-
-# create_ext_file(city_name, all_polygons_picture) 
 
 # Create EXT file            
 def create_ext(city_name, polygonz):
@@ -1711,13 +1718,11 @@ class BinaryFacade:
 
     def to_file(self, f):
         write_pack(f, '2H', self.room, self.flags)
-        self.start.write(f)
-        self.end.write(f)
-        self.sides.write(f)
+        write_pack(f, '6f', *self.start, *self.end)
+        write_pack(f, '3f', *self.sides)
         write_pack(f, 'f', self.scale)
         f.write(self.name.encode('utf-8'))
         f.write(b'\x00')
-
         
     def __repr__(self):
         return f"""
@@ -1730,27 +1735,49 @@ BinaryFacade
     Scale: {self.scale}
     Name: {self.name}
     """
-
+      
+def read_facade_scales(file_path):
+    scales = {}
+    with open(file_path, 'r') as f:
+        for line in f:
+            facade_name, scale = line.strip().split(": ")
+            scales[facade_name] = float(scale)
+    return scales
+      
+def get_coord_from_tuple(coord_tuple, axis):
+    axis_dict = {'x': 0, 'y': 1, 'z': 2}
+    return coord_tuple[axis_dict[axis]]  
+    
 def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, debug_facade=False):
     if set_facade:
         facades = []
+        axis_dict = {'x': 0, 'y': 1, 'z': 2}
+        
+        
+        cwd = os.getcwd()  # Get the current working directory
+        
+        scales = read_facade_scales(os.path.join(cwd, 'RESOURCES/FCD_scales.txt')) 
+        
+        #scales = read_facade_scales('/RESOURCES/FCD_scales.txt')
 
         for params in facade_params:
-            num_facades = math.ceil(
-                abs(params['end'][params['axis']] - params['start'][params['axis']]) / params['separator'])
+            num_facades = math.ceil(abs(get_coord_from_tuple(params['end'], params['axis']) - get_coord_from_tuple(params['start'], params['axis'])) / params['separator'])
 
             for i in range(num_facades):
                 room = params['room']
                 flags = params['flags']
-                current_start = params['start'].copy()
-                current_end = params['end'].copy()
+                current_start = list(params['start'])
+                current_end = list(params['end'])
 
                 shift = params['separator'] * i
-                current_start[params['axis']] += shift
-                current_end[params['axis']] += shift
+                current_start[axis_dict[params['axis']]] += shift
+                current_end[axis_dict[params['axis']]] += shift
+
+                current_start = tuple(current_start)
+                current_end = tuple(current_end)
 
                 sides = params['sides']
-                scale = params['scale']
+                scale = scales.get(params['facade_name'], params.get('scale', 1.0))
                 name = params['facade_name']
 
                 facade = BinaryFacade(room, flags, current_start, current_end, sides, scale, name)
@@ -1768,7 +1795,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
             with open(os.path.join(os.getcwd(), debug_filename), mode='w', encoding='utf-8') as f:
                 for facade in facades:
                     f.write(str(facade))
-   
+
 ###################################################################################################################
 ################################################################################################################### 
                             
@@ -1859,27 +1886,27 @@ def start_game(destination_folder, play_game=False):
 # SET FCD
 fcd_one = {
 	'room': 1,
-	'flags': 35,
-	'start': Vector3(-60, 0.0, -30.0),
-	'end': Vector3(-25, 0.0, -30.0),
-	'sides': Vector3(28.465626,28.465626,0),
-	'separator': 10, 
+	'flags': 1,
+	'start': (-80, 0.0, -30.0),
+	'end': (80, 0.0, -30.0),
+	'sides': (0,0,0.000000),
+	'separator': 80, 
 	'facade_name': "dfhotel01",
-	'scale': 30.0,
+	#'scale': 30.0,
 	'axis': 'x'}
 
 fcd_two = {
 	'room': 1,
 	'flags': 35,
-	'start': Vector3(10, 0.0, -30.0),
-	'end': Vector3(10, 0.0, -60.0),
-	'sides': Vector3(28.465626,28.465626,0),
+	'start': (10, 0.0, -30.0),
+	'end': (10, 0.0, -60.0),
+	'sides': (28.465626,28.465626,0),
 	'separator': 10, 
 	'facade_name': "ofbldg02",
-	'scale': 9,
+	#'scale': 9,
 	'axis': 'z'}
 
-fcd_list = [fcd_one, fcd_two]
+fcd_list = [fcd_one]
 
 ###################################################################################################################
 
@@ -1971,9 +1998,9 @@ new_properties = {
 ################################################################################################################   
 
 # Call FUNCTIONS
-print("\n===============================================")
-print("\nGenerating " + f"{race_locale_name}... \n")
-print("===============================================\n")
+print("\n===============================================\n")
+print("Generating " + f"{race_locale_name}...")
+print("\n===============================================\n")
 
 # Material related
 read_materials = MaterialEditor.read_binary(input_physics_file)
@@ -2329,8 +2356,8 @@ with open(f'SHOP/CITY/{city_name}.PTL', 'wb') as f:
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, mm1_folder)
 
-print("\n===============================================")
-print("\nSuccesfully created " + f"{race_locale_name}!\n")
-print("===============================================\n")
+print("\n===============================================\n")
+print("Succesfully created " + f"{race_locale_name}!")
+print("\n===============================================\n")
 
 start_game(mm1_folder, play_game)
