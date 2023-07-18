@@ -34,7 +34,7 @@ import numpy as np
 import matplotlib.pyplot as plt                 
 import matplotlib.transforms as mtransforms  
 from collections import defaultdict
-from typing import List, Dict, Union, Tuple 
+from typing import List, Dict, Union, Tuple, Optional, BinaryIO
 
 
 #! SETUP I (mandatory)                          Control + F    "city=="  to jump to The City Creation section
@@ -55,28 +55,25 @@ set_bridges=False               # change to "True" if you want BRIDGES // (curre
 
 ai_map=True                    # change both to "True" if you want AI paths
 ai_streets=True                # change both to "True" if you want AI paths
-cruise_start_position=          (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True"
+cruise_start_position=          (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True" 
+
+randomize_textures=False        # change to "True" if you want randomize all textures in your Map (see below for a selection)
+randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
 debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
 debug_facade=False              # change to "True" if you want a Facade Debug text file
-debug_bng=False                 # change to "True" if you want a BNG Debug text file
+debug_props=False               # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
 
 
-#* SETUP III (optional, Blender)
+#* SETUP II (optional, Blender)
 export_blender=debug_bnd=False  # change to "True" if you want to export the Map vertices to Blender
 run_blender=False               # change to "True" if you want to run Blender after Map vertices have been exported
 bnd_blender_data = "SCRIPT_EXPORT_vertices.txt" 
 blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # change if necessary
 
 
-#* SETUP IV (optional, Randomize Textures)
-global randomize_textures
-randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for a selection)
-randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
-
-
-#* SETUP V (optional, Race Editor)
+#* SETUP III (optional, Race Editor)
 morning, noon, evening, night = 0, 1, 2, 3  # do not change
 clear, cloudy, rain, snow = 0, 1, 2, 3      # do not change
 
@@ -128,7 +125,7 @@ circuit_waypoints = [cir_0]
 checkpoint_waypoints = [race_0]
 
 
-#* SETUP VI (optional, Cops and Robbers)
+#* SETUP IV (optional, Cops and Robbers)
 cnr_waypoints = [                          # set Cops and Robbers Waypoints manually and concisely
     ## 1st set, Name: ... ## 
     (20.0,1.0,80.0),                       #? Bank / Blue Team Hideout
@@ -140,7 +137,7 @@ cnr_waypoints = [                          # set Cops and Robbers Waypoints manu
     (-90.0,1.0,-90.0)]
 
 
-#* SETUP VII (optional, Animations)
+#* SETUP V (optional, Animations)
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain", other objects won't work
         (250, 40.0, -250),      # you can only have one Plane and/or one Eltrain
@@ -154,7 +151,7 @@ anim_data = {
         (-80, 25.0, 80)]}
 
 
-#* SETUP VIII (optional, Bridges, experimental)
+#* SETUP VI (optional, Bridges, experimental)
 slim_bridge = "tpdrawbridge04"  #* dimension: x: 30.0 y: 5.9 z: 32.5
 wide_bridge = "tpdrawbridge06"  #* dimension: x: 40.0 y: 5.9 z: 32.5
 new_bridge_object = "..."       # you can pass any object, for example: vpmustang99
@@ -189,26 +186,21 @@ def to_do_list(x):
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
             WALL --> is there a way to enable collision on both sides of a wall? (probably not)
-            WALL --> are they still infinite in height with the new plane implementation?
             WALL --> re-implement "wall_side"
             BRIDGE --> fix Bridge setting                   
             HUDMAP --> fix/automate (correct) polygon alignment
             HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
             HUDMAP --> debug JPG should be based on the Bound Number, not on standard enumeration
             BAI --> fix AI, path setting is working, but AI (cops, traffic, etc) still does not spawn/work (Open1560 related)
-            BAI --> add # lane 1 [], # lane 2 [], etc, to enable more paths in one "Street file"
-            BAI --> improve general use, e.g. the user should be able to set "stop" for an intersection type instead of passing the value "3"
             BMS --> export "cache_size" variable correctly
             BMS --> add flashing texturs (e.g. airport lights at Meigs Field, "fxltglow") see notes: GLOW AIRPORT.txt (didn't work so far)
             FCD --> test and document flag behavior
             FCD --> investigate Sides and Scales effect
             FCD --> make a screenshot of each facade in the game for reference for the Useful Documents folder
             FCD --> enable diagonal Facade setting
-            BNG --> fix prop setting (currently broken)
             BNG --> add more prop pictures in Useful Documents (e.g. bridge04, brigdebuild, etc)
             BNG --> investigate Custom Prop Editor
             BNG --> investigate breakable parts in .MMBANGERDATA
-            CELLS --> implement Cell type (default, tunnel, no skid, etc) in (save_bms)
             RACES --> the current max number of races per type is 15, can we increase this?
             DEBUG --> add debug BMS (textures)
             OPEN1560 --> add (forked) updated Open1560
@@ -412,11 +404,10 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
     return radius_sqr ** 0.5
 
 
-output_physics_file = "physics.db"
-
 # POLYGON CLASS
 class Polygon:
-    def __init__(self, cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d):
+    def __init__(self, cell_id: int, mtl_index: int, flags: int, vert_indices: List[int],
+                 plane_edges: List[Vector3], plane_n: Vector3, plane_d: float, cell_type: int = 0) -> None:
         self.cell_id = cell_id
         self.mtl_index = mtl_index
         self.flags = flags
@@ -428,27 +419,27 @@ class Polygon:
             plane_d = plane_d[0]
         elif isinstance(plane_d, np.float64):
             plane_d = float(plane_d)
-        # else:
-            # raise TypeError(f"plane_d must be a float or a list containing one float, not {type(plane_d)}")
+            
         self.plane_d = plane_d
+        self.cell_type = cell_type
         
     @property
-    def is_quad(self):
+    def is_quad(self) -> bool:
         return bool(self.flags & 4)
 
     @property
-    def num_verts(self):
+    def num_verts(self) -> int:
         return 4 if self.is_quad else 3
           
     @classmethod
-    def read(cls, f):
+    def read(cls, f: BinaryIO) -> 'Polygon':
         cell_id, mtl_index, flags, *vert_indices = read_unpack(f, '<HBB4H')
         plane_edges = [Vector3.read(f) for _ in range(4)]
         plane_n = Vector3.read(f)
         plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
-    def to_file(self, f):
+    def to_file(self, f: BinaryIO) -> None:
         write_pack(f, '<HBB4H', self.cell_id, self.mtl_index, self.flags, *self.vert_indices)
 
         for edge in self.plane_edges:
@@ -474,14 +465,17 @@ Plane D: [{plane_d_str}]
         '''
         
         
-# BND CLASS     
+# BND CLASS
 class BND:
-    def __init__(self, magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
-                 num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
-                 x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
-                 hot_verts, edges_0, edges_1, edge_normals, edge_floats,
-                 row_offsets, row_shorts, row_indices, row_heights):
-        
+    def __init__(self, magic: str, offset: Vector3, x_dim: int, y_dim: int, z_dim: int, 
+                 center: Vector3, radius: float, radius_sqr: float, bb_min: Vector3, bb_max: Vector3, 
+                 num_verts: int, num_polys: int, num_hot_verts1: int, num_hot_verts2: int, num_edges: int, 
+                 x_scale: float, z_scale: float, num_indices: int, height_scale: float, cache_size: int, 
+                 vertices: List[Vector3], polys: List[Polygon],
+                 hot_verts: List[Vector3], edges_0: List[int], edges_1: List[int], 
+                 edge_normals: List[Vector3], edge_floats: List[float],
+                 row_offsets: Optional[List[int]], row_shorts: Optional[List[int]], 
+                 row_indices: Optional[List[int]], row_heights: Optional[List[int]]) -> None:
         self.magic = magic
         self.offset = offset    
         self.x_dim = x_dim
@@ -517,7 +511,7 @@ class BND:
         self.row_heights = row_heights
                   
     @classmethod
-    def from_file(cls, f):        
+    def read(cls, f: BinaryIO) -> 'BND':        
         magic = read_unpack(f, '<4s')[0]
         offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
@@ -553,7 +547,7 @@ class BND:
                    hot_verts, edges_0, edges_1, edge_normals, edge_floats,
                    row_offsets, row_shorts, row_indices, row_heights)
     
-    def to_file(self, f):
+    def to_file(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
         self.offset.write(f)         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
@@ -572,12 +566,12 @@ class BND:
             poly.to_file(f)              
                 
     # Write BND TEXT data
-    def write_to_file(self, file_name, debug_bnd=False):
+    def write_to_file(self, file_name: str, debug_bnd: bool = False) -> None:
         if debug_bnd:
             with open(file_name, 'w') as f:
                 f.write(str(self))
                 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f'''
 
 BND
@@ -606,11 +600,13 @@ Polys: {self.polys}
     '''
 
 
-# BMS CLASS  
 class BMS:
-    def __init__(self, Magic, VertexCount, AdjunctCount, SurfaceCount, IndicesCount, 
-                 Radius, Radiussq, BoundingBoxRadius, 
-                 TextureCount, Flags, StringName, Coordinates, TextureDarkness, TexCoords, Enclosed_shape, SurfaceSides, IndicesSides):
+    def __init__(self, Magic: str, VertexCount: int, AdjunctCount: int, SurfaceCount: int, IndicesCount: int,
+                 Radius: float, Radiussq: float, BoundingBoxRadius: float,
+                 TextureCount: int, Flags: int, StringName: List[str], Coordinates: List[Vector3],
+                 TextureDarkness: List[int], TexCoords: List[float], Enclosed_shape: List[int],
+                 SurfaceSides: List[int], IndicesSides: List[List[int]]) -> None:
+
         self.Magic = Magic
         self.VertexCount = VertexCount
         self.AdjunctCount = AdjunctCount
@@ -656,19 +652,13 @@ class BMS:
 ################################################################################################################       
    
 #! INITIALIZATIONS | do not change
-poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0])
-polys = [poly_filler]
 vertices = []
 all_polygons_picture = []
-
-
-
-# FCD related
-
+poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0], 0)
+polys = [poly_filler]
 
 target_fcd_dir = os.path.join(os.getcwd(), "SHOP", "CITY")
 
-# Physics related
 resources_folder = os.path.join(os.getcwd(), "RESOURCES")
 physics_folder = os.path.join(os.getcwd(), "SHOP", "MTL")
 os.makedirs(physics_folder, exist_ok=True)
@@ -676,14 +666,16 @@ input_physics_file = os.path.join(resources_folder, "input_PHYSICS.DB")
 output_physics_file = "physics.db"
 
 ################################################################################################################               
- 
+
 # Handle Texture Mapping for BMS files
-def compute_tex_coords(mode="H", repeat_x=1, repeat_y=1, tilt=0, angle_degrees=(45, 45), custom=None):
+def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, tilt: float = 0,
+                       angle_degrees: Union[float, Tuple[float, float]] = (45, 45),
+                       custom: Optional[List[float]] = None) -> List[float]:
     
-    def tex_coords_rotating_repeating(repeat_x, repeat_y, angle_degrees):
+    def tex_coords_rotating_repeating(repeat_x: int, repeat_y: int, angle_degrees: Tuple[float, float]) -> List[float]:
         angle_radians = [math.radians(angle) for angle in angle_degrees]
 
-        def rotate(x, y, angle_idx):
+        def rotate(x: float, y: float, angle_idx: int) -> Tuple[float, float]:
             new_x = x * math.cos(angle_radians[angle_idx]) - y * math.sin(angle_radians[angle_idx])
             new_y = x * math.sin(angle_radians[angle_idx]) + y * math.cos(angle_radians[angle_idx])
             return new_x, new_y
@@ -744,8 +736,10 @@ def compute_tex_coords(mode="H", repeat_x=1, repeat_y=1, tilt=0, angle_degrees=(
 # SAVE BMS
 def save_bms(
     texture_name, texture_indices=[1], vertices=vertices, polys=polys, 
-    texture_darkness=None, TexCoords=None, exclude=False, tex_coord_mode=None, tex_coord_params=None):
-    
+    texture_darkness=None, TexCoords=None, exclude=False, tex_coord_mode=None, 
+    tex_coord_params=None, randomize_textures=randomize_textures, 
+    randomize_texture_names=randomize_texture_names):
+        
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
     
@@ -856,13 +850,13 @@ def compute_plane_edges(vertex_coordinates):
 
     return [dir_coord_1, dir_coord_2, dir_coord_3, dir_coord_4]
 
-def compute_plane_params(p1, p2, p3, p4):
+def compute_plane_params(p1: np.ndarray, p2: np.ndarray, p3: np.ndarray, p4: np.ndarray) -> Tuple[np.ndarray, float]:
     v1 = np.subtract(p2, p1)
     v2 = np.subtract(p3, p1)
 
     planeN = np.cross(v1, v2)
     planeN = planeN / np.linalg.norm(planeN)
-    
+
     planeD = -np.dot(planeN, p1)
 
     planeN = np.round(planeN, 3)
@@ -875,7 +869,7 @@ def compute_plane_params(p1, p2, p3, p4):
 def create_polygon(
     bound_number, material_index, vertex_coordinates, 
     plane_edges=None, flags=None, 
-    vertices=vertices, polys=polys, sort_vertices=True):
+    vertices=vertices, polys=polys, sort_vertices=True, cell_type=0):
             
     # Flags
     if flags is None:
@@ -906,7 +900,7 @@ def create_polygon(
         plane_edges = compute_plane_edges(sorted_vertices)  
         
     # Finalize Polygon
-    poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d)
+    poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d, cell_type)
     polys.append(poly)
     
     # Create JPG (for the HUD)
@@ -943,6 +937,11 @@ def user_notes(x):
     'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
     'custom', and 'combined'
     
+    Cell types:
+    1 = Tunnel (Echo, No Lighting, No Reflections, No Ptx)
+    2 = Indoors
+    200 = No Skids
+    
     Once functional AI is implemented, the road_type / bound_number might matter, here is the list:
     Open Areas: 0-199
     Roads: 201-859
@@ -951,13 +950,14 @@ def user_notes(x):
         
 # Start_Area
 create_polygon(
-	bound_number = 1,
-	material_index = 0,
-	vertex_coordinates=[
-		(-50.0, 0.0, 70.0),
-		(50.0, 0.0, 70.0),
-		(50.0, 0.0, -70.0),
-		(-50.0, 0.0, -70.0)])
+    bound_number = 1,
+    material_index = 0,
+    cell_type = 1,
+    vertex_coordinates=[
+        (-50.0, 0.0, 70.0),
+        (50.0, 0.0, 70.0),
+        (50.0, 0.0, -70.0),
+        (-50.0, 0.0, -70.0)])
 
 save_bms(
     texture_name = ["R6"], 
@@ -1290,17 +1290,27 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circ
     # Create CELLS file
     cells_file = os.path.join("SHOP", "CITY", f"{city_name}.CELLS")
     with open(cells_file, "w") as f:
-        f.write(f"{len(bms_files)}\n")              # total number of cells
+        f.write(f"{len(bms_files)}\n")  # total number of cells
         f.write(str(max(bms_files) + 1000) + "\n")  # max cell number + 1000 (mandatory)
 
         sorted_bms_files = sorted(bms_files)
         for bound_number in sorted_bms_files:
             
+            # Retrieve corresponding polygon's cell type
+            cell_type = None
+            for poly in polys:
+                if poly.cell_id == bound_number:
+                    cell_type = poly.cell_type
+                    break
+
+            if cell_type is None:
+                cell_type = 0
+            
             # Write CELLS data
             if bound_number in bms_a2_files:
-                row = f"{bound_number},32,4,0\n"
+                row = f"{bound_number},32,{cell_type},0\n"
             else:
-                row = f"{bound_number},8,0,0\n"
+                row = f"{bound_number},8,{cell_type},0\n"
             f.write(row)
     
     # Copy CMD.exe, RUN.bat, and SHIP.bat to SHOP folder
@@ -1361,10 +1371,6 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
     output_folder_city = os.path.join("SHOP", "BMP16")
     output_folder_cwd = os.getcwd() 
     
-    hudmap_picture640 = city_name + "640.JPG"
-    hudmap_picture320 = city_name + "320.JPG"
-    hudmap_debug = city_name + "_HUD_debug.jpg"
-    
     global all_polygons_picture
     
     def draw_polygon(ax, polygon, color, label=None, add_label=False):
@@ -1399,15 +1405,17 @@ def plot_polygons(show_label=False, plot_picture=False, export_jpg=False,
             trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
             for line in ax.lines:
                 line.set_transform(trans)
-            plt.savefig(os.path.join(output_folder_city, hudmap_picture640), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
-            plt.savefig(os.path.join(output_folder_city, hudmap_picture320), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
+                      
+            # Save JPG 640 and 320 Pictures
+            plt.savefig(os.path.join(output_folder_city, f"{city_name}.640.JPG"), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
+            plt.savefig(os.path.join(output_folder_city, f"{city_name}.320.JPG"), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor=background_color)
 
             if debug_hud:
                 ax.cla()
                 ax.set_facecolor(background_color)
                 for i, polygon in enumerate(all_polygons_picture):
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
-                plt.savefig(os.path.join(output_folder_cwd, hudmap_debug), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
+                plt.savefig(os.path.join(output_folder_cwd, f"{city_name}_HUD_debug.jpg"), dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
 
 # Create EXT file            
 def create_ext(city_name, polygonz):
@@ -1741,19 +1749,19 @@ class BinaryBanger:
         
     def __repr__(self):
         return f'''
-    BinaryBanger
-    Room: {self.Room}
-    Flags: {self.Flags}
-    Start: {self.Start}
-    End: {self.End}
-    Name: {self.Name}
+BinaryBanger
+Room: {self.Room}
+Flags: {self.Flags}
+Start: {self.Start}
+End: {self.End}
+Name: {self.Name}
     '''
   
 class Prop_Editor:
     def __init__(self, filename: str, city_name: str, debug_bng: bool = False):
         self.filename = filename
         self.objects = []
-        self.debug_bng = debug_bng  
+        self.debug_props = debug_props  
         self.debug_filename = f"{city_name}_BNG_debug.txt"
         resources_folder = os.path.join(os.getcwd(), "RESOURCES")
         self.prop_file_path = os.path.join(resources_folder, "Prop_Dimensions_Extracted.txt")
@@ -1773,15 +1781,16 @@ class Prop_Editor:
                 write_pack(f, '<I', len(self.objects))
             
                 for index, obj in enumerate(self.objects, 1):
-                    if self.debug_bng:
+                    if self.debug_props:
                         with open(self.debug_filename, "a") as debug_f:
                             debug_f.write(f'''
-        Prop {index} Data:
-        Start: {obj.start}
-        End: {obj.end}
-        Name: {obj.name}
-        ''')
-                        write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
+Prop {index} Data:
+Start: {obj.start}
+End: {obj.end}
+Name: {obj.name}
+''')
+                        write_pack(
+                            f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
 
                         for char in obj.name: 
                             write_pack(f, '<s', bytes(char, encoding='utf8')) 
@@ -1829,7 +1838,7 @@ class Prop_Editor:
             raise ValueError("Prop {} not found in prop data.".format(prop_name))
    
 prop_file = os.path.join("SHOP", "CITY", f"{city_name}.BNG")  
-prop_writer = Prop_Editor(prop_file, city_name, debug_bng) 
+prop_writer = Prop_Editor(prop_file, city_name, debug_props) 
 
 #################################################################################
 #################################################################################
@@ -1953,13 +1962,22 @@ YES_NO_MAP = {
 class StreetFile_Editor:
     def __init__(self, city_name, street_data, ai_streets=False, reverse=False):
         self.street_name = street_data["street_name"]
-        self.original_vertices = street_data["vertices"]
-
         self.reverse = reverse
-        if self.reverse:
-            self.vertices = self.original_vertices + self.original_vertices[::-1]  # append reversed vertices to original vertices
-        else:
-            self.vertices = self.original_vertices
+
+        if "lanes" in street_data:
+            self.original_lanes = street_data["lanes"]
+            if self.reverse:
+                self.lanes = {key: values + values[::-1] for key, values in self.original_lanes.items()}  
+                # append reversed vertices to original vertices
+            else:
+                self.lanes = self.original_lanes
+        elif "vertices" in street_data:
+            self.original_lanes = {"lane_1": street_data["vertices"]}
+            if self.reverse:
+                self.lanes = {"lane_1": street_data["vertices"] + street_data["vertices"][::-1]}  
+                # append reversed vertices to original vertices
+            else:
+                self.lanes = self.original_lanes
 
         self.intersection_types = [INTERSECTION_TYPE_MAP[typ] for typ in street_data.get("intersection_types", ["continue", "continue"])]
         self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
@@ -1977,21 +1995,23 @@ class StreetFile_Editor:
         os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
         with open(self.filepath, 'w') as file:
             file.write(self.construct_template())
-                
+
     def construct_template(self):
-        normal = "0.0 1.0 0.0"
-        vertex_string = '\n\t\t'.join(f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in self.vertices)
-        normals_string = '\n\t\t'.join(f'{normal}' for _ in self.original_vertices)
+        lane_1_key = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
+        num_vertex_per_lane = len(self.original_lanes[lane_1_key])
+        num_total_vertex = num_vertex_per_lane * len(self.lanes) * (2 if self.reverse else 1)
+        vertex_string = '\n\t\t'.join('\n\t\t'.join(f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
+        normals_string = '\n\t\t'.join('0.0 1.0 0.0' for _ in range(num_total_vertex))
         stop_light_positions_strings = '\n\t'.join(f'StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}' for i, pos in enumerate(self.stop_light_positions))
 
         street_template = f"""
 mmRoadSect :0 {{
-    NumVertexs {len(self.original_vertices)}
-    NumLanes[0] 1
-    NumLanes[1] {1 if self.reverse else 0}
+    NumVertexs {num_vertex_per_lane}
+    NumLanes[0] {len(self.lanes)}
+    NumLanes[1] {len(self.lanes) if self.reverse else 0}
     NumSidewalks[0] 0
     NumSidewalks[1] 0
-    TotalVertexs {len(self.vertices)}
+    TotalVertexs {num_total_vertex}
     Vertexs [
         {vertex_string}
     ]
@@ -2239,40 +2259,64 @@ fcd_list = [fcd_one]
 # Stop_light_positions, defaults to: (0,0,0)
 # Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: "No"
 
+# Stop lights will only show if the Intersection_type is "stoplight"
+# Each lane will automatically have a revered lane added
+
 street_0 = {
     "street_name": "cruise_start",
     "vertices": [
-        cruise_start_position,
-        cruise_start_position]} # you must keep the "second position", otherwise the game will crash
-
+        cruise_start_position,  # you must keep the "second position", otherwise the game will crash
+        cruise_start_position]} 
+ 
 street_1 = {
-    "street_name": "path_1",
-    "vertices": [
-        (-30.0, 1.0, -20.0),
-        (-30.0, 1.0, -50.0),
-        (-30.0, 1.0, -80.0),
-        (-30.0, 1.0, -110.0),
-        (-30.0, 1.0, -140.0),
-        (-30.0, 1.0, -145.0)]}
+     "street_name": "path_1",
+     "vertices": [
+         (10.0, 0.0, -20.0),
+         (10.0, 0.0, -40.0),
+         (10.0, 0.0, -60.0),
+         (10.0, 0.0, -80.0)]}
 
 street_2 = {
     "street_name": "path_2",
-    "vertices": [
-        (-40.0, 0.0, -20.0),
-        (-40.0, 0.0, -40.0),
-        (-40.0, 0.0, -60.0),
-        (-40.0, 0.0, -80.0)],
-    "intersection_types": ["stop", "yield"],
+    "lanes": {
+        "lane_1": [
+            (-30.0, 1.0, -20.0),
+            (-30.0, 1.0, -50.0),
+            (-30.0, 1.0, -80.0),
+            (-30.0, 1.0, -110.0),
+            (-30.0, 1.0, -140.0),
+            (-30.0, 1.0, -145.0)
+        ],
+        "lane_2": [
+            (-40.0, 1.0, -20.0),
+            (-40.0, 1.0, -50.0),
+            (-40.0, 1.0, -80.0),
+            (-40.0, 1.0, -110.0),
+            (-40.0, 1.0, -140.0),
+            (-40.0, 1.0, -145.0)
+        ],
+        "lane_3": [
+            (-50.0, 1.0, -20.0),
+            (-50.0, 1.0, -50.0),
+            (-50.0, 1.0, -80.0),
+            (-50.0, 1.0, -110.0),
+            (-50.0, 1.0, -140.0),
+            (-50.0, 1.0, -145.0)
+        ]
+    },
+    "intersection_types": ["stoplight", "stoplight"],
     "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
     "stop_light_positions": [
-        (-40.0, 0.0, -20.0),
-        (-40.0, 0.0, -20.1),
-        (35.0, 0.0, 10.0),
-        (35.1, 0.0, 10.0)],
-    "traffic_blocked": ["no", "yes"],
-    "ped_blocked": ["yes", "no"],
+         (-30.0, 0.0, -20.0),
+         (-30.0, 0.0, -20.1),
+         (-10.0, 0.0, -20.0),
+         (-10.0, 0.0, -20.1)
+         ],
+    "traffic_blocked": ["no", "no"],
+    "ped_blocked": ["no", "no"],
     "road_divided": "no",
-    "alley": "yes"}
+    "alley": "no"
+}
 
 # Pack all AI paths for processing
 street_data = [street_0, street_1, street_2]
@@ -2354,12 +2398,7 @@ move_custom_textures()
 create_ext(city_name, all_polygons_picture) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
-
-
-
 create_facades(f"{city_name}.FCD", fcd_list, target_fcd_dir, set_facade, debug_facade)
-
-
 prop_writer.add_props(prop_list)
 prop_writer.write_props(set_props)    
 
