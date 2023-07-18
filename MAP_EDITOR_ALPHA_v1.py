@@ -97,7 +97,8 @@ blz_0 = [
     [0.0, 0.0, -60, 5.0, 15.0],
     [0.0, 0.0, -80, 5.0, 15.0],
     [0.0, 0.0, -99, 5.0, 15.0], 
-    [morning, clear, 0, 0, 0, 99999, night, snow, 1, 1, 1, 99999]] #* time, weather, cops, ambient, peds, timelimit (Amateur first, Pro second)    
+    [morning, clear, 0, 0, 0, 99999, night, snow, 1, 1, 1, 99999]] 
+#* time, weather, cops, ambient, peds, timelimit (Amateur first, Pro second)    
 
 blz_1 = [
     [0.0, 0.0, 0.1, 5.0, 15.0],
@@ -111,13 +112,15 @@ cir_0 = [
     [0.0, 0.0, 50.0, 90, 8.0],
     [50.0, 0.0, 0.0, 0.01, 8.0],
     [0.0, 0.0, -75.0, -90, 8.0],
-    [noon, clear, 3, 0, 0, 0, evening, snow, 3, 0, 0, 0]] #* time, weather, number of laps, cops, ambient, peds (Amateur first, Pro second) 
+    [noon, clear, 3, 0, 0, 0, evening, snow, 3, 0, 0, 0]] 
+#* time, weather, number of laps, cops, ambient, peds (Amateur first, Pro second) 
 
 # Checkpoints   
 race_0 = [
     [0.0, 0.0, 0.0, 0.0, 15.0],
     [0.0, 0.0, 50.0, 0.0, 15.0],  
-    [morning, rain, 0, 0, 0, night, snow, 0, 0, 0]] #* time, weather, cops, ambient, peds (Amateur first, Pro second) 
+    [morning, rain, 0, 0, 0, night, snow, 0, 0, 0]] 
+#* time, weather, cops, ambient, peds (Amateur first, Pro second) 
 
 # Packing all the race configurations
 blitz_waypoints = [blz_0, blz_1]
@@ -187,6 +190,7 @@ def to_do_list(x):
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
             WALL --> is there a way to enable collision on both sides of a wall? (probably not)
             WALL --> are they still infinite in height with the new plane implementation?
+            WALL --> re-implement "wall_side"
             BRIDGE --> fix Bridge setting                   
             HUDMAP --> fix/automate (correct) polygon alignment
             HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
@@ -204,7 +208,6 @@ def to_do_list(x):
             BNG --> add more prop pictures in Useful Documents (e.g. bridge04, brigdebuild, etc)
             BNG --> investigate Custom Prop Editor
             BNG --> investigate breakable parts in .MMBANGERDATA
-            AIMAP --> enable user to set cop and ambient setting for each individual race
             CELLS --> implement Cell type (default, tunnel, no skid, etc) in (save_bms)
             RACES --> the current max number of races per type is 15, can we increase this?
             DEBUG --> add debug BMS (textures)
@@ -423,16 +426,24 @@ class Polygon:
             plane_d = plane_d[0]
         elif isinstance(plane_d, np.float64):
             plane_d = float(plane_d)
-        else:
-            raise TypeError(f"plane_d must be a float or a list containing one float, not {type(plane_d)}")
+        # else:
+            # raise TypeError(f"plane_d must be a float or a list containing one float, not {type(plane_d)}")
         self.plane_d = plane_d
+        
+    @property
+    def is_quad(self):
+        return bool(self.flags & 4)
+
+    @property
+    def num_verts(self):
+        return 4 if self.is_quad else 3
           
     @classmethod
-    def from_file(cls, f):
+    def read(cls, f):
         cell_id, mtl_index, flags, *vert_indices = read_unpack(f, '<HBB4H')
         plane_edges = [Vector3.read(f) for _ in range(4)]
         plane_n = Vector3.read(f)
-        plane_d = read_unpack(f, '<f')[0]
+        plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
     def to_file(self, f):
@@ -459,12 +470,16 @@ Plane Edges: {self.plane_edges}
 Plane N: {self.plane_n}
 Plane D: [{plane_d_str}]
         '''
-
-
+        
+        
+# BND CLASS     
 class BND:
     def __init__(self, magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
                  num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
-                 x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys):
+                 x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
+                 hot_verts, edges_0, edges_1, edge_normals, edge_floats,
+                 row_offsets, row_shorts, row_indices, row_heights):
+        
         self.magic = magic
         self.offset = offset    
         self.x_dim = x_dim
@@ -485,10 +500,22 @@ class BND:
         self.num_indices = num_indices
         self.height_scale = height_scale
         self.cache_size = cache_size
+        
         self.vertices = vertices              
-        self.polys = polys                      
-
-    def from_file(cls, f):
+        self.polys = polys   
+        
+        self.hot_verts = hot_verts
+        self.edges_0 = edges_0
+        self.edges_1 = edges_1
+        self.edge_normals = edge_normals
+        self.edge_floats = edge_floats
+        self.row_offsets = row_offsets
+        self.row_shorts = row_shorts
+        self.row_indices = row_indices
+        self.row_heights = row_heights
+                  
+    @classmethod
+    def from_file(cls, f):        
         magic = read_unpack(f, '<4s')[0]
         offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
@@ -499,11 +526,30 @@ class BND:
         num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<5l')
         x_scale, z_scale, num_indices, height_scale, cache_size = read_unpack(f, '<2f3l')
         vertices = [Vector3.read(f) for _ in range(num_verts)]
-        polys = [Polygon.from_file(f) for _ in range(num_polys + 1)] 
+        polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
+        
+        hot_verts = Vector3.readn(f, num_hot_verts2)
+        edges_0 = read_unpack(f, '<{}I'.format(num_edges))
+        edges_1 = read_unpack(f, '<{}I'.format(num_edges))
+        edge_normals = Vector3.readn(f, num_edges)
+        edge_floats = read_unpack(f, '<{}f'.format(num_edges))
+        
+        row_offsets = None
+        row_shorts = None
+        row_indices = None
+        row_heights = None
+
+        if x_dim and y_dim:
+            row_offsets = read_unpack(f, '<{}I'.format(z_dim))
+            row_shorts = read_unpack(f, '<{}H'.format(x_dim * z_dim))
+            row_indices = read_unpack(f, '<{}H'.format(num_indices))
+            row_heights = read_unpack(f, '<{}B'.format(x_dim * x_dim))
 
         return cls(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
                    num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
-                   x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys)
+                   x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
+                   hot_verts, edges_0, edges_1, edge_normals, edge_floats,
+                   row_offsets, row_shorts, row_indices, row_heights)
     
     def to_file(self, f):
         write_pack(f, '<4s', self.magic)
@@ -608,9 +654,6 @@ class BMS:
 ################################################################################################################       
    
 #! INITIALIZATIONS | do not change
-# BND related
-bnd_hit_id = f"{city_name}_HITID.BND"
-bnd_hit_id_text = f"{city_name}_HITID_debug.txt"
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0])
 
 polys = [poly_filler]
@@ -764,7 +807,6 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
 ################################################################################################################               
 ################################################################################################################  
 
-# Initialize BND   
 def initialize_bnd(vertices, polys):
     magic = b'2DNB\0'
     offset = Vector3(0.0, 0.0, 0.0)
@@ -772,19 +814,28 @@ def initialize_bnd(vertices, polys):
     center = calculate_center(vertices)
     radius = calculate_radius(vertices, center)
     radius_sqr = radius ** 2
-    min_ = calculate_min(vertices)
-    max_ = calculate_max(vertices)
-    num_hot_verts_1, num_hot_verts_2, num_edges = 0, 0, 0
+    bb_min = calculate_min(vertices)
+    bb_max = calculate_max(vertices)
+    num_hot_verts1, num_hot_verts2, num_edges = 0, 0, 0
     x_scale, z_scale = 0.0, 0.0
     num_indices, height_scale, cache_size = 0, 0, 0
+    
+    hot_verts = [Vector3(0.0, 0.0, 0.0)]  
+    edges_0, edges_1 = [0], [1] 
+    edge_normals = [Vector3(0.0, 0.0, 0.0)] 
+    edge_floats = [0.0]  
+    row_offsets, row_shorts, row_indices, row_heights = [0], [0], [0], [0]  
 
     return BND(magic, offset, x_dim, y_dim, z_dim, 
-               center, radius, radius_sqr, min_, max_, 
+               center, radius, radius_sqr, bb_min, bb_max, 
                len(vertices), len(polys) - 1,
-               num_hot_verts_1, num_hot_verts_2, num_edges, 
+               num_hot_verts1, num_hot_verts2, num_edges, 
                x_scale, z_scale, 
-               num_indices, height_scale, cache_size, vertices, polys)
-    
+               num_indices, height_scale, cache_size,
+               vertices, polys,
+               hot_verts, edges_0, edges_1, edge_normals, edge_floats,
+               row_offsets, row_shorts, row_indices, row_heights)
+
 # Sort BND Vertices Coordinates
 def sort_coordinates(vertex_coordinates):
     max_x_coord = max(vertex_coordinates, key=lambda coord: coord[0])
@@ -998,13 +1049,17 @@ save_bms(
 ################################################################################################################               
 ################################################################################################################ 
 
-# Initialize and write BND file
-bnd = initialize_bnd(vertices, polys)
+bnd_hit_id = f"{city_name}_HITID.BND"
+bnd_hit_id_text = f"{city_name}_HITID_debug.txt"
 
-with open(bnd_hit_id, "wb") as f:
-    bnd.to_file(f)
+def create_bnd(vertices, polys, city_name, debug_bnd):
+    bnd = initialize_bnd(vertices, polys)
+    
+    with open(bnd_hit_id, "wb") as f:
+        bnd.to_file(f)
+        
     bnd.write_to_file(bnd_hit_id_text, debug_bnd)
-
+    
 # Create SHOP and FOLDER structure   
 def create_folders(city_name):
     os.makedirs("build", exist_ok=True)
@@ -1423,7 +1478,253 @@ DrawBridge{bridge_number}
             with open(bridge_gizmo, "a") as f:
                 if bridge_data is not None:
                     f.write(bridge_data)
-                
+                    
+                    
+#!########### Modified Code by 0x1F9F1 Start ############                       
+MIN_Y = -20
+MAX_Y = 50
+COLINEAR_FUDGE = 0.00001
+MERGE_COLINEAR = True
+RADIUS_FUDGE = 1
+TANGENT_ANGLE_FUDGE = 0.999
+TANGENT_DIST_FUDGE = 0.1
+CORNER_FUDGE = 0.1
+LENGTH_FUDGE = 1
+STRICT_EDGES = False
+
+if MERGE_COLINEAR:
+    assert not STRICT_EDGES
+    
+    
+# EDGE CLASS    
+class Edge:
+    def __init__(self, v1, v2):
+        A = Vector2(v1.y - v2.y, v2.x - v1.x)
+        assert A == (v1 - v2).Cross()
+
+        c = A.Dot(v1)
+        d = A.Mag2()
+
+        if d > 0.00001:
+            line = Vector3(A.x, A.y, -c) * (d ** -0.5)
+        else:
+            line = Vector3(0, 0, 1000000)
+
+        self.v1 = v1
+        self.v2 = v2
+
+        self.line = line
+
+        self.v1p = self.line_pos(self.v1, 0)
+        self.v2p = self.line_pos(self.v2, 0)
+
+        assert self.v1p < self.v2p
+
+        self.length = d ** 0.5
+
+        assert abs(self.length - self.v1.Dist(self.v2)) < 0.0001
+        delta = self.v1p + self.length - self.v2p
+        assert abs(delta) < 0.0001, delta
+
+    # Distance tangential to the line
+    def tangent_dist(self, point):
+        return (point.x * self.line.x) + (point.y * self.line.y) + self.line.z
+
+    # Distance along the line
+    def line_pos(self, point, dist):
+        x = point.x + self.line.x * dist
+        y = point.y + self.line.y * dist
+        return (x * self.line.y) - (y * self.line.x)
+
+    def pos_to_point(self, pos):
+        return Vector2(
+             (self.line.y * pos) - (self.line.x * self.line.z),
+            -(self.line.x * pos) - (self.line.y * self.line.z))
+
+
+# CELL CLASS
+class Cell:
+    def __init__(self, id):
+        self.id = id
+        self.edges = []
+
+    def add_edge(self, v1, v2):
+        # Discard the Y (height) coordinate
+        v1 = Vector2(v1.x, v1.z)
+        v2 = Vector2(v2.x, v2.z)
+
+        if v1.Dist2(v2) < 0.00001:
+            return
+
+        self.edges.append(Edge(v1, v2))
+
+    def merge_colinear(self):
+        i = 0
+
+        while i < len(self.edges):
+            edge1 = self.edges[i]
+
+            j = i + 1
+
+            while j < len(self.edges):
+                edge2 = self.edges[j]
+                j += 1
+
+                angle = (edge1.line.x * edge2.line.x) + (edge1.line.y * edge2.line.y)
+
+                if abs(angle) < 0.999:
+                    continue
+
+                v1p = edge1.tangent_dist(edge2.v1)
+                if abs(v1p) > COLINEAR_FUDGE:
+                    continue
+
+                v2p = edge1.tangent_dist(edge2.v2)
+                if abs(v2p) > COLINEAR_FUDGE:
+                    continue
+
+                v1p = edge1.line_pos(edge2.v1, v1p)
+                v2p = edge1.line_pos(edge2.v2, v2p)
+
+                v1p, v2p = min(v1p, v2p), max(v1p, v2p)
+
+                if (v2p < edge1.v1p + CORNER_FUDGE) or (v1p > edge1.v2p - CORNER_FUDGE):
+                    continue
+
+                edge1.v1p = min(edge1.v1p, v1p)
+                edge1.v2p = max(edge1.v2p, v2p)
+
+                edge1.v1 = edge1.pos_to_point(edge1.v1p)
+                edge1.v2 = edge1.pos_to_point(edge1.v2p)
+
+                del self.edges[j - 1]
+                j = i + 1
+
+            i += 1
+
+    def process(self):
+        if MERGE_COLINEAR:
+            self.merge_colinear()
+
+        bb_min = Vector2( 10000000,  10000000)
+        bb_max = Vector2(-10000000, -10000000)
+
+        for edge in self.edges:
+            for vert in (edge.v1,edge.v2):
+                bb_min.x = min(bb_min.x, vert.x)
+                bb_min.y = min(bb_min.y, vert.y)
+
+                bb_max.x = max(bb_max.x, vert.x)
+                bb_max.y = max(bb_max.y, vert.y)
+
+        self.bb_min = bb_min
+        self.bb_max = bb_max
+        self.center = (self.bb_min + self.bb_max) * 0.5
+        self.radius = (self.bb_min.Dist(self.bb_max) * 0.5)
+
+    def check_radius(self, other, fudge):
+        return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
+
+# Prepare PTL
+def prepare_ptl(polys, vertices):
+    cells = {}
+
+    for poly in polys:
+        if poly.cell_id in cells: 
+            cell = cells[poly.cell_id]
+        else:
+            cell = Cell(poly.cell_id)
+            cells[poly.cell_id] = cell
+
+        for i in range(poly.num_verts):
+            j = (i + 1) % poly.num_verts
+            cell.add_edge(vertices[poly.vert_indices[i]], vertices[poly.vert_indices[j]]) 
+
+    for cell in cells.values():
+        cell.process()
+
+    portals = set()
+
+    cell_vs_cell = 0
+    edge_vs_edge = 0
+
+    for cell1 in cells.values():
+        for cell2 in cells.values():
+            if cell1.id >= cell2.id:
+                continue
+
+            if not cell1.check_radius(cell2, RADIUS_FUDGE):
+                continue
+
+            cell_vs_cell += 1
+
+            for edge1 in cell1.edges:
+                for edge2 in cell2.edges:
+                    edge_vs_edge += 1
+
+                    v1p = edge1.tangent_dist(edge2.v1)
+                    if abs(v1p) > TANGENT_DIST_FUDGE:
+                        continue
+
+                    v2p = edge1.tangent_dist(edge2.v2)
+                    if abs(v2p) > TANGENT_DIST_FUDGE:
+                        continue
+
+                    v1p = edge1.line_pos(edge2.v1, v1p)
+                    v2p = edge1.line_pos(edge2.v2, v2p)
+
+                    v1p, v2p = min(v1p, v2p), max(v1p, v2p)
+
+                    # Check whether any parts of the two edges are touching
+                    if (v2p < edge1.v1p + CORNER_FUDGE) or (v1p > edge1.v2p - CORNER_FUDGE):
+                        continue
+
+                    if STRICT_EDGES:
+                        # Check whether these two edges match
+                        if (abs((v1p - edge1.v1p)) > CORNER_FUDGE) or (abs(v2p - edge1.v2p) > CORNER_FUDGE):
+                            continue
+                    else:
+                        if (v2p - v1p) < LENGTH_FUDGE:
+                            continue
+                        pass
+
+                    v1p = max(edge1.v1p, v1p)
+                    v2p = min(edge1.v2p, v2p)
+
+                    assert v1p < v2p
+
+                    # TODO: Preserve y-height
+                    p1 = edge1.pos_to_point(v1p)
+                    p2 = edge1.pos_to_point(v2p)
+
+                    portals.add((cell1.id, cell2.id, p1, p2))
+                    
+    return cells, portals
+
+# Create PTL
+def create_ptl(city_name, polys, vertices):
+    cells, portals = prepare_ptl(polys, vertices)
+
+    with open(f'SHOP/CITY/{city_name}.PTL', 'wb') as f:
+        write_pack(f, '<I', 0)
+        write_pack(f, '<I', len(portals))
+
+        for cell_1, cell_2, v1, v2 in portals:
+            flags = 0x2
+            edge_count = 2
+            write_pack(f, '<BB', flags, edge_count)
+            write_pack(f, '<H', 101)
+            write_pack(f, '<HH', cell_2, cell_1)
+
+            # TODO: Change height
+            height = MAX_Y - MIN_Y
+            write_pack(f, '<f', height)
+
+            Vector3(v1.x, 0, v1.y).write(f)
+            Vector3(v2.x, 0, v2.y).write(f)
+#!########### Modified Code by 0x1F9F1 / Brick End ############                    
+                    
+                            
 # BINARYBANGER CLASS                            
 class BinaryBanger:
     def __init__(self, start: Vector3, end: Vector3, name: str):
@@ -2031,6 +2332,7 @@ BAI_Editor(city_name, street_names, ai_map)
 
 # Main functions
 create_folders(city_name)
+create_bnd(vertices, polys, city_name, debug_bnd)
 distribute_files(city_name, bnd_hit_id, 
                            len(blitz_waypoints), blitz_waypoints, len(circuit_waypoints), 
                            circuit_waypoints, len(checkpoint_waypoints), checkpoint_waypoints, all_races_files=True)
@@ -2054,319 +2356,7 @@ plot_polygons(debug_hud=debug_hud, show_label=False, plot_picture=False, export_
               x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
               background_color='black')
 
-
-#*########### Code by 0x1F9F1 / Brick ############*
-class mmPolygon:
-    def __init__(self, cell_id, mtl_id, flags, vert_indices, plane_edges, plane_n, plane_d):
-        self.cell_id = cell_id
-        self.mtl_id = mtl_id
-        self.flags = flags
-        self.vert_indices = vert_indices
-        self.plane_edges = plane_edges
-        self.plane_n = plane_n
-        self.plane_d = plane_d
-
-    @property
-    def is_quad(self):
-        return bool(self.flags & 4)
-
-    @property
-    def num_verts(self):
-        return 4 if self.is_quad else 3
-
-    def read(file):
-        cell_id, mtl_id, flags = read_unpack(file, '<HBB')
-        vert_indices = read_unpack(file, '<4H')
-        plane_edges = Vector3.readn(file, 4)
-        plane_n = Vector3.read(file)
-        plane_d, = read_unpack(file, '<f')
-        return mmPolygon(cell_id, mtl_id, flags, vert_indices, plane_edges, plane_n, plane_d)
-
-    def readn(file, count):
-        return [mmPolygon.read(file) for _ in range(count)]
-    
-MERGE_COLINEAR = True
-RADIUS_FUDGE = 1
-TANGENT_ANGLE_FUDGE = 0.999
-TANGENT_DIST_FUDGE = 0.1
-CORNER_FUDGE = 0.1
-LENGTH_FUDGE = 1
-STRICT_EDGES = False
-
-if MERGE_COLINEAR:
-    assert not STRICT_EDGES
-
-# Read 
-with open(f'SHOP/BND/{city_name}_HITID.BND', 'rb') as f:
-    magic, = read_unpack(f, '<I')
-    assert magic == 0x424E4432 # 2BND
-
-    offset = Vector3.read(f)
-    assert offset == Vector3(0, 0, 0)
-
-    width, row_count, height = read_unpack(f, '<III')
-    center = Vector3.read(f)
-    radius, radius_sqr = read_unpack(f, '<ff')
-    bb_min, bb_max = Vector3.readn(f, 2)
-    num_verts, num_polys = read_unpack(f, '<II')
-    num_hot_verts_1, num_hot_verts_2 = read_unpack(f, '<II')
-    num_edges, = read_unpack(f, '<I')
-    x_scale, z_scale, num_indices, y_scale = read_unpack(f, '<ffIf')
-    cache_size = read_unpack(f, '<I')
-
-    vertices = Vector3.readn(f, num_verts)
-    polys = mmPolygon.readn(f, num_polys + 1)
-
-    hot_verts = Vector3.readn(f, num_hot_verts_2)
-    edges_0 = read_unpack(f, '<{}I'.format(num_edges))
-    edges_1 = read_unpack(f, '<{}I'.format(num_edges))
-    edge_normals = Vector3.readn(f, num_edges)
-    edge_floats = read_unpack(f, '<{}f'.format(num_edges))
-
-    if width and row_count:
-        row_offsets = read_unpack(f, '<{}I'.format(height))
-        row_shorts = read_unpack(f, '<{}H'.format(width * height))
-        row_indices = read_unpack(f, '<{}H'.format(num_indices))
-        row_heights = read_unpack(f, '<{}B'.format(width * height))
-
-class Edge:
-    def __init__(self, v1, v2):
-        A = Vector2(v1.y - v2.y, v2.x - v1.x)
-        assert A == (v1 - v2).Cross()
-
-        c = A.Dot(v1)
-        d = A.Mag2()
-
-        if d > 0.00001:
-            line = Vector3(A.x, A.y, -c) * (d ** -0.5)
-        else:
-            line = Vector3(0, 0, 1000000)
-
-        self.v1 = v1
-        self.v2 = v2
-
-        self.line = line
-
-        self.v1p = self.line_pos(self.v1, 0)
-        self.v2p = self.line_pos(self.v2, 0)
-
-        assert self.v1p < self.v2p
-
-        self.length = d ** 0.5
-
-        assert abs(self.length - self.v1.Dist(self.v2)) < 0.0001
-        delta = self.v1p + self.length - self.v2p
-        assert abs(delta) < 0.0001, delta
-
-    # Distance tangential to the line
-    def tangent_dist(self, point):
-        return (point.x * self.line.x) + (point.y * self.line.y) + self.line.z
-
-    # Distance along the line
-    def line_pos(self, point, dist):
-        x = point.x + self.line.x * dist
-        y = point.y + self.line.y * dist
-        return (x * self.line.y) - (y * self.line.x)
-
-    def pos_to_point(self, pos):
-        return Vector2(
-             (self.line.y * pos) - (self.line.x * self.line.z),
-            -(self.line.x * pos) - (self.line.y * self.line.z))
-
-
-COLINEAR_FUDGE = 0.00001
-
-class Cell:
-    def __init__(self, id):
-        self.id = id
-        self.edges = []
-
-    def add_edge(self, v1, v2):
-        # Discard the Y (height) coordinate
-        v1 = Vector2(v1.x, v1.z)
-        v2 = Vector2(v2.x, v2.z)
-
-        if v1.Dist2(v2) < 0.00001:
-            return
-
-        self.edges.append(Edge(v1, v2))
-
-    def merge_colinear(self):
-        i = 0
-
-        while i < len(self.edges):
-            edge1 = self.edges[i]
-
-            j = i + 1
-
-            while j < len(self.edges):
-                edge2 = self.edges[j]
-                j += 1
-
-                angle = (edge1.line.x * edge2.line.x) + (edge1.line.y * edge2.line.y)
-
-                if abs(angle) < 0.999:
-                    continue
-
-                v1p = edge1.tangent_dist(edge2.v1)
-                if abs(v1p) > COLINEAR_FUDGE:
-                    continue
-
-                v2p = edge1.tangent_dist(edge2.v2)
-                if abs(v2p) > COLINEAR_FUDGE:
-                    continue
-
-                v1p = edge1.line_pos(edge2.v1, v1p)
-                v2p = edge1.line_pos(edge2.v2, v2p)
-
-                v1p, v2p = min(v1p, v2p), max(v1p, v2p)
-
-                if (v2p < edge1.v1p + CORNER_FUDGE) or (v1p > edge1.v2p - CORNER_FUDGE):
-                    continue
-
-                edge1.v1p = min(edge1.v1p, v1p)
-                edge1.v2p = max(edge1.v2p, v2p)
-
-                edge1.v1 = edge1.pos_to_point(edge1.v1p)
-                edge1.v2 = edge1.pos_to_point(edge1.v2p)
-
-                del self.edges[j - 1]
-                j = i + 1
-
-            i += 1
-
-    def process(self):
-        if MERGE_COLINEAR:
-            self.merge_colinear()
-
-        bb_min = Vector2( 10000000,  10000000)
-        bb_max = Vector2(-10000000, -10000000)
-
-        for edge in self.edges:
-            for vert in (edge.v1,edge.v2):
-                bb_min.x = min(bb_min.x, vert.x)
-                bb_min.y = min(bb_min.y, vert.y)
-
-                bb_max.x = max(bb_max.x, vert.x)
-                bb_max.y = max(bb_max.y, vert.y)
-
-        self.bb_min = bb_min
-        self.bb_max = bb_max
-        self.center = (self.bb_min + self.bb_max) * 0.5
-        self.radius = (self.bb_min.Dist(self.bb_max) * 0.5)
-
-    def check_radius(self, other, fudge):
-        return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
-
-cells = {}
-
-for poly in polys:
-    if poly.cell_id in cells: # Important
-        cell = cells[poly.cell_id]
-    else:
-        cell = Cell(poly.cell_id)
-        cells[poly.cell_id] = cell
-
-    for i in range(poly.num_verts):
-        j = (i + 1) % poly.num_verts
-
-        cell.add_edge(vertices[poly.vert_indices[i]], vertices[poly.vert_indices[j]]) # Important
-
-for cell in cells.values():
-    cell.process()
-
-portals = set()
-
-cell_vs_cell = 0
-edge_vs_edge = 0
-
-for cell1 in cells.values():
-    for cell2 in cells.values():
-        if cell1.id >= cell2.id:
-            continue
-
-        if not cell1.check_radius(cell2, RADIUS_FUDGE):
-            continue
-
-        cell_vs_cell += 1
-
-        for edge1 in cell1.edges:
-            for edge2 in cell2.edges:
-                edge_vs_edge += 1
-
-                # angle = (edge1.line.x * edge2.line.x) + (edge1.line.y * edge2.line.y)
-
-                # if abs(angle) < TANGENT_ANGLE_FUDGE:
-                #     continue
-
-                v1p = edge1.tangent_dist(edge2.v1)
-                if abs(v1p) > TANGENT_DIST_FUDGE:
-                    continue
-
-                v2p = edge1.tangent_dist(edge2.v2)
-                if abs(v2p) > TANGENT_DIST_FUDGE:
-                    continue
-
-                v1p = edge1.line_pos(edge2.v1, v1p)
-                v2p = edge1.line_pos(edge2.v2, v2p)
-
-                v1p, v2p = min(v1p, v2p), max(v1p, v2p)
-
-                # Check whether any parts of the two edges are touching
-                if (v2p < edge1.v1p + CORNER_FUDGE) or (v1p > edge1.v2p - CORNER_FUDGE):
-                    continue
-
-                if STRICT_EDGES:
-                    # Check whether these two edges match
-                    if (abs((v1p - edge1.v1p)) > CORNER_FUDGE) or (abs(v2p - edge1.v2p) > CORNER_FUDGE):
-                        continue
-                else:
-                    if (v2p - v1p) < LENGTH_FUDGE:
-                        continue
-                    pass
-
-                v1p = max(edge1.v1p, v1p)
-                v2p = min(edge1.v2p, v2p)
-
-                assert v1p < v2p
-
-                # TODO: Preserve y-height
-                p1 = edge1.pos_to_point(v1p)
-                p2 = edge1.pos_to_point(v2p)
-
-                portals.add((cell1.id, cell2.id, p1, p2))
-
-MIN_Y = -20
-MAX_Y = 50
-
-# Write PTL (Portal) file
-with open(f'SHOP/CITY/{city_name}.PTL', 'wb') as f:
-    write_pack(f, '<I', 0)
-    write_pack(f, '<I', len(portals))
-
-    for cell_1, cell_2, v1, v2 in portals:
-        # 0x1: Active (Implicit)
-
-        # Flags 0x2 and 0x4 disable groups
-        # 0x2: Reset Clip MinX, MaxX, MinY, MaxY | Open Area?
-        # 0x4: Reset MinX or MaxX depending on direction | Half-Open Area?
-        # 0x8: Must be infront (or behind?) portal plane
-        flags = 0x2
-        edge_count = 2
-        write_pack(f, '<BB', flags, edge_count)
-        write_pack(f, '<H', 101)
-        write_pack(f, '<HH', cell_2, cell_1)
-
-        # TODO: Change height
-        height = MAX_Y - MIN_Y
-        write_pack(f, '<f', height)
-
-        Vector3(v1.x, 0, v1.y).write(f)
-        Vector3(v2.x, 0, v2.y).write(f)
-#*########### Code by 0x1F9F1 / Brick ############*
-
-
-
+create_ptl(city_name, polys, vertices)
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, mm1_folder)
 
