@@ -53,9 +53,9 @@ set_props=False                 # change to "True" if you want PROPS // (current
 set_anim=False                  # change to "True" if you want ANIM (plane and eltrain
 set_bridges=False               # change to "True" if you want BRIDGES // (currently broken)
 
-ai_map=False                    # change both to "True" if you want AI paths
-ai_streets=False                # change both to "True" if you want AI paths
-cruise_start_pos=               (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True"
+ai_map=True                    # change both to "True" if you want AI paths
+ai_streets=True                # change both to "True" if you want AI paths
+cruise_start_position=          (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True"
 
 debug_bnd=False                 # change to "True" if you want a BND/collision Debug text file
 debug_facade=False              # change to "True" if you want a Facade Debug text file
@@ -412,6 +412,8 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
     return radius_sqr ** 0.5
 
 
+output_physics_file = "physics.db"
+
 # POLYGON CLASS
 class Polygon:
     def __init__(self, cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d):
@@ -655,16 +657,15 @@ class BMS:
    
 #! INITIALIZATIONS | do not change
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0])
-
 polys = [poly_filler]
 vertices = []
 all_polygons_picture = []
 
-# Bridge related
-bridge_filler = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99"
+
 
 # FCD related
-created_fcd_file = city_name + ".FCD"
+
+
 target_fcd_dir = os.path.join(os.getcwd(), "SHOP", "CITY")
 
 # Physics related
@@ -1049,6 +1050,7 @@ save_bms(
 ################################################################################################################               
 ################################################################################################################ 
 
+# Create BND file
 bnd_hit_id = f"{city_name}_HITID.BND"
 bnd_hit_id_text = f"{city_name}_HITID_debug.txt"
 
@@ -1066,6 +1068,7 @@ def create_folders(city_name):
     os.makedirs(os.path.join("SHOP", "BMP16"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "TEX16O"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "TUNE"), exist_ok=True)
+    os.makedirs(os.path.join("SHOP", "MTL"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}CITY"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}LM"), exist_ok=True)
     os.makedirs(os.path.join("SHOP", "BND", f"{city_name}CITY"), exist_ok=True)
@@ -1461,6 +1464,8 @@ def create_bridges(all_bridges, set_bridges=False):
         drawbridge_values = f"""
 {bridge_object}, 0, {bridge_offset[0]}, {bridge_offset[1]}, {bridge_offset[2]}, {bridge_facing[0]}, {bridge_facing[1]}, {bridge_facing[2]})
         """
+        
+        bridge_filler = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99"
 
         bridge_data = f"""
 DrawBridge{bridge_number}
@@ -1932,26 +1937,38 @@ mmMapData :0 {{
         return textwrap.dedent(bai_map_template).strip()
     
     
+# Intersection Type Mapping
+INTERSECTION_TYPE_MAP = {
+    "stop": 0,
+    "stoplight": 1,
+    "yield": 2,
+    "continue": 3}
+
+# Yes/No Mapping
+YES_NO_MAP = {
+    "no": 0,
+    "yes": 1}
+
 # Street File Editor CLASS
 class StreetFile_Editor:
     def __init__(self, city_name, street_data, ai_streets=False, reverse=False):
         self.street_name = street_data["street_name"]
         self.original_vertices = street_data["vertices"]
-        
+
         self.reverse = reverse
         if self.reverse:
             self.vertices = self.original_vertices + self.original_vertices[::-1]  # append reversed vertices to original vertices
         else:
             self.vertices = self.original_vertices
-            
-        self.intersection_types = street_data.get("intersection_types", [1, 3])
+
+        self.intersection_types = [INTERSECTION_TYPE_MAP[typ] for typ in street_data.get("intersection_types", ["continue", "continue"])]
         self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
         self.stop_light_names = street_data.get("stop_light_names", ["tplttrafc", "tplttrafc"])
-        self.traffic_blocked = street_data.get("traffic_blocked", [0, 0])
-        self.ped_blocked = street_data.get("ped_blocked", [0, 0])
-        self.road_divided = street_data.get("road_divided", 0)
-        self.alley = street_data.get("alley", 0)
-          
+        self.traffic_blocked = [YES_NO_MAP[val] for val in street_data.get("traffic_blocked", ["no", "no"])]
+        self.ped_blocked = [YES_NO_MAP[val] for val in street_data.get("ped_blocked", ["no", "no"])]
+        self.road_divided = YES_NO_MAP[street_data.get("road_divided", "no")]
+        self.alley = YES_NO_MAP[street_data.get("alley", "no")]
+
         if ai_streets:
             self.write_to_file()
 
@@ -2197,7 +2214,7 @@ def start_game(destination_folder, play_game=False):
 
 #* Few Facade name examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
    
-# SET FCD
+# SET FACADES
 fcd_one = {
 	'room': 1,
 	'flags': 1,
@@ -2206,67 +2223,59 @@ fcd_one = {
 	'sides': (0,0,0.000000),
 	'separator': 80, 
 	'facade_name': "dfhotel01",
-	#'scale': 30.0,
+	'scale': 30.0, # can be omitted in later versions (i.e. use scale of input object)
 	'axis': 'x'}
 
-fcd_two = {
-	'room': 1,
-	'flags': 35,
-	'start': (10, 0.0, -30.0),
-	'end': (10, 0.0, -60.0),
-	'sides': (28.465626,28.465626,0),
-	'separator': 10, 
-	'facade_name': "ofbldg02",
-	#'scale': 9,
-	'axis': 'z'}
-
+# Pack all Facades for processing
 fcd_list = [fcd_one]
 
 ###################################################################################################################
 
-# AI PATH NOTES
-# Intersection Types: 
-# 0 = Stop, 1 = Traffic Light, 2 = Yield, 3 = Continue
+# SET AI PATHS
 
-# Other Types:
-# 0 = No, 1 = Yes
+# The following variables are optional: 
+# Intersection_type, defaults to: "continue"
+# Stop_light_names, defaults to: "tplttrafc"
+# Stop_light_positions, defaults to: (0,0,0)
+# Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: "No"
+
+street_0 = {
+    "street_name": "cruise_start",
+    "vertices": [
+        cruise_start_position,
+        cruise_start_position]} # you must keep the "second position", otherwise the game will crash
 
 street_1 = {
     "street_name": "path_1",
     "vertices": [
-        (-30.0, 1.0, 75.0),
-        (-30.0, 1.0, 70.0),
-        (-30.0, 1.0, 40.0),
-        (-30.0, 1.0, 10.0),
         (-30.0, 1.0, -20.0),
         (-30.0, 1.0, -50.0),
         (-30.0, 1.0, -80.0),
         (-30.0, 1.0, -110.0),
         (-30.0, 1.0, -140.0),
         (-30.0, 1.0, -145.0)]}
- 
-# Put all your created Streets in this list
-street_data = [street_1]
 
-# # Example of a "complex" street (alpha version)
-# data_street_example = {
-#     "street_name": "path_2",
-#     "vertices": [
-#         (-40.0, 0.0, -20.0),
-#         (-40.0, 0.0, -40.0),
-#         (-40.0, 0.0, -60.0),
-#         (-40.0, 0.0, -80.0)],
-#     "intersection_types": [1, 1],
-#     "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
-#     "stop_light_positions": [
-#         (-40.0, 0.0, -20.0),
-#         (-40.0, 0.0, -20.1),
-#         (35.0, 0.0, 10.0),
-#         (35.1, 0.0, 10.0)],
-#         "traffic_blocked": [0, 0],
-#         "ped_blocked": [0, 0],
-#         "road_divided": 0,
-#         "alley": 0}
+street_2 = {
+    "street_name": "path_2",
+    "vertices": [
+        (-40.0, 0.0, -20.0),
+        (-40.0, 0.0, -40.0),
+        (-40.0, 0.0, -60.0),
+        (-40.0, 0.0, -80.0)],
+    "intersection_types": ["stop", "yield"],
+    "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
+    "stop_light_positions": [
+        (-40.0, 0.0, -20.0),
+        (-40.0, 0.0, -20.1),
+        (35.0, 0.0, 10.0),
+        (35.1, 0.0, 10.0)],
+    "traffic_blocked": ["no", "yes"],
+    "ped_blocked": ["yes", "no"],
+    "road_divided": "no",
+    "alley": "yes"}
+
+# Pack all AI paths for processing
+street_data = [street_0, street_1, street_2]
 
 ################################################################################################################               
 
@@ -2294,7 +2303,7 @@ prop_2 = {'offset_x': -10,
           'face_y': 0.0, 
           'face_z': -40000}
 
-# Put all your created Props in this list
+# Pack all Props for processing
 prop_list = [prop_1, prop_2]
 
 ################################################################################################################     
@@ -2317,6 +2326,7 @@ print("Generating " + f"{race_locale_name}...")
 print("\n===============================================\n")
 
 # Material related
+output_physics_file = "physics.db"
 read_materials = Material_Editor.read_binary(input_physics_file)
 for prop in ["friction", "elasticity", "drag"]:
     setattr(read_materials[set_material_index - 1], prop, new_properties[prop])
@@ -2344,7 +2354,12 @@ move_custom_textures()
 create_ext(city_name, all_polygons_picture) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
-create_facades(created_fcd_file, fcd_list, target_fcd_dir, set_facade, debug_facade)
+
+
+
+create_facades(f"{city_name}.FCD", fcd_list, target_fcd_dir, set_facade, debug_facade)
+
+
 prop_writer.add_props(prop_list)
 prop_writer.write_props(set_props)    
 
