@@ -42,6 +42,7 @@ city_name = "USER"                              # One word (no spaces)  --- name
 race_locale_name = "My First City"              # Can be multiple words --- name of the city in Race Locale Menu
 mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1560 is automatically copied to this folder)
 
+
 #* SETUP II (optional, Map Creation)
 play_game=True                  # boot the game immediately after the Map is created
 delete_shop=True                # delete the raw city files after the .ar file has been created
@@ -61,60 +62,70 @@ debug_facade=False              # change to "True" if you want a Facade Debug te
 debug_bng=False                 # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
 
+
 #* SETUP III (optional, Blender)
 export_blender=debug_bnd=False  # change to "True" if you want to export the Map vertices to Blender
 run_blender=False               # change to "True" if you want to run Blender after Map vertices have been exported
 bnd_blender_data = "SCRIPT_EXPORT_vertices.txt" 
 blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # change if necessary
 
+
 #* SETUP IV (optional, Randomize Textures)
 global randomize_textures
 randomize_textures=False        # change to "True" if you want randomize textures in your Map (see below for a selection)
 randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
-#* SETUP V (optional, Race Editor: max is 15 for Blitzes & Circuits, and 12 for Checkpoints)
-blitz_race_names = ["Just in Time"]
+
+#* SETUP V (optional, Race Editor)
+morning, noon, evening, night = 0, 1, 2, 3  # do not change
+clear, cloudy, rain, snow = 0, 1, 2, 3      # do not change
+
+# Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
+# Blitzes can have a total of 11 waypoints, the number of waypoints for Circuits and Checkpoints is unlimited
+# Waypoint Structure: (x, y, z, rotation, width)
+
+# Race names
+blitz_race_names = ["Tigerhawk's BRB", "Target Car 2024"]
 circuit_race_names = ["Dading's Circuit"]
-checkpoint_race_names = ["filler_race"]
+checkpoint_race_names = ["Giga's Madness"]
 
-wp_filler = ",0,0," #  will be automated later, do not change
+# Blitzes
+blz_0 = [
+    [0.0, 0.0, 0.1, 5.0, 15.0], # your notes here
+    [0.0, 0.0, -20, 5.0, 15.0], # your notes here
+    [0.0, 0.0, -40, 5.0, 15.0],
+    [0.0, 0.0, -60, 5.0, 15.0],
+    [0.0, 0.0, -80, 5.0, 15.0],
+    [0.0, 0.0, -99, 5.0, 15.0], 
+    [morning, clear, 0, 0, 0, 99999, night, snow, 1, 1, 1, 99999]] #* time, weather, cops, ambient, peds, timelimit (Amateur first, Pro second)    
 
-# WAYPOINTS | Tabbing / spacing the Coordinates is optional, but recommended for readability and editing
-# Maximum number of checkpoints for Blitzes is 11 (including the start and finish checkpoints)
-# Structure: (x, y, z, rotation, width, filler)
+blz_1 = [
+    [0.0, 0.0, 0.1, 5.0, 15.0],
+    [0.0, 0.0, -20, 5.0, 15.0],
+    [0.0, 0.0, -40, 5.0, 15.0],
+    [morning, cloudy, 0, 0, 0, 2024, evening, rain, 1, 1, 1, 2024]]
 
-# Blitz 0 WP        METHOD 1: write the data like a text file       
-blz_0_ALL = f"""
-0.0,   0.0,    0.1,    5.0,    15.0 {wp_filler} 
-0.0,   0.0,    -20,    5.0,    15.0 {wp_filler}
-0.0,   0.0,    -40,    5.0,    15.0 {wp_filler}    
-0.0,   0.0,    -60,    5.0,    15.0 {wp_filler}    
-0.0,   0.0,    -80,    5.0,    15.0 {wp_filler}    
-0.0,   0.0,    -99,    5.0,    15.0 {wp_filler}"""
+# Circuits
+cir_0 = [
+    [20.0, 0.0, 0.0, 180.0, 8.0],
+    [0.0, 0.0, 50.0, 90, 8.0],
+    [50.0, 0.0, 0.0, 0.01, 8.0],
+    [0.0, 0.0, -75.0, -90, 8.0],
+    [noon, clear, 3, 0, 0, 0, evening, snow, 3, 0, 0, 0]] #* time, weather, number of laps, cops, ambient, peds (Amateur first, Pro second) 
 
-# Circuit 0 WP      METHOD 2: write each row into a separate variable           
-cir_1_WP_start =       "20.0,      0.0,    0.0,         180.0,      8.0     ,0,0,"
-cir_1_WP_ch1 =         "0.0,       0.0,    50.0,        90,         8.0     ,0,0,"
-cir_1_WP_ch2 =         "50.0,      0.0,    0.0,         0.01,       8.0     ,0,0,"
-cir_1_WP_finish =      "0.0,       0.0,    -75.0,       -90,        8.0     ,0,0,"
-cir_1_ALL = [cir_1_WP_start, cir_1_WP_ch1, cir_1_WP_ch2, cir_1_WP_finish]
+# Checkpoints   
+race_0 = [
+    [0.0, 0.0, 0.0, 0.0, 15.0],
+    [0.0, 0.0, 50.0, 0.0, 15.0],  
+    [morning, rain, 0, 0, 0, night, snow, 0, 0, 0]] #* time, weather, cops, ambient, peds (Amateur first, Pro second) 
 
-#######################################################################################
-morning, noon, evening, night = 0, 1, 2, 3; clear, cloudy, rain, snow = 0, 1, 2, 3
-filler_WP_1 = "0.0, 0.0, 0.0, 0.0, 15.0, 0, 0,"; filler_WP_2 = "0.0, 0.0, 50.0, 0.0, 15.0, 0, 0,"
-filler_ALL = [filler_WP_1, filler_WP_2]
-#######################################################################################
+# Packing all the race configurations
+blitz_waypoints = [blz_0, blz_1]
+circuit_waypoints = [cir_0]
+checkpoint_waypoints = [race_0]
 
-# Blitz WP file, Time of Day, Weather, Time Limit (s), Number of Checkpoints (5 arguments)
-blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1)]
 
-# Circuit WP file, Time of Day, Weather, Laps Amateur, Laps Pro (5 arguments)
-circuit_waypoints = [(cir_1_ALL, night, snow, 2, 3)]
-
-# Checkpoint WP file, Time of Day, Weather (3 arguments)
-checkpoint_waypoints = [(filler_ALL, noon, cloudy)]
-
-# COPS AND ROBBERS
+#* SETUP VI (optional, Cops and Robbers)
 cnr_waypoints = [                          # set Cops and Robbers Waypoints manually and concisely
     ## 1st set, Name: ... ## 
     (20.0,1.0,80.0),                       #? Bank / Blue Team Hideout
@@ -125,7 +136,8 @@ cnr_waypoints = [                          # set Cops and Robbers Waypoints manu
     (90.0,1.0,90.0),
     (-90.0,1.0,-90.0)]
 
-# ANIM
+
+#* SETUP VII (optional, Animations)
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain", other objects won't work
         (250, 40.0, -250),      # you can only have one Plane and/or one Eltrain
@@ -138,7 +150,8 @@ anim_data = {
         (-80, 25.0, -80),
         (-80, 25.0, 80)]}
 
-# BRIDGES (experimental)
+
+#* SETUP VIII (optional, Bridges, experimental)
 slim_bridge = "tpdrawbridge04"  #* dimension: x: 30.0 y: 5.9 z: 32.5
 wide_bridge = "tpdrawbridge06"  #* dimension: x: 40.0 y: 5.9 z: 32.5
 new_bridge_object = "..."       # you can pass any object, for example: vpmustang99
@@ -268,6 +281,7 @@ class Vector2:
 
     def Dist(self, other):
         return self.Dist2(other) ** 0.5
+
 
 # VECTOR3 CLASS
 class Vector3:
@@ -435,15 +449,15 @@ class Polygon:
         plane_d_str = f'{round(self.plane_d, 2):.2f}' if round_values else f'{self.plane_d:f}'
 
         return f'''
-    mmPolygon
-    Cell ID: {self.cell_id}
-    Material Index: {self.mtl_index}
-    Flags: {self.flags}
-    Vertices Indices: {self.vert_indices}
-    Vertices Coordinates: {vertices_coordinates}
-    Plane Edges: {self.plane_edges}
-    Plane N: {self.plane_n}
-    Plane D: [{plane_d_str}]
+Polygon
+Cell ID: {self.cell_id}
+Material Index: {self.mtl_index}
+Flags: {self.flags}
+Vertices Indices: {self.vert_indices}
+Vertices Coordinates: {vertices_coordinates}
+Plane Edges: {self.plane_edges}
+Plane N: {self.plane_n}
+Plane D: [{plane_d_str}]
         '''
 
 
@@ -605,11 +619,6 @@ all_polygons_picture = []
 
 # Bridge related
 bridge_filler = "tpsone,0,-9999.99,0.0,-9999.99,-9999.99,0.0,-9999.99"
-
-# Race related
-num_blitz = len(blitz_waypoints)
-num_circuit = len(circuit_waypoints)
-num_checkpoint = len(checkpoint_waypoints)
 
 # FCD related
 created_fcd_file = city_name + ".FCD"
@@ -1017,9 +1026,9 @@ def create_folders(city_name):
         f.write(f"LocalizedName={localized_name}\n")
         f.write(f"MapName={map_name}\n")
         f.write(f"RaceDir={race_dir}\n")
-        f.write(f"BlitzCount={num_blitz}\n")
-        f.write(f"CircuitCount={num_circuit}\n")
-        f.write(f"CheckpointCount={num_checkpoint}\n")
+        f.write(f"BlitzCount={len(blitz_waypoints)}\n")
+        f.write(f"CircuitCount={len(circuit_waypoints)}\n")
+        f.write(f"CheckpointCount={len(checkpoint_waypoints)}\n")
         blitz_race_names_str = '|'.join(blitz_race_names)
         circuit_race_names_str = '|'.join(circuit_race_names)
         checkpoint_race_names_str = '|'.join(checkpoint_race_names)
@@ -1112,67 +1121,65 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circ
         
         for i in range(num_files):
             file_name = f"{race_type}{i}WAYPOINTS.CSV"
-            
+
             with open(file_name, "w") as f:
                 ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[((n//10%10!=1)*(n%10<4)*n%10)::4])
                 f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
-                
-                for waypoint in race_waypoints[i][0]:
-                    f.write(waypoint + "\n")
+
+                for waypoint in race_waypoints[i][:-1]:  # Exclude the last item, which are other parameters
+                    waypoint_line = ', '.join(map(str, waypoint))
+                    waypoint_line += ",0,0,\n"
+                    f.write(waypoint_line)
+
             shutil.move(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name))
-            
-        # Set MMDATA.CSV values           
-        car_type, difficulty, opponent, num_laps_checkpoint = 0, 1, 99, 99
-        cops_x = 1.0        # will be customizable later // just add as a parameter in e.g. "blitz_waypoints = [(blz_0_ALL, morning, clear, 60, len(blz_0_ALL)-1)]"
-        ambient_x = 1.0     # will be customizable later
-        peds_x = 1.0        # will be customizable later
-                
-        # Create MM_type_DATA.CSV files
+
+        # Create MM_DATA files
         mm_file_name = f"MM{race_type}DATA.CSV"
-        mm_data_comment_line = "Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n"
-        
+        mm_data_comment_line = "Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents,       Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n"
+        car_type_na, difficulty_na, opponent_na, num_laps_checkpoint_na, time_limit_na = 0, 1, 99, 99, 99
+
         with open(mm_file_name, "w") as f:
             f.write(mm_data_comment_line)
-            
+
             for i in range(num_files):
+                other_parameters = race_waypoints[i][-1]
+                num_laps_blitz = len(race_waypoints[i]) - 2 
+
                 if race_type == "BLITZ":
-                    blitz_waypoints, timeofday, weather, timelimit, num_laps_blitz = race_waypoints[i]  
-                    
-                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_blitz, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_blitz, timelimit, difficulty
+                    a_timeofday, a_weather, a_cops, a_ambient, a_peds, a_timelimit, p_timeofday, p_weather, p_cops, p_ambient, p_peds, p_timelimit = other_parameters
+                    race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, num_laps_blitz, a_timelimit, opponent_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, num_laps_blitz, p_timelimit, difficulty_na]
 
                 elif race_type == "CIRCUIT":
-                    circuit_waypoints, timeofday, weather, num_laps_a, num_laps_p = race_waypoints[i]  
-                    
-                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_a, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_p, timelimit, difficulty
-                    
+                    a_timeofday, a_weather, a_num_circuit_laps, a_cops, a_ambient, a_peds, p_timeofday, p_weather, p_num_circuit_laps, p_cops, p_ambient, p_peds = other_parameters
+                    race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, a_num_circuit_laps, time_limit_na, difficulty_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, p_num_circuit_laps, time_limit_na, difficulty_na]
+
                 elif race_type == "RACE":
-                    checkpoint_waypoints, timeofday, weather = race_waypoints[i] 
-                    
-                    race_data = car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_checkpoint, timelimit, difficulty, car_type, timeofday, weather, opponent, cops_x, ambient_x, peds_x, num_laps_checkpoint, timelimit, difficulty
-                    
-                # Race prefixes    
+                    a_timeofday, a_weather, a_cops, a_ambient, a_peds, p_timeofday, p_weather, p_cops, p_ambient, p_peds = other_parameters
+                    race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, num_laps_checkpoint_na, time_limit_na, difficulty_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, num_laps_checkpoint_na, time_limit_na, difficulty_na]
+
+                race_data_str = ', '.join(map(str, race_data))
+
                 if race_type == "RACE":
-                    race_data_str = ', '.join(map(str, race_data))
-                    f.write(f"{race_prefixes[i]}, {race_data_str}\n") 
+                    # Write the RACE prefixes (ASP1", "ASP2", "ASP3", "ASU1", "ASU2" ... etc)
+                    f.write(f"{race_prefixes[i]}, {race_data_str}\n")
                 else:
-                    race_data_str = ', '.join(map(str, race_data))
-                    f.write(f"{prefix}{i}, {race_data_str}\n") 
-                                    
+                    f.write(f"{prefix}{i}, {race_data_str}\n")
+
         destination_path = os.path.join("SHOP", "RACE", city_name, mm_file_name)
         shutil.move(mm_file_name, destination_path)
-        
-    # Create COPSWAYPOINTS.CSV file
-    cnr_csv_file = "COPSWAYPOINTS.CSV"
-    cnr_comment_line = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
-    cnr_filler = ",0,0,0,0,0,\n"
-    with open(cnr_csv_file, "w") as f:
-        f.write(cnr_comment_line)
-        for i in range(0, len(cnr_waypoints), 3):
-            f.write(", ".join(map(str, cnr_waypoints[i])) + cnr_filler) 
-            f.write(", ".join(map(str, cnr_waypoints[i+1])) + cnr_filler)
-            f.write(", ".join(map(str, cnr_waypoints[i+2])) + cnr_filler)
-        
-    shutil.move(cnr_csv_file, os.path.join("SHOP", "RACE", f"{city_name}", cnr_csv_file))
+
+        # Create COPSWAYPOINTS.CSV file
+        cnr_csv_file = "COPSWAYPOINTS.CSV"
+        cnr_comment_line = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
+        cnr_filler = ",0,0,0,0,0,\n"
+        with open(cnr_csv_file, "w") as f:
+            f.write(cnr_comment_line)
+            for i in range(0, len(cnr_waypoints), 3):
+                f.write(", ".join(map(str, cnr_waypoints[i])) + cnr_filler) 
+                f.write(", ".join(map(str, cnr_waypoints[i+1])) + cnr_filler)
+                f.write(", ".join(map(str, cnr_waypoints[i+2])) + cnr_filler)
+
+        shutil.move(cnr_csv_file, os.path.join("SHOP", "RACE", f"{city_name}", cnr_csv_file))
 
     # Create OPPONENT files
     if all_races_files:
@@ -2025,8 +2032,8 @@ BAI_Editor(city_name, street_names, ai_map)
 # Main functions
 create_folders(city_name)
 distribute_files(city_name, bnd_hit_id, 
-                           num_blitz, blitz_waypoints, num_circuit, 
-                           circuit_waypoints, num_checkpoint, checkpoint_waypoints, all_races_files=True)
+                           len(blitz_waypoints), blitz_waypoints, len(circuit_waypoints), 
+                           circuit_waypoints, len(checkpoint_waypoints), checkpoint_waypoints, all_races_files=True)
 
 move_open1560(mm1_folder)
 move_dev(mm1_folder, city_name)
