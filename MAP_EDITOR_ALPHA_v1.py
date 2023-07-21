@@ -185,8 +185,7 @@ def to_do_list(x):
             TEXTURES --> add TEX16A and TEX16O from existing custom cities and create a folder with suitable/common textures
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
-            WALL --> is there a way to enable collision on both sides of a wall? (probably not)
-            WALL --> re-implement "wall_side"
+            WALL --> implement "double_wall" (i.e. duplicating the polygon with the different wall "side")
             BRIDGE --> fix Bridge setting                   
             HUDMAP --> fix/automate (correct) polygon alignment
             HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
@@ -850,7 +849,7 @@ def compute_plane_edges(vertex_coordinates):
 
     return [dir_coord_1, dir_coord_2, dir_coord_3, dir_coord_4]
 
-def compute_plane_params(p1: np.ndarray, p2: np.ndarray, p3: np.ndarray, p4: np.ndarray) -> Tuple[np.ndarray, float]:
+def compute_plane_params(p1, p2, p3, p4):
     v1 = np.subtract(p2, p1)
     v2 = np.subtract(p3, p1)
 
@@ -864,11 +863,9 @@ def compute_plane_params(p1: np.ndarray, p2: np.ndarray, p3: np.ndarray, p4: np.
 
     return planeN, planeD
 
-#TODO re-implement WALL_SIDE
-# Create and Append Polygons
 def create_polygon(
     bound_number, material_index, vertex_coordinates, 
-    plane_edges=None, flags=None, 
+    plane_edges=None, flags=None, wall_side=None,
     vertices=vertices, polys=polys, sort_vertices=True, cell_type=0):
             
     # Flags
@@ -879,7 +876,7 @@ def create_polygon(
         elif flags == 3:
             raise ValueError("Triangles are not supported yet. This feature is currently under construction.")
 
-    # # Vertex indices
+    # Vertex indices
     base_vertex_index = len(vertices)
 
     # Sorting (currently desired for all polygons)
@@ -893,8 +890,37 @@ def create_polygon(
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
     
     # Plane parameters
-    plane_n, plane_d = compute_plane_params(*vertex_coordinates[:4])
-    plane_n = Vector3(*plane_n)
+    if wall_side is None:
+        plane_n, plane_d = compute_plane_params(*vertex_coordinates[:4])
+    else:
+        # WALL with varying X and Y coordinates
+        if (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
+            max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
+            abs(max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates)) <= 0.15):
+
+            if wall_side == "outside":
+                corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
+            elif wall_side == "inside":
+                corners = [0, 0, 1, -max(coord[2] for coord in vertex_coordinates)]
+            
+            plane_n, plane_d = corners[:3], corners[3]
+
+        # WALL with varying Z and Y coordinates                               
+        elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
+              max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
+              max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
+                    
+            if wall_side == "outside":
+                corners = [-1, 0, 0, min(coord[0] for coord in vertex_coordinates)]
+            elif wall_side == "inside":
+                corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
+                
+            plane_n, plane_d = corners[:3], corners[3]
+
+    if isinstance(plane_n, np.ndarray):
+        plane_n = Vector3(*plane_n.tolist())
+    elif isinstance(plane_n, list):
+        plane_n = Vector3(*plane_n)
     
     if plane_edges is None:
         plane_edges = compute_plane_edges(sorted_vertices)  
@@ -1047,6 +1073,20 @@ save_bms(
     texture_name = ["T_WATER"], 
     TexCoords=compute_tex_coords(mode="r.V", repeat_x=10, repeat_y=100))
 
+# Invisible Wall
+create_polygon(
+    bound_number = 8,
+    material_index = 0,
+    vertex_coordinates=[
+        (-10.0, 0.0, -40.00),
+        (-10.0, 15.0, -39.99),
+        (10.0, 15.0, -39.99),
+        (10.0, 0.0, -40.00)], wall_side="inside")
+
+save_bms(
+    texture_name = ["SNOW"], 
+    TexCoords=compute_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
+
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -1064,17 +1104,22 @@ def create_bnd(vertices, polys, city_name, debug_bnd):
     
 # Create SHOP and FOLDER structure   
 def create_folders(city_name):
-    os.makedirs("build", exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BMP16"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "TEX16O"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "TUNE"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "MTL"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}CITY"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BMS", f"{city_name}LM"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BND", f"{city_name}CITY"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "BND", f"{city_name}LM"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "CITY", f"{city_name}"), exist_ok=True)
-    os.makedirs(os.path.join("SHOP", "RACE", f"{city_name}"), exist_ok=True)
+    FOLDER_STRUCTURE = [
+        "build", 
+        "SHOP/BMP16", 
+        "SHOP/TEX16O", 
+        "SHOP/TUNE", 
+        "SHOP/MTL", 
+        f"SHOP/BMS/{city_name}CITY",
+        f"SHOP/BMS/{city_name}LM",
+        f"SHOP/BND/{city_name}CITY",
+        f"SHOP/BND/{city_name}LM",
+        f"SHOP/CITY/{city_name}",
+        f"SHOP/RACE/{city_name}"
+    ]
+        
+    for path in FOLDER_STRUCTURE:
+        os.makedirs(path, exist_ok=True)
     
     # Write City Info file
     with open(os.path.join("SHOP", "TUNE", f"{city_name}.CINFO"), "w") as f:
@@ -1508,7 +1553,6 @@ STRICT_EDGES = False
 if MERGE_COLINEAR:
     assert not STRICT_EDGES
     
-    
 # EDGE CLASS    
 class Edge:
     def __init__(self, v1, v2):
@@ -1843,6 +1887,12 @@ prop_writer = Prop_Editor(prop_file, city_name, debug_props)
 #################################################################################
 #################################################################################
 
+# Folder paths
+BASE_DIR = os.getcwd()
+RESOURCES_FOLDER = os.path.join(BASE_DIR, "RESOURCES")
+PHYSICS_FOLDER = os.path.join(BASE_DIR, "SHOP", "MTL")
+INPUT_PHYSICS_FILE = os.path.join(RESOURCES_FOLDER, "input_PHYSICS.DB")
+
 # MATERIALEDITOR CLASS
 class Material_Editor:
     def __init__(self, name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color):
@@ -1865,7 +1915,6 @@ class Material_Editor:
         params = read_unpack(f, '>7f2I')
         velocity = Vector2.read(f)
         ptx_color = Vector3.read(f)
-
         return Material_Editor(name, *params, velocity, ptx_color)
 
     @staticmethod
@@ -1879,21 +1928,24 @@ class Material_Editor:
         self.ptx_color.write(f)
 
     @staticmethod
-    def read_physics_db(file_name):
-        with open(file_name, 'rb') as file:
-            count = read_unpack(file, '>I')[0]
-            return Material_Editor.readn(file, count)
-
-    @classmethod
-    def read_binary(cls, file_name):
-        return cls.read_physics_db(file_name)
-
-    @staticmethod
     def write_physics_db(file_name, agi_phys_parameters):
         with open(file_name, 'wb') as f:
             write_pack(f, '>I', len(agi_phys_parameters))
             for param in agi_phys_parameters:
                 param.to_file(f)
+                
+    @classmethod
+    def create_physics(cls, new_properties, set_material_index, output_file_name="physics.db"):
+        
+        with open(os.path.join(BASE_DIR, "RESOURCES", "input_PHYSICS.DB"), 'rb') as file:
+            count = read_unpack(file, '>I')[0]
+            read_material_file = cls.readn(file, count)
+            
+        for prop in ["friction", "elasticity", "drag"]:
+            setattr(read_material_file[set_material_index - 1], prop, new_properties[prop])
+            
+        cls.write_physics_db(output_file_name, read_material_file)
+        shutil.move(output_file_name, os.path.join(BASE_DIR, "SHOP", "MTL", output_file_name))
                 
     def __repr__(self):
         cleaned_name = self.name.rstrip()
@@ -1918,7 +1970,7 @@ AgiPhysParameters
 
 # BAI EDITOR CLASS
 class BAI_Editor:
-    def __init__(self, city_name, streets, ai_map=False):
+    def __init__(self, city_name, streets, ai_map=True):
         self.city_name = f"{city_name}"
         self.streets = streets
                        
@@ -1945,21 +1997,12 @@ mmMapData :0 {{
         """
         return textwrap.dedent(bai_map_template).strip()
     
-    
-# Intersection Type Mapping
-INTERSECTION_TYPE_MAP = {
-    "stop": 0,
-    "stoplight": 1,
-    "yield": 2,
-    "continue": 3}
-
-# Yes/No Mapping
-YES_NO_MAP = {
-    "no": 0,
-    "yes": 1}
 
 # Street File Editor CLASS
 class StreetFile_Editor:
+    INTERSECTION_TYPE_MAP = {"stop": 0, "stoplight": 1, "yield": 2, "continue": 3}
+    YES_NO_MAP = {"no": 0, "yes": 1}
+    
     def __init__(self, city_name, street_data, ai_streets=False, reverse=False):
         self.street_name = street_data["street_name"]
         self.reverse = reverse
@@ -1979,13 +2022,13 @@ class StreetFile_Editor:
             else:
                 self.lanes = self.original_lanes
 
-        self.intersection_types = [INTERSECTION_TYPE_MAP[typ] for typ in street_data.get("intersection_types", ["continue", "continue"])]
+        self.intersection_types = [self.INTERSECTION_TYPE_MAP[typ] for typ in street_data.get("intersection_types", ["continue", "continue"])]
         self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
         self.stop_light_names = street_data.get("stop_light_names", ["tplttrafc", "tplttrafc"])
-        self.traffic_blocked = [YES_NO_MAP[val] for val in street_data.get("traffic_blocked", ["no", "no"])]
-        self.ped_blocked = [YES_NO_MAP[val] for val in street_data.get("ped_blocked", ["no", "no"])]
-        self.road_divided = YES_NO_MAP[street_data.get("road_divided", "no")]
-        self.alley = YES_NO_MAP[street_data.get("alley", "no")]
+        self.traffic_blocked = [self.YES_NO_MAP[val] for val in street_data.get("traffic_blocked", ["no", "no"])]
+        self.ped_blocked = [self.YES_NO_MAP[val] for val in street_data.get("ped_blocked", ["no", "no"])]
+        self.road_divided = self.YES_NO_MAP[street_data.get("road_divided", "no")]
+        self.alley = self.YES_NO_MAP[street_data.get("alley", "no")]
 
         if ai_streets:
             self.write_to_file()
@@ -2033,7 +2076,12 @@ mmRoadSect :0 {{
     Alley {self.alley}
     }}
         """
+        
         return textwrap.dedent(street_template).strip()
+    
+    def create_streets(city_name, street_data, ai_streets, reverse, ai_map=True):
+        street_names = [StreetFile_Editor(city_name, data, ai_streets, reverse).street_name for data in street_data]
+        return BAI_Editor(city_name, street_names, ai_map)
 
 ###################################################################################################################
 ################################################################################################################### 
@@ -2370,19 +2418,10 @@ print("Generating " + f"{race_locale_name}...")
 print("\n===============================================\n")
 
 # Material related
-output_physics_file = "physics.db"
-read_materials = Material_Editor.read_binary(input_physics_file)
-for prop in ["friction", "elasticity", "drag"]:
-    setattr(read_materials[set_material_index - 1], prop, new_properties[prop])
-Material_Editor.write_physics_db(output_physics_file, read_materials)
-shutil.move(output_physics_file, os.path.join(physics_folder, output_physics_file))
+Material_Editor.create_physics(new_properties, set_material_index)
 
 # AI related
-street_names = []
-for data in street_data:
-    creator = StreetFile_Editor(city_name, data, ai_streets, reverse=True)
-    street_names.append(data["street_name"])
-BAI_Editor(city_name, street_names, ai_map)
+StreetFile_Editor.create_streets(city_name, street_data, ai_streets, ai_map)
 
 # Main functions
 create_folders(city_name)
