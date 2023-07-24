@@ -56,7 +56,6 @@ set_bridges=False               # change to "True" if you want BRIDGES // (curre
 
 ai_map=True                     # change both to "True" if you want AI paths
 ai_streets=True                 # change both to "True" if you want AI paths
-cruise_start_position=          (20.0, 0.0, 20.0) # x, y, z // both ai_map and ai_streets must be "True" // (in development)
 
 randomize_textures=False        # change to "True" if you want randomize all textures in your Map (see below for a selection)
 randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
@@ -179,15 +178,12 @@ aimap_cop_data = "-30.1 0.0 30.0 0.0 2 0"
  
 def to_do_list(x):
             """
-            TEXCOORDS --> investigate/improve "rotating_repeating" (angles)
             TEXCOORDS --> fix wall textures not appearing in game (add +0.01 or -0.01 to one of the x or z coordinates)
-            TEXTURES --> add TEX16A and TEX16O from existing custom cities and create a folder with suitable/common textures
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
-            TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? (code has beenimplemented, needs to be tested)
+            TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? 
             WALL --> implement "double_wall" (i.e. duplicating the polygon with the different wall "side")
             BRIDGE --> fix Bridge setting                   
             HUDMAP --> fix/automate (correct) polygon alignment
-            HUDMAP --> color fill certain Polygons (e.g. Blue for Water, Green for Grass) - need to retrieve/match polygon Bound Number
             HUDMAP --> debug JPG should be based on the Bound Number, not on standard enumeration
             BAI --> fix AI, path setting is working, but AI (cops, traffic, etc) still does not spawn/work (Open1560 related)
             BMS --> add flashing texturs (e.g. airport lights at Meigs Field, "fxltglow") see notes: GLOW AIRPORT.txt (didn't work so far)
@@ -654,7 +650,6 @@ MOVE = shutil.move
 
 # INITIALIZATIONS | do not change
 vertices = []
-all_polygons_picture = []
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0], 0)
 polys = [poly_filler]
 
@@ -897,7 +892,7 @@ def compute_plane_edgenormals(p1, p2, p3, p4):
 def create_polygon(
     bound_number, material_index, vertex_coordinates, 
     plane_edges=None, flags=None, wall_side=None,
-    vertices=vertices, polys=polys, sort_vertices=True, cell_type=0):
+    vertices=vertices, polys=polys, sort_vertices=True, cell_type=0, hud_fill=False, fill_color=None, outline_color='cyan'):
 
     # Vertex indices
     base_vertex_index = len(vertices)
@@ -962,7 +957,8 @@ def create_polygon(
     polys.append(poly)
     
     # Create JPG (for the HUD)
-    all_polygons_picture.append(vertex_coordinates)
+    hudmap.append(vertex_coordinates)
+    polygon_properties[len(hudmap) - 1] = (hud_fill, fill_color, outline_color)
            
 ################################################################################################################               
 ################################################################################################################ 
@@ -1000,22 +996,29 @@ def user_notes(x):
     Roads: 201-859
     Intersections: 860+
     """
-    
+ 
 # Cell types
 TUNNEL = 1
 INDOORS = 2
 NO_SKIDS = 200 
+
+# HUD map colors
+R6_ROAD = '#414441'  
+WOOD = '#7b5931'
+GRASS_24 = '#396d18'
+SNOW = '#cdcecd'
+WATER_CHICAGO = '#5d8096' 
         
 # Start_Area
 create_polygon(
     bound_number = 1,
     material_index = 0,
-    cell_type = TUNNEL,
     vertex_coordinates=[
         (-50.0, 0.0, 70.0),
         (50.0, 0.0, 70.0),
         (50.0, 0.0, -70.0),
-        (-50.0, 0.0, -70.0)])
+        (-50.0, 0.0, -70.0)],
+        hud_fill = True, fill_color = R6_ROAD)
 
 save_bms(
     texture_name = ["R6"], 
@@ -1029,7 +1032,8 @@ create_polygon(
 		(-50.0, 0.0, -70.0),
 		(50.0, 0.0, -70.0),
 		(50.0, 0.0, -140.0),
-		(-50.0, 0.0, -140.0)])
+		(-50.0, 0.0, -140.0)],
+        hud_fill = True, fill_color = GRASS_24)
 
 save_bms(
     texture_name = ["24_GRASS"], 
@@ -1044,7 +1048,8 @@ create_polygon(
 		(-50.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0),
 		(50.0, 0.0, -210.0),
-		(-50.0, 0.0, -210.0)])
+		(-50.0, 0.0, -210.0)],
+         hud_fill = True, fill_color = SNOW)
 
 save_bms(
     texture_name = ["SNOW"], 
@@ -1058,7 +1063,8 @@ create_polygon(
 		(50.0, 0.0, 70.0),
 		(140.0, 0.0, 70.0),
 		(140.0, 0.0, -70.0),
-		(50.0, 0.0, -70.0)])
+		(50.0, 0.0, -70.0)],
+        hud_fill = True, fill_color = WOOD)
 
 save_bms(
     texture_name = ["T_WOOD"], 
@@ -1068,11 +1074,14 @@ save_bms(
 create_polygon(
 	bound_number = 5,
 	material_index = 0,
+    cell_type = TUNNEL,
 	vertex_coordinates=[
 		(50.0, 0.0, -70.0),
 		(140.0, 0.0, -70.0),
 		(140.0, 0.0, -140.0),
-		(50.0, 0.0, -140.0)])
+		(50.0, 0.0, -140.0)],
+        hud_fill = True, fill_color = '#af0000')
+                                       #CD5C5C
 
 save_bms(
     texture_name = ["T_BARRICADE"], 
@@ -1086,7 +1095,8 @@ create_polygon(
 		(50.0, 0.0, -140.0),
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
-		(50.0, 0.0, -210.0)])
+		(50.0, 0.0, -210.0)],
+        hud_fill = True, fill_color = WATER_CHICAGO)
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1101,7 +1111,8 @@ create_polygon(
 		(-50.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
-		(-50.0, 300.0, -1000.0)])
+		(-50.0, 300.0, -1000.0)],
+        hud_fill = True, fill_color = WATER_CHICAGO)
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1115,7 +1126,7 @@ create_polygon(
         (-10.0, 0.0, -50.00),
         (-10.0, 15.0, -49.99),
         (10.0, 15.0, -49.99),
-        (10.0, 0.0, -50.00)], wall_side="inside")
+        (10.0, 0.0, -50.00)], wall_side= "inside")
 
 save_bms(
     texture_name = ["SNOW"], 
@@ -1149,8 +1160,8 @@ def create_folders(city_name):
     
     for path in FOLDER_STRUCTURE:
         os.makedirs(path, exist_ok=True)
+        
     # Write City Info file    
-
     with open(SHOP / 'TUNE' / f"{city_name}.CINFO", "w") as f:
         localized_name = race_locale_name
         map_name = city_name.lower()
@@ -1423,15 +1434,19 @@ def create_ar(city_name, destination_folder, delete_shop=False):
 # Create JPG of all Polygon shapes
 def create_hudmap(show_label=False, plot_picture=False, export_jpg=False, 
                   x_offset=0, y_offset=0, line_width=1, background_color='black', debug_hud=False):
-    
-    global all_polygons_picture
+
+    global hudmap
+    global polygon_properties
     output_bmp_folder = SHOP / 'BMP16'
-           
-    def draw_polygon(ax, polygon, color, label=None, add_label=False):
+
+    def draw_polygon(ax, polygon, outline_color, label=None, add_label=False, hud_fill=False, fill_color=None):
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
         xs, ys = xs + (xs[0],), ys + (ys[0],)
-        ax.plot(xs, ys, color=color, linewidth=line_width)
+        ax.plot(xs, ys, color=outline_color, linewidth=line_width)
         
+        if hud_fill:
+            ax.fill(xs, ys, fill_color)
+            
         if add_label: # control label addition
             center = calculate_center_tuples(polygon)
             ax.text(center[0], center[2], label, color='white', ha='center', va='center', fontsize=4.0)
@@ -1440,12 +1455,14 @@ def create_hudmap(show_label=False, plot_picture=False, export_jpg=False,
         fig, ax = plt.subplots()
         ax.set_facecolor(background_color)
 
-        # Sort the vertex_coordinates in all_polygons_picture
-        all_polygons_picture = [sort_coordinates(polygon) for polygon in all_polygons_picture]
+        # Sort the vertex_coordinates in hudmap
+        hudmap = [sort_coordinates(polygon) for polygon in hudmap]
 
         # Enumeration should be based on the bound_number
-        for i, polygon in enumerate(all_polygons_picture):
-            draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=False) # note: do not remove "C" from "C{i}"
+        for i, polygon in enumerate(hudmap):
+            hud_fill, fill_color, outline_color = polygon_properties.get(i, (False, None, 'cyan'))
+            draw_polygon(ax, polygon, outline_color, label=f'{i+1}' if show_label else None, 
+                         add_label=False, hud_fill=hud_fill, fill_color=fill_color)
         ax.set_aspect('equal', 'box')
         
         if show_label:
@@ -1467,7 +1484,7 @@ def create_hudmap(show_label=False, plot_picture=False, export_jpg=False,
             if debug_hud:
                 ax.cla()
                 ax.set_facecolor(background_color)
-                for i, polygon in enumerate(all_polygons_picture):
+                for i, polygon in enumerate(hudmap):
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
                 plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
 
@@ -2264,6 +2281,7 @@ def export_vertices_for_blender(input_bnd: str, output_file_name: str, export_bl
                                     new_line = f"Vertices Coordinates: {', '.join(coords)}"
                                     output_file.write(new_line + "\n")
                                 flag_value = None    
+                                
         if run_blender:                  
             # After the loop, look for any Blender file in the cwd
             for file in os.listdir():
@@ -2334,11 +2352,11 @@ fcd_list = [fcd_one]
 # Stop lights will only show if the Intersection_type is "stoplight"
 # Each lane will automatically have a revered lane added
 
-street_0 = {
+start_pos = {
     "street_name": "cruise_start",
     "vertices": [
-        cruise_start_position,  # you must keep the "second position", otherwise the game will crash
-        cruise_start_position]} 
+        (0,0,0),    # do not remove this line
+        (30,0,30)]} # set your start position here
  
 street_1 = {
      "street_name": "path_1",
@@ -2391,7 +2409,7 @@ street_2 = {
     "alley": "no"}
 
 # Pack all AI paths for processing
-street_list = [street_0, street_1, street_2]
+street_list = [start_pos, street_1, street_2]
 
 ################################################################################################################               
 
@@ -2476,7 +2494,7 @@ move_open1560(mm1_folder)
 move_dev_folder(mm1_folder, city_name)
 move_custom_textures()
 
-create_ext(city_name, all_polygons_picture) 
+create_ext(city_name, hudmap) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facade)
