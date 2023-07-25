@@ -49,7 +49,7 @@ play_game=True                  # boot the game immediately after the Map is cre
 delete_shop=True                # delete the raw city files after the .ar file has been created
 
 set_facade=True                 # change to "True" if you want FACADES
-set_props=True                  # change to "True" if you want PROPS // (currently broken)
+set_props=True                  # change to "True" if you want PROPS
 
 set_anim=True                   # change to "True" if you want ANIM (plane and eltrain
 set_bridges=False               # change to "True" if you want BRIDGES // (currently broken)
@@ -160,7 +160,7 @@ new_bridge_object = "vpmustang99"   # you can pass any object
 #! Broken
 # Structure: (x,y,z, orientation, bridge_number, bridge_object)
 bridges = [
-    ((-30.0, 5.0, 50.0), "V", 3, slim_bridge)] 
+    ((-30.0, 5.0, 50.0), "V", 2, slim_bridge)] 
 
 # Possible orientations
 f"""Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
@@ -178,24 +178,37 @@ aimap_cop_data = "-30.1 0.0 30.0 0.0 2 0"
  
 def to_do_list(x):
             """
-            TEXCOORDS --> fix wall textures not appearing in game (add +0.01 or -0.01 to one of the x or z coordinates)
-            TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game for unknown reasons
-            TEXTURES --> will other textures also "drift" if they contain the string "T_WATER..."? 
-            WALL --> implement "double_wall" (i.e. duplicating the polygon with the different wall "side")
-            BRIDGE --> fix Bridge setting                   
-            HUDMAP --> fix/automate (correct) polygon alignment
-            HUDMAP --> debug JPG should be based on the Bound Number, not on standard enumeration
-            BAI --> fix AI, path setting is working, but AI (cops, traffic, etc) still does not spawn/work (Open1560 related)
-            BMS --> add flashing texturs (e.g. airport lights at Meigs Field, "fxltglow") see notes: GLOW AIRPORT.txt (didn't work so far)
+            ! FIX:
+            BRIDGE --> setting bridges currently crashes the game
+            BAI --> path setting works, but AI (cops, traffic, peds, etc) still do not spawn/drive/work
+            
+            TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game
+            TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
+
+            ? ADD SHORT-TERM:
+            SHAPES -> implement proper Edges (this will enable triangular shapes and diagonal quadrilaterals)
+            SHAPES --> implement "double_wall" (i.e. duplicating the polygon with the different wall "side")
+            
             FCD --> test and document flag behavior
-            FCD --> investigate Sides and Scales effect
-            FCD --> make a screenshot of each facade in the game for reference for the Useful Documents folder
-            FCD --> enable diagonal Facade setting
-            BNG --> add more prop pictures in Useful Documents (e.g. bridge04, brigdebuild, etc)
-            BNG --> investigate Custom Prop Editor
-            BNG --> investigate breakable parts in .MMBANGERDATA
-            RACES --> the current max number of races per type is 15, can we increase this?
+            FCD --> test and document Sides and Scales behavior
+            FCD --> screenshot each vanilla facade for user reference
+            FCD --> implement diagonal facades
+            
+            PROPS --> add "car prop" files (i.e. {car}.MMBANGERDATA)
+            PROPS --> screenshot each vanilla prop for user reference
+            
+            ? ADD LONG-TERM:
             DEBUG --> add debug BMS (textures)
+            PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
+            PROPS --> investigate creating custom texturized props from scatch
+            RACES --> increase the maximum number of races per type (current max is 15)
+            
+            TEXTURES --> will other textures also "drift" if they contain the string "T_WATER{}"?
+            TEXTURES --> enable flashing texturs (i.e. airport lights at Meigs Field "fxltglow", see notes: GLOW AIRPORT.txt)            
+            
+            HUDMAP --> correctly align the HUD map in the game
+            HUDMAP --> match the debug JPG to the bound number
+
             OPEN1560 --> add (forked) updated Open1560
             """               
             
@@ -269,8 +282,8 @@ class Vector2:
 
     def Dist(self, other):
         return self.Dist2(other) ** 0.5
-
-
+    
+    
 # VECTOR3 CLASS
 class Vector3:
     def __init__(self, x, y, z):
@@ -348,6 +361,14 @@ class Vector3:
 
     def Dist(self, other):
         return self.Dist2(other) ** 0.5
+    
+    def Negate(self):
+        return Vector3(-self.x, -self.y, -self.z)
+
+    def Set(self, x, y, z):
+        self.x = x
+        self.y = y
+        self.z = z
        
        
 # Calculate BND center, min, max, radius, radius squared    
@@ -650,6 +671,8 @@ MOVE = shutil.move
 
 # INITIALIZATIONS | do not change
 vertices = []
+hudmap_vertices = []
+hudmap_properties = {}
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0], 0)
 polys = [poly_filler]
 
@@ -957,8 +980,8 @@ def create_polygon(
     polys.append(poly)
     
     # Create JPG (for the HUD)
-    hudmap.append(vertex_coordinates)
-    polygon_properties[len(hudmap) - 1] = (hud_fill, fill_color, outline_color)
+    hudmap_vertices.append(vertex_coordinates)
+    hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, fill_color, outline_color)
            
 ################################################################################################################               
 ################################################################################################################ 
@@ -1365,6 +1388,8 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circ
         sorted_bms_files = sorted(bms_files)
         for bound_number in sorted_bms_files:
             
+            facade_room_fix = "1,1"
+            
             # Retrieve corresponding polygon's cell type
             cell_type = None
             for poly in polys:
@@ -1377,9 +1402,9 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circ
             
             # Write CELLS data
             if bound_number in bms_a2_files:
-                row = f"{bound_number},32,{cell_type},0\n"
+                row = f"{bound_number},32,{cell_type},{facade_room_fix}\n"
             else:
-                row = f"{bound_number},8,{cell_type},0\n"
+                row = f"{bound_number},8,{cell_type},{facade_room_fix}\n"
             f.write(row)
     
     for file in Path("angel").iterdir():
@@ -1435,8 +1460,8 @@ def create_ar(city_name, destination_folder, delete_shop=False):
 def create_hudmap(show_label=False, plot_picture=False, export_jpg=False, 
                   x_offset=0, y_offset=0, line_width=1, background_color='black', debug_hud=False):
 
-    global hudmap
-    global polygon_properties
+    global hudmap_vertices
+    global hudmap_properties
     output_bmp_folder = SHOP / 'BMP16'
 
     def draw_polygon(ax, polygon, outline_color, label=None, add_label=False, hud_fill=False, fill_color=None):
@@ -1456,11 +1481,11 @@ def create_hudmap(show_label=False, plot_picture=False, export_jpg=False,
         ax.set_facecolor(background_color)
 
         # Sort the vertex_coordinates in hudmap
-        hudmap = [sort_coordinates(polygon) for polygon in hudmap]
+        hudmap_vertices = [sort_coordinates(polygon) for polygon in hudmap_vertices]
 
         # Enumeration should be based on the bound_number
-        for i, polygon in enumerate(hudmap):
-            hud_fill, fill_color, outline_color = polygon_properties.get(i, (False, None, 'cyan'))
+        for i, polygon in enumerate(hudmap_vertices):
+            hud_fill, fill_color, outline_color = hudmap_properties.get(i, (False, None, 'cyan'))
             draw_polygon(ax, polygon, outline_color, label=f'{i+1}' if show_label else None, 
                          add_label=False, hud_fill=hud_fill, fill_color=fill_color)
         ax.set_aspect('equal', 'box')
@@ -1484,7 +1509,7 @@ def create_hudmap(show_label=False, plot_picture=False, export_jpg=False,
             if debug_hud:
                 ax.cla()
                 ax.set_facecolor(background_color)
-                for i, polygon in enumerate(hudmap):
+                for i, polygon in enumerate(hudmap_vertices):
                     draw_polygon(ax, polygon, color=f'C{i}', label=f'{i+1}' if show_label else None, add_label=True)
                 plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi=1000, bbox_inches='tight', pad_inches=0.01, facecolor='white')
 
@@ -2136,8 +2161,8 @@ mmRoadSect :0 {{
 
 # FACADE CLASS
 class Facade_Editor:
-    def __init__(self, room, flags, start, end, sides, scale, name):
-        self.room = room
+    def __init__(self, flags, start, end, sides, scale, name):
+        self.room = 0x1
         self.flags = flags
         self.start = start
         self.end = end
@@ -2161,7 +2186,7 @@ class Facade_Editor:
             name_data.extend(char)
 
         name = name_data.decode('utf-8')
-        return cls(room, flags, start, end, sides, scale, name)
+        return cls(flags, start, end, sides, scale, name)
 
     def to_file(self, f):
         write_pack(f, '2H', self.room, self.flags)
@@ -2183,9 +2208,9 @@ Facade_Editor
     Name: {self.name}
     """
       
-def read_facade_scales(file_path):
+def read_facade_scales(scales_file):
     scales = {}
-    with open(file_path, 'r') as f:
+    with open(scales_file, 'r') as f:
         for line in f:
             facade_name, scale = line.strip().split(": ")
             scales[facade_name] = float(scale)
@@ -2205,8 +2230,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
         for params in facade_params:
             num_facades = math.ceil(abs(get_coord_from_tuple(params['end'], params['axis']) - get_coord_from_tuple(params['start'], params['axis'])) / params['separator'])
 
-            for i in range(num_facades):
-                room = params['room']
+            for i in range(num_facades): 
                 flags = params['flags']
                 current_start = list(params['start'])
                 current_end = list(params['end'])
@@ -2222,7 +2246,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
                 scale = scales.get(params['facade_name'], params.get('scale', 1.0))
                 name = params['facade_name']
 
-                facade = Facade_Editor(room, flags, current_start, current_end, sides, scale, name)
+                facade = Facade_Editor(flags, current_start, current_end, sides, scale, name)
                 facades.append(facade)
 
         with open(filename, mode='wb') as f:
@@ -2325,7 +2349,6 @@ def start_game(destination_folder, play_game=False):
 #* Few Facade name examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
    
 fcd_one = {
-	'room': 1,
 	'flags': 1057,
 	'start': (-10, 0.0, -50.0),
 	'end': (10, 0.0, -50.0),
@@ -2334,7 +2357,6 @@ fcd_one = {
 	'facade_name': "ofbldg02",
 	'scale': 9.0, # can be omitted in later versions (i.e. use scale of input object)
 	'axis': 'x'}
-
 
 # Pack all Facades for processing
 fcd_list = [fcd_one]
@@ -2494,7 +2516,7 @@ move_open1560(mm1_folder)
 move_dev_folder(mm1_folder, city_name)
 move_custom_textures()
 
-create_ext(city_name, hudmap) 
+create_ext(city_name, hudmap_vertices) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facade)
