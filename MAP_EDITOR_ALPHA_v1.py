@@ -1119,7 +1119,8 @@ create_polygon(
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0)],
-        hud_fill = True, fill_color = WATER_CHICAGO)
+        hud_fill = True, fill_color = WATER_CHICAGO)    
+                        # or: fill_color = '#af0000'
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1211,6 +1212,18 @@ def move_custom_textures():
 
     for custom_texs in custom_textures_path.iterdir():
         shutil.copy(custom_texs, destination_tex16o_path / custom_texs.name)
+        
+def move_core_tune():
+    editor_tune_dir = BASE_DIR / 'Core AR' / 'TUNE'
+    shop_tune_dir = BASE_DIR / 'SHOP' / 'TUNE'
+
+    tune_files = list(editor_tune_dir.glob('*'))
+    tune_files_in_shop = list(shop_tune_dir.glob('*'))
+
+    files_to_copy = [f for f in tune_files if f.name not in [d.name for d in tune_files_in_shop]]
+
+    for file in files_to_copy:
+        shutil.copy(file, shop_tune_dir) 
         
 def move_dev_folder(destination_folder, city_name):
     dev_folder_path = BASE_DIR / 'dev'
@@ -1492,7 +1505,7 @@ def create_hudmap(show_label=False, plot_picture=False, export_jpg=False,
         
         if show_label:
             plt.legend()
-            
+
         if plot_picture:
             plt.show()
         
@@ -2374,16 +2387,17 @@ fcd_list = [fcd_one]
 # Stop lights will only show if the Intersection_type is "stoplight"
 # Each lane will automatically have a revered lane added
 
-start_pos = {
-    "street_name": "cruise_start",
+street_0 = {
+    "street_name": "path_filler",
     "vertices": [
-        (0,0,0),    # do not remove this line
-        (30,0,30)]} # set your start position here
+        (0,0,0),    # keep this
+        (30,0,30)]} # keep this
  
 street_1 = {
      "street_name": "path_1",
      "vertices": [
-         (0.0, 0.0, 15.0),      #! for unknown reasons, the first line is now the starting position in Cruise mode, but keep "street_0" just in case
+         #! for unknown reasons, the first line below is now the starting position in Cruise mode, but keep "street_0" just in case
+         (0.0, 0.0, 15.0),
          (10.0, 0.0, -20.0),
          (10.0, 0.0, -40.0),
          (10.0, 0.0, -60.0),
@@ -2431,7 +2445,7 @@ street_2 = {
     "alley": "no"}
 
 # Pack all AI paths for processing
-street_list = [start_pos, street_1, street_2]
+street_list = [street_0, street_1, street_2]
 
 ################################################################################################################               
 
@@ -2475,6 +2489,9 @@ random_parameters = [
     {"seed": 123, "num_objects": 1, "object_dict": prop_3, "x_range": (65, 135), "z_range": (-65, 65)},
     {"seed": 2, "num_objects": 10, "object_dict": prop_4, "x_range": (50, 140), "z_range": (-140, -70)}]
 
+# Traffic Cars
+#TODO add list of traffic cars
+
 ################################################################################################################     
 
 # SET MATERIAL PROPERTIES
@@ -2514,6 +2531,7 @@ prop_editor.write_props(set_props)
 
 move_open1560(mm1_folder)
 move_dev_folder(mm1_folder, city_name)
+move_core_tune()
 move_custom_textures()
 
 create_ext(city_name, hudmap_vertices) 

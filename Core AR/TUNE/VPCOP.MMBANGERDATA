@@ -1,0 +1,47 @@
+mmBangerData :009a4b2c {
+    NodeName "vpcop"
+    AudioId 0 
+    Size 6 3 4 
+    CG 0 0 0 
+    Offset 0 0 0
+    GlowOffset 0 0 0 
+    Mass 1500 
+    Elasticity 0.3
+    Friction 0.2 
+    ImpulseLimit2 1000 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :009a4b94 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 0 
+    YRadius 11.7881 
+}
