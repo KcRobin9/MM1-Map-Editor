@@ -58,7 +58,7 @@ ai_map=True                     # change both to "True" if you want AI paths
 ai_streets=True                 # change both to "True" if you want AI paths
 
 randomize_textures=False        # change to "True" if you want randomize all textures in your Map (see below for a selection)
-randomize_texture_names = ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
+randomize_texture_names=        ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
 
 debug_collision=False           # change to "True" if you want a BND/collision Debug text file // (currently broken)
 debug_facade=False              # change to "True" if you want a Facade Debug text file
@@ -74,8 +74,8 @@ blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # 
 
 
 #* SETUP III (optional, Race Editor)
-morning, noon, evening, night = 0, 1, 2, 3  # do not change
-clear, cloudy, rain, snow = 0, 1, 2, 3      # do not change
+MORNING, NOON, EVENING, NIGHT = 0, 1, 2, 3  
+CLEAR, CLOUDY, RAIN, SNOW = 0, 1, 2, 3      
 
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
 # Blitzes can have a total of 11 waypoints, the number of waypoints for Circuits and Checkpoints is unlimited
@@ -94,14 +94,14 @@ blz_0 = [
     [0.0, 0.0, -60, 5.0, 15.0],
     [0.0, 0.0, -80, 5.0, 15.0],
     [0.0, 0.0, -99, 5.0, 15.0], 
-    [morning, clear, 0, 0, 0, 99999, night, snow, 1, 1, 1, 99999]] 
+    [MORNING, CLEAR, 0, 0, 0, 99999, NIGHT, SNOW, 1, 1, 1, 99999]] 
     #* time, weather, cops, ambient, peds, timelimit (Amateur first, Pro second)    
 
 blz_1 = [
     [0.0, 0.0, 0.1, 5.0, 15.0],
     [0.0, 0.0, -20, 5.0, 15.0],
     [0.0, 0.0, -40, 5.0, 15.0],
-    [morning, cloudy, 0, 0, 0, 2024, evening, rain, 1, 1, 1, 2024]]
+    [MORNING, CLOUDY, 0, 0, 0, 2024, EVENING, RAIN, 1, 1, 1, 2024]]
 
 # Circuits
 cir_0 = [
@@ -109,14 +109,14 @@ cir_0 = [
     [0.0, 0.0, 50.0, 90, 8.0],
     [50.0, 0.0, 0.0, 0.01, 8.0],
     [0.0, 0.0, -75.0, -90, 8.0],
-    [noon, clear, 3, 0, 0, 0, evening, snow, 3, 0, 0, 0]] 
+    [NOON, CLEAR, 3, 0, 0, 0, EVENING, SNOW, 3, 0, 0, 0]] 
     #* time, weather, number of laps, cops, ambient, peds (Amateur first, Pro second) 
 
 # Checkpoints   
 race_0 = [
     [0.0, 0.0, 0.0, 0.0, 15.0],
     [0.0, 0.0, 50.0, 0.0, 15.0],  
-    [morning, rain, 0, 0, 0, night, snow, 0, 0, 0]] 
+    [MORNING, RAIN, 0, 0, 0, NIGHT, SNOW, 0, 0, 0]] 
     #* time, weather, cops, ambient, peds (Amateur first, Pro second) 
 
 # Packing all the race configurations
@@ -184,6 +184,8 @@ def to_do_list(x):
             
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game
             TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
+            
+            DEBUG --> fix BND (collision) debug
 
             ? ADD SHORT-TERM:
             SHAPES -> implement proper Edges (this will enable triangular shapes and diagonal quadrilaterals)
@@ -194,7 +196,6 @@ def to_do_list(x):
             FCD --> screenshot each vanilla facade for user reference
             FCD --> implement diagonal facades
             
-            PROPS --> add "car prop" files (i.e. {car}.MMBANGERDATA)
             PROPS --> screenshot each vanilla prop for user reference
             
             ? ADD LONG-TERM:
@@ -663,7 +664,7 @@ class BMS:
 ################################################################################################################               
 ################################################################################################################       
 
-# CONSTANTS | do not change
+# SCRIPT CONSTANTS | do not change
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = SHOP / 'CITY'
@@ -1030,7 +1031,7 @@ R6_ROAD = '#414441'
 WOOD = '#7b5931'
 GRASS_24 = '#396d18'
 SNOW = '#cdcecd'
-WATER_CHICAGO = '#5d8096' 
+WATER = '#5d8096' 
         
 # Start_Area
 create_polygon(
@@ -1119,7 +1120,7 @@ create_polygon(
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0)],
-        hud_fill = True, fill_color = WATER_CHICAGO)    
+        hud_fill = True, fill_color = WATER)    
                         # or: fill_color = '#af0000'
 
 save_bms(
@@ -1136,7 +1137,7 @@ create_polygon(
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
 		(-50.0, 300.0, -1000.0)],
-        hud_fill = True, fill_color = WATER_CHICAGO)
+        hud_fill = True, fill_color = WATER)
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1213,18 +1214,43 @@ def move_custom_textures():
     for custom_texs in custom_textures_path.iterdir():
         shutil.copy(custom_texs, destination_tex16o_path / custom_texs.name)
         
-def move_core_tune():
-    editor_tune_dir = BASE_DIR / 'Core AR' / 'TUNE'
-    shop_tune_dir = BASE_DIR / 'SHOP' / 'TUNE'
+def move_core_tune(bangerdata_properties):
+    editor_tune_dir = Path(BASE_DIR) / 'Core AR' / 'TUNE'
+    shop_tune_dir = Path(BASE_DIR) / 'SHOP' / 'TUNE'
 
     tune_files = list(editor_tune_dir.glob('*'))
-    tune_files_in_shop = list(shop_tune_dir.glob('*'))
 
-    files_to_copy = [f for f in tune_files if f.name not in [d.name for d in tune_files_in_shop]]
+    for file in tune_files:
+        shutil.copy(file, shop_tune_dir)  
 
-    for file in files_to_copy:
-        shutil.copy(file, shop_tune_dir) 
-        
+        if file.stem.lower() in bangerdata_properties:
+            shop_file = shop_tune_dir / file.name  
+
+            with open(shop_file, 'r') as f:
+                lines = f.readlines()
+            
+            properties = bangerdata_properties[file.stem.lower()]
+
+            for i, line in enumerate(lines):
+                if 'ImpulseLimit2' in properties and line.strip().startswith('ImpulseLimit2'):
+                    new_value = properties['ImpulseLimit2']
+                    lines[i] = f'\tImpulseLimit2 {new_value}\n'
+                elif 'Mass' in properties and line.strip().startswith('Mass'):
+                    new_value = properties['Mass']
+                    lines[i] = f'\tMass {new_value}\n'
+                elif 'AudioId' in properties and line.strip().startswith('AudioId'):
+                    new_value = properties['AudioId']
+                    lines[i] = f'\tAudioId {new_value}\n'
+                elif 'Size' in properties and line.strip().startswith('Size'):
+                    new_value = properties['Size']
+                    lines[i] = f'\tSize {new_value}\n'
+                elif 'CG' in properties and line.strip().startswith('CG'):
+                    new_value = properties['CG']
+                    lines[i] = f'\tCG {new_value}\n'
+            
+            with open(shop_file, 'w') as f:
+                f.writelines(lines)
+            
 def move_dev_folder(destination_folder, city_name):
     dev_folder_path = BASE_DIR / 'dev'
     destination_path = Path(destination_folder) / 'dev'
@@ -1816,7 +1842,6 @@ def prepare_ptl(polys, vertices):
 def create_ptl(city_name, polys, vertices):
     cells, portals = prepare_ptl(polys, vertices)
 
-    # with open(f'SHOP/CITY/{city_name}.PTL', 'wb') as f:
     with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
         
         write_pack(f, '<I', 0)
@@ -2482,15 +2507,56 @@ prop_3 = {'offset_y': 0.0,
 
 prop_4 = {'offset_y': 0.0,
           'separator': 10.0,
-          'name': ["vpbug", "vpbus", "caddie", "vpcop", "vpford", "vpbullet", "vpmustang99", "vppanoz", "vppanoz", "vpsemi"]}
+          'name': ["vpbug", "vpbus", "caddie", "vpcop", "vpford", "vpbullet", "vpmustang99", "vppanoz", "vppanozgt", "vpsemi"]}
 
 # Configure your random props here
 random_parameters = [
     {"seed": 123, "num_objects": 1, "object_dict": prop_3, "x_range": (65, 135), "z_range": (-65, 65)},
     {"seed": 2, "num_objects": 10, "object_dict": prop_4, "x_range": (50, 140), "z_range": (-140, -70)}]
 
-# Traffic Cars
-#TODO add list of traffic cars
+# ImpulseLimit
+TREE = 1E+30
+
+# AudioIds
+MALLDOOR_ = 1
+POLE_ = 3           
+SIGN_ = 4          
+MAIL_ = 5              
+METER_ = 6
+TRASH_ = 7          
+BENCH_ = 8         
+TREE_ = 11         
+BOXES_ = 12         # also used for "bridge crossgate"
+NO_NAME_ = 13       # difficult to describe
+BARREL_ = 15        # also used for "dumpster"
+PHONEBOOTH_ = 20
+CONE_ = 22 
+NO_NAME_2 = 24      # sounds a bit similar to "glass"
+NEWS_ = 25
+GLASS_ = 27
+
+# Set additional Prop Properties here (currently only possible for cars)
+# The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
+bangerdata_properties = {
+    'vpbug': {'ImpulseLimit2': TREE, 'AudioId': GLASS_},
+    'vpbus': {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_, 'Size': '18 6 5', 'CG': '0 0 0'}}
+
+# Props
+f"""    Player Cars:
+        vpbug, vpbus, caddie, vpcop, vpford, vpbullet, vpmustang99, vppanoz, vppanoz, vpsemi
+
+        Traffic Cars:
+        vaboeing_small, vabus, vacompact, vadelivery, vadiesels, valimo, valimoangel
+        valimoblack, vapickup, vasedanl, vasedans, vataxi, vataxicheck, vavan       
+        
+        Other:
+        vaboeing            (very large plane, no collision)
+        r_l_train           (el train)
+        tp_trailer          (trailer)
+        tpdrawbridge04      (drawbridge small)
+        tpdrawbridge06      (drawbridge large)
+        ...                 (many more) 
+        """
 
 ################################################################################################################     
 
@@ -2531,7 +2597,7 @@ prop_editor.write_props(set_props)
 
 move_open1560(mm1_folder)
 move_dev_folder(mm1_folder, city_name)
-move_core_tune()
+move_core_tune(bangerdata_properties)
 move_custom_textures()
 
 create_ext(city_name, hudmap_vertices) 
