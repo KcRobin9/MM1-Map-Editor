@@ -1,0 +1,59 @@
+struct Vector3
+{
+    float x;
+    float y;
+    float z;
+};
+
+struct mmPolygon
+{
+    ushort CellId;
+    ubyte MtlIndex;
+    ubyte Flags;
+    ushort VertIndices[4];
+    Vector3 PlaneEdges[4];
+    Vector3 PlaneN;
+    float PlaneD;
+};
+
+struct BND
+{
+    long Magic; // BND2
+    Vector3 Offset;
+    long XDim;
+    long YDim;
+    long ZDim;
+    Vector3 Center;
+    float Radius;
+    float RadiusSqr;
+    Vector3 BBMin;
+    Vector3 BBMax;
+    long NumVerts;
+    long NumPolys;
+    long NumHotVerts1;
+    long NumHotVerts2;
+    long NumEdges;
+    float XScale;
+    float ZScale;
+    long NumIndices;
+    float HeightScale;
+    long CacheSize;
+
+    Vector3 Vertices[NumVerts];
+    mmPolygon Polys[NumPolys + 1];
+    Vector3 HotVerts[NumHotVerts2];
+    long EdgesVerts1[NumEdges];
+    long EdgesVerts2[NumEdges];
+    Vector3 EdgePlaneNs[NumEdges];
+    float EdgePlaneDs[NumEdges];
+
+    if (XDim && YDim && ZDim)
+    {
+        long RowOffsets[ZDim];
+        ushort BucketOffsets[XDim * ZDim];
+        ushort RowBuckets[NumIndices];
+        ubyte FixedHeights[XDim * ZDim];
+    }
+};
+
+BND file;

@@ -1,6 +1,6 @@
 # Midtown Madness 1 Map Editor
 
-![Preview](RESOURCES/preview.png)
+![Preview](Editor Resources/preview.png)
 
 [![Chat On Discord](https://img.shields.io/discord/239900961731117059?color=7289DA&logo=discord)](https://discord.gg/tjTQAbFdqQ)
 
@@ -29,8 +29,8 @@ If you have any questions or suggestions, feel free to reach out to me via Disco
 
 ## Gallery
 
-![Preview](RESOURCES/preview_1.png)
+![Preview](Editor Resources/preview_1.png)
 
-![Preview](RESOURCES/preview_2.png)
+![Preview](Editor Resources/preview_2.png)
 
-![Preview](RESOURCES/preview_3.png)
+![Preview](Editor Resources/preview_3.png)
