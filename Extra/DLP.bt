@@ -1,0 +1,68 @@
+struct Vector2
+{
+    float u;
+    float v;
+};
+
+struct Vector3
+{
+    float x;
+    float y;
+    float z;
+};
+
+struct Color
+{
+    float red;
+    float green;
+    float blue;
+    float alpha;
+};
+
+struct DLPVertex
+{
+    ushort Id;
+    Vector3 Position;
+    Vector2 UV;
+    u32 Color;
+};
+
+struct DLPPatch
+{
+    ushort SRes;
+    ushort TRes;
+    ushort Flags;
+    ushort ROpts;
+    ushort MtlIdx;
+    ushort TexIdx;
+    ushort PhysIdx;
+    DLPVertex Vertices[SRes * TRes];
+    string Name;
+};
+
+struct DLPGroup
+{
+    ubyte NameLen;
+    char Name[NameLen];
+    long NumVertices;
+    long NumPatches;
+    ushort VertexIndices[NumVertices];
+    ushort PatchIndices[NumPatches];
+};
+
+struct DLP
+{
+    long Magic; // 'DLP7'
+    long NumGroups;
+    long NumPatches;
+    long NumVertices;
+    DLPGroup Groups[NumGroups];
+    DLPPatch Patches[NumPatches];
+    Vector3 Vertices[NumVertices];
+
+    agiMtlParameters MLib[];
+    agiTexParameters TLib[];
+    agiPhysParameters PLib[];
+};
+
+DLP file;

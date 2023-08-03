@@ -45,7 +45,7 @@ mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1
 
 
 #* SETUP II (optional, Map Creation)
-play_game=True                  # boot the game immediately after the Map is created
+play_game =True                  # boot the game immediately after the Map is created
 delete_shop=True                # delete the raw city files after the .ar file has been created
 
 set_facade=True                 # change to "True" if you want FACADES
@@ -1277,7 +1277,7 @@ CheckpointNames={checkpoint_race_names_str}
 """)
                     
 def move_custom_textures(): 
-    custom_textures_path = BASE_DIR / "Add Custom Textures"
+    custom_textures_path = BASE_DIR / "Custom Textures"
     destination_tex16o_path = BASE_DIR / "SHOP" / "TEX16O"
 
     for custom_texs in custom_textures_path.iterdir():
@@ -1332,7 +1332,7 @@ def move_dev_folder(destination_folder, city_name):
     shutil.rmtree(city_folder_path, ignore_errors=True)
     
 def move_open1560(destination_folder):
-    open1560_folder_path = BASE_DIR / 'Installation_Instructions' / 'Open1560'
+    open1560_folder_path = BASE_DIR / 'Installation Instructions' / 'Open1560'
     destination_folder = Path(destination_folder)
     
     for open1560_files in open1560_folder_path.iterdir():
@@ -1975,7 +1975,7 @@ class Prop_Editor:
         self.input_bng_file = input_bng_file
         self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_bng_file else BASE_DIR / f"{city_name}"
         self.debug_filename = f"{city_name}_BNG_debug.txt"
-        self.prop_file_path = BASE_DIR / "RESOURCES" / "Prop_Dimensions_Extracted.txt"
+        self.prop_file_path = BASE_DIR / "Editor Resources" / "Prop Dimensions.txt"
         self.prop_data = self.load_prop_dimensions()    
           
     def load_prop_dimensions(self):
@@ -2135,7 +2135,7 @@ class Material_Editor:
                 
     @classmethod
     def create_physics(cls, new_properties, set_material_index, physics_output_file):
-        input_file = BASE_DIR / "RESOURCES" / "input_PHYSICS.DB"
+        input_file = BASE_DIR / "Editor Resources" / "PHYSICS.DB"
         output_folder = SHOP / "MTL"
         
         with input_file.open('rb') as file:
@@ -2356,7 +2356,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade=False, de
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
         
-        scales = read_facade_scales(BASE_DIR / 'RESOURCES' / 'FCD_scales.txt')
+        scales = read_facade_scales(BASE_DIR / "Editor Resources" / 'FCD scales.txt')
 
         for params in facade_params:
             num_facades = math.ceil(abs(get_coord_from_tuple(params['end'], params['axis']) - get_coord_from_tuple(params['start'], params['axis'])) / params['separator'])
@@ -2485,7 +2485,6 @@ fcd_one = {
 	'sides': (27.84,0.00,0.00),
 	'separator': 10.0, 
 	'facade_name': "ofbldg02",
-	'scale': 9.0, # can be omitted in later versions (i.e. use scale of input object)
 	'axis': 'x'}
 
 # Pack all Facades for processing
@@ -2704,9 +2703,9 @@ create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, d
 
 export_vertices_for_blender(f"{city_name}_HITID_debug.txt", bnd_blender_data, export_blender, run_blender)     
 
-create_hudmap(debug_hud=debug_hud, show_label=False, plot_picture=False, export_jpg=True, 
-              x_offset=-0.0, y_offset=-0.0, line_width=0.7, 
-              background_color='black')
+create_hudmap(debug_hud = debug_hud, show_label = False, plot_picture = False, export_jpg = True, 
+              x_offset = -0.0, y_offset = -0.0, line_width = 0.7, 
+              background_color = 'black')
 
 create_ptl(city_name, polys, vertices)
 create_ar(city_name, mm1_folder, delete_shop)
