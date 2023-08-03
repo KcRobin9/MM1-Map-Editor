@@ -51,7 +51,7 @@ delete_shop=True                # delete the raw city files after the .ar file h
 set_facade=True                 # change to "True" if you want FACADES
 set_props=True                  # change to "True" if you want PROPS
 
-set_anim=True                   # change to "True" if you want ANIM (plane and eltrain
+set_anim=True                   # change to "True" if you want ANIM (plane and eltrain)
 set_bridges=False               # change to "True" if you want BRIDGES // (currently broken)
 
 ai_map=True                     # change both to "True" if you want AI paths
@@ -64,7 +64,7 @@ debug_collision=False           # change to "True" if you want a BND/collision D
 debug_facade=False              # change to "True" if you want a Facade Debug text file
 debug_props=False               # change to "True" if you want a BNG Debug text file
 debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
-
+DEBUG_BMS=False                 # change to "True" if you want a BMS Debug text files (in directory "DEBUG_BMS")
 
 #* SETUP II (optional, Blender)
 export_blender=False            # change to "True" if you want to export the Map vertices to Blender
@@ -76,6 +76,8 @@ blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # 
 #* SETUP III (optional, Race Editor)
 MORNING, NOON, EVENING, NIGHT = 0, 1, 2, 3  
 CLEAR, CLOUDY, RAIN, SNOW = 0, 1, 2, 3      
+
+FOLLOW, ROADBLOCK, SPINOUT, PUSH, MIX = 0, 3, 4, 8, 15      
 
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
 # Blitzes can have a total of 11 waypoints, the number of waypoints for Circuits and Checkpoints is unlimited
@@ -152,15 +154,15 @@ anim_data = {
 
 
 #* SETUP VI (optional, Bridges, experimental)
-slim_bridge = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
-wide_bridge = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
-crossgate = "tpcrossgate06"
-new_bridge_object = "vpmustang99"   # you can pass any object
+bridge_slim = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
+bridge_wide = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
+bridge_crossgate = "tpcrossgate06"
+bridge_object = "vpmustang99"   # you can pass any object
 
 #! Broken
 # Structure: (x,y,z, orientation, bridge_number, bridge_object)
 bridges = [
-    ((-30.0, 5.0, 50.0), "V", 2, slim_bridge)] 
+    ((-30.0, 5.0, 50.0), "V", 2, bridge_slim)] 
 
 # Possible orientations
 f"""Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
@@ -199,14 +201,12 @@ def to_do_list(x):
             PROPS --> screenshot each vanilla prop for user reference
             
             ? ADD LONG-TERM:
-            DEBUG --> add debug BMS (textures)
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             PROPS --> investigate creating custom texturized props from scatch
             RACES --> increase the maximum number of races per type (current max is 15)
             
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER{}"?
-            TEXTURES --> enable flashing texturs (i.e. airport lights at Meigs Field "fxltglow", see notes: GLOW AIRPORT.txt)            
-            
+                       
             HUDMAP --> correctly align the HUD map in the game
             HUDMAP --> match the debug JPG to the bound number
 
@@ -613,6 +613,7 @@ Polys: {self.polys}
     '''
 
 
+# BMS CLASS
 class BMS:
     def __init__(self, Magic: str, VertexCount: int, AdjunctCount: int, SurfaceCount: int, IndicesCount: int,
                  Radius: float, Radiussq: float, BoundingBoxRadius: float,
@@ -660,11 +661,74 @@ class BMS:
 
             for indices_side in self.IndicesSides:
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
+                
+    @classmethod
+    def from_file(cls, file_name: str):
+        with open(file_name, 'rb') as f:
+            Magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')
+            VertexCount, AdjunctCount, SurfaceCount, IndicesCount = read_unpack(f, '4I')
+            Radius, Radiussq, BoundingBoxRadius = read_unpack(f, '3f')
+            TextureCount, Flags = read_unpack(f, 'bb')
+            f.read(6)  
+
+            StringName = []
+            for _ in range(VertexCount):
+                StringName.append(read_unpack(f, '32s')[0].decode('utf-8').rstrip('\x00'))
+                f.read(16) # Skip 16 bytes
+
+            Coordinates = []
+            for _ in range(VertexCount):
+                x, y, z = read_unpack(f, '3f')
+                Coordinates.append(Vector3(x, y, z))
+
+            TextureDarkness = list(read_unpack(f, str(AdjunctCount) + 'b'))
+            TexCoords = list(read_unpack(f, str(AdjunctCount * 2) + 'f'))
+            Enclosed_shape = list(read_unpack(f, str(AdjunctCount) + 'H'))
+            SurfaceSides = list(read_unpack(f, str(SurfaceCount) + 'b'))
+
+            IndicesSides = []
+            for _ in range(SurfaceCount):
+                indices_side = list(read_unpack(f, str(IndicesCount) + 'H'))
+                IndicesSides.append(indices_side)
+
+        return cls(Magic, VertexCount, AdjunctCount, SurfaceCount, IndicesCount, 
+                   Radius, Radiussq, BoundingBoxRadius, 
+                   TextureCount, Flags, StringName, Coordinates, 
+                   TextureDarkness, TexCoords, Enclosed_shape, SurfaceSides, IndicesSides)
+                    
+    def write_bms_debug(self, file_name: str, debug_dir = "DEBUG_BMS") -> None:
+        Path(debug_dir).mkdir(parents=True, exist_ok=True)
+
+        if DEBUG_BMS:
+            with open(debug_dir / Path(file_name), 'w') as f:
+                f.write(str(self))
+                
+    def __repr__(self):
+        return f'''
+BMS
+Magic: {self.Magic}
+VertexCount: {self.VertexCount}
+AdjunctCount: {self.AdjunctCount}
+SurfaceCount: {self.SurfaceCount}
+IndicesCount: {self.IndicesCount}
+Radius: {self.Radius}
+Radiussq: {self.Radiussq}
+BoundingBoxRadius: {self.BoundingBoxRadius}
+TextureCount: {self.TextureCount}
+Flags: {self.Flags}
+StringName: {self.StringName}
+Coordinates: {self.Coordinates}
+TextureDarkness: {self.TextureDarkness}
+TexCoords: {self.TexCoords}
+Enclosed_shape: {self.Enclosed_shape}
+SurfaceSides: {self.SurfaceSides}
+IndicesSides: {self.IndicesSides}
+        '''
 
 ################################################################################################################               
 ################################################################################################################       
 
-# SCRIPT CONSTANTS | do not change
+# SCRIPT CONSTANTS
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = SHOP / 'CITY'
@@ -776,6 +840,9 @@ def save_bms(
     
     bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, TexCoords)
     bms.to_file(bms_filename)
+    
+    if DEBUG_BMS:
+        bms.write_bms_debug(bms_filename + ".txt")
              
 # Create BMS      
 def create_bms(vertices, polys, texture_indices, texture_name: List[str], texture_darkness=None, TexCoords=None):
@@ -796,9 +863,7 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
 
     # Texture Darkness and TexCoords        
     if texture_darkness is None:
-        texture_darkness = [2] * adjunct_count # 2 is normal texture brightness 
-        
-    # Not Recommeneded    
+        texture_darkness = [2] * adjunct_count # 2 is default texture brightness
     if TexCoords is None:
         TexCoords = [0.0 for _ in range(adjunct_count * 2)]
 
@@ -1014,6 +1079,10 @@ def user_notes(x):
     'r.H.f', 'repeating_horizontal_flipped', 'r.V', 'repeating_vertical',
     'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
     'custom', and 'combined'
+    
+    You can set "texture_darkness" in the function "save_bms()" making texture edges darker or lighter. 
+    If there are four vertices, you can then use it as follows: "texture_darkness = [40,2,50,1]"
+    Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
     Once functional AI is implemented, the road_type / bound_number might matter, here is the list:
     Open Areas: 0-199
@@ -1026,17 +1095,18 @@ TUNNEL = 1
 INDOORS = 2
 NO_SKIDS = 200 
 
-# HUD map colors
-R6_ROAD = '#414441'  
+# HUD map colors 
 WOOD = '#7b5931'
-GRASS_24 = '#396d18'
 SNOW = '#cdcecd'
 WATER = '#5d8096' 
+R6_ROAD = '#414441'  
+GRASS_24 = '#396d18'
         
 # Start_Area
 create_polygon(
     bound_number = 1,
     material_index = 0,
+    cell_type = TUNNEL,
     vertex_coordinates=[
         (-50.0, 0.0, 70.0),
         (50.0, 0.0, 70.0),
@@ -1045,7 +1115,8 @@ create_polygon(
         hud_fill = True, fill_color = R6_ROAD)
 
 save_bms(
-    texture_name = ["R6"], 
+    texture_name = ["R6"],
+    texture_darkness = [40,2,50,1],
     TexCoords=compute_tex_coords(mode="r.V", repeat_x=10, repeat_y=10))
 
 # Grass_Area    
@@ -1105,7 +1176,6 @@ create_polygon(
 		(140.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0)],
         hud_fill = True, fill_color = '#af0000')
-                                       #CD5C5C
 
 save_bms(
     texture_name = ["T_BARRICADE"], 
@@ -1121,7 +1191,6 @@ create_polygon(
 		(140.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0)],
         hud_fill = True, fill_color = WATER)    
-                        # or: fill_color = '#af0000'
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1263,7 +1332,7 @@ def move_dev_folder(destination_folder, city_name):
     shutil.rmtree(city_folder_path, ignore_errors=True)
     
 def move_open1560(destination_folder):
-    open1560_folder_path = BASE_DIR / 'Installation Instructions' / 'Open1560'
+    open1560_folder_path = BASE_DIR / 'Installation_Instructions' / 'Open1560'
     destination_folder = Path(destination_folder)
     
     for open1560_files in open1560_folder_path.iterdir():
@@ -1338,14 +1407,17 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circ
 
                 if race_type == "BLITZ":
                     a_timeofday, a_weather, a_cops, a_ambient, a_peds, a_timelimit, p_timeofday, p_weather, p_cops, p_ambient, p_peds, p_timelimit = other_parameters
+                    
                     race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, num_laps_blitz, a_timelimit, opponent_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, num_laps_blitz, p_timelimit, difficulty_na]
 
                 elif race_type == "CIRCUIT":
                     a_timeofday, a_weather, a_num_circuit_laps, a_cops, a_ambient, a_peds, p_timeofday, p_weather, p_num_circuit_laps, p_cops, p_ambient, p_peds = other_parameters
+                    
                     race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, a_num_circuit_laps, time_limit_na, difficulty_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, p_num_circuit_laps, time_limit_na, difficulty_na]
 
                 elif race_type == "RACE":
                     a_timeofday, a_weather, a_cops, a_ambient, a_peds, p_timeofday, p_weather, p_cops, p_ambient, p_peds = other_parameters
+                    
                     race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, num_laps_checkpoint_na, time_limit_na, difficulty_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, num_laps_checkpoint_na, time_limit_na, difficulty_na]
 
                 race_data_str = ', '.join(map(str, race_data))
@@ -1865,43 +1937,65 @@ def create_ptl(city_name, polys, vertices):
                             
 # BINARYBANGER CLASS                            
 class BinaryBanger:
-    def __init__(self, start: Vector3, end: Vector3, name: str):
-        self.room = 4       
-        self.flags = 0x800  
+    def __init__(self, start: Vector3, end: Vector3, name: str, room: int = 4, flags: int = 0x800):
+        self.room = room
+        self.flags = flags
         self.start = start
         self.end = end
         self.name = name
         
+    @classmethod
+    def read(cls, f):
+        room, flags = read_unpack(f, '<HH')
+        start_x, start_y, start_z = read_unpack(f, '<3f')
+        end_x, end_y, end_z = read_unpack(f, '<3f')
+        name = ''
+        char = f.read(1).decode('utf8')
+        while char != "\x00":
+            name += char
+            char = f.read(1).decode('utf8')
+        start = Vector3(start_x, start_y, start_z)
+        end = Vector3(end_x, end_y, end_z)
+        return cls(start, end, name, room, flags)
+        
     def __repr__(self):
         return f'''
 BinaryBanger
-Room: {self.Room}
-Flags: {self.Flags}
-Start: {self.Start}
-End: {self.End}
-Name: {self.Name}
+Room: {self.room}
+Flags: {self.flags}
+Start: {self.start}
+End: {self.end}
+Name: {self.name}
     '''
   
 class Prop_Editor:
-    def __init__(self, city_name: str, debug_props: bool = False):
+    def __init__(self, city_name: str, debug_props: bool = False, input_bng_file: bool = False):
         self.objects = []
         self.debug_props = debug_props
-        self.filename = SHOP_CITY / f"{city_name}.BNG"
+        self.input_bng_file = input_bng_file
+        self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_bng_file else BASE_DIR / f"{city_name}"
         self.debug_filename = f"{city_name}_BNG_debug.txt"
         self.prop_file_path = BASE_DIR / "RESOURCES" / "Prop_Dimensions_Extracted.txt"
-        self.prop_data = self.load_prop_data()    
+        self.prop_data = self.load_prop_dimensions()    
           
-    def load_prop_data(self):
+    def load_prop_dimensions(self):
         prop_data = {}
         with open(self.prop_file_path, "r") as f:
             for line in f:
                 name, value_x, value_y, value_z = line.split()
                 prop_data[name] = Vector3(float(value_x), float(value_y), float(value_z))
         return prop_data
+    
+    def read_bng_file(self):
+        with open(self.filename, mode = "rb") as f:
+            num_objects = read_unpack(f, '<I')[0]
+            
+            for _ in range(num_objects):
+                self.objects.append(BinaryBanger.read(f))
         
     def write_props(self, set_props: bool = False):
         if set_props:
-            with open(self.filename, mode="wb") as f:
+            with open(self.filename, mode = "wb") as f:
                 write_pack(f, '<I', len(self.objects))
             
                 for index, obj in enumerate(self.objects, 1):
@@ -1913,8 +2007,7 @@ class Prop_Editor:
                                 End: {obj.end}
                                 Name: {obj.name}
                             '''))
-                        write_pack(
-                            f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
+                        write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
 
                         for char in obj.name: 
                             write_pack(f, '<s', bytes(char, encoding='utf8')) 
@@ -1927,9 +2020,9 @@ class Prop_Editor:
             face = Vector3(obj['face_x'], obj['face_y'], obj['face_z'])
             name = obj['name']
             
-            # separator = obj.get('separator', name)  # default is the name of the object itself if 'separator' not provided
-            separator = obj.get('separator', default_separator_value) 
-            axis = obj.get('axis', 'x')             # default is 'x' if 'axis' not provided
+            # separator = obj.get('separator', name)ed
+            separator = obj.get('separator', default_separator_value)
+            axis = obj.get('axis', 'x') # default is 'x' if 'axis' not provided
 
             # Check if Separator is a string (object name) or a numeric value
             if isinstance(separator, str):
@@ -2345,7 +2438,6 @@ def export_vertices_for_blender(input_bnd: str, output_file_name: str, export_bl
                                 flag_value = None    
                                 
         if run_blender:                  
-            # After the loop, look for any Blender file in the cwd
             for file in os.listdir():
                 if file.endswith(".blend"):
                     print(f"Opening {file} with Blender...")
@@ -2487,11 +2579,11 @@ prop_1 = {'offset_x': 0,
 # Multiple props (TP Trailer)
 prop_2 = {'offset_x': 60, 
           'offset_y': 0.0, 
-          'offset_z': -50, 
-          'name': 'tp_trailer', 
           
+          'offset_z': -50, 
           'end_offset_z': 70, 
-          'separator': 16.34, 
+          'separator': 16.34,
+          'name': 'tp_trailer', 
           'axis': 'z',
 
           'face_x': 10, 
@@ -2594,6 +2686,11 @@ for i in random_parameters:
 
 prop_editor.add_props(prop_list)
 prop_editor.write_props(set_props)
+
+#prop_editor = Prop_Editor("CHICAGO.BNG", input_bng_file=True)
+#prop_editor.read_bng_file()
+#for obj in prop_editor.objects:
+#    print(obj)
 
 move_open1560(mm1_folder)
 move_dev_folder(mm1_folder, city_name)
