@@ -125,9 +125,9 @@ race_0 = [
     #* time, weather, cops, ambient, peds (Amateur first, Pro second) 
 
 # Packing all the race configurations
-blitz_waypoints = [blz_0, blz_1]
-circuit_waypoints = [cir_0]
-checkpoint_waypoints = [race_0]
+blitz_races = [blz_0, blz_1]
+circuit_races = [cir_0]
+checkpoint_races = [race_0]
 
 
 #* SETUP IV (optional, Cops and Robbers)
@@ -191,11 +191,10 @@ def to_do_list(x):
             TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
             
             DEBUG --> fix BND (collision) debug
-            PROPS --> Prop_Editor(city_name, debug_props = True) // see definition
 
             ? ADD SHORT-TERM:
             SHAPES --> implement proper Edges (this will enable triangular shapes and diagonal quadrilaterals)
-            SHAPES --> implement "double_wall" (i.e. duplicating the polygon with the different wall "side")
+            SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides")
             
             FCD --> test and document flag behavior
             FCD --> test and document Sides and Scales behavior
@@ -203,7 +202,6 @@ def to_do_list(x):
             FCD --> implement diagonal facades
             
             SCRIPT --> Disable need for "hud_fill = True" in create_polygon()
-            SCRIPT --> rename "{}_waypoints" in line 127
             SCRIPT --> simplify "plane_edges = [Vector3(*edge) for edge in [" in create_polygon()
             
             PROPS --> screenshot each vanilla prop for user reference
@@ -211,14 +209,16 @@ def to_do_list(x):
             ? ADD LONG-TERM:
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             PROPS --> investigate creating custom texturized props from scatch
-            RACES --> increase the maximum number of races per type (current max is 15)
+            
+            RACES --> customize AIMAP data for each race
+            RACES --> increase the maximum number of races per type (current max is 15) // see racedata.h
             
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER{}"?
                        
             HUDMAP --> correctly align the HUD map in the game
             HUDMAP --> match the debug JPG to the bound number
 
-            OPEN1560 --> add (forked) updated Open1560
+            OPEN1560 --> add custom updated Open1560
             """               
             
 ################################################################################################################               
@@ -1304,9 +1304,9 @@ def create_folders(city_name):
 LocalizedName={localized_name}
 MapName={map_name}
 RaceDir={race_dir}
-BlitzCount={len(blitz_waypoints)}
-CircuitCount={len(circuit_waypoints)}
-CheckpointCount={len(checkpoint_waypoints)}
+BlitzCount={len(blitz_races)}
+CircuitCount={len(circuit_races)}
+CheckpointCount={len(checkpoint_races)}
 BlitzNames={blitz_race_names_str}
 CircuitNames={circuit_race_names_str}
 CheckpointNames={checkpoint_race_names_str}
@@ -1383,8 +1383,8 @@ def move_open1560(destination_folder):
             shutil.copy2(open1560_files, destination_file_path)
                              
 # Distribute generated files
-def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circuit, 
-                               circuit_waypoints, num_checkpoint, checkpoint_waypoints, 
+def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit, 
+                               circuit_races, num_checkpoint, checkpoint_races, 
                                all_races_files = True):
 
     bms_files = []
@@ -1411,9 +1411,9 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_waypoints, num_circ
     if num_checkpoint > len(race_prefixes):
         raise ValueError("Number of Checkpoint races cannot be more than 12")
     
-    for race_type, race_description, prefix, num_files, race_waypoints in [("BLITZ", "Blitz", "ABL", num_blitz, blitz_waypoints), 
-                                                                           ("CIRCUIT", "Circuit", "CIR", num_circuit, circuit_waypoints), 
-                                                                           ("RACE", "Checkpoint", "RACE", num_checkpoint, checkpoint_waypoints)]:
+    for race_type, race_description, prefix, num_files, race_waypoints in [("BLITZ", "Blitz", "ABL", num_blitz, blitz_races), 
+                                                                           ("CIRCUIT", "Circuit", "CIR", num_circuit, circuit_races), 
+                                                                           ("RACE", "Checkpoint", "RACE", num_checkpoint, checkpoint_races)]:
         
         for i in range(num_files):
             file_name = f"{race_type}{i}WAYPOINTS.CSV"
@@ -1634,7 +1634,7 @@ def create_hudmap(show_label = False, plot_picture = False, export_jpg = False,
 
         hudmap_vertices = [sort_coordinates(polygon) for polygon in hudmap_vertices]
 
-        #todo Enumeration should be based on the bound_number / cell_id 
+        #TODO: Enumeration should be based on the bound_number / cell_id 
         for i, polygon in enumerate(hudmap_vertices):
             hud_fill, fill_color, outline_color = hudmap_properties.get(i, (False, None, 'cyan'))
             
@@ -2034,28 +2034,34 @@ class Prop_Editor:
             
             for _ in range(num_objects):
                 self.objects.append(BinaryBanger.read(f))
-        
-    def write_props(self, set_props: bool = False):
-        if set_props:
-            with open(self.filename, mode = "wb") as f:
-                write_pack(f, '<I', len(self.objects))
             
-                for index, obj in enumerate(self.objects, 1):
-                    
-                    #! FIX ME: write_pack props when self.debug_props is False
-                    if self.debug_props:
-                        with open(self.debug_filename, "a") as debug_f:
-                            debug_f.write(textwrap.dedent(f'''
-                                Prop {index} Data:
-                                Start: {obj.start}
-                                End: {obj.end}
-                                Name: {obj.name}
-                            '''))
-                        write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
+    def write_props(self, set_props: bool = False):
+        if not set_props:
+            return
 
-                        for char in obj.name: 
-                            write_pack(f, '<s', bytes(char, encoding='utf8')) 
-                        
+        with open(self.filename, mode = "wb") as f:
+            write_pack(f, '<I', len(self.objects))
+
+            for index, obj in enumerate(self.objects, 1):
+                if self.debug_props:
+                    self.write_debug_info(index, obj)
+
+                self.write_object_data(f, obj)
+
+    def write_object_data(self, f, obj):
+        write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
+        for char in obj.name:
+            write_pack(f, '<s', bytes(char, encoding='utf8'))
+
+    def write_debug_info(self, index, obj):
+        with open(self.debug_filename, "a") as debug_f:
+            debug_f.write(textwrap.dedent(f'''
+                Prop {index} Data:
+                Start: {obj.start}
+                End: {obj.end}
+                Name: {obj.name}
+            '''))
+                      
     def add_props(self, new_objects: List[Dict[str, Union[int, float, str]]]):
         default_separator_value = 10.0
         
@@ -2244,7 +2250,7 @@ mmMapData :0 {{
         """
         return textwrap.dedent(bai_map_template).strip()
     
-
+    
 # Street File Editor CLASS
 class StreetFile_Editor:
     INTERSECTION_TYPE_MAP = {"stop": 0, "stoplight": 1, "yield": 2, "continue": 3}
@@ -2424,7 +2430,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, 
                 facade = Facade_Editor(flags, current_start, current_end, sides, scale, name)
                 facades.append(facade)
 
-        with open(filename, mode='wb') as f:
+        with open(filename, mode = 'wb') as f: 
             write_pack(f, '<I', len(facades))
             for facade in facades:
                 facade.to_file(f)
@@ -2433,7 +2439,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, 
 
         if debug_facade:
             debug_filename = filename.replace('.FCD', '_FCD_debug.txt')
-            with open(debug_filename, mode='w', encoding='utf-8') as f:
+            with open(debug_filename, mode = 'w', encoding = 'utf-8') as f:
                 for facade in facades:
                     f.write(str(facade))
 
@@ -2716,24 +2722,24 @@ print("\n===============================================\n")
 create_folders(city_name)
 create_bnd(vertices, polys, city_name, debug_collision)
 distribute_files(city_name, f"{city_name}_HITID.BND", 
-                           len(blitz_waypoints), blitz_waypoints, len(circuit_waypoints), 
-                           circuit_waypoints, len(checkpoint_waypoints), checkpoint_waypoints, all_races_files = True)
+                           len(blitz_races), blitz_races, len(circuit_races), 
+                           circuit_races, len(checkpoint_races), checkpoint_races, all_races_files = True)
 
 Material_Editor.create_physics(new_properties, set_material_index, "physics.db")
 StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_map)
 
-prop_editor = Prop_Editor(city_name, debug_props = True)
+prop_editor = Prop_Editor(city_name, debug_props = debug_props, input_bng_file = False)
 
 for i in random_parameters:
     randomized_objects = prop_editor.place_objects_randomly(**i)
     prop_list.extend(randomized_objects)
-
+    
 prop_editor.add_props(prop_list)
 prop_editor.write_props(set_props)
 
-#prop_editor = Prop_Editor("CHICAGO.BNG", input_bng_file=True)
-#prop_editor.read_bng_file()
-#for obj in prop_editor.objects:
+# prop_editor = Prop_Editor("CHICAGO.BNG", input_bng_file = True)
+# prop_editor.read_bng_file()
+# for obj in prop_editor.objects:
 #    print(obj)
 
 move_open1560(mm1_folder)
