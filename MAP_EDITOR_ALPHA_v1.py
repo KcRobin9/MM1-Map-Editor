@@ -162,7 +162,7 @@ bridge_wide = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
 bridge_crossgate = "tpcrossgate06"
 bridge_object = "vpmustang99"       # you can pass any object
 
-#! Broken
+#! Unfinished
 # Structure: (x,y,z, orientation, bridge_number, bridge_object)
 bridges = [
     ((-30.0, 5.0, 50.0), "V", 2, bridge_slim)] 
@@ -193,7 +193,6 @@ def to_do_list(x):
             DEBUG --> fix BND (collision) debug
 
             ? ADD SHORT-TERM:
-            SHAPES --> implement proper Edges (this will enable triangular shapes and diagonal quadrilaterals)
             SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides")
             
             FCD --> test and document flag behavior
@@ -201,8 +200,7 @@ def to_do_list(x):
             FCD --> screenshot each vanilla facade for user reference
             FCD --> implement diagonal facades
             
-            SCRIPT --> Disable need for "hud_fill = True" in create_polygon()
-            SCRIPT --> simplify "plane_edges = [Vector3(*edge) for edge in [" in create_polygon()
+            SCRIPT --> disable need for "hud_fill = True" in create_polygon()
             
             PROPS --> screenshot each vanilla prop for user reference
             
@@ -583,8 +581,8 @@ class BND:
         write_pack(f, '<3l', self.num_indices, self.height_scale, self.cache_size)
  
         for vertex in self.vertices:       
-            vertex.write(f)            
-
+            vertex.write(f)   
+        
         for poly in self.polys:           
             poly.to_file(f)              
                 
@@ -626,7 +624,7 @@ class BMS:
     def __init__(self, Magic: str, VertexCount: int, AdjunctCount: int, SurfaceCount: int, IndicesCount: int,
                  Radius: float, Radiussq: float, BoundingBoxRadius: float,
                  TextureCount: int, Flags: int, StringName: List[str], Coordinates: List[Vector3],
-                 TextureDarkness: List[int], TexCoords: List[float], Enclosed_shape: List[int],
+                 TextureDarkness: List[int], tex_coords: List[float], Enclosed_shape: List[int],
                  SurfaceSides: List[int], IndicesSides: List[List[int]]) -> None:
 
         self.Magic = Magic
@@ -642,7 +640,7 @@ class BMS:
         self.StringName = StringName
         self.Coordinates = Coordinates
         self.TextureDarkness = TextureDarkness
-        self.TexCoords = TexCoords  
+        self.tex_coords = tex_coords  
         self.Enclosed_shape = Enclosed_shape  
         self.SurfaceSides = SurfaceSides
         self.IndicesSides = IndicesSides
@@ -663,7 +661,7 @@ class BMS:
                 write_pack(f, '3f', coordinate.x, coordinate.y, coordinate.z)
 
             write_pack(f, str(self.AdjunctCount) + 'b', *self.TextureDarkness)
-            write_pack(f, str(self.AdjunctCount * 2) + 'f', *self.TexCoords)            
+            write_pack(f, str(self.AdjunctCount * 2) + 'f', *self.tex_coords)            
             write_pack(f, str(self.AdjunctCount) + 'H', *self.Enclosed_shape)
             write_pack(f, str(self.SurfaceCount) + 'b', *self.SurfaceSides)
 
@@ -690,7 +688,7 @@ class BMS:
                 Coordinates.append(Vector3(x, y, z))
 
             TextureDarkness = list(read_unpack(f, str(AdjunctCount) + 'b'))
-            TexCoords = list(read_unpack(f, str(AdjunctCount * 2) + 'f'))
+            tex_coords = list(read_unpack(f, str(AdjunctCount * 2) + 'f'))
             Enclosed_shape = list(read_unpack(f, str(AdjunctCount) + 'H'))
             SurfaceSides = list(read_unpack(f, str(SurfaceCount) + 'b'))
 
@@ -702,7 +700,7 @@ class BMS:
         return cls(Magic, VertexCount, AdjunctCount, SurfaceCount, IndicesCount, 
                    Radius, Radiussq, BoundingBoxRadius, 
                    TextureCount, Flags, StringName, Coordinates, 
-                   TextureDarkness, TexCoords, Enclosed_shape, SurfaceSides, IndicesSides)
+                   TextureDarkness, tex_coords, Enclosed_shape, SurfaceSides, IndicesSides)
                     
     def write_bms_debug(self, file_name: str, debug_dir = "DEBUG_BMS") -> None:
         Path(debug_dir).mkdir(parents = True, exist_ok = True)
@@ -727,7 +725,7 @@ Flags: {self.Flags}
 StringName: {self.StringName}
 Coordinates: {self.Coordinates}
 TextureDarkness: {self.TextureDarkness}
-TexCoords: {self.TexCoords}
+TexCoords: {self.tex_coords}
 Enclosed_shape: {self.Enclosed_shape}
 SurfaceSides: {self.SurfaceSides}
 IndicesSides: {self.IndicesSides}
@@ -776,29 +774,29 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
     
-    # Horizontal
-    if mode == "H" or mode == "horizontal":
+    # Vertical
+    if mode == "V" or mode == "vertical":
         return [0, 0, 0, 1, 1, 1, 1, 0]
-    elif mode == "H.f" or mode == "horizontal_flipped":
+    elif mode == "V.f" or mode == "vertical_flipped":
         return [0, 1, 0, 0, 1, 0, 1, 1]
     
-    # Vertical
-    elif mode == "V" or mode == "vertical":
+    # Horizontal
+    elif mode == "H" or mode == "horizontal":
         return [0, 0, 1, 0, 1, 1, 0, 1]
-    elif mode == "V.f" or mode == "vertical_flipped":
+    elif mode == "H.f" or mode == "horizontal_flipped":
         return [1, 0, 0, 0, 0, 1, 1, 1]
-    
-    # Horizontal Repeated
-    elif mode == "r.H" or mode == "repeating_horizontal":
-        return [0, 0, 0, repeat_y, repeat_x, repeat_y, repeat_x, 0]
-    elif mode == "r.H.f" or mode == "repeating_horizontal_flipped":
-        return [0, repeat_y, 0, 0, repeat_x, 0, repeat_x, repeat_y]
     
     # Vertical Repeated
     elif mode == "r.V" or mode == "repeating_vertical":
-        return [0, 0, repeat_y, 0, repeat_y, repeat_x, 0, repeat_x]
+        return [0, 0, 0, repeat_x, repeat_y, repeat_x, repeat_y, 0]
     elif mode == "r.V.f" or mode == "repeating_vertical_flipped":
-        return [repeat_y, 0, 0, 0, 0, repeat_x, repeat_y, repeat_x]
+        return [0, repeat_x, 0, 0, repeat_y, 0, repeat_y, repeat_x]
+    
+    # Horizontal Repeated
+    elif mode == "r.H" or mode == "repeating_horizontal":
+        return [0, 0, repeat_x, 0, repeat_x, repeat_y, 0, repeat_y]
+    elif mode == "r.H.f" or mode == "repeating_horizontal_flipped":
+        return [repeat_x, 0, 0, 0, 0, repeat_y, repeat_x, repeat_y]
     
     # Check
     elif mode == "r.r" or mode == "rotating_repeating":
@@ -823,7 +821,7 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
 # SAVE BMS
 def save_bms(
     texture_name, texture_indices=[1], vertices = vertices, polys = polys, 
-    texture_darkness = None, TexCoords = None, exclude = False, tex_coord_mode = None, 
+    texture_darkness = None, tex_coords = None, exclude = False, tex_coord_mode = None, 
     tex_coord_params = None, randomize_textures = randomize_textures, 
     randomize_texture_names = randomize_texture_names):
         
@@ -834,9 +832,8 @@ def save_bms(
     if randomize_textures and not exclude:
         texture_name = [random.choice(randomize_texture_names)]
     
-    # Create correct Water BMS
+    # Set correct Water BMS
     if any(name.startswith("T_WATER") for name in texture_name):
-    #if any("WATER" in name for name in texture_name):
         bms_filename = "CULL{:02d}_A2.bms".format(bound_number)
     else:
         bms_filename = "CULL{:02d}_H.bms".format(bound_number)
@@ -844,18 +841,18 @@ def save_bms(
     if tex_coord_mode is not None:
         if tex_coord_params is None:
             tex_coord_params = {}
-        TexCoords = compute_tex_coords(tex_coord_mode, **tex_coord_params)
+        tex_coords = compute_tex_coords(tex_coord_mode, **tex_coord_params)
         
     single_poly = [poly_filler, poly]
     
-    bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, TexCoords)
+    bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
     bms.to_file(bms_filename)
     
     if DEBUG_BMS:
         bms.write_bms_debug(bms_filename + ".txt")
              
 # Create BMS      
-def create_bms(vertices, polys, texture_indices, texture_name: List[str], texture_darkness = None, TexCoords = None):
+def create_bms(vertices, polys, texture_indices, texture_name: List[str], texture_darkness = None, tex_coords = None):
     shapes = []
     for poly in polys[1:]:  # Skip the first filler polygon
         vertex_coordinates = [vertices[i] for i in poly.vert_indices]
@@ -874,8 +871,8 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
     # Texture Darkness and TexCoords        
     if texture_darkness is None:
         texture_darkness = [2] * adjunct_count # 2 is default texture brightness
-    if TexCoords is None:
-        TexCoords = [0.0 for _ in range(adjunct_count * 2)]
+    if tex_coords is None:
+        tex_coords = [0.0 for _ in range(adjunct_count * 2)]
 
     # Create a list of Indices Sides, one for each shape
     indices_sides = []
@@ -887,7 +884,7 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
         
     return BMS(magic, vertex_count, adjunct_count, surface_count, indices_count, 
                radius, radiussq, bounding_box_radius, 
-               texture_count, flags, texture_name, coordinates, texture_darkness, TexCoords, enclosed_shape, texture_indices, indices_sides)
+               texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, enclosed_shape, texture_indices, indices_sides)
 
 ################################################################################################################               
 ################################################################################################################  
@@ -921,65 +918,7 @@ def initialize_bnd(vertices, polys):
                hot_verts, edges_0, edges_1, edge_normals, edge_floats,
                row_offsets, row_shorts, row_indices, row_heights)
 
-# Sort BND Vertices Coordinates
-def sort_coordinates(vertex_coordinates):
-    
-    max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
-    min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
-    
-    max_z_for_max_x = max([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key=lambda coord: coord[2])
-    min_z_for_max_x = min([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key=lambda coord: coord[2])
-    max_z_for_min_x = max([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key=lambda coord: coord[2])
-    min_z_for_min_x = min([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key=lambda coord: coord[2])
-
-    return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
-
-#! Simplified Plane Edges method (used for horizontal and vertical rectangles, no angled rectangles)
-def compute_plane_edges(vertex_coordinates):
-    plane_edge_1 = Vector3(-1, 0, -vertex_coordinates[0][0])
-    plane_edge_2 = Vector3(0, 1, vertex_coordinates[1][2])
-    plane_edge_3 = Vector3(1, 0, vertex_coordinates[2][0])
-    plane_edge_4 = Vector3(0, -1, -vertex_coordinates[3][2])
-    
-    return [plane_edge_1, plane_edge_2, plane_edge_3, plane_edge_4]
-
-#! Improved Plane Edges method (used for angled rectangles, however the signs of the scalars are inconsistent)
-#! This method is currently considered broken and needs to be fixed
-def compute_plane_edges_version_2(vertex_coordinates):
-    vertices = [np.array([coord[0], 0, coord[2]]) for coord in vertex_coordinates]  # Set y-value to 0
-
-    plane_edges = []
-
-    for i in range(len(vertices)):
-        A = vertices[i]
-        B = vertices[(i + 1) % len(vertices)]
-
-        D = B - A
-
-        if np.linalg.norm(D) == 0:
-            continue
-
-        D_norm = D / np.linalg.norm(D)
-
-        d = np.linalg.norm(np.cross(A, D)) / np.linalg.norm(D)
-        
-        #! Swapped X and Z (broken)
-        plane_edges.append(Vector3(D_norm[2], D_norm[0], d))
-                
-        #! Individual Sign Swapping (broken)
-        # if i == 0:
-        #     plane_edges.append(Vector3(-D_norm[2], D_norm[0], -d))
-        # elif i == 1:
-        #     plane_edges.append(Vector3(D_norm[2], D_norm[0], d))
-        # elif i == 2:
-        #     plane_edges.append(Vector3(D_norm[2], D_norm[0], d))
-        # elif i == 3:
-        #     plane_edges.append(Vector3(D_norm[2], -D_norm[0], -d))   
-
-    return plane_edges
-
-#! Plane Edge Normals, this implementation is 100% correct
-def compute_plane_edgenormals(p1, p2, p3, p4):
+def compute_plane_edgenormals(p1, p2, p3):
     v1 = np.subtract(p2, p1)
     v2 = np.subtract(p3, p1)
 
@@ -993,12 +932,62 @@ def compute_plane_edgenormals(p1, p2, p3, p4):
 
     return planeN, planeD
 
+def calculate_edges(vertex_coordinates):
+    vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
+    planeN, planeD = compute_plane_edgenormals(*vertices[:3]) 
+
+    num_verts = len(vertices)
+    plane_edges = []
+
+    abs_plane_x = abs(planeN[0])
+    abs_plane_y = abs(planeN[1])
+    abs_plane_z = abs(planeN[2])
+
+    negate = 1.0
+
+    if abs_plane_x < abs_plane_y or abs_plane_x < abs_plane_z:
+        if abs_plane_y < abs_plane_x or abs_plane_y < abs_plane_z:
+            if planeN[2] < 0.0:
+                negate = -1.0
+            for i in range(num_verts):
+                A = vertices[i]
+                B = vertices[(i+1) % num_verts]
+                D = B - A
+                plane_edges.append(np.array([-D[1] * negate, D[0] * negate, -np.dot([-D[1], D[0]], [A[0], A[1]])]))
+        else:
+            if planeN[1] > 0.0:
+                negate = -1.0
+            for i in range(num_verts):
+                A = vertices[i]
+                B = vertices[(i+1) % num_verts]
+                D = B - A
+                plane_edges.append(np.array([-D[2] * negate, D[0] * negate, -np.dot([-D[2], D[0]], [A[0], A[2]])]))
+    else:
+        if planeN[0] < 0.0:
+            negate = -1.0
+        for i in range(num_verts):
+            A = vertices[i]
+            B = vertices[(i+1) % num_verts]
+            D = B - A
+            plane_edges.append(np.array([-D[2] * negate, D[1] * negate, -np.dot([-D[2], D[1]], [A[1], A[2]])]))
+
+    # Normalize edges
+    for i in range(len(plane_edges)):
+        norm_val = np.linalg.norm(plane_edges[i][:2])  # only first two components
+        plane_edges[i][:2] /= norm_val
+        plane_edges[i][2] /= norm_val
+
+    # Convert back to Vector3
+    edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
+    
+    return edges
+
 def create_polygon(
     bound_number, material_index, vertex_coordinates, 
-    plane_edges = None, plane_n = None, plane_d = None, flags = None, plane_normal = None,
-    vertices = vertices, polys = polys, sort_vertices = True, cell_type = 0, 
-    hud_fill = False, fill_color = None, outline_color = 'cyan'):
-    
+    plane_edges = None, flags = None, wall_side = None,
+    vertices = vertices, polys = polys, 
+    cell_type = 0, hud_fill = False, fill_color = None, outline_color = 'cyan'):
+
     # Vertex indices
     base_vertex_index = len(vertices)
        
@@ -1008,40 +997,38 @@ def create_polygon(
         if flags is None:
             raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
 
-    # Sorting (currently desired for all polygons)
-    if sort_vertices: 
-        sorted_vertices = sort_coordinates(vertex_coordinates)
-    else:              
-        sorted_vertices = vertex_coordinates 
-
-    new_vertices = [Vector3(*coord) for coord in sorted_vertices]
+    new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
     vertices.extend(new_vertices)
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
     
+    # Plane Edges    
+    if plane_edges is None:
+        plane_edges = calculate_edges(vertex_coordinates) 
+    
     # Plane Normals
-    if plane_normal is None:
-        plane_n, plane_d = compute_plane_edgenormals(*vertex_coordinates[:4])
-    elif plane_normal[0] == "custom":
-        plane_n, plane_d = plane_normal[1][:3], plane_normal[1][3] 
+    if wall_side is None:
+        plane_n, plane_d = compute_plane_edgenormals(*vertex_coordinates[:3])
     else:
+        # WALL with varying X and Y coordinates
         if (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
             max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
             abs(max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates)) <= 0.15):
 
-            if plane_normal == "outside":
+            if wall_side == "outside":
                 corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
-            elif plane_normal == "inside":
+            elif wall_side == "inside":
                 corners = [0, 0, 1, -max(coord[2] for coord in vertex_coordinates)]
             
             plane_n, plane_d = corners[:3], corners[3]
 
+        # WALL with varying Z and Y coordinates                               
         elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
-            max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
-            max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
+              max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
+              max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
                     
-            if plane_normal == "outside":
+            if wall_side == "outside":
                 corners = [-1, 0, 0, min(coord[0] for coord in vertex_coordinates)]
-            elif plane_normal == "inside":
+            elif wall_side == "inside":
                 corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
                 
             plane_n, plane_d = corners[:3], corners[3]
@@ -1050,18 +1037,12 @@ def create_polygon(
         plane_n = Vector3(*plane_n.tolist())
     elif isinstance(plane_n, list):
         plane_n = Vector3(*plane_n)
-
-    # Plane Edges
-    if plane_edges is None:
-        plane_edges = compute_plane_edges(sorted_vertices)  
-    elif plane_edges == "test":
-        plane_edges = compute_plane_edges_version_2(sorted_vertices)
-        
+            
     # Finalize Polygon
     poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d, cell_type)
     polys.append(poly)
     
-    # HUD setup
+    # Create JPG (for the HUD)
     hudmap_vertices.append(vertex_coordinates)
     hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, fill_color, outline_color)
            
@@ -1085,9 +1066,9 @@ def user_notes(x):
     Note that you can also set custom Materials properties elsewhere in the script
     
     Texture (UV) mapping examples:
-    TexCoords=compute_tex_coords(mode="v")
-    TexCoords=compute_tex_coords(mode="r.V", repeat_x=4, repeat_y=2))
-    TexCoords=compute_tex_coords(mode="r.r", repeat_x=3, repeat_y=3, angle_degrees=(45, 45))) // unfinished
+    tex_coords = compute_tex_coords(mode = "v")
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 4, repeat_y = 2))
+    tex_coords = compute_tex_coords(mode = "r.r", repeat_x = 3, repeat_y = 3, angle_degrees = (45, 45))) // unfinished
     
     Allowed values are: 
     'H', 'horizontal', 'H.f', 'horizontal_flipped',
@@ -1118,7 +1099,7 @@ WATER = '#5d8096'
 R6_ROAD = '#414441'  
 GRASS_24 = '#396d18'
         
-# Start_Area
+# Start Area
 create_polygon(
     bound_number = 1,
     material_index = 0,
@@ -1133,9 +1114,9 @@ create_polygon(
 save_bms(
     texture_name = ["R6"],
     texture_darkness = [40,2,50,1],
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Grass_Area    
+# Grass Area    
 create_polygon(
 	bound_number = 2,
 	material_index = 87,
@@ -1148,9 +1129,9 @@ create_polygon(
 
 save_bms(
     texture_name = ["24_GRASS"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# No_Friction
+# No Friction (Snow)
 create_polygon(
 	bound_number = 3,
 	material_index = 98,
@@ -1164,9 +1145,9 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Wood_Area
+# Wood Area
 create_polygon(
 	bound_number = 4,
 	material_index = 0,
@@ -1179,9 +1160,9 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_WOOD"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Barricades_Area  
+# Barricade Area  
 create_polygon(
 	bound_number = 5,
 	material_index = 0,
@@ -1195,9 +1176,9 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_BARRICADE"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 50, repeat_y = 50))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 50, repeat_y = 50))
 
-# Water_Area
+# Water Area
 create_polygon(
 	bound_number = 6,
 	material_index = 91,
@@ -1210,7 +1191,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_WATER"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 # Hill
 create_polygon(
@@ -1226,7 +1207,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_WATER"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 100))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 100))
 
 # Wall "inside"
 create_polygon(
@@ -1236,31 +1217,56 @@ create_polygon(
         (-10.0, 0.0, -50.00),
         (-10.0, 15.0, -49.99),
         (10.0, 15.0, -49.99),
-        (10.0, 0.0, -50.00)], plane_normal= "inside")
+        (10.0, 0.0, -50.00)], wall_side = "inside")
 
 save_bms(
     texture_name = ["SNOW"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Angled Rectangle
+# Triangle I
 create_polygon(
     bound_number = 9,
     material_index = 0,
-    vertex_coordinates = [
-        (-50,0.1,60),
-        (-100.0,0.1,50),
-        (-100.0,0.1,10),
-        (-50,0.1,30)],
-plane_edges = [Vector3(*edge) for edge in [
-        (-0.37,0.93,46.42),
-        (1.00,-0.00,-100.00),
-        (0.20,-0.98,-68.64),
-        (-1.00,-0.00,50.00)]],
-    plane_normal = ("custom", [-0.00, 1.00, 0.00, -0.00]))
+    vertex_coordinates=[
+        (-130.0, 0.0, 70.0),
+        (-50.0, 0.0, 70.0),
+        (-50.0, 0.0, 0.0),
+        (-50.1, 0.0, 0.0)],
+        hud_fill = True, fill_color = '#ffffe0')
 
 save_bms(
-    texture_name = ["OT_MALL_BRICK"], 
-    TexCoords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    texture_name = ["OT_MALL_BRICK"],
+    tex_coords=compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+
+# Triangle II
+create_polygon(
+    bound_number = 11,
+    material_index = 0,
+    vertex_coordinates=[
+        (-50.0, 0.0, 70.0),
+        (-130.0, 0.0, 70.0),
+        (-50.0, 0.0, 140.0),
+        (-49.9, 0.0, 140.0)],
+        hud_fill = True, fill_color = '#ffffe0')
+
+save_bms(
+    texture_name = ["OT_MALL_BRICK"],
+    tex_coords=compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+
+# Diagonal Road I
+create_polygon(
+    bound_number = 12,
+    material_index = 0,
+    vertex_coordinates=[
+        (-50.0, 0.0, 130.0),
+        (-50.0, 0.0, 140.0),
+        (140.0, 0.0, 70.0),
+        (120.0, 0.0, 70.0)],
+        hud_fill = True, fill_color = GRASS_24)
+
+save_bms(
+    texture_name = ["24_GRASS"],
+    tex_coords=compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -1632,7 +1638,7 @@ def create_hudmap(show_label = False, plot_picture = False, export_jpg = False,
         fig, ax = plt.subplots()
         ax.set_facecolor(background_color)
 
-        hudmap_vertices = [sort_coordinates(polygon) for polygon in hudmap_vertices]
+        hudmap_vertices = [polygon for polygon in hudmap_vertices]
 
         #TODO: Enumeration should be based on the bound_number / cell_id 
         for i, polygon in enumerate(hudmap_vertices):
