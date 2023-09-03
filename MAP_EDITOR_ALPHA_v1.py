@@ -23,8 +23,8 @@
 import os
 import re
 import csv
+import bpy
 import math
-import glob
 import struct
 import shutil
 import random
@@ -34,45 +34,43 @@ import numpy as np
 import matplotlib.pyplot as plt                 
 import matplotlib.transforms as mtransforms
 from pathlib import Path  
-from collections import defaultdict
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
 
 
-#! SETUP I (mandatory)                          Control + F    "city=="  to jump to The City Creation section
+#! SETUP I (Names and directory)                Control + F    "city=="  to jump to The City Creation section
 city_name = "USER"                              # One word (no spaces)  --- name of the .ar file
-race_locale_name = "My First City"              # Can be multiple words --- name of the city in Race Locale Menu
+race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
 mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1560 is automatically copied to this folder)
 
 
-#* SETUP II (optional, Map Creation)
-play_game=True                  # boot the game immediately after the Map is created
-delete_shop=True                # delete the raw city files after the .ar file has been created
+#* SETUP II (Map Creation)
+play_game = True                # start the game immediately after the Map is created
+delete_shop = True              # delete the raw city files after the .ar file has been created
 
-set_facade=True                 # change to "True" if you want FACADES
-set_props=True                  # change to "True" if you want PROPS
+set_facade = True               # change to "True" if you want FACADES
+set_props = True                # change to "True" if you want PROPS
 
-set_anim=True                   # change to "True" if you want ANIM (plane and eltrain)
-set_bridges=False               # change to "True" if you want BRIDGES // (currently broken)
+set_anim = True                 # change to "True" if you want ANIM (plane and eltrain)
+set_bridges = False             # change to "True" if you want BRIDGES // (unfinished)
 
-ai_map=True                     # change both to "True" if you want AI paths
-ai_streets=True                 # change both to "True" if you want AI paths
+ai_map = True                   # change both to "True" if you want AI paths // (do not change this to "False")
+ai_streets = True               # change both to "True" if you want AI paths // (do not change this to "False")
 
-randomize_textures=False        # change to "True" if you want randomize all textures in your Map (see below for a selection)
-randomize_texture_names=        ["T_WATER", "T_GRASS", "T_WOOD", "IND_WALL", "EXPLOSION", "OT_BAR_BRICK", "R4", "R6", "T_WALL", "FXLTGLOW"]
+random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
+randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 
-debug_collision=False           # change to "True" if you want a BND/collision Debug text file // (currently broken)
-debug_facade=False              # change to "True" if you want a Facade Debug text file
-debug_props=False               # change to "True" if you want a BNG Debug text file
-debug_hud=False                 # change to "True" if you want a HUD Debug jpg file
-DEBUG_BMS=False                 # change to "True" if you want a BMS Debug text files (in directory "DEBUG_BMS")
+debug_collision = False         # change to "True" if you want a BND/collision Debug text file // (currently broken)
+debug_facade = False            # change to "True" if you want a Facade Debug text file
+debug_props = False             # change to "True" if you want a BNG Debug text file
+DEBUG_BMS = False               # change to "True" if you want a BMS Debug text files (in directory "DEBUG_BMS")
 
+# HUD
+shape_outline_color = 'Cyan'    # change to any other color, if you don't want any color, set to 'None'         
+debug_hud = False               # change to "True" if you want a HUD Debug jpg file
+debug_hud_bound_id = True       # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
-#* SETUP II (optional, Blender)
-export_blender=False            # change to "True" if you want to export the Map vertices to Blender
-run_blender=False               # change to "True" if you want to run Blender after Map vertices have been exported
-bnd_blender_data = "SCRIPT_EXPORT_vertices.txt" 
-blender_exe = r"C:\\Program Files\Blender Foundation\Blender 3.3\blender.exe" # change if necessary
-
+# Blender
+# textures_directory = r"C:\Users\robin\Desktop\Blender_Script\DDS" // (under construction)  
 
 #* SETUP III (optional, Race Editor)
 # Weather and Time constants
@@ -193,28 +191,27 @@ def to_do_list(x):
             DEBUG --> fix BND (collision) debug
 
             ? ADD SHORT-TERM:
-            SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides")
+            SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides") & improve general wall setting
             
             FCD --> test and document flag behavior
             FCD --> test and document Sides and Scales behavior
             FCD --> screenshot each vanilla facade for user reference
             FCD --> implement diagonal facades
             
-            SCRIPT --> disable need for "hud_fill = True" in create_polygon()
-            
-            PROPS --> screenshot each vanilla prop for user reference
-            
+            SCRIPT --> update Installation Instructions (e.g. guide for VS Code and Blender interaction)
+                                
             ? ADD LONG-TERM:
+            SHAPES --> triangles with 3 vertices causes various issues
+            
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             PROPS --> investigate creating custom texturized props from scatch
             
-            RACES --> customize AIMAP data for each race
-            RACES --> increase the maximum number of races per type (current max is 15) // see racedata.h
+            RACES --> customize AIMAP data for each race 
             
             TEXTURES --> will other textures also "drift" if they contain the string "T_WATER{}"?
+            TEXTURES --> evaluate 'rotating_repeating' and 'custom'
                        
             HUDMAP --> correctly align the HUD map in the game
-            HUDMAP --> match the debug JPG to the bound number
 
             OPEN1560 --> add custom updated Open1560
             """               
@@ -744,6 +741,8 @@ MOVE = shutil.move
 vertices = []
 hudmap_vertices = []
 hudmap_properties = {}
+polygons_data = []
+stored_texture_names = []
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0], 0)
 polys = [poly_filler]
 
@@ -798,7 +797,7 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
     elif mode == "r.H.f" or mode == "repeating_horizontal_flipped":
         return [repeat_x, 0, 0, 0, 0, repeat_y, repeat_x, repeat_y]
     
-    # Check
+    #TODO
     elif mode == "r.r" or mode == "rotating_repeating":
         return tex_coords_rotating_repeating(repeat_x, repeat_y, angle_degrees)
     elif mode == "custom":
@@ -817,22 +816,24 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
                          'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
                          'custom', and 'combined'
                          """))
-        
+           
 # SAVE BMS
 def save_bms(
-    texture_name, texture_indices=[1], vertices = vertices, polys = polys, 
-    texture_darkness = None, tex_coords = None, exclude = False, tex_coord_mode = None, 
-    tex_coord_params = None, randomize_textures = randomize_textures, 
-    randomize_texture_names = randomize_texture_names):
+    texture_name, texture_indices = [1], vertices = vertices, polys = polys, 
+    texture_darkness = None, tex_coords = None, random_texture_exclude = False, 
+    tex_coord_mode = None, tex_coord_params = None, 
+    randomize_textures = randomize_textures, random_textures = random_textures):
         
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
     
-    # Randomize Textures if boolean is set to True (and the polygon is not excluded)
-    if randomize_textures and not exclude:
-        texture_name = [random.choice(randomize_texture_names)]
+    # Randomize Textures
+    if randomize_textures and not random_texture_exclude:
+        texture_name = [random.choice(random_textures)]
+        
+    stored_texture_names.append(texture_name[0])
     
-    # Set correct Water BMS
+    # Create correct BMS file for Water textures
     if any(name.startswith("T_WATER") for name in texture_name):
         bms_filename = "CULL{:02d}_A2.bms".format(bound_number)
     else:
@@ -864,13 +865,19 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
     coordinates = [coord for shape in shapes for coord in shape]
     vertex_count = len(coordinates)
     adjunct_count = len(coordinates)
-    surface_count = len(texture_indices)            
-    indices_count = surface_count * 4
+    surface_count = len(texture_indices)   
+    
+    if len(coordinates) == 4:
+        indices_count = surface_count * 4
+    elif len(coordinates) == 3:
+        indices_count = surface_count * 3
+                 
     enclosed_shape = list(range(adjunct_count))
 
     # Texture Darkness and TexCoords        
     if texture_darkness is None:
         texture_darkness = [2] * adjunct_count # 2 is default texture brightness
+        
     if tex_coords is None:
         tex_coords = [0.0 for _ in range(adjunct_count * 2)]
 
@@ -934,7 +941,7 @@ def compute_plane_edgenormals(p1, p2, p3):
 
 def calculate_edges(vertex_coordinates):
     vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
-    planeN, planeD = compute_plane_edgenormals(*vertices[:3]) 
+    planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
 
     num_verts = len(vertices)
     plane_edges = []
@@ -977,29 +984,35 @@ def calculate_edges(vertex_coordinates):
         plane_edges[i][:2] /= norm_val
         plane_edges[i][2] /= norm_val
 
-    # Convert back to Vector3
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
     
     return edges
 
 def create_polygon(
-    bound_number, material_index, vertex_coordinates, 
-    plane_edges = None, flags = None, wall_side = None,
-    vertices = vertices, polys = polys, 
-    cell_type = 0, hud_fill = False, fill_color = None, outline_color = 'cyan'):
+    bound_number, vertex_coordinates, 
+    vertices = vertices, polys = polys,
+    material_index = 0, cell_type = 0, 
+    flags = None, plane_edges = None, wall_side = None,
+    hud_color = None, shape_outline_color = shape_outline_color):
 
     # Vertex indices
     base_vertex_index = len(vertices)
        
     # Flags
     if flags is None:
-        flags = 6 if len(vertex_coordinates) == 4 else (3 if len(vertex_coordinates) == 3 else None)
-        if flags is None:
+        if len(vertex_coordinates) == 4:
+            flags = 6
+        elif len(vertex_coordinates) == 3:
+            flags = 3
+        else:
             raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
-
+        
     new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
     vertices.extend(new_vertices)
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
+    
+    # if len(new_vertices) == 3:
+    #    vert_indices.append(0)
     
     # Plane Edges    
     if plane_edges is None:
@@ -1014,13 +1027,14 @@ def create_polygon(
             max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
             abs(max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates)) <= 0.15):
 
+            
             if wall_side == "outside":
                 corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
             elif wall_side == "inside":
                 corners = [0, 0, 1, -max(coord[2] for coord in vertex_coordinates)]
             
             plane_n, plane_d = corners[:3], corners[3]
-
+            
         # WALL with varying Z and Y coordinates                               
         elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
               max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
@@ -1041,10 +1055,83 @@ def create_polygon(
     # Finalize Polygon
     poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d, cell_type)
     polys.append(poly)
-    
+        
     # Create JPG (for the HUD)
+    hud_fill = hud_color is not None
     hudmap_vertices.append(vertex_coordinates)
-    hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, fill_color, outline_color)
+    hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, hud_color, shape_outline_color, str(bound_number))
+    
+    # Store the polygon data (for Blender)
+    polygon_info = {
+        "vertex_coordinates": vertex_coordinates,
+        "bound_number": bound_number,
+        "material_index": material_index,
+    }
+    polygons_data.append(polygon_info)
+    
+def apply_texture_to_object(obj, texture_path):
+    mat = bpy.data.materials.new(name = "DDS_Material")
+    obj.data.materials.append(mat)
+    obj.active_material = mat
+    
+    # Enable 'Use nodes':
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+    
+    # Clear default nodes
+    for node in nodes:
+        nodes.remove(node)
+
+    # Add a diffuse shader and connect the texture to it:
+    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
+    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+
+    # Load texture
+    texture_node.image = bpy.data.images.load(texture_path)
+
+    links = mat.node_tree.links
+    link = links.new
+    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+
+    # Add the shader to the material's surface
+    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+    
+    # UV unwrap the object (simple version)
+    bpy.ops.object.select_all(action='DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.object.editmode_toggle()
+    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.uv.smart_project()
+    bpy.ops.object.editmode_toggle()
+    
+# Create Meshes from Coordinates using 'polygon_data'
+def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
+    coords = polygon_data["vertex_coordinates"]
+    name = f"P{polygon_data['bound_number']}_M{polygon_data['material_index']}"
+
+    edges = []
+    faces = [range(len(coords))]
+
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(name, mesh)
+
+    bpy.context.collection.objects.link(obj)
+
+    mesh.from_pydata(coords, edges, faces)
+    mesh.update()
+
+    if textures_directory:
+        apply_texture_to_object(obj, textures_directory)
+
+    return obj        
+        
+def create_blender_meshes():
+    texture_paths = [os.path.join(textures_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+
+    for polygon, texture_path in zip(polygons_data, texture_paths):
+        create_mesh_from_polygon_data(polygon, texture_path)
            
 ################################################################################################################               
 ################################################################################################################ 
@@ -1086,13 +1173,19 @@ def user_notes(x):
     Roads: 201-859
     Intersections: 860+
     """
+    
+# Material types
+GRASS_MTL = 87
+WATER_MTL = 91
+CUSTOM_NO_FRIC_MTL = 98 
  
 # Cell types
 TUNNEL = 1
 INDOORS = 2
+WATER_DRIFT = 4     # only works with 'T_WATER' textures
 NO_SKIDS = 200 
 
-# HUD map colors 
+# HUD map colors (feel free to add more)
 WOOD = '#7b5931'
 SNOW = '#cdcecd'
 WATER = '#5d8096' 
@@ -1102,14 +1195,12 @@ GRASS_24 = '#396d18'
 # Start Area
 create_polygon(
     bound_number = 1,
-    material_index = 0,
-    cell_type = TUNNEL,
     vertex_coordinates = [
         (-50.0, 0.0, 70.0),
         (50.0, 0.0, 70.0),
         (50.0, 0.0, -70.0),
         (-50.0, 0.0, -70.0)],
-        hud_fill = True, fill_color = R6_ROAD)
+        hud_color = R6_ROAD)
 
 save_bms(
     texture_name = ["R6"],
@@ -1119,29 +1210,29 @@ save_bms(
 # Grass Area    
 create_polygon(
 	bound_number = 2,
-	material_index = 87,
+	material_index = GRASS_MTL,
 	vertex_coordinates = [
 		(-50.0, 0.0, -70.0),
 		(50.0, 0.0, -70.0),
 		(50.0, 0.0, -140.0),
 		(-50.0, 0.0, -140.0)],
-        hud_fill = True, fill_color = GRASS_24)
+        hud_color = GRASS_24)
 
 save_bms(
     texture_name = ["24_GRASS"], 
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# No Friction (Snow)
+# Snow Area (no friction)
 create_polygon(
 	bound_number = 3,
-	material_index = 98,
+	material_index = CUSTOM_NO_FRIC_MTL,
     cell_type = NO_SKIDS,
 	vertex_coordinates = [
 		(-50.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0),
 		(50.0, 0.0, -210.0),
 		(-50.0, 0.0, -210.0)],
-         hud_fill = True, fill_color = SNOW)
+         hud_color = SNOW)
 
 save_bms(
     texture_name = ["SNOW"], 
@@ -1150,13 +1241,12 @@ save_bms(
 # Wood Area
 create_polygon(
 	bound_number = 4,
-	material_index = 0,
 	vertex_coordinates = [
 		(50.0, 0.0, 70.0),
 		(140.0, 0.0, 70.0),
 		(140.0, 0.0, -70.0),
 		(50.0, 0.0, -70.0)],
-        hud_fill = True, fill_color = WOOD)
+        hud_color = WOOD)
 
 save_bms(
     texture_name = ["T_WOOD"], 
@@ -1165,14 +1255,13 @@ save_bms(
 # Barricade Area  
 create_polygon(
 	bound_number = 5,
-	material_index = 0,
     cell_type = TUNNEL,
 	vertex_coordinates = [
 		(50.0, 0.0, -70.0),
 		(140.0, 0.0, -70.0),
 		(140.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0)],
-        hud_fill = True, fill_color = '#af0000')
+        hud_color = '#af0000')
 
 save_bms(
     texture_name = ["T_BARRICADE"], 
@@ -1181,13 +1270,14 @@ save_bms(
 # Water Area
 create_polygon(
 	bound_number = 6,
-	material_index = 91,
+    cell_type = WATER_DRIFT,
+	material_index = WATER_MTL,
 	vertex_coordinates = [
 		(50.0, 0.0, -140.0),
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0)],
-        hud_fill = True, fill_color = WATER)    
+        hud_color = WATER)    
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1196,14 +1286,13 @@ save_bms(
 # Hill
 create_polygon(
 	bound_number = 7,
-	material_index = 0,
-    cell_type = NO_SKIDS,
+    cell_type = WATER_DRIFT,
 	vertex_coordinates = [
 		(-50.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
 		(-50.0, 300.0, -1000.0)],
-        hud_fill = True, fill_color = WATER)
+        hud_color = WATER)
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1212,7 +1301,6 @@ save_bms(
 # Wall "inside"
 create_polygon(
     bound_number = 8,
-    material_index = 0,
     vertex_coordinates = [
         (-10.0, 0.0, -50.00),
         (-10.0, 15.0, -49.99),
@@ -1223,50 +1311,49 @@ save_bms(
     texture_name = ["SNOW"], 
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Triangle I
-create_polygon(
-    bound_number = 9,
-    material_index = 0,
-    vertex_coordinates=[
-        (-130.0, 0.0, 70.0),
-        (-50.0, 0.0, 70.0),
-        (-50.0, 0.0, 0.0),
-        (-50.1, 0.0, 0.0)],
-        hud_fill = True, fill_color = '#ffffe0')
-
-save_bms(
-    texture_name = ["OT_MALL_BRICK"],
-    tex_coords=compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
-
-# Triangle II
-create_polygon(
-    bound_number = 11,
-    material_index = 0,
-    vertex_coordinates=[
-        (-50.0, 0.0, 70.0),
-        (-130.0, 0.0, 70.0),
-        (-50.0, 0.0, 140.0),
-        (-49.9, 0.0, 140.0)],
-        hud_fill = True, fill_color = '#ffffe0')
-
-save_bms(
-    texture_name = ["OT_MALL_BRICK"],
-    tex_coords=compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
-
 # Diagonal Road I
 create_polygon(
-    bound_number = 12,
-    material_index = 0,
-    vertex_coordinates=[
+    bound_number = 9,
+    vertex_coordinates = [
         (-50.0, 0.0, 130.0),
         (-50.0, 0.0, 140.0),
         (140.0, 0.0, 70.0),
         (120.0, 0.0, 70.0)],
-        hud_fill = True, fill_color = GRASS_24)
+        hud_color = GRASS_24)
 
 save_bms(
     texture_name = ["24_GRASS"],
     tex_coords=compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+
+# Triangle I
+create_polygon(
+    bound_number = 50,
+    cell_type = NO_SKIDS,
+    vertex_coordinates = [
+        (-130.0, 0.0, 70.0),
+        (-50.0, 0.0, 70.0),
+        (-50.0, 7.0, 0.0),
+        (-50.1, 7.0, 0.0)],
+        hud_color = '#ffffe0')
+
+save_bms(
+    texture_name = ["OT_MALL_BRICK"],
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+
+# Triangle II
+create_polygon(
+    bound_number = 51,
+    cell_type = NO_SKIDS,
+    vertex_coordinates = [
+        (-50.0, 0.0, 70.0),
+        (-130.0, 0.0, 70.0),
+        (-50.0, 0.0, 140.0),
+        (-49.9, 0.0, 140.0)],
+        hud_color = '#ffffe0')
+
+save_bms(
+    texture_name = ["OT_MALL_BRICK"],
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -1417,16 +1504,16 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
     if num_checkpoint > len(race_prefixes):
         raise ValueError("Number of Checkpoint races cannot be more than 12")
     
-    for race_type, race_description, prefix, num_files, race_waypoints in [("BLITZ", "Blitz", "ABL", num_blitz, blitz_races), 
-                                                                           ("CIRCUIT", "Circuit", "CIR", num_circuit, circuit_races), 
-                                                                           ("RACE", "Checkpoint", "RACE", num_checkpoint, checkpoint_races)]:
+    for race_type, race_desc, prefix, num_files, race_waypoints in [("BLITZ", "Blitz", "ABL", num_blitz, blitz_races), 
+                                                                    ("CIRCUIT", "Circuit", "CIR", num_circuit, circuit_races), 
+                                                                    ("RACE", "Checkpoint", "RACE", num_checkpoint, checkpoint_races)]:
         
         for i in range(num_files):
             file_name = f"{race_type}{i}WAYPOINTS.CSV"
 
             with open(file_name, "w") as f:
                 ordinal = lambda n: "%d%s" % (n, "tsnrhtdd"[((n//10%10!=1)*(n%10<4)*n%10)::4])
-                f.write(f"# This is your {ordinal(i)} {race_description} race Waypoint file\n")
+                f.write(f"# This is your {ordinal(i)} {race_desc} race Waypoint file\n")
 
                 for waypoint in race_waypoints[i][:-1]:  # Exclude the last item, which are other parameters
                     waypoint_line = ', '.join(map(str, waypoint))
@@ -1437,7 +1524,7 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
 
         # Create MM_DATA files
         mm_data_csv = f"MM{race_type}DATA.CSV"
-        mm_data_comment_line = "Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents,       Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n"
+        mm_data_comment_line = "Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n"
         car_type_na, difficulty_na, opponent_na, num_laps_checkpoint_na, time_limit_na = 0, 1, 99, 99, 99
 
         with open(mm_data_csv, "w") as f:
@@ -1610,68 +1697,64 @@ def create_ar(city_name, destination_folder, delete_shop = False) -> None:
             shutil.rmtree(SHOP)
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
-                    
-# Create a JPG of all the Polygon shapes
-def create_hudmap(show_label = False, plot_picture = False, export_jpg = False, 
-                  x_offset = 0, y_offset = 0, line_width = 1, 
-                  background_color = 'black', debug_hud = False) -> None:
+
+def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, 
+                  export_jpg = True, x_offset = 0, y_offset = 0, line_width = 1, background_color = 'black') -> None:
 
     global hudmap_vertices
     global hudmap_properties
     output_bmp_folder = SHOP / 'BMP16'
 
-    def draw_polygon(ax, polygon, outline_color, 
-                     label = None, add_label = False, hud_fill = False, fill_color = None) -> None:
+    def draw_polygon(ax, polygon, shape_outline_color, 
+                     label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
         
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
-        xs, ys = xs + (xs[0],), ys + (ys[0],)
-        ax.plot(xs, ys, color=outline_color, linewidth=line_width)
+        xs, ys = xs + (xs[0],), ys + (ys[0],)  # the commas after [0] cannot be removed
+        
+        if shape_outline_color:
+            ax.plot(xs, ys, color = shape_outline_color, linewidth = line_width)
         
         if hud_fill:
-            ax.fill(xs, ys, fill_color)
+            ax.fill(xs, ys, hud_color)
             
         if add_label: 
             center = calculate_center_tuples(polygon)
             ax.text(center[0], center[2], label, color = 'white', ha = 'center', va = 'center', fontsize = 4.0)
 
-    if plot_picture or export_jpg:
-        fig, ax = plt.subplots()
+    if export_jpg:
+        # Regular Export (320 and 640 versions)
+        _, ax = plt.subplots()
         ax.set_facecolor(background_color)
-
-        hudmap_vertices = [polygon for polygon in hudmap_vertices]
-
-        #TODO: Enumeration should be based on the bound_number / cell_id 
+        
         for i, polygon in enumerate(hudmap_vertices):
-            hud_fill, fill_color, outline_color = hudmap_properties.get(i, (False, None, 'cyan'))
-            
-            draw_polygon(ax, polygon, outline_color, label = f'{i+1}' if show_label else None, 
-                         add_label = False, hud_fill = hud_fill, fill_color = fill_color)
+            hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
+            draw_polygon(ax, polygon, shape_outline_color, add_label = False, hud_fill = hud_fill, hud_color = hud_color)
             
         ax.set_aspect('equal', 'box')
-        
-        if show_label:
-            plt.legend()
+        ax.axis('off')
+        trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
+        for line in ax.lines:
+            line.set_transform(trans)
 
-        if plot_picture:
-            plt.show()
-        
-        if export_jpg:
-            ax.axis('off')
-            trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
-            for line in ax.lines:
-                line.set_transform(trans)
-                      
-            # Save JPG 640 and 320 Pictures            
-            plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.1, facecolor = background_color)
-            plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.1, facecolor = background_color)
+        # Save JPG 640 and 320 Pictures            
+        plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.1, facecolor = background_color)
+        plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.1, facecolor = background_color)
 
-            if debug_hud:
-                ax.cla()
-                ax.set_facecolor(background_color)
-                for i, polygon in enumerate(hudmap_vertices):
-                    draw_polygon(ax, polygon, color = f'C{i}', label = f'{i+1}' if show_label else None, add_label = True)
-                    
-                plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.01, facecolor = 'white')
+    # Debug Export
+    if debug_hud:
+        _, ax_debug = plt.subplots()
+        ax_debug.set_facecolor('black')
+
+        for i, polygon in enumerate(hudmap_vertices):
+            hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
+            draw_polygon(ax_debug, polygon, shape_outline_color, 
+                         label = bound_label if debug_hud_bound_id else None, 
+                         add_label = True, hud_fill = hud_fill, hud_color = hud_color)
+
+        ax_debug.set_aspect('equal', 'box')
+        ax_debug.axis('off')
+                
+        plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.01, facecolor = 'black')
 
 # Create EXT file            
 def create_ext(city_name, polygonz):
@@ -1684,7 +1767,7 @@ def create_ext(city_name, polygonz):
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
                
 # Create Bridges       
-def create_bridges(all_bridges, set_bridges = False):
+def create_bridges(all_bridges, set_bridges = set_bridges):
     for bridge in all_bridges:
         bridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
         
@@ -1738,7 +1821,8 @@ DrawBridge{bridge_number}"""
                 if bridge_data is not None:
                     f.write(bridge_data)
                      
-#!########### Modified Code by 0x1F9F1 Start ############                       
+#!########### Modified Code by 0x1F9F1 Start ############      
+                 
 MIN_Y = -20
 MAX_Y = 50
 COLINEAR_FUDGE = 0.00001
@@ -1960,7 +2044,7 @@ def prepare_ptl(polys, vertices):
 
 # Create PTL
 def create_ptl(city_name, polys, vertices):
-    cells, portals = prepare_ptl(polys, vertices)
+    _, portals = prepare_ptl(polys, vertices)
 
     with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
         
@@ -1980,6 +2064,7 @@ def create_ptl(city_name, polys, vertices):
 
             Vector3(v1.x, 0, v1.y).write(f)
             Vector3(v2.x, 0, v2.y).write(f)
+            
 #!########### Modified Code by 0x1F9F1 / Brick End ############                    
                     
                                
@@ -2448,60 +2533,6 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, 
             with open(debug_filename, mode = 'w', encoding = 'utf-8') as f:
                 for facade in facades:
                     f.write(str(facade))
-
-###################################################################################################################
-################################################################################################################### 
-
-# Export Vertices for Blender               
-def export_vertices_for_blender(input_bnd: str, output_file_name: str, export_blender: bool = False, run_blender: bool = False) -> None:
-    if export_blender: 
-        pattern_flags = r"Flags: (\d+)"
-        pattern_coords = r"Vertices Coordinates: \[{.*?}\]"
-
-        def all_identical(coords):
-            return all(coord == coords[0] for coord in coords)
-
-        flag_counter = defaultdict(int)
-
-        with open(output_file_name, "w") as output_file:
-            for txt_file in glob.glob(input_bnd):
-                
-                with open(txt_file, "r") as input_file:
-                    lines = input_file.readlines()
-
-                    flag_value = None
-
-                    for i, line in enumerate(lines):
-                        match_flags = re.search(pattern_flags, line)
-                        if match_flags:
-                            flag_value = int(match_flags.group(1))
-                        else:
-                            match_coords = re.search(pattern_coords, line)
-                            if match_coords:
-                                coords = re.findall(r"{.*?}", match_coords.group(0))
-
-                                if flag_value in (0, 1, 2, 8, 9, 10):
-                                    coords = coords[:3]
-                                elif flag_value in (4, 5, 6):
-                                    coords = coords[:4]
-                                else:
-                                    flag_counter[flag_value] += 1
-                                    flag_value = None
-                                    continue
-
-                                if not all_identical(coords):
-                                    new_line = f"Vertices Coordinates: {', '.join(coords)}"
-                                    output_file.write(new_line + "\n")
-                                flag_value = None    
-                                
-        if run_blender:                  
-            for file in os.listdir():
-                if file.endswith(".blend"):
-                    print(f"Opening {file} with Blender...")
-                    subprocess.run([blender_exe, file])
-                    break
-            else:
-                print("No Blender file found in the current directory.")
                 
 ###################################################################################################################
 ###################################################################################################################  
@@ -2560,22 +2591,24 @@ fcd_list = [fcd_one]
 # Stop lights will only show if the Intersection_type is "stoplight"
 # Each lane will automatically have a revered lane added
 
+#! Do not delete this Street
 street_0 = {
     "street_name": "path_filler",
     "vertices": [
         (0,0,0),    # keep this
-        (30,0,30)]} # keep this
- 
+        (30,0,30)]} # starting position in Cruise mode
+
+#! Do not delete this Street
 street_1 = {
      "street_name": "path_1",
      "vertices": [
-         #! for unknown reasons, the first line below is now the starting position in Cruise mode, but keep "street_0" just in case
          (0.0, 0.0, 15.0),
          (10.0, 0.0, -20.0),
          (10.0, 0.0, -40.0),
          (10.0, 0.0, -60.0),
          (10.0, 0.0, -80.0)]}
 
+#! Do not delete this Street
 street_2 = {
     "street_name": "path_2",
     "lanes": {
@@ -2646,10 +2679,10 @@ prop_2 = {'offset_x': 60,
           'face_y': 0.0, 
           'face_z': -40000}
 
-#! Put your non-randomized props here
+# Put your non-randomized props here
 prop_list = [prop_1, prop_2] 
 
-#! Put your randomized props here (you will add them to a list "random_parameters")
+# Put your randomized props here (you will add them to a list "random_parameters")
 prop_3 = {'offset_y': 0.0,
           'name': ["tp_tree10m"]*20}
 
@@ -2714,9 +2747,9 @@ set_material_index = 98
 
 # See: /Useful documents/PHYSICS.DB_extracted.txt for more information
 new_properties = {
-    "friction": 0.01, 
-    "elasticity": 0.01, 
-    "drag": 0.01}
+    "friction": 0.11, 
+    "elasticity": 0.11, 
+    "drag": 0.11}
 
 ################################################################################################################   
 
@@ -2758,9 +2791,7 @@ create_anim(city_name, anim_data, set_anim)
 create_bridges(bridges, set_bridges) 
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facade)
 
-export_vertices_for_blender(f"{city_name}_HITID_debug.txt", bnd_blender_data, export_blender, run_blender)     
-
-create_hudmap(debug_hud = debug_hud, show_label = False, plot_picture = False, export_jpg = True, 
+create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
               x_offset = -0.0, y_offset = -0.0, line_width = 0.7, 
               background_color = 'black')
 
@@ -2773,3 +2804,5 @@ print("Succesfully created " + f"{race_locale_name}!")
 print("\n===============================================\n")
 
 start_game(mm1_folder, play_game)
+
+# create_blender_meshes()
