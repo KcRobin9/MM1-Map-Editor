@@ -59,13 +59,14 @@ ai_streets = True               # change both to "True" if you want AI paths // 
 random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 
-debug_collision = False         # change to "True" if you want a BND / collision Debug text file // (unfinished)
-debug_facade = False            # change to "True" if you want a Facade Debug text file
+# Debug
+debug_bounds = False            # change to "True" if you want a BND Debug text file
 debug_props = False             # change to "True" if you want a BNG Debug text file
-DEBUG_BMS = False               # change to "True" if you want a BMS Debug text files (in directory "DEBUG_BMS")
+debug_facades = False           # change to "True" if you want a FCD Debug text file
+DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in directory "_Debug_BMS")
 
 # HUD
-shape_outline_color = 'Red'     # change to any other color, if you don't want any color, set to 'None'         
+shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file
 debug_hud_bound_id = True       # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
@@ -187,8 +188,6 @@ def to_do_list(x):
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game
             TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
             
-            DEBUG --> fix BND (collision) debug
-
             ? ADD SHORT-TERM:
             SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides") & improve general wall setting
             
@@ -470,21 +469,21 @@ class Polygon:
         self.plane_n.write(f)
         write_pack(f, '<f', self.plane_d)
    
-    def __repr__(self, round_values = True):
-        vertices_coordinates = [BND.vertices[index] for index in self.vert_indices]
+    def __repr__(self, bnd_instance, round_values = True):
+        vertices_coordinates = [bnd_instance.vertices[index] for index in self.vert_indices]
         plane_d_str = f'{round(self.plane_d, 2):.2f}' if round_values else f'{self.plane_d:f}'
-
-        return f'''
-Polygon
-Cell ID: {self.cell_id}
-Material Index: {self.mtl_index}
-Flags: {self.flags}
-Vertices Indices: {self.vert_indices}
-Vertices Coordinates: {vertices_coordinates}
-Plane Edges: {self.plane_edges}
-Plane N: {self.plane_n}
-Plane D: [{plane_d_str}]
-        '''
+        
+        return (
+            f"Polygon\n"
+            f"Bound Number: {self.cell_id}\n"
+            f"Material Index: {self.mtl_index}\n"
+            f"Flags: {self.flags}\n"
+            f"Vertices Indices: {self.vert_indices}\n"
+            f"Vertices Coordinates: {vertices_coordinates}\n"
+            f"Plane Edges: {self.plane_edges}\n"
+            f"Plane N: {self.plane_n}\n"
+            f"Plane D: [{plane_d_str}]\n"
+        )
         
         
 # BND CLASS
@@ -587,37 +586,38 @@ class BND:
         for poly in self.polys:           
             poly.to_file(f)              
                 
-    def write_bnd_debug(self, file_name: str, debug_collision: bool) -> None:
-        if debug_collision:
+    def write_bnd_debug(self, file_name: str, debug_bounds: bool) -> None:
+        if debug_bounds:
             with open(file_name, 'w') as f:
                 f.write(str(self))
                 
     def __repr__(self) -> str:
-        return f'''
-BND
-Magic: {self.magic}
-Offset: {self.offset}
-XDim: {self.x_dim}
-YDim: {self.y_dim}
-ZDim: {self.z_dim}
-Center: {self.center}
-Radius: {self.radius}
-Radius_sqr: {self.radius_sqr}
-BBMin: {self.bb_min}
-BBMax: {self.bb_max}
-Num Verts: {self.num_verts}
-Num Polys: {self.num_polys}
-Num Hot Verts1: {self.num_hot_verts1}
-Num Hot Verts2: {self.num_hot_verts2}
-Num Edges: {self.num_edges}
-XScale: {self.x_scale}
-ZScale: {self.z_scale}
-Num Indices: {self.num_indices}
-Height Scale: {self.height_scale}
-Cache Size: {self.cache_size}
-Vertices: {self.vertices}
-Polys: {self.polys}
-    '''
+        polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
+        return (
+            f"BND\n"
+            f"Magic: 2DNB\n"
+            f"Offset: {self.offset}\n"
+            f"XDim: {self.x_dim}\n"
+            f"YDim: {self.y_dim}\n"
+            f"ZDim: {self.z_dim}\n"
+            f"Center: {self.center}\n"
+            f"Radius: {self.radius:.2f}\n" 
+            f"Radius_sqr: {self.radius_sqr:.2f}\n"  
+            f"BBMin: {self.bb_min}\n"
+            f"BBMax: {self.bb_max}\n"
+            f"Num Verts: {self.num_verts}\n"
+            f"Num Polys: {self.num_polys}\n"
+            f"Num Hot Verts1: {self.num_hot_verts1}\n"
+            f"Num Hot Verts2: {self.num_hot_verts2}\n"
+            f"Num Edges: {self.num_edges}\n"
+            f"XScale: {self.x_scale}\n"
+            f"ZScale: {self.z_scale}\n"
+            f"Num Indices: {self.num_indices}\n"
+            f"Height Scale: {self.height_scale}\n"
+            f"Cache Size: {self.cache_size}\n\n"
+            f"Vertices:\n{self.vertices}\n\n"
+            f"======= Polys =======\n\n{polys_representation}\n"
+        )
 
 
 # BMS CLASS
@@ -709,7 +709,7 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                                     
-    def write_bms_debug(self, file_name: str, debug_dir = "DEBUG_BMS") -> None:
+    def write_bms_debug(self, file_name: str, debug_dir = "_Debug_BMS") -> None:
         Path(debug_dir).mkdir(parents = True, exist_ok = True)
 
         if DEBUG_BMS:
@@ -1401,12 +1401,12 @@ save_bms(
 ################################################################################################################ 
 
 # Create BND file
-def create_bnd(vertices, polys, city_name, debug_collision):
+def create_bnd(vertices, polys, city_name, debug_bounds):
     bnd = initialize_bnd(vertices, polys)
     
     with open(f"{city_name}_HITID.BND", "wb") as f:
         bnd.write_bnd(f)
-        bnd.write_bnd_debug(f"{city_name}_HITID_debug.txt", debug_collision) #! broken
+        bnd.write_bnd_debug(f"{city_name}_HITID_debug.txt", debug_bounds) 
   
 # Create SHOP and FOLDER structure   
 def create_folders(city_name):
@@ -2538,7 +2538,7 @@ def get_coord_from_tuple(coord_tuple, axis):
     axis_dict = {'x': 0, 'y': 1, 'z': 2}
     return coord_tuple[axis_dict[axis]]  
     
-def create_fcd(filename, facade_params, target_fcd_dir, set_facade = False, debug_facade = False):
+def create_fcd(filename, facade_params, target_fcd_dir, set_facade = False, debug_facades = False):
     if set_facade:
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
@@ -2575,7 +2575,7 @@ def create_fcd(filename, facade_params, target_fcd_dir, set_facade = False, debu
 
         MOVE(filename, target_fcd_dir / filename)
 
-        if debug_facade:
+        if debug_facades:
             debug_filename = filename.replace('.FCD', '_FCD_debug.txt')
             with open(debug_filename, mode = 'w', encoding = 'utf-8') as f:
                 for facade in facades:
@@ -2803,7 +2803,7 @@ print("Generating " + f"{race_locale_name}...")
 print("\n===============================================\n")
 
 create_folders(city_name)
-create_bnd(vertices, polys, city_name, debug_collision)
+create_bnd(vertices, polys, city_name, debug_bounds)
 distribute_files(city_name, f"{city_name}_HITID.BND", 
                            len(blitz_races), blitz_races, len(circuit_races), 
                            circuit_races, len(checkpoint_races), checkpoint_races, all_races_files = True)
@@ -2828,7 +2828,7 @@ move_custom_textures()
 create_ext(city_name, hudmap_vertices) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
-create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facade)
+create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
 
 create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
               x_offset = -0.0, y_offset = -0.0, line_width = 0.7, 
