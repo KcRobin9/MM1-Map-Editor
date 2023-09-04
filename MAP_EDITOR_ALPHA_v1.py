@@ -59,7 +59,7 @@ ai_streets = True               # change both to "True" if you want AI paths // 
 random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 
-debug_collision = False         # change to "True" if you want a BND/collision Debug text file // (currently broken)
+debug_collision = False         # change to "True" if you want a BND / collision Debug text file // (unfinished)
 debug_facade = False            # change to "True" if you want a Facade Debug text file
 debug_props = False             # change to "True" if you want a BNG Debug text file
 DEBUG_BMS = False               # change to "True" if you want a BMS Debug text files (in directory "DEBUG_BMS")
@@ -951,7 +951,7 @@ def compute_plane_edgenormals(p1, p2, p3): # only 3 vertices are being used
 
     return planeN, planeD
 
-def calculate_edges(vertex_coordinates):
+def compute_edges(vertex_coordinates):
     vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
     planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
 
@@ -1000,11 +1000,22 @@ def calculate_edges(vertex_coordinates):
     
     return edges
 
+# Sort BND Vertices
+def sort_coordinates(vertex_coordinates):
+    max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
+    min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
+    max_z_for_max_x = max([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
+    min_z_for_max_x = min([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
+    max_z_for_min_x = max([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
+    min_z_for_min_x = min([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
+
+    return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
+
 def create_polygon(
     bound_number, vertex_coordinates, 
     vertices = vertices, polys = polys,
     material_index = 0, cell_type = 0, 
-    flags = None, plane_edges = None, wall_side = None,
+    flags = None, plane_edges = None, wall_side = None, sort_vertices = False,
     hud_color = None, shape_outline_color = shape_outline_color):
 
     # Vertex indices
@@ -1019,6 +1030,9 @@ def create_polygon(
         else:
             raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
         
+    if sort_vertices: 
+        vertex_coordinates = sort_coordinates(vertex_coordinates)
+        
     new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
     vertices.extend(new_vertices)
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
@@ -1028,7 +1042,7 @@ def create_polygon(
     
     # Plane Edges    
     if plane_edges is None:
-        plane_edges = calculate_edges(vertex_coordinates) 
+        plane_edges = compute_edges(vertex_coordinates) 
     
     # Plane Normals
     if wall_side is None:
