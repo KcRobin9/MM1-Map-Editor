@@ -2356,6 +2356,21 @@ AgiPhysParameters
 ###################################################################################################################
 ###################################################################################################################
 
+# Intersection types
+STOP = 0 
+STOP_LIGHT = 1 
+YIELD = 2
+CONTINUE = 3
+
+# True or False for e.g. "traffic_blocked"
+NO = 0
+YES = 1
+
+# Stop Light names
+STOP_SIGN = "tpsstop"
+STOP_LIGHT_SINGLE = "tplttrafc"
+STOP_LIGHT_DUAL = "tplttrafcdual"
+
 # BAI EDITOR CLASS
 class BAI_Editor:
     def __init__(self, city_name, streets, ai_map = True):
@@ -2386,13 +2401,9 @@ mmMapData :0 {{
 }}
         """
         return textwrap.dedent(bai_map_template).strip()
-    
-    
+       
 # STREETFILE CLASS
-class StreetFile_Editor:
-    INTERSECTION_TYPE_MAP = {"stop": 0, "stoplight": 1, "yield": 2, "continue": 3}
-    YES_NO_MAP = {"no": 0, "yes": 1}
-    
+class StreetFile_Editor:    
     def __init__(self, city_name, street_data, ai_streets = False, reverse = False):
         self.street_name = street_data["street_name"]
         self.reverse = reverse
@@ -2412,13 +2423,13 @@ class StreetFile_Editor:
             else:
                 self.lanes = self.original_lanes
 
-        self.intersection_types = [self.INTERSECTION_TYPE_MAP[typ] for typ in street_data.get("intersection_types", ["continue", "continue"])]
+        self.intersection_types = street_data.get("intersection_types", [CONTINUE, CONTINUE])
         self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
-        self.stop_light_names = street_data.get("stop_light_names", ["tplttrafc", "tplttrafc"])
-        self.traffic_blocked = [self.YES_NO_MAP[val] for val in street_data.get("traffic_blocked", ["no", "no"])]
-        self.ped_blocked = [self.YES_NO_MAP[val] for val in street_data.get("ped_blocked", ["no", "no"])]
-        self.road_divided = self.YES_NO_MAP[street_data.get("road_divided", "no")]
-        self.alley = self.YES_NO_MAP[street_data.get("alley", "no")]
+        self.stop_light_names = street_data.get("stop_light_names", [STOP_LIGHT_SINGLE, STOP_LIGHT_SINGLE])
+        self.traffic_blocked = street_data.get("traffic_blocked", [NO, NO])
+        self.ped_blocked =  street_data.get("ped_blocked", [NO, NO])
+        self.road_divided = street_data.get("road_divided", NO)
+        self.alley = street_data.get("alley", NO)
 
         if ai_streets:
             self.write_streets()
@@ -2465,7 +2476,7 @@ mmRoadSect :0 {{
     ]
     Divided {self.road_divided}
     Alley {self.alley}
-    }}
+}}
         """
         
         return textwrap.dedent(street_template).strip()
@@ -2629,14 +2640,23 @@ fcd_list = [fcd_one]
 
 # SET AI PATHS
 
-# The following variables are optional: 
-# Intersection_type, defaults to: "continue"
-# Stop_light_names, defaults to: "tplttrafc"
-# Stop_light_positions, defaults to: (0,0,0)
-# Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: "No"
+f"""
+# The following variables are OPTIONAL: 
 
+# Intersection_types, defaults to: "CONTINUE"
+(possbile types: "STOP", "STOP_LIGHT", "YIELD", "CONTINUE")
+
+# Stop_light_names, defaults to: "STOP_LIGHT_SINGLE"
+(possbile names: "STOP_SIGN", "STOP_LIGHT_SINGLE", "STOP_LIGHT_DUAL")
+
+# Stop_light_positions, defaults to: (0,0,0)
+# Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: "NO"
+(possbile values: "YES", "NO")
+
+Note:
 # Stop lights will only show if the Intersection_type is "stoplight"
-# Each lane will automatically have a revered lane added
+# Each lane will automatically have an identical reversed lane  
+"""
 
 #! Do not delete this Street
 street_0 = {
@@ -2684,18 +2704,17 @@ street_2 = {
             (-50.0, 1.0, -145.0)
         ]
     },
-    "intersection_types": ["stoplight", "stoplight"],
-    "stop_light_names": ["tplttrafcdual", "tplttrafcdual"],
+    "intersection_types": [STOP_LIGHT, STOP_LIGHT],
+    "stop_light_names": [STOP_LIGHT_DUAL, STOP_LIGHT_DUAL],
     "stop_light_positions": [
          (10.0, 0.0, -20.0),
          (10.01, 0.0, -20.0),
          (-10.0, 0.0, -20.0),
-         (-10.0, 0.0, -20.1)
-         ],
-    "traffic_blocked": ["no", "no"],
-    "ped_blocked": ["no", "no"],
-    "road_divided": "no",
-    "alley": "no"}
+         (-10.0, 0.0, -20.1)],
+    "traffic_blocked": [NO, NO],
+    "ped_blocked": [NO, NO],
+    "road_divided": NO,
+    "alley": NO}
 
 # Pack all AI paths for processing
 street_list = [street_0, street_1, street_2]
@@ -2846,7 +2865,6 @@ start_game(mm1_folder, play_game)
 
 # W.I.P.
 # create_blender_meshes()
-
 
 #? ============ For Reference ============
 
