@@ -65,7 +65,7 @@ debug_props = False             # change to "True" if you want a BNG Debug text 
 DEBUG_BMS = False               # change to "True" if you want a BMS Debug text files (in directory "DEBUG_BMS")
 
 # HUD
-shape_outline_color = 'Cyan'    # change to any other color, if you don't want any color, set to 'None'         
+shape_outline_color = 'Red'     # change to any other color, if you don't want any color, set to 'None'         
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file
 debug_hud_bound_id = True       # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
@@ -154,13 +154,12 @@ anim_data = {
         (-180, 25.0, 180)]}
 
 
-#* SETUP VI (optional, Bridges, experimental)
+#* SETUP VI (optional, Bridges, unfinished)
 bridge_slim = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
 bridge_wide = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
 bridge_crossgate = "tpcrossgate06"
 bridge_object = "vpmustang99"       # you can pass any object
 
-#! Unfinished
 # Structure: (x,y,z, orientation, bridge_number, bridge_object)
 bridges = [
     ((-30.0, 5.0, 50.0), "V", 2, bridge_slim)] 
@@ -201,7 +200,7 @@ def to_do_list(x):
             SCRIPT --> update Installation Instructions (e.g. guide for VS Code and Blender interaction)
                                 
             ? ADD LONG-TERM:
-            SHAPES --> triangles with 3 vertices causes various issues
+            SHAPES --> triangles with slopes currently causes issues
             
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             PROPS --> investigate creating custom texturized props from scatch
@@ -219,7 +218,7 @@ def to_do_list(x):
 ################################################################################################################               
 ################################################################################################################        
 
-# Simplify Struct Usage
+# Simplify Struct usage
 def read_unpack(file, fmt):
     return struct.unpack(fmt, file.read(struct.calcsize(fmt)))
 
@@ -458,6 +457,11 @@ class Polygon:
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
     def to_file(self, f: BinaryIO) -> None:
+        
+        # Each polygon (here triangles), still require four vertex indices
+        if len(self.vert_indices) < 4: 
+            self.vert_indices += (0,) * (4 - len(self.vert_indices))
+        
         write_pack(f, '<HBB4H', self.cell_id, self.mtl_index, self.flags, *self.vert_indices)
 
         for edge in self.plane_edges:
@@ -466,7 +470,7 @@ class Polygon:
         self.plane_n.write(f)
         write_pack(f, '<f', self.plane_d)
    
-    def __repr__(self, round_values=True):
+    def __repr__(self, round_values = True):
         vertices_coordinates = [BND.vertices[index] for index in self.vert_indices]
         plane_d_str = f'{round(self.plane_d, 2):.2f}' if round_values else f'{self.plane_d:f}'
 
@@ -529,7 +533,7 @@ class BND:
         self.row_heights = row_heights
                   
     @classmethod
-    def read(cls, f: BinaryIO) -> 'BND':        
+    def read_bnd(cls, f: BinaryIO) -> 'BND':        
         magic = read_unpack(f, '<4s')[0]
         offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
@@ -565,7 +569,7 @@ class BND:
                    hot_verts, edges_0, edges_1, edge_normals, edge_floats,
                    row_offsets, row_shorts, row_indices, row_heights)
     
-    def to_file(self, f: BinaryIO) -> None:
+    def write_bnd(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
         self.offset.write(f)         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
@@ -618,87 +622,93 @@ Polys: {self.polys}
 
 # BMS CLASS
 class BMS:
-    def __init__(self, Magic: str, VertexCount: int, AdjunctCount: int, SurfaceCount: int, IndicesCount: int,
-                 Radius: float, Radiussq: float, BoundingBoxRadius: float,
-                 TextureCount: int, Flags: int, StringName: List[str], Coordinates: List[Vector3],
-                 TextureDarkness: List[int], tex_coords: List[float], Enclosed_shape: List[int],
-                 SurfaceSides: List[int], IndicesSides: List[List[int]]) -> None:
+    def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
+                 radius: float, radius_sq: float, bounding_box_radius: float,
+                 texture_count: int, flags: int, string_name: List[str], coordinates: List[Vector3],
+                 texture_darkness: List[int], tex_coords: List[float], enclosed_shape: List[int],
+                 surface_sides: List[int], indices_sides: List[List[int]]) -> None:
 
-        self.Magic = Magic
-        self.VertexCount = VertexCount
-        self.AdjunctCount = AdjunctCount
-        self.SurfaceCount = SurfaceCount
-        self.IndicesCount = IndicesCount
-        self.Radius = Radius
-        self.Radiussq = Radiussq
-        self.BoundingBoxRadius = BoundingBoxRadius
-        self.TextureCount = TextureCount
-        self.Flags = Flags
-        self.StringName = StringName
-        self.Coordinates = Coordinates
-        self.TextureDarkness = TextureDarkness
+        self.magic = magic
+        self.vertex_count = vertex_count
+        self.adjunct_count = adjunct_count
+        self.surface_count = surface_count
+        self.indices_count = indices_count
+        self.radius = radius
+        self.radius_sq = radius_sq
+        self.bounding_box_radius = bounding_box_radius
+        self.texture_count = texture_count
+        self.flags = flags
+        self.string_name = string_name
+        self.coordinates = coordinates
+        self.texture_darkness = texture_darkness
         self.tex_coords = tex_coords  
-        self.Enclosed_shape = Enclosed_shape  
-        self.SurfaceSides = SurfaceSides
-        self.IndicesSides = IndicesSides
+        self.enclosed_shape = enclosed_shape  
+        self.surface_sides = surface_sides
+        self.indices_sides = indices_sides
         
-    def to_file(self, file_name: str) -> None:
+    @classmethod
+    def read_bms(cls, file_name: str):
+        with open(file_name, 'rb') as f:
+            magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')            
+            vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
+            radius, radius_sq, bounding_box_radius = read_unpack(f, '3f')
+            texture_count, flags = read_unpack(f, 'bb')
+            
+            f.read(6)  
+            string_name = read_unpack(f, '32s')[0].decode('utf-8').rstrip('\x00')
+            f.read(16) 
+
+            coordinates = []
+            for _ in range(vertex_count):
+                x, y, z = read_unpack(f, '3f')
+                coordinates.append(Vector3(x, y, z))
+
+            texture_darkness = list(read_unpack(f, str(adjunct_count) + 'b'))
+            tex_coords = list(read_unpack(f, str(adjunct_count * 2) + 'f'))
+            enclosed_shape = list(read_unpack(f, str(adjunct_count) + 'H'))
+            surface_sides = list(read_unpack(f, str(surface_count) + 'b'))
+
+            indices_sides = []
+            for _ in range(surface_count):
+                indices_side = list(read_unpack(f, str(indices_count) + 'H'))
+                indices_sides.append(indices_side)
+
+        return cls(magic, vertex_count, adjunct_count, surface_count, indices_count, 
+                   radius, radius_sq, bounding_box_radius, 
+                   texture_count, flags, string_name, coordinates, 
+                   texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
+        
+    def write_bms(self, file_name: str) -> None:
         with open(file_name, 'wb') as f:
-            write_pack(f, '16s', self.Magic.encode('utf-8').ljust(16, b'\x00'))
-            write_pack(f, '4I', self.VertexCount, self.AdjunctCount, self.SurfaceCount, self.IndicesCount)
-            write_pack(f, '3f', self.Radius, self.Radiussq, self.BoundingBoxRadius)
-            write_pack(f, 'bb', self.TextureCount, self.Flags)
+            write_pack(f, '16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
+            write_pack(f, '4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
+            write_pack(f, '3f', self.radius, self.radius_sq, self.bounding_box_radius)
+            write_pack(f, 'bb', self.texture_count, self.flags)
             f.write(b'\x00' * 6) 
 
-            for StringName in self.StringName:
-                write_pack(f, '32s', StringName.encode('utf-8').ljust(32, b'\x00'))
+            for name in self.string_name:
+                write_pack(f, '32s', name.encode('utf-8').ljust(32, b'\x00'))
                 f.write(b'\x00' * (4 * 4))
 
-            for coordinate in self.Coordinates:
+            for coordinate in self.coordinates:
                 write_pack(f, '3f', coordinate.x, coordinate.y, coordinate.z)
 
-            write_pack(f, str(self.AdjunctCount) + 'b', *self.TextureDarkness)
-            write_pack(f, str(self.AdjunctCount * 2) + 'f', *self.tex_coords)            
-            write_pack(f, str(self.AdjunctCount) + 'H', *self.Enclosed_shape)
-            write_pack(f, str(self.SurfaceCount) + 'b', *self.SurfaceSides)
-
-            for indices_side in self.IndicesSides:
-                write_pack(f, str(len(indices_side)) + 'H', *indices_side)
+            write_pack(f, str(self.adjunct_count) + 'b', *self.texture_darkness)
+                        
+            # Temporary hack, ensuring tex_coords is not longer than adjunct_count * 2
+            if len(self.tex_coords) > self.adjunct_count * 2:
+                self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
                 
-    @classmethod
-    def from_file(cls, file_name: str):
-        with open(file_name, 'rb') as f:
-            Magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')
-            VertexCount, AdjunctCount, SurfaceCount, IndicesCount = read_unpack(f, '4I')
-            Radius, Radiussq, BoundingBoxRadius = read_unpack(f, '3f')
-            TextureCount, Flags = read_unpack(f, 'bb')
-            f.read(6)  
+            write_pack(f, str(self.adjunct_count * 2) + 'f', *self.tex_coords)            
+            write_pack(f, str(self.adjunct_count) + 'H', *self.enclosed_shape)
+            write_pack(f, str(self.surface_count) + 'b', *self.surface_sides)
 
-            StringName = []
-            for _ in range(VertexCount):
-                StringName.append(read_unpack(f, '32s')[0].decode('utf-8').rstrip('\x00'))
-                f.read(16) # Skip 16 bytes
-
-            Coordinates = []
-            for _ in range(VertexCount):
-                x, y, z = read_unpack(f, '3f')
-                Coordinates.append(Vector3(x, y, z))
-
-            TextureDarkness = list(read_unpack(f, str(AdjunctCount) + 'b'))
-            tex_coords = list(read_unpack(f, str(AdjunctCount * 2) + 'f'))
-            Enclosed_shape = list(read_unpack(f, str(AdjunctCount) + 'H'))
-            SurfaceSides = list(read_unpack(f, str(SurfaceCount) + 'b'))
-
-            IndicesSides = []
-            for _ in range(SurfaceCount):
-                indices_side = list(read_unpack(f, str(IndicesCount) + 'H'))
-                IndicesSides.append(indices_side)
-
-        return cls(Magic, VertexCount, AdjunctCount, SurfaceCount, IndicesCount, 
-                   Radius, Radiussq, BoundingBoxRadius, 
-                   TextureCount, Flags, StringName, Coordinates, 
-                   TextureDarkness, tex_coords, Enclosed_shape, SurfaceSides, IndicesSides)
-                    
+            # Even with three vertices, we still require four indices (indices_sides: [[0, 1, 2, 0]])
+            for indices_side in self.indices_sides:
+                while len(indices_side) < 4:
+                    indices_side.append(0)
+                write_pack(f, str(len(indices_side)) + 'H', *indices_side)
+                                    
     def write_bms_debug(self, file_name: str, debug_dir = "DEBUG_BMS") -> None:
         Path(debug_dir).mkdir(parents = True, exist_ok = True)
 
@@ -709,24 +719,25 @@ class BMS:
     def __repr__(self):
         return f'''
 BMS
-Magic: {self.Magic}
-VertexCount: {self.VertexCount}
-AdjunctCount: {self.AdjunctCount}
-SurfaceCount: {self.SurfaceCount}
-IndicesCount: {self.IndicesCount}
-Radius: {self.Radius}
-Radiussq: {self.Radiussq}
-BoundingBoxRadius: {self.BoundingBoxRadius}
-TextureCount: {self.TextureCount}
-Flags: {self.Flags}
-StringName: {self.StringName}
-Coordinates: {self.Coordinates}
-TextureDarkness: {self.TextureDarkness}
+Magic: {self.magic}
+VertexCount: {self.vertex_count}
+AdjunctCount: {self.adjunct_count}
+SurfaceCount: {self.surface_count}
+IndicesCount: {self.indices_count}
+Radius: {self.radius}
+Radiussq: {self.radius_sq}
+BoundingBoxRadius: {self.bounding_box_radius}
+TextureCount: {self.texture_count}
+Flags: {self.flags}
+StringName: {self.string_name}
+Coordinates: {self.coordinates}
+TextureDarkness: {self.texture_darkness}
 TexCoords: {self.tex_coords}
-Enclosed_shape: {self.Enclosed_shape}
-SurfaceSides: {self.SurfaceSides}
-IndicesSides: {self.IndicesSides}
+Enclosed_shape: {self.enclosed_shape}
+SurfaceSides: {self.surface_sides}
+IndicesSides: {self.indices_sides}
         '''
+
 
 ################################################################################################################               
 ################################################################################################################       
@@ -749,7 +760,7 @@ polys = [poly_filler]
 ################################################################################################################ 
 ################################################################################################################               
 
-# Handle Texture Mapping for BMS files
+# Texture Mapping for BMS files
 def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, tilt: float = 0,
                        angle_degrees: Union[float, Tuple[float, float]] = (45, 45),
                        custom: Optional[List[float]] = None) -> List[float]:
@@ -772,7 +783,7 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
 
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
-    
+        
     # Vertical
     if mode == "V" or mode == "vertical":
         return [0, 0, 0, 1, 1, 1, 1, 0]
@@ -797,7 +808,7 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
     elif mode == "r.H.f" or mode == "repeating_horizontal_flipped":
         return [repeat_x, 0, 0, 0, 0, repeat_y, repeat_x, repeat_y]
     
-    #TODO
+    # TODO
     elif mode == "r.r" or mode == "rotating_repeating":
         return tex_coords_rotating_repeating(repeat_x, repeat_y, angle_degrees)
     elif mode == "custom":
@@ -820,9 +831,8 @@ def compute_tex_coords(mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, ti
 # SAVE BMS
 def save_bms(
     texture_name, texture_indices = [1], vertices = vertices, polys = polys, 
-    texture_darkness = None, tex_coords = None, random_texture_exclude = False, 
-    tex_coord_mode = None, tex_coord_params = None, 
-    randomize_textures = randomize_textures, random_textures = random_textures):
+    texture_darkness = None, tex_coords = None, tex_coord_mode = None, tex_coord_params = None, 
+    randomize_textures = randomize_textures, random_texture_exclude = False, random_textures = random_textures):
         
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
@@ -847,7 +857,7 @@ def save_bms(
     single_poly = [poly_filler, poly]
     
     bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
-    bms.to_file(bms_filename)
+    bms.write_bms(bms_filename)
     
     if DEBUG_BMS:
         bms.write_bms_debug(bms_filename + ".txt")
@@ -855,7 +865,8 @@ def save_bms(
 # Create BMS      
 def create_bms(vertices, polys, texture_indices, texture_name: List[str], texture_darkness = None, tex_coords = None):
     shapes = []
-    for poly in polys[1:]:  # Skip the first filler polygon
+    
+    for poly in polys[1:]: # Skip the first filler polygon
         vertex_coordinates = [vertices[i] for i in poly.vert_indices]
         shapes.append(vertex_coordinates)
     
@@ -867,11 +878,12 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
     adjunct_count = len(coordinates)
     surface_count = len(texture_indices)   
     
+    # Even with three vertices, we still require four indices (indices_sides: [[0, 1, 2, 0]])
     if len(coordinates) == 4:
         indices_count = surface_count * 4
     elif len(coordinates) == 3:
-        indices_count = surface_count * 3
-                 
+        indices_count = surface_count * 4
+                     
     enclosed_shape = list(range(adjunct_count))
 
     # Texture Darkness and TexCoords        
@@ -925,7 +937,7 @@ def initialize_bnd(vertices, polys):
                hot_verts, edges_0, edges_1, edge_normals, edge_floats,
                row_offsets, row_shorts, row_indices, row_heights)
 
-def compute_plane_edgenormals(p1, p2, p3):
+def compute_plane_edgenormals(p1, p2, p3): # only 3 vertices are being used  
     v1 = np.subtract(p2, p1)
     v2 = np.subtract(p3, p1)
 
@@ -943,7 +955,7 @@ def calculate_edges(vertex_coordinates):
     vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
     planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
 
-    num_verts = len(vertices)
+    num_verts = len(vertices) # 3 for triangle, 4 for quad
     plane_edges = []
 
     abs_plane_x = abs(planeN[0])
@@ -980,7 +992,7 @@ def calculate_edges(vertex_coordinates):
 
     # Normalize edges
     for i in range(len(plane_edges)):
-        norm_val = np.linalg.norm(plane_edges[i][:2])  # only first two components
+        norm_val = np.linalg.norm(plane_edges[i][:2]) # only first two components
         plane_edges[i][:2] /= norm_val
         plane_edges[i][2] /= norm_val
 
@@ -1022,7 +1034,7 @@ def create_polygon(
     if wall_side is None:
         plane_n, plane_d = compute_plane_edgenormals(*vertex_coordinates[:3])
     else:
-        # WALL with varying X and Y coordinates
+        # Wall with varying X and Y coordinates
         if (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
             max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
             abs(max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates)) <= 0.15):
@@ -1035,7 +1047,7 @@ def create_polygon(
             
             plane_n, plane_d = corners[:3], corners[3]
             
-        # WALL with varying Z and Y coordinates                               
+        # Wall with varying Z and Y coordinates                               
         elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
               max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
               max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
@@ -1069,7 +1081,7 @@ def create_polygon(
     }
     polygons_data.append(polygon_info)
     
-def apply_texture_to_object(obj, texture_path):
+def apply_dds_to_object(obj, texture_path):
     mat = bpy.data.materials.new(name = "DDS_Material")
     obj.data.materials.append(mat)
     obj.active_material = mat
@@ -1123,7 +1135,7 @@ def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
     mesh.update()
 
     if textures_directory:
-        apply_texture_to_object(obj, textures_directory)
+        apply_dds_to_object(obj, textures_directory)
 
     return obj        
         
@@ -1149,8 +1161,9 @@ def user_notes(x):
         max_x,min_z 
         min_x,min_z 
     
-    For the Material Index, keep in mind: 0 = Road, 87 = Grass, 91 (Water)        
-    Note that you can also set custom Materials properties elsewhere in the script
+    For the Material Index, you can use the constants under 'Material types'. 
+    You can also omit the Material Index, it will then default to 0 (which is a regular road).       
+    Note that you can also set custom Materials properties elsewhere in the script (search for: 'set_material_index')
     
     Texture (UV) mapping examples:
     tex_coords = compute_tex_coords(mode = "v")
@@ -1164,7 +1177,7 @@ def user_notes(x):
     'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
     'custom', and 'combined'
     
-    You can set "texture_darkness" in the function "save_bms()" making texture edges darker or lighter. 
+    You can set "texture_darkness" in the function "save_bms()" making texture edges darker or lighter at the corners. 
     If there are four vertices, you can then use it as follows: "texture_darkness = [40,2,50,1]"
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
@@ -1177,7 +1190,7 @@ def user_notes(x):
 # Material types
 GRASS_MTL = 87
 WATER_MTL = 91
-CUSTOM_NO_FRIC_MTL = 98 
+CUSTOM_MTL_NO_FRIC = 98 
  
 # Cell types
 TUNNEL = 1
@@ -1225,7 +1238,7 @@ save_bms(
 # Snow Area (no friction)
 create_polygon(
 	bound_number = 3,
-	material_index = CUSTOM_NO_FRIC_MTL,
+    material_index = CUSTOM_MTL_NO_FRIC,
     cell_type = NO_SKIDS,
 	vertex_coordinates = [
 		(-50.0, 0.0, -140.0),
@@ -1280,7 +1293,7 @@ create_polygon(
         hud_color = WATER)    
 
 save_bms(
-    texture_name = ["T_WATER"], 
+    texture_name = ["VPSEMIRED_BK_VL"], 
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 # Hill
@@ -1332,8 +1345,8 @@ create_polygon(
     vertex_coordinates = [
         (-130.0, 0.0, 70.0),
         (-50.0, 0.0, 70.0),
-        (-50.0, 7.0, 0.0),
-        (-50.1, 7.0, 0.0)],
+        (-50.0, 0.0, 0.0),
+        (-50.0, 0.0, -0.1)],
         hud_color = '#ffffe0')
 
 save_bms(
@@ -1347,13 +1360,28 @@ create_polygon(
     vertex_coordinates = [
         (-50.0, 0.0, 70.0),
         (-130.0, 0.0, 70.0),
-        (-50.0, 0.0, 140.0),
-        (-49.9, 0.0, 140.0)],
+        (-50.0, 0.0, 140.0)],
         hud_color = '#ffffe0')
 
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+
+#! Same triangle as above, but with four vertices (backup)
+# # Triangle II
+# create_polygon(
+#     bound_number = 51,
+#     cell_type = NO_SKIDS,
+#     vertex_coordinates = [
+#         (-50.0, 0.0, 70.0),
+#         (-130.0, 0.0, 70.0),
+#         (-50.0, 0.0, 140.0),
+#         (-50.0, 0.0, 139.9)],
+#         hud_color = '#ffffe0')
+
+# save_bms(
+#     texture_name = ["OT_MALL_BRICK"],
+#     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -1363,7 +1391,7 @@ def create_bnd(vertices, polys, city_name, debug_collision):
     bnd = initialize_bnd(vertices, polys)
     
     with open(f"{city_name}_HITID.BND", "wb") as f:
-        bnd.to_file(f)
+        bnd.write_bnd(f)
         bnd.write_bnd_debug(f"{city_name}_HITID_debug.txt", debug_collision) #! broken
   
 # Create SHOP and FOLDER structure   
@@ -1631,7 +1659,7 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
             
             facade_room_fix = "1,1"
             
-            # Retrieve corresponding polygon's cell type
+            # Retrieve polygon's cell type
             cell_type = None
             for poly in polys:
                 if poly.cell_id == bound_number:
@@ -1641,7 +1669,7 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
             if cell_type is None:
                 cell_type = 0
             
-            # Write CELLS data
+            # Write cells data
             if bound_number in bms_a2_files:
                 row = f"{bound_number},32,{cell_type},{facade_room_fix}\n"
             else:
@@ -1659,12 +1687,12 @@ def create_anim(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: boo
         main_anim_file = output_folder_anim / "ANIM.CSV"
 
         # Create ANIM.CSV file and write anim names
-        with open(main_anim_file, 'w', newline='') as file:
+        with open(main_anim_file, 'w', newline = '') as file:
             writer = csv.writer(file)
             for obj in anim_data.keys():
                 writer.writerow([f"anim_{obj}"])
 
-        # Create Individual ANIM files and write Coordinates
+        # Create individual anim files and write coordinates
         for obj, coordinates in anim_data.items():
             file_name = output_folder_anim / f"ANIM_{obj.upper()}.CSV"
             with open(file_name, 'w', newline='') as file:
@@ -1709,7 +1737,7 @@ def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color,
                      label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
         
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
-        xs, ys = xs + (xs[0],), ys + (ys[0],)  # the commas after [0] cannot be removed
+        xs, ys = xs + (xs[0],), ys + (ys[0],) # the commas after [0] cannot be removed
         
         if shape_outline_color:
             ax.plot(xs, ys, color = shape_outline_color, linewidth = line_width)
@@ -1757,12 +1785,13 @@ def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color,
         plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.01, facecolor = 'black')
 
 # Create EXT file            
-def create_ext(city_name, polygonz):
-    min_x = min(point[0] for polygon in polygonz for point in polygon)
-    max_x = max(point[0] for polygon in polygonz for point in polygon)
-    min_z = min(point[2] for polygon in polygonz for point in polygon)
-    max_z = max(point[2] for polygon in polygonz for point in polygon)
+def create_ext(city_name, polygons):
+    x_coords = [vertex[0] for poly in polygons for vertex in poly]
+    z_coords = [vertex[2] for poly in polygons for vertex in poly]
     
+    min_x, max_x = min(x_coords), max(x_coords)
+    min_z, max_z = min(z_coords), max(z_coords)
+
     with open(SHOP_CITY / f"{city_name}.EXT", 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
                
@@ -2078,17 +2107,20 @@ class BinaryBanger:
         self.name = name
         
     @classmethod
-    def read(cls, f):
+    def read_bng(cls, f):
         room, flags = read_unpack(f, '<HH')
         start_x, start_y, start_z = read_unpack(f, '<3f')
         end_x, end_y, end_z = read_unpack(f, '<3f')
+        
         name = ''
         char = f.read(1).decode('utf8')
         while char != "\x00":
             name += char
             char = f.read(1).decode('utf8')
+            
         start = Vector3(start_x, start_y, start_z)
         end = Vector3(end_x, end_y, end_z)
+        
         return cls(start, end, name, room, flags)
         
     def __repr__(self):
@@ -2124,9 +2156,9 @@ class Prop_Editor:
             num_objects = read_unpack(f, '<I')[0]
             
             for _ in range(num_objects):
-                self.objects.append(BinaryBanger.read(f))
+                self.objects.append(BinaryBanger.read_bng(f))
             
-    def write_props(self, set_props: bool = False):
+    def write_bng_file(self, set_props: bool = False):
         if not set_props:
             return
 
@@ -2161,7 +2193,7 @@ class Prop_Editor:
             face = Vector3(obj['face_x'], obj['face_y'], obj['face_z'])
             name = obj['name']
             
-            # separator = obj.get('separator', name)ed
+            # separator = obj.get('separator', name)
             separator = obj.get('separator', default_separator_value)
             axis = obj.get('axis', 'x') # default is 'x' if 'axis' not provided
 
@@ -2171,7 +2203,7 @@ class Prop_Editor:
                     raise ValueError(f"Separator {separator} not found in prop data.")
                 separator_value = self.prop_data[separator][axis]
             else:
-                separator_value = separator  # separator is a numeric value
+                separator_value = separator # separator is a numeric value
 
             self.objects.append(BinaryBanger(offset, face, name + "\x00"))
 
@@ -2180,7 +2212,7 @@ class Prop_Editor:
                     num_props = int(abs(obj['end_offset_' + axis] - obj['offset_' + axis]) / separator_value)
 
                     for i in range(1, num_props):
-                        new_offset = Vector3(offset.x, offset.y, offset.z)  # create a new instance with the same coordinates
+                        new_offset = Vector3(offset.x, offset.y, offset.z) # create a new instance with the same coordinates
                         new_offset[axis] = obj['offset_' + axis] + i * separator_value
                         self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
 
@@ -2197,7 +2229,7 @@ class Prop_Editor:
         else:
             raise ValueError("Prop {} not found in prop data.".format(prop_name))
         
-    def place_objects_randomly(self, seed, num_objects, object_dict, x_range, z_range):
+    def place_props_randomly(self, seed, num_objects, object_dict, x_range, z_range):
 
         new_objects = []
         
@@ -2212,7 +2244,7 @@ class Prop_Editor:
                 z = random.uniform(*z_range)
 
             # Create a new object dictionary with the random x and z coordinates
-            new_object_dict = dict(object_dict)  # Copy the original dictionary
+            new_object_dict = dict(object_dict) # Copy the original dictionary
             new_object_dict['offset_x'] = x
             new_object_dict['offset_z'] = z
             new_object_dict['name'] = name
@@ -2250,7 +2282,7 @@ class Material_Editor:
         self.ptx_color = ptx_color 
 
     @staticmethod
-    def read(f):
+    def read_materials(f):
         name = f.read(32).decode("latin-1").rstrip('\x00')
         params = read_unpack(f, '>7f2I')
         velocity = Vector2.read(f)
@@ -2259,23 +2291,23 @@ class Material_Editor:
 
     @staticmethod
     def readn(f, count):
-        return [Material_Editor.read(f) for _ in range(count)]
+        return [Material_Editor.read_materials(f) for _ in range(count)]
 
-    def to_file(self, f):
+    def write_materials(self, f):        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
         write_pack(f, '>7f2I', self.friction, self.elasticity, self.drag, self.bump_height, self.bump_width, self.bump_depth, self.sink_depth, self.type, self.sound)
         self.velocity.write(f)
         self.ptx_color.write(f)
 
     @staticmethod
-    def write_physics(file_name, agi_phys_parameters):
+    def write_materials_file(file_name, agi_phys_parameters):
         with open(file_name, 'wb') as f:
             write_pack(f, '>I', len(agi_phys_parameters))
-            for param in agi_phys_parameters:
-                param.to_file(f)
+            for param in agi_phys_parameters:                
+                param.write_materials(f)
                 
     @classmethod
-    def create_physics(cls, new_properties, set_material_index, physics_output_file):
+    def edit_materials(cls, new_properties, set_material_index, physics_output_file):
         input_file = BASE_DIR / "EditorResources" / "PHYSICS.DB"
         output_folder = SHOP / "MTL"
         
@@ -2286,7 +2318,7 @@ class Material_Editor:
         for prop in ["friction", "elasticity", "drag"]:
             setattr(read_material_file[set_material_index - 1], prop, new_properties[prop])
             
-        cls.write_physics(physics_output_file, read_material_file)
+        cls.write_materials_file(physics_output_file, read_material_file)
         MOVE(physics_output_file, output_folder / physics_output_file)
   
     def __repr__(self):
@@ -2319,16 +2351,16 @@ class BAI_Editor:
         self.ai_dir = BASE_DIR / "dev" / "CITY" / self.city_name
                 
         if ai_map:
-            self.write_to_file()
+            self.write_map()
 
-    def write_to_file(self):        
+    def write_map(self):        
         self.ai_map_file = self.ai_dir / f"{self.city_name}.map"
         self.ai_dir.mkdir(parents = True, exist_ok = True)
         
         with open(self.ai_map_file, 'w') as file:
-            file.write(self.construct_template())
+            file.write(self.map_template())
     
-    def construct_template(self):
+    def map_template(self):
         streets_representation = '\n\t\t'.join([f'"{street}"' for street in self.streets])
 
         bai_map_template = f"""
@@ -2342,7 +2374,7 @@ mmMapData :0 {{
         return textwrap.dedent(bai_map_template).strip()
     
     
-# Street File Editor CLASS
+# STREETFILE CLASS
 class StreetFile_Editor:
     INTERSECTION_TYPE_MAP = {"stop": 0, "stoplight": 1, "yield": 2, "continue": 3}
     YES_NO_MAP = {"no": 0, "yes": 1}
@@ -2375,16 +2407,16 @@ class StreetFile_Editor:
         self.alley = self.YES_NO_MAP[street_data.get("alley", "no")]
 
         if ai_streets:
-            self.write_to_file()
+            self.write_streets()
 
-    def write_to_file(self):
+    def write_streets(self):
         self.filepath = BASE_DIR / "dev" / "CITY" / city_name / f"{self.street_name}.road"
         self.filepath.parent.mkdir(parents = True, exist_ok = True)
         
         with self.filepath.open('w') as file:
-            file.write(self.construct_template())
+            file.write(self.street_template())
 
-    def construct_template(self):
+    def street_template(self):
         lane_1_key = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
         num_vertex_per_lane = len(self.original_lanes[lane_1_key])
         num_total_vertex = num_vertex_per_lane * len(self.lanes) * (2 if self.reverse else 1)
@@ -2443,8 +2475,8 @@ class Facade_Editor:
         self.name = name
 
     @classmethod
-    def from_file(cls, f):
-        room, flags = read_unpack(f, '2H')
+    def read_fcd(cls, f):
+        _, flags = read_unpack(f, '2H')
         start = Vector3.read(f)
         end = Vector3.read(f)
         sides = Vector3.read(f)
@@ -2456,11 +2488,11 @@ class Facade_Editor:
             if char == b'\x00':
                 break
             name_data.extend(char)
-
         name = name_data.decode('utf-8')
+        
         return cls(flags, start, end, sides, scale, name)
 
-    def to_file(self, f):
+    def write_fcd(self, f):
         write_pack(f, '2H', self.room, self.flags)
         write_pack(f, '6f', *self.start, *self.end)
         write_pack(f, '3f', *self.sides)
@@ -2470,7 +2502,7 @@ class Facade_Editor:
         
     def __repr__(self):
         return f"""
-Facade_Editor
+Facade Editor
     Room: {self.room}
     Flags: {self.flags}
     Start: {self.start}
@@ -2480,7 +2512,7 @@ Facade_Editor
     Name: {self.name}
     """
       
-def read_facade_scales(scales_file):
+def read_fcd_scales(scales_file):
     scales = {}
     with open(scales_file, 'r') as f:
         for line in f:
@@ -2492,15 +2524,16 @@ def get_coord_from_tuple(coord_tuple, axis):
     axis_dict = {'x': 0, 'y': 1, 'z': 2}
     return coord_tuple[axis_dict[axis]]  
     
-def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, debug_facade = False):
+def create_fcd(filename, facade_params, target_fcd_dir, set_facade = False, debug_facade = False):
     if set_facade:
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
         
-        scales = read_facade_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
+        scales = read_fcd_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
 
         for params in facade_params:
-            num_facades = math.ceil(abs(get_coord_from_tuple(params['end'], params['axis']) - get_coord_from_tuple(params['start'], params['axis'])) / params['separator'])
+            num_facades = math.ceil(abs(
+                get_coord_from_tuple(params['end'], params['axis']) - get_coord_from_tuple(params['start'], params['axis'])) / params['separator'])
 
             for i in range(num_facades): 
                 flags = params['flags']
@@ -2524,7 +2557,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, 
         with open(filename, mode = 'wb') as f: 
             write_pack(f, '<I', len(facades))
             for facade in facades:
-                facade.to_file(f)
+                facade.write_fcd(f)
 
         MOVE(filename, target_fcd_dir / filename)
 
@@ -2746,10 +2779,7 @@ f"""    Player Cars:
 set_material_index = 98
 
 # See: /Useful documents/PHYSICS.DB_extracted.txt for more information
-new_properties = {
-    "friction": 0.11, 
-    "elasticity": 0.11, 
-    "drag": 0.11}
+new_properties = {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}
 
 ################################################################################################################   
 
@@ -2764,22 +2794,17 @@ distribute_files(city_name, f"{city_name}_HITID.BND",
                            len(blitz_races), blitz_races, len(circuit_races), 
                            circuit_races, len(checkpoint_races), checkpoint_races, all_races_files = True)
 
-Material_Editor.create_physics(new_properties, set_material_index, "physics.db")
+Material_Editor.edit_materials(new_properties, set_material_index, "physics.db")
 StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_map)
 
 prop_editor = Prop_Editor(city_name, debug_props = debug_props, input_bng_file = False)
 
 for i in random_parameters:
-    randomized_objects = prop_editor.place_objects_randomly(**i)
+    randomized_objects = prop_editor.place_props_randomly(**i)
     prop_list.extend(randomized_objects)
     
 prop_editor.add_props(prop_list)
-prop_editor.write_props(set_props)
-
-# prop_editor = Prop_Editor("CHICAGO.BNG", input_bng_file = True)
-# prop_editor.read_bng_file()
-# for obj in prop_editor.objects:
-#    print(obj)
+prop_editor.write_bng_file(set_props)
 
 move_open1560(mm1_folder)
 move_dev_folder(mm1_folder, city_name)
@@ -2789,7 +2814,7 @@ move_custom_textures()
 create_ext(city_name, hudmap_vertices) 
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
-create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facade)
+create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facade)
 
 create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
               x_offset = -0.0, y_offset = -0.0, line_width = 0.7, 
@@ -2805,4 +2830,14 @@ print("\n===============================================\n")
 
 start_game(mm1_folder, play_game)
 
+# W.I.P.
 # create_blender_meshes()
+
+
+#? ============ For Reference ============
+
+# # Print the contents of a BNG file in the current working directory
+# prop_editor = Prop_Editor("CHICAGO.BNG", debug_props = debug_props, input_bng_file = True)
+# prop_editor.read_bng_file()
+# for objects in prop_editor.objects:
+#    print(objects)
