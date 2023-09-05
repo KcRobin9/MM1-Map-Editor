@@ -995,8 +995,12 @@ def compute_edges(vertex_coordinates):
         norm_val = np.linalg.norm(plane_edges[i][:2]) # only first two components
         plane_edges[i][:2] /= norm_val
         plane_edges[i][2] /= norm_val
-
+        
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
+    
+    # Added a required empty edge for triangles to match the binary structure
+    if len(vertices) == 3:
+        edges.append(Vector3(0.0, 0.0, 0.0))
     
     return edges
 
@@ -1036,10 +1040,7 @@ def create_polygon(
     new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
     vertices.extend(new_vertices)
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
-    
-    # if len(new_vertices) == 3:
-    #    vert_indices.append(0)
-    
+        
     # Plane Edges    
     if plane_edges is None:
         plane_edges = compute_edges(vertex_coordinates) 
@@ -1124,11 +1125,11 @@ def apply_dds_to_object(obj, texture_path):
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
     
     # UV unwrap the object (simple version)
-    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action = 'DESELECT')
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     bpy.ops.object.editmode_toggle()
-    bpy.ops.mesh.select_all(action='SELECT')
+    bpy.ops.mesh.select_all(action = 'SELECT')
     bpy.ops.uv.smart_project()
     bpy.ops.object.editmode_toggle()
     
@@ -1299,6 +1300,7 @@ create_polygon(
 	bound_number = 6,
     cell_type = WATER_DRIFT,
 	material_index = WATER_MTL,
+    sort_vertices = True,
 	vertex_coordinates = [
 		(50.0, 0.0, -140.0),
 		(140.0, 0.0, -140.0),
@@ -1307,7 +1309,7 @@ create_polygon(
         hud_color = WATER)    
 
 save_bms(
-    texture_name = ["VPSEMIRED_BK_VL"], 
+    texture_name = ["T_WATER_WIN"], 
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 # Hill
@@ -1357,10 +1359,9 @@ create_polygon(
     bound_number = 50,
     cell_type = NO_SKIDS,
     vertex_coordinates = [
-        (-130.0, 0.0, 70.0),
+        (-130.0, 15.0, 70.0),
         (-50.0, 0.0, 70.0),
-        (-50.0, 0.0, 0.0),
-        (-50.0, 0.0, -0.1)],
+        (-50.0, 0.0, 0.0)],
         hud_color = '#ffffe0')
 
 save_bms(
@@ -1372,30 +1373,13 @@ create_polygon(
     bound_number = 51,
     cell_type = NO_SKIDS,
     vertex_coordinates = [
-        (-50.0, 0.0, 70.0),
-        (-130.0, 0.0, 70.0),
-        (-50.0, 0.0, 140.0)],
+        (-130.0, 15.0, 70.0),
+        (-50.0, 0.0, 140.0),
+        (-50.0, 0.0, 70.0)],
         hud_color = '#ffffe0')
-
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
-
-#! Same triangle as above, but with four vertices (backup)
-# # Triangle II
-# create_polygon(
-#     bound_number = 51,
-#     cell_type = NO_SKIDS,
-#     vertex_coordinates = [
-#         (-50.0, 0.0, 70.0),
-#         (-130.0, 0.0, 70.0),
-#         (-50.0, 0.0, 140.0),
-#         (-50.0, 0.0, 139.9)],
-#         hud_color = '#ffffe0')
-
-# save_bms(
-#     texture_name = ["OT_MALL_BRICK"],
-#     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -1562,7 +1546,7 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
                     waypoint_line += ",0,0,\n"
                     f.write(waypoint_line)
 
-            MOVE(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name)) #! do not change
+            MOVE(file_name, os.path.join("SHOP", "RACE", f"{city_name}", file_name)) # do not change
 
         # Create MM_DATA files
         mm_data_csv = f"MM{race_type}DATA.CSV"
@@ -1796,7 +1780,7 @@ def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color,
         ax_debug.set_aspect('equal', 'box')
         ax_debug.axis('off')
                 
-        plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.01, facecolor = 'black')
+        plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 2.0, facecolor = 'black')
 
 # Create EXT file            
 def create_ext(city_name, polygons):
@@ -2750,7 +2734,7 @@ prop_list = [prop_1, prop_2]
 
 # Put your randomized props here (you will add them to a list "random_parameters")
 prop_3 = {'offset_y': 0.0,
-          'name': ["tp_tree10m"]*20}
+          'name': ["tp_tree10m"] * 20}
 
 prop_4 = {'offset_y': 0.0,
           'separator': 10.0,
@@ -2850,7 +2834,7 @@ create_bridges(bridges, set_bridges)
 create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
 
 create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
-              x_offset = -0.0, y_offset = -0.0, line_width = 0.7, 
+              x_offset = 0.0, y_offset = 0.0, line_width = 0.7, 
               background_color = 'black')
 
 create_ptl(city_name, polys, vertices)
