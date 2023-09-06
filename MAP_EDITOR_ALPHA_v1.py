@@ -55,6 +55,9 @@ set_bridges = False             # change to "True" if you want BRIDGES // (unfin
 
 ai_map = True                   # change both to "True" if you want AI paths // (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths // (do not change this to "False")
+ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
+lars_race_maker = True          # chane to "True" if you want to create "lars race maker"
+cruise_start_pos =              (-70, 6, 50) # requires "street_0" to be included in packing
 
 random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
@@ -69,6 +72,22 @@ DEBUG_BMS = False               # change to "True" if you want BMS Debug text fi
 shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file
 debug_hud_bound_id = True       # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
+
+# AIMAP Race data (currently applies to all races, will customizable per race in future versions)
+aimap_ambient_density = 0.2
+aimap_num_opponents = 3 
+aimap_opponent_car = "vpbug" 
+
+aimap_cop_count = 1
+aimap_cop_car = "vpcop"
+aimap_cop_data = "15.0 0.0 75.0 0.0 0 4"
+
+opponent_xyz = f"""
+10.0, 0.0, 77.5,0.0,0,0,0,
+0.0, 0.0, -100.0,0.0,0,0,0,
+95.0, 0.0, -110.0,0.0,0,0,0,
+40.0, 0.0, 100.0,0.0,0,0,0,
+0.0, 0.0, 77.5,0.0,0,0,0,"""
 
 # Blender
 # textures_directory = r"C:\Users\robin\Desktop\Blender_Script\DDS" // (under construction)  
@@ -169,13 +188,6 @@ bridges = [
 f"""Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
     Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East."""
 
-# AIMAP Race data (currently applies to all races, will customizable per race in future versions)
-aimap_ambient_density = 0.5
-aimap_num_opponents = 8 
-aimap_opponent_car = "vppanozgt" 
-aimap_cop_car = "vpcop"
-aimap_cop_data = "-30.1 0.0 30.0 0.0 2 0"
-
 ################################################################################################################               
 ################################################################################################################     
  
@@ -183,12 +195,15 @@ def to_do_list(x):
             """
             ! FIX:
             BRIDGE --> setting bridges currently crashes the game
-            BAI --> path setting works, but AI (cops, traffic, peds, etc) still do not spawn/drive/work
             
             TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game
             TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
             
             ? ADD SHORT-TERM:
+            BAI --> improve AI paths and Opponents/Cops/Peds 
+            
+            Blender --> improve Import/Export Blender process
+            
             SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides") & improve general wall setting
             
             FCD --> test and document flag behavior
@@ -198,15 +213,12 @@ def to_do_list(x):
             
             SCRIPT --> update Installation Instructions (e.g. guide for VS Code and Blender interaction)
                                 
-            ? ADD LONG-TERM:
-            SHAPES --> triangles with slopes currently causes issues
-            
+            ? ADD LONG-TERM:            
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             PROPS --> investigate creating custom texturized props from scatch
             
             RACES --> customize AIMAP data for each race 
             
-            TEXTURES --> will other textures also "drift" if they contain the string "T_WATER{}"?
             TEXTURES --> evaluate 'rotating_repeating' and 'custom'
                        
             HUDMAP --> correctly align the HUD map in the game
@@ -1210,8 +1222,13 @@ CUSTOM_MTL_NO_FRIC = 98
 # Cell types
 TUNNEL = 1
 INDOORS = 2
-WATER_DRIFT = 4     # only works with 'T_WATER' textures
+WATER_DRIFT = 4     # only works with 'T_WATER{}' textures
 NO_SKIDS = 200 
+
+# Road types
+LANDMARK = 0
+STREET = 201
+INTERSECTION = 860
 
 # HUD map colors (feel free to add more)
 WOOD = '#7b5931'
@@ -1219,10 +1236,28 @@ SNOW = '#cdcecd'
 WATER = '#5d8096' 
 R6_ROAD = '#414441'  
 GRASS_24 = '#396d18'
-        
-# Start Area
+
+# Note:
+# There must be at least one polygon with 'bound_number = 1' (or 1 + LANDMARK)
+# There can not be a polygon with bound_number 0
+
+# Start Area South
 create_polygon(
-    bound_number = 1,
+    bound_number = 860,
+    vertex_coordinates = [
+        (-25.0, 0.0, 85.0),
+        (25.0, 0.0, 85.0),
+        (25.0, 0.0, 70.0),
+        (-25.0, 0.0, 70.0)],
+        hud_color = R6_ROAD)
+
+save_bms(
+    texture_name = ["CHECK04"],
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 4, repeat_y = 1))
+
+# Start Area Main
+create_polygon(
+    bound_number = 201,
     vertex_coordinates = [
         (-50.0, 0.0, 70.0),
         (50.0, 0.0, 70.0),
@@ -1235,24 +1270,41 @@ save_bms(
     texture_darkness = [40,2,50,1],
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Grass Area    
+# Grass Area | Intersection 
 create_polygon(
-	bound_number = 2,
+	bound_number = 861,
 	material_index = GRASS_MTL,
+    sort_vertices = True,
 	vertex_coordinates = [
+		(20.0, 0.0, -70.0),
 		(-50.0, 0.0, -70.0),
-		(50.0, 0.0, -70.0),
-		(50.0, 0.0, -140.0),
-		(-50.0, 0.0, -140.0)],
+		(-50.0, 0.0, -130.0),
+		(20.0, 0.0, -130.0)],
         hud_color = GRASS_24)
 
 save_bms(
     texture_name = ["24_GRASS"], 
-    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 7, repeat_y = 10))
+
+# Grass Area | Street
+create_polygon(
+	bound_number = 202,
+	material_index = GRASS_MTL,
+    sort_vertices = True,
+	vertex_coordinates = [
+		(50.0, 0.0, -70.0),
+		(20.0, 0.0, -70.0),
+		(20.0, 0.0, -130.0),
+		(50.0, 0.0, -130.0)],
+        hud_color = WATER)
+
+save_bms(
+    texture_name = ["T_GRASS_WIN"], 
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 3, repeat_y = 10))
 
 # Snow Area (no friction)
 create_polygon(
-	bound_number = 3,
+	bound_number = 1,
     material_index = CUSTOM_MTL_NO_FRIC,
     cell_type = NO_SKIDS,
 	vertex_coordinates = [
@@ -1266,23 +1318,9 @@ save_bms(
     texture_name = ["SNOW"], 
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
 
-# Wood Area
-create_polygon(
-	bound_number = 4,
-	vertex_coordinates = [
-		(50.0, 0.0, 70.0),
-		(140.0, 0.0, 70.0),
-		(140.0, 0.0, -70.0),
-		(50.0, 0.0, -70.0)],
-        hud_color = WOOD)
-
-save_bms(
-    texture_name = ["T_WOOD"], 
-    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
-
 # Barricade Area  
 create_polygon(
-	bound_number = 5,
+	bound_number = 862,
     cell_type = TUNNEL,
 	vertex_coordinates = [
 		(50.0, 0.0, -70.0),
@@ -1295,9 +1333,23 @@ save_bms(
     texture_name = ["T_BARRICADE"], 
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 50, repeat_y = 50))
 
+# Wood Area
+create_polygon(
+	bound_number = 203,
+	vertex_coordinates = [
+		(50.0, 0.0, 70.0),
+		(140.0, 0.0, 70.0),
+		(140.0, 0.0, -70.0),
+		(50.0, 0.0, -70.0)],
+        hud_color = WOOD)
+
+save_bms(
+    texture_name = ["T_WOOD"], 
+    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
+
 # Water Area
 create_polygon(
-	bound_number = 6,
+	bound_number = 2,
     cell_type = WATER_DRIFT,
 	material_index = WATER_MTL,
     sort_vertices = True,
@@ -1314,7 +1366,7 @@ save_bms(
 
 # Hill
 create_polygon(
-	bound_number = 7,
+	bound_number = 3,
     cell_type = WATER_DRIFT,
 	vertex_coordinates = [
 		(-50.0, 0.0, -210.0),
@@ -1329,12 +1381,12 @@ save_bms(
 
 # Wall "inside"
 create_polygon(
-    bound_number = 8,
+    bound_number = 4,
     vertex_coordinates = [
         (-10.0, 0.0, -50.00),
         (-10.0, 15.0, -49.99),
         (10.0, 15.0, -49.99),
-        (10.0, 0.0, -50.00)], wall_side = "inside")
+        (10.0, 0.0, -50.00)], wall_side = "outside")
 
 save_bms(
     texture_name = ["SNOW"], 
@@ -1342,13 +1394,19 @@ save_bms(
 
 # Diagonal Road I
 create_polygon(
-    bound_number = 9,
+    bound_number = 863,
     vertex_coordinates = [
-        (-50.0, 0.0, 130.0),
-        (-50.0, 0.0, 140.0),
-        (140.0, 0.0, 70.0),
-        (120.0, 0.0, 70.0)],
+        (-50.0, 0.0, 100.0),
+        (-50.0, 0.0, 270.0),
+        (170.0, 0.0, 70.0),
+        (90.0, 0.0, 70.0)],
         hud_color = GRASS_24)
+
+# narrow version:
+        # (-50.0, 0.0, 130.0),
+        # (-50.0, 0.0, 140.0),
+        # (140.0, 0.0, 70.0),
+        # (120.0, 0.0, 70.0)],
 
 save_bms(
     texture_name = ["24_GRASS"],
@@ -1356,7 +1414,7 @@ save_bms(
 
 # Triangle I
 create_polygon(
-    bound_number = 50,
+    bound_number = 204,
     cell_type = NO_SKIDS,
     vertex_coordinates = [
         (-130.0, 15.0, 70.0),
@@ -1370,7 +1428,7 @@ save_bms(
 
 # Triangle II
 create_polygon(
-    bound_number = 51,
+    bound_number = 205,
     cell_type = NO_SKIDS,
     vertex_coordinates = [
         (-130.0, 15.0, 70.0),
@@ -1380,7 +1438,7 @@ create_polygon(
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
-
+        
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -1551,7 +1609,7 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
         # Create MM_DATA files
         mm_data_csv = f"MM{race_type}DATA.CSV"
         mm_data_comment_line = "Description, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty, CarType, TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit, Difficulty\n"
-        car_type_na, difficulty_na, opponent_na, num_laps_checkpoint_na, time_limit_na = 0, 1, 99, 99, 99
+        car_type_na, difficulty_na, opponent_na, num_laps_checkpoint_na, time_limit_na = 0, 1, 64, 99, 99
 
         with open(mm_data_csv, "w") as f:
             f.write(mm_data_comment_line)
@@ -1562,17 +1620,14 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
 
                 if race_type == "BLITZ":
                     a_timeofday, a_weather, a_cops, a_ambient, a_peds, a_timelimit, p_timeofday, p_weather, p_cops, p_ambient, p_peds, p_timelimit = other_parameters
-                    
                     race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, num_laps_blitz, a_timelimit, opponent_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, num_laps_blitz, p_timelimit, difficulty_na]
 
                 elif race_type == "CIRCUIT":
                     a_timeofday, a_weather, a_num_circuit_laps, a_cops, a_ambient, a_peds, p_timeofday, p_weather, p_num_circuit_laps, p_cops, p_ambient, p_peds = other_parameters
-                    
                     race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, a_num_circuit_laps, time_limit_na, difficulty_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, p_num_circuit_laps, time_limit_na, difficulty_na]
 
                 elif race_type == "RACE":
                     a_timeofday, a_weather, a_cops, a_ambient, a_peds, p_timeofday, p_weather, p_cops, p_ambient, p_peds = other_parameters
-                    
                     race_data = [car_type_na, a_timeofday, a_weather, opponent_na, a_cops, a_ambient, a_peds, num_laps_checkpoint_na, time_limit_na, difficulty_na, car_type_na, p_timeofday, p_weather, opponent_na, p_cops, p_ambient, p_peds, num_laps_checkpoint_na, time_limit_na, difficulty_na]
 
                 race_data_str = ', '.join(map(str, race_data))
@@ -1602,12 +1657,13 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
     if all_races_files:
         for race_type, prefix, num_files in [("BLITZ", "B", num_blitz), ("CIRCUIT", "C", num_circuit), ("RACE", "R", num_checkpoint)]:
             for race_index in range(num_files):
-                for opp_index in range(1, aimap_num_opponents + 1):
+                for opp_index in range(aimap_num_opponents):
                     opp_file_name = f"OPP{opp_index}{race_type}{race_index}.{prefix}{race_index}"
                     
-                    opp_comment_line = f"# This is your Opponent file for opponent number {opp_index}, in race {race_type}{race_index}"
+                    opp_comment_line = f"# This is your Opponent file for opponent number {opp_index}, in race {race_type}{race_index}"                    
                     with open(opp_file_name, "w") as f:
                         f.write(opp_comment_line)
+                        f.write(opponent_xyz)
                         
                     MOVE(opp_file_name, SHOP / "RACE" / city_name / opp_file_name)
                     
@@ -1616,34 +1672,33 @@ def distribute_files(city_name, bnd_hit_id, num_blitz, blitz_races, num_circuit,
                 with open(aimap_file_name, "w") as f:
                     
                     aimap_content = f"""
-                    # Ambient Traffic Density 
-                    [Density] 
-                    {aimap_ambient_density}
+# Ambient Traffic Density 
+[Density] 
+{aimap_ambient_density}
 
-                    # Default Road Speed Limit 
-                    [Speed Limit] 
-                    45 
+# Default Road Speed Limit 
+[Speed Limit] 
+45 
 
-                    # Ambient Traffic Exceptions
-                    # Rd Id, Density, Speed Limit 
-                    [Exceptions] 
-                    0 
+# Ambient Traffic Exceptions
+# Rd Id, Density, Speed Limit 
+[Exceptions] 
+0 
 
-                    # Police Init 
-                    # Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route 
-                    [Police] 
-                    1 
-                    {aimap_cop_car} {aimap_cop_data}
+# Police Init 
+# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route 
+[Police] 
+{aimap_cop_count} 
+{aimap_cop_car} {aimap_cop_data}
 
-                    # Opponent Init, Geo File, WavePoint File 
-                    [Opponent] 
-                    {aimap_num_opponents}
-                    """
-
-                    f.write(textwrap.dedent(aimap_content.strip()))
+# Opponent Init, Geo File, WavePoint File 
+[Opponent] 
+{aimap_num_opponents}
+"""
+                    f.write(textwrap.dedent(aimap_content))
                     
-                    for opp_index in range(1, aimap_num_opponents + 1):
-                        f.write(f"{aimap_opponent_car} OPP{opp_index}{race_type}{race_index}.{prefix}{opp_index}\n")
+                    for opp_index in range(aimap_num_opponents):
+                        f.write(f"{aimap_opponent_car} OPP{opp_index}{race_type}{race_index}.{prefix}{race_index}\n")
                         
                 MOVE(aimap_file_name, SHOP / "RACE" / city_name / aimap_file_name)
     
@@ -1763,8 +1818,8 @@ def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color,
             line.set_transform(trans)
 
         # Save JPG 640 and 320 Pictures            
-        plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.1, facecolor = background_color)
-        plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.1, facecolor = background_color)
+        plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+        plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
 
     # Debug Export
     if debug_hud:
@@ -1780,7 +1835,7 @@ def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color,
         ax_debug.set_aspect('equal', 'box')
         ax_debug.axis('off')
                 
-        plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 2.0, facecolor = 'black')
+        plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = 'white')
 
 # Create EXT file            
 def create_ext(city_name, polygons):
@@ -1848,7 +1903,7 @@ DrawBridge{bridge_number}"""
                 if bridge_data is not None:
                     f.write(bridge_data)
                      
-#!########### Modified Code by 0x1F9F1 Start ############      
+#!########### Code by 0x1F9F1 / Brick (Modified) ############      
                  
 MIN_Y = -20
 MAX_Y = 50
@@ -2092,7 +2147,7 @@ def create_ptl(city_name, polys, vertices):
             Vector3(v1.x, 0, v1.y).write(f)
             Vector3(v2.x, 0, v2.y).write(f)
             
-#!########### Modified Code by 0x1F9F1 / Brick End ############                    
+#!########### Code by 0x1F9F1 / Brick (Modified) ############                   
                     
                                
 # BINARYBANGER CLASS                            
@@ -2388,22 +2443,22 @@ mmMapData :0 {{
        
 # STREETFILE CLASS
 class StreetFile_Editor:    
-    def __init__(self, city_name, street_data, ai_streets = False, reverse = False):
+    def __init__(self, city_name, street_data, ai_reverse = False, ai_streets = ai_streets):
         self.street_name = street_data["street_name"]
-        self.reverse = reverse
+        self.ai_reverse = ai_reverse
 
         if "lanes" in street_data:
             self.original_lanes = street_data["lanes"]
-            if self.reverse:
+            
+            if self.ai_reverse:
                 self.lanes = {key: values + values[::-1] for key, values in self.original_lanes.items()}  
-                # append reversed vertices to original vertices
             else:
                 self.lanes = self.original_lanes
+                
         elif "vertices" in street_data:
             self.original_lanes = {"lane_1": street_data["vertices"]}
-            if self.reverse:
+            if self.ai_reverse:
                 self.lanes = {"lane_1": street_data["vertices"] + street_data["vertices"][::-1]}  
-                # append reversed vertices to original vertices
             else:
                 self.lanes = self.original_lanes
 
@@ -2426,18 +2481,18 @@ class StreetFile_Editor:
             file.write(self.street_template())
 
     def street_template(self):
-        lane_1_key = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
+        lane_1_key = list(self.lanes.keys())[0] # Assuming all lanes have the same number of vertices
         num_vertex_per_lane = len(self.original_lanes[lane_1_key])
-        num_total_vertex = num_vertex_per_lane * len(self.lanes) * (2 if self.reverse else 1)
+        num_total_vertex = num_vertex_per_lane * len(self.lanes) * (2 if self.ai_reverse else 1)
         vertex_string = '\n\t\t'.join('\n\t\t'.join(f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
-        normals_string = '\n\t\t'.join('0.0 1.0 0.0' for _ in range(num_total_vertex))
+        normals_string = '\n\t\t'.join('0.0 1.0 0.0' for _ in range(num_vertex_per_lane))
         stop_light_positions_strings = '\n\t'.join(f'StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}' for i, pos in enumerate(self.stop_light_positions))
 
         street_template = f"""
 mmRoadSect :0 {{
     NumVertexs {num_vertex_per_lane}
     NumLanes[0] {len(self.lanes)}
-    NumLanes[1] {len(self.lanes) if self.reverse else 0}
+    NumLanes[1] {len(self.lanes) if self.ai_reverse else 0}
     NumSidewalks[0] 0
     NumSidewalks[1] 0
     TotalVertexs {num_total_vertex}
@@ -2465,9 +2520,121 @@ mmRoadSect :0 {{
         
         return textwrap.dedent(street_template).strip()
     
-    def create_streets(city_name, street_data, ai_streets, reverse, ai_map = True):
-        street_names = [StreetFile_Editor(city_name, data, ai_streets, reverse).street_name for data in street_data]
+    def create_streets(city_name, street_data, ai_streets, ai_reverse, ai_map = ai_map):
+        street_names = [StreetFile_Editor(city_name, data, ai_reverse, ai_streets).street_name for data in street_data]
         return BAI_Editor(city_name, street_names, ai_map)
+    
+    
+def get_first_and_last_street_vertices(street_list, process_vertices = False):
+    vertices_set = set()
+    
+    for street in street_list:
+        vertices = street["vertices"]
+        if vertices: # Check if the list is not empty
+            vertices_set.add(vertices[0])
+            vertices_set.add(vertices[-1])
+
+    result = list(vertices_set)
+
+    if process_vertices:
+        processed_vertices = []
+
+        for vertex in result:
+            # Take x, y, z from the vertex and expand it with filler data
+            processed = [vertex[0], vertex[1], vertex[2], 0, 20.0, 0.0, 0.0, 0.0, 0.0]
+            processed_vertices.append(processed)
+        
+        return processed_vertices
+
+    return result
+
+def create_lars_race_maker(street_list, lars_race_maker = False, process_vertices = True):
+    vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
+       
+#!########### Code by Lars (Modified) ############    
+
+    html_start = """
+<!DOCTYPE html>
+<html>
+<body>
+
+<img id = "scream" width = "1" height = "1"
+src = "Red_Lars.bmp" alt = "The Scream" >
+<canvas id = "myCanvas" width = "1280" height = "960">
+Your browser does not support the HTML5 canvas tag.
+</canvas>
+<div id ="out">
+
+</div>
+<script>
+var coords = [
+"""
+
+    html_end = """
+]
+
+window.onload = function() {
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+    var img = document.getElementById("scream");
+    ctx.drawImage(img, 10, 10);
+    for (var i = 0 ; i < coords.length; i ++) {
+        ctx.lineWidth = "10";
+        ctx.strokeStyle = "blue";
+        ctx.beginPath();
+        ctx.arc(coords[i][0] / 4.45 + 665, coords[i][2] / 4.45 + 517, 5, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+};
+let last = null
+function getCursorPosition(canvas, event) {
+    const rect = canvas.getBoundingClientRect()
+    const x = event.clientX - rect.left
+    const y = event.clientY - rect.top
+    console.log("x: " + x + " y: " + y)
+    let closest = [-1, 10000000000]
+    for (var i = 0 ; i < coords.length; i ++) {
+        let dist = (((x - 665) * 4.45)-coords[i][0])**2 + (((y - 517) * 4.45)-coords[i][2])**2
+        if (closest[1] > dist) {
+            closest = [i, dist]
+        }
+    }
+    if (closest[1] < 500) {
+        document.getElementById("out").innerHTML += coords[closest[0]].join(',')
+        document.getElementById("out").innerHTML += '<br/>'
+        console.log(coords[closest[0]][0], coords[closest[0]][2] / 4.45 + 517)
+    if (last) {
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        ctx.lineWidth = "5";
+        ctx.strokeStyle = "blue";
+        ctx.beginPath();
+        ctx.moveTo(last[0], last[1]);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+    }
+    last = [x,y]
+    }
+}
+const canvas = document.getElementById('myCanvas')
+canvas.addEventListener('mousedown', function(e) {
+    getCursorPosition(canvas, e)
+})
+</script>
+</body>
+</html>
+"""
+
+#!########### Code by Lars (Modified) ############   
+
+    coords_string = ",\n".join([str(coord) for coord in vertices_processed])
+    new_html_content = html_start + coords_string + html_end
+    
+    if lars_race_maker:
+        with open("lars_race_maker.html", "w") as file:
+            file.write(new_html_content)
+
+    return new_html_content
 
 ###################################################################################################################
 ################################################################################################################### 
@@ -2644,48 +2811,93 @@ Note:
 
 #! Do not delete this Street
 street_0 = {
-    "street_name": "path_filler",
+    "street_name": "cruise_start",
     "vertices": [
-        (0,0,0),    # keep this
-        (30,0,30)]} # starting position in Cruise mode
+        (0,0,0),            # keep this
+        cruise_start_pos]}  # starting position in Cruise mode
+        #* is NOT included right now
 
-#! Do not delete this Street
 street_1 = {
-     "street_name": "path_1",
+     "street_name": "west_path",
      "vertices": [
-         (0.0, 0.0, 15.0),
-         (10.0, 0.0, -20.0),
-         (10.0, 0.0, -40.0),
-         (10.0, 0.0, -60.0),
-         (10.0, 0.0, -80.0)]}
+         (0.0, 0.0, 77.5),
+         (0.0, 0.0, 70.0),
+         (0.0, 0.0, 10.0),
+         (0.0, 0.0, 0.0),
+         (0.0, 0.0, -10.0),
+         (0.0, 0.0, -70.0),
+         (0.0, 0.0, -70.0),
+         (0.0, 0.0, -100.0)]}
 
-#! Do not delete this Street
 street_2 = {
-    "street_name": "path_2",
+     "street_name": "north_horz_path",
+     "vertices": [
+         (0.0, 0.0, -100.0),
+         (20.0, 0.0, -100.0),
+         (25.0, 0.0, -100.0),
+         (30.0, 0.0, -100.0),
+         (35.0, 0.0, -100.0),
+         (40.0, 0.0, -100.0),
+         (45.0, 0.0, -100.0),
+         (50.0, 0.0, -100.0),
+         (95.0, 0.0, -110.0)]}
+
+street_3 = {
+     "street_name": "east_path",
+     "vertices": [
+         (95.0, 0.0, -110.0),
+         (95.0, 0.0, -70.0),
+         (100.0, 0.0, -50.0),
+         (105.0, 0.0, -30.0),
+         (110.0, 0.0, -10.0),
+         (115.0, 0.0, 10.0),
+         (120.0, 0.0, 30.0),
+         (125.0, 0.0, 50.0),
+         (130.0, 0.0, 70.0),
+         (40.0, 0.0, 100.0)]}
+
+# perfect Angled path:
+# (40.0, 0.0, 102.5)
+
+street_4 = {
+    "street_name": "diagonal__triangle_path",
+    "vertices": [
+        (40.0, 0.0, 100.0),
+        (-50.0, 0.0, 135.0),
+        (-59.88, 3.04, 125.52),
+        (-84.62, 7.67, 103.28),
+        (-89.69, 8.62, 62.57),
+        (-61.94, 3.42, 32.00),
+        (-20, 0.0, 70.0),
+        (0.0, 0.0, 77.5)]}
+
+# Street examples with multiple lanes and all optional settings
+street_example = {
+    "street_name": "example_path",
     "lanes": {
         "lane_1": [
-            (-30.0, 1.0, -20.0),
+            (-40.0, 1.0, -20.0),
+            (-30.0, 1.0, -30.0),
             (-30.0, 1.0, -50.0),
             (-30.0, 1.0, -80.0),
-            (-30.0, 1.0, -110.0),
-            (-30.0, 1.0, -140.0),
-            (-30.0, 1.0, -145.0)
+            (-30.0, 1.0, -100.0),
+            (-40.0, 1.0, -110.0)
         ],
         "lane_2": [
             (-40.0, 1.0, -20.0),
+            (-40.0, 1.0, -30.0),
             (-40.0, 1.0, -50.0),
             (-40.0, 1.0, -80.0),
-            (-40.0, 1.0, -110.0),
-            (-40.0, 1.0, -140.0),
-            (-40.0, 1.0, -145.0)
+            (-40.0, 1.0, -100.0),
+            (-40.0, 1.0, -110.0)
         ],
         "lane_3": [
-            (-50.0, 1.0, -20.0),
+            (-40.0, 1.0, -20.0),
+            (-50.0, 1.0, -30.0),
             (-50.0, 1.0, -50.0),
             (-50.0, 1.0, -80.0),
-            (-50.0, 1.0, -110.0),
-            (-50.0, 1.0, -140.0),
-            (-50.0, 1.0, -145.0)
+            (-50.0, 1.0, -100.0),
+            (-40.0, 1.0, -110.0)
         ]
     },
     "intersection_types": [STOP_LIGHT, STOP_LIGHT],
@@ -2701,7 +2913,7 @@ street_2 = {
     "alley": NO}
 
 # Pack all AI paths for processing
-street_list = [street_0, street_1, street_2]
+street_list = [street_1, street_2, street_3, street_4]
 
 ################################################################################################################               
 
@@ -2812,7 +3024,7 @@ distribute_files(city_name, f"{city_name}_HITID.BND",
                            circuit_races, len(checkpoint_races), checkpoint_races, all_races_files = True)
 
 Material_Editor.edit_materials(new_properties, set_material_index, "physics.db")
-StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_map)
+StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse = ai_reverse, ai_map = ai_map)
 
 prop_editor = Prop_Editor(city_name, debug_props = debug_props, input_bng_file = False)
 
@@ -2832,12 +3044,14 @@ create_ext(city_name, hudmap_vertices)
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
+create_ptl(city_name, polys, vertices)
 
 create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
               x_offset = 0.0, y_offset = 0.0, line_width = 0.7, 
               background_color = 'black')
 
-create_ptl(city_name, polys, vertices)
+create_lars_race_maker(street_list, process_vertices = True, lars_race_maker = lars_race_maker)
+
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, Path(mm1_folder))
 
