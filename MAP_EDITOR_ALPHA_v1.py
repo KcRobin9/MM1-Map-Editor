@@ -33,8 +33,8 @@ import subprocess
 import numpy as np            
 from pathlib import Path  
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
-# import matplotlib.pyplot as plt                 ## comment this out when importing to Blender and set "set_minimap" to False
-# import matplotlib.transforms as mtransforms     ## comment this out when importing to Blender and set "set_minimap" to False
+import matplotlib.pyplot as plt                 ## comment this out when importing to Blender and set "set_minimap" to False
+import matplotlib.transforms as mtransforms     ## comment this out when importing to Blender and set "set_minimap" to False
 
 
 #! SETUP I (Names and directory)                Control + F    "city=="  to jump to The City Creation section
@@ -53,7 +53,7 @@ set_props = True                # change to "True" if you want PROPS
 set_anim = True                 # change to "True" if you want ANIM (plane and eltrain)
 set_bridges = False             # change to "True" if you want BRIDGES ## w.i.p.
 
-set_minimap = False             # change to "True" if you want a MINIMAP ## w.i.p.
+set_minimap = True             # change to "True" if you want a MINIMAP ## w.i.p.
 
 ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
