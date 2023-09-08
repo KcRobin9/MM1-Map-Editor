@@ -30,11 +30,11 @@ import shutil
 import random
 import textwrap
 import subprocess
-import numpy as np
-import matplotlib.pyplot as plt                 
-import matplotlib.transforms as mtransforms
+import numpy as np            
 from pathlib import Path  
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
+# import matplotlib.pyplot as plt                 ## comment this out when importing to Blender and set "set_minimap" to False
+# import matplotlib.transforms as mtransforms     ## comment this out when importing to Blender and set "set_minimap" to False
 
 
 #! SETUP I (Names and directory)                Control + F    "city=="  to jump to The City Creation section
@@ -51,16 +51,22 @@ set_facade = True               # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
 
 set_anim = True                 # change to "True" if you want ANIM (plane and eltrain)
-set_bridges = False             # change to "True" if you want BRIDGES // (unfinished)
+set_bridges = False             # change to "True" if you want BRIDGES ## w.i.p.
 
-ai_map = True                   # change both to "True" if you want AI paths // (do not change this to "False")
-ai_streets = True               # change both to "True" if you want AI paths // (do not change this to "False")
+set_minimap = False             # change to "True" if you want a MINIMAP ## w.i.p.
+
+ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
+ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
-lars_race_maker = True          # chane to "True" if you want to create "lars race maker"
+lars_race_maker = False         # change to "True" if you want to create "lars race maker" ## w.i.p.
 cruise_start_pos =              (-70, 6, 50) # requires "street_0" to be included in packing
 
 random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
+
+# Blender
+import_to_blender = False
+textures_directory = r"C:\Users\robin\Desktop\Blender_Script\DDS" # w.i.p., this folder contains all the DDS textures
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BND Debug text file
@@ -71,7 +77,7 @@ DEBUG_BMS = False               # change to "True" if you want BMS Debug text fi
 # HUD
 shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file
-debug_hud_bound_id = True       # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
+debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
 # AIMAP Race data (currently applies to all races, will customizable per race in future versions)
 aimap_ambient_density = 0.2
@@ -89,8 +95,6 @@ opponent_xyz = f"""
 40.0, 0.0, 100.0,0.0,0,0,0,
 0.0, 0.0, 77.5,0.0,0,0,0,"""
 
-# Blender
-# textures_directory = r"C:\Users\robin\Desktop\Blender_Script\DDS" // (under construction)  
 
 #* SETUP III (optional, Race Editor)
 # Weather and Time constants
@@ -212,12 +216,13 @@ def to_do_list(x):
             FCD --> implement diagonal facades
             
             SCRIPT --> update Installation Instructions (e.g. guide for VS Code and Blender interaction)
+            SCRIPT --> split "create_cells" function from "distribute_
                                 
             ? ADD LONG-TERM:            
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             PROPS --> investigate creating custom texturized props from scatch
             
-            RACES --> customize AIMAP data for each race 
+            RACES --> implement Race Editor (i.e. custom (ai) data for each race)
             
             TEXTURES --> evaluate 'rotating_repeating' and 'custom'
                        
@@ -1032,7 +1037,8 @@ def create_polygon(
     vertices = vertices, polys = polys,
     material_index = 0, cell_type = 0, 
     flags = None, plane_edges = None, wall_side = None, sort_vertices = False,
-    hud_color = None, shape_outline_color = shape_outline_color):
+    hud_color = None, shape_outline_color = shape_outline_color,
+    tile_x = 1, tile_y = 1, rotate = 0):
 
     # Vertex indices
     base_vertex_index = len(vertices)
@@ -1105,48 +1111,130 @@ def create_polygon(
         "vertex_coordinates": vertex_coordinates,
         "bound_number": bound_number,
         "material_index": material_index,
+        "tile_x": tile_x,  
+        "tile_y": tile_y,
+        "rotate": rotate,
     }
     polygons_data.append(polygon_info)
+
+def load_all_dds_to_blender(textures_directory):
+    for file_name in os.listdir(textures_directory):
+        if file_name.lower().endswith(".DDS"):
+            texture_path = os.path.join(textures_directory, file_name)
+            if texture_path not in bpy.data.images:
+                bpy.data.images.load(texture_path)
+
+def update_uv_tiling(self, context):
+    tile_x = self.tile_x
+    tile_y = self.tile_y
+    rotate_angle = self.rotate 
+
+    # Make sure the object is active and selected
+    bpy.ops.object.select_all(action = 'DESELECT')
+    self.select_set(True)
+    bpy.context.view_layer.objects.active = self
+
+    # Update the UV mapping of the object based on its custom properties
+    tile_uvs(self, tile_x, tile_y)
+    rotate_uvs(self, rotate_angle)
     
 def apply_dds_to_object(obj, texture_path):
     mat = bpy.data.materials.new(name = "DDS_Material")
     obj.data.materials.append(mat)
     obj.active_material = mat
     
-    # Enable 'Use nodes':
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
     
-    # Clear default nodes
     for node in nodes:
         nodes.remove(node)
 
-    # Add a diffuse shader and connect the texture to it:
     diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
     texture_node = nodes.new(type = 'ShaderNodeTexImage')
 
-    # Load texture
-    texture_node.image = bpy.data.images.load(texture_path)
+    texture_image = bpy.data.images.load(texture_path)
+    texture_node.image = texture_image
 
     links = mat.node_tree.links
     link = links.new
     link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
 
-    # Add the shader to the material's surface
     output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
     
-    # UV unwrap the object (simple version)
+    # UV unwrap the object to fit the texture's aspect ratio
+    unwrap_to_aspect_ratio(obj, texture_image)
+    
+def rotate_uvs(obj, angle_degrees):    
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+
     bpy.ops.object.select_all(action = 'DESELECT')
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    bpy.ops.object.editmode_toggle()
-    bpy.ops.mesh.select_all(action = 'SELECT')
-    bpy.ops.uv.smart_project()
-    bpy.ops.object.editmode_toggle()
+
+    # Get the active UV layer of the object
+    uv_layer = obj.data.uv_layers.active.data
     
-# Create Meshes from Coordinates using 'polygon_data'
-def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
+    angle_rad = math.radians(angle_degrees)
+
+    cos_angle = math.cos(angle_rad)
+    sin_angle = math.sin(angle_rad)
+
+    # Rotate each UV coordinate around the UV center (0.5, 0.5)
+    for uv_data in uv_layer:
+        u, v = uv_data.uv
+        u -= 0.5
+        v -= 0.5
+        rotated_u = u * cos_angle - v * sin_angle
+        rotated_v = u * sin_angle + v * cos_angle
+        uv_data.uv = (rotated_u + 0.5, rotated_v + 0.5)
+
+def unwrap_to_aspect_ratio(obj, image):
+    bpy.ops.object.select_all(action = 'DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    
+    # Enter edit mode and select all
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action = 'SELECT')
+    
+    # Perform UV unwrap
+    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+    
+    # Enter UV edit mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    obj.data.uv_layers.active.active = True
+
+    # Normalize the UVs to ensure they use the entire texture
+    bbox = [obj.data.uv_layers.active.data[i].uv for i in range(len(obj.data.uv_layers.active.data))]
+    uvs_min = [min(co[0] for co in bbox), min(co[1] for co in bbox)]
+    uvs_max = [max(co[0] for co in bbox), max(co[1] for co in bbox)]
+    
+    for uv_loop in obj.data.uv_layers.active.data:
+        uv_loop.uv[0] = (uv_loop.uv[0] - uvs_min[0]) / (uvs_max[0] - uvs_min[0])
+        uv_loop.uv[1] = (uv_loop.uv[1] - uvs_min[1]) / (uvs_max[1] - uvs_min[1])
+    
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+
+
+def tile_uvs(obj, tile_x=1, tile_y=1):
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    # Get the active UV layer of the object
+    uv_layer = obj.data.uv_layers.active.data
+
+    # Restore original UVs
+    original_uvs = obj["original_uvs"]
+    for i, uv_data in enumerate(uv_layer):
+        uv_data.uv[0] = original_uvs[i][0]
+        uv_data.uv[1] = original_uvs[i][1]
+
+    # Loop over each UV coordinate and scale it
+    for uv_data in uv_layer:
+        uv_data.uv[0] *= tile_x
+        uv_data.uv[1] *= tile_y
+
+def create_mesh_from_polygon_data(polygon_data, textures_directory=None):
     coords = polygon_data["vertex_coordinates"]
     name = f"P{polygon_data['bound_number']}_M{polygon_data['material_index']}"
 
@@ -1157,20 +1245,88 @@ def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
     obj = bpy.data.objects.new(name, mesh)
 
     bpy.context.collection.objects.link(obj)
-
     mesh.from_pydata(coords, edges, faces)
     mesh.update()
+    
+    if not obj.data.uv_layers:
+        obj.data.uv_layers.new()
+
+    # Retrieve the original UVs after creating the object and before tiling
+    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
+    obj["original_uvs"] = original_uvs
+    
+    bpy.types.Object.tile_x = bpy.props.FloatProperty(name = "Tile X", default = 1.0, update = update_uv_tiling)
+    bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 1.0, update = update_uv_tiling)
+    bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
+
+    obj.tile_x = polygon_data.get('tile_x', 1)
+    obj.tile_y = polygon_data.get('tile_y', 1)
+    obj.rotate = polygon_data.get('rotate', 0)
 
     if textures_directory:
         apply_dds_to_object(obj, textures_directory)
+        tile_x = polygon_data.get('tile_x', 1)
+        tile_y = polygon_data.get('tile_y', 1)
+        rotate_angle = polygon_data.get('rotate', 0) 
 
-    return obj        
+        tile_uvs(obj, tile_x, tile_y)
+        rotate_uvs(obj, rotate_angle)  
+
+        obj.data.update()
         
-def create_blender_meshes():
-    texture_paths = [os.path.join(textures_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+    # Rotate the created Blender model to match the game's coordinate system
+    bpy.ops.object.select_all(action = 'DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis='X')
+    
+    for area in bpy.context.screen.areas:
+        if area.type == 'VIEW_3D':
+            area.spaces[0].shading.type = 'MATERIAL'
 
-    for polygon, texture_path in zip(polygons_data, texture_paths):
-        create_mesh_from_polygon_data(polygon, texture_path)
+    return obj
+
+class UpdateUVMapping(bpy.types.Operator):
+    bl_idname = "object.update_uv_mapping"
+    bl_label = "Update UV Mapping"
+    bl_description = "Updates UV mapping based on object's custom properties"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        for obj in bpy.context.selected_objects:
+            
+            # Check if the object has the necessary custom properties
+            if all(prop in obj.keys() for prop in ["tile_x", "tile_y", "rotate"]):
+                tile_x = obj["tile_x"]
+                tile_y = obj["tile_y"]
+                rotate_angle = obj["rotate"]
+
+                # Update the UV mapping of the object based on its custom properties
+                tile_uvs(obj, tile_x, tile_y)
+                rotate_uvs(obj, rotate_angle)
+
+        return {"FINISHED"}
+
+#* Maybe remove this, but keep for now
+def setup_keymap():
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
+    if kc:
+        km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
+        kmi = km.keymap_items.new("object.update_uv_mapping", 'U', 'PRESS', shift = True, ctrl = True)
+    
+def create_blender_meshes(import_to_blender: bool = False):
+    if import_to_blender:
+
+        load_all_dds_to_blender(textures_directory)
+            
+        texture_paths = [os.path.join(textures_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+
+        bpy.ops.object.select_all(action='SELECT')
+        bpy.ops.object.delete()
+
+        for polygon, texture_path in zip(polygons_data, texture_paths):
+            create_mesh_from_polygon_data(polygon, texture_path)
            
 ################################################################################################################               
 ################################################################################################################ 
@@ -1249,6 +1405,7 @@ create_polygon(
         (25.0, 0.0, 85.0),
         (25.0, 0.0, 70.0),
         (-25.0, 0.0, 70.0)],
+        tile_y = 4.0, tile_x = 1.0,
         hud_color = R6_ROAD)
 
 save_bms(
@@ -1263,6 +1420,8 @@ create_polygon(
         (50.0, 0.0, 70.0),
         (50.0, 0.0, -70.0),
         (-50.0, 0.0, -70.0)],
+        tile_x = 10, tile_y = 10,
+        rotate = 120,
         hud_color = R6_ROAD)
 
 save_bms(
@@ -1280,7 +1439,8 @@ create_polygon(
 		(-50.0, 0.0, -70.0),
 		(-50.0, 0.0, -130.0),
 		(20.0, 0.0, -130.0)],
-        hud_color = GRASS_24)
+        hud_color = GRASS_24,
+        tile_x = 10, tile_y = 7)
 
 save_bms(
     texture_name = ["24_GRASS"], 
@@ -1296,7 +1456,8 @@ create_polygon(
 		(20.0, 0.0, -70.0),
 		(20.0, 0.0, -130.0),
 		(50.0, 0.0, -130.0)],
-        hud_color = WATER)
+        hud_color = WATER,
+        tile_x = 10, tile_y = 3)
 
 save_bms(
     texture_name = ["T_GRASS_WIN"], 
@@ -1312,7 +1473,8 @@ create_polygon(
 		(50.0, 0.0, -140.0),
 		(50.0, 0.0, -210.0),
 		(-50.0, 0.0, -210.0)],
-         hud_color = SNOW)
+         hud_color = SNOW,
+         tile_x = 10, tile_y = 10)
 
 save_bms(
     texture_name = ["SNOW"], 
@@ -1327,7 +1489,8 @@ create_polygon(
 		(140.0, 0.0, -70.0),
 		(140.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0)],
-        hud_color = '#af0000')
+        hud_color = '#af0000',
+        tile_x = 50, tile_y = 50)
 
 save_bms(
     texture_name = ["T_BARRICADE"], 
@@ -1341,7 +1504,8 @@ create_polygon(
 		(140.0, 0.0, 70.0),
 		(140.0, 0.0, -70.0),
 		(50.0, 0.0, -70.0)],
-        hud_color = WOOD)
+        hud_color = WOOD,
+        tile_x = 10, tile_y = 10)
 
 save_bms(
     texture_name = ["T_WOOD"], 
@@ -1358,7 +1522,8 @@ create_polygon(
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0)],
-        hud_color = WATER)    
+        hud_color = WATER,
+        tile_x = 10, tile_y = 10)
 
 save_bms(
     texture_name = ["T_WATER_WIN"], 
@@ -1373,7 +1538,8 @@ create_polygon(
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
 		(-50.0, 300.0, -1000.0)],
-        hud_color = WATER)
+        hud_color = WATER,
+        tile_x = 100, tile_y = 10)
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1400,13 +1566,8 @@ create_polygon(
         (-50.0, 0.0, 270.0),
         (170.0, 0.0, 70.0),
         (90.0, 0.0, 70.0)],
-        hud_color = GRASS_24)
-
-# narrow version:
-        # (-50.0, 0.0, 130.0),
-        # (-50.0, 0.0, 140.0),
-        # (140.0, 0.0, 70.0),
-        # (120.0, 0.0, 70.0)],
+        hud_color = GRASS_24,
+        tile_x = 10, tile_y = 10)
 
 save_bms(
     texture_name = ["24_GRASS"],
@@ -1420,7 +1581,8 @@ create_polygon(
         (-130.0, 15.0, 70.0),
         (-50.0, 0.0, 70.0),
         (-50.0, 0.0, 0.0)],
-        hud_color = '#ffffe0')
+        hud_color = '#ffffe0',
+        tile_x = 10, tile_y = 10)
 
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
@@ -1434,7 +1596,9 @@ create_polygon(
         (-130.0, 15.0, 70.0),
         (-50.0, 0.0, 140.0),
         (-50.0, 0.0, 70.0)],
-        hud_color = '#ffffe0')
+        hud_color = '#ffffe0',
+        tile_x = 10, tile_y = 10)
+
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
     tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 10, repeat_y = 10))
@@ -1779,63 +1943,74 @@ def create_ar(city_name, destination_folder, delete_shop = False) -> None:
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
 
-def create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, 
+def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, 
                   export_jpg = True, x_offset = 0, y_offset = 0, line_width = 1, background_color = 'black') -> None:
 
-    global hudmap_vertices
-    global hudmap_properties
-    output_bmp_folder = SHOP / 'BMP16'
+    if set_minimap:
+        global hudmap_vertices
+        global hudmap_properties
+        output_bmp_folder = SHOP / 'BMP16'
+        
+        min_x = min(point[0] for polygon in hudmap_vertices for point in polygon)
+        max_x = max(point[0] for polygon in hudmap_vertices for point in polygon)
+        min_z = min(point[2] for polygon in hudmap_vertices for point in polygon)
+        max_z = max(point[2] for polygon in hudmap_vertices for point in polygon)
 
-    def draw_polygon(ax, polygon, shape_outline_color, 
-                     label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
-        
-        xs, ys = zip(*[(point[0], point[2]) for point in polygon])
-        xs, ys = xs + (xs[0],), ys + (ys[0],) # the commas after [0] cannot be removed
-        
-        if shape_outline_color:
-            ax.plot(xs, ys, color = shape_outline_color, linewidth = line_width)
-        
-        if hud_fill:
-            ax.fill(xs, ys, hud_color)
+        width = int(max_x - min_x)
+        height = int(max_z - min_z)
+
+        def draw_polygon(ax, polygon, shape_outline_color, 
+                        label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
             
-        if add_label: 
-            center = calculate_center_tuples(polygon)
-            ax.text(center[0], center[2], label, color = 'white', ha = 'center', va = 'center', fontsize = 4.0)
-
-    if export_jpg:
-        # Regular Export (320 and 640 versions)
-        _, ax = plt.subplots()
-        ax.set_facecolor(background_color)
-        
-        for i, polygon in enumerate(hudmap_vertices):
-            hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
-            draw_polygon(ax, polygon, shape_outline_color, add_label = False, hud_fill = hud_fill, hud_color = hud_color)
+            xs, ys = zip(*[(point[0], point[2]) for point in polygon])
+            xs, ys = xs + (xs[0],), ys + (ys[0],) # the commas after [0] cannot be removed
             
-        ax.set_aspect('equal', 'box')
-        ax.axis('off')
-        trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
-        for line in ax.lines:
-            line.set_transform(trans)
-
-        # Save JPG 640 and 320 Pictures            
-        plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-        plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-
-    # Debug Export
-    if debug_hud:
-        _, ax_debug = plt.subplots()
-        ax_debug.set_facecolor('black')
-
-        for i, polygon in enumerate(hudmap_vertices):
-            hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
-            draw_polygon(ax_debug, polygon, shape_outline_color, 
-                         label = bound_label if debug_hud_bound_id else None, 
-                         add_label = True, hud_fill = hud_fill, hud_color = hud_color)
-
-        ax_debug.set_aspect('equal', 'box')
-        ax_debug.axis('off')
+            if shape_outline_color:
+                ax.plot(xs, ys, color = shape_outline_color, linewidth = line_width)
+            
+            if hud_fill:
+                ax.fill(xs, ys, hud_color)
                 
-        plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = 'white')
+            if add_label: 
+                center = calculate_center_tuples(polygon)
+                ax.text(center[0], center[2], label, color = 'white', ha = 'center', va = 'center', fontsize = 4.0)
+
+        if export_jpg:
+            # Regular Export (320 and 640 versions)
+            _, ax = plt.subplots()
+            ax.set_facecolor(background_color)
+            
+            for i, polygon in enumerate(hudmap_vertices):
+                hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
+                draw_polygon(ax, polygon, shape_outline_color, add_label = False, hud_fill = hud_fill, hud_color = hud_color)
+                
+            ax.set_aspect('equal', 'box')
+            ax.axis('off')
+            trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
+            for line in ax.lines:
+                line.set_transform(trans)
+
+            # Save JPG 640 and 320 Pictures            
+            plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+            plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+
+        if debug_hud:
+            # fig, ax_debug = plt.subplots(figsize=(1000, 1000), dpi=1)
+            fig, ax_debug = plt.subplots(figsize=(width, height), dpi=1)
+            ax_debug.set_facecolor('black')
+            
+            for i, polygon in enumerate(hudmap_vertices):
+                hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
+                draw_polygon(ax_debug, polygon, shape_outline_color, 
+                            label=bound_label if debug_hud_bound_id else None, 
+                            add_label=True, hud_fill=hud_fill, hud_color=hud_color)
+            
+            ax_debug.axis('off')
+            ax_debug.set_xlim([min_x, max_x])
+            ax_debug.set_ylim([min_z, max_z])
+            ax_debug.set_position([0, 0, 1, 1])
+
+            plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'orange')
 
 # Create EXT file            
 def create_ext(city_name, polygons):
@@ -1847,6 +2022,8 @@ def create_ext(city_name, polygons):
 
     with open(SHOP_CITY / f"{city_name}.EXT", 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
+        
+    return min_x, max_x, min_z, max_z
                
 # Create Bridges       
 def create_bridges(all_bridges, set_bridges = set_bridges):
@@ -2524,7 +2701,6 @@ mmRoadSect :0 {{
         street_names = [StreetFile_Editor(city_name, data, ai_reverse, ai_streets).street_name for data in street_data]
         return BAI_Editor(city_name, street_names, ai_map)
     
-    
 def get_first_and_last_street_vertices(street_list, process_vertices = False):
     vertices_set = set()
     
@@ -2550,86 +2726,112 @@ def get_first_and_last_street_vertices(street_list, process_vertices = False):
 
 def create_lars_race_maker(street_list, lars_race_maker = False, process_vertices = True):
     vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
-       
+    
+    polygons = hudmap_vertices
+    min_x, max_x, min_z, max_z = create_ext(city_name, polygons)
+    canvas_width = int(max_x - min_x)
+    canvas_height = int(max_z - min_z)
+    
 #!########### Code by Lars (Modified) ############    
 
-    html_start = """
+    html_start = f"""
 <!DOCTYPE html>
 <html>
 <body>
 
-<img id = "scream" width = "1" height = "1"
-src = "Red_Lars.bmp" alt = "The Scream" >
-<canvas id = "myCanvas" width = "1280" height = "960">
-Your browser does not support the HTML5 canvas tag.
-</canvas>
-<div id ="out">
+<img id="scream" width = "1" height = "1" src = "USER_HUD_debug.jpg" alt = "The Scream">
 
-</div>
+<canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height}">
+Your browser does not support the HTML5 canvas tag.
+
+</canvas>
+<div id = "out"></div>
 <script>
+
+var MIN_X = {min_x};
+var MAX_X = {max_x};
+var MIN_Z = {min_z};
+var MAX_Z = {max_z};
+
 var coords = [
 """
 
     html_end = """
-]
+];
+"""
 
+    html_end += """
 window.onload = function() {
     var canvas = document.getElementById("myCanvas");
     var ctx = canvas.getContext("2d");
     var img = document.getElementById("scream");
+    
+    
     ctx.drawImage(img, 10, 10);
-    for (var i = 0 ; i < coords.length; i ++) {
+    for (var i = 0; i < coords.length; i++) {
         ctx.lineWidth = "10";
         ctx.strokeStyle = "blue";
         ctx.beginPath();
-        ctx.arc(coords[i][0] / 4.45 + 665, coords[i][2] / 4.45 + 517, 5, 0, 2 * Math.PI);
+"""
+
+    html_end += """
+        // Adjusting the coordinates to match the 1:1 scaling
+        ctx.arc((coords[i][0] - MIN_X), (coords[i][2] - MIN_Z), 5, 0, 2 * Math.PI);
         ctx.fill();
+"""
+
+    html_end += """
     }
 };
-let last = null
-function getCursorPosition(canvas, event) {
-    const rect = canvas.getBoundingClientRect()
-    const x = event.clientX - rect.left
-    const y = event.clientY - rect.top
-    console.log("x: " + x + " y: " + y)
-    let closest = [-1, 10000000000]
-    for (var i = 0 ; i < coords.length; i ++) {
-        let dist = (((x - 665) * 4.45)-coords[i][0])**2 + (((y - 517) * 4.45)-coords[i][2])**2
-        if (closest[1] > dist) {
-            closest = [i, dist]
-        }
-    }
-    if (closest[1] < 500) {
-        document.getElementById("out").innerHTML += coords[closest[0]].join(',')
-        document.getElementById("out").innerHTML += '<br/>'
-        console.log(coords[closest[0]][0], coords[closest[0]][2] / 4.45 + 517)
-    if (last) {
-        var canvas = document.getElementById("myCanvas");
-        var ctx = canvas.getContext("2d");
-        ctx.lineWidth = "5";
-        ctx.strokeStyle = "blue";
-        ctx.beginPath();
-        ctx.moveTo(last[0], last[1]);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-    }
-    last = [x,y]
-    }
-}
-const canvas = document.getElementById('myCanvas')
-canvas.addEventListener('mousedown', function(e) {
-    getCursorPosition(canvas, e)
-})
+"""
+
+    html_end += f"""
+let last = null;
+function getCursorPosition(canvas, event) {{
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    console.log("x: " + x + " y: " + y);
+    let closest = [-1, 10000000000];
+    for (var i = 0; i < coords.length; i++) {{
+        let dist = (x - coords[i][0])**2 + (y - coords[i][2])**2;
+        if (closest[1] > dist) {{
+            closest = [i, dist];
+        }}
+    }}
+    if (closest[1] < 500) {{
+        document.getElementById("out").innerHTML += coords[closest[0]].join(',');
+        document.getElementById("out").innerHTML += '<br/>';
+        if (last) {{
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            ctx.lineWidth = "5";
+            ctx.strokeStyle = "blue";
+            ctx.beginPath();
+            ctx.moveTo(last[0], last[1]);
+            ctx.lineTo(x, y);
+            ctx.stroke();
+        }}
+        last = [x,y];
+    }}
+}}
+    """
+
+    html_end += f"""
+const canvas = document.getElementById('myCanvas');
+canvas.addEventListener('mousedown', function(e) {{
+    getCursorPosition(canvas, e);
+}});
 </script>
 </body>
 </html>
-"""
-
+    """
+    
 #!########### Code by Lars (Modified) ############   
 
     coords_string = ",\n".join([str(coord) for coord in vertices_processed])
     new_html_content = html_start + coords_string + html_end
-    
+        
     if lars_race_maker:
         with open("lars_race_maker.html", "w") as file:
             file.write(new_html_content)
@@ -3040,15 +3242,15 @@ move_dev_folder(mm1_folder, city_name)
 move_core_tune(bangerdata_properties)
 move_custom_textures()
 
-create_ext(city_name, hudmap_vertices) 
+create_ext(city_name, hudmap_vertices)
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
 create_ptl(city_name, polys, vertices)
 
-create_hudmap(debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
-              x_offset = 0.0, y_offset = 0.0, line_width = 0.7, 
-              background_color = 'black')
+create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
+               x_offset = 0.0, y_offset = 0.0, line_width = 0.7, 
+               background_color = 'black')
 
 create_lars_race_maker(street_list, process_vertices = True, lars_race_maker = lars_race_maker)
 
@@ -3061,8 +3263,11 @@ print("\n===============================================\n")
 
 start_game(mm1_folder, play_game)
 
-# W.I.P.
-# create_blender_meshes()
+# Blender (w.i.p.)
+create_blender_meshes(import_to_blender = import_to_blender)
+bpy.utils.register_class(UpdateUVMapping)
+# setup_keymap()
+
 
 #? ============ For Reference ============
 
