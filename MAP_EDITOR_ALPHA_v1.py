@@ -45,7 +45,8 @@ mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1
 
 #* SETUP II (Map Creation)
 play_game = True                # start the game immediately after the Map is created
-delete_shop = True              # delete the raw city files after the .ar file has been created
+no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise Mode
+delete_shop = False             # delete the raw city files after the .ar file has been created
 
 set_facade = True               # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
@@ -2960,10 +2961,17 @@ def create_fcd(filename, facade_params, target_fcd_dir, set_facade = False, debu
 ###################################################################################################################  
 
 # Create commandline
-def create_commandline(city_name: str, destination_folder: Path):
+def create_commandline(city_name: str, destination_folder: Path, no_ui: bool = False):
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
-    cmd_params = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}"
+    
+    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}"
+    
+    if no_ui:
+        cmd_params = f"{base_cmd} -noui -keyboard"
+    else:
+        cmd_params = f"{base_cmd}"
+        
     cmd_file_path = destination_folder / cmd_file
     
     with cmd_file_path.open("w") as file:
@@ -3267,7 +3275,7 @@ create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, e
 create_lars_race_maker(street_list, process_vertices = True, lars_race_maker = lars_race_maker)
 
 create_ar(city_name, mm1_folder, delete_shop)
-create_commandline(city_name, Path(mm1_folder))
+create_commandline(city_name, Path(mm1_folder), no_ui)
 
 print("\n===============================================\n")
 print("Succesfully created " + f"{race_locale_name}!")
