@@ -22,11 +22,11 @@
 
 import os
 import re
-import csv
 import bpy
+import csv
 import math
-import struct
 import shutil
+import struct
 import random
 import textwrap
 import subprocess
@@ -46,7 +46,7 @@ mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1
 #* SETUP II (Map Creation)
 play_game = True                # start the game immediately after the Map is created
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise Mode
-delete_shop = False             # delete the raw city files after the .ar file has been created
+delete_shop = True              # delete the raw city files after the .ar file has been created
 
 set_facade = True               # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
@@ -67,7 +67,7 @@ randomize_textures = False      # change to "True" if you want to randomize all 
 
 # Blender
 import_to_blender = False
-textures_directory = r"C:\Users\robin\Desktop\Blender_Script\DDS" # w.i.p., this folder contains all the DDS textures
+textures_directory = Path.cwd() / 'DDS' # w.i.p., this folder contains all the DDS textures
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BND Debug text file
@@ -199,11 +199,7 @@ f"""Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
 ################################################################################################################     
  
 def to_do_list(x):
-            """
-            ! FIX:            
-            TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game
-            TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
-            
+            """            
             ? ADD SHORT-TERM:
             BAI --> improve AI paths and Opponents/Cops/Peds 
             
@@ -217,7 +213,6 @@ def to_do_list(x):
             FCD --> implement diagonal facades
             
             SCRIPT --> update Installation Instructions (e.g. guide for VS Code and Blender interaction)
-            SCRIPT --> split "create_cells" function from "distribute_
                                 
             ? ADD LONG-TERM:            
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
@@ -225,6 +220,8 @@ def to_do_list(x):
             
             RACES --> implement Race Editor (i.e. custom (ai) data for each race)
             
+            TEXTURES --> replacing textures with edited vanilla textures works, but adding new textures crashes the game
+            TEXTURES --> fix wall textures not appearing in game (FIX -> add +0.01 or -0.01 to one of the x or z coordinates)
             TEXTURES --> evaluate 'rotating_repeating' and 'custom'
                        
             HUDMAP --> correctly align the HUD map in the game
@@ -390,7 +387,7 @@ class Vector3:
         self.y = y
         self.z = z
        
-       
+
 # Calculate BND center, min, max, radius, radius squared    
 def calculate_max(vertices: List[Vector3]):
     max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
@@ -500,8 +497,7 @@ class Polygon:
             f"Vertices Coordinates: {vertices_coordinates}\n"
             f"Plane Edges: {self.plane_edges}\n"
             f"Plane N: {self.plane_n}\n"
-            f"Plane D: [{plane_d_str}]\n"
-        )
+            f"Plane D: [{plane_d_str}]\n")
         
         
 # BND CLASS
@@ -634,8 +630,7 @@ class BND:
             f"Height Scale: {self.height_scale}\n"
             f"Cache Size: {self.cache_size}\n\n"
             f"Vertices:\n{self.vertices}\n\n"
-            f"======= Polys =======\n\n{polys_representation}\n"
-        )
+            f"======= Polys =======\n\n{polys_representation}\n")
 
 
 # BMS CLASS
@@ -1023,7 +1018,7 @@ def compute_edges(vertex_coordinates):
         
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
     
-    # Added a required empty edge for triangles to match the binary structure
+    # Add a required empty edge for triangles to match the BND binary structure
     if len(vertices) == 3:
         edges.append(Vector3(0.0, 0.0, 0.0))
     
@@ -1122,8 +1117,8 @@ def create_polygon(
         "rotate": rotate,
         "sort_vertices": sort_vertices,
         "cell_type": cell_type,
-        "hud_color": hud_color,
-    }
+        "hud_color": hud_color}
+    
     polygons_data.append(polygon_info)
 
 def load_all_dds_to_blender(textures_directory):
@@ -1133,13 +1128,11 @@ def load_all_dds_to_blender(textures_directory):
             if texture_path not in bpy.data.images:
                 bpy.data.images.load(texture_path)
                 
-
 def update_uv_tiling(self, context):
     tile_x = self.tile_x
     tile_y = self.tile_y
     rotate_angle = self.rotate 
 
-    # Make sure the object is active and selected
     bpy.ops.object.select_all(action = 'DESELECT')
     self.select_set(True)
     bpy.context.view_layer.objects.active = self
@@ -1209,7 +1202,7 @@ def unwrap_to_aspect_ratio(obj, image):
     bpy.ops.mesh.select_all(action = 'SELECT')
     
     # Perform UV unwrap
-    bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+    bpy.ops.uv.unwrap(method = 'ANGLE_BASED', margin = 0.001)
     
     # Enter UV edit mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -1225,7 +1218,6 @@ def unwrap_to_aspect_ratio(obj, image):
         uv_loop.uv[1] = (uv_loop.uv[1] - uvs_min[1]) / (uvs_max[1] - uvs_min[1])
     
     bpy.ops.object.mode_set(mode = 'OBJECT')
-
 
 def tile_uvs(obj, tile_x=1, tile_y=1):
     bpy.ops.object.mode_set(mode = 'OBJECT')
@@ -1244,9 +1236,9 @@ def tile_uvs(obj, tile_x=1, tile_y=1):
         uv_data.uv[0] *= tile_x
         uv_data.uv[1] *= tile_y
 
-def create_mesh_from_polygon_data(polygon_data, textures_directory=None):
+def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
+    name = f"P{polygon_data['bound_number']}"
     coords = polygon_data["vertex_coordinates"]
-    name = f"P{polygon_data['bound_number']}_M{polygon_data['material_index']}"
 
     edges = []
     faces = [range(len(coords))]
@@ -1258,7 +1250,6 @@ def create_mesh_from_polygon_data(polygon_data, textures_directory=None):
     mesh.from_pydata(coords, edges, faces)
     mesh.update()
     
-    # Set custom properties from polygon_data
     custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index"]
     for prop in custom_properties:
         if prop in polygon_data:
@@ -1330,14 +1321,15 @@ class UpdateUVMapping(bpy.types.Operator):
 
         return {"FINISHED"}
 
-#* Maybe remove this, but keep for now
 def setup_keymap():
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
     if kc:
-        km = wm.keyconfigs.addon.keymaps.new(name='Object Mode', space_type='EMPTY')
-        kmi = km.keymap_items.new("object.update_uv_mapping", 'U', 'PRESS', shift = True, ctrl = True)
-    
+        km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
+                
+        # Keymap for Blender Export to Custom Format 
+        kmi_export = km.keymap_items.new("script.export_custom_format", 'E', 'PRESS', shift = True)
+
 def create_blender_meshes(import_to_blender: bool = False):
     if import_to_blender:
 
@@ -1350,7 +1342,121 @@ def create_blender_meshes(import_to_blender: bool = False):
 
         for polygon, texture_path in zip(polygons_data, texture_paths):
             create_mesh_from_polygon_data(polygon, texture_path)
-           
+            
+def extract_blender_polygon_data(obj):
+    bound_number = int(obj.name[1:])
+    
+    data = {
+        "bound_number": bound_number,
+        "material_index": obj["material_index"],
+        "cell_type": obj["cell_type"],
+        "sort_vertices": obj["sort_vertices"],
+        "vertex_coordinates": obj.data.vertices,
+        "hud_color": obj["hud_color"],
+        "rotate": obj["rotate"]}
+    
+    return data
+
+def format_decimal(val):
+    if val == int(val): 
+        return f"{val:.1f}"
+    else: 
+        return f"{val:.2f}"
+
+
+def get_dds_name_from_blender_polygon(obj):
+    if obj.material_slots:
+        mat = obj.material_slots[0].material
+        if mat and mat.use_nodes:
+            for node in mat.node_tree.nodes:
+                if isinstance(node, bpy.types.ShaderNodeTexImage):
+                    return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
+    return "CHECK04"
+
+def generate_export_script(obj):
+    data = extract_blender_polygon_data(obj)
+
+    vertex_str = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
+    hud_color_str = f"'{data['hud_color']}'" if data['hud_color'] else "None"
+    
+    texture_name = get_dds_name_from_blender_polygon(obj)
+    
+    tile_x = obj.get("tile_x", 1)
+    tile_y = obj.get("tile_y", 1)
+
+    # Construct material index string
+    material_index = data['material_index']
+    if material_index in MATERIAL_MAP:
+        material_str = f"material_index = {MATERIAL_MAP[material_index]}"
+    else:
+        material_str = f"material_index = {material_index}"
+
+    # Construct optional attributes
+    optional_attrs = [material_str]
+    if data['sort_vertices'] == 1:
+        optional_attrs.append("sort_vertices = True")
+    if data['cell_type'] != 0:
+        optional_attrs.append(f"cell_type = {data['cell_type']}")
+    if data['rotate'] != 0.0:
+        optional_attrs.append(f"rotate = {data['rotate']}")
+    
+    optional_str = ",\n\t".join(optional_attrs)
+
+    # Construct export string
+    export_data = f"""create_polygon(
+\tbound_number = {data['bound_number']},
+\t{optional_str},
+\tvertex_coordinates = [
+\t\t{vertex_str}],
+\thud_color = {hud_color_str})
+
+save_bms(
+\ttexture_name = ["{texture_name}"],
+\ttex_coords = compute_tex_coords(bound_number = {data['bound_number']}, mode = "r.H", repeat_x = {tile_x}, repeat_y = {tile_y}))
+"""
+
+    return export_data
+
+
+class ExportCustomFormat(bpy.types.Operator):
+    bl_idname = "script.export_custom_format"
+    bl_label = "Export to Custom Format"
+
+    def execute(self, context):
+        directory_name = "Blender_Export"
+        
+        if not os.path.exists(directory_name):
+            os.mkdir(directory_name)
+            
+        base_file_name = "Map_Editor_Blender_Export.txt"
+        file_path = os.path.join(directory_name, base_file_name)
+        count = 1
+        while os.path.exists(file_path):
+            file_path = os.path.join(directory_name, f"{count}_{base_file_name}")
+            count += 1
+        
+        bpy.ops.object.select_all(action = 'DESELECT')
+        for obj in bpy.context.scene.objects:
+            if obj.type == 'MESH':
+                obj.select_set(True)
+            
+        try:
+            with open(file_path, 'w') as file:
+                for obj in bpy.context.selected_objects:
+                    if obj.type == 'MESH':
+                        export_script = generate_export_script(obj)
+                        file.write(export_script + '\n\n')
+            
+            subprocess.Popen(["notepad.exe", file_path])
+            
+            self.report({'INFO'}, f"Saved data to {file_path}")
+            bpy.ops.object.select_all(action = 'DESELECT')
+        except Exception as e:
+            self.report({'ERROR'}, str(e))
+            return {'CANCELLED'}
+
+        return {'FINISHED'}
+
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -1397,6 +1503,15 @@ def user_notes(x):
 GRASS_MTL = 87
 WATER_MTL = 91
 CUSTOM_MTL_NO_FRIC = 98 
+
+# Material names in Blender
+MATERIAL_MAP = {
+    GRASS_MTL: "GRASS_MTL",
+    WATER_MTL: "WATER_MTL",
+    CUSTOM_MTL_NO_FRIC: "CUSTOM_NO_FRIC_MTL"}
+
+REVERSE_MATERIAL_MAP = {v.replace("_MTL", ""): k for k, v in MATERIAL_MAP.items()}
+
  
 # Cell types
 TUNNEL = 1
@@ -2599,6 +2714,7 @@ STOP_SIGN = "tpsstop"
 STOP_LIGHT_SINGLE = "tplttrafc"
 STOP_LIGHT_DUAL = "tplttrafcdual"
 
+
 # BAI EDITOR CLASS
 class BAI_Editor:
     def __init__(self, city_name, streets, ai_map = True):
@@ -2629,6 +2745,7 @@ mmMapData :0 {{
 }}
         """
         return textwrap.dedent(bai_map_template).strip()
+       
        
 # STREETFILE CLASS
 class StreetFile_Editor:    
@@ -2712,7 +2829,8 @@ mmRoadSect :0 {{
     def create_streets(city_name, street_data, ai_streets, ai_reverse, ai_map = ai_map):
         street_names = [StreetFile_Editor(city_name, data, ai_reverse, ai_streets).street_name for data in street_data]
         return BAI_Editor(city_name, street_names, ai_map)
-    
+        
+        
 def get_first_and_last_street_vertices(street_list, process_vertices = False):
     vertices_set = set()
     
@@ -2736,6 +2854,7 @@ def get_first_and_last_street_vertices(street_list, process_vertices = False):
 
     return result
 
+
 def create_lars_race_maker(street_list, lars_race_maker = False, process_vertices = True):
     vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
     
@@ -2751,7 +2870,7 @@ def create_lars_race_maker(street_list, lars_race_maker = False, process_vertice
 <html>
 <body>
 
-<img id="scream" width = "1" height = "1" src = "USER_HUD_debug.jpg" alt = "The Scream">
+<img id = "scream" width = "1" height = "1" src = "USER_HUD_debug.jpg" alt = "The Scream">
 
 <canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height}">
 Your browser does not support the HTML5 canvas tag.
@@ -2852,6 +2971,7 @@ canvas.addEventListener('mousedown', function(e) {{
 
 ###################################################################################################################
 ################################################################################################################### 
+
 
 # FACADE CLASS
 class Facade_Editor:
@@ -2960,6 +3080,7 @@ def create_fcd(filename, facade_params, target_fcd_dir, set_facade = False, debu
 ###################################################################################################################
 ###################################################################################################################  
 
+
 # Create commandline
 def create_commandline(city_name: str, destination_folder: Path, no_ui: bool = False):
     city_name = city_name.lower()
@@ -2976,6 +3097,7 @@ def create_commandline(city_name: str, destination_folder: Path, no_ui: bool = F
     
     with cmd_file_path.open("w") as file:
         file.write(cmd_params)
+        
         
 # Start game
 def start_game(destination_folder, play_game = False):
@@ -3269,8 +3391,7 @@ create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug
 create_ptl(city_name, polys, vertices)
 
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
-               x_offset = 0.0, y_offset = 0.0, line_width = 0.7, 
-               background_color = 'black')
+               x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
 create_lars_race_maker(street_list, process_vertices = True, lars_race_maker = lars_race_maker)
 
@@ -3286,8 +3407,8 @@ start_game(mm1_folder, play_game)
 # Blender (w.i.p.)
 create_blender_meshes(import_to_blender = import_to_blender)
 bpy.utils.register_class(UpdateUVMapping)
-# setup_keymap()
-
+bpy.utils.register_class(ExportCustomFormat)
+setup_keymap()
 
 #? ============ For Reference ============
 
