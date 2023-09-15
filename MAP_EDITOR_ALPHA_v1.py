@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt                 ## comment this out when importi
 import matplotlib.transforms as mtransforms     ## comment this out when importing to Blender and set "set_minimap" to False
 
 
-#! SETUP I (Map Name and Directory)                Control + F    "city=="  to jump to The City Creation section
+#! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
 city_name = "First_City"                        # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
 mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1560 is automatically copied to this folder)
@@ -59,7 +59,7 @@ set_minimap = True              # change to "True" if you want a MINIMAP ## w.i.
 ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
-lars_race_maker = False         # change to "True" if you want to create "lars race maker" ## w.i.p.
+lars_race_maker = True          # change to "True" if you want to create "lars race maker" 
 cruise_start_pos = (-70, 6, 50) # requires "street_0" to be included in street packing
 
 random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
@@ -238,10 +238,8 @@ def to_do_list(x):
             """            
             ? ADD SHORT-TERM:
             BAI --> improve AI paths and Opponents/Cops/Peds 
-            
-            Blender --> improve Import/Export Blender process
-            
-            SHAPES --> implement "double_wall" (i.e. duplicating the polygon with both "wall sides") & improve general wall setting
+                        
+            SHAPES --> implement "wall_side = double"
             
             FCD --> test and document flag behavior
             FCD --> test and document Sides and Scales behavior
@@ -259,8 +257,6 @@ def to_do_list(x):
             TEXTURES --> evaluate 'rotating_repeating' and 'custom'
                        
             HUDMAP --> correctly align the HUD map in the game
-
-            OPEN1560 --> add custom updated Open1560
             """               
             
 ################################################################################################################               
@@ -2242,8 +2238,7 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
             plt.savefig(output_bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
             plt.savefig(output_bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
 
-        if debug_hud:
-            # fig, ax_debug = plt.subplots(figsize = (1000, 1000), dpi = 1)
+        if debug_hud or lars_race_maker:
             fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
             ax_debug.set_facecolor('black')
             
@@ -2255,7 +2250,7 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
             
             ax_debug.axis('off')
             ax_debug.set_xlim([min_x, max_x])
-            ax_debug.set_ylim([min_z, max_z])
+            ax_debug.set_ylim([max_z, min_z]) # flip the image vertically
             ax_debug.set_position([0, 0, 1, 1])
 
             plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'orange')
@@ -2983,7 +2978,7 @@ def get_first_and_last_street_vertices(street_list, process_vertices = False):
     return result
 
 
-def create_lars_race_maker(street_list, lars_race_maker = False, process_vertices = True):
+def create_lars_race_maker(city_name, street_list, lars_race_maker = False, process_vertices = True):
     #!########### Code by Lars (Modified) ############    
     vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
     
@@ -2995,15 +2990,32 @@ def create_lars_race_maker(street_list, lars_race_maker = False, process_vertice
     html_start = f"""
 <!DOCTYPE html>
 <html>
-<body>
 
-<img id = "scream" width = "1" height = "1" src = "USER_HUD_debug.jpg" alt = "The Scream">
+<head>
+    <style>
+        body {{
+            background-color: #2b2b2b;
+        }}
 
-<canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height}">
+        #myCanvas {{
+            background-color: #2b2b2b;
+        }}
+
+        #out {{
+            color: white;
+        }}
+    </style>
+</head>
+
+<img id = "scream" width = "{canvas_width}" height = {canvas_height} src = "{city_name}_HUD_debug.jpg" alt = "The Scream" style = "display:none;">
+
+<canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height} style = "background-color: #2b2b2b;">
 Your browser does not support the HTML5 canvas tag.
 
 </canvas>
+
 <div id = "out"></div>
+
 <script>
 
 var MIN_X = {min_x};
@@ -3016,6 +3028,10 @@ var coords = [
 
     html_end = """
 ];
+
+function mapRange(value, in_min, in_max, out_min, out_max) {
+    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 """
 
     html_end += """
@@ -3024,8 +3040,8 @@ window.onload = function() {
     var ctx = canvas.getContext("2d");
     var img = document.getElementById("scream");
     
-    
-    ctx.drawImage(img, 10, 10);
+    // Draw the image onto the canvas
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
     for (var i = 0; i < coords.length; i++) {
         ctx.lineWidth = "10";
         ctx.strokeStyle = "blue";
@@ -3033,8 +3049,11 @@ window.onload = function() {
 """
 
     html_end += """
-        // Adjusting the coordinates to match the 1:1 scaling
-        ctx.arc((coords[i][0] - MIN_X), (coords[i][2] - MIN_Z), 5, 0, 2 * Math.PI);
+        // Mapping the coordinates to fit within the canvas dimensions
+        let mappedX = mapRange(coords[i][0], MIN_X, MAX_X, 0, canvas.width);
+        let mappedZ = mapRange(coords[i][2], MIN_Z, MAX_Z, 0, canvas.height);
+
+        ctx.arc(mappedX, mappedZ, 5, 0, 2 * Math.PI);
         ctx.fill();
 """
 
@@ -3045,6 +3064,7 @@ window.onload = function() {
 
     html_end += f"""
 let last = null;
+
 function getCursorPosition(canvas, event) {{
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -3052,7 +3072,10 @@ function getCursorPosition(canvas, event) {{
     console.log("x: " + x + " y: " + y);
     let closest = [-1, 10000000000];
     for (var i = 0; i < coords.length; i++) {{
-        let dist = (x - coords[i][0])**2 + (y - coords[i][2])**2;
+        let mappedX = mapRange(coords[i][0], MIN_X, MAX_X, 0, canvas.width);
+        let mappedZ = mapRange(coords[i][2], MIN_Z, MAX_Z, 0, canvas.height);
+        
+        let dist = (x - mappedX)**2 + (y - mappedZ)**2;
         if (closest[1] > dist) {{
             closest = [i, dist];
         }}
@@ -3089,7 +3112,7 @@ canvas.addEventListener('mousedown', function(e) {{
     new_html_content = html_start + coords_string + html_end
         
     if lars_race_maker:
-        with open("lars_race_maker.html", "w") as file:
+        with open("Lars_Race_Maker.html", "w") as file:
             file.write(new_html_content)
 
     return new_html_content
@@ -3521,7 +3544,7 @@ create_ptl(city_name, polys, vertices)
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
-create_lars_race_maker(street_list, process_vertices = True, lars_race_maker = lars_race_maker)
+create_lars_race_maker(city_name, street_list, process_vertices = True, lars_race_maker = lars_race_maker)
 
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, Path(mm1_folder), no_ui)
