@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt                 ## comment this out when importi
 import matplotlib.transforms as mtransforms     ## comment this out when importing to Blender and set "set_minimap" to False
 
 
-#! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
+#! SETUP I (Map Name and Directory)                Control + F    "city=="  to jump to The City Creation section
 city_name = "First_City"                        # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
 mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1560 is automatically copied to this folder)
@@ -51,8 +51,8 @@ delete_shop = True              # delete the raw city files after the .ar file h
 set_facade = True               # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
 
-set_anim = True                 # change to "True" if you want ANIM (plane and eltrain)
-set_bridges = True              # change to "True" if you want BRIDGES ## w.i.p.
+set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
+set_bridges = False             # change to "True" if you want BRIDGES
 
 set_minimap = True              # change to "True" if you want a MINIMAP ## w.i.p.
 
@@ -225,10 +225,13 @@ bridge_object = "vpmustang99"       # you can pass any object
 #! Structure: (x,y,z, orientation, bridge_number, bridge_object)
 # N.B.: you should only set one bridge per cull room
 bridges = [
-    ((-30.0, 3.0, 0.0), "V", 2, bridge_wide)] 
+    ((-50.01, 0.01, -100.0), "H.W", 2, bridge_wide),
+    ((-91.01, 0.01, -100.0), "H.W", 3, bridge_wide),
+    ] 
 
 # Possible orientations
-f"""Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
+f"""Please choose from orientation:
+    'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.
     Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East."""
 
 ################################################################################################################               
@@ -1581,6 +1584,8 @@ WATER = '#5d8096'
 R6_ROAD = '#414441'  
 GRASS_24 = '#396d18'
 
+ORANGE_COL = "#ffa500"
+L_RED_COL = "#ff7f7f"
     
 # N.B.:
 # There must be at least one polygon with 'bound_number = 1' (or 1 + LANDMARK)
@@ -1719,7 +1724,7 @@ create_polygon(
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
 		(-50.0, 300.0, -1000.0)],
-        hud_color = WATER)
+        hud_color = ORANGE_COL)
 
 save_bms(
     texture_name = ["T_WATER"], 
@@ -1779,6 +1784,66 @@ create_polygon(
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
     tex_coords = compute_tex_coords(bound_number = 205, mode = "r.V", repeat_x = 10, repeat_y = 10))
+
+# Speed Bump I 
+create_polygon(
+	bound_number = 206,
+    sort_vertices = True,
+	vertex_coordinates = [
+		(-50.0, 3.0, -135.0),
+		(50.0, 3.0, -135.0),
+		(50.0, 0.0, -130.0),
+		(-50.0, 0.0, -130.0)],
+         hud_color = L_RED_COL)
+
+save_bms(
+    texture_name = ["T_STOP"], 
+    tex_coords = compute_tex_coords(bound_number = 206, mode = "r.V", repeat_x = 10, repeat_y = 1))
+
+# Speed Bump II 
+create_polygon(
+	bound_number = 207,
+	vertex_coordinates = [
+		(-50.0, 3.0, -135.0),
+		(50.0, 3.0, -135.0),
+		(50.0, 0.0, -140.0),
+		(-50.0, 0.0, -140.0)],
+         hud_color = L_RED_COL)
+
+save_bms(
+    texture_name = ["T_STOP"], 
+    tex_coords = compute_tex_coords(bound_number = 207, mode = "r.V", repeat_x = 1, repeat_y = 10))
+
+# Bridge I 
+# We hebben x = 40 nodig hier
+create_polygon(
+	bound_number = 208,
+    sort_vertices = True,
+	vertex_coordinates = [
+		(-90.0, 0.0, -80.0),
+		(-50.0, 0.0, -80.0),
+		(-50.0, 0.0, -120.0),
+		(-90.0, 0.0, -120.0)],
+        hud_color = R6_ROAD)
+
+save_bms(
+    texture_name = ["RINTER"], 
+    tex_coords = compute_tex_coords(bound_number = 208, mode = "r.V", repeat_x = 5, repeat_y = 5))
+
+# Bridge II 
+create_polygon(
+	bound_number = 209,
+    sort_vertices = True,
+	vertex_coordinates = [
+		(-141.0, 0.0, -80.0),
+		(-91.0, 0.0, -80.0),
+		(-91.0, 0.0, -120.0),
+		(-141.0, 0.0, -120.0)],
+        hud_color = R6_ROAD)
+
+save_bms(
+    texture_name = ["T_GRASS"], 
+    tex_coords = compute_tex_coords(bound_number = 208, mode = "r.V", repeat_x = 5, repeat_y = 5))
         
 ################################################################################################################               
 ################################################################################################################ 
@@ -2269,49 +2334,45 @@ def create_ext(city_name, polygons):
         
     return min_x, max_x, min_z, max_z
 
-               
-# Create Bridges       
-def create_bridges(all_bridges, set_bridges):
-    for bridge in all_bridges:
-        bridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
-        
-        # Vertical
-        if bridge_orientation == "V":
-            bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2]]
-        elif bridge_orientation == "V.F":
-            bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2]]
-            
-        # Horizontal
-        elif bridge_orientation == "H.E":
-            bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] + 10]
-        elif bridge_orientation == "H.W":
-            bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] - 10]
-            
-        # Diagonal North    
-        elif bridge_orientation == "N.E":
-            bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] + 10]
-        elif bridge_orientation == "N.W":
-            bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] - 10]
-            
-        # Diagonal South   
-        elif bridge_orientation == "S.E":
-            bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] + 10]
-        elif bridge_orientation == "S.W":
-            bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] - 10]
-            
-        else:
-            ValueError(f"""
-                  Invalid Bridge Orientation. 
-                  Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'."
-                  Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
-                  """)
-            return
-           
-        drawbridge_values = f"{bridge_object},0,{bridge_offset[0]},{bridge_offset[1]},{bridge_offset[2]},{bridge_facing[0]},{bridge_facing[1]},{bridge_facing[2]}"
-        bridge_filler = "tpcrossgate06,0,-999.99,0.00,-999.99,-999.99,0.00,-999.99"
 
-        # Bridge Data specifically requires 6 lines of data and tabbing. The game will crash if 4 empty lines are used instead of tabs
-        bridge_data = f"""DrawBridge{bridge_number}
+def create_bridges(all_bridges, set_bridges):
+    if set_bridges:
+        bridge_gizmo = SHOP_CITY / f"{city_name}.GIZMO"
+        
+        if bridge_gizmo.exists():
+            os.remove(bridge_gizmo)
+        
+        with bridge_gizmo.open("a") as f: 
+            for bridge in all_bridges:
+                bridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
+                
+                # Orientation logic
+                if bridge_orientation == "V":
+                    bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2]]
+                elif bridge_orientation == "V.F":
+                    bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2]]
+                elif bridge_orientation == "H.E":
+                    bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] + 10]
+                elif bridge_orientation == "H.W":
+                    bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] - 10]
+                elif bridge_orientation == "N.E":
+                    bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] + 10]
+                elif bridge_orientation == "N.W":
+                    bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] - 10]
+                elif bridge_orientation == "S.E":
+                    bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] + 10]
+                elif bridge_orientation == "S.W":
+                    bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] - 10]
+                else:
+                    raise ValueError(f"\n\nInvalid Bridge Orientation.\n"
+                 f"Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.\n"
+                 f"Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.\n")
+
+                drawbridge_values = f"{bridge_object},0,{bridge_offset[0]},{bridge_offset[1]},{bridge_offset[2]},{bridge_facing[0]},{bridge_facing[1]},{bridge_facing[2]}"
+                bridge_filler = "tpcrossgate06,0,-999.99,0.00,-999.99,-999.99,0.00,-999.99"
+
+                # Bridge Data specifically requires 6 lines of data and tabbing. The game will crash if 4 empty lines are used instead of tabs
+                bridge_data = f"""DrawBridge{bridge_number}
 \t{drawbridge_values} 
 \t{bridge_filler}
 \t{bridge_filler}
@@ -2320,12 +2381,10 @@ def create_bridges(all_bridges, set_bridges):
 \t{bridge_filler}
 DrawBridge{bridge_number}"""
 
-        if set_bridges:            
-            bridge_gizmo = SHOP_CITY / f"{city_name}.GIZMO"
-            with bridge_gizmo.open("w") as f:
-                if bridge_data is not None:
+                if bridge_data:
                     f.write(bridge_data)
-                     
+                    f.write("\n")
+                    
 #!########### Code by 0x1F9F1 / Brick (Modified) ############      
                  
 MIN_Y = -20
