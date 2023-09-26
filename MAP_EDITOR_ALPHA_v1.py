@@ -33,8 +33,8 @@ import subprocess
 import numpy as np            
 from pathlib import Path  
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
-import matplotlib.pyplot as plt                 ## comment this out when importing to Blender and set "set_minimap" to False
-import matplotlib.transforms as mtransforms     ## comment this out when importing to Blender and set "set_minimap" to False
+import matplotlib.pyplot as plt                
+import matplotlib.transforms as mtransforms    
 
 
 #! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
@@ -44,18 +44,18 @@ mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1
 
 
 #* SETUP II (Map Creation)
-play_game = True                # start the game immediately after the Map is created
+play_game = True                # start the game immediately after the Map is created (defaults to False when importing to Blender)
 delete_shop = True              # delete the raw city files after the .ar file has been created
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # other race types are currently not supported by the game
+no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 
 set_facade = True               # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
 
-set_anim = True                 # change to "True" if you want ANIM (plane and eltrain)
+set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = False             # change to "True" if you want BRIDGES ## w.i.p.
 
-set_minimap = True              # change to "True" if you want a MINIMAP ## w.i.p.
+set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when importing to Blender) ## w.i.p.
 
 ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
@@ -82,7 +82,7 @@ DEBUG_BMS = False               # change to "True" if you want BMS Debug text fi
 
 # HUD
 shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
-debug_hud = False               # change to "True" if you want a HUD Debug jpg file
+debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
 debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
 
@@ -145,7 +145,7 @@ race_data = {
                 'density': 0.25,
                 'num_of_police': 2,
                 'police_data': [
-                    #! (x, y, z, rotation, start type, behavior)
+                    #! (x, y, z, rotation, start lane [0 = stationary, 2 = in traffic], behavior)
                     f'vpcop 10.0 0.0 65.0 {ROT_N} 0 {PUSH}',
                     f'vpcop -10.0 0.0 65.0 {ROT_N} 0 {MIX}',
                 ]
@@ -250,7 +250,7 @@ BRIDGE_WIDE = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
 bridge_crossgate = "tpcrossgate06"
 bridge_object = "vpmustang99"       # you can pass any object
 
-#! Structure: (x,y,z, orientation, bridge_number, bridge_object)
+#! Structure: (x,y,z, orientation, bridge number, bridge object)
 # N.B.: you should only set one bridge per cull room
 bridges = [
     ((-50.01, 0.01, -100.0), "H.W", 2, BRIDGE_WIDE),
@@ -268,9 +268,9 @@ f"""
  
 def to_do_list(x):
             """            
-            SHORT-TERM:                                    
+            SHORT-TERM:                                            
             FCD --> implement diagonal facades
-                    
+            
             BAI --> improve AI paths and Opponents/Cops/Peds 
                   
             LONG-TERM:        
@@ -984,7 +984,7 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
 ################################################################################################################               
 ################################################################################################################  
 
-def initialize_bnd(vertices, polys):
+def initialize_bounds(vertices, polys):
     magic = b'2DNB\0'
     offset = Vector3(0.0, 0.0, 0.0)
     x_dim, y_dim, z_dim = 0, 0, 0
@@ -1014,7 +1014,7 @@ def initialize_bnd(vertices, polys):
                row_offsets, row_shorts, row_indices, row_heights)
 
 
-def compute_plane_edgenormals(p1, p2, p3): # Only 3 vertices are being used  
+def compute_plane_edgenormals(p1, p2, p3):  # Only 3 vertices are being used  
     v1 = np.subtract(p2, p1)
     v2 = np.subtract(p3, p1)
 
@@ -1185,6 +1185,38 @@ def create_polygon(
 ################################################################################################################  
 
 # Blender
+def enable_developer_extras():
+    prefs = bpy.context.preferences
+    view = prefs.view
+    
+    # Set "Developer Extra's" if not already enabled
+    if not view.show_developer_ui:
+        view.show_developer_ui = True
+        bpy.ops.wm.save_userpref()
+        print("Developer Extras enabled!")
+    else:
+        print("Developer Extras already enabled!")
+        
+           
+def adjust_3D_view_settings():
+    for area in bpy.context.screen.areas:
+        if area.type == 'VIEW_3D':
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    
+                    # Clip distance
+                    space.clip_end = 5000.0
+                    
+                    # Set the shading mode to Solid
+                    shading = space.shading
+                    shading.type = 'SOLID'
+                    
+                    # Uniform Lighting
+                    shading = space.shading
+                    shading.light = 'FLAT'
+                    shading.color_type = 'TEXTURE'
+
+              
 def load_all_dds_to_blender(textures_directory):
     for file_name in os.listdir(textures_directory):
         if file_name.lower().endswith(".dds"):
@@ -1362,12 +1394,8 @@ def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
     bpy.ops.object.select_all(action = 'DESELECT')
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis='X')
+    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis = 'X')
     
-    for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
-            area.spaces[0].shading.type = 'MATERIAL'
-
     return obj
 
 
@@ -1395,12 +1423,13 @@ class UpdateUVMapping(bpy.types.Operator):
 
 def create_blender_meshes(import_to_blender: bool = False):
     if import_to_blender:
-
+        enable_developer_extras()
+        adjust_3D_view_settings()
         load_all_dds_to_blender(textures_directory)
             
         texture_paths = [os.path.join(textures_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
 
-        bpy.ops.object.select_all(action='SELECT')
+        bpy.ops.object.select_all(action = 'SELECT')
         bpy.ops.object.delete()
 
         for polygon, texture_path in zip(polygons_data, texture_paths):
@@ -1524,7 +1553,7 @@ class ExportCustomFormat(bpy.types.Operator):
         return {'FINISHED'}
     
     
-def setup_keymap(import_to_blender):
+def set_blender_keybinding(import_to_blender: bool = False):
     if import_to_blender:
         wm = bpy.context.window_manager
         kc = wm.keyconfigs.addon
@@ -2320,8 +2349,8 @@ save_bms(
 ################################################################################################################ 
 
 # Create BND file
-def create_bnd(vertices, polys, city_name, debug_bounds):
-    bnd = initialize_bnd(vertices, polys)
+def create_bounds(vertices, polys, city_name, debug_bounds):
+    bnd = initialize_bounds(vertices, polys)
     
     with open(f"{city_name}_HITID.BND", "wb") as f:
         bnd.write_bnd(f)
@@ -2369,7 +2398,7 @@ CheckpointNames={checkpoint_race_names_str}
 """)
         
                     
-def move_custom_textures(): 
+def copy_custom_textures(): 
     custom_textures_path = BASE_DIR / "Custom Textures"
     destination_tex16o_path = BASE_DIR / "SHOP" / "TEX16O"
 
@@ -2377,7 +2406,7 @@ def move_custom_textures():
         shutil.copy(custom_texs, destination_tex16o_path / custom_texs.name)
         
         
-def move_core_tune(bangerdata_properties):
+def copy_core_tune(bangerdata_properties):
     editor_tune_dir = Path(BASE_DIR) / 'Core AR' / 'TUNE'
     shop_tune_dir = Path(BASE_DIR) / 'SHOP' / 'TUNE'
 
@@ -2415,7 +2444,7 @@ def move_core_tune(bangerdata_properties):
                 f.writelines(lines)
                 
             
-def move_dev_folder(destination_folder, city_name):
+def copy_dev_folder(destination_folder, city_name):
     dev_folder_path = BASE_DIR / 'dev'
     destination_path = Path(destination_folder) / 'dev'
     
@@ -2427,7 +2456,7 @@ def move_dev_folder(destination_folder, city_name):
     shutil.rmtree(city_folder_path, ignore_errors = True)
     
     
-def move_open1560(destination_folder):
+def copy_open1560(destination_folder):
     open1560_folder_path = BASE_DIR / 'Installation Instructions' / 'Open1560'
     destination_folder = Path(destination_folder)
     
@@ -2733,10 +2762,10 @@ def create_ar(city_name: str, destination_folder: str, delete_shop: bool = False
             print(f"Failed to delete the SHOP directory. Reason: {e}")
 
 
-def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, 
+def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender,
                   export_jpg = True, x_offset = 0, y_offset = 0, line_width = 1, background_color = 'black') -> None:
 
-    if set_minimap:
+    if set_minimap and not import_to_blender:
         global hudmap_vertices
         global hudmap_properties
         output_bmp_folder = SHOP / 'BMP16'
@@ -3014,7 +3043,7 @@ class Cell:
 
 
 # Prepare PTL
-def prepare_ptl(polys, vertices):
+def prepare_portals(polys, vertices):
     cells = {}
 
     for poly in polys:
@@ -3091,8 +3120,8 @@ def prepare_ptl(polys, vertices):
 
 
 # Create PTL
-def create_ptl(city_name, polys, vertices):
-    _, portals = prepare_ptl(polys, vertices)
+def create_portals(city_name, polys, vertices):
+    _, portals = prepare_portals(polys, vertices)
 
     with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
         
@@ -3676,7 +3705,7 @@ class Facade_Editor:
         self.name = name
 
     @classmethod
-    def read_fcd(cls, f):
+    def read_facades(cls, f):
         _, flags = read_unpack(f, '2H')
         start = Vector3.read(f)
         end = Vector3.read(f)
@@ -3693,7 +3722,7 @@ class Facade_Editor:
         
         return cls(flags, start, end, sides, scale, name)
 
-    def write_fcd(self, f):
+    def write_facades(self, f):
         write_pack(f, '2H', self.room, self.flags)
         write_pack(f, '6f', *self.start, *self.end)
         write_pack(f, '3f', *self.sides)
@@ -3714,7 +3743,7 @@ Facade Editor
     """
     
     
-def read_fcd_scales(scales_file):
+def read_facade_scales(scales_file):
     scales = {}
     with open(scales_file, 'r') as f:
         for line in f:
@@ -3728,12 +3757,12 @@ def get_coord_from_tuple(coord_tuple, axis):
     return coord_tuple[axis_dict[axis]]  
     
     
-def create_fcd(filename, facade_params, target_fcd_dir, set_facade=False, debug_facades=False):
+def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, debug_facades = False):
     if set_facade:
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
 
-        scales = read_fcd_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
+        scales = read_facade_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
 
         for params in facade_params:
             axis_idx = axis_dict[params['axis']]
@@ -3770,10 +3799,10 @@ def create_fcd(filename, facade_params, target_fcd_dir, set_facade=False, debug_
                 facade = Facade_Editor(flags, current_start, current_end, sides, scale, name)
                 facades.append(facade)
 
-        with open(filename, mode='wb') as f:
+        with open(filename, mode = 'wb') as f:
             write_pack(f, '<I', len(facades))
             for facade in facades:
-                facade.write_fcd(f)
+                facade.write_facades(f)
 
         MOVE(filename, target_fcd_dir / filename)
 
@@ -3812,24 +3841,25 @@ def create_commandline(city_name: str, destination_folder: Path, no_ui: bool = F
 
         
 # Start game
-def start_game(destination_folder, play_game = False):
-    if play_game:
+def start_game(destination_folder, play_game = False, import_to_blender = False):
+    if play_game and not import_to_blender:
         subprocess.run(str(Path(destination_folder) / "Open1560.exe"), cwd = str(destination_folder), shell = True)
         
 ################################################################################################################### 
 
 #* FACADE NOTES
-#* The "room" should match the bound_number in which the Facade is located.
 #* Separator: (max_x - min_x) / separator(value) = number of facades
-#* Sides: unknown, but leave it as is
-#* Scale: unknown value, behavior: stretch each facade or thin it out
+#* Sides --> set to (0, 0, 0), but can be changed (relates to lighting)
+#* Scale --> enlarges or shrinks non-fixed facades
 #* Facade_name: name of the facade in the game files
 
-#* For a list of facades, check out the /__Useful Documents/CHICAGO_unique_FCD_SCALES.txt
-#* Here you will also find the Scale values for each facade that was used in the original game.
+#* All relevant Facade information can be found in: /UserResources/FACADES.
+#* Each facade is photographed and documented (see: "FACADE_DATA.txt")
 
-#* Few Facade name examples: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01, tunnel02
+#* A few Facade_name examples are: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01
 
+# Flags
+#todo: add more flags
 DARK = 33
 BRIGHT = 35
 
@@ -4148,15 +4178,12 @@ print("\n===============================================\n")
 
 create_folders(city_name)
 create_city_info()
-create_bnd(vertices, polys, city_name, debug_bounds)
+create_bounds(vertices, polys, city_name, debug_bounds)
 create_cells(city_name, f"{city_name}_HITID.BND")
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
-# Material_Editor.edit_materials(new_properties, set_material_index, "physics.db")
 Material_Editor.edit_materials(new_physics_properties, "physics.db")
-
-
 StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse = ai_reverse, ai_map = ai_map)
 
 prop_editor = Prop_Editor(city_name, debug_props = debug_props, input_bng_file = False)
@@ -4168,18 +4195,18 @@ for i in random_parameters:
 prop_editor.add_props(prop_list)
 prop_editor.write_bng_file(set_props)
 
-move_open1560(mm1_folder)
-move_dev_folder(mm1_folder, city_name)
-move_core_tune(bangerdata_properties)
-move_custom_textures()
+copy_open1560(mm1_folder)
+copy_dev_folder(mm1_folder, city_name)
+copy_core_tune(bangerdata_properties)
+copy_custom_textures()
 
 create_ext(city_name, hudmap_vertices)
 create_anim(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
-create_fcd(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
-create_ptl(city_name, polys, vertices)
+create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
+create_portals(city_name, polys, vertices)
 
-create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, export_jpg = True, 
+create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender, export_jpg = True, 
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
 create_lars_race_maker(city_name, street_list, process_vertices = True, lars_race_maker = lars_race_maker)
@@ -4191,13 +4218,13 @@ print("\n===============================================\n")
 print("Succesfully created " + f"{race_locale_name}!")
 print("\n===============================================\n")
 
-start_game(mm1_folder, play_game)
+start_game(mm1_folder, play_game, import_to_blender)
 
 # Blender (w.i.p.)
 create_blender_meshes(import_to_blender)
 bpy.utils.register_class(UpdateUVMapping)
 bpy.utils.register_class(ExportCustomFormat)
-setup_keymap(import_to_blender)
+set_blender_keybinding(import_to_blender)
 
 #? ============ For Reference ============
 
