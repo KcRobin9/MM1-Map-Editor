@@ -269,11 +269,8 @@ f"""
 def to_do_list(x):
             """            
             SHORT-TERM:                                    
-            FCD --> test and document flag behavior (w.i.p.)
-            FCD --> test and document Sides and Scales behavior
-            FCD --> screenshot each vanilla facade for user reference (w.i.p.)
             FCD --> implement diagonal facades
-            
+                    
             BAI --> improve AI paths and Opponents/Cops/Peds 
                   
             LONG-TERM:        

@@ -4,7 +4,7 @@
 
 [![Chat On Discord](https://img.shields.io/discord/239900961731117059?color=7289DA&logo=discord)](https://discord.gg/tjTQAbFdqQ)
 
-Midtown Madness 1 is a racing game made Angel Studios, featuring the city of Chicago.
+Midtown Madness 1 is a racing game made by Angel Studios, featuring the city of Chicago.
 
 This Map Editor was developed to provide an easy way for users to create their own unique cities for Midtown Madness 1. 
 Not only can you design roads, hills, and walls, but you can also customize textures, facades, props, bridges, physics, animations, AI paths, races, and even the HUD.
