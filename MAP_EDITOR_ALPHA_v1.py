@@ -72,7 +72,7 @@ randomize_textures = False      # change to "True" if you want to randomize all 
 
 # Blender
 import_to_blender = False
-textures_directory = Path.cwd() / 'DDS' # w.i.p., this folder contains all the DDS textures
+dds_directory = Path.cwd() / 'DDS' # w.i.p., this folder contains all the DDS textures
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BND Debug text file
@@ -149,7 +149,8 @@ race_data = {
                     #! (x, y, z, rotation, start lane [0 = stationary, 2 = in traffic], behavior)
                     f'vpcop 10.0 0.0 65.0 {ROT_N} 0 {PUSH}',
                     f'vpcop -10.0 0.0 65.0 {ROT_N} 0 {MIX}',
-                ]
+                ],
+                'num_of_opponents': 1,
             },
             'opponent_cars': {
                 'vpbug':        [[5.0, 0.0, 35.0, LANE_4, ROT_N], 
@@ -177,7 +178,8 @@ race_data = {
                 'num_of_police': 0,
                 'police_data': [
                     f'vpcop 15.0 0.0 75.0 0.0 0 {ROADBLOCK}',
-                ]
+                ],
+                'num_of_opponents': 2,
             },
             'opponent_cars': {
                 'vppanoz':      [[-10.0, 245, -850, ROT_N, LANE_4], 
@@ -208,7 +210,8 @@ race_data = {
                 'num_of_police': 1,
                 'police_data': [
                     'vpcop 0.0 0.0 50.0 0.0 0 {SPINOUT}',
-                ]
+                ],
+                'num_of_opponents': 1,
             },
             'opponent_cars': {
                 'vpcaddie':     [[5.0, 0.0, 35.0, LANE_4, ROT_N], 
@@ -1213,19 +1216,55 @@ def adjust_3D_view_settings():
                     shading.type = 'SOLID'
                     
                     # Uniform Lighting
-                    shading = space.shading
                     shading.light = 'FLAT'
                     shading.color_type = 'TEXTURE'
 
               
-def load_all_dds_to_blender(textures_directory):
-    for file_name in os.listdir(textures_directory):
+def load_all_dds_to_blender(dds_directory):
+    for file_name in os.listdir(dds_directory):
         if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(textures_directory, file_name)
+            texture_path = os.path.join(dds_directory, file_name)
             if texture_path not in bpy.data.images:
                 bpy.data.images.load(texture_path)
-       
-                
+
+
+def preload_all_dds_materials(dds_directory):
+    for file_name in os.listdir(dds_directory):
+        if file_name.lower().endswith(".dds"):
+            texture_path = os.path.join(dds_directory, file_name)
+
+            # Load the DDS texture into Blender
+            if texture_path not in bpy.data.images:
+                texture_image = bpy.data.images.load(texture_path)
+            else:
+                texture_image = bpy.data.images[texture_path]
+
+            # Create a material using the DDS texture
+            material_name = os.path.splitext(os.path.basename(texture_path))[0]
+            if material_name not in bpy.data.materials:
+                create_material_from_texture(material_name, texture_image)
+
+
+def create_material_from_texture(material_name, texture_image):
+    mat = bpy.data.materials.new(name = material_name)
+    mat.use_nodes = True
+
+    nodes = mat.node_tree.nodes
+    for node in nodes:
+        nodes.remove(node)
+
+    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
+    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+    texture_node.image = texture_image
+
+    links = mat.node_tree.links
+    link = links.new
+    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+
+    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])      
+
+      
 def update_uv_tiling(self, context):
     tile_x = self.tile_x
     tile_y = self.tile_y
@@ -1241,13 +1280,21 @@ def update_uv_tiling(self, context):
     
     
 def apply_dds_to_object(obj, texture_path):
-    mat = bpy.data.materials.new(name = "DDS_Material")
+    # Extract the filename (without extension) from the texture_path
+    material_name = os.path.splitext(os.path.basename(texture_path))[0]
+    
+    # Check if the material with this name already exists
+    if material_name in bpy.data.materials:
+        mat = bpy.data.materials[material_name]
+    else:
+        mat = bpy.data.materials.new(name = material_name)
+
     obj.data.materials.append(mat)
     obj.active_material = mat
-    
+
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
-    
+
     for node in nodes:
         nodes.remove(node)
 
@@ -1263,11 +1310,11 @@ def apply_dds_to_object(obj, texture_path):
 
     output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
-    
+
     # UV unwrap the object to fit the texture's aspect ratio
     unwrap_to_aspect_ratio(obj, texture_image)
-    
-    
+
+        
 def rotate_uvs(obj, angle_degrees):    
     bpy.ops.object.mode_set(mode = 'OBJECT')
 
@@ -1339,7 +1386,7 @@ def tile_uvs(obj, tile_x = 1, tile_y = 1):
         uv_data.uv[1] *= tile_y
 
 
-def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
+def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
     name = f"P{polygon_data['bound_number']}"
     coords = polygon_data["vertex_coordinates"]
 
@@ -1382,8 +1429,8 @@ def create_mesh_from_polygon_data(polygon_data, textures_directory = None):
     
     obj.rotate = polygon_data.get('rotate', 0)
 
-    if textures_directory:
-        apply_dds_to_object(obj, textures_directory)    
+    if dds_directory:
+        apply_dds_to_object(obj, dds_directory)    
         rotate_angle = polygon_data.get('rotate', 0) 
 
         tile_uvs(obj, tile_x, tile_y)
@@ -1420,15 +1467,56 @@ class UpdateUVMapping(bpy.types.Operator):
                 rotate_uvs(obj, rotate_angle)
 
         return {"FINISHED"}
+    
+    
+class AssignCustomProperties(bpy.types.Operator):
+    bl_idname = "object.assign_custom_properties"
+    bl_label = "Assign Custom Properties to Polygons"
+    bl_description = "Assign Custom Properties to polygons that do not have them yet"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        for obj in bpy.context.scene.objects:
+            if obj.type == 'MESH':
+                
+                if "cell_type" not in obj:
+                    obj["cell_type"] = 0
+                    
+                if "hud_color" not in obj:
+                    obj["hud_color"] = 0
+                    
+                if "material_index" not in obj:
+                    obj["material_index"] = 0
+                
+                if "sort_vertices" not in obj:
+                    obj["sort_vertices"] = 0
+
+                if "rotate" not in obj:
+                    obj["rotate"] = 0.0
+                
+                if "tile_x" not in obj:
+                    obj["tile_x"] = 2.0
+                if "tile_y" not in obj:
+                    obj["tile_y"] = 2.0
+
+                if "original_uvs" not in obj:
+                    # Save the original UVs after creating the object and before tiling
+                    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
+                    obj["original_uvs"] = original_uvs
+                    
+        self.report({'INFO'}, "Assigned Custom Properties")
+        return {"FINISHED"}
 
 
 def create_blender_meshes(import_to_blender: bool = False):
     if import_to_blender:
         enable_developer_extras()
         adjust_3D_view_settings()
-        load_all_dds_to_blender(textures_directory)
-            
-        texture_paths = [os.path.join(textures_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+        
+        load_all_dds_to_blender(dds_directory)
+        preload_all_dds_materials(dds_directory)
+                    
+        texture_paths = [os.path.join(dds_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
 
         bpy.ops.object.select_all(action = 'SELECT')
         bpy.ops.object.delete()
@@ -1459,7 +1547,7 @@ def get_dds_name_from_blender_polygon(obj):
             for node in mat.node_tree.nodes:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
-    return "CHECK04"
+    return "CHECK04"  # if no texture is applied on the polygon, use CHECK04 as a placeholder
 
 
 def format_decimal(val):
@@ -1514,9 +1602,9 @@ save_bms(
     return export_data
 
 
-class ExportCustomFormat(bpy.types.Operator):
-    bl_idname = "script.export_custom_format"
-    bl_label = "Export to Custom Format"
+class ExportBlenderPolygons(bpy.types.Operator):
+    bl_idname = "script.export_blender_polygons"
+    bl_label = "Export Blender Polygons"
 
     def execute(self, context):
         directory_name = "Blender_Export"
@@ -1532,10 +1620,20 @@ class ExportCustomFormat(bpy.types.Operator):
             count += 1
         
         bpy.ops.object.select_all(action = 'DESELECT')
+        
+        mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
+
+        if mesh_objects:
+            for obj in mesh_objects:
+                obj.select_set(True)
+            context.view_layer.objects.active = mesh_objects[0]
+
+            # Apply location transformation (to get Global coordinates)
+            bpy.ops.object.transform_apply(location = True, rotation = False, scale = False)
+        
         for obj in bpy.context.scene.objects:
             if obj.type == 'MESH':
                 obj.select_set(True)
-            
         try:
             with open(file_path, 'w') as file:
                 for obj in bpy.context.selected_objects:
@@ -1562,7 +1660,9 @@ def set_blender_keybinding(import_to_blender: bool = False):
             km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
                     
             # Keymap for Blender Export to Custom Format (Shift + E)
-            kmi_export = km.keymap_items.new("script.export_custom_format", 'E', 'PRESS', shift = True)
+            kmi_export = km.keymap_items.new("script.export_blender_polygons", 'E', 'PRESS', shift = True)
+            
+            kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -2555,7 +2655,7 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
     MOVE(mm_data_file, SHOP / "RACE" / city_name / mm_data_file)
 
 
-def write_aimap(city_name, race_type, race_index, aimap_config, opponent_cars):
+def write_aimap(city_name, race_type, race_index, aimap_config, opponent_cars, num_of_opponents):
     aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
     with open(aimap_file_name, "w") as f:
         
@@ -2585,13 +2685,14 @@ def write_aimap(city_name, race_type, race_index, aimap_config, opponent_cars):
         opp_content = f"""
 # Opponent Init, Geo File, WavePoint File 
 [Opponent] 
-{len(opponent_cars)}
+{num_of_opponents}
 """
         f.write(opp_content)
         for idx, opp_car in enumerate(opponent_cars):
             f.write(f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}\n")
             
     MOVE(aimap_file_name, SHOP / "RACE" / city_name / aimap_file_name)
+
     
     
 def create_races(city_name, race_data):
@@ -2609,13 +2710,13 @@ def create_races(city_name, race_data):
                 for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
                     write_waypoints(
                         f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
-                        opp_waypoints, race_type, race_index, opponent_num = opp_idx)
+                        opp_waypoints, race_type, race_index, opponent_num=opp_idx)
                 
                 # MMData
                 write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
                 
                 # AIMAP
-                write_aimap(city_name, race_type, race_index, config['aimap'], config['opponent_cars']) 
+                write_aimap(city_name, race_type, race_index, config['aimap'], config['opponent_cars'], num_of_opponents=config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
                 
         else: # For other race types
             prefix = race_type_to_prefix[race_type] # Directly assign the prefix string
@@ -2628,13 +2729,14 @@ def create_races(city_name, race_data):
                 for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
                     write_waypoints(
                         f"OPP{opp_idx}{race_type}{idx}{race_type_to_extension[race_type]}{idx}", 
-                        opp_waypoints, race_type, idx, opponent_num = opp_idx)
+                        opp_waypoints, race_type, idx, opponent_num=opp_idx)
                 
-                ## MMData
+                # MMData
                 write_mm_data(f"MM{race_type}DATA.CSV", race_configs, race_type, prefix)
                 
                 # AIMAP
-                write_aimap(city_name, race_type, idx, config['aimap'], config['opponent_cars']) 
+                write_aimap(city_name, race_type, idx, config['aimap'], config['opponent_cars'], num_of_opponents=config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
+
                 
                 
 def create_cnr(city_name, cnr_waypoints):
@@ -2712,7 +2814,7 @@ def create_cells(city_name: str, bnd_hit_id: str):
     
     
 # Create Animations                              
-def create_anim(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
+def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
     if set_anim:
         output_folder_anim = SHOP_CITY / city_name
         main_anim_file = output_folder_anim / "ANIM.CSV"
@@ -4219,7 +4321,7 @@ copy_core_tune(bangerdata_properties)
 copy_custom_textures()
 
 create_ext(city_name, hudmap_vertices)
-create_anim(city_name, anim_data, set_anim)   
+create_animations(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
 create_portals(city_name, polys, vertices)
@@ -4241,7 +4343,8 @@ start_game(mm1_folder, play_game, import_to_blender)
 # Blender (w.i.p.)
 create_blender_meshes(import_to_blender)
 bpy.utils.register_class(UpdateUVMapping)
-bpy.utils.register_class(ExportCustomFormat)
+bpy.utils.register_class(ExportBlenderPolygons)
+bpy.utils.register_class(AssignCustomProperties)
 set_blender_keybinding(import_to_blender)
 
 #? ============ For Reference ============
