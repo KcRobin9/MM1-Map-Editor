@@ -4,7 +4,7 @@ Velocity is (likely) not used by the game
 
 
 [AgiPhysParameters(
-  name        = 'BENCH ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+  name        = 'BENCH',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -17,8 +17,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF010_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF010_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -31,8 +31,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF011_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF011_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -45,8 +45,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF012_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF012_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -59,8 +59,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF013_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF013_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -73,8 +73,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF014_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF014_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -87,8 +87,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF015_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF015_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -101,8 +101,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF016_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF016_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -115,8 +115,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF01_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF01_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -129,8 +129,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF01_DS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF01_DS',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -143,8 +143,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF01_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF01_I',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -157,8 +157,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF01_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF01_O',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -171,8 +171,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF02_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF02_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -185,8 +185,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF02_DS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF02_DS',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -199,8 +199,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF02_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF02_I',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -213,8 +213,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF02_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF02_O',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -227,8 +227,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF03_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF03_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -241,8 +241,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF03_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF03_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -255,8 +255,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF03_DS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF03_DS',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -269,8 +269,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF03_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF03_I',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -283,8 +283,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF03_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF03_O',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -297,8 +297,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF03_W ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF03_W',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -311,8 +311,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF04_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF04_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -325,8 +325,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF04_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF04_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -339,8 +339,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF04_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF04_I',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -353,8 +353,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF04_O ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF04_O',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -367,8 +367,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF04_W ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF04_W',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -381,8 +381,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF05_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF05_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -395,8 +395,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF05_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF05_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -409,8 +409,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF05_I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF05_I',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -423,8 +423,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF06 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF06',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -437,8 +437,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF06_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF06_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -451,8 +451,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF06_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF06_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -465,8 +465,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF07_C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF07_C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -479,8 +479,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BF07_D ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BF07_D',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -493,8 +493,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'BUSH ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'BUSH',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -507,8 +507,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'DIRT ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'DIRT',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -521,8 +521,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'FACADE_SF2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'FACADE_SF2',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -535,8 +535,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'FIREHY ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'FIREHY',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -549,8 +549,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'FLAGSTONE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'FLAGSTONE',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -563,8 +563,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'GRASS1 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'GRASS1',
   friction    = 0.50,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -577,8 +577,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LANDMARK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LANDMARK',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -591,8 +591,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LIGHT01 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LIGHT01',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -605,8 +605,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LIGHT02 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LIGHT02',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -619,8 +619,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LIGHTTP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LIGHTTP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -633,8 +633,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LIGHTTS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LIGHTTS',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -647,8 +647,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LMOSQR_GRND ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LMOSQR_GRND',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -661,8 +661,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'LMPARK_GRASS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'LMPARK_GRASS',
   friction    = 0.50,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -675,8 +675,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'MBOX ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'MBOX',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -689,8 +689,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'NEW2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'NEW2',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -703,8 +703,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'P_BMAN ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'P_BMAN',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -717,8 +717,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'P_DINE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'P_DINE',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -731,8 +731,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'P_TCOP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'P_TCOP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -745,8 +745,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'P_TWAIT ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'P_TWAIT',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -759,8 +759,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'P_WWMN ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'P_WWMN',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -773,8 +773,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'PMETER ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'PMETER',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -787,8 +787,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R1 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R1',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -801,8 +801,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R2',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -815,8 +815,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R2C ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R2C',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -829,8 +829,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R2I ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R2I',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -843,8 +843,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R4 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R4',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -857,8 +857,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R6 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R6',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -871,8 +871,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'R8 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'R8',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -885,8 +885,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RD1RR_TRACK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RD1RR_TRACK',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -899,8 +899,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RD2LANE_COB ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RD2LANE_COB',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -913,8 +913,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RD2LANE_IND ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RD2LANE_IND',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -927,8 +927,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RD2LANEP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RD2LANEP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -941,8 +941,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RD4LANEP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RD4LANEP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -955,8 +955,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RD4LANEPI ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RD4LANEPI',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -969,8 +969,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RF08 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RF08',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -983,8 +983,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RF10 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RF10',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -997,8 +997,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RFWY ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RFWY',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1011,8 +1011,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RINTER ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RINTER',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1025,8 +1025,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'RWALK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'RWALK',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1039,8 +1039,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SDWLK ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SDWLK',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1053,8 +1053,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SGN_OW ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SGN_OW',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1067,8 +1067,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SGN_SL ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SGN_SL',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1081,8 +1081,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SGN_ST ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SGN_ST',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1095,8 +1095,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SGN_STP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SGN_STP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1109,8 +1109,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SGN_XW ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SGN_XW',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1123,8 +1123,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SHRSE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SHRSE',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1137,8 +1137,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SHRUB ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SHRUB',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1151,8 +1151,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SIGN_CONST ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SIGN_CONST',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1165,8 +1165,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SIGN_DEADEND ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SIGN_DEADEND',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1179,8 +1179,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SIGN_STOP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SIGN_STOP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1193,8 +1193,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'SIGN_STOPLIGHT ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'SIGN_STOPLIGHT',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1207,8 +1207,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'T_GRASS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'T_GRASS',
   friction    = 0.68,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1221,8 +1221,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'T_STEP_SIDE ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'T_STEP_SIDE',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1235,8 +1235,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'T_STEP_TOP ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'T_STEP_TOP',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1249,8 +1249,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'T_WALK_ALLEY ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'T_WALK_ALLEY',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1263,8 +1263,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'T_WATER ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'T_WATER',
   friction    = 666.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1277,8 +1277,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'TBPARK03GRASS ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'TBPARK03GRASS',
   friction    = 0.50,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1291,8 +1291,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'TCANM ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'TCANM',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1305,8 +1305,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'TEST1 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'TEST1',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1319,8 +1319,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'TEST2 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'TEST2',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1333,8 +1333,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'TEST3 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'TEST3',
   friction    = 2.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1347,8 +1347,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'TEST4 ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'TEST4',
   friction    = 0.00,
   elasticity  = 0.10,
   drag        = 0.00,
@@ -1361,8 +1361,8 @@ Velocity is (likely) not used by the game
   velocity    = x = 0.0, y = 0.0),
   ptx_color   = x = 1.0, y = 1.0, z = 1.0)
 
-, AgiPhysParameters(
-  name        = 'WPOBJ ÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ',
+AgiPhysParameters(
+  name        = 'WPOBJ',
   friction    = 1.00,
   elasticity  = 0.10,
   drag        = 0.00,

@@ -60,7 +60,7 @@ set_minimap = True              # change to "True" if you want a MINIMAP (defaul
 ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
-lars_race_maker = True          # change to "True" if you want to create "lars race maker" 
+lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
 
 # You can add multiple Cruise Start positions here as backup, only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
@@ -78,6 +78,7 @@ textures_directory = Path.cwd() / 'DDS' # w.i.p., this folder contains all the D
 debug_bounds = False            # change to "True" if you want a BND Debug text file
 debug_props = False             # change to "True" if you want a BNG Debug text file
 debug_facades = False           # change to "True" if you want a FCD Debug text file
+debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in folder "_Debug_BMS")
 
 # HUD
@@ -3356,7 +3357,7 @@ class Material_Editor:
                 param.write_materials(f)
                 
     @classmethod    
-    def edit_materials(cls, materials_properties, physics_output_file):
+    def edit_materials(cls, materials_properties, physics_output_file, debug_physics):
         input_file = BASE_DIR / "EditorResources" / "PHYSICS.DB"
         output_folder = SHOP / "MTL"
         
@@ -3371,24 +3372,41 @@ class Material_Editor:
             
         cls.write_materials_file(physics_output_file, read_material_file)
         MOVE(physics_output_file, output_folder / physics_output_file)
-  
-    def __repr__(self):
-        cleaned_name = self.name.rstrip()
+        
+        if debug_physics:
+            debug_file_name = "PHYSICS_DB_debug.txt"
+            cls.write_debug_file(debug_file_name, read_material_file)
+   
+    @classmethod
+    def write_debug_file(cls, debug_filename, material_list):
+        with open(debug_filename, 'w') as debug_file:
+            for idx, material in enumerate(material_list):
+                debug_file.write(material.__repr__(idx))
+                debug_file.write("\n")
+
+    def __repr__(self, idx = None):
+        cleaned_name = self.name.rstrip("\x00 Í")
+        formatted_velocity = f"x = {self.velocity.x:.2f}, y = {self.velocity.y:.2f}"
+        
+        header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
+        
         return f"""
-AgiPhysParameters
-    name        = '{cleaned_name}',
-    friction    = {self.friction:.2f},
-    elasticity  = {self.elasticity:.2f},
-    drag        = {self.drag:.2f},
-    bump_height = {self.bump_height:.2f},
-    bump_width  = {self.bump_width:.2f},
-    bump_depth  = {self.bump_depth:.2f},
-    sink_depth  = {self.sink_depth:.2f},
-    type        = {self.type},
-    sound       = {self.sound},
-    velocity    = {self.velocity},
-    ptx_color   = {self.ptx_color}
+    {header}
+        name        = '{cleaned_name}',
+        friction    = {self.friction:.2f},
+        elasticity  = {self.elasticity:.2f},
+        drag        = {self.drag:.2f},
+        bump_height = {self.bump_height:.2f},
+        bump_width  = {self.bump_width:.2f},
+        bump_depth  = {self.bump_depth:.2f},
+        sink_depth  = {self.sink_depth:.2f},
+        type        = {self.type},
+        sound       = {self.sound},
+        velocity    = {formatted_velocity},
+        ptx_color   = {self.ptx_color}
         """
+
+
         
 ###################################################################################################################
 ###################################################################################################################
@@ -4161,12 +4179,12 @@ f"""    Player Cars:
 ################################################################################################################     
 
 # SET MATERIAL PROPERTIES
-# available numbers: 94, 95, 96, 97, 98,
-# see: /UserResources/PHYSICS/PHYSICS.DB_extracted.txt for more information
+# available indices: 94, 95, 96, 97, 98,
+# see: /UserResources/PHYSICS/PHYSICS.DB.txt for more information
 
 new_physics_properties = {
-    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0},  # slippery
-    97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0}  # sticky
+    97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # sticky
+    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0},   # slippery
 }
 
 ################################################################################################################   
@@ -4183,7 +4201,7 @@ create_cells(city_name, f"{city_name}_HITID.BND")
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
-Material_Editor.edit_materials(new_physics_properties, "physics.db")
+Material_Editor.edit_materials(new_physics_properties, "physics.db", debug_physics)
 StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse = ai_reverse, ai_map = ai_map)
 
 prop_editor = Prop_Editor(city_name, debug_props = debug_props, input_bng_file = False)
