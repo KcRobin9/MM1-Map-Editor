@@ -86,6 +86,9 @@ shape_outline_color = None      # change to any other color (e.g. 'Red'), if you
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
 debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
+# Advanced
+empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
+
 
 #* SETUP III (optional, Race Editor)
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
@@ -273,15 +276,15 @@ f"""
 def to_do_list(x):
             """            
             SHORT-TERM:                                            
+            SHAPES --> analyze walls
+            
             FCD --> implement diagonal facades
             
             BAI --> improve AI paths and Opponents/Cops/Peds 
                   
             LONG-TERM:        
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
-            
-            SHAPES --> implement Double Sided Walls
-                        
+                                    
             TEXTURES --> add (new) custom textures 
             TEXTURES --> fix visibility wall textures
             TEXTURES --> UV mapping in general
@@ -1018,6 +1021,25 @@ def initialize_bounds(vertices, polys):
                row_offsets, row_shorts, row_indices, row_heights)
 
 
+def ensure_ccw_order(vertex_coordinates):
+    v1, v2, v3 = vertex_coordinates
+    
+    edge1 = np.subtract(v2, v1)
+    edge2 = np.subtract(v3, v1)
+    
+    normal = np.cross(edge1, edge2)
+    reference_up = np.array([0, 1, 0])
+    
+    dot_product = np.dot(normal, reference_up)
+    
+    if dot_product < 0:
+        # If it's clockwise, swap the order of the vertices
+        return [v1, v3, v2]
+    else:
+        # If it's counterclockwise, no changes needed
+        return [v1, v2, v3]
+
+
 def compute_plane_edgenormals(p1, p2, p3):  # Only 3 vertices are being used  
     v1 = np.subtract(p2, p1)
     v2 = np.subtract(p3, p1)
@@ -1109,16 +1131,26 @@ def create_polygon(
 
     # Vertex indices
     base_vertex_index = len(vertices)
-       
+    
+    # Ensure 3 or 4 vertices
+    if len(vertex_coordinates) != 3 and len(vertex_coordinates) != 4:
+        raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
+
+    if bound_number == 0 and bound_number == 200:
+        raise ValueError("Bound Number must be between 1 and 199, or 201 and 255.")
+    
+    # Ensure Counterclockwise order
+    if len(vertex_coordinates) == 3:
+        vertex_coordinates = ensure_ccw_order(vertex_coordinates)
+           
     # Flags
     if flags is None:
         if len(vertex_coordinates) == 4:
             flags = 6
         elif len(vertex_coordinates) == 3:
             flags = 3
-        else:
-            raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
-        
+
+    # Sorting        
     if sort_vertices: 
         vertex_coordinates = sort_coordinates(vertex_coordinates)
         
@@ -1139,7 +1171,6 @@ def create_polygon(
             max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
             abs(max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates)) <= 0.15):
 
-            
             if wall_side == "outside":
                 corners = [0, 0, -1, max(coord[2] for coord in vertex_coordinates)]
             elif wall_side == "inside":
@@ -1151,7 +1182,7 @@ def create_polygon(
         elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
               max(coord[1] for coord in vertex_coordinates) - min(coord[1] for coord in vertex_coordinates) > 0.1 and
               max(coord[2] for coord in vertex_coordinates) - min(coord[2] for coord in vertex_coordinates) > 0.1):
-                    
+
             if wall_side == "outside":
                 corners = [-1, 0, 0, min(coord[0] for coord in vertex_coordinates)]
             elif wall_side == "inside":
@@ -1178,6 +1209,7 @@ def create_polygon(
         "vertex_coordinates": vertex_coordinates,
         "bound_number": bound_number,
         "material_index": material_index,
+        "always_visible": always_visible,
         "rotate": rotate,
         "sort_vertices": sort_vertices,
         "cell_type": cell_type,
@@ -1400,7 +1432,7 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
     mesh.from_pydata(coords, edges, faces)
     mesh.update()
     
-    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index"]
+    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
     for prop in custom_properties:
         if prop in polygon_data:
             obj[prop] = polygon_data[prop]
@@ -1491,6 +1523,9 @@ class AssignCustomProperties(bpy.types.Operator):
                 if "sort_vertices" not in obj:
                     obj["sort_vertices"] = 0
 
+                if "always_visible" not in obj:
+                    obj["always_visible"] = 0
+
                 if "rotate" not in obj:
                     obj["rotate"] = 0.0
                 
@@ -1498,10 +1533,15 @@ class AssignCustomProperties(bpy.types.Operator):
                     obj["tile_x"] = 2.0
                 if "tile_y" not in obj:
                     obj["tile_y"] = 2.0
-
+                
                 if "original_uvs" not in obj:
-                    # Save the original UVs after creating the object and before tiling
-                    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
+                    # Check if the object has an active UV layer, and if not, create one
+                    uv_layer = obj.data.uv_layers.active
+                    if uv_layer is None:
+                        uv_layer = obj.data.uv_layers.new(name = "UVMap")
+
+                    # Now save the original UVs
+                    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in uv_layer.data]
                     obj["original_uvs"] = original_uvs
                     
         self.report({'INFO'}, "Assigned Custom Properties")
@@ -1526,12 +1566,18 @@ def create_blender_meshes(import_to_blender: bool = False):
             
             
 def extract_blender_polygon_data(obj):
-    bound_number = int(obj.name[1:])
+    if obj.name.startswith("P"):
+        bound_number = int(obj.name[1:])
+    elif obj.name.startswith("Shape_"):
+        bound_number = int(obj.name.split("_")[1])
+    else:
+        raise ValueError(f"Unrecognized object name format: {obj.name}")
     
     data = {
         "bound_number": bound_number,
         "material_index": obj["material_index"],
         "cell_type": obj["cell_type"],
+        "always_visible": obj["always_visible"], 
         "sort_vertices": obj["sort_vertices"],
         "vertex_coordinates": obj.data.vertices,
         "hud_color": obj["hud_color"],
@@ -1577,10 +1623,13 @@ def generate_export_script(obj):
 
     # Construct optional attributes
     optional_attrs = [material_str]
+    
     if data['sort_vertices'] == 1:
         optional_attrs.append("sort_vertices = True")
     if data['cell_type'] != 0:
         optional_attrs.append(f"cell_type = {data['cell_type']}")
+    if data['always_visible'] != 0:
+        optional_attrs.append(f"always_visible = {data['always_visible']}")
     if data['rotate'] != 0.0:
         optional_attrs.append(f"rotate = {data['rotate']}")
     
@@ -1629,7 +1678,7 @@ class ExportBlenderPolygons(bpy.types.Operator):
             context.view_layer.objects.active = mesh_objects[0]
 
             # Apply location transformation (to get Global coordinates)
-            bpy.ops.object.transform_apply(location = True, rotation = False, scale = False)
+            bpy.ops.object.transform_apply(location = True, rotation = False, scale = True)
         
         for obj in bpy.context.scene.objects:
             if obj.type == 'MESH':
@@ -1659,9 +1708,8 @@ def set_blender_keybinding(import_to_blender: bool = False):
         if kc:
             km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
                     
-            # Keymap for Blender Export to Custom Format (Shift + E)
+            # Shift + E to export the polygons, Shift + P to assign custom properties
             kmi_export = km.keymap_items.new("script.export_blender_polygons", 'E', 'PRESS', shift = True)
-            
             kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
 
 ################################################################################################################               
@@ -1707,6 +1755,7 @@ def user_notes(x):
     """
     
 # Material types
+ROAD_MTL = 0
 GRASS_MTL = 87
 WATER_MTL = 91
 STICKY_MTL = 97
@@ -1741,11 +1790,9 @@ GRASS_24 = '#396d18'
 ORANGE_COL = "#ffa500"
 LIGHT_RED_COL = "#ff7f7f"
 
+
 #! N.B.:
-#! There must be one polygon with 'bound_number = 1' (or 1 + LANDMARK)
-#! There can not be a polygon with 'bound_number = 0' (or 0 + LANDMARK)
-
-
+#! The 'bound_number' can not be equal to 0, 200, or a negative number
 
 #! ======================== MAIN AREA ======================== #*
 
@@ -2712,14 +2759,11 @@ def create_races(city_name, race_data):
                         f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
                         opp_waypoints, race_type, race_index, opponent_num=opp_idx)
                 
-                # MMData
                 write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
+                write_aimap(city_name, race_type, race_index, config['aimap'], config['opponent_cars'], num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
                 
-                # AIMAP
-                write_aimap(city_name, race_type, race_index, config['aimap'], config['opponent_cars'], num_of_opponents=config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
-                
-        else: # For other race types
-            prefix = race_type_to_prefix[race_type] # Directly assign the prefix string
+        else:  # For other race types
+            prefix = race_type_to_prefix[race_type]  # Directly assign the prefix string
             for idx, config in race_configs.items():
                 
                 # Player Waypoints for Blizes and Circuits
@@ -2731,13 +2775,9 @@ def create_races(city_name, race_data):
                         f"OPP{opp_idx}{race_type}{idx}{race_type_to_extension[race_type]}{idx}", 
                         opp_waypoints, race_type, idx, opponent_num=opp_idx)
                 
-                # MMData
                 write_mm_data(f"MM{race_type}DATA.CSV", race_configs, race_type, prefix)
-                
-                # AIMAP
-                write_aimap(city_name, race_type, idx, config['aimap'], config['opponent_cars'], num_of_opponents=config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
+                write_aimap(city_name, race_type, idx, config['aimap'], config['opponent_cars'], num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
 
-                
                 
 def create_cnr(city_name, cnr_waypoints):
         cnr_csv_file = "COPSWAYPOINTS.CSV"
@@ -2810,6 +2850,12 @@ def create_cells(city_name: str, bnd_hit_id: str):
                 row = f"{bound_number},32,{cell_type}{always_visible_data}\n"
             else:
                 row = f"{bound_number},8,{cell_type}{always_visible_data}\n"
+                
+            # Testing 
+            #     row = f"{bound_number},32,{cell_type},1,1\n"
+            # else:
+            #     row = f"{bound_number},8,{cell_type},1,1\n"
+                
             f.write(row)
     
     
@@ -3223,28 +3269,29 @@ def prepare_portals(polys, vertices):
 
 
 # Create PTL
-def create_portals(city_name, polys, vertices):
-    _, portals = prepare_portals(polys, vertices)
-
-    with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
+def create_portals(city_name, polys, vertices, empty_portals):
+    if empty_portals:
+        with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
+            pass
         
-        write_pack(f, '<I', 0)
-        write_pack(f, '<I', len(portals))
-
-        for cell_1, cell_2, v1, v2 in portals:
-            flags = 0x2
-            edge_count = 2
-            write_pack(f, '<BB', flags, edge_count)
-            write_pack(f, '<H', 101)
-            write_pack(f, '<HH', cell_2, cell_1)
-
-            # TODO: Change height
-            height = MAX_Y - MIN_Y
-            write_pack(f, '<f', height)
-
-            Vector3(v1.x, 0, v1.y).write(f)
-            Vector3(v2.x, 0, v2.y).write(f)
+    else:
+        _, portals = prepare_portals(polys, vertices)    
+        with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
             
+            write_pack(f, '<I', 0)
+            write_pack(f, '<I', len(portals))    
+            for cell_1, cell_2, v1, v2 in portals:
+                flags = 0x2
+                edge_count = 2
+                write_pack(f, '<BB', flags, edge_count)
+                write_pack(f, '<H', 101)
+                write_pack(f, '<HH', cell_2, cell_1)    
+                # TODO: Change height
+                height = MAX_Y - MIN_Y
+                write_pack(f, '<f', height)    
+                Vector3(v1.x, 0, v1.y).write(f)
+                Vector3(v2.x, 0, v2.y).write(f)
+
 #!########### Code by 0x1F9F1 / Brick (Modified) ############                   
                     
                                
@@ -4057,7 +4104,7 @@ f"""
 # Stop_light_names, defaults to: "STOP_LIGHT_SINGLE"
 (possbile names: "STOP_SIGN", "STOP_LIGHT_SINGLE", "STOP_LIGHT_DUAL")
 
-# Stop_light_positions, defaults to: (0,0,0)
+# Stop_light_positions, defaults to: (0, 0, 0)
 # Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: "NO"
 (possbile values: "YES", "NO")
 
@@ -4324,7 +4371,7 @@ create_ext(city_name, hudmap_vertices)
 create_animations(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
-create_portals(city_name, polys, vertices)
+create_portals(city_name, polys, vertices, empty_portals)
 
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender, export_jpg = True, 
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
