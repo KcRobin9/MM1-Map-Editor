@@ -156,8 +156,8 @@ race_data = {
                 'num_of_opponents': 1,
             },
             'opponent_cars': {
-                'vpbug':        [[5.0, 0.0, 35.0, LANE_4, ROT_N], 
-                                [5.0, 0.0, -130.0, LANE_4, ROT_N]], 
+                'vpbug':        [[5.0, 0.0, 35.0], 
+                                [5.0, 0.0, -130.0]], 
             }
         }
     },
@@ -180,18 +180,18 @@ race_data = {
                 'density': 0.2,
                 'num_of_police': 0,
                 'police_data': [
-                    f'vpcop 15.0 0.0 75.0 0.0 0 {ROADBLOCK}',
+                    f'vpcop 15.0 0.0 75.0 {ROT_N} 0 {ROADBLOCK}',
                 ],
                 'num_of_opponents': 2,
             },
             'opponent_cars': {
-                'vppanoz':      [[-10.0, 245, -850, ROT_N, LANE_4], 
-                                [0.0, 0.0, -100, ROT_N, LANE_4],
-                                [-10.0, 0.0, -75.0, ROT_N, LANE_4]],
+                'vppanoz':      [[-10.0, 245, -850], 
+                                [0.0, 0.0, -100],
+                                [-10.0, 0.0, -75.0]],
                 
-                'vppanozgt':    [[10.0, 245, -850, ROT_N, LANE_4],
-                                [0.0, 0.0, -100, ROT_N, LANE_4],
-                                [10.0, 0.0, -75.0, ROT_N, LANE_4]],
+                'vppanozgt':    [[10.0, 245, -850],
+                                [0.0, 0.0, -100],
+                                [10.0, 0.0, -75.0]],
             }
         }
     },
@@ -212,13 +212,13 @@ race_data = {
                 'density': 0.75,
                 'num_of_police': 1,
                 'police_data': [
-                    'vpcop 0.0 0.0 50.0 0.0 0 {SPINOUT}',
+                    f'vpcop 0.0 0.0 50.0 {ROT_N} 0 {SPINOUT}',
                 ],
                 'num_of_opponents': 1,
             },
             'opponent_cars': {
-                'vpcaddie':     [[5.0, 0.0, 35.0, LANE_4, ROT_N], 
-                                [5.0, 0.0, -130.0, LANE_4, ROT_N]], 
+                'vpcaddie':     [[5.0, 0.0, 35.0], 
+                                [5.0, 0.0, -130.0]], 
             }
         }
     }
@@ -2668,19 +2668,26 @@ def fill_mm_date_values(race_type, user_values):
 
 def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num = None):
     with open(opp_wp_file, "w") as f:
-        if opponent_num:
+        if opponent_num is not None:
             # Opponent waypoint header
-            f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {(race_index)}\n")
+            f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
+            
+            # Writing waypoints for Opponents and adding the filler values
+            for waypoint in waypoints:
+                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {ROT_AUTO}, 0, 0,\n"
+                f.write(waypoint_line)
         else:
             # Player waypoint header
             f.write(f"# This is your {ordinal(race_index)} {race_desc} race Waypoint file\n")
-        
-        for waypoint in waypoints:
-            waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
-            f.write(waypoint_line)
+            
+            # Writing waypoints for players and adding the filler values
+            for waypoint in waypoints:
+                waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
+                f.write(waypoint_line)
+
     MOVE(opp_wp_file, SHOP / "RACE" / city_name / opp_wp_file)
-
-
+    
+    
 def write_mm_data(mm_data_file, configs, race_type, prefix):
     with open(mm_data_file, 'w') as f:
         header = ",".join(["Description"] + 2 * ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"])
