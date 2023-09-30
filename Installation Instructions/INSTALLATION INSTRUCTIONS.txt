@@ -3,37 +3,41 @@
 Welcome to this Installation Guide.
 Depending on your current situation, the setup for the Map Editor may take up to 30 minutes.
 
-1) Download Python
+1) Download Python (required)
 https://www.python.org/downloads/
 
 2) Download Visual Studio Code (strongly recommended)
 https://code.visualstudio.com/download
 
-3) Install Python
-Double click the downloaded executable
-Make sure to tick the boxes: 
-"add python.exe to PATH" &
-"use admin privileges when installing py.exe"
-Then click on "Install Now"
+3) Download Blender (3.6) (strongly recommended)
+https://www.blender.org/download/
 
-4) Test Python
-Double click on "Install_Me.bat"
+4) Install Python
+Use the default settings provided by the installer
 
-5) Configure the Map Editor
-Install_Me.bat will do various things, but it will also open the main script ("MAP_EDITOR_ALPHA_v1.py") for you.
+5) Configure Visual Studio Code
+Go to the Extensions tab, and search for + install the following:
+"Pylance"
+"Blender Development" 
+"Better Comments" (by Aaron Bond) (not required, but recommended)
 
-While in the script, go to line 36 and find "SETUP I (mandatory)".
-Here you must (atleast) set your MM1 folder path.
+6) Test Python and Install Required Libraries
+Double click on "Install_Me.bat" and let the script do its thing
 
-Afterwards, read the (user)notes in the script to familiarize yourself with the editor.
-But importantly, you can go to approx. line 750 in the Main Script, and start setting Polygons and Textures there.
+7) Connect Python and Blender
+Watch this tutorial from 3:48 onwards: https://www.youtube.com/watch?v=YUytEtaVrrc
+N.B. some parts are already covered in this tutorial, and not all parts are relevant.
+However, it showcases some critical steps to set the right permissions and connect Python to Blender.
 
-6) Creating your Custom City
-Double click on "Run_Editor_Script.bat" in the main directory:
+If after going through all steps it's not working, send me a message. I'm happy to help out.
 
-Or open "powershell.exe" in the main directory, and type: `python MAP_EDITOR_ALPHA_v1.py` and press Enter
+8) Build your First City
+Open the script and direct the Editor to your Midtown Madness folder, e.g. "mm1_folder = r"C:\Users\robin\Desktop\MM1_game" 
 
-(alternatively, you can also type: python m [and then press the Tab key], the sentence will then auto complete to 
-"python MAP_EDITOR_ALPHA_v1.py", saving you time)
+The Editor comes with a test city (i.e. polygons) and has options set in a way such that you can immediately build the city.
+To do this, open "powershell".exe in the main directory. Then type:
+"python m [press the Tab] key" and press enter.
+Pressing the Tab key after you entered "m" will autofill the name into "python MAP_EDITOR_ALPHA_v1.py"
+The script will now build the city, and immediately boot you into the game. Click Cruise, pick a car, and start driving.
 
-7) Have fun building your Cities!
+~~~

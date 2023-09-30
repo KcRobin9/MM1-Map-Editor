@@ -4,17 +4,30 @@ python ./Test_Python.py
 Start-Sleep -Seconds 2
 
 Write-Host ""
-Write-Host "Installing required Python Package..."
-Write-Host "Installing matplotlib..."
+Write-Host "Installing required Python Packages..."
+Write-Host ""
+Write-Host "Installing matplotlib (please wait 30 seconds)"
+Write-Host ""
 Start-Sleep -Seconds 2
+Write-Host ""
 pip install matplotlib
-Start-Sleep -Seconds 8 # difficult to guess a correct timer for users that do not have the library installed
+Start-Sleep -Seconds 30
+Write-Host ""
+Write-Host ""
+Write-Host ""
+Write-Host "Installing fake-blender (please wait 30 seconds)"
+Write-Host ""
+pip install fake-bpy-module-latest
+Write-Host ""
+Start-Sleep -Seconds 30 
 
 Write-Host "==================================================================="
 Write-Host "==================================================================="
-Write-Host "Waiting 60 seconds before exiting to let the installation complete..."
+Write-Host ""
+Write-Host "Installation Complete!"
 Write-Host "***Please press Enter to open the Map Editor and exit this Window***"
-for($i=60; $i -gt 0; $i--)
+Write-Host ""
+for($i = 30; $i -gt 0; $i--)
 {
     if ($Host.UI.RawUI.KeyAvailable -and ($Host.UI.RawUI.ReadKey("IncludeKeyUp,NoEcho").VirtualKeyCode -eq 13))
     {
