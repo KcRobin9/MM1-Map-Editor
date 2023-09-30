@@ -1038,6 +1038,40 @@ def ensure_ccw_order(vertex_coordinates):
     else:
         # If it's counterclockwise, no changes needed
         return [v1, v2, v3]
+    
+    
+def compute_normal(p1, p2, p3):
+    v1 = np.array(p2) - np.array(p1)
+    v2 = np.array(p3) - np.array(p1)
+    return np.cross(v1, v2)
+
+
+def ensure_quad_ccw_order(vertex_coordinates):
+    normal = compute_normal(*vertex_coordinates[:3])
+    normal /= np.linalg.norm(normal)
+    
+    # Use Gram-Schmidt process to get two orthogonal vectors on the plane
+    basis1 = np.array(vertex_coordinates[1]) - np.array(vertex_coordinates[0])
+    basis1 -= np.dot(basis1, normal) * normal
+    basis1 /= np.linalg.norm(basis1)
+    basis2 = np.cross(normal, basis1)
+
+    # Project vertices onto the plane defined by the normal
+    projections = [
+        (np.dot(vertex, basis1), np.dot(vertex, basis2))
+        for vertex in vertex_coordinates]
+
+    # Compute the centroid of the projected points
+    centroid = np.mean(projections, axis = 0)
+    
+    # Compute angles of vertices relative to centroid
+    delta = np.array(projections) - centroid
+    angles = np.arctan2(delta[:, 1], delta[:, 0])
+    
+    # Sort vertices based on these angles
+    sorted_indices = np.argsort(angles)
+    
+    return [vertex_coordinates[i] for i in sorted_indices]
 
 
 def compute_plane_edgenormals(p1, p2, p3):  # Only 3 vertices are being used  
@@ -1127,7 +1161,7 @@ def create_polygon(
     material_index = 0, cell_type = 0, 
     flags = None, plane_edges = None, wall_side = None, sort_vertices = False,
     hud_color = None, shape_outline_color = shape_outline_color,
-    rotate = 0, always_visible = False):
+    rotate = 0, always_visible = False, fix_faulty_quad = False):
 
     # Vertex indices
     base_vertex_index = len(vertices)
@@ -1139,9 +1173,12 @@ def create_polygon(
     if bound_number == 0 and bound_number == 200:
         raise ValueError("Bound Number must be between 1 and 199, or 201 and 255.")
     
-    # Ensure Counterclockwise order
+    # Ensure Counterclockwise Winding
     if len(vertex_coordinates) == 3:
         vertex_coordinates = ensure_ccw_order(vertex_coordinates)
+        
+    elif len(vertex_coordinates) == 4 and fix_faulty_quad:
+        vertex_coordinates = ensure_quad_ccw_order(vertex_coordinates)
            
     # Flags
     if flags is None:
@@ -2491,7 +2528,45 @@ save_bms(
     texture_name = ["T_STOP"], 
     tex_coords = compute_tex_coords(bound_number = 207, mode = "r.V", repeat_x = 1, repeat_y = 10))
 
-#todo: add Triangle Speedbumps to fill the side void 
+# Speed Bump Triangle I | N/A
+create_polygon(
+	bound_number = 208,
+	vertex_coordinates = [
+		(-50.0, 0.0, -140.0),
+		(-50.01, 0.0, -130.0),
+		(-50.0, 3.0, -135.0)])
+
+save_bms(
+    texture_name = ["T_STOP"], 
+    tex_coords = compute_tex_coords(bound_number = 207, mode = "r.V", repeat_x = 30, repeat_y = 30))
+
+# Speed Bump Triangle II | N/A
+create_polygon(
+	bound_number = 209,
+	vertex_coordinates = [
+		(50.0, 0.0, -140.0),
+		(50.01, 0.0, -130.0),
+		(50.0, 3.0, -135.0)])
+
+save_bms(
+    texture_name = ["T_STOP"], 
+    tex_coords = compute_tex_coords(bound_number = 208, mode = "r.V", repeat_x = 30, repeat_y = 30))
+
+# Faulty Quad for illustration purposes
+create_polygon(
+    bound_number = 777,
+    material_index = 0,
+    fix_faulty_quad = True,
+    vertex_coordinates = [
+        (-89.09, 0.41, -43.12),
+        (-89.09, 0.41, -55.62),
+        (-107.73, 0.41, -40.53),
+        (-111.22, 0.41, -52.36)],
+    hud_color = None)
+
+save_bms(
+    texture_name = ["CHECK04"],
+    tex_coords = compute_tex_coords(bound_number = 777, mode = "r.H", repeat_x = 4, repeat_y = 1))
 
 ################################################################################################################               
 ################################################################################################################ 
