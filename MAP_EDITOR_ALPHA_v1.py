@@ -80,6 +80,7 @@ debug_props = False             # change to "True" if you want a BNG Debug text 
 debug_facades = False           # change to "True" if you want a FCD Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in folder "_Debug_BMS")
+round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # HUD
 shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
@@ -87,6 +88,7 @@ debug_hud = False               # change to "True" if you want a HUD Debug jpg f
 debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
 # Advanced
+quiet_logs = False              # change to "True" if you want to hide most logs, the game prints a ton of warnings and errors if e.g. an AI car can't find its path, causing FPS drops
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
 
 
@@ -254,7 +256,7 @@ anim_data = {
 #* SETUP VI (optional, Bridges)
 BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
 BRIDGE_WIDE = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
-bridge_crossgate = "tpcrossgate06"
+CROSSGATE = "tpcrossgate06"
 bridge_object = "vpmustang99"       # you can pass any object
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
@@ -397,7 +399,7 @@ class Vector3:
         else:
             raise ValueError("Invalid key: {}. Use 'x', 'y', or 'z'.".format(key))
         
-    def __repr__(self, round_values = True):
+    def __repr__(self, round_values = round_debug_values):
         if round_values:
             return '{{{:.2f},{:.2f},{:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
         else:
@@ -546,7 +548,7 @@ class Polygon:
         self.plane_n.write(f)
         write_pack(f, '<f', self.plane_d)
    
-    def __repr__(self, bnd_instance, round_values = True):
+    def __repr__(self, bnd_instance, round_values = round_debug_values):
         vertices_coordinates = [bnd_instance.vertices[index] for index in self.vert_indices]
         plane_d_str = f'{round(self.plane_d, 2):.2f}' if round_values else f'{self.plane_d:f}'
         
@@ -836,7 +838,7 @@ polys = [poly_filler]
 ################################################################################################################               
 
 # Texture Mapping for BMS files
-def compute_tex_coords(bound_number, mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, tilt: float = 0,
+def compute_tex_coords(bound_number: int, mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, tilt: float = 0,
                        angle_degrees: Union[float, Tuple[float, float]] = (45, 45),
                        custom: Optional[List[float]] = None) -> List[float]:
     
@@ -1161,17 +1163,26 @@ def create_polygon(
     material_index = 0, cell_type = 0, 
     flags = None, plane_edges = None, wall_side = None, sort_vertices = False,
     hud_color = None, shape_outline_color = shape_outline_color,
-    rotate = 0, always_visible = False, fix_faulty_quad = False):
+    rotate = 0, always_visible = True, fix_faulty_quad = False):
 
     # Vertex indices
     base_vertex_index = len(vertices)
     
     # Ensure 3 or 4 vertices
     if len(vertex_coordinates) != 3 and len(vertex_coordinates) != 4:
-        raise ValueError("Unsupported number of Vertices. You must either set 3 or 4 coordinates.")
+        error_message = f"""\n
+        ***ERROR***
+        Unsupported number of vertices.
+        You must either set 3 or 4 coordinates per polgyon.
+        """
+        raise ValueError(error_message)
 
-    if bound_number == 0 and bound_number == 200:
-        raise ValueError("Bound Number must be between 1 and 199, or 201 and 255.")
+    if bound_number == 0 or bound_number == 200 or bound_number > 32767:
+        error_message = f"""\n
+        ***ERROR***
+        Bound Number must be between 1 and 199, and 201 and 32767.
+        """
+        raise ValueError(error_message)
     
     # Ensure Counterclockwise Winding
     if len(vertex_coordinates) == 3:
@@ -1829,13 +1840,14 @@ LIGHT_RED_COL = "#ff7f7f"
 
 
 #! N.B.:
-#! The 'bound_number' can not be equal to 0, 200, or a negative number
+#! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
 
 #! ======================== MAIN AREA ======================== #*
 
 # Main Area Colored Checkpoints
 create_polygon(
-    bound_number = 860,
+    bound_number = 30000,
+    always_visible = True, 
     vertex_coordinates = [
         (-25.0, 0.0, 85.0),
         (25.0, 0.0, 85.0),
@@ -1845,7 +1857,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["CHECK04"],
-    tex_coords = compute_tex_coords(bound_number = 860, mode = "r.H", repeat_x = 4, repeat_y = 1))
+    tex_coords = compute_tex_coords(bound_number = 30000, mode = "r.H", repeat_x = 4, repeat_y = 1))
 
 # Main Area w/ Building | Road
 create_polygon(
@@ -2568,6 +2580,160 @@ save_bms(
     texture_name = ["CHECK04"],
     tex_coords = compute_tex_coords(bound_number = 777, mode = "r.H", repeat_x = 4, repeat_y = 1))
 
+
+
+#! ======================== HIGHWAY TUNNEL ======================== #* 
+
+create_polygon(
+	bound_number = 2220,
+	vertex_coordinates = [
+		(-160.0, -0.00, -120.0),
+		(-200.0, -0.00, -120.0),
+		(-160.0, -3.0, -160.0)],
+	hud_color = '#414441')
+
+save_bms(texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2220, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2221,
+	vertex_coordinates = [
+		(-200.0, -0.00, -120.0),
+        (-160.0, -3.0, -160.0),
+		(-200.0, -3.0, -160.0)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2221, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2222,
+	vertex_coordinates = [
+		(-160.0, -3.0, -160.0),
+		(-156.59, -6.00, -204.88),
+		(-200.0, -3.0, -160.0)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2222, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2223,
+	vertex_coordinates = [
+		(-156.59, -6.00, -204.88),
+		(-200.0, -3.0, -160.0),
+		(-191.82, -6.00, -223.82)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2223, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2224,
+	vertex_coordinates = [
+		(-156.59, -6.00, -204.88),
+		(-140.06, -9.00, -229.75),
+		(-191.82, -6.00, -223.82)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2224, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2225,
+	vertex_coordinates = [
+		(-140.06, -9.00, -229.75),
+		(-191.82, -6.00, -223.82),
+		(-165.59, -9.00, -260.54)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2225, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2226,
+	vertex_coordinates = [
+		(-140.06, -9.00, -229.75),
+		(-117.58, -12.00, -247.47),
+		(-165.59, -9.00, -260.54)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2226, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2227,
+	vertex_coordinates = [
+		(-117.58, -12.00, -247.47),
+		(-165.59, -9.00, -260.54),
+		(-127.21, -12.00, -286.30)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2240, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 2228,
+	vertex_coordinates = [
+		(-117.58, -12.00, -247.47),
+		(-90.0, -15.00, -254.51),
+		(-127.21, -12.00, -286.30)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2227, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+
+
+create_polygon(
+	bound_number = 2229,
+	vertex_coordinates = [
+		(-90.0, -15.00, -254.51),
+		(-127.21, -12.00, -286.30),
+		(-90.0, -15.00, -294.48)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["FREEWAY2"],
+	tex_coords = compute_tex_coords(bound_number = 2228, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+
+create_polygon(
+	bound_number = 924,
+    fix_faulty_quad = True,
+	always_visible = True,
+	vertex_coordinates = [
+		(-79.0, -15.00, -254.51),
+		(-79.0, -15.00, -294.48),
+		(-90.0, -15.00, -254.51),
+		(-90.0, -15.00, -294.48)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["RINTER"],
+	tex_coords = compute_tex_coords(bound_number = 924, mode = "r.H", repeat_x = 5.0, repeat_y = 5.0))
+
+create_polygon(
+	bound_number = 923,
+    fix_faulty_quad = True,
+	always_visible = True,
+	vertex_coordinates = [
+		(-79.0, -15.00, -254.51),
+		(-90.0, -15.00, -254.51),
+		(-79.0, 14.75, -120.0),
+		(-90.0, 14.75, -120.0)],
+	hud_color = '#414441')
+
+save_bms(
+	texture_name = ["RWALK"],
+	tex_coords = compute_tex_coords(bound_number = 923, mode = "r.H", repeat_x = 5.0, repeat_y = 5.0))
+
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -2911,6 +3077,9 @@ def create_cells(city_name: str, bnd_hit_id: str):
             always_visible_bound_numbers.insert(0, 1)
         always_visible_count = len(always_visible_bound_numbers)
         
+        max_warning_count = 0  
+        max_error_count = 0  
+        
         for bound_number in sorted_bms_files:
             # Get cell type
             cell_type = None
@@ -2932,15 +3101,43 @@ def create_cells(city_name: str, bnd_hit_id: str):
                 row = f"{bound_number},32,{cell_type}{always_visible_data}\n"
             else:
                 row = f"{bound_number},8,{cell_type}{always_visible_data}\n"
-                
+            
+            # Check for row length and update the max warning/error count
+            row_length = len(row)
+            if 200 <= row_length < 254:
+                max_warning_count = max(max_warning_count, row_length)
+            elif row_length >= 254:
+                max_error_count = max(max_error_count, row_length)
+            
+            f.write(row)
+        
+        if max_error_count >= 254:
+            error_message = f"""
+            ***ERROR***
+            Character limit of 254 exceeded in .CELLS file.
+            Maximum character count encountered is {max_error_count}.
+            To solve the problem, set 'always_visible' to False for some polygons.
+            If the 'bound_number' is 99 (2 charachters), then it consumes 3 characters in the CELLS file.
+            """
+            raise ValueError(error_message)
+        
+        elif 200 <= max_warning_count < 254:
+            warning_message = f"""
+            ***WARNING***
+            Close to row character limit 254 in .CELLS file. 
+            Maximum character count encountered is {max_warning_count}.
+            To reduce the charachter count, consider setting 'always_visible' to False for some polygons.
+            If the 'bound_number' is 99 (2 charachters), then it consumes 3 characters in the CELLS file.
+            *************\n
+            """
+            print(warning_message)
+
             # Testing 
             #     row = f"{bound_number},32,{cell_type},1,1\n"
             # else:
             #     row = f"{bound_number},8,{cell_type},1,1\n"
-                
-            f.write(row)
-    
-    
+                        
+
 # Create Animations                              
 def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
     if set_anim:
@@ -3013,7 +3210,7 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
                         label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
             
             xs, ys = zip(*[(point[0], point[2]) for point in polygon])
-            xs, ys = xs + (xs[0],), ys + (ys[0],) # the commas after [0] cannot be removed
+            xs, ys = xs + (xs[0],), ys + (ys[0],) # the commas after [0] should not be removed
             
             if shape_outline_color:
                 ax.plot(xs, ys, color = shape_outline_color, linewidth = line_width)
@@ -4064,11 +4261,14 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, 
 ###################################################################################################################
 ###################################################################################################################  
 
-def create_commandline(city_name: str, destination_folder: Path, no_ui: bool = False, no_ui_type: str = ""):
+def create_commandline(city_name: str, dest_folder: Path, no_ui: bool = False, no_ui_type: str = "", quiet_logs: bool = False):
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
     
     base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}"
+    
+    if quiet_logs:
+        base_cmd += " -quiet"
     
     if no_ui:
         if not no_ui_type or no_ui_type.lower() == "cruise":
@@ -4081,12 +4281,12 @@ def create_commandline(city_name: str, destination_folder: Path, no_ui: bool = F
                 raise ValueError("Race index should be between 0 and 14.")
             base_cmd += f" -noui -{race_type} {race_index} -keyboard"
     
-    cmd_params = base_cmd
+    processed_cmd = base_cmd
         
-    cmd_file_path = destination_folder / cmd_file
+    cmd_file_path = dest_folder / cmd_file
     
     with cmd_file_path.open("w") as file:
-        file.write(cmd_params)
+        file.write(processed_cmd)
 
         
 # Start game
@@ -4461,7 +4661,7 @@ create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, i
 create_lars_race_maker(city_name, street_list, process_vertices = True, lars_race_maker = lars_race_maker)
 
 create_ar(city_name, mm1_folder, delete_shop)
-create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type)
+create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs)
 
 print("\n===============================================\n")
 print("Succesfully created " + f"{race_locale_name}!")
