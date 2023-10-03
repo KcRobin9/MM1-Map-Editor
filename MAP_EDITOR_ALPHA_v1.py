@@ -756,8 +756,8 @@ class BMS:
                    texture_count, flags, string_name, coordinates, 
                    texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
         
-    def write_bms(self, file_name: str) -> None:
-        with open(file_name, 'wb') as f:
+    def write_bms(self, path: Path) -> None:
+        with open(path, 'wb') as f:
             write_pack(f, '16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
             write_pack(f, '4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '3f', self.radius, self.radius_sq, self.bounding_box_radius)
@@ -922,6 +922,13 @@ def save_bms(
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
     
+    # Determine the target directory
+    if bound_number < 200:
+        target_dir = SHOP / "BMS" / f"{city_name}LM"
+    else:
+        target_dir = SHOP / "BMS" / f"{city_name}CITY"
+    target_dir.mkdir(parents = True, exist_ok = True)  # Ensure the directory exists
+    
     # Randomize Textures
     if randomize_textures and not random_texture_exclude:
         texture_name = [random.choice(random_textures)]
@@ -942,7 +949,7 @@ def save_bms(
     single_poly = [poly_filler, poly]
     
     bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
-    bms.write_bms(bms_filename)
+    bms.write_bms(target_dir / bms_filename)
     
     if DEBUG_BMS:
         bms.write_bms_debug(bms_filename + ".txt")
@@ -2738,13 +2745,17 @@ save_bms(
 ################################################################################################################               
 ################################################################################################################ 
 
-# Create BND file
+# # Create BND file
 def create_bounds(vertices, polys, city_name, debug_bounds):
     bnd = initialize_bounds(vertices, polys)
     
-    with open(f"{city_name}_HITID.BND", "wb") as f:
+    bnd_folder = SHOP / "BND"
+    bnd_folder.mkdir(parents = True, exist_ok = True) 
+    
+    with open(bnd_folder / f"{city_name}_HITID.BND", "wb") as f:
         bnd.write_bnd(f)
-        bnd.write_bnd_debug(f"{city_name}_HITID_debug.txt", debug_bounds) 
+    
+    bnd.write_bnd_debug(f"{city_name}_HITID_debug.txt", debug_bounds)
   
   
 # Create SHOP and FOLDER structure   
@@ -3041,32 +3052,29 @@ def create_cnr(city_name, cnr_waypoints):
                 f.write(", ".join(map(str, cnr_waypoints[i+2])) + cnr_filler)
 
         MOVE(cnr_csv_file, SHOP / "RACE" / city_name / cnr_csv_file)
-                      
+  
+_H = 8
+_A2 = 32                    
                                 
-def create_cells(city_name: str, bnd_hit_id: str, truncate_cells: bool = False):
+def create_cells(city_name: str, truncate_cells: bool = False):
     bms_files = []
     bms_a2_files = set()
     
-    # Move BMS files in their correct folder
-    for file in BASE_DIR.iterdir():
-        if file.name.endswith(".bms"):
-            bound_number = int(re.findall(r'\d+', file.name)[0])
-            bms_files.append(bound_number)
-            if file.name.endswith("_A2.bms"):
-                bms_a2_files.add(bound_number)
-            if bound_number < 200:
-                MOVE(file, SHOP / "BMS" / f"{city_name}LM" / file.name)
-            else:
-                MOVE(file, SHOP / "BMS" / f"{city_name}CITY" / file.name)
+    lm_folder = SHOP / "BMS" / f"{city_name}LM"
+    city_folder = SHOP / "BMS" / f"{city_name}CITY"
     
-    # Move BND files in their correct folder
-    for file in BASE_DIR.iterdir():
-        if file.name.endswith(".bnd"):
-            MOVE(file, SHOP / "BND" / file.name)
-    MOVE(bnd_hit_id, SHOP / "BND" / bnd_hit_id)
+    cells_folder = SHOP_CITY
+
+    for folder in [lm_folder, city_folder]:
+        for file in folder.iterdir():
+            if file.name.endswith(".bms"):
+                bound_number = int(re.findall(r'\d+', file.name)[0])
+                bms_files.append(bound_number)
+                if file.name.endswith("_A2.bms"):
+                    bms_a2_files.add(bound_number)
     
     # Create the CELLS file
-    with open(SHOP_CITY / f"{city_name}.CELLS", "w") as f:
+    with open(cells_folder / f"{city_name}.CELLS", "w") as f:
         f.write(f"{len(bms_files)}\n")
         f.write(str(max(bms_files) + 1000) + "\n")
         
@@ -3099,9 +3107,9 @@ def create_cells(city_name: str, bnd_hit_id: str, truncate_cells: bool = False):
                 always_visible_data = ",0"
 
             if bound_number in bms_a2_files:
-                row = f"{bound_number},32,{cell_type}{always_visible_data}\n"
+                row = f"{bound_number},{_A2},{cell_type}{always_visible_data}\n"
             else:
-                row = f"{bound_number},8,{cell_type}{always_visible_data}\n"
+                row = f"{bound_number},{_H},{cell_type}{always_visible_data}\n"
             
             # Check for row length and update the max warning/error count
             row_length = len(row)
@@ -3118,9 +3126,9 @@ def create_cells(city_name: str, bnd_hit_id: str, truncate_cells: bool = False):
                     
                     # Reconstruct the row string
                     if bound_number in bms_a2_files:
-                        row = f"{bound_number},32,{cell_type}{always_visible_data}\n"
+                        row = f"{bound_number},{_A2},{cell_type}{always_visible_data}\n"
                     else:
-                        row = f"{bound_number},8,{cell_type}{always_visible_data}\n"
+                        row = f"{bound_number},{_H},{cell_type}{always_visible_data}\n"
                     
                     # Update the row length
                     row_length = len(row)
@@ -4645,7 +4653,7 @@ print("\n===============================================\n")
 create_folders(city_name)
 create_city_info()
 create_bounds(vertices, polys, city_name, debug_bounds)
-create_cells(city_name, f"{city_name}_HITID.BND", truncate_cells)
+create_cells(city_name, truncate_cells)
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
