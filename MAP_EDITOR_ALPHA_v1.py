@@ -67,8 +67,8 @@ cruise_start_pos = (35.0, 31.0, 10.0)
 cruise_start_pos = (60.0, 27.0, 330.0)
 cruise_start_pos = (0.0, 0.0, 0.0)
 
-random_textures =               ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
+random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
 # Blender
 import_to_blender = False
@@ -90,6 +90,7 @@ debug_hud_bound_id = False      # change to "True" if you want to see the Bound 
 # Advanced
 quiet_logs = False              # change to "True" if you want to hide most logs, the game prints a ton of warnings and errors if e.g. an AI car can't find its path, causing FPS drops
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
+truncate_cells = False			# change to "True" if you want to truncate cells (used for testing very large cities)
 
 
 #* SETUP III (optional, Race Editor)
@@ -3042,7 +3043,7 @@ def create_cnr(city_name, cnr_waypoints):
         MOVE(cnr_csv_file, SHOP / "RACE" / city_name / cnr_csv_file)
                       
                                 
-def create_cells(city_name: str, bnd_hit_id: str):
+def create_cells(city_name: str, bnd_hit_id: str, truncate_cells: bool = False):
     bms_files = []
     bms_a2_files = set()
     
@@ -3104,6 +3105,27 @@ def create_cells(city_name: str, bnd_hit_id: str):
             
             # Check for row length and update the max warning/error count
             row_length = len(row)
+            
+            if truncate_cells and row_length >= 254:
+                # Truncate the always_visible_bound_numbers until the row length is less than 254
+                while len(row) >= 254:
+                    # Remove the last element from the list
+                    always_visible_bound_numbers.pop()
+                    
+                    # Reconstruct the always_visible_data string
+                    always_visible_count = len(always_visible_bound_numbers)
+                    always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_bound_numbers))}"
+                    
+                    # Reconstruct the row string
+                    if bound_number in bms_a2_files:
+                        row = f"{bound_number},32,{cell_type}{always_visible_data}\n"
+                    else:
+                        row = f"{bound_number},8,{cell_type}{always_visible_data}\n"
+                    
+                    # Update the row length
+                    row_length = len(row)
+
+            # Update the max warning/error count based on the new row length
             if 200 <= row_length < 254:
                 max_warning_count = max(max_warning_count, row_length)
             elif row_length >= 254:
@@ -3131,11 +3153,6 @@ def create_cells(city_name: str, bnd_hit_id: str):
             *************\n
             """
             print(warning_message)
-
-            # Testing 
-            #     row = f"{bound_number},32,{cell_type},1,1\n"
-            # else:
-            #     row = f"{bound_number},8,{cell_type},1,1\n"
                         
 
 # Create Animations                              
@@ -4628,7 +4645,7 @@ print("\n===============================================\n")
 create_folders(city_name)
 create_city_info()
 create_bounds(vertices, polys, city_name, debug_bounds)
-create_cells(city_name, f"{city_name}_HITID.BND")
+create_cells(city_name, f"{city_name}_HITID.BND", truncate_cells)
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
