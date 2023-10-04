@@ -53,7 +53,7 @@ set_facade = True               # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
 
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
-set_bridges = False             # change to "True" if you want BRIDGES ## w.i.p.
+set_bridges = True              # change to "True" if you want BRIDGES
 
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when importing to Blender) ## w.i.p.
 
@@ -90,7 +90,7 @@ debug_hud_bound_id = False      # change to "True" if you want to see the Bound 
 # Advanced
 quiet_logs = False              # change to "True" if you want to hide most logs, the game prints a ton of warnings and errors if e.g. an AI car can't find its path, causing FPS drops
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
-truncate_cells = False			# change to "True" if you want to truncate cells (used for testing very large cities)
+truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
 
 
 #* SETUP III (optional, Race Editor)
