@@ -75,10 +75,11 @@ import_to_blender = False
 dds_directory = Path.cwd() / 'DDS' # w.i.p., this folder contains all the DDS textures
 
 # Debug
-debug_bounds = False            # change to "True" if you want a BND Debug text file
-debug_props = False             # change to "True" if you want a BNG Debug text file
-debug_facades = False           # change to "True" if you want a FCD Debug text file
+debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
+debug_props = False             # change to "True" if you want a PROPS Debug text file
+debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
+debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in folder "_Debug_BMS")
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
@@ -320,9 +321,12 @@ class Vector2:
 
     def write(self, file):
         write_pack(file, '<2f', self.x, self.y)
-
-    def __repr__(self):
-        return '{{{:f},{:f}}}'.format(self.x, self.y)
+                
+    def __repr__(self, round_values = round_debug_values):
+        if round_values:
+            return '{:.2f}, {:.2f}'.format(round(self.x, 2), round(self.y, 2))
+        else:
+            return '{:f}, {:f}'.format(self.x, self.y)
 
     def __add__(self, other):
         return Vector2(self.x + other.x, self.y + other.y)
@@ -665,9 +669,9 @@ class BND:
         for poly in self.polys:           
             poly.to_file(f)              
                 
-    def write_bnd_debug(self, file_name: str, debug_bounds: bool) -> None:
+    def write_bnd_debug(self, debug_filename: str, debug_bounds: bool) -> None:
         if debug_bounds:
-            with open(file_name, 'w') as f:
+            with open(debug_filename, 'w') as f:
                 f.write(str(self))
                 
     def __repr__(self) -> str:
@@ -2755,7 +2759,7 @@ def create_bounds(vertices, polys, city_name, debug_bounds):
     with open(bnd_folder / f"{city_name}_HITID.BND", "wb") as f:
         bnd.write_bnd(f)
     
-    bnd.write_bnd_debug(f"{city_name}_HITID_debug.txt", debug_bounds)
+    bnd.write_bnd_debug("BOUNDS_debug.txt", debug_bounds)
   
   
 # Create SHOP and FOLDER structure   
@@ -3573,28 +3577,54 @@ def prepare_portals(polys, vertices):
 
 
 # Create PTL
-def create_portals(city_name, polys, vertices, empty_portals):
+def create_portals(city_name, polys, vertices, empty_portals = False, debug_portals = False):
+    portals_folder = SHOP_CITY
+    portals_file = f"{city_name}.PTL"
+    
+    if debug_portals:
+        debug_filename = "PORTALS_debug.txt"
+        
+        if os.path.exists(debug_filename):
+            os.remove(debug_filename)
+            
+        debug_file = open(debug_filename, "a")
+        debug_file.write("Portal Debug File\n")
+        debug_file.write("=================\n")
+    
     if empty_portals:
-        with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
+        with open(portals_folder / portals_file, 'wb') as f:
             pass
         
     else:
         _, portals = prepare_portals(polys, vertices)    
-        with open(SHOP_CITY / f"{city_name}.PTL", 'wb') as f:
+        with open(portals_folder / portals_file, 'wb') as f:
             
             write_pack(f, '<I', 0)
             write_pack(f, '<I', len(portals))    
+            
+            if debug_portals:
+                debug_file.write(f"{len(portals)} portals prepared.\n\n")
+            
             for cell_1, cell_2, v1, v2 in portals:
                 flags = 0x2
                 edge_count = 2
                 write_pack(f, '<BB', flags, edge_count)
                 write_pack(f, '<H', 101)
-                write_pack(f, '<HH', cell_2, cell_1)    
+                write_pack(f, '<HH', cell_2, cell_1)  
+                  
                 # TODO: Change height
                 height = MAX_Y - MIN_Y
-                write_pack(f, '<f', height)    
+                write_pack(f, '<f', height)
+                    
                 Vector3(v1.x, 0, v1.y).write(f)
                 Vector3(v2.x, 0, v2.y).write(f)
+                
+                if debug_portals:
+                    debug_file.write(f"Portal between Cell {cell_1} and Cell {cell_2}\n")
+                    debug_file.write(f"Vertices ({v1}), ({v2})\n\n")
+                    
+    if debug_portals:
+        debug_file.close()
 
 #!########### Code by 0x1F9F1 / Brick (Modified) ############                   
                     
@@ -3642,7 +3672,7 @@ class Prop_Editor:
         self.debug_props = debug_props
         self.input_bng_file = input_bng_file
         self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_bng_file else BASE_DIR / f"{city_name}"
-        self.debug_filename = f"{city_name}_BNG_debug.txt"
+        self.debug_filename = "PROPS_debug.txt"
         self.prop_file_path = BASE_DIR / "EditorResources" / "Prop Dimensions.txt"
         self.prop_data = self.load_prop_dimensions()    
           
@@ -3677,15 +3707,16 @@ class Prop_Editor:
     def write_object_data(self, f, obj):
         write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
         for char in obj.name:
-            write_pack(f, '<s', bytes(char, encoding='utf8'))
+            write_pack(f, '<s', bytes(char, encoding = 'utf8'))
 
     def write_debug_info(self, index, obj):
+        clean_name = obj.name.rstrip('\x00')
         with open(self.debug_filename, "a") as debug_f:
             debug_f.write(textwrap.dedent(f'''
-                Prop {index} Data:
+                Prop {index}
                 Start: {obj.start}
                 End: {obj.end}
-                Name: {obj.name}
+                Name: {clean_name}
             '''))
                       
     def add_props(self, new_objects: List[Dict[str, Union[int, float, str]]]):
@@ -3844,20 +3875,20 @@ class Material_Editor:
         header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
         
         return f"""
-    {header}
-        name        = '{cleaned_name}',
-        friction    = {self.friction:.2f},
-        elasticity  = {self.elasticity:.2f},
-        drag        = {self.drag:.2f},
-        bump_height = {self.bump_height:.2f},
-        bump_width  = {self.bump_width:.2f},
-        bump_depth  = {self.bump_depth:.2f},
-        sink_depth  = {self.sink_depth:.2f},
-        type        = {self.type},
-        sound       = {self.sound},
-        velocity    = {formatted_velocity},
-        ptx_color   = {self.ptx_color}
-        """
+{header}
+    name        = '{cleaned_name}',
+    friction    = {self.friction:.2f},
+    elasticity  = {self.elasticity:.2f},
+    drag        = {self.drag:.2f},
+    bump_height = {self.bump_height:.2f},
+    bump_width  = {self.bump_width:.2f},
+    bump_depth  = {self.bump_depth:.2f},
+    sink_depth  = {self.sink_depth:.2f},
+    type        = {self.type},
+    sound       = {self.sound},
+    velocity    = {formatted_velocity},
+    ptx_color   = {self.ptx_color}
+    """
 
 
         
@@ -4278,7 +4309,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, 
         MOVE(filename, target_fcd_dir / filename)
 
         if debug_facades:
-            debug_filename = filename.replace('.FCD', '_FCD_debug.txt')
+            debug_filename = "FACADES_debug.txt"
             with open(debug_filename, mode = 'w', encoding = 'utf-8') as f:
                 for facade in facades:
                     f.write(str(facade))
@@ -4333,7 +4364,7 @@ def start_game(destination_folder, play_game = False, import_to_blender = False)
 #* A few Facade_name examples are: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01
 
 # Flags
-#todo: add more flags
+# todo: add more flags
 DARK = 33
 BRIGHT = 35
 
@@ -4375,7 +4406,7 @@ fcd_orange_building_4 = {
     'separator': 10.0}
 
 fcd_white_hotel_long_road = {
-    'flags': 35,
+    'flags': BRIGHT,
 	'start': (-160.0, 0.0, -80.0),
 	'end': (-160.0, 0.0, 20.0),
 	'sides': (0.0, 0.0, 0.0),
@@ -4384,7 +4415,7 @@ fcd_white_hotel_long_road = {
 	'axis': 'z'}
 
 fcd_red_hotel_long_road = {
-    'flags': 35,
+    'flags': BRIGHT,
 	'start': (-160.0, 0.0, 40.0),
 	'end': (-160.0, 0.0, 140.0),
 	'sides': (0.0, 0.0, 0.0),
@@ -4678,7 +4709,7 @@ create_ext(city_name, hudmap_vertices)
 create_animations(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
-create_portals(city_name, polys, vertices, empty_portals)
+create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender, export_jpg = True, 
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
