@@ -49,7 +49,7 @@ delete_shop = True              # delete the raw city files after the .ar file h
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 
-set_facade = True               # change to "True" if you want FACADES
+set_facades = True              # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
 
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
@@ -280,20 +280,18 @@ f"""
 def to_do_list(x):
             """            
             SHORT-TERM:                                            
-            SHAPES --> analyze walls
+            SHAPES --> wall setting
             
             FCD --> implement diagonal facades
             
-            BAI --> improve AI paths and Opponents/Cops/Peds 
+            BLENDER --> implement custom UI
+            
+            BAI --> improve AI paths setting
                   
-            LONG-TERM:        
+            LONG-TERM:      
+            TEXTURES --> UV mapping  
+            
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
-                                    
-            TEXTURES --> add (new) custom textures 
-            TEXTURES --> fix visibility wall textures
-            TEXTURES --> UV mapping in general
-                       
-            HUDMAP --> correctly align the HUD map in the game
             """               
             
 ################################################################################################################               
@@ -826,7 +824,7 @@ IndicesSides: {self.indices_sides}
 # SCRIPT CONSTANTS
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
-SHOP_CITY = SHOP / 'CITY'
+SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
 MOVE = shutil.move
 
 # INITIALIZATIONS | do not change
@@ -843,13 +841,13 @@ polys = [poly_filler]
 ################################################################################################################               
 
 # Texture Mapping for BMS files
-def compute_tex_coords(bound_number: int, mode: str = "H", repeat_x: int = 1, repeat_y: int = 1, tilt: float = 0,
+def compute_uv(bound_number: int, mode: str = "H", tile_x: int = 1, tile_y: int = 1, tilt: float = 0,
                        angle_degrees: Union[float, Tuple[float, float]] = (45, 45),
                        custom: Optional[List[float]] = None) -> List[float]:
     
     global texcoords_data
     
-    def tex_coords_rotating_repeating(repeat_x: int, repeat_y: int, 
+    def tex_coords_rotating_repeating(tile_x: int, tile_y: int, 
                                       angle_degrees: Tuple[float, float]) -> List[float]:
         
         angle_radians = [math.radians(angle) for angle in angle_degrees]
@@ -861,16 +859,16 @@ def compute_tex_coords(bound_number: int, mode: str = "H", repeat_x: int = 1, re
 
         coords = [
             (0, 0),
-            (repeat_x, 0),
-            (repeat_x, repeat_y),
-            (0, repeat_y)]
+            (tile_x, 0),
+            (tile_x, tile_y),
+            (0, tile_y)]
 
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
     
     if 'entries' not in texcoords_data:
         texcoords_data['entries'] = {}
-    texcoords_data['entries'][bound_number] = {'repeat_x': repeat_x, 'repeat_y': repeat_y}
+    texcoords_data['entries'][bound_number] = {'tile_x': tile_x, 'tile_y': tile_y}
     
     # Vertical
     if mode == "V" or mode == "vertical":
@@ -886,19 +884,19 @@ def compute_tex_coords(bound_number: int, mode: str = "H", repeat_x: int = 1, re
     
     # Vertical Repeated
     elif mode == "r.V" or mode == "repeating_vertical":
-        return [0, 0, 0, repeat_x, repeat_y, repeat_x, repeat_y, 0]
+        return [0, 0, 0, tile_x, tile_y, tile_x, tile_y, 0]
     elif mode == "r.V.f" or mode == "repeating_vertical_flipped":
-        return [0, repeat_x, 0, 0, repeat_y, 0, repeat_y, repeat_x]
+        return [0, tile_x, 0, 0, tile_y, 0, tile_y, tile_x]
     
     # Horizontal Repeated
     elif mode == "r.H" or mode == "repeating_horizontal":
-        return [0, 0, repeat_x, 0, repeat_x, repeat_y, 0, repeat_y]
+        return [0, 0, tile_x, 0, tile_x, tile_y, 0, tile_y]
     elif mode == "r.H.f" or mode == "repeating_horizontal_flipped":
-        return [repeat_x, 0, 0, 0, 0, repeat_y, repeat_x, repeat_y]
+        return [tile_x, 0, 0, 0, 0, tile_y, tile_x, tile_y]
     
     # TODO
     elif mode == "r.r" or mode == "rotating_repeating":
-        return tex_coords_rotating_repeating(repeat_x, repeat_y, angle_degrees)
+        return tex_coords_rotating_repeating(tile_x, tile_y, angle_degrees)
     elif mode == "custom":
         if custom is None:
             raise ValueError("Custom TexCoords must be provided for mode 'custom'")
@@ -948,7 +946,7 @@ def save_bms(
     if tex_coord_mode is not None:
         if tex_coord_params is None:
             tex_coord_params = {}
-        tex_coords = compute_tex_coords(tex_coord_mode, **tex_coord_params)
+        tex_coords = compute_uv(tex_coord_mode, **tex_coord_params)
         
     single_poly = [poly_filler, poly]
     
@@ -1189,7 +1187,7 @@ def create_polygon(
         """
         raise ValueError(error_message)
 
-    if bound_number == 0 or bound_number == 200 or bound_number > 32767:
+    if bound_number == 0 or bound_number == 200 or bound_number >= 32768:
         error_message = f"""\n
         ***ERROR***
         Bound Number must be between 1 and 199, and 201 and 32767.
@@ -1513,8 +1511,8 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
 
     if bound_number in texcoords_data.get('entries', {}):
         
-        tile_x = texcoords_data['entries'][bound_number].get('repeat_x', 1)
-        tile_y = texcoords_data['entries'][bound_number].get('repeat_y', 1)
+        tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
+        tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
         
     obj.tile_x = tile_x
     obj.tile_y = tile_y
@@ -1625,7 +1623,7 @@ def create_blender_meshes(import_to_blender: bool = False):
             create_mesh_from_polygon_data(polygon, texture_path)
             
             
-def extract_blender_polygon_data(obj):
+def extract_polygon_data(obj):
     if obj.name.startswith("P"):
         bound_number = int(obj.name[1:])
     elif obj.name.startswith("Shape_"):
@@ -1641,19 +1639,20 @@ def extract_blender_polygon_data(obj):
         "sort_vertices": obj["sort_vertices"],
         "vertex_coordinates": obj.data.vertices,
         "hud_color": obj["hud_color"],
-        "rotate": obj["rotate"]}
+        "rotate": obj["rotate"]
+        }
     
     return data
 
 
-def get_dds_name_from_blender_polygon(obj):
+def get_dds_from_polygon(obj):
     if obj.material_slots:
         mat = obj.material_slots[0].material
         if mat and mat.use_nodes:
             for node in mat.node_tree.nodes:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
-    return "CHECK04"  # if no texture is applied on the polygon, use CHECK04 as a placeholder
+    return "CHECK04"  # if no texture is applied to the polygon, use CHECK04 as a placeholder
 
 
 def format_decimal(val):
@@ -1664,48 +1663,56 @@ def format_decimal(val):
 
 
 def generate_export_script(obj):
-    data = extract_blender_polygon_data(obj)
+    data = extract_polygon_data(obj)
+    texture_name = get_dds_from_polygon(obj)
 
     vertex_str = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
-    hud_color_str = f"'{data['hud_color']}'" if data['hud_color'] else "None"
-    
-    texture_name = get_dds_name_from_blender_polygon(obj)
-    
+        
     tile_x = obj.get("tile_x", 1)
     tile_y = obj.get("tile_y", 1)
-
-    # Construct material index string
-    material_index = data['material_index']
-    if material_index in MATERIAL_MAP:
-        material_str = f"material_index = {MATERIAL_MAP[material_index]}"
-    else:
-        material_str = f"material_index = {material_index}"
-
-    # Construct optional attributes
-    optional_attrs = [material_str]
     
+    optional_attrs = []
+    
+    material_index = data['material_index']
+    if material_index not in [0, '0']:
+        material_str = f"material_index = {MATERIAL_MAP.get(material_index, material_index)}"
+        optional_attrs.append(material_str) 
+
     if data['sort_vertices'] == 1:
         optional_attrs.append("sort_vertices = True")
-    if data['cell_type'] != 0:
-        optional_attrs.append(f"cell_type = {data['cell_type']}")
-    if data['always_visible'] != 0:
-        optional_attrs.append(f"always_visible = {data['always_visible']}")
+        
+    cell_type = data['cell_type']
+    if cell_type in CELL_MAP:
+        optional_attrs.append(f"cell_type = {CELL_MAP[cell_type]}")
+    elif cell_type != 0:
+        optional_attrs.append(f"cell_type = {cell_type}")
+        
+    if data['always_visible'] == 1:
+        optional_attrs.append(f"always_visible = True")
     if data['rotate'] != 0.0:
         optional_attrs.append(f"rotate = {data['rotate']}")
+
+    hud_color = data['hud_color']
+    if hud_color not in [0, '0']:
+        if hud_color in HUD_MAP:
+            hud_color_str = f"hud_color = {HUD_MAP[hud_color]}"
+        else:
+            hud_color_str = f"hud_color = '{hud_color}'"
+        optional_attrs.append(hud_color_str)
     
-    optional_str = ",\n\t".join(optional_attrs)
+    optional_strs = ",\n\t".join(optional_attrs)
 
     # Construct export string
-    export_data = f"""create_polygon(
-\tbound_number = {data['bound_number']},
-\t{optional_str},
-\tvertex_coordinates = [
-\t\t{vertex_str}],
-\thud_color = {hud_color_str})
+    export_data = f"""
+create_polygon(
+    bound_number = {data['bound_number']},
+    {optional_strs},
+    vertex_coordinates = [
+        {vertex_str}])
 
 save_bms(
-\ttexture_name = ["{texture_name}"],
-\ttex_coords = compute_tex_coords(bound_number = {data['bound_number']}, mode = "r.H", repeat_x = {tile_x}, repeat_y = {tile_y}))
+    texture_name = ["{texture_name}"],
+    tex_coords = compute_uv(bound_number = {data['bound_number']}, mode = "r.H", tile_x = {tile_x}, tile_y = {tile_y}))
 """
 
     return export_data
@@ -1768,7 +1775,7 @@ def set_blender_keybinding(import_to_blender: bool = False):
         if kc:
             km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
                     
-            # Shift + E to export the polygons, Shift + P to assign custom properties
+            # Shift + P to assign custom properties, Shift + E to export the polygons
             kmi_export = km.keymap_items.new("script.export_blender_polygons", 'E', 'PRESS', shift = True)
             kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
 
@@ -1793,9 +1800,9 @@ def user_notes(x):
     Note that you can also set custom Materials Properties in the script (search for: 'new_physics_properties')
     
     Texture (UV) mapping examples:
-    tex_coords = compute_tex_coords(mode = "v")
-    tex_coords = compute_tex_coords(mode = "r.V", repeat_x = 4, repeat_y = 2))
-    tex_coords = compute_tex_coords(mode = "r.r", repeat_x = 3, repeat_y = 3, angle_degrees = (45, 45))) // unfinished
+    tex_coords = compute_uv(mode = "v")
+    tex_coords = compute_uv(mode = "r.V", tile_x = 4, tile_y = 2))
+    tex_coords = compute_uv(mode = "r.r", tile_x = 3, tile_y = 3, angle_degrees = (45, 45))) // unfinished
     
     Allowed values are: 
     'H', 'horizontal', 'H.f', 'horizontal_flipped',
@@ -1815,19 +1822,10 @@ def user_notes(x):
     """
     
 # Material types
-ROAD_MTL = 0
 GRASS_MTL = 87
 WATER_MTL = 91
 STICKY_MTL = 97
 NO_FRICTION_MTL = 98 
-
-# Material names in Blender (w.i.p)
-MATERIAL_MAP = {
-    GRASS_MTL: "GRASS_MTL",
-    WATER_MTL: "WATER_MTL",
-    NO_FRICTION_MTL: "NO_FRICTION_MTL"}
-
-REVERSE_MATERIAL_MAP = {v.replace("_MTL", ""): k for k, v in MATERIAL_MAP.items()}
 
 # Cell / Room types
 TUNNEL = 1
@@ -1835,21 +1833,40 @@ INDOORS = 2
 WATER_DRIFT = 4         # only works with 'T_WATER{}' textures
 NO_SKIDS = 200 
 
-# Road types
-LANDMARK = 0
-STREET = 201
-INTERSECTION = 860
-
 # HUD map colors (feel free to add more)
 WOOD = '#7b5931'
 SNOW = '#cdcecd'
 WATER = '#5d8096' 
 R6_ROAD = '#414441'  
 GRASS_24 = '#396d18'
-
 ORANGE_COL = "#ffa500"
 LIGHT_RED_COL = "#ff7f7f"
 
+# Road types
+LANDMARK = 0
+STREET = 201
+INTERSECTION = 860
+
+# Blender Export Mapping
+MATERIAL_MAP = {
+    GRASS_MTL: "GRASS_MTL",
+    WATER_MTL: "WATER_MTL",
+    NO_FRICTION_MTL: "NO_FRICTION_MTL"}
+
+CELL_MAP = {
+    TUNNEL: "TUNNEL",
+    INDOORS: "INDOORS",
+    WATER_DRIFT: "WATER_DRIFT",
+    NO_SKIDS: "NO_SKIDS"}
+
+HUD_MAP = {
+    WOOD: "WOOD",
+    SNOW: "SNOW",
+    WATER: "WATER",
+    R6_ROAD: "R6_ROAD",
+    GRASS_24: "GRASS_24",
+    ORANGE_COL: "ORANGE_COL",
+    LIGHT_RED_COL: "LIGHT_RED_COL"}
 
 #! N.B.:
 #! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
@@ -1869,7 +1886,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["CHECK04"],
-    tex_coords = compute_tex_coords(bound_number = 30000, mode = "r.H", repeat_x = 4, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 30000, mode = "r.H", tile_x = 4, tile_y = 1))
 
 # Main Area w/ Building | Road
 create_polygon(
@@ -1885,7 +1902,7 @@ create_polygon(
 save_bms(
     texture_name = ["R6"],
     texture_darkness = [40, 2, 50, 1],
-    tex_coords = compute_tex_coords(bound_number = 201, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 201, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Main Grass Area | Intersection 
 create_polygon(
@@ -1901,7 +1918,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["24_GRASS"], 
-    tex_coords = compute_tex_coords(bound_number = 861, mode = "r.V", repeat_x = 7, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 861, mode = "r.V", tile_x = 7, tile_y = 10))
 
 # Main Grass Area Brown | Road
 create_polygon(
@@ -1917,7 +1934,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_GRASS_WIN"], 
-    tex_coords = compute_tex_coords(bound_number = 202, mode = "r.V", repeat_x = 3, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 202, mode = "r.V", tile_x = 3, tile_y = 10))
 
 # Main Snow Area | Landmark (change?)
 create_polygon(
@@ -1933,7 +1950,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], 
-    tex_coords = compute_tex_coords(bound_number = 1, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 1, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Main Barricade Area | Intersection 
 create_polygon(
@@ -1948,7 +1965,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_BARRICADE"], 
-    tex_coords = compute_tex_coords(bound_number = 862, mode = "r.V", repeat_x = 50, repeat_y = 50))
+    tex_coords = compute_uv(bound_number = 862, mode = "r.V", tile_x = 50, tile_y = 50))
 
 # Main Wood Area | Road
 create_polygon(
@@ -1962,7 +1979,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_WOOD"], 
-    tex_coords = compute_tex_coords(bound_number = 203, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 203, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Main Water Area | Landmark
 create_polygon(
@@ -1979,7 +1996,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_WATER_WIN"], 
-    tex_coords = compute_tex_coords(bound_number = 2, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 2, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Main Diagonal Grass Road 
 create_polygon(
@@ -1993,7 +2010,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["24_GRASS"],
-    tex_coords=compute_tex_coords(bound_number = 863, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords=compute_uv(bound_number = 863, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Triangle Brick I | Intersecton (to do)
 create_polygon(
@@ -2008,7 +2025,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
-    tex_coords = compute_tex_coords(bound_number = 204, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 204, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Triangle Brick II | to be decided
 create_polygon(
@@ -2023,7 +2040,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["OT_MALL_BRICK"],
-    tex_coords = compute_tex_coords(bound_number = 205, mode = "r.V", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 205, mode = "r.V", tile_x = 10, tile_y = 10))
 
 # Main Orange Hill | Landmark (change?)
 create_polygon(
@@ -2038,7 +2055,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_WATER"], 
-    tex_coords = compute_tex_coords(bound_number = 3, mode = "r.V", repeat_x = 10, repeat_y = 100))
+    tex_coords = compute_uv(bound_number = 3, mode = "r.V", tile_x = 10, tile_y = 100))
 
 
 
@@ -2055,7 +2072,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], # N/A
-    tex_coords = compute_tex_coords(bound_number = 4, mode = "r.V", repeat_x = 1, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 4, mode = "r.V", tile_x = 1, tile_y = 1))
 
 # Orange Building Wall "North" | Landmark
 create_polygon(
@@ -2068,7 +2085,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], # N/A
-    tex_coords = compute_tex_coords(bound_number = 5, mode = "r.V", repeat_x = 1, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 5, mode = "r.V", tile_x = 1, tile_y = 1))
 
 # Orange Building Wall "West" | Landmark
 create_polygon(
@@ -2082,7 +2099,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], # N/A
-    tex_coords = compute_tex_coords(bound_number = 6, mode = "r.V", repeat_x = 1, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 6, mode = "r.V", tile_x = 1, tile_y = 1))
 
 # Orange Building Wall "East" | Landmark
 create_polygon(
@@ -2095,7 +2112,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], # N/A
-    tex_coords = compute_tex_coords(bound_number = 7, mode = "r.V", repeat_x = 1, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 7, mode = "r.V", tile_x = 1, tile_y = 1))
 
 # Orange Building Rooftop | Intersection
 create_polygon(
@@ -2108,7 +2125,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SNOW"], # N/A
-    tex_coords = compute_tex_coords(bound_number = 900, mode = "r.V", repeat_x = 1, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 900, mode = "r.V", tile_x = 1, tile_y = 1))
 
 
 
@@ -2128,7 +2145,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RINTER"], 
-    tex_coords = compute_tex_coords(bound_number = 250, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 250, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge II West | Road
 create_polygon(
@@ -2144,7 +2161,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_GRASS"], 
-    tex_coords = compute_tex_coords(bound_number = 251, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 251, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Road West of West Bridge | Road
 create_polygon(
@@ -2160,7 +2177,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 252, mode = "r.V", repeat_x = 3, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 252, mode = "r.V", tile_x = 3, tile_y = 5))
 
 # Intersection West of Bridges | Intersection
 create_polygon(
@@ -2176,7 +2193,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RINTER"], 
-    tex_coords = compute_tex_coords(bound_number = 950, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 950, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Far West Freeway | Road
 create_polygon(
@@ -2192,7 +2209,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["FREEWAY2"], 
-    tex_coords = compute_tex_coords(bound_number = 253, mode = "r.H", repeat_x = 15, repeat_y = 2))
+    tex_coords = compute_uv(bound_number = 253, mode = "r.H", tile_x = 15, tile_y = 2))
 
 # West Freeway Sidewalk I | Road
 create_polygon(
@@ -2207,7 +2224,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SDWLK2"], 
-    tex_coords = compute_tex_coords(bound_number = 254, mode = "r.H", repeat_x = 50, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 254, mode = "r.H", tile_x = 50, tile_y = 1))
 
 # West Freeway Sidewalk II | Road
 create_polygon(
@@ -2223,7 +2240,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["SDWLK2"], 
-    tex_coords = compute_tex_coords(bound_number = 255, mode = "r.H", repeat_x = 50, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 255, mode = "r.H", tile_x = 50, tile_y = 1))
 
 # West Freeway South Intersection | Intersection
 create_polygon(
@@ -2239,7 +2256,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RINTER"], 
-    tex_coords = compute_tex_coords(bound_number = 951, mode = "r.H", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 951, mode = "r.H", tile_x = 5, tile_y = 5))
 
 # Hill South West | Road
 create_polygon(
@@ -2255,7 +2272,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 256, mode = "r.V", repeat_x = 4, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 256, mode = "r.V", tile_x = 4, tile_y = 10))
 
 
 
@@ -2275,7 +2292,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RINTER"], 
-    tex_coords = compute_tex_coords(bound_number = 925, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 925, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge Road South | Road
 create_polygon(
@@ -2291,7 +2308,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RWALK"], 
-    tex_coords = compute_tex_coords(bound_number = 226, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 226, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge Road South Intersection | Intersection
 create_polygon(
@@ -2307,7 +2324,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RINTER"], 
-    tex_coords = compute_tex_coords(bound_number = 926, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 926, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge Road South Hill UP I | Road
 create_polygon(
@@ -2322,7 +2339,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RWALK"], 
-    tex_coords = compute_tex_coords(bound_number = 227, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 227, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge Road South Hill UP II | Road
 create_polygon(
@@ -2337,7 +2354,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["OT_SHOP03_BRICK"], 
-    tex_coords = compute_tex_coords(bound_number = 228, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 228, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge Road South Hill Freeway I | Road
 create_polygon(
@@ -2352,7 +2369,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RWALK"], 
-    tex_coords = compute_tex_coords(bound_number = 233, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 233, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Bridge Road South Hill Freeway II | Road
 create_polygon(
@@ -2367,7 +2384,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RWALK"], 
-    tex_coords = compute_tex_coords(bound_number = 234, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 234, mode = "r.V", tile_x = 5, tile_y = 5))
 
 
 
@@ -2387,7 +2404,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["RINTER"], 
-    tex_coords = compute_tex_coords(bound_number = 952, mode = "r.V", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 952, mode = "r.V", tile_x = 5, tile_y = 5))
 
 # Elevated South Horizontal | Road
 create_polygon(
@@ -2403,7 +2420,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 300, mode = "r.H", repeat_x = 15, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 300, mode = "r.H", tile_x = 15, tile_y = 5))
 
 # Elevated South East Intersection | Intersection
 create_polygon(
@@ -2418,7 +2435,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 953, mode = "r.V", repeat_x = 5, repeat_y = 15))
+    tex_coords = compute_uv(bound_number = 953, mode = "r.V", tile_x = 5, tile_y = 15))
 
 # Elevated South East Road | Road
 create_polygon(
@@ -2433,7 +2450,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 301, mode = "r.V", repeat_x = 5, repeat_y = 15))
+    tex_coords = compute_uv(bound_number = 301, mode = "r.V", tile_x = 5, tile_y = 15))
 
 # Elevated East Road | Road
 create_polygon(
@@ -2449,7 +2466,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 302, mode = "r.H", repeat_x = 2, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 302, mode = "r.H", tile_x = 2, tile_y = 5))
 
 
 
@@ -2469,7 +2486,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_tex_coords(bound_number = 232, mode = "r.H", repeat_x = 2, repeat_y = 3))
+    tex_coords = compute_uv(bound_number = 232, mode = "r.H", tile_x = 2, tile_y = 3))
 
 # Intersection Orange Building
 create_polygon(
@@ -2485,7 +2502,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["CT_FOOD_BRICK"], 
-    tex_coords = compute_tex_coords(bound_number = 232, mode = "r.H", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 232, mode = "r.H", tile_x = 10, tile_y = 10))
 
 # Road To Orange Building I | Road
 create_polygon(
@@ -2501,7 +2518,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["VPBUSRED_TP_BK"], 
-    tex_coords = compute_tex_coords(bound_number = 232, mode = "r.H", repeat_x = 10, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 232, mode = "r.H", tile_x = 10, tile_y = 10))
 
 # Road To Orange Building I | Road
 create_polygon(
@@ -2517,7 +2534,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R_WIN_01"], 
-    tex_coords = compute_tex_coords(bound_number = 232, mode = "r.H", repeat_x = 5, repeat_y = 5))
+    tex_coords = compute_uv(bound_number = 232, mode = "r.H", tile_x = 5, tile_y = 5))
 
 
 
@@ -2536,7 +2553,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_STOP"], 
-    tex_coords = compute_tex_coords(bound_number = 206, mode = "r.V", repeat_x = 10, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 206, mode = "r.V", tile_x = 10, tile_y = 1))
 
 # Speed Bump II | N/A
 create_polygon(
@@ -2550,7 +2567,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_STOP"], 
-    tex_coords = compute_tex_coords(bound_number = 207, mode = "r.V", repeat_x = 1, repeat_y = 10))
+    tex_coords = compute_uv(bound_number = 207, mode = "r.V", tile_x = 1, tile_y = 10))
 
 # Speed Bump Triangle I | N/A
 create_polygon(
@@ -2562,7 +2579,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_STOP"], 
-    tex_coords = compute_tex_coords(bound_number = 207, mode = "r.V", repeat_x = 30, repeat_y = 30))
+    tex_coords = compute_uv(bound_number = 207, mode = "r.V", tile_x = 30, tile_y = 30))
 
 # Speed Bump Triangle II | N/A
 create_polygon(
@@ -2574,7 +2591,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_STOP"], 
-    tex_coords = compute_tex_coords(bound_number = 208, mode = "r.V", repeat_x = 30, repeat_y = 30))
+    tex_coords = compute_uv(bound_number = 208, mode = "r.V", tile_x = 30, tile_y = 30))
 
 # Faulty Quad for illustration purposes
 create_polygon(
@@ -2590,7 +2607,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["CHECK04"],
-    tex_coords = compute_tex_coords(bound_number = 777, mode = "r.H", repeat_x = 4, repeat_y = 1))
+    tex_coords = compute_uv(bound_number = 777, mode = "r.H", tile_x = 4, tile_y = 1))
 
 
 
@@ -2605,7 +2622,7 @@ create_polygon(
 	hud_color = '#414441')
 
 save_bms(texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2220, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2220, mode = "r.H", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2221,
@@ -2617,7 +2634,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2221, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2221, mode = "r.V", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2222,
@@ -2629,7 +2646,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2222, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2222, mode = "r.H", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2223,
@@ -2641,7 +2658,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2223, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2223, mode = "r.V", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2224,
@@ -2653,7 +2670,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2224, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2224, mode = "r.H", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2225,
@@ -2665,7 +2682,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2225, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2225, mode = "r.V", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2226,
@@ -2677,7 +2694,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2226, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2226, mode = "r.H", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2227,
@@ -2689,7 +2706,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2240, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2240, mode = "r.V", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 2228,
@@ -2701,7 +2718,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2227, mode = "r.H", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2227, mode = "r.H", tile_x = 3.0, tile_y = 3.0))
 
 
 create_polygon(
@@ -2714,7 +2731,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_tex_coords(bound_number = 2228, mode = "r.V", repeat_x = 3.0, repeat_y = 3.0))
+	tex_coords = compute_uv(bound_number = 2228, mode = "r.V", tile_x = 3.0, tile_y = 3.0))
 
 create_polygon(
 	bound_number = 924,
@@ -2729,7 +2746,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["RINTER"],
-	tex_coords = compute_tex_coords(bound_number = 924, mode = "r.H", repeat_x = 5.0, repeat_y = 5.0))
+	tex_coords = compute_uv(bound_number = 924, mode = "r.H", tile_x = 5.0, tile_y = 5.0))
 
 create_polygon(
 	bound_number = 923,
@@ -2744,7 +2761,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["RWALK"],
-	tex_coords = compute_tex_coords(bound_number = 923, mode = "r.H", repeat_x = 5.0, repeat_y = 5.0))
+	tex_coords = compute_uv(bound_number = 923, mode = "r.H", tile_x = 5.0, tile_y = 5.0))
 
 ################################################################################################################               
 ################################################################################################################ 
@@ -4259,8 +4276,8 @@ def get_coord_from_tuple(coord_tuple, axis):
     return coord_tuple[axis_dict[axis]]  
     
     
-def create_facades(filename, facade_params, target_fcd_dir, set_facade = False, debug_facades = False):
-    if set_facade:
+def create_facades(filename, facade_params, target_fcd_dir, set_facades = False, debug_facades = False):
+    if set_facades:
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
 
@@ -4708,7 +4725,7 @@ copy_custom_textures()
 create_ext(city_name, hudmap_vertices)
 create_animations(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
-create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facade, debug_facades)
+create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender, export_jpg = True, 
