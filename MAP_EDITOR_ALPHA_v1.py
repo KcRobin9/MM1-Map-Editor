@@ -40,12 +40,12 @@ import matplotlib.transforms as mtransforms
 #! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
 city_name = "First_City"                        # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
-mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (Open1560 is automatically copied to this folder)
+mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (A custom Open1560 version is automatically copied to this folder)
 
 
-#* SETUP II (Map Creation)
-play_game = True                # start the game immediately after the Map is created (defaults to False when importing to Blender)
-delete_shop = True              # delete the raw city files after the .ar file has been created
+#* SETUP II (Map Creation)      
+play_game = True                # change to "True" to immediately start the game after the Map is created (defaults to False when importing to Blender)
+delete_shop = True              # change to "True" to delete the raw city files after the .ar file has been created
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 
@@ -293,7 +293,7 @@ def to_do_list(x):
             
             PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
             """               
-            
+                        
 ################################################################################################################               
 ################################################################################################################        
 
@@ -1786,21 +1786,16 @@ def set_blender_keybinding(import_to_blender: bool = False):
 
 def user_notes(x):
     f""" 
-    Please find some example Polygons and BMS below this text.
-    You can already run this the script with these Polygons and BMS to see how it works.
+    Please find some Polygons and Texture examples below this text.
+    You can already run this the script and create the Test Map yourself
     
-    If you're creating a Flat Surface, you should pass this structure to "vertex_coordinates:"
-        max_x,max_z 
-        min_x,max_z 
-        max_x,min_z 
-        min_x,min_z 
+    If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are accepted)
+    If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    For the Material Index, you can use the constants under 'Material types'. 
-    You can also omit the Material Index, it will then default to 0 (which is a regular road).       
-    Note that you can also set custom Materials Properties in the script (search for: 'new_physics_properties')
+    For the Material Index (optional variable, defaults to 0), you can use the constants under 'Material types'.    
+    Note that you can also set custom Material / Physics  Properties (search for: 'new_physics_properties' in the script)
     
     Texture (UV) mapping examples:
-    tex_coords = compute_uv(mode = "v")
     tex_coords = compute_uv(mode = "r.V", tile_x = 4, tile_y = 2))
     tex_coords = compute_uv(mode = "r.r", tile_x = 3, tile_y = 3, angle_degrees = (45, 45))) // unfinished
     
@@ -1811,8 +1806,8 @@ def user_notes(x):
     'r.V.f', 'repeating_vertical_flipped', 'r.r', 'rotating_repeating',
     'custom', and 'combined'
     
-    You can set "texture_darkness" in the function "save_bms()" making texture edges darker or lighter at the corners. 
-    If there are four vertices, you can then use it as follows: "texture_darkness = [40,2,50,1]"
+    The variable "texture_darkness" in the function "save_bms()" makes the texture edges darker / lighter. 
+    If there are four vertices, you can for example set: "texture_darkness = [40,2,50,1]"
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
     To properly set up the AI, adhere to the following for 'bound_number = x':
@@ -1867,6 +1862,7 @@ HUD_MAP = {
     GRASS_24: "GRASS_24",
     ORANGE_COL: "ORANGE_COL",
     LIGHT_RED_COL: "LIGHT_RED_COL"}
+
 
 #! N.B.:
 #! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
@@ -2771,9 +2767,11 @@ def create_bounds(vertices, polys, city_name, debug_bounds):
     bnd = initialize_bounds(vertices, polys)
     
     bnd_folder = SHOP / "BND"
+    bnd_file = f"{city_name}_HITID.BND"
+    
     bnd_folder.mkdir(parents = True, exist_ok = True) 
     
-    with open(bnd_folder / f"{city_name}_HITID.BND", "wb") as f:
+    with open(bnd_folder / bnd_file, "wb") as f:
         bnd.write_bnd(f)
     
     bnd.write_bnd_debug("BOUNDS_debug.txt", debug_bounds)
@@ -2798,8 +2796,11 @@ def create_folders(city_name):
         os.makedirs(path, exist_ok = True)
         
         
-def create_city_info():   
-    with open(SHOP / 'TUNE' / f"{city_name}.CINFO", "w") as f:
+def create_city_info(): 
+    cinfo_folder = SHOP / "TUNE"
+    cinfo_file = f"{city_name}.CINFO"
+    
+    with open(cinfo_folder / cinfo_file, "w") as f:
         localized_name = race_locale_name
         map_name = city_name.lower()
         race_dir = city_name.lower()
@@ -3305,7 +3306,7 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
             plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'orange')
 
 
-# Create EXT file            
+# Create EXT file                      
 def create_ext(city_name, polygons):
     x_coords = [vertex[0] for poly in polygons for vertex in poly]
     z_coords = [vertex[2] for poly in polygons for vertex in poly]
@@ -3313,15 +3314,21 @@ def create_ext(city_name, polygons):
     min_x, max_x = min(x_coords), max(x_coords)
     min_z, max_z = min(z_coords), max(z_coords)
 
-    with open(SHOP_CITY / f"{city_name}.EXT", 'w') as f:
+    ext_folder = SHOP_CITY
+    ext_file = f"{city_name}.EXT"
+
+    with open(ext_folder / ext_file, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
     return min_x, max_x, min_z, max_z
 
 
 def create_bridges(all_bridges, set_bridges):
+    bridge_folder = SHOP_CITY
+    bridge_file = f"{city_name}.GIZMO"
+        
     if set_bridges:
-        bridge_gizmo = SHOP_CITY / f"{city_name}.GIZMO"
+        bridge_gizmo = bridge_folder / bridge_file
         
         if bridge_gizmo.exists():
             os.remove(bridge_gizmo)
@@ -4311,7 +4318,7 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facades = False,
                 current_start = tuple(current_start)
                 current_end = tuple(current_end)
 
-                sides = params['sides']
+                sides = params.get('sides', (0.0, 0.0, 0.0))
                 scale = scales.get(params['facade_name'], params.get('scale', 1.0))
                 name = params['facade_name']
 
@@ -4371,71 +4378,82 @@ def start_game(destination_folder, play_game = False, import_to_blender = False)
 
 #* FACADE NOTES
 #* Separator: (max_x - min_x) / separator(value) = number of facades
-#* Sides --> set to (0, 0, 0), but can be changed (relates to lighting)
+#* Sides --> omitted bey default, but can set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
-#* Facade_name: name of the facade in the game files
+#* Facade name --> name of the facade in the game files
 
 #* All relevant Facade information can be found in: /UserResources/FACADES.
 #* Each facade is photographed and documented (see: "FACADE_DATA.txt")
 
 #* A few Facade_name examples are: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01
 
-# Flags
-# todo: add more flags
-DARK = 33
-BRIGHT = 35
+# Flags (if applicable, consult the documentation for more info)
+FRONT = 1 # sometimes 1 is also used for the full model
+FRONT_BRIGHT = 3
 
-   
+FRONT_LEFT = 9
+FRONT_BACK = 25
+FRONT_ROOFTOP = 33
+FRONT_LEFT = 41 # value 73 is also commonly used for this
+FRONT_RIGHT = 49
+
+FRONT_LEFT_ROOF = 105 
+FRONT_RIGHT_ROOF = 145 # value 177 is also commonly used for this
+FRONT_LEFT_RIGHT = 217
+FRONT_LEFT_RIGHT_ROOF = 249
+
+FRONT_BACK_ROOF = 1057
+FRONT_RIGHT_BACK = 1073
+FRONT_LEFT_ROOF_BACK = 1129
+FRONT_RIGHT_ROOF_BACK = 1201
+ALL_SIDES = 1273
+
+
 fcd_orange_building_1 = {
-	'flags': BRIGHT,
+	'flags': FRONT_BRIGHT,
 	'start': (-10.0, 0.0, -50.0),
 	'end': (10, 0.0, -50.0),
-	'sides': (27.84,0.00,0.00),
+	# 'sides': (27.84,0.00,0.00),
 	'separator': 10.0,
 	'facade_name': "ofbldg02",
 	'axis': 'x'}
 
 fcd_orange_building_2 = {
-	'flags': BRIGHT,
+	'flags': FRONT_BRIGHT,
 	'start': (10.0, 0.0, -70.0),
 	'end': (-10, 0.0, -70.0),
-	'sides': (27.84,0.00,0.00),
 	'separator': 10.0,
 	'facade_name': "ofbldg02",
 	'axis': 'x'}
 
 fcd_orange_building_3 = {
-	'flags': BRIGHT,
+	'flags': FRONT_BRIGHT,
 	'start': (-10.0, 0.0, -70.0),
 	'end': (-10.0, 0.0, -50.0),
-	'sides': (0,0,27.84),
 	'separator': 10.0,
 	'facade_name': "ofbldg02",
 	'axis': 'z'}
 
 fcd_orange_building_4 = {
-	'flags': BRIGHT,
+	'flags': FRONT_BRIGHT,
 	'start': (10.0, 0.0, -50.0),
 	'end': (10.0, 0.0, -70.0),
-	'sides': (0,0,0.0),
 	'facade_name': "ofbldg02",
     'axis': 'z',
     'separator': 10.0}
 
 fcd_white_hotel_long_road = {
-    'flags': BRIGHT,
+    'flags': FRONT_BRIGHT,
 	'start': (-160.0, 0.0, -80.0),
 	'end': (-160.0, 0.0, 20.0),
-	'sides': (0.0, 0.0, 0.0),
 	'separator': 25.0, 
 	'facade_name': "rfbldg05",
 	'axis': 'z'}
 
 fcd_red_hotel_long_road = {
-    'flags': BRIGHT,
+    'flags': FRONT_BRIGHT,
 	'start': (-160.0, 0.0, 40.0),
 	'end': (-160.0, 0.0, 140.0),
-	'sides': (0.0, 0.0, 0.0),
 	'separator': 20.0, 
 	'facade_name': "dfbldg06",
 	'axis': 'z'}
@@ -4706,9 +4724,9 @@ create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
 Material_Editor.edit_materials(new_physics_properties, "physics.db", debug_physics)
-StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse = ai_reverse, ai_map = ai_map)
+StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse, ai_map)
 
-prop_editor = Prop_Editor(city_name, debug_props = debug_props, input_bng_file = False)
+prop_editor = Prop_Editor(city_name, debug_props, input_bng_file = False)
 
 for i in random_parameters:
     randomized_objects = prop_editor.place_props_randomly(**i)
@@ -4731,7 +4749,7 @@ create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender, export_jpg = True, 
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
-create_lars_race_maker(city_name, street_list, process_vertices = True, lars_race_maker = lars_race_maker)
+create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices = True)
 
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs)
