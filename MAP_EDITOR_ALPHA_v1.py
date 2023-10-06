@@ -262,16 +262,26 @@ CROSSGATE = "tpcrossgate06"
 bridge_object = "vpmustang99"       # you can pass any object
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
-# N.B.: you should only set one bridge per cull room
+# N.B.: you can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
 bridges = [
-    ((-50.01, 0.01, -100.0), "H.W", 2, BRIDGE_WIDE),
-    ((-119.01, 0.01, -100.0), "H.E", 3, BRIDGE_WIDE),
-    ] 
+    ((-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [
+    ((-50.0, 0.15, -115.0), 270, 2, CROSSGATE),
+    ((-50.0, 0.15, -85.0), -270, 2, CROSSGATE)
+    ]),  
+    ((-119.0, 0.01, -100.0), "H.E", 3, BRIDGE_WIDE, [
+    ((-119.0, 0.15, -115.0), 270, 3, CROSSGATE),
+    ((-119.0, 0.15, -85.0), -270, 3, CROSSGATE)
+    ]),
+] 
+
+# Here's how you set a bridge without any attributes
+# ((-119.01, 0.01, -100.0), "H.E", 3, BRIDGE_WIDE, [])
 
 # supported orientations
 f"""
     'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.
     Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
+    Or you can manually set the orientation in degrees (0 - 360).
 """
 
 ################################################################################################################               
@@ -3331,51 +3341,65 @@ def create_ext(city_name, polygons):
 def create_bridges(all_bridges, set_bridges):
     bridge_folder = SHOP_CITY
     bridge_file = f"{city_name}.GIZMO"
-        
+    
     if set_bridges:
         bridge_gizmo = bridge_folder / bridge_file
         
         if bridge_gizmo.exists():
             os.remove(bridge_gizmo)
-        
+
+        def calculate_facing(offset, orientation):
+            if isinstance(orientation, (float, int)): 
+                angle_radians = math.radians(orientation)  
+                return [
+                    offset[0] + 10 * math.cos(angle_radians), 
+                    offset[1], 
+                    offset[2] + 10 * math.sin(angle_radians)
+                ]
+            elif isinstance(orientation, str):
+                mappings = {
+                    "V": (-10, 0, 0),
+                    "V.F": (10, 0, 0),
+                    "H.E": (0, 0, 10),
+                    "H.W": (0, 0, -10),
+                    "N.E": (10, 0, 10),
+                    "N.W": (10, 0, -10),
+                    "S.E": (-10, 0, 10),
+                    "S.W": (-10, 0, -10)
+                }
+                try:
+                    return [offset[i] + mappings[orientation][i] for i in range(3)]
+                except KeyError:
+                    raise ValueError(f"""
+                    Invalid Bridge Orientation.
+                    Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.
+                    Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
+                    Or set the orientation using a numeric value between 0 and 360 degrees.
+                    """)
+            else:
+                raise TypeError("Invalid type for bridge orientation. Expected a string or a number.")
+
         with bridge_gizmo.open("a") as f: 
             for bridge in all_bridges:
-                bridge_offset, bridge_orientation, bridge_number, bridge_object = bridge
-                
-                # Orientation logic
-                if bridge_orientation == "V":
-                    bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2]]
-                elif bridge_orientation == "V.F":
-                    bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2]]
-                elif bridge_orientation == "H.E":
-                    bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] + 10]
-                elif bridge_orientation == "H.W":
-                    bridge_facing = [bridge_offset[0], bridge_offset[1], bridge_offset[2] - 10]
-                elif bridge_orientation == "N.E":
-                    bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] + 10]
-                elif bridge_orientation == "N.W":
-                    bridge_facing = [bridge_offset[0] + 10, bridge_offset[1], bridge_offset[2] - 10]
-                elif bridge_orientation == "S.E":
-                    bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] + 10]
-                elif bridge_orientation == "S.W":
-                    bridge_facing = [bridge_offset[0] - 10, bridge_offset[1], bridge_offset[2] - 10]
-                else:
-                    raise ValueError(f"\n\nInvalid Bridge Orientation.\n"
-                 f"Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.\n"
-                 f"Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.\n")
+                bridge_offset, bridge_orientation, bridge_number, bridge_object, additional_objects = bridge
+                bridge_facing = calculate_facing(bridge_offset, bridge_orientation)
 
                 drawbridge_values = f"{bridge_object},0,{bridge_offset[0]},{bridge_offset[1]},{bridge_offset[2]},{bridge_facing[0]},{bridge_facing[1]},{bridge_facing[2]}"
-                bridge_filler = f"{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99"
+                
+                additional_objects_lines = ""
+                for obj in additional_objects:
+                    obj_offset, obj_orientation, obj_id, obj_type = obj
+                    obj_facing = calculate_facing(obj_offset, obj_orientation)
+                    
+                    additional_objects_lines += f"\t{obj_type},{obj_id},{obj_offset[0]},{obj_offset[1]},{obj_offset[2]},{obj_facing[0]},{obj_facing[1]},{obj_facing[2]}\n"
 
-                # Bridge Data specifically requires 6 lines of data and tabbing. The game will crash if 4 empty lines are used instead of tabs
+                num_fillers = 5 - len(additional_objects)
+                bridge_filler = f"{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99"
+                bridge_fillers = "".join([f"\t{bridge_filler}\n" for _ in range(num_fillers)])
+                
                 bridge_data = f"""DrawBridge{bridge_number}
 \t{drawbridge_values} 
-\t{bridge_filler}
-\t{bridge_filler}
-\t{bridge_filler}
-\t{bridge_filler}
-\t{bridge_filler}
-DrawBridge{bridge_number}"""
+{additional_objects_lines}{bridge_fillers}DrawBridge{bridge_number}"""
 
                 if bridge_data:
                     f.write(bridge_data)
