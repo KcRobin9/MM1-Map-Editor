@@ -171,7 +171,7 @@ race_data = {
                 [0.0, 245, -850, ROT_S, LANE_4], 
                 [0.0, 110, -500, ROT_S, 30.0],    
                 [25.0, 45.0, -325, ROT_S, 25.0],   
-                [35.0, 12.0, -102.5, ROT_S, LANE_4], 
+                [35.0, 12.0, -95.0, ROT_S, LANE_4], 
                 [35.0, 30.0, 0.0, ROT_S, LANE_4], 
                 [35.0, 30.0, 40.0, ROT_S, LANE_4], 
                 ],
@@ -444,7 +444,10 @@ class Vector3:
 
     def Dot(self, rhs):
         return (self.x * rhs.x) + (self.y * rhs.y) + (self.z * rhs.z)
-
+    
+    def Mag(self):
+        return self.Mag2() ** 0.5
+    
     def Mag2(self):
         return (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
 
@@ -3775,80 +3778,81 @@ class Prop_Editor:
                       
     def add_props(self, new_objects):
         default_separator_value = 10.0
-        
+    
         for obj in new_objects:
-            offset = Vector3(obj['offset_x'], obj['offset_y'], obj['offset_z'])
-            face = Vector3(obj['face_x'], obj['face_y'], obj['face_z'])
+            offset = Vector3(*obj['offset'])
+            end = Vector3(*obj.get('end', obj['offset']))  
+            face = obj.get('face')  
             name = obj['name']
-            
-            # separator = obj.get('separator', name)
-            separator = obj.get('separator', default_separator_value)
-            axis = obj.get('axis', 'x') # default is 'x' if 'axis' not provided
 
-            # Check if Separator is a string (object name) or a numeric value
-            if isinstance(separator, str):
-                if separator not in self.prop_data:
-                    raise ValueError(f"Separator {separator} not found in prop data.")
-                separator_value = self.prop_data[separator][axis]
+            # Compute diagonal and its length
+            diagonal = end - offset
+            diagonal_length = diagonal.Mag()
+            
+            separator = obj.get('separator', default_separator_value)
+            if isinstance(separator, str) and separator.lower() in ["x", "y", "z"]:
+                prop_dims = self.prop_data.get(name, Vector3(1, 1, 1))
+                separator = getattr(prop_dims, separator.lower())
+                
+            elif not isinstance(separator, (int, float)):
+                separator = default_separator_value
+
+            if face is None:
+                # Create a facing vector that points from offset to end
+                face = (Vector3(diagonal.x * 1e6, diagonal.y * 1e6, diagonal.z * 1e6))
             else:
-                separator_value = separator  # separator is a numeric value
+                face = Vector3(*face)
 
             self.objects.append(BinaryBanger(offset, face, name + "\x00"))
 
-            if name in self.prop_data:
-                if 'end_offset_' + axis in obj:
-                    num_props = int(abs(obj['end_offset_' + axis] - obj['offset_' + axis]) / separator_value)
+            # Number of props is determined by the length of the diagonal and separator
+            num_props = int(diagonal_length / separator)
 
-                    for i in range(1, num_props):
-                        new_offset = Vector3(offset.x, offset.y, offset.z)  # create a new instance with the same coordinates
-                        new_offset[axis] = obj['offset_' + axis] + i * separator_value
-                        self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
-
-    def get_prop_dimension(self, prop_name: str, dimension: str) -> float:
-        if prop_name in self.prop_data:
-            if dimension == 'x':
-                return self.prop_data[prop_name].x
-            elif dimension == 'y':
-                return self.prop_data[prop_name].y
-            elif dimension == 'z':
-                return self.prop_data[prop_name].z
-            else:
-                raise ValueError("Invalid dimension: {}. Use 'x', 'y', or 'z'.".format(dimension))
-        else:
-            raise ValueError("Prop {} not found in prop data.".format(prop_name))
-        
+            # Add objects along the diagonal
+            for i in range(1, num_props):
+                # Compute new offset along the diagonal
+                new_offset = offset + (diagonal.Normalize() * (i * separator))
+                self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
+  
     def place_props_randomly(self, seed, num_objects, object_dict, x_range, z_range):
-
         new_objects = []
-        
-        if isinstance(object_dict['name'], str):
+
+        # Ensure 'name' is a list for consistent handling later
+        if isinstance(object_dict.get('name'), str):
             object_dict['name'] = [object_dict['name']]
             
-        random.seed(seed)  
+        random.seed(seed)
 
         for name in object_dict['name']:
             for _ in range(num_objects):
                 x = random.uniform(*x_range)
                 z = random.uniform(*z_range)
+                y = object_dict.get('offset_y', 0.0)  
 
-            # Create a new object dictionary with the random x and z coordinates
-            new_object_dict = dict(object_dict) # Copy the original dictionary
-            new_object_dict['offset_x'] = x
-            new_object_dict['offset_z'] = z
-            new_object_dict['name'] = name
-            
-            # Generate random face_x, face_y, and face_z values if they are not provided in the object dictionary
-            if 'face_x' not in new_object_dict:
-                new_object_dict['face_x'] = random.uniform(-179.0, 179.0)
-            if 'face_y' not in new_object_dict:
-                new_object_dict['face_y'] = random.uniform(-179.0, 179.0)
-            if 'face_z' not in new_object_dict:
-                new_object_dict['face_z'] = random.uniform(-179.0, 179.0)
+                # Creating a new object dict, ensuring the name is not a list
+                new_object_dict = {
+                    'name': name,
+                    'offset': (x, y, z)
+                }
 
-            # Add the new object
-            new_objects.append(new_object_dict)
-            
+                # If face is not defined, create random face vector
+                if 'face' not in object_dict:
+                    face_x = random.uniform(-1e6, 1e6)
+                    face_y = random.uniform(-1e6, 1e6)  # N / A
+                    face_z = random.uniform(-1e6, 1e6)
+                    new_object_dict['face'] = (face_x, face_y, face_z)
+                else:
+                    new_object_dict['face'] = object_dict['face']
+
+                # Copy additional properties from object_dict if they exist
+                for key, value in object_dict.items():
+                    if key not in new_object_dict:
+                        new_object_dict[key] = value
+
+                new_objects.append(new_object_dict)
+        
         return new_objects
+
 
 #################################################################################
 #################################################################################
@@ -4620,56 +4624,37 @@ street_list = [cruise_start,
 ################################################################################################################               
 
 # SET PROPS
-china_gate = {'offset_x': 0, 
-          'offset_y': 0.0, 
-          'offset_z': -20, 
-          'face_x': 10000, 
-          'face_y': 0.0, 
-          'face_z': -80, 
-          'name': 'cpgate'}
+china_gate = {'offset': (0, 0.0, -20), 
+              'face': (1 * HUGE, 0.0, -20), 
+              'name': 'cpgate'}
 
-trailer_set = {'offset_x': 60, 
-          'offset_y': 0.0, 
-          
-          'offset_z': -50, 
-          'end_offset_z': 70, 
-          'separator': 16.34,
-          'name': 'tp_trailer', 
-          'axis': 'z',
+trailer_set = {'offset': (60, 0.0, 70), 
+               'end': (60, 0.0, -50), 
+               'name': 'tp_trailer', 
+               'separator': 'x'} # Use the {}-axis dimension of the object as the spacing between each prop
 
-          'face_x': 10, 
-          'face_y': 0.0, 
-          'face_z': -40000}
-
-bridge_orange_buildling = {
-          'offset_x': 35, 
-          'offset_y': 12.0,
-          'offset_z': -70, 
-          
-          'end_offset_z': -32.5, 
-          'separator': 32.5,
-          'name': BRIDGE_SLIM, 
-          'axis': 'z',
-
-          'face_x': 300000, 
-          'face_y': 20.0, 
-          'face_z': -65}
+bridge_orange_buildling = {          
+          'offset': (35, 12.0, -70),
+          'face': (35 * HUGE, 12.0, -70),
+          'name': BRIDGE_SLIM}
 
 # Put your non-randomized props here
 prop_list = [china_gate, trailer_set, bridge_orange_buildling] 
 
-# Put your randomized props here (you will add them to a list "random_parameters")
-random_trees = {'offset_y': 0.0,
-          'name': ["tp_tree10m"] * 20}
+# # Put your randomized props here (you will add them to the list "random_parameters")
+random_trees = {
+        'offset_y': 0.0,
+        'name': ["tp_tree10m"] * 20}
 
-random_cars = {'offset_y': 0.0,
+random_cars = {
+        'offset_y': 0.0,
           'separator': 10.0,
           'name': ["vpbug", "vpbus", "caddie", "vpcop", "vpford", "vpbullet", "vpmustang99", "vppanoz", "vppanozgt", "vpsemi"]}
 
 # Configure your random props here
 random_parameters = [
     {"seed": 123, "num_objects": 1, "object_dict": random_trees, "x_range": (65, 135), "z_range": (-65, 65)},
-    {"seed": 2, "num_objects": 10, "object_dict": random_cars, "x_range": (50, 140), "z_range": (-140, -70)}]
+    {"seed": 1, "num_objects": 2, "object_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}]
 
 # ImpulseLimit
 TREE = 1E+30
