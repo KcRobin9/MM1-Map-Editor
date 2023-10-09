@@ -49,8 +49,8 @@ delete_shop = True              # change to "True" to delete the raw city files 
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 
-set_facades = True              # change to "True" if you want FACADES
 set_props = True                # change to "True" if you want PROPS
+set_facades = True              # change to "True" if you want FACADES
 
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = True              # change to "True" if you want BRIDGES
@@ -62,7 +62,7 @@ ai_streets = True               # change both to "True" if you want AI paths ## 
 ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
 lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
 
-# You can add multiple Cruise Start positions here as backup, only the last one will be used
+# You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
 cruise_start_pos = (60.0, 27.0, 330.0)
 cruise_start_pos = (0.0, 0.0, 0.0)
@@ -93,21 +93,24 @@ quiet_logs = False              # change to "True" if you want to hide most logs
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
 
-
-#* SETUP III (optional, Race Editor)
-# Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
-# Blitzes can have a total of 11 waypoints, the number of waypoints for Circuits and Checkpoints is unlimited
+################################################################################################################               
+################################################################################################################
 
 # Race Data Constants
 # Time & Weather
 MORNING, NOON, EVENING, NIGHT = 0, 1, 2, 3  
 CLEAR, CLOUDY, RAIN, SNOW = 0, 1, 2, 3     
 
+# Opponent Count
 MAX_OPP_8 = 8 
 MAX_OPP_128 = 128 
 
 # Cop Behavior
 FOLLOW, ROADBLOCK, SPINOUT, PUSH, MIX = 0, 3, 4, 8, 15   
+
+# Cop Start Lane
+STATIONARY = 0 
+IN_TRAFFIC = 2
 
 # Waypoint Rotation
 ROT_S = 179.99
@@ -127,14 +130,46 @@ LAPS_3 = 3
 LAPS_5 = 5
 LAPS_10 = 10
 
+# Race Types
+CRUISE = "ROAM"
+BLITZ = "BLITZ"
+RACE = "RACE"
+CIRCUIT = "CIRCUIT"
+COPS_N_ROBBERS = "COPSANDROBBERS"
+
+# Modes
+SINGLE = "SINGLE"
+MULTI = "MULTI"
+ALL_MODES = "All Modes"
+
+# Cars
+VW_BEETLE = "vpbug"
+CITY_BUS = "vpbus"
+CADILLAC = "vpcaddie"
+CRUISER = "vpcop"
+FORD_F350 = "vpford"
+FASTBACK = "vpbullet"
+MUSTANG99 = "vpmustang99"
+ROADSTER = "vppanoz"
+PANOZ_GTR1 = "vppanozgt"
+SEMI = "vpsemi"
+
+################################################################################################################               
+################################################################################################################
+
+#* SETUP III (optional, Race Editor)
+# Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
+# Blitzes can have a total of 11 waypoints (including the start position), the number of waypoints for Circuits and Checkpoints is unlimited
+# The max number of laps in Circuit races is 10
 
 # Race Names
 blitz_race_names = ["Chaotic Tower"]
 circuit_race_names = ["City Lapper"]
 checkpoint_race_names = ["Photo Finish"]
 
+# Races
 race_data = {
-    'BLITZ': {
+    BLITZ: {
         0: {
             'waypoints': [
                 #! (x, y, z, rotation, width)
@@ -153,21 +188,22 @@ race_data = {
                 'density': 0.25,
                 'num_of_police': 2,
                 'police_data': [
-                    #! (x, y, z, rotation, start lane [0 = stationary, 2 = in traffic], behavior)
-                    f'vpcop 10.0 0.0 65.0 {ROT_N} 0 {PUSH}',
-                    f'vpcop -10.0 0.0 65.0 {ROT_N} 0 {MIX}',
+                    #! (x, y, z, rotation, start lane, behavior)
+                    f'{CRUISER} 10.0 0.0 65.0 {ROT_N} {STATIONARY} {PUSH}',
+                    f'{CRUISER} -10.0 0.0 65.0 {ROT_N} {IN_TRAFFIC} {MIX}',
                 ],
                 'num_of_opponents': 1,
             },
             'opponent_cars': {
-                'vpbug':        [[5.0, 0.0, 35.0], 
-                                [5.0, 0.0, -130.0]], 
+                VW_BEETLE:      [[5.0, 0.0, 35.0], 
+                                 [5.0, 0.0, -130.0]], 
             }
         }
     },
-    'RACE':{
+    RACE: {
         0: {
             'waypoints': [
+                [-83.0, 18.0, -114.0, ROT_N, 12.0],
                 [0.0, 245, -850, ROT_S, LANE_4], 
                 [0.0, 110, -500, ROT_S, 30.0],    
                 [25.0, 45.0, -325, ROT_S, 25.0],   
@@ -184,22 +220,22 @@ race_data = {
                 'density': 0.2,
                 'num_of_police': 0,
                 'police_data': [
-                    f'vpcop 15.0 0.0 75.0 {ROT_N} 0 {ROADBLOCK}',
+                    f'{CRUISER} 15.0 0.0 75.0 {ROT_N} {STATIONARY} {ROADBLOCK}',
                 ],
                 'num_of_opponents': 2,
             },
             'opponent_cars': {
-                'vppanoz':      [[-10.0, 245, -850], 
+                ROADSTER:      [[-10.0, 245, -850], 
                                 [0.0, 0.0, -100],
                                 [-10.0, 0.0, -75.0]],
                 
-                'vppanozgt':    [[10.0, 245, -850],
+                PANOZ_GTR1:    [[10.0, 245, -850],
                                 [0.0, 0.0, -100],
                                 [10.0, 0.0, -75.0]],
             }
         }
     },
-    'CIRCUIT': {
+    CIRCUIT: {
         0: {
             'waypoints': [
                 [0.0, 0.0, 40.0, ROT_AUTO, LANE_4], 
@@ -216,12 +252,12 @@ race_data = {
                 'density': 0.75,
                 'num_of_police': 1,
                 'police_data': [
-                    f'vpcop 0.0 0.0 50.0 {ROT_N} 0 {SPINOUT}',
+                    f'{CRUISER} 0.0 0.0 50.0 {ROT_N} {STATIONARY} {SPINOUT}',
                 ],
                 'num_of_opponents': 1,
             },
             'opponent_cars': {
-                'vpcaddie':     [[5.0, 0.0, 35.0], 
+                CADILLAC:      [[5.0, 0.0, 35.0], 
                                 [5.0, 0.0, -130.0]], 
             }
         }
@@ -277,12 +313,40 @@ bridges = [
 # Here's how you set a bridge without any attributes
 # ((-119.01, 0.01, -100.0), "H.E", 3, BRIDGE_WIDE, [])
 
-# supported orientations
+# Supported orientations
 f"""
     'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.
     Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
     Or you can manually set the orientation in degrees (0 - 360).
 """
+
+
+#* SETUP VII (optional, Custom Bridge Configs)
+bridge_race_0 = {
+    "RaceType": RACE, 
+    "RaceNum": "0", 
+    "BridgeOffGoal": 0.50, 
+    "BridgeOnGoal": 0.50,
+    "GateDelta": 0.40,
+    "GateOffGoal": -1.57,
+    "GateOnGoal": 0.0,
+    "BridgeOnDelay": 7.79,
+    "GateOffDelay": 5.26 ,
+    "BridgeOffDelay": 0.0,
+    "GateOnDelay": 5.0,
+    "Mode": SINGLE
+}
+
+bridge_cnr = {
+    "RaceType": COPS_N_ROBBERS,
+    "BridgeDelta": 0.20,
+    "BridgeOffGoal": 0.33,
+    "BridgeOnGoal": 0.33,
+    "Mode": MULTI
+}
+
+# Pack all Custom Bridge Configs. for processing
+bridge_configs = [bridge_race_0, bridge_cnr]
 
 ################################################################################################################               
 ################################################################################################################     
@@ -971,7 +1035,8 @@ def save_bms(
             
              
 # Create BMS      
-def create_bms(vertices, polys, texture_indices, texture_name: List[str], texture_darkness = None, tex_coords = None):
+def create_bms(vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
+               texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None):
     shapes = []
     
     for poly in polys[1:]:  # Skip the first filler polygon
@@ -1016,7 +1081,7 @@ def create_bms(vertices, polys, texture_indices, texture_name: List[str], textur
 ################################################################################################################               
 ################################################################################################################  
 
-def initialize_bounds(vertices, polys):
+def initialize_bounds(vertices: List[Vector3], polys: List[Polygon]):
     magic = b'2DNB\0'
     offset = Vector3(0.0, 0.0, 0.0)
     x_dim, y_dim, z_dim = 0, 0, 0
@@ -1046,7 +1111,7 @@ def initialize_bounds(vertices, polys):
                row_offsets, row_shorts, row_indices, row_heights)
 
 
-def ensure_ccw_order(vertex_coordinates):
+def ensure_ccw_order(vertex_coordinates: List[Vector3]):
     v1, v2, v3 = vertex_coordinates
     
     edge1 = np.subtract(v2, v1)
@@ -3408,6 +3473,64 @@ def create_bridges(all_bridges, set_bridges):
                     f.write(bridge_data)
                     f.write("\n")
                     
+                    
+def custom_bridge_config(configs, set_bridges, tune_folder = SHOP / 'TUNE'):    
+    bridge_config_template = """
+mmBridgeMgr :076850a0 {{
+    BridgeDelta {BridgeDelta}
+    BridgeOffGoal {BridgeOffGoal}
+    BridgeOnGoal {BridgeOnGoal}
+    GateDelta {GateDelta}
+    GateOffGoal {GateOffGoal}
+    GateOnGoal {GateOnGoal}
+    BridgeOnDelay {BridgeOnDelay}
+    GateOffDelay {GateOffDelay}
+    BridgeOffDelay {BridgeOffDelay}
+    GateOnDelay {GateOnDelay}
+    }}
+    """
+
+    default_config = {
+        "BridgeDelta": 0.20,
+        "BridgeOffGoal": 0.0,
+        "BridgeOnGoal": 0.47,
+        "GateDelta": 0.40,
+        "GateOffGoal": -1.57,
+        "GateOnGoal": 0.0,
+        "BridgeOnDelay": 7.79,
+        "GateOffDelay": 5.26,
+        "BridgeOffDelay": 0.0,
+        "GateOnDelay": 5.0,
+        "Mode": SINGLE,
+    }
+    
+    if set_bridges:
+        for config in configs:
+            final_config = {**default_config, **config}
+            config_str = bridge_config_template.format(**final_config)
+            
+            race_type = final_config["RaceType"]
+            filenames = []
+
+            if race_type in [CRUISE, COPS_N_ROBBERS]:
+                base_name = CRUISE if race_type == CRUISE else COPS_N_ROBBERS
+                if final_config["Mode"] in [SINGLE, ALL_MODES]:
+                    filenames.append(f"{base_name}.MMBRIDGEMGR")
+                if final_config["Mode"] in [MULTI, ALL_MODES]:
+                    filenames.append(f"{base_name}M.MMBRIDGEMGR")
+            else:
+                if race_type not in [RACE, CIRCUIT, BLITZ]:
+                    raise ValueError(f"Invalid RaceType. Must be one of {RACE}, {CIRCUIT}, {BLITZ}, {CRUISE}, or {COPS_N_ROBBERS}.")
+
+                if final_config["Mode"] in [SINGLE, ALL_MODES]:
+                    filenames.append(f"{race_type}{final_config['RaceNum']}.MMBRIDGEMGR")
+                if final_config["Mode"] in [MULTI, ALL_MODES]:
+                    filenames.append(f"{race_type}{final_config['RaceNum']}M.MMBRIDGEMGR")
+            
+            for filename in filenames:
+                (tune_folder / filename).write_text(config_str)
+                
+                
 #!########### Code by 0x1F9F1 / Brick (Modified) ############      
                  
 MIN_Y = -20
@@ -3952,6 +4075,7 @@ class Material_Editor:
 ###################################################################################################################
 ###################################################################################################################
 
+# AI constants
 # Intersection types
 STOP = 0 
 STOP_LIGHT = 1 
@@ -4408,7 +4532,7 @@ def start_game(dest_folder: str, play_game: bool = False, import_to_blender: boo
 
 #* FACADE NOTES
 #* Separator: (max_x - min_x) / separator(value) = number of facades
-#* Sides --> omitted bey default, but can set (relates to lighting, but behavior is not clear)
+#* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
 #* Facade name --> name of the facade in the game files
 
@@ -4443,7 +4567,7 @@ fcd_orange_building_1 = {
 	'flags': FRONT_BRIGHT,
 	'start': (-10.0, 0.0, -50.0),
 	'end': (10, 0.0, -50.0),
-	# 'sides': (27.84,0.00,0.00),
+	# 'sides': (27.8, 0.0, 0.0),
 	'separator': 10.0,
 	'facade_name': "ofbldg02",
 	'axis': 'x'}
@@ -4492,7 +4616,6 @@ fcd_red_hotel_long_road = {
 fcd_list = [
     fcd_orange_building_1, fcd_orange_building_2, fcd_orange_building_3, fcd_orange_building_4, 
     fcd_white_hotel_long_road, fcd_red_hotel_long_road]
-
 
 ###################################################################################################################
 
@@ -4649,7 +4772,7 @@ random_trees = {
 random_cars = {
         'offset_y': 0.0,
           'separator': 10.0,
-          'name': ["vpbug", "vpbus", "caddie", "vpcop", "vpford", "vpbullet", "vpmustang99", "vppanoz", "vppanozgt", "vpsemi"]}
+          'name': [VW_BEETLE, CITY_BUS, CADILLAC, CRUISER, FORD_F350, FASTBACK, MUSTANG99, ROADSTER, PANOZ_GTR1, SEMI]}
 
 # Configure your random props here
 random_parameters = [
@@ -4680,12 +4803,12 @@ GLASS_ = 27
 # Set additional Prop Properties here (currently only possible for cars)
 # The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
 bangerdata_properties = {
-    'vpbug': {'ImpulseLimit2': TREE, 'AudioId': GLASS_},
-    'vpbus': {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_, 'Size': '18 6 5', 'CG': '0 0 0'}}
+    VW_BEETLE: {'ImpulseLimit2': TREE, 'AudioId': GLASS_},
+    CITY_BUS: {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_, 'Size': '18 6 5', 'CG': '0 0 0'}}
 
 # Props
 f"""    Player Cars:
-        vpbug, vpbus, caddie, vpcop, vpford, vpbullet, vpmustang99, vppanoz, vppanoz, vpsemi
+        See constants at the top of the script
 
         Traffic Cars:
         vaboeing_small, vabus, vacompact, vadelivery, vadiesels, valimo, valimoangel
@@ -4745,6 +4868,7 @@ copy_custom_textures()
 create_ext(city_name, hudmap_vertices)
 create_animations(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
+custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 
