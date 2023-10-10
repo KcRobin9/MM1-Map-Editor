@@ -1,0 +1,248 @@
+mmCarSim :01457e0c {
+    Mass 1500 
+    InertiaBox 3 2.5 4
+    BodyCG 0 0 0
+    Drag 0.11998 
+    Downforce 0 
+    BoundFriction 0.1 
+    BoundElasticity 0.1 
+    DriftTorque 0 
+    CarFrictionHandling 1 
+    MaxDamage 910000000
+    MedDamage 900000000
+    RedistHeight 1 
+    RedistLongRatio 0.5 
+    SlipPercentThresh 0.5 
+    Engine mmEngine :014594ac {
+            MaxHorsePower 690 
+            OptRPM 6500 
+            MaxRPM 9400 
+            GCL 0.25 
+        }
+    Trans mmTransmission :09337eec {
+            NumGears 8 
+            UpshiftThreshold 6000 
+            DownshiftThreshold 2800 
+            GearRatios [
+                 -9.8 
+                 0 
+                 20.3 
+                 9.3 
+                 7 
+                 5 
+                 4.04 
+                 3.4 
+                ]
+            UpshiftRPM [
+                 6000 
+                 8300 
+                 8100 
+                 8600 
+                 7900 
+                 7900 
+                 7900 
+                 6000 
+                ]
+            DownshiftRPM [
+                 3000 
+                 2300 
+                 2300 
+                 2300 
+                 3000 
+                 3000 
+                 2000 
+                 2000 
+                ]
+        }
+    AeroCollide asAero :01458380 {
+            CDamp 0 0 0
+            VelDamp 0 0 0
+            Vel2Damp 0 0 0
+            AngCDamp 0 0 0
+            AngVelDamp 6 0 6
+            AngVel2Damp 6 0 6
+        }
+    FrontLeft mmWheel :0145862c {
+            Spring 62300 
+            Damping 6200 
+            SteeringRatio 0.4 
+            SuspensionBlend 0.5 
+            BrakeRatio 0.42 
+            StaticFriction 2 
+            SuspensionLimit 0.3 
+            RenderableSuspensionLimit 0.1 
+            RubberSpring 40000 
+            RubberDamp 2000 
+            OptimumSlipPercent 0.08 
+            StaticFric 1.2 
+            SlidingFric 1 
+        }
+    BackLeft mmWheel :01458b34 {
+            Spring 62300 
+            Damping 6200 
+            SteeringRatio 0.05 
+            SuspensionBlend 0.5 
+            BrakeRatio 0 
+            StaticFriction 1 
+            SuspensionLimit 0.3 
+            RenderableSuspensionLimit 0.1 
+            RubberSpring 40000 
+            RubberDamp 2000 
+            OptimumSlipPercent 0.08 
+            StaticFric 1.2 
+            SlidingFric 1 
+        }
+    DamageSmokeOffset 0 0.6 -2.4
+    AsphaltRule asBirthRule :0145978c {
+            Position -80.68 0.1501 -460.5
+            PositionVar 0 0 0
+            Velocity 0 1 0
+            VelocityVar 0 0 0
+            Life 2 
+            LifeVar 0 
+            Mass 0.1 
+            MassVar 0 
+            Radius 0.05 
+            RadiusVar 1 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity 2 
+            TexFrameStart 11 
+            TexFrameEnd 13 
+            BirthFlags 0 
+        }
+    OffroadRule asBirthRule :01459858 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 2 2 2
+            Life 1 
+            LifeVar 0 
+            Mass 0.2 
+            MassVar 0 
+            Radius 0.5 
+            RadiusVar 0.3 
+            Drag 0.02 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 1 
+            TexFrameEnd 4 
+            BirthFlags 0 
+        }
+    SnowRule asBirthRule :014599f0 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 2 2 2
+            Life 0.3 
+            LifeVar 0 
+            Mass 0.2 
+            MassVar 0 
+            Radius 0.3 
+            RadiusVar 0.2 
+            Drag 0.03 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 6 
+            TexFrameEnd 8 
+            BirthFlags 0 
+        }
+    SlushRule asBirthRule :01459924 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 1 1 1
+            Life 1 
+            LifeVar 0 
+            Mass 0.05 
+            MassVar 0 
+            Radius 0.15 
+            RadiusVar 0.1 
+            Drag 0.1 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 5 
+            TexFrameEnd 9 
+            BirthFlags 0 
+        }
+    SmokeRule asBirthRule :01459b88 {
+            Position -327.6 0.8882 321.5
+            PositionVar 0 0 0
+            Velocity 0 1 0
+            VelocityVar 1 2 1
+            Life 0.8 
+            LifeVar 0.4 
+            Mass 0.2 
+            MassVar 0 
+            Radius 0.3 
+            RadiusVar 0.799527 
+            Drag 1 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity 3 
+            TexFrameStart 5 
+            TexFrameEnd 9 
+            BirthFlags 0 
+        }
+    DriftThreshold 0.6 
+    SpinThreshold 0.9 
+    BrakeFrontFricMultiplier 1 
+    BrakeBackFricMultiplier 1 
+    SteerMultiplier 1 
+    SpinStart 0.9 
+    SpinStop 1.2 
+    SpinStartTime 0.25 
+    SpinEndTime 0.35 
+    SpinFromMax 0.3 
+    SpinFromMin 0 
+    SpinToMin 0.6 
+    SpinToMax 1 
+    FrontDriftFricMultiplier 1 
+    BackDriftFricMultiplier 1 
+    FrontSpinFricMultiplier 1 
+    BackSpinFricMultiplier 1 
+}

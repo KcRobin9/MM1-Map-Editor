@@ -142,7 +142,7 @@ SINGLE = "SINGLE"
 MULTI = "MULTI"
 ALL_MODES = "All Modes"
 
-# Cars
+# Player Cars
 VW_BEETLE = "vpbug"
 CITY_BUS = "vpbus"
 CADILLAC = "vpcaddie"
@@ -153,6 +153,25 @@ MUSTANG99 = "vpmustang99"
 ROADSTER = "vppanoz"
 PANOZ_GTR1 = "vppanozgt"
 SEMI = "vpsemi"
+
+# Ambient Cars
+TINY_CAR = "vacompact"
+SEDAN_SMALL = "vasedans"
+SEDAN_LARGE = "vasedanl"
+
+SMALL_VAN = "vavan"
+PICKUP = "vapickup"
+DELIVERY_VAN = "vadelivery"
+LARGE_TRUCK = "vadiesels"
+
+YELLOW_TAXI = "vataxi"
+GREEN_TAXI = "vataxicheck"
+
+WHITE_LIMO = "valimo"
+BLACK_LIMO = "valimoangel"
+
+TRAFFIC_BUS = "vabus"
+PLANE_SMALL = "vaboeing_small"
 
 ################################################################################################################               
 ################################################################################################################
@@ -203,7 +222,7 @@ race_data = {
     RACE: {
         0: {
             'waypoints': [
-                [-83.0, 18.0, -114.0, ROT_N, 12.0],
+                # [-83.0, 18.0, -114.0, ROT_N, 12.0],
                 [0.0, 245, -850, ROT_S, LANE_4], 
                 [0.0, 110, -500, ROT_S, 30.0],    
                 [25.0, 45.0, -325, ROT_S, 25.0],   
@@ -225,11 +244,11 @@ race_data = {
                 'num_of_opponents': 2,
             },
             'opponent_cars': {
-                ROADSTER:      [[-10.0, 245, -850], 
+                WHITE_LIMO:      [[-10.0, 245, -850], 
                                 [0.0, 0.0, -100],
                                 [-10.0, 0.0, -75.0]],
                 
-                PANOZ_GTR1:    [[10.0, 245, -850],
+                BLACK_LIMO:    [[10.0, 245, -850],
                                 [0.0, 0.0, -100],
                                 [10.0, 0.0, -75.0]],
             }
@@ -2908,46 +2927,43 @@ def copy_custom_textures():
 
     for custom_texs in custom_texs_folder.iterdir():
         shutil.copy(custom_texs, dest_tex16o_folder / custom_texs.name)
-        
-        
-def copy_core_tune(bangerdata_properties):
+
+
+def edit_and_copy_mmbangerdata(bangerdata_properties):
     editor_tune_folder = Path(BASE_DIR) / 'Core AR' / 'TUNE'
     shop_tune_folder = Path(SHOP) / 'TUNE'
 
-    tune_files = list(editor_tune_folder.glob('*'))
-
-    for file in tune_files:
-        shutil.copy(file, shop_tune_folder)  
-
-        if file.stem.lower() in bangerdata_properties:
-            tweaked_tune_files = shop_tune_folder / file.name  
-
-            with open(tweaked_tune_files, 'r') as f:  # this is actually the original file
-                lines = f.readlines()
+    for file in editor_tune_folder.glob('*.MMBANGERDATA'):
+        if file.stem not in bangerdata_properties:
+            shutil.copy(file, shop_tune_folder)
             
-            properties = bangerdata_properties[file.stem.lower()]
+    for prop_key, properties in bangerdata_properties.items():
+        file = editor_tune_folder / f"{prop_key}.MMBANGERDATA"
+        
+        if file.exists():
+            with open(file, 'r') as f: 
+                lines = f.readlines()
 
             for i, line in enumerate(lines):
-                if 'ImpulseLimit2' in properties and line.strip().startswith('ImpulseLimit2'):
-                    new_value = properties['ImpulseLimit2']
-                    lines[i] = f'\tImpulseLimit2 {new_value}\n'
-                elif 'Mass' in properties and line.strip().startswith('Mass'):
-                    new_value = properties['Mass']
-                    lines[i] = f'\tMass {new_value}\n'
-                elif 'AudioId' in properties and line.strip().startswith('AudioId'):
-                    new_value = properties['AudioId']
-                    lines[i] = f'\tAudioId {new_value}\n'
-                elif 'Size' in properties and line.strip().startswith('Size'):
-                    new_value = properties['Size']
-                    lines[i] = f'\tSize {new_value}\n'
-                elif 'CG' in properties and line.strip().startswith('CG'):
-                    new_value = properties['CG']
-                    lines[i] = f'\tCG {new_value}\n'
+                for key, new_value in properties.items():
+                    if line.strip().startswith(key):
+                        lines[i] = f'\t{key} {new_value}\n'
             
+            tweaked_tune_files = shop_tune_folder / file.name
             with open(tweaked_tune_files, 'w') as f:
                 f.writelines(lines)
                 
-            
+                
+def copy_core_tune_files():
+    editor_tune_folder = Path(BASE_DIR) / 'Core AR' / 'TUNE'
+    shop_tune_folder = Path(SHOP) / 'TUNE'
+    
+    non_mmbangerdata_files = [f for f in editor_tune_folder.glob('*') if not f.name.endswith('.MMBANGERDATA')]
+    
+    for file in non_mmbangerdata_files:
+        shutil.copy(file, shop_tune_folder)
+                
+                
 def copy_dev_folder(dest_folder, city_name):
     dev_folder = BASE_DIR / 'dev'
     dest_folder = Path(dest_folder) / 'dev'
@@ -4811,8 +4827,7 @@ f"""    Player Cars:
         See constants at the top of the script
 
         Traffic Cars:
-        vaboeing_small, vabus, vacompact, vadelivery, vadiesels, valimo, valimoangel
-        valimoblack, vapickup, vasedanl, vasedans, vataxi, vataxicheck, vavan       
+        See constants at the top of the script     
         
         Other:
         vaboeing            (very large plane, no collision)
@@ -4862,7 +4877,8 @@ prop_editor.write_bng_file(set_props)
 
 copy_open1560(mm1_folder)
 copy_dev_folder(mm1_folder, city_name)
-copy_core_tune(bangerdata_properties)
+edit_and_copy_mmbangerdata(bangerdata_properties)
+copy_core_tune_files()
 copy_custom_textures()
 
 create_ext(city_name, hudmap_vertices)
