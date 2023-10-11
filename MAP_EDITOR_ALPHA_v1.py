@@ -142,7 +142,7 @@ SINGLE = "SINGLE"
 MULTI = "MULTI"
 ALL_MODES = "All Modes"
 
-# Player Cars
+# Player Cars (also usable as Opponent cars, Cop cars, and Props)
 VW_BEETLE = "vpbug"
 CITY_BUS = "vpbus"
 CADILLAC = "vpcaddie"
@@ -154,7 +154,7 @@ ROADSTER = "vppanoz"
 PANOZ_GTR1 = "vppanozgt"
 SEMI = "vpsemi"
 
-# Ambient Cars
+# Ambient Cars (also usable as Opponent cars, Cop cars, and Props)
 TINY_CAR = "vacompact"
 SEDAN_SMALL = "vasedans"
 SEDAN_LARGE = "vasedanl"
@@ -173,6 +173,50 @@ BLACK_LIMO = "valimoangel"
 TRAFFIC_BUS = "vabus"
 PLANE_SMALL = "vaboeing_small"
 
+# Props
+BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
+BRIDGE_WIDE = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
+CROSSGATE = "tpcrossgate06"
+BRIDGE_BUILDING = "tpbridgebuild"
+
+TRAILER = "tp_trailer"
+BARRICADE = "tp_barricade"
+TREE_SLIM = "tp_tree10m"
+TREE_WIDE = "tp_tree15m"
+SAILBOAT = "tpsailboat"
+CHINATOWN_GATE = "cpgate"
+
+BIN = "tptcanc"
+CONE = "tpcone"
+BENCH = "tpbench"
+DUMPSTER = "tpdmpstr"
+CRASH_CAN = "tpcrshcan"
+TRASH_BOXES = "tptrashalley02"
+
+PLANT = "tpplanter_mall"
+MAILBOX = "tpmail"
+BUS_STOP = "tpsbus"
+PHONE_BOOTH = "optbooth"
+
+SIDEWALK_LIGHT = "opstlite"
+HIGHWAY_LIGHT = "tpltst"
+
+GLASS = "dp01wina"
+WALL = "dp24walla"
+
+STOP_SIGN = "tpsstop"
+WRONG_WAY = "tpwrongway"
+DO_NOT_ENTER = "tpswrng"
+STOP_LIGHT_SINGLE = "tplttrafc"
+STOP_LIGHT_DUAL = "tplttrafcdual"
+
+CRANE = "dp60crane"
+ELTRAIN = "r_l_train"
+ELTRAIN_SUPPORT_SLIM = "dp_left"
+ELTRAIN_SUPPORT_WIDE = "dp_left6"
+
+PLANE_LARGE = "vaboeing" # no collision
+ 
 ################################################################################################################               
 ################################################################################################################
 
@@ -311,9 +355,6 @@ anim_data = {
 
 
 #* SETUP VI (optional, Bridges)
-BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
-BRIDGE_WIDE = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
-CROSSGATE = "tpcrossgate06"
 bridge_object = "vpmustang99"       # you can pass any object
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
@@ -4102,11 +4143,6 @@ CONTINUE = 3
 NO = 0
 YES = 1
 
-# Stop Light names
-STOP_SIGN = "tpsstop"
-STOP_LIGHT_SINGLE = "tplttrafc"
-STOP_LIGHT_DUAL = "tplttrafcdual"
-
 
 # BAI EDITOR CLASS
 class BAI_Editor:
@@ -4765,11 +4801,11 @@ street_list = [cruise_start,
 # SET PROPS
 china_gate = {'offset': (0, 0.0, -20), 
               'face': (1 * HUGE, 0.0, -20), 
-              'name': 'cpgate'}
+              'name': CHINATOWN_GATE}
 
 trailer_set = {'offset': (60, 0.0, 70), 
                'end': (60, 0.0, -50), 
-               'name': 'tp_trailer', 
+               'name': TRAILER, 
                'separator': 'x'} # Use the {}-axis dimension of the object as the spacing between each prop
 
 bridge_orange_buildling = {          
@@ -4783,7 +4819,11 @@ prop_list = [china_gate, trailer_set, bridge_orange_buildling]
 # # Put your randomized props here (you will add them to the list "random_parameters")
 random_trees = {
         'offset_y': 0.0,
-        'name': ["tp_tree10m"] * 20}
+        'name': [TREE_SLIM] * 20}
+
+random_sailboats = {
+        'offset_y': 0.0,
+        'name': [SAILBOAT] * 19}
 
 random_cars = {
         'offset_y': 0.0,
@@ -4793,50 +4833,35 @@ random_cars = {
 # Configure your random props here
 random_parameters = [
     {"seed": 123, "num_objects": 1, "object_dict": random_trees, "x_range": (65, 135), "z_range": (-65, 65)},
+    {"seed": 99, "num_objects": 1, "object_dict": random_sailboats, "x_range": (55, 135), "z_range": (-145, -205)},
     {"seed": 1, "num_objects": 2, "object_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}]
 
 # ImpulseLimit
 TREE = 1E+30
 
 # AudioIds
-MALLDOOR_ = 1
-POLE_ = 3           
-SIGN_ = 4          
-MAIL_ = 5              
-METER_ = 6
-TRASH_ = 7          
-BENCH_ = 8         
-TREE_ = 11         
-BOXES_ = 12         # also used for "bridge crossgate"
-NO_NAME_ = 13       # difficult to describe
-BARREL_ = 15        # also used for "dumpster"
-PHONEBOOTH_ = 20
-CONE_ = 22 
-NO_NAME_2 = 24      # sounds a bit similar to "glass"
-NEWS_ = 25
-GLASS_ = 27
+MALLDOOR_AUD = 1
+POLE_AUD = 3           
+SIGN_AUD = 4          
+MAIL_AUD = 5              
+METER_AUD = 6
+TRASH_AUD = 7          
+BENCH_AUD = 8         
+TREE_AUD = 11         
+BOXES_AUD = 12         # also used for "bridge crossgate"
+NO_NAME_AUD = 13       # difficult to describe
+BARREL_AUD = 15        # also used for "dumpster"
+PHONEBOOTH_AUD = 20
+CONE_AUD = 22 
+NO_NAME_2_AUD = 24     # sounds a bit similar to "glass"
+NEWS_AUD = 25
+GLASS_AUD = 27
 
 # Set additional Prop Properties here (currently only possible for cars)
 # The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
 bangerdata_properties = {
-    VW_BEETLE: {'ImpulseLimit2': TREE, 'AudioId': GLASS_},
-    CITY_BUS: {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_, 'Size': '18 6 5', 'CG': '0 0 0'}}
-
-# Props
-f"""    Player Cars:
-        See constants at the top of the script
-
-        Traffic Cars:
-        See constants at the top of the script     
-        
-        Other:
-        vaboeing            (very large plane, no collision)
-        r_l_train           (el train)
-        tp_trailer          (trailer)
-        {BRIDGE_WIDE}       (wide bridge)
-        {BRIDGE_SLIM}       (slim bridge)
-        ...                 (many more) 
-        """
+    VW_BEETLE: {'ImpulseLimit2': TREE, 'AudioId': GLASS_AUD},
+    CITY_BUS: {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_AUD, 'Size': '18 6 5', 'CG': '0 0 0'}}
 
 ################################################################################################################     
 
