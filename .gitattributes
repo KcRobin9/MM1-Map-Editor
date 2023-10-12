@@ -1,0 +1,3 @@
+*.mod linguist-vendored
+*.bat linguist-vendored
+*.dat linguist-vendored
