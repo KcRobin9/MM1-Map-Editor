@@ -1,0 +1,12 @@
+[autorun]
+OPEN=setup.EXE /autorun
+ICON=setup.EXE,0
+
+shell\setup=Install Midtown Madness
+shell\setup\command=setup.exe
+
+shell\dxsetup=Install DirectX 6.1
+shell\dxsetup\command=directx\dxsetup
+
+shell\zonea502=Install the Internet Gaming Zone
+shell\zonea502\command=zonea502.exe

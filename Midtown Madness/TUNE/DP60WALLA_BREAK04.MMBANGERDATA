@@ -1,0 +1,47 @@
+mmBangerData :104142a8 {
+    NodeName "DP60WALLA_BREAK04"
+    AudioId 0 
+    Size 2.137 1.209 2.503
+    CG -3.754 2.742 -4.125
+    Offset 0 0 0
+    GlowOffset 3.754 -2.742 4.125
+    Mass 64.6643 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0.05 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 6 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :10414310 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 4 
+            TexFrameEnd 4 
+            BirthFlags 0 
+        }
+    TexNumber 3 
+    BillFlags 16 
+    YRadius 0 
+}

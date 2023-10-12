@@ -1,0 +1,6 @@
+mmInput :010b9f48 {
+    MouseSensitivity 0.185005 
+    MouseSteerFilter 1.7 
+    JoySteerFilter 1.5 
+    DiscreteSteeringDelta 1 
+}

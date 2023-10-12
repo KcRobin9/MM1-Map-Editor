@@ -1,0 +1,23 @@
+aiVehicleData :06cd6938 {
+    NodeName "vaicop"
+    Size 2 1.455 5.079
+    MaxAngClamp 0 0 0
+    Mass 1478.19 
+    Friction 0.5 
+    Elasticity 0.1 
+    SoundId 9 
+    MaxDamage 118255 
+    PtxThresh 118255 
+    Spring 29563.8 
+    Damping 2956.38 
+    SuspensionLimit 0.07 
+    RubberSpring 26607.4 
+    RubberDamp 2660.74 
+    TireRadius 0.374732 
+    FLOff -0.7532 0.3488 -1.576
+    FROff 0.7545 0.3488 -1.576
+    BLOff 0.7964 0.3571 1.416
+    BROff -0.8031 0.3571 1.416
+    BBLOff 0 0 0
+    BBROff 0 0 0
+}

@@ -1,0 +1,26 @@
+Index: dp_left.mmBangerData
+===================================================================
+RCS file: /Angel/soft/CVS/mm/shop/tune/dp_left.mmBangerData,v
+retrieving revision 1.2
+diff -r1.2 dp_left.mmBangerData
+1c1
+< mmBangerData :0703f714 {
+---
+> mmBangerData :17bdc100 {
+11c11
+<     ImpulseLimit2 1.0e+30
+---
+>     ImpulseLimit2 1e+030 
+17c17
+<     BirthRule asBirthRule :0703f77c {
+---
+>     BirthRule asBirthRule :17bdc168 {
+45c45
+<     BillFlags 0
+---
+>     BillFlags 0 
+47c47
+< }
+---
+> }
+\ No newline at end of file

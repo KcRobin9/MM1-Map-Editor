@@ -1,0 +1,54 @@
+mmBangerData :05e24c70 {
+    NodeName "tpboxalley"
+    AudioId 12 
+    Size 4.354 2 1.465
+    CG -0.02697 1 0.04153
+    Offset 0 0 0
+    GlowOffset 0 0 0
+    Mass 1275.59 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 6 
+    PartNames [
+"BREAK_PART01"         
+"BREAK_PART02"         
+"BREAK_PART03"         
+"BREAK_PART04"         
+"BREAK_PART05"         
+"BREAK_PART06"         
+        ]
+    BirthRule asBirthRule :05e24cfc {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 0 
+    YRadius 2.25326 
+}

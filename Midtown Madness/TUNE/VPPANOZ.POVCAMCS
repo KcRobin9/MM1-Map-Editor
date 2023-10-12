@@ -1,0 +1,24 @@
+PovCamCS :01302ad4 {
+    m_Offset 0 1.2 -0.5
+    m_Pitch 0 
+    POVJitterAmp 0 
+    m_ApproachOn 0 
+    m_AppAppOn 0 
+    m_AppRot 28 
+    m_AppXRot 0.5 
+    m_AppYPos 28 
+    m_AppXZPos 28 
+    m_AppApp 0.7 
+    m_AppRotMin 0 
+    m_AppPosMin 0 
+    m_LookAbove 1 
+    TrackTo 0 0.8 0
+    m_MaxDist 1.8 
+    m_MinDist 2.5 
+    m_LookAt 1 
+    m_BlendTime 0.8 
+    m_BlendGoal 1 
+    m_cameraFOV 60 
+    m_cameraNear 0.5 
+    m_cameraFar 1600 
+}

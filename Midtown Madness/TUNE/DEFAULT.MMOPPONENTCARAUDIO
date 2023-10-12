@@ -1,0 +1,13 @@
+mmOpponentCarAudio :01f9b158 {
+    m_bFlags 0 
+    m_EngineAudio EngineAudioOpponent :01f9b1a4 {
+            m_pcEngineWave "Enginesedan1"
+            m_fMinVolume 0.89 
+            m_fMaxVolume 0.89 
+            m_fVolumeMultiplier 0.000181818 
+            m_fMinPitch 0.25 
+            m_fMaxPitch 1.20 
+            m_fPitchMultiplier 0.000181818
+            m_iSoundIndex 1
+        }
+}

@@ -1,0 +1,19 @@
+mmPlayer :01adf748 {
+    DriftThreshold 0.6 
+    SpinThreshold 0.9 
+    BrakeFrontFricMultiplier 0.7 
+    BrakeBackFricMultiplier 0.6 
+    SteerMultiplier 1 
+    SpinStart 0.9 
+    SpinStop 1.2 
+    SpinStartTime 0.15 
+    SpinEndTime 0.3 
+    SpinFromMax 0.3 
+    SpinFromMin 0 
+    SpinToMin 0.6 
+    SpinToMax 1 
+    FrontDriftFricMultiplier 1 
+    BackDriftFricMultiplier 0.48 
+    FrontSpinFricMultiplier 1 
+    BackSpinFricMultiplier 0.3 
+}

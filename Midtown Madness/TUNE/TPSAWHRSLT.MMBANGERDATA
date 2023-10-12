@@ -1,0 +1,51 @@
+mmBangerData :05e22ec0 {
+    NodeName "tpsawhrslt"
+    AudioId 13 
+    Size 0.764 1.453 0.7878
+    CG -0.009 0.7265 5.066e-007
+    Offset 0 0 0
+    GlowOffset -0.1 0.67 -0.1
+    Mass 87.4568 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 3 
+    PartNames [
+"BREAKSAWHRS01"         
+"BREAKSAWHRS02"         
+"BREAKSAWHRS03"         
+        ]
+    BirthRule asBirthRule :05e22f4c {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 0 
+    YRadius 0.5614 
+}

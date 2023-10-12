@@ -1,0 +1,37 @@
+mmBangerData :01045e1c {
+    NodeName "tpsspd_BREAK_PROPSIGN"
+    AudioId 4 
+    Size -5.353e-038 -7.825e-039 1.682e-044
+    CG 0 -4.481e-038 -4.501e-038
+    Mass 0 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :01045e8c {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+}

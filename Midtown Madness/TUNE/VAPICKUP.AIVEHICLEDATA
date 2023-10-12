@@ -1,0 +1,23 @@
+aiVehicleData :18a48d58 {
+    NodeName "vapickup"
+    Size 2.157 1.327 5.275
+    MaxAngClamp 0 0 0
+    Mass 1509.85 
+    Friction 0.5 
+    Elasticity 0.1 
+    SoundId 9 
+    MaxDamage 120788 
+    PtxThresh 120788 
+    Spring 30197 
+    Damping 2113.79 
+    SuspensionLimit 0.07 
+    RubberSpring 21137.9 
+    RubberDamp 1056.9 
+    TireRadius 0.364125 
+    FLOff -0.8201 0.3446 -1.357
+    FROff 0.8118 0.3446 -1.357
+    BLOff 0.7846 0.3446 1.928
+    BROff -0.7874 0.3446 1.928
+    BBLOff 0 0 0
+    BBROff 0 0 0
+}

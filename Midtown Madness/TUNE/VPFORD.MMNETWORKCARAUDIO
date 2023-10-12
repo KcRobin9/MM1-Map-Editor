@@ -1,0 +1,14 @@
+mmNetworkCarAudio :01f724b8 {
+    m_bFlags 0
+    m_fHornVolume .95
+    m_EngineAudio EngineAudioOpponent :01f72504 {
+            m_pcEngineWave "Truckdrive"
+            m_fMinVolume 0.95 
+            m_fMaxVolume 0.95 
+            m_fVolumeMultiplier 0.0005 
+            m_fMinPitch 0.25
+            m_fMaxPitch 2 
+            m_fPitchMultiplier 0.0002 
+            m_iSoundIndex 5 
+        }
+}

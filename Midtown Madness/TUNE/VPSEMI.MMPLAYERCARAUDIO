@@ -1,0 +1,23 @@
+mmPlayerCarAudio :0224a928 {
+    m_pcHornWaveName "FREIGHTHORN"
+    m_bFlags 2 
+    m_fHornVolume 0.94 
+    m_EngineAudio EngineAudio :0224a974 {
+            m_pcHighRpmWave "FREIGHTDRIVE"
+            m_pcLowRpmWave "FREIGHTIDLE"
+            m_pcClutchWave "TRUCKGEARSHIFT"
+            m_fMinVolume[kHiRpmIndex] 0.1 
+            m_fMaxVolume[kHiRpmIndex] 0.90 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.000454545 
+            m_fMinVolume[kLowRpmIndex] 0.1 
+            m_fMaxVolume[kLowRpmIndex] 0.82 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.00015748 
+            m_fMinPitch[kHiRpmIndex] 0.24 
+            m_fMaxPitch[kHiRpmIndex] 2 
+            m_fPitchMultiplier[kHiRpmIndex] 0.00019802 
+            m_fMinPitch[kLowRpmIndex] 1 
+            m_fMaxPitch[kLowRpmIndex] 1.15 
+            m_fPitchMultiplier[kLowRpmIndex] 0.001 
+            m_fClutchVolume 0.87 
+        }
+}

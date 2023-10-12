@@ -1,0 +1,23 @@
+mmPlayerCarAudio :0223f9c8 {
+    m_pcHornWaveName "CADIHORN"
+    m_bFlags 0 
+    m_fHornVolume 0.95 
+    m_EngineAudio EngineAudio :0223fa14 {
+            m_pcHighRpmWave "CADIDRIVE"
+            m_pcLowRpmWave "CADIIDLE"
+            m_pcClutchWave "REVERSE"
+            m_fMinVolume[kHiRpmIndex] 0.1 
+            m_fMaxVolume[kHiRpmIndex] 0.93 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.000333333 
+            m_fMinVolume[kLowRpmIndex] 0.1 
+            m_fMaxVolume[kLowRpmIndex] 0.90 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.000194175 
+            m_fMinPitch[kHiRpmIndex] 0.34 
+            m_fMaxPitch[kHiRpmIndex] 4.5 
+            m_fPitchMultiplier[kHiRpmIndex] 0.000185185 
+            m_fMinPitch[kLowRpmIndex] 0.83 
+            m_fMaxPitch[kLowRpmIndex] 1.64 
+            m_fPitchMultiplier[kLowRpmIndex] 0.00064516 
+            m_fClutchVolume 0.93 
+        }
+}

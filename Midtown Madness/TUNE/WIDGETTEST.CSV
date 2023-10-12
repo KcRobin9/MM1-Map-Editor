@@ -1,0 +1,219 @@
+MENU NAME,ID,WIDGET NAME,ID,X,Y,W,H,DESC
+Navigation Bar,0,mnav_opt,0,463,7,100,29,5 State
+Navigation Bar,0,mnav_help,1,565,9,22,23,3 State
+Navigation Bar,0,mnav_stow,2,587,3,25,31,3 State
+Navigation Bar,0,mnav_exit,3,612,14,24,27,3 State
+Navigation Bar,0,mnav_prev,4,478,439,49,27,5 State
+Main Menu,1,main_quick,0,28,184,232,34,4 State
+Main Menu,1,main_single,1,28,226,232,34,4 State
+Main Menu,1,main_multi,2,28,268,232,34,4 State
+Main Menu,1,race_rec,3,28,435,174,22,4 State
+AboutMenu Menu,34,Credits,0,54,178,215,245
+AboutMenu Menu,34,onav_done,1,546,436,59,28,4 State
+AboutMenu Menu,34,PID Label,2,130,130,100,18
+Driver Select Menu,6,DRIVER,0,225,94,212,14
+Driver Select Menu,6,driv_new,1,460,134,86,38,4 State
+Driver Select Menu,6,driv_del,2,513,185,86,38,4 State
+Driver Select Menu,6,driv_stats,3,467,280,86,38,4 State
+Driver Select Menu,6,driv_next,4,527,398,101,56,5 State
+Garage Menu,8,roller_up,0,597,74,13,12,3 State
+Garage Menu,8,roller_down,1,597,86,13,12,3 State
+Garage Menu,8,Locked Sign,2,43,163,0,0
+Garage Menu,8,Locked Text,3,34,280,0,0
+Garage Menu,8,CAR COLOR,4,350,120,216,18
+Garage Menu,8,roller_up,5,597,119,13,12,3 State
+Garage Menu,8,roller_down,6,597,131,13,12,3 State
+Garage Menu,8,VEHICLES,7,350,75,216,18
+Garage Menu,8,Car Description,8,190,385,0,0
+Garage Menu,8,HORSEPOWER,9,353,203,216,6
+Garage Menu,8,TOP SPEED,10,353,235,216,6
+Garage Menu,8,DURABILITY,11,353,268,216,6
+Garage Menu,8,MASS,12,353,300,216,6
+Garage Menu,8,PHYSICS REALISM,13,349,170,216,15
+Garage Menu,8,vehi_show,14,136,314,185,37,4 State
+Garage Menu,8,veh_auto,15,352,324,263,18,5 State
+Garage Menu,8,vehi_play,16,527,398,101,56,5 State
+Vehicle Showcase,9,onav_done,0,500,420,59,28,4 State
+Single Race Menu,7,race_blitz,0,46,128,212,22,5 State
+Single Race Menu,7,race_circ,1,46,188,212,22,5 State
+Single Race Menu,7,race_waypt,2,46,158,212,22,5 State
+Single Race Menu,7,race_roam,3,46,98,212,22,5 State
+Single Race Menu,7,LAPS,4,207,222,40,32
+Single Race Menu,7,CHECKPOINTS,5,207,222,40,32
+Single Race Menu,7,OPPONENTS,6,207,255,40,32
+Single Race Menu,7,RACE NAME,7,280,95,212,18
+Single Race Menu,7,race_env,8,508,286,86,38,4 State
+Single Race Menu,7,TOD Icons,9,435,273,0,0
+Single Race Menu,7,Weather Icons,10,435,305,0,0
+Single Race Menu,7,TRAFFIC DENSITY,11,255,355,224,32
+Single Race Menu,7,COP DENSITY,12,255,427,224,32
+Single Race Menu,7,PEDESTRIAN DENSITY,13,255,391,224,32
+Single Race Menu,7,race desc icons,14,267,132,0,0
+Single Race Menu,7,race_cenv,15,267,200,204,22,4 State
+Single Race Menu,7,race_next,16,527,398,101,56,5 State
+Net Select Menu,10,Net Name,0,394,72,211,18
+Net Select Menu,10,mpst_tcpl,1,116,93,261,22,5 State
+Net Select Menu,10,mpst_ipx,2,116,124,261,22,5 State
+Net Select Menu,10,mpst_tcpn,3,116,155,261,22,5 State
+Net Select Menu,10,mpst_serl,4,116,186,261,22,5 State
+Net Select Menu,10,mpst_modm,5,116,217,261,22,5 State
+Net Select Menu,10,Protocol Descriptions,6,418,107,0,0
+Net Select Menu,10,textscroll,7,168,322,0,0
+Net Select Menu,10,mpst_join,8,533,232,86,38,4 State
+Net Select Menu,10,mpst_host,9,445,253,86,38,4 State
+Net Select Menu,10,Previous,10,549,439,0,0
+Main Options Menu,2,onav_aud,0,74,121,291,37,4 State
+Main Options Menu,2,onav_cont,1,134,199,291,37,4 State
+Main Options Menu,2,onav_gra,2,194,277,291,37,4 State
+Main Options Menu,2,onav_credit,3,411,341,177,54,4 State
+Main Options Menu,2,Previous,4,546,438,0,0
+Graphics Options,4,onav_cancel,0,543,433,82,36,4 State
+Graphics Options,4,onav_done,1,484,420,59,28,4 State
+Graphics Options,4,reset_def,2,290,423,86,38,4 State
+Graphics Options,4,TEXTURE RESOLUTION,3,76,107,195,18
+Graphics Options,4,OBJECT DETAIL,4,76,156,195,18
+Graphics Options,4,RESOLUTION,5,76,205,195,18
+Graphics Options,4,RENDERER,6,76,254,195,18
+Graphics Options,4,SHADOWS,7,76,303,195,18
+Graphics Options,4,ogra_env,8,335,93,226,18,5 State
+Graphics Options,4,ogra_texf,9,335,123,226,18,5 State
+Graphics Options,4,ogra_sky,10,335,154,226,18,5 State
+Graphics Options,4,ogra_refl,11,335,186,226,18,5 State
+Graphics Options,4,ogra_hide,12,335,217,226,18,5 State
+Graphics Options,4,ogra_pag,13,335,247,226,18,5 State
+Graphics Options,4,ogra_rend,14,335,279,226,18,5 State
+Graphics Options,4,FAR CLIP DISTANCE,15,337,337,227,15
+Graphics Options,4,LIGHTING QUALITY,16,337,379,227,15
+Audio Options,3,onav_cancel,0,543,433,82,36,4 State
+Audio Options,3,onav_done,1,484,420,59,28,4 State
+Audio Options,3,reset_def,2,290,423,86,38,4 State
+Audio Options,3,DEVICE,3,75,122,229,18
+Audio Options,3,Stereo FX,4,75,174,229,18
+Audio Options,3,SOUND QUALITY,5,75,226,229,18
+Audio Options,3,oaud_efts,6,365,122,226,18,5 State
+Audio Options,3,oaud_music,7,365,154,226,18,5 State
+Audio Options,3,oaud_comm,8,365,186,226,18,5 State
+Audio Options,3,WAVE VOLUME,9,366,249,227,15
+Audio Options,3,CD VOLUME,10,366,291,227,15
+Audio Options,3,BALANCE,11,366,333,227,15
+Control Options,5,onav_cancel,0,543,433,82,36,4 State
+Control Options,5,onav_done,1,485,420,59,28,4 State
+Control Options,5,reset_def,2,288,423,86,38,4 State
+Control Options,5,Controllers,3,57,108,196,18
+Control Options,5,CW Array,4,316,67,252,20
+Control Options,5,ocon_force,5,43,331,226,18,5 State
+Control Options,5,Force-Feedback Collision Intensity,6,40,382,227,15
+Control Options,5,Force-Feedback Road Force Intensity,7,40,422,227,15
+Control Options,5,ocon_cali,8,105,222,110,31,4 State
+Control Options,5,ocon_rev,9,43,271,226,18,5 State
+Control Options,5,Steering Sensitivity,10,40,163,227,15
+Control Options,5,Controller Dead Zone,11,40,203,227,15
+Control Options,5,ocon_pov,12,43,301,226,18,5 State
+Host Race Menu,11,host_cont,0,527,399,101,56,5 State
+Host Race Menu,11,race_blitz,1,46,128,212,22,5 State
+Host Race Menu,11,race_circ,2,46,188,212,22,5 State
+Host Race Menu,11,race_waypt,3,46,158,212,22,5 State
+Host Race Menu,11,race_roam,4,46,98,212,22,5 State
+Host Race Menu,11,race_cops,5,46,220,212,22,5 State
+Host Race Menu,11,LAPS,6,496,113,30,18
+Host Race Menu,11,CHECKPOINTS,7,496,113,40,32
+Host Race Menu,11,RACE NAME,8,291,111,172,18
+Host Race Menu,11,race_env,9,521,326,86,38,4 State
+Host Race Menu,11,TOD Icons,10,454,337,0,0
+Host Race Menu,11,Weather Icons,11,454,369,0,0
+Host Race Menu,11,PEDESTRIAN DENSITY,12,268,417,230,32
+Host Race Menu,11,Password,13,292,267,171,18
+Host Race Menu,11,Max Players,14,522,267,32,32
+Host Race Menu,11,race desc icons,15,280,151,0,0
+Host Race Menu,11,race_cenv,16,280,210,204,22,4 State
+Network Arena,12,NONAME,0,56,425,393,18
+Network Arena,12,compscroll,1,200,118,0,0
+Network Arena,12,mpst_veh,2,466,223,152,37,4 State
+Network Arena,12,aren_ready,3,527,399,101,56,5 State
+Cops & Robbers Settings,13,copr_melee,0,45,122,205,18,5 State
+Cops & Robbers Settings,13,copr_copr,1,45,144,205,18,5 State
+Cops & Robbers Settings,13,copr_rvsr,2,45,166,205,18,5 State
+Cops & Robbers Settings,13,copr_none,3,266,305,150,18,5 State
+Cops & Robbers Settings,13,copr_time,4,266,328,150,18,5 State
+Cops & Robbers Settings,13,copr_point,5,266,349,150,18,5 State
+Cops & Robbers Settings,13,crt_red,6,75,211,86,38,5 State
+Cops & Robbers Settings,13,crt_blue,7,163,236,86,38,5 State
+Cops & Robbers Settings,13,GOLD MASS,8,436,297,152,18
+Cops & Robbers Settings,13,LIMIT VALUE,9,436,340,152,18
+Cops & Robbers Settings,13,mpst_veh,10,290,400,152,37,4 State
+Cops & Robbers Settings,13,mpst_cont,11,527,398,101,56,5 State
+Cops & Robbers Settings,13,compscroll,12,264,129,0,0
+Cops & Robbers Settings,13,CR Settings,13,266,372,0,0
+Enter an Address,14,TCP/IP Address,0,210,205,219,18
+Enter an Address,14,dlg_cancel,1,378,303,79,35,4 State
+Enter an Address,14,dlg_done,2,286,303,79,35,4 State
+Control Warning,21,dlg_ok,0,332,235,79,35,4 State
+Control Warning,21,dlg_cancel,1,430,233,79,35,4 State
+Setup Serial Communications,16,PORT,0,232,142,169,18
+Setup Serial Communications,16,BAUD RATE,1,232,186,169,18
+Setup Serial Communications,16,STOP BITS,2,232,230,169,18
+Setup Serial Communications,16,FLOW CONTROL,3,232,274,169,18
+Setup Serial Communications,16,PARITY,4,232,318,169,18
+Setup Serial Communications,16,dlg_cancel,5,427,351,79,35,4 State
+Setup Serial Communications,16,dlg_done,6,334,351,79,35,4 State
+Create a New Driver,17,Enter New Driver Name,0,202,164,239,18
+Create a New Driver,17,newp_amat,1,200,205,163,18,5 State
+Create a New Driver,17,newp_prof,2,200,242,163,18,5 State
+Create a New Driver,17,rank desc icons,3,172,283,0,0
+Create a New Driver,17,dlg_done,4,334,347,79,35,4 State
+Create a New Driver,17,dlg_cancel,5,428,347,79,35,4 State
+retrieve_dlg,18,dlg_done,0,417,214,79,35,4 State
+retrieve_dlg,18,dlg_cancel,1,417,212,79,35,4 State
+Driver Record,19,compscroll,0,81,121,0,0
+Driver Record,19,drec_bltz,1,94,356,163,18,5 State
+Driver Record,19,drec_circ,2,94,382,163,18,5 State
+Driver Record,19,drec_chck,3,94,408,163,18,5 State
+Driver Record,19,dlg_done,4,496,384,79,35,4 State
+Race Statistics,20,compscroll,0,81,100,0,0
+Race Statistics,20,hoff_amap,1,271,327,163,18,5 State
+Race Statistics,20,hoff_prop,2,271,353,163,18,5 State
+Race Statistics,20,hoff_pros,3,271,379,163,18,5 State
+Race Statistics,20,drec_bltz,4,94,327,163,18,5 State
+Race Statistics,20,drec_circ,5,94,353,163,18,5 State
+Race Statistics,20,drec_chck,6,94,379,163,18,5 State
+Race Statistics,20,dlg_done,7,496,355,79,35,4 State
+locked_dlg,23,dlg_done,0,422,222,79,35,4 State
+locked_dlg,23,dlg_cancel,1,627,525,79,35,4 State
+badpass_dlg,24,dlg_done,0,424,220,79,35,4 State
+badpass_dlg,24,dlg_cancel,1,260,442,79,35,4 State
+Race Environment,22,renv_imorn,0,219,124,42,31,5 State
+Race Environment,22,renv_inoon,1,261,124,42,31,5 State
+Race Environment,22,renv_isuns,2,303,124,42,31,5 State
+Race Environment,22,renv_inite,3,345,124,42,31,5 State
+Race Environment,22,renv_isun,4,219,174,42,31,5 State
+Race Environment,22,renv_ifog,5,261,174,42,31,5 State
+Race Environment,22,renv_irain,6,303,174,42,31,5 State
+Race Environment,22,renv_isnow,7,345,174,42,31,5 State
+Race Environment,22,TRAFFIC DENSITY,8,161,226,227,15
+Race Environment,22,COP DENSITY,9,161,341,227,15
+Race Environment,22,PEDESTRIAN DENSITY,10,161,270,227,15
+Race Environment,22,renv_hide,11,161,289,185,18,5 State
+Race Environment,22,dlg_done,12,339,370,79,35,4 State
+Race Environment,22,dlg_cancel,13,432,370,79,35,4 State
+Enter a valid password,25,Password,0,149,244,116,18
+Enter a valid password,25,dlg_cancel,1,346,233,79,35,4 State
+Enter a valid password,25,dlg_done,2,430,233,79,35,4 State
+quit_dlg,27,dlg_done,0,329,222,79,35,4 State
+quit_dlg,27,dlg_cancel,1,422,222,79,35,4 State
+delp_dlg,28,dlg_done,0,285,304,79,35,4 State
+delp_dlg,28,dlg_cancel,1,378,304,79,35,4 State
+dupp_dlg,29,dlg_done,0,378,304,79,35,4 State
+dupp_dlg,29,dlg_cancel,1,317,137,79,35,4 State
+xassign_dlg,32,dlg_done,0,422,221,79,35,4 State
+xassign_dlg,32,dlg_cancel,1,316,205,79,35,4 State
+plim_dlg,33,dlg_done,0,422,222,79,35,4 State
+plim_dlg,33,dlg_cancel,1,316,205,79,35,4 State
+lastp_dlg,30,dlg_done,0,420,222,79,35,4 State
+lastp_dlg,30,dlg_cancel,1,316,205,79,35,4 State
+zone_dlg,26,dlg_done,0,420,222,79,35,4 State
+zone_dlg,26,dlg_cancel,1,316,205,79,35,4 State
+odef_dlg,31,dlg_done,0,285,304,79,35,4 State
+odef_dlg,31,dlg_cancel,1,378,304,79,35,4 State
+City Selection,35,CITY,0,202,164,240,18
+City Selection,35,dlg_done,1,334,347,79,35,4 State
+City Selection,35,dlg_cancel,2,428,347,79,35,4 State

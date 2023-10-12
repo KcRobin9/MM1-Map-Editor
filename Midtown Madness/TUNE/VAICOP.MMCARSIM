@@ -1,0 +1,67 @@
+mmCarSim :00cadadc {
+    Mass 1200 
+    InertiaBox 3 2.5 4
+    BodyCG 0 0.05 0
+    Drag 0.0999797 
+    Downforce 0 
+    BoundFriction 0.1 
+    BoundElasticity 0.5 
+    DriftTorque 6
+    WeebleTorque 9670
+    Engine mmEngine :00caf848 {
+            MaxHorsePower 900 
+            OptRPM 5000 
+            MaxRPM 8500 
+        }
+    Trans mmTransmission :00caf8c0 {
+            NumGears 8 
+            UpshiftThreshold 6000 
+            DownshiftThreshold 2800 
+            GearRatios [
+                 -9.8 
+                 18 
+                 14 
+                 11 
+                 8.5 
+                 5.64 
+                 5.5 
+                 2.5 
+                ]
+        }
+    AeroCollide asAero :00cae458 {
+            CDamp 0 0 0
+            VelDamp 0 0 0
+            Vel2Damp 0 0 0
+            AngCDamp 0 0 0
+            AngVelDamp 6 0 6
+            AngVel2Damp 6 0 6
+        }
+    FrontLeft mmWheel :00cae7b0 {
+            Spring 62300 
+            Damping 6200 
+            SteeringRatio 0.35 
+            SuspensionBlend 0.5 
+            BrakeRatio 0.85 
+            StaticFriction 2 
+            SuspensionLimit 0.02 
+            RubberSpring 40000 
+            RubberDamp 2000 
+            OptimumSlipPercent 0.08 
+            StaticFric 1.2 
+            SlidingFric 1.2 
+        }
+    BackLeft mmWheel :00caee00 {
+            Spring 62300 
+            Damping 6200 
+            SteeringRatio 0.05 
+            SuspensionBlend 0.5 
+            BrakeRatio 0.85 
+            StaticFriction 1 
+            SuspensionLimit 0.02 
+            RubberSpring 40000 
+            RubberDamp 2000 
+            OptimumSlipPercent 0.08 
+            StaticFric 1.2 
+            SlidingFric 1.2 
+        }
+}

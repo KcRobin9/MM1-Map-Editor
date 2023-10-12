@@ -1,0 +1,23 @@
+# anim name,mma name,first frame,last frame,Y AXIS Offset,Y AXIS DISTANCE,X AXIS Offset,X AXIS DISTANCE,default next[
+# transition moves [by convention] are of the form: from_to where the,,,,,,,,
+# source and destination are looped animations,,,,,,,,
+STAND,manwalk,1,1,0,0,0,0,STAND_WALK
+STAND_WALK,manwalk,1,4,0,0.23,0,0,WALK
+WALK,manwalk,5,24,0.23,1.45,0,0,WALK
+WALK_STAND,manwalk,25,35,1.68,0.36,0,0,STAND
+STAND_ANTIC,manantic,1,5,0,0,0,0,ANTIC
+ANTIC,manantic,6,10,0,0,0,0,ANTIC
+ANTIC_WALK,manant2w,1,4,0,0.14,0,0,WALK
+WALK_ANTIC,manw2ant,1,10,1.71,0.32,0,0,ANTIC
+ANTIC_LDIVE,mandivel,1,16,0,0,0,-2.35,LDIVE
+LDIVE,mandivel,17,17,0,0,-2.35,-0.3,LDIVE_STAND
+LDIVE_STAND,mandivel,18,40,0,0,-2.65,-1.82,STAND
+ANTIC_RDIVE,mandiver,1,16,0,0,0,2.33,RDIVE
+RDIVE,mandiver,17,17,0,0,2.33,0.3,RDIVE_STAND
+RDIVE_STAND,mandiver,18,40,0,0,2.63,1.83,STAND
+WALK_RDIVE,manw2dir,1,10,1.71,0,0,2.24,RDIVE
+WALK_LDIVE,manw2dil,1,10,1.71,0,0,-2.24,LDIVE
+RUN,manrun,6,17,0.03,3.03,0,0,RUN
+BACKUP,manw2bak,10,10,0.89,0,0,0,BACKUP
+BACKUP_WALK,manbak2w,1,4,0,0.2,0,0,WALK
+RUN_WALK,manrun2w,1,6,3.12,0.77,0,0,WALK

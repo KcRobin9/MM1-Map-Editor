@@ -1,0 +1,14 @@
+mmNetworkCarAudio :01f9b158 {
+    m_bFlags 0 
+    m_fHornVolume .95
+    m_EngineAudio EngineAudioOpponent :01f9b1a4 {
+            m_pcEngineWave "Mustangdrive"
+            m_fMinVolume 0.91 
+            m_fMaxVolume 0.91 
+            m_fVolumeMultiplier 0.0005 
+            m_fMinPitch 0.24 
+            m_fMaxPitch 2 
+            m_fPitchMultiplier 0.000208333 
+            m_iSoundIndex 2 
+        }
+}

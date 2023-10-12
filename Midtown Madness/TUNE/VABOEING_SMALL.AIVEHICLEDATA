@@ -1,0 +1,23 @@
+aiVehicleData :18005f80 {
+    NodeName "vaboeing_small"
+    Size 7.399 2.768 7.865
+    MaxAngClamp 0 0 0
+    Mass 2500.0 
+    Friction 0.5 
+    Elasticity 0.1 
+    SoundId 9 
+    MaxDamage 1.28845e+006 
+    PtxThresh 1.28845e+006 
+    Spring 322112 
+    Damping 22547.8 
+    SuspensionLimit 0.07 
+    RubberSpring 225478 
+    RubberDamp 11273.9 
+    TireRadius 0.106558 
+    FLOff 0.03577 0.1013 -2.016
+    FROff 0.61 0.1119 0.5402
+    BLOff -0.5429 0.1119 0.5402
+    BROff 0 0 0
+    BBLOff 0 0 0
+    BBROff 0 0 0
+}

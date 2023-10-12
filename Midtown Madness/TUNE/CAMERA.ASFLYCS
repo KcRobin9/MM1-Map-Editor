@@ -1,0 +1,15 @@
+asFlyCS :0050ae48 {
+    Matrix Matrix34 :0050ae8c {
+            a 0.3746 0 0.9272
+            b 0 1 0
+            c -0.9272 0 0.3746
+            d 166.5 3.349 -754.8
+        }
+    Global 0 
+    Inherit $00000000
+    Flags 1 
+    NextNode $009314bc
+    ChildNode $00930ff0
+    ParentNode $03a18220
+    NodeName "Camera"
+}

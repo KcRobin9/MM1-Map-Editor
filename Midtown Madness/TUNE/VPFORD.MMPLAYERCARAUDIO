@@ -1,0 +1,23 @@
+mmPlayerCarAudio :02246ae8 {
+    m_pcHornWaveName "TRUCKHORN"
+    m_bFlags 0 
+    m_fHornVolume 0.92 
+    m_EngineAudio EngineAudio :02246b34 {
+            m_pcHighRpmWave "TRUCKDRIVE"
+            m_pcLowRpmWave "TRUCKIDLE"
+            m_pcClutchWave "TRUCKGEARSHIFT"
+            m_fMinVolume[kHiRpmIndex] 0.1 
+            m_fMaxVolume[kHiRpmIndex] 0.95 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.0005 
+            m_fMinVolume[kLowRpmIndex] 0.1 
+            m_fMaxVolume[kLowRpmIndex] 0.86 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.000181818 
+            m_fMinPitch[kHiRpmIndex] 0.44 
+            m_fMaxPitch[kHiRpmIndex] 2 
+            m_fPitchMultiplier[kHiRpmIndex] 0.000188679 
+            m_fMinPitch[kLowRpmIndex] 0.82 
+            m_fMaxPitch[kLowRpmIndex] 1.33 
+            m_fPitchMultiplier[kLowRpmIndex] 0.000625 
+            m_fClutchVolume 0.87 
+        }
+}

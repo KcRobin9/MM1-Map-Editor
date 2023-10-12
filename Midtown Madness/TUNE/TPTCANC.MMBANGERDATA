@@ -1,0 +1,47 @@
+mmBangerData :05e1f7d4 {
+    NodeName "tptcanc"
+    AudioId 0 
+    Size 0.7229 0.9682 0.7627
+    CG -0.001241 0.4841 0
+    Offset 0 0 0
+    GlowOffset 0 0 0
+    Mass 53.3894 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :05e1f860 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 9 21 10
+            Life 2 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 0.3 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 2 
+            DRotationVar 0 
+            InitialBlast 2 
+            SpewRate 10.4 
+            SpewTimeLimit 15 
+            Gravity -15 
+            TexFrameStart 0 
+            TexFrameEnd 3 
+            BirthFlags 0 
+        }
+    TexNumber 3 
+    BillFlags 0 
+    YRadius 0.470125 
+}

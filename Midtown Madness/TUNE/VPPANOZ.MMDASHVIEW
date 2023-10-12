@@ -1,0 +1,18 @@
+mmDashView :02540d14 {
+    MaxSpeed 160 
+    MaxRPM 8000 
+    DashPos -0.137 0.316 -0.936
+    RoofPos 0.08 -1.979e-009 0
+    WheelOffset -0.3228 0.2025 0.05947
+    RPMPos 0.342 0.338 0.004
+    RPMMinRot 4 
+    RPMMaxRot -1.21 
+    SpeedPos 0.134 0.335 0.003
+    SpeedMinRot 4.42 
+    SpeedMaxRot -0.860024 
+    WheelFact 1 
+    DamagePos 0.494 0.265 0.003
+    DamageMinRot 3.2 
+    DamageMaxRot -0.0099989 
+    DashCamOffset 0 1.2 -0.5
+}

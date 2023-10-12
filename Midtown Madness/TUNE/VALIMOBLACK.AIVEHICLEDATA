@@ -1,0 +1,23 @@
+aiVehicleData :18a49058 {
+    NodeName "valimoblack"
+    Size 2.038 1.309 6.577
+    MaxAngClamp 0 0 0
+    Mass 1754.05 
+    Friction 0.5 
+    Elasticity 0.1 
+    SoundId 9 
+    MaxDamage 140324 
+    PtxThresh 140324 
+    Spring 35081 
+    Damping 2455.67 
+    SuspensionLimit 0.07 
+    RubberSpring 24556.7 
+    RubberDamp 1227.83 
+    TireRadius 0.352667 
+    FLOff -0.8379 0.3113 -1.668
+    FROff 0.8362 0.3113 -1.668
+    BLOff 0.7563 0.3113 2.803
+    BROff -0.7638 0.3113 2.803
+    BBLOff 0 0 0
+    BBROff 0 0 0
+}

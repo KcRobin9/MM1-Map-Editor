@@ -1,0 +1,23 @@
+mmPlayerCarAudio :0224adb0 {
+    m_pcHornWaveName "RACECARHORN"
+    m_bFlags 0 
+    m_fHornVolume 0.95 
+    m_EngineAudio EngineAudio :0224adfc {
+            m_pcHighRpmWave "RACECARDRIVE"
+            m_pcLowRpmWave "RACECARIDLE"
+            m_pcClutchWave "REVERSE"
+            m_fMinVolume[kHiRpmIndex] 0.1 
+            m_fMaxVolume[kHiRpmIndex] 0.94 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.0005 
+            m_fMinVolume[kLowRpmIndex] 0.1 
+            m_fMaxVolume[kLowRpmIndex] 0.96 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.00013986 
+            m_fMinPitch[kHiRpmIndex] 0.65 
+            m_fMaxPitch[kHiRpmIndex] 2 
+            m_fPitchMultiplier[kHiRpmIndex] 0.000148148 
+            m_fMinPitch[kLowRpmIndex] 0.8 
+            m_fMaxPitch[kLowRpmIndex] 1.64 
+            m_fPitchMultiplier[kLowRpmIndex] 0.000540541 
+            m_fClutchVolume 0.93 
+        }
+}

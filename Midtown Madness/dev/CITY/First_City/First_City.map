@@ -1,0 +1,11 @@
+mmMapData :0 {
+    NumStreets 6
+    Street [
+        "cruise_start"
+		"main_west_path"
+		"main_grass_horz_path"
+		"east_path"
+		"main_double_triangle_path"
+		"orange_hill_path"
+    ]
+}

@@ -1,0 +1,47 @@
+mmBangerData :067e6630 {
+    NodeName "tp_tree15m"
+    AudioId 11 
+    Size 12 15 3e-006
+    CG 0 7.5 -5e-007
+    Offset 0 0 0
+    GlowOffset 0 -7.5 5e-007
+    Mass 0.054 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 1.0e+30 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :067e6698 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 31 
+    YRadius 0.72866 
+}

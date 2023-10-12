@@ -1,0 +1,23 @@
+mmPlayerCarAudio :01f9b158 {
+    m_pcHornWaveName "Mustanghorn"
+    m_bFlags 0 
+    m_fHornVolume .95
+    m_EngineAudio EngineAudio :01f9b1a4 {
+            m_pcHighRpmWave ""
+            m_pcLowRpmWave "Enginesedan1"
+            m_pcClutchWave "Reverse"
+            m_fMinVolume[kHiRpmIndex] 0.0 
+            m_fMaxVolume[kHiRpmIndex] 0.0 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.000 
+            m_fMinVolume[kLowRpmIndex] 0.89 
+            m_fMaxVolume[kLowRpmIndex] 0.89 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.000181818 
+            m_fMinPitch[kHiRpmIndex] 0.0 
+            m_fMaxPitch[kHiRpmIndex] 0
+            m_fPitchMultiplier[kHiRpmIndex] 0.0 
+            m_fMinPitch[kLowRpmIndex] 0.25 
+            m_fMaxPitch[kLowRpmIndex] 1.20 
+            m_fPitchMultiplier[kLowRpmIndex] 0.000181818
+            m_fClutchVolume 0.93 
+        }
+}

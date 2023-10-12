@@ -40,12 +40,13 @@ import matplotlib.transforms as mtransforms
 #! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
 city_name = "First_City"                        # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
-mm1_folder = r"C:\Users\robin\Desktop\MM1_game" # Path to your MM1 folder (A custom Open1560 version is automatically copied to this folder)
+mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM game that comes with the Editor
 
 
 #* SETUP II (Map Creation)      
 play_game = True                # change to "True" to immediately start the game after the Map is created (defaults to False when importing to Blender)
 delete_shop = True              # change to "True" to delete the raw city files after the .ar file has been created
+
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 
@@ -807,7 +808,7 @@ class BND:
         for poly in self.polys:           
             poly.to_file(f)              
                 
-    def write_bnd_debug(self, debug_filename: str, debug_bounds: bool) -> None:
+    def write_bnd_debug(self, debug_filename: str, debug_bounds: bool = False) -> None:
         if debug_bounds:
             with open(debug_filename, 'w') as f:
                 f.write(str(self))
@@ -1144,7 +1145,7 @@ def create_bms(vertices: List[Vector3], polys: List[Polygon], texture_indices: L
 ################################################################################################################               
 ################################################################################################################  
 
-def initialize_bounds(vertices: List[Vector3], polys: List[Polygon]):
+def initialize_bounds(vertices: List[Vector3], polys: List[Polygon]) -> BND:
     magic = b'2DNB\0'
     offset = Vector3(0.0, 0.0, 0.0)
     x_dim, y_dim, z_dim = 0, 0, 0
@@ -1174,7 +1175,7 @@ def initialize_bounds(vertices: List[Vector3], polys: List[Polygon]):
                row_offsets, row_shorts, row_indices, row_heights)
 
 
-def ensure_ccw_order(vertex_coordinates: List[Vector3]):
+def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     v1, v2, v3 = vertex_coordinates
     
     edge1 = np.subtract(v2, v1)
@@ -1420,7 +1421,7 @@ def create_polygon(
 ################################################################################################################  
 
 # Blender
-def enable_developer_extras():
+def enable_developer_extras() -> None:
     prefs = bpy.context.preferences
     view = prefs.view
     
@@ -1433,7 +1434,7 @@ def enable_developer_extras():
         print("Developer Extras already enabled!")
         
            
-def adjust_3D_view_settings():
+def adjust_3D_view_settings() -> None:
     for area in bpy.context.screen.areas:
         if area.type == 'VIEW_3D':
             for space in area.spaces:
@@ -1451,7 +1452,7 @@ def adjust_3D_view_settings():
                     shading.color_type = 'TEXTURE'
 
               
-def load_all_dds_to_blender(dds_directory):
+def load_all_dds_to_blender(dds_directory: Path) -> None:
     for file_name in os.listdir(dds_directory):
         if file_name.lower().endswith(".dds"):
             texture_path = os.path.join(dds_directory, file_name)
@@ -1459,7 +1460,7 @@ def load_all_dds_to_blender(dds_directory):
                 bpy.data.images.load(texture_path)
 
 
-def preload_all_dds_materials(dds_directory):
+def preload_all_dds_materials(dds_directory: Path) -> None:
     for file_name in os.listdir(dds_directory):
         if file_name.lower().endswith(".dds"):
             texture_path = os.path.join(dds_directory, file_name)
@@ -2972,7 +2973,7 @@ CheckpointNames={checkpoint_names}
 """)
         
                     
-def copy_custom_textures(): 
+def copy_custom_textures() -> None: 
     custom_texs_folder = BASE_DIR / "Custom Textures"
     dest_tex16o_folder = SHOP / "TEX16O"
 
@@ -3015,33 +3016,17 @@ def copy_core_tune_files():
         shutil.copy(file, shop_tune_folder)
                 
                 
-def copy_dev_folder(dest_folder, city_name):
+def copy_dev_folder(mm1_folder: Path, city_name: str) -> None:
     dev_folder = BASE_DIR / 'dev'
-    dest_folder = Path(dest_folder) / 'dev'
+    mm1_folder = Path(mm1_folder) / 'dev'
     
-    shutil.rmtree(dest_folder, ignore_errors = True)  # remove any existing AI files in the dev folder
-    shutil.copytree(dev_folder, dest_folder)
+    shutil.rmtree(mm1_folder, ignore_errors = True)  # remove any existing AI files in the dev folder
+    shutil.copytree(dev_folder, mm1_folder)
     
     # Delete AI files in CWD
     ai_files = dev_folder / 'CITY' / city_name
     shutil.rmtree(ai_files, ignore_errors = True)
     
-    
-def copy_open1560(dest_folder):
-    dest_folder = Path(dest_folder)
-    open1560_folder = BASE_DIR / 'Installation Instructions' / 'Open1560'
-    
-    for files in open1560_folder.iterdir():
-        dest_file_path = dest_folder / files.name
-
-        # If the source file doesn't exist, skip to the next iteration
-        if not files.is_file():
-            continue
-
-        # If the dest file doesn't exist or the source file is newer than the dest file, copy the files
-        if not dest_file_path.exists() or files.stat().st_mtime > dest_file_path.stat().st_mtime:
-            shutil.copy2(files, dest_file_path)
-
 ################################################################################################################               
 ################################################################################################################ 
 
@@ -3360,19 +3345,19 @@ def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_ani
                         
                         
 # Create AR file and delete folders
-def create_ar(city_name: str, mm1_folder: str, delete_shop: bool = False) -> None:
+def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
     
     os.chdir(SHOP)
-    ar_command = f"CMD.EXE /C run !!!!!{city_name}_City"
+    ar_command = f"CMD.EXE /C run !!!!!{city_name}"
     subprocess.run(ar_command, shell = True)
     os.chdir(BASE_DIR)  
     
     build_dir = BASE_DIR / 'build'
     for file in build_dir.iterdir():
-        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{city_name}_City"):
+        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{city_name}"):
             MOVE(file, Path(mm1_folder) / file.name)
             
     # Delete the build folder
@@ -4561,7 +4546,7 @@ def create_commandline(city_name: str, dest_folder: Path, no_ui: bool = False, n
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
     
-    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -speedycops -l {city_name}"
+    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {city_name}"
     
     if quiet_logs:
         base_cmd += " -quiet"
@@ -4907,7 +4892,6 @@ for i in random_parameters:
 prop_editor.add_props(prop_list)
 prop_editor.write_bng_file(set_props)
 
-copy_open1560(mm1_folder)
 copy_dev_folder(mm1_folder, city_name)
 edit_and_copy_mmbangerdata(bangerdata_properties)
 copy_core_tune_files()

@@ -1,0 +1,23 @@
+aiVehicleData :18a49118 {
+    NodeName "vataxi"
+    Size 2.038 1.437 5.183
+    MaxAngClamp 0 0 0
+    Mass 1518.08 
+    Friction 0.5 
+    Elasticity 0.1 
+    SoundId 9 
+    MaxDamage 121447 
+    PtxThresh 121447 
+    Spring 30361.7 
+    Damping 2125.32 
+    SuspensionLimit 0.07 
+    RubberSpring 21253.2 
+    RubberDamp 1062.66 
+    TireRadius 0.352667 
+    FLOff -0.8651 0.3113 -1.668
+    FROff 0.8592 0.3113 -1.668
+    BLOff 0.8447 0.3113 1.522
+    BROff -0.8447 0.3113 1.522
+    BBLOff 0 0 0
+    BBROff 0 0 0
+}

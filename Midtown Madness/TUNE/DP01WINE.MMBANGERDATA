@@ -1,0 +1,61 @@
+mmBangerData :178f6a14 {
+    NodeName "DP01WINE"
+    AudioId 27 
+    Size 3.008 3 3
+    CG -1.5 1.5 1.5
+    Offset 0 0 0
+    GlowOffset 1.5 -1.5 -1.5
+    Mass 0.338383 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0.01 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 2 
+    NumParts 13 
+    PartNames [
+"BREAK01"         
+"BREAK02"         
+"BREAK03"         
+"BREAK04"         
+"BREAK05"         
+"BREAK06"         
+"BREAK07"         
+"BREAK08"         
+"BREAK09"         
+"BREAK10"         
+"BREAK11"         
+"BREAK12"         
+"BREAK13"         
+        ]
+    BirthRule asBirthRule :178f6a7c {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 16 
+    YRadius 4.74804 
+}

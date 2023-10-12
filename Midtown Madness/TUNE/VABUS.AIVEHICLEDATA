@@ -1,0 +1,23 @@
+aiVehicleData :18a48e18 {
+    NodeName "vabus"
+    Size 2.6 3.266 13.85
+    MaxAngClamp 0 0 0
+    Mass 11761.6 
+    Friction 0.5 
+    Elasticity 0.1 
+    SoundId 9 
+    MaxDamage 940930 
+    PtxThresh 940930 
+    Spring 235233 
+    Damping 16466.3 
+    SuspensionLimit 0.07 
+    RubberSpring 164663 
+    RubberDamp 8233.14 
+    TireRadius 0.529239 
+    FLOff -1.056 0.4956 -4.602
+    FROff 1.056 0.4956 -4.602
+    BLOff 0.9997 0.4956 3.386
+    BROff -0.9949 0.4956 3.386
+    BBLOff 0.9997 0.4956 4.557
+    BBROff -0.9949 0.4956 4.557
+}

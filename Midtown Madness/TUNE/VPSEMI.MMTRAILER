@@ -1,0 +1,36 @@
+mmTrailer :01bda4b0 {
+    Mass 3000 
+    InertiaBox 3 1.0 9
+    BoundFriction 0.1 
+    BoundElasticity 0.1 
+    WheelFL mmWheel :01bda938 {
+            Spring 115000 
+            Damping 18000 
+            SteeringRatio 0 
+            SuspensionBlend 0.5 
+            BrakeRatio 0.100001 
+            StaticFriction 2 
+            SuspensionLimit 0.2 
+            RenderableSuspensionLimit 0.1 
+            RubberSpring 40000 
+            RubberDamp 2500 
+            OptimumSlipPercent 0.08 
+            StaticFric 1.2 
+            SlidingFric 1 
+        }
+    WheelBL mmWheel :01bdae40 {
+            Spring 115000 
+            Damping 18000 
+            SteeringRatio 0.05 
+            SuspensionBlend 0.5 
+            BrakeRatio 0.100001 
+            StaticFriction 1 
+            SuspensionLimit 0.2 
+            RenderableSuspensionLimit 0.1 
+            RubberSpring 40000 
+            RubberDamp 2500 
+            OptimumSlipPercent 0.08 
+            StaticFric 1.2 
+            SlidingFric 1 
+        }
+}

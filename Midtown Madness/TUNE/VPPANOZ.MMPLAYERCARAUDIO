@@ -1,0 +1,23 @@
+mmPlayerCarAudio :0224e180 {
+    m_pcHornWaveName "PNEUSHORN"
+    m_bFlags 0 
+    m_fHornVolume 0.95 
+    m_EngineAudio EngineAudio :0224e1cc {
+            m_pcHighRpmWave "PNEUSDRIVE"
+            m_pcLowRpmWave "PNEUSIDLE"
+            m_pcClutchWave "REVERSE"
+            m_fMinVolume[kHiRpmIndex] 0.1 
+            m_fMaxVolume[kHiRpmIndex] 0.94 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.0005 
+            m_fMinVolume[kLowRpmIndex] 0.1 
+            m_fMaxVolume[kLowRpmIndex] 0.89 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.000153846 
+            m_fMinPitch[kHiRpmIndex] 0.24 
+            m_fMaxPitch[kHiRpmIndex] 4.5 
+            m_fPitchMultiplier[kHiRpmIndex] 0.000333333 
+            m_fMinPitch[kLowRpmIndex] 0.92 
+            m_fMaxPitch[kLowRpmIndex] 1.64 
+            m_fPitchMultiplier[kLowRpmIndex] 0.0004 
+            m_fClutchVolume 0.93 
+        }
+}

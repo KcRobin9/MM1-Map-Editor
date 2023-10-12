@@ -1,0 +1,15 @@
+aiVehicleManager :02c4bc3c {
+    Size 3 2 4
+    MaxAngClamp 100 100 100
+    Mass 2600 
+    Friction 0.9 
+    Elasticity 0.05 
+    SoundId 9 
+    MaxDamage 2e+005 
+    PtxThresh 1000 
+    Flags 3 
+    NextNode $02d69010
+    ChildNode $00000000
+    ParentNode $02c4bc08
+    NodeName "_541"
+}

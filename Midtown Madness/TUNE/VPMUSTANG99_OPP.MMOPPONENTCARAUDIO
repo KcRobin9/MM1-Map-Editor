@@ -1,0 +1,13 @@
+mmOpponentCarAudio :01f92030 {
+    m_bFlags 0 
+    m_EngineAudio EngineAudioOpponent :01f9207c {
+            m_pcEngineWave "MUSTANGDRIVE"
+            m_fMinVolume 0.93 
+            m_fMaxVolume 0.93 
+            m_fVolumeMultiplier 0.000363636 
+            m_fMinPitch 0.2 
+            m_fMaxPitch 2 
+            m_fPitchMultiplier 0.00025974 
+            m_iSoundIndex 2 
+        }
+}

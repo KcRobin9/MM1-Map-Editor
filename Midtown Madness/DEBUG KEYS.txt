@@ -1,0 +1,106 @@
+This debug EXE can be found in "Midtown Madness Sneak Preview\debug" on the disk. Basically it's same thing as the normal midtown.exe file, but without any dev/debug stuff stripped out. It has a ton of features waiting to be uncovered.
+
+Problem is that it doesn't seem to want to run, at least on modern operating systems. This EXE has been patched to correct the flaw that causes this. It has also been modified to allow for hardware rendering in the main menu, which fixes an additional crash after returning to the menu from a race.
+
+Finally, it has also been modified to unlock further debug options than what is available by default.
+
+Known functions:
+SHIFT+Q : Toggles between car masses
+SHIFT+W : Draw AI IDs
+SHIFT+E : Replay function (unfinished)
+SHIFT+R : Teleports to random places in the city
+SHIFT+T : Draws AI path progress
+SHIFT+I : Draw Intersection IDs
+SHIFT+U : Returns camera to player car
+SHIFT+O : Camera follows an opponent, press more to cycle
+SHIFT+P : Saves a position
+SHIFT+A : Turns on/off audio system
+SHIFT+S : Toggles Sky
+SHIFT+F : Toggles Force feedback
+SHIFT+G : Draws Bridge IDs
+SHIFT+L : Draws Path IDs
+SHIFT+V : Draws Version number
+SHIFT+B : Draws AI paths
+SHIFT+M : Same as SHIFT+B
+SHIFT+1-4 : Toggle specific force feedback effects
+SHIFT+7 : Next race
+SHIFT+8 : Reload race
+SHIFT+9 : Explode car
+SHIFT+F2 : Toggles some render debug mode
+SHIFT+F3 : Toggle render mode (solid, wire, textured)
+SHIFT+F4 : Toggle physics debug mode
+SHIFT+F5 : Make BMP screenshot
+SHIFT+F7 : Toggle mipmaps 
+SHIFT+F12 : Advance frame by frame
+
+SHIFT+F1 : Toggle cullmgr pages (performance debug modes)
+CTRL+SHIFT+F2 : Decrease height of graph
+CTRL+SHIFT+F3 : Increase height of graph
+CTRL+SHIFT+F4 : Changes render order of graph
+
+CTRL+M : Midgets menu. Allows you control over many aspects of the game.
+NUMPAD 8 : Move up
+NUMPAD 2 : Move down
+NUMPAD 6 : Increase value
+NUMPAD 4 : Decrease value
+NUMPAD 7 : Top of page
+NUMPAD 1 : Bottom of page
+NUMPAD 9 : Page up
+NUMPAD 3 : Page down
+Enter : Select
+P : Return to parent menu
+1-9 : Go to child menu
+
+Menu Only:
+F12 : Cycle Menus
+D : Show Damage Textures (Vehicle Selection Menu)
+R : Reset Damage Textures (Vehicle Selection Menu)
+Z : Zoom In (Vehicle Selection Menu)
+X : Zoom Out(Vehicle Selection Menu)
+
+Command line arguments (SEE: "commandline.txt"):
+-nomovie : No intros
+-noaudio : No audio
+-test <single digit number> : Loads the AR located at c:\mm\shop\build\test<number>.ar
+-noui : Puts you right into the city, can be combined with the following 3 arguments
+-blitz <num> : Enters the <num>th blitz race
+-race <num> : Enters the <num>th checkpoint race
+-circuit <num> : Enters the <num>th circuit race
+-keyboard : Sets controller to keyboard
+-joystick : Sets controller to joystick
+-wheel : Sets controller to wheel
+-allrace : Unlocks all races
+-allcars : Unlocks all cars
+-stoabs : Sets blitz times to 800  seconds, unlocks all cars & races,  turns on nodamage
+-supercops : You never escape cops with this on
+-ambient <num> : Sets the amount of traffic cars (not traffic density)
+-noai : Turns off ai (opponents, cops, etc)
+-nocops : Turns off cops
+-noopponents : Turns off opponents
+-blitztime <num> : Sets the blitz time to <num> (a time in whole seconds)
+-sample : Creates a gstat_*_*_**** file, telling you how long the game took to do certain tasks each frame
+-archivecycle : Loads a bunch of different races, and times how long it took in the log (if enabled)
+-dragtimer : Times your 0-60mph times (shows on the hud once you hit 60mph)
+-prio <num> : Sets task priority 
+-damagescale <num> : Sets the global damage scale
+-crash : No idea yet
+-console : Shows a console (use with agiVerbose)
+-agiVerbose : Show more logging (shows debug logs)
+-simdbg : Some memory debugging stuff
+-leakdbg : Same as above
+-heapdbg : Same as above
+-updatedbg : Same as above
+-updatememdbg : Same as above
+-mono : Logs to a connected monochrome monitor (yeah this probably doesn't work on any modern system)
+-com <num1> <num2> : Log to com port
+-quiet : Less logs
+-logopen : Log when the game opens files
+-annotate : Show texture names on top of textures
+-window : Set windowed mode
+-width <num> : Set renderer width
+-height <num> : Set renderer height
+-config : Redetect gfx
+-nomip : No mipmaps
+-nfog : Use "normalized fog"
+-notexcomp : No texture compression
+-sw : Software rendering mode

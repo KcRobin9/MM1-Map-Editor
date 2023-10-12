@@ -1,0 +1,13 @@
+mmOpponentCarAudio :01f72a48 {
+    m_bFlags 1 
+    m_EngineAudio EngineAudioOpponent :01f72a94 {
+            m_pcEngineWave "BUSDRIVE"
+            m_fMinVolume 0.89 
+            m_fMaxVolume 0.89 
+            m_fVolumeMultiplier 0.00051282 
+            m_fMinPitch 0.38 
+            m_fMaxPitch 2 
+            m_fPitchMultiplier 0.000188679 
+            m_iSoundIndex 4 
+        }
+}

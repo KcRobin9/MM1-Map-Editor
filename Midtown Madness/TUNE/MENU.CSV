@@ -1,0 +1,13 @@
+MENU NAME,BACKGROUND,ID,X,Y,W,H
+Main Menu,driv_back,1,0,0,640,480
+Host Race Menu,host_back,11,0,0,640,480
+Enter an Address,tcp_dlg,14,170,127,300,225
+Setup Serial Communications,serial_dlg,16,120,75,400,330
+Create a New Driver,serial_dlg,17,120,75,400,330
+Retrieving Game Settings...,serial_dlg,18,120,202,400,76
+Driver Record,drec_dlg,19,50,37,540,405
+Race Statistics,hoff_dlg,20,50,37,540,405
+Control Warning,join_dlg,21,120,202,400,76
+Race Environment,renv_dlg,22,120,52,400,375
+MessageBox,message_box,23,120,202,400,76
+Enter a valid password,serial_dlg,24,120,202,400,76

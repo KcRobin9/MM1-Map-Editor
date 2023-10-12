@@ -1,0 +1,14 @@
+mmNetworkCarAudio :01f72a48 {
+    m_bFlags 0
+    m_fHornVolume .95
+    m_EngineAudio EngineAudioOpponent :01f72a94 {
+            m_pcEngineWave "Pneusdrive"
+            m_fMinVolume 0.92 
+            m_fMaxVolume 0.92 
+            m_fVolumeMultiplier 0.000540541 
+            m_fMinPitch 0.24 
+            m_fMaxPitch 2 
+            m_fPitchMultiplier 0.000333333 
+            m_iSoundIndex 6 
+        }
+}

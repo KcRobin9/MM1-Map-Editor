@@ -1,0 +1,35 @@
+# Ambient Traffic Density
+[Density]
+0.13
+
+# Default Road Speed Limit
+[Speed Limit]
+45
+
+# Ambient Traffic Exceptions
+# Rd Id, Density, Speed Limit
+[Exceptions]
+0
+
+# Police Init
+# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route
+[Police]
+5
+vpcop -462.0 3.0 -771.0 -140 0 2
+vpcop -638.0 2.0 -87.0 -179 0 2
+vpcop -61.0 6.0 -1048.0 -178 0 2
+vpcop -420.0 1.0 -449.0 -88 0 3
+vpcop -574.0 1.0 -18.0 -90 0 0
+
+# Opponent Init
+# Geo File, WavePoint File
+# vpfer vpbug vpcaddie vpmtruck
+[Opponent]
+6
+vppanozgt	opp1r66.c25
+vppanoz	opp2r66.c29
+vpbug		opp3r66.c29
+vppanozgt	opp5r66.c29
+vppanoz	opp6r66.c25
+vpmustang99	opp7r66.c25
+

@@ -1,0 +1,23 @@
+mmPlayerCarAudio :070f4140 {
+    m_pcHornWaveName "BULLETHORN"
+    m_bFlags 0 
+    m_fHornVolume 0.95 
+    m_EngineAudio EngineAudio :070f4168 {
+            m_pcHighRpmWave "BULLETDRIVE"
+            m_pcLowRpmWave "BULLETIDLE"
+            m_pcClutchWave "REVERSE"
+            m_fMinVolume[kHiRpmIndex] 0.1 
+            m_fMaxVolume[kHiRpmIndex] 0.95 
+            m_fVolumeMultiplier[kHiRpmIndex] 0.000416666 
+            m_fMinVolume[kLowRpmIndex] 0.1 
+            m_fMaxVolume[kLowRpmIndex] 0.89 
+            m_fVolumeMultiplier[kLowRpmIndex] 0.00025 
+            m_fMinPitch[kHiRpmIndex] 0.3 
+            m_fMaxPitch[kHiRpmIndex] 2 
+            m_fPitchMultiplier[kHiRpmIndex] 0.000244557 
+            m_fMinPitch[kLowRpmIndex] 0.95 
+            m_fMaxPitch[kLowRpmIndex] 1.4 
+            m_fPitchMultiplier[kLowRpmIndex] 0.000833333 
+            m_fClutchVolume 0.93 
+        }
+}

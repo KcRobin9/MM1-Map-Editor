@@ -1,0 +1,35 @@
+mmBangerData :01066bcc {
+    NodeName "tpgate_BREAKPOST"
+    AudioId 0 
+    Size 0.2 3 0.2
+    CG 0 2.215 0
+    Mass 12 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    BirthRule asBirthRule :01066c3c {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+}
