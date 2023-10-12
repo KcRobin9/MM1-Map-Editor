@@ -44,7 +44,7 @@ mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM gam
 
 
 #* SETUP II (Map Creation)      
-play_game = True                # change to "True" to immediately start the game after the Map is created (defaults to False when importing to Blender)
+play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
 delete_shop = True              # change to "True" to delete the raw city files after the .ar file has been created
 
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
@@ -56,7 +56,7 @@ set_facades = True              # change to "True" if you want FACADES
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = True              # change to "True" if you want BRIDGES
 
-set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when importing to Blender) ## w.i.p.
+set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
 
 ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
@@ -72,8 +72,7 @@ randomize_textures = False      # change to "True" if you want to randomize all 
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
 # Blender
-import_to_blender = False
-dds_directory = Path.cwd() / 'DDS' # w.i.p., this folder contains all the DDS textures
+dds_directory = Path.cwd() / 'DDS' 
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
@@ -81,7 +80,7 @@ debug_props = False             # change to "True" if you want a PROPS Debug tex
 debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
-DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in folder "_Debug_BMS")
+DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # HUD
@@ -90,7 +89,8 @@ debug_hud = False               # change to "True" if you want a HUD Debug jpg f
 debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
 # Advanced
-quiet_logs = False              # change to "True" if you want to hide most logs, the game prints a ton of warnings and errors if e.g. an AI car can't find its path, causing FPS drops
+quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
+more_logs = False               # change to "True" if you want to see additional logs and open a logging console
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
 
@@ -219,7 +219,7 @@ ELTRAIN = "r_l_train"
 ELTRAIN_SUPPORT_SLIM = "dp_left"
 ELTRAIN_SUPPORT_WIDE = "dp_left6"
 
-PLANE_LARGE = "vaboeing" # no collision
+PLANE_LARGE = "vaboeing"  # no collision
  
 ################################################################################################################               
 ################################################################################################################
@@ -347,7 +347,7 @@ cnr_waypoints = [                           # set Cops and Robbers Waypoints
 #* SETUP V (optional, Animations)
 anim_data = {
     'plane': [                  # you can only use "plane" and "eltrain", other objects will not work
-        (450, 30.0, -450),      # you can only have one Plane and/or one Eltrain
+        (450, 30.0, -450),      # you can not have multiple Planes or Eltrains
         (450, 30.0, 450),       # you can set any number of coordinates for your path(s)
         (-450, 30.0, -450),     
         (-450, 30.0, 450)], 
@@ -930,7 +930,7 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                                     
-    def write_bms_debug(self, file_name: str, debug_dir = "_Debug_BMS") -> None:
+    def write_bms_debug(self, file_name: str, debug_dir = "Debug BMS") -> None:
         Path(debug_dir).mkdir(parents = True, exist_ok = True)
 
         if DEBUG_BMS:
@@ -1748,8 +1748,18 @@ class AssignCustomProperties(bpy.types.Operator):
         return {"FINISHED"}
 
 
-def create_blender_meshes(import_to_blender: bool = False):
-    if import_to_blender:
+def is_blender_running() -> bool:
+    try:
+        import bpy
+        # Trying to access a bpy.context attribute to see if we get an exception
+        _ = bpy.context.window_manager
+        return True
+    except (AttributeError, ImportError):
+        return False
+
+
+def create_blender_meshes() -> None:
+    if is_blender_running():
         enable_developer_extras()
         adjust_3D_view_settings()
         
@@ -1860,6 +1870,14 @@ save_bms(
     return export_data
 
 
+def get_script_path():
+    try:
+        return Path(__file__).parent
+    except NameError:
+        print("Warning: Unable to return script path.")
+        return None
+
+
 class ExportBlenderPolygons(bpy.types.Operator):
     bl_idname = "script.export_blender_polygons"
     bl_label = "Export Blender Polygons"
@@ -1867,17 +1885,23 @@ class ExportBlenderPolygons(bpy.types.Operator):
     select_all: bpy.props.BoolProperty(default = True)
 
     def execute(self, context):
-        output_folder = "Blender_Export"
+        script_path = get_script_path()
+        if script_path:
+            output_folder = script_path / 'Blender Export'
+        else:
+            print("Warning: Falling back to directory: Desktop / Blender Export")
+            # Path.cwd() "incorrectly" returns the user's desktop directory 
+            output_folder = Path.cwd() / 'Blender Export'
         
-        if not os.path.exists(output_folder):
+        if not output_folder.exists():
             os.mkdir(output_folder)
         
         base_file_name = "Map_Editor_Blender_Export.txt"
-        export_file = os.path.join(output_folder, base_file_name)
+        export_file = output_folder / base_file_name
         
         count = 1
         while os.path.exists(export_file):
-            export_file = os.path.join(output_folder, f"{count}_{base_file_name}")
+            export_file = output_folder / f"{count}_{base_file_name}"
             count += 1
         
         # Conditionally select all meshes or use selected ones based on the 'select_all' property
@@ -1908,9 +1932,9 @@ class ExportBlenderPolygons(bpy.types.Operator):
         
         return {'FINISHED'}
     
-                
-def set_blender_keybinding(import_to_blender: bool = False):
-    if import_to_blender:
+    
+def set_blender_keybinding() -> None:
+    if is_blender_running():
         wm = bpy.context.window_manager
         kc = wm.keyconfigs.addon
         if kc:
@@ -1940,7 +1964,7 @@ def user_notes(x):
     If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are accepted)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    For the Material Index (optional variable, defaults to 0), you can use the constants under 'Material types'.    
+    The Material Index (optional variable, defaults to 0). You can use the constants under 'Material types'.    
     Note that you can also set custom Material / Physics  Properties (search for: 'new_physics_properties' in the script)
     
     Texture (UV) mapping examples:
@@ -1987,7 +2011,6 @@ ORANGE = "#ffa500"
 LIGHT_RED = "#ff7f7f"
 LIGHT_YELLOW = '#ffffe0'
 
-
 # Road types
 LANDMARK = 0
 STREET = 201
@@ -2017,8 +2040,7 @@ HUD_MAP = {
     LIGHT_YELLOW: "LIGHT_YELLOW"}
     
     
-#! N.B.:
-#! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
+#! N.B.: The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
 
 #! ======================== MAIN AREA ======================== #*
 
@@ -3374,10 +3396,10 @@ def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> No
             print(f"Failed to delete the SHOP directory. Reason: {e}")
 
 
-def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender,
+def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
                         x_offset = 0, y_offset = 0, line_width = 1, background_color = 'black') -> None:
 
-    if set_minimap and not import_to_blender:
+    if set_minimap and not is_blender_running():
         global hudmap_vertices
         global hudmap_properties
         bmp_folder = SHOP / 'BMP16'
@@ -4542,14 +4564,21 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facades = False,
 ###################################################################################################################
 ###################################################################################################################  
 
-def create_commandline(city_name: str, dest_folder: Path, no_ui: bool = False, no_ui_type: str = "", quiet_logs: bool = False):
+def create_commandline(city_name: str, mm1_folder: Path, no_ui: bool = False, no_ui_type: str = "", 
+                       quiet_logs: bool = False, more_logs: bool = False):
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
     
     base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {city_name}"
     
-    if quiet_logs:
+    if quiet_logs and not more_logs:
         base_cmd += " -quiet"
+        
+    if more_logs and not quiet_logs:
+        base_cmd += " -logopen -agiVerbose -console"
+        
+    if more_logs and quiet_logs:
+        print("\nWARNING: You can't have both 'quiet' and 'more logs' enabled. Please choose one.")
     
     if no_ui:
         if not no_ui_type or no_ui_type.lower() == "cruise":
@@ -4564,16 +4593,16 @@ def create_commandline(city_name: str, dest_folder: Path, no_ui: bool = False, n
     
     processed_cmd = base_cmd
         
-    cmd_file_path = dest_folder / cmd_file
+    cmd_file_path = mm1_folder / cmd_file
     
     with cmd_file_path.open("w") as file:
         file.write(processed_cmd)
 
         
 # Start game
-def start_game(dest_folder: str, play_game: bool = False, import_to_blender: bool = False) -> None:
-    if play_game and not import_to_blender:
-        subprocess.run(str(Path(dest_folder) / "Open1560.exe"), cwd = str(dest_folder), shell = True)
+def start_game(mm1_folder: str, play_game: bool = False) -> None:
+    if play_game and not is_blender_running():
+        subprocess.run(str(Path(mm1_folder) / "Open1560.exe"), cwd = str(mm1_folder), shell = True)
         
 ################################################################################################################### 
 
@@ -4904,26 +4933,26 @@ custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 
-create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, import_to_blender,
+create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
 create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices = True)
 
 create_ar(city_name, mm1_folder, delete_shop)
-create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs)
+create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs, more_logs)
+
+# Blender (w.i.p.)
+create_blender_meshes()
+bpy.utils.register_class(UpdateUVMapping)
+bpy.utils.register_class(ExportBlenderPolygons)
+bpy.utils.register_class(AssignCustomProperties)
+set_blender_keybinding()
 
 print("\n===============================================\n")
 print("Succesfully created " + f"{race_locale_name}!")
 print("\n===============================================\n")
 
-start_game(mm1_folder, play_game, import_to_blender)
-
-# Blender (w.i.p.)
-create_blender_meshes(import_to_blender)
-bpy.utils.register_class(UpdateUVMapping)
-bpy.utils.register_class(ExportBlenderPolygons)
-bpy.utils.register_class(AssignCustomProperties)
-set_blender_keybinding(import_to_blender)
+start_game(mm1_folder, play_game)
 
 #? ============ For Reference ============
 
