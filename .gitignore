@@ -1,8 +1,8 @@
 /crashes/
+/Blender Export/
 
-Midtown Madness/Open1560.log
 Midtown Madness/commandline.txt
+Midtown Madness/*.log
 Midtown Madness/!*.ar
-
 Midtown Madness/dev/
 

@@ -93,6 +93,7 @@ quiet_logs = False              # change to "True" if you want to hide most logs
 more_logs = False               # change to "True" if you want to see additional logs and open a logging console
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
+fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 ################################################################################################################               
 ################################################################################################################
@@ -398,16 +399,14 @@ bridge_race_0 = {
     "GateOffDelay": 5.26 ,
     "BridgeOffDelay": 0.0,
     "GateOnDelay": 5.0,
-    "Mode": SINGLE
-}
+    "Mode": SINGLE}
 
 bridge_cnr = {
     "RaceType": COPS_N_ROBBERS,
     "BridgeDelta": 0.20,
     "BridgeOffGoal": 0.33,
     "BridgeOnGoal": 0.33,
-    "Mode": MULTI
-}
+    "Mode": MULTI}
 
 # Pack all Custom Bridge Configs. for processing
 bridge_configs = [bridge_race_0, bridge_cnr]
@@ -415,21 +414,14 @@ bridge_configs = [bridge_race_0, bridge_cnr]
 ################################################################################################################               
 ################################################################################################################     
  
-def to_do_list(x):
+def to_do_list(x): # this list only contains a small number of main topics, many smaller tasks are excluded
             """            
-            SHORT-TERM:                                            
-            SHAPES --> wall setting
-            
-            FCD --> implement diagonal facades
-            
-            BLENDER --> implement custom UI
-            
-            BAI --> improve AI paths setting
-                  
-            LONG-TERM:      
-            TEXTURES --> UV mapping  
-            
-            PROPS --> investigate breakable parts in (see {}.MMBANGERDATA)
+            Correctly set walls (currently they are infinite in height collision-wise)
+            Improve Facades setting (e.g. diagonal facades)
+            Improve setting of AI paths
+            Improve UV mapping (script and Blender-wise)
+            Implement / Improve Custom Blender UI
+            Investigate Breakable Parts (see {}.MMBANGERDATA)
             """               
                         
 ################################################################################################################               
@@ -647,7 +639,9 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
 # POLYGON CLASS
 class Polygon:
     def __init__(self, cell_id: int, mtl_index: int, flags: int, vert_indices: List[int],
-                 plane_edges: List[Vector3], plane_n: Vector3, plane_d: float, cell_type: int = 0, always_visible: bool = False) -> None:
+                 plane_edges: List[Vector3], plane_n: Vector3, plane_d: float, 
+                 cell_type: int = 0, always_visible: bool = False) -> None:
+        
         self.cell_id = cell_id
         self.mtl_index = mtl_index
         self.flags = flags
@@ -719,6 +713,7 @@ class BND:
                  edge_normals: List[Vector3], edge_floats: List[float],
                  row_offsets: Optional[List[int]], row_shorts: Optional[List[int]], 
                  row_indices: Optional[List[int]], row_heights: Optional[List[int]]) -> None:
+        
         self.magic = magic
         self.offset = offset    
         self.x_dim = x_dim
@@ -916,7 +911,7 @@ class BMS:
 
             write_pack(f, str(self.adjunct_count) + 'b', *self.texture_darkness)
                         
-            # Temporary hack, ensuring tex_coords is not longer than adjunct_count * 2
+            # Temporary solution, ensuring tex_coords is not longer than adjunct_count * 2
             if len(self.tex_coords) > self.adjunct_count * 2:
                 self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
                 
@@ -924,7 +919,7 @@ class BMS:
             write_pack(f, str(self.adjunct_count) + 'H', *self.enclosed_shape)
             write_pack(f, str(self.surface_count) + 'b', *self.surface_sides)
 
-            # Even with three vertices, we still require four indices (indices_sides: [[0, 1, 2, 0]])
+            # Even with three vertices, four indices are still required // (indices_sides: [[0, 1, 2, 0]])
             for indices_side in self.indices_sides:
                 while len(indices_side) < 4:
                     indices_side.append(0)
@@ -982,14 +977,14 @@ polys = [poly_filler]
 ################################################################################################################               
 
 # Texture Mapping for BMS files
-def compute_uv(bound_number: int, mode: str = "H", tile_x: int = 1, tile_y: int = 1, tilt: float = 0,
-                       angle_degrees: Union[float, Tuple[float, float]] = (45, 45),
-                       custom: Optional[List[float]] = None) -> List[float]:
+def compute_uv(
+    bound_number: int, mode: str = "H", tile_x: int = 1, tile_y: int = 1, tilt: float = 0,
+    angle_degrees: Union[float, Tuple[float, float]] = (45, 45),
+    custom: Optional[List[float]] = None) -> List[float]:
     
     global texcoords_data
     
-    def tex_coords_rotating_repeating(tile_x: int, tile_y: int, 
-                                      angle_degrees: Tuple[float, float]) -> List[float]:
+    def tex_coords_rotating_repeating(tile_x: int, tile_y: int, angle_degrees: Tuple[float, float]) -> List[float]:
         
         angle_radians = [math.radians(angle) for angle in angle_degrees]
 
@@ -1099,8 +1094,10 @@ def save_bms(
             
              
 # Create BMS      
-def create_bms(vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
-               texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None):
+def create_bms(
+    vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
+    texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None):
+    
     shapes = []
     
     for poly in polys[1:]:  # Skip the first filler polygon
@@ -1315,7 +1312,7 @@ def create_polygon(
     material_index = 0, cell_type = 0, 
     flags = None, plane_edges = None, wall_side = None, sort_vertices = False,
     hud_color = None, shape_outline_color = shape_outline_color,
-    rotate = 0, always_visible = True, fix_faulty_quad = False):
+    rotate = 0, always_visible = True, fix_faulty_quads = fix_faulty_quads):
 
     # Vertex indices
     base_vertex_index = len(vertices)
@@ -1353,7 +1350,7 @@ def create_polygon(
     if len(vertex_coordinates) == 3:
         vertex_coordinates = ensure_ccw_order(vertex_coordinates)
         
-    elif len(vertex_coordinates) == 4 and fix_faulty_quad:
+    elif len(vertex_coordinates) == 4 and fix_faulty_quads:
         vertex_coordinates = ensure_quad_ccw_order(vertex_coordinates)
            
     # Flags
@@ -1420,540 +1417,6 @@ def create_polygon(
 ################################################################################################################               
 ################################################################################################################  
 
-# Blender
-def enable_developer_extras() -> None:
-    prefs = bpy.context.preferences
-    view = prefs.view
-    
-    # Set "Developer Extra's" if not already enabled
-    if not view.show_developer_ui:
-        view.show_developer_ui = True
-        bpy.ops.wm.save_userpref()
-        print("Developer Extras enabled!")
-    else:
-        print("Developer Extras already enabled!")
-        
-           
-def adjust_3D_view_settings() -> None:
-    for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
-            for space in area.spaces:
-                if space.type == 'VIEW_3D':
-                    
-                    # Clip distance
-                    space.clip_end = 5000.0
-                    
-                    # Set the shading mode to Solid
-                    shading = space.shading
-                    shading.type = 'SOLID'
-                    
-                    # Uniform Lighting
-                    shading.light = 'FLAT'
-                    shading.color_type = 'TEXTURE'
-
-              
-def load_all_dds_to_blender(dds_directory: Path) -> None:
-    for file_name in os.listdir(dds_directory):
-        if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(dds_directory, file_name)
-            if texture_path not in bpy.data.images:
-                bpy.data.images.load(texture_path)
-
-
-def preload_all_dds_materials(dds_directory: Path) -> None:
-    for file_name in os.listdir(dds_directory):
-        if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(dds_directory, file_name)
-
-            # Load the DDS texture into Blender
-            if texture_path not in bpy.data.images:
-                texture_image = bpy.data.images.load(texture_path)
-            else:
-                texture_image = bpy.data.images[texture_path]
-
-            # Create a material using the DDS texture
-            material_name = os.path.splitext(os.path.basename(texture_path))[0]
-            if material_name not in bpy.data.materials:
-                create_material_from_texture(material_name, texture_image)
-
-
-def create_material_from_texture(material_name, texture_image):
-    mat = bpy.data.materials.new(name = material_name)
-    mat.use_nodes = True
-
-    nodes = mat.node_tree.nodes
-    for node in nodes:
-        nodes.remove(node)
-
-    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
-    texture_node = nodes.new(type = 'ShaderNodeTexImage')
-    texture_node.image = texture_image
-
-    links = mat.node_tree.links
-    link = links.new
-    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
-
-    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
-    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])      
-
-      
-def update_uv_tiling(self, context):
-    tile_x = self.tile_x
-    tile_y = self.tile_y
-    rotate_angle = self.rotate 
-
-    bpy.ops.object.select_all(action = 'DESELECT')
-    self.select_set(True)
-    bpy.context.view_layer.objects.active = self
-
-    # Update the UV mapping of the object based on its custom properties
-    tile_uvs(self, tile_x, tile_y)
-    rotate_uvs(self, rotate_angle)
-    
-    
-def apply_dds_to_object(obj, texture_path):
-    # Extract the filename (without extension) from the texture_path
-    material_name = os.path.splitext(os.path.basename(texture_path))[0]
-    
-    # Check if the material with this name already exists
-    if material_name in bpy.data.materials:
-        mat = bpy.data.materials[material_name]
-    else:
-        mat = bpy.data.materials.new(name = material_name)
-
-    obj.data.materials.append(mat)
-    obj.active_material = mat
-
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-
-    for node in nodes:
-        nodes.remove(node)
-
-    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
-    texture_node = nodes.new(type = 'ShaderNodeTexImage')
-
-    texture_image = bpy.data.images.load(texture_path)
-    texture_node.image = texture_image
-
-    links = mat.node_tree.links
-    link = links.new
-    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
-
-    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
-    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
-
-    # UV unwrap the object to fit the texture's aspect ratio
-    unwrap_to_aspect_ratio(obj, texture_image)
-
-        
-def rotate_uvs(obj, angle_degrees):    
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-
-    # Get the active UV layer of the object
-    uv_layer = obj.data.uv_layers.active.data
-    
-    angle_rad = math.radians(angle_degrees)
-
-    cos_angle = math.cos(angle_rad)
-    sin_angle = math.sin(angle_rad)
-
-    # Rotate each UV coordinate around the UV center (0.5, 0.5)
-    for uv_data in uv_layer:
-        u, v = uv_data.uv
-        u -= 0.5
-        v -= 0.5
-        rotated_u = u * cos_angle - v * sin_angle
-        rotated_v = u * sin_angle + v * cos_angle
-        uv_data.uv = (rotated_u + 0.5, rotated_v + 0.5)
-
-
-def unwrap_to_aspect_ratio(obj, image):
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    
-    # Enter edit mode and select all
-    bpy.ops.object.mode_set(mode = 'EDIT')
-    bpy.ops.mesh.select_all(action = 'SELECT')
-    
-    # Perform UV unwrap
-    bpy.ops.uv.unwrap(method = 'ANGLE_BASED', margin = 0.001)
-    
-    # Enter UV edit mode
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-    obj.data.uv_layers.active.active = True
-
-    # Normalize the UVs to ensure they use the entire texture
-    bbox = [obj.data.uv_layers.active.data[i].uv for i in range(len(obj.data.uv_layers.active.data))]
-    uvs_min = [min(co[0] for co in bbox), min(co[1] for co in bbox)]
-    uvs_max = [max(co[0] for co in bbox), max(co[1] for co in bbox)]
-    
-    for uv_loop in obj.data.uv_layers.active.data:
-        uv_loop.uv[0] = (uv_loop.uv[0] - uvs_min[0]) / (uvs_max[0] - uvs_min[0])
-        uv_loop.uv[1] = (uv_loop.uv[1] - uvs_min[1]) / (uvs_max[1] - uvs_min[1])
-    
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-
-
-def tile_uvs(obj, tile_x = 1, tile_y = 1):
-    bpy.ops.object.mode_set(mode = 'OBJECT')
-
-    # Get the active UV layer of the object
-    uv_layer = obj.data.uv_layers.active.data
-
-    # Restore original UVs
-    original_uvs = obj["original_uvs"]
-    for i, uv_data in enumerate(uv_layer):
-        uv_data.uv[0] = original_uvs[i][0]
-        uv_data.uv[1] = original_uvs[i][1]
-
-    # Loop over each UV coordinate and scale it
-    for uv_data in uv_layer:
-        uv_data.uv[0] *= tile_x
-        uv_data.uv[1] *= tile_y
-
-
-def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
-    name = f"P{polygon_data['bound_number']}"
-    coords = polygon_data["vertex_coordinates"]
-
-    edges = []
-    faces = [range(len(coords))]
-
-    mesh = bpy.data.meshes.new(name)
-    obj = bpy.data.objects.new(name, mesh)
-
-    bpy.context.collection.objects.link(obj)
-    mesh.from_pydata(coords, edges, faces)
-    mesh.update()
-    
-    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
-    for prop in custom_properties:
-        if prop in polygon_data:
-            obj[prop] = polygon_data[prop]
-    
-    if not obj.data.uv_layers:
-        obj.data.uv_layers.new()
-
-    # Retrieve the original UVs after creating the object and before tiling
-    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
-    obj["original_uvs"] = original_uvs
-    
-    bpy.types.Object.tile_x = bpy.props.FloatProperty(name = "Tile X", default = 2.0, update = update_uv_tiling)
-    bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
-    bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
-    
-    bound_number = polygon_data['bound_number']
-    tile_x, tile_y = 1, 1  
-
-    if bound_number in texcoords_data.get('entries', {}):
-        
-        tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
-        tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
-        
-    obj.tile_x = tile_x
-    obj.tile_y = tile_y
-    
-    obj.rotate = polygon_data.get('rotate', 0)
-
-    if dds_directory:
-        apply_dds_to_object(obj, dds_directory)    
-        rotate_angle = polygon_data.get('rotate', 0) 
-
-        tile_uvs(obj, tile_x, tile_y)
-        rotate_uvs(obj, rotate_angle)  
-
-        obj.data.update()
-        
-    # Rotate the created Blender model to match the game's coordinate system
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis = 'X')
-    
-    return obj
-
-
-class UpdateUVMapping(bpy.types.Operator):
-    bl_idname = "object.update_uv_mapping"
-    bl_label = "Update UV Mapping"
-    bl_description = "Updates UV mapping based on object's custom properties"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):
-        for obj in bpy.context.selected_objects:
-            
-            # Check if the object has the necessary custom properties
-            if all(prop in obj.keys() for prop in ["tile_x", "tile_y", "rotate"]):
-                tile_x = obj["tile_x"]
-                tile_y = obj["tile_y"]
-                rotate_angle = obj["rotate"]
-
-                # Update the UV mapping of the object based on its custom properties
-                tile_uvs(obj, tile_x, tile_y)
-                rotate_uvs(obj, rotate_angle)
-
-        return {"FINISHED"}
-    
-    
-class AssignCustomProperties(bpy.types.Operator):
-    bl_idname = "object.assign_custom_properties"
-    bl_label = "Assign Custom Properties to Polygons"
-    bl_description = "Assign Custom Properties to polygons that do not have them yet"
-    bl_options = {"REGISTER", "UNDO"}
-
-    def execute(self, context):
-        for obj in bpy.context.scene.objects:
-            if obj.type == 'MESH':
-                
-                if "cell_type" not in obj:
-                    obj["cell_type"] = 0
-                    
-                if "hud_color" not in obj:
-                    obj["hud_color"] = 0
-                    
-                if "material_index" not in obj:
-                    obj["material_index"] = 0
-                
-                if "sort_vertices" not in obj:
-                    obj["sort_vertices"] = 0
-
-                if "always_visible" not in obj:
-                    obj["always_visible"] = 0
-
-                if "rotate" not in obj:
-                    obj["rotate"] = 0.0
-                
-                if "tile_x" not in obj:
-                    obj["tile_x"] = 2.0
-                if "tile_y" not in obj:
-                    obj["tile_y"] = 2.0
-                
-                if "original_uvs" not in obj:
-                    # Check if the object has an active UV layer, and if not, create one
-                    uv_layer = obj.data.uv_layers.active
-                    if uv_layer is None:
-                        uv_layer = obj.data.uv_layers.new(name = "UVMap")
-
-                    # Now save the original UVs
-                    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in uv_layer.data]
-                    obj["original_uvs"] = original_uvs
-                    
-        self.report({'INFO'}, "Assigned Custom Properties")
-        return {"FINISHED"}
-
-
-def is_blender_running() -> bool:
-    try:
-        import bpy
-        # Trying to access a bpy.context attribute to see if we get an exception
-        _ = bpy.context.window_manager
-        return True
-    except (AttributeError, ImportError):
-        return False
-
-
-def create_blender_meshes() -> None:
-    if is_blender_running():
-        enable_developer_extras()
-        adjust_3D_view_settings()
-        
-        load_all_dds_to_blender(dds_directory)
-        preload_all_dds_materials(dds_directory)
-                    
-        texture_paths = [os.path.join(dds_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
-
-        bpy.ops.object.select_all(action = 'SELECT')
-        bpy.ops.object.delete()
-
-        for polygon, texture_path in zip(polygons_data, texture_paths):
-            create_mesh_from_polygon_data(polygon, texture_path)
-            
-            
-def extract_polygon_data(obj):
-    if obj.name.startswith("P"):
-        bound_number = int(obj.name[1:])
-    elif obj.name.startswith("Shape_"):
-        bound_number = int(obj.name.split("_")[1])
-    else:
-        raise ValueError(f"Unrecognized object name format: {obj.name}")
-    
-    data = {
-        "bound_number": bound_number,
-        "material_index": obj["material_index"],
-        "cell_type": obj["cell_type"],
-        "always_visible": obj["always_visible"], 
-        "sort_vertices": obj["sort_vertices"],
-        "vertex_coordinates": obj.data.vertices,
-        "hud_color": obj["hud_color"],
-        "rotate": obj["rotate"]
-        }
-    
-    return data
-
-
-def get_dds_from_polygon(obj):
-    if obj.material_slots:
-        mat = obj.material_slots[0].material
-        if mat and mat.use_nodes:
-            for node in mat.node_tree.nodes:
-                if isinstance(node, bpy.types.ShaderNodeTexImage):
-                    return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
-    return "CHECK04"  # if no texture is applied to the polygon, use CHECK04 as a placeholder
-
-
-def format_decimal(val):
-    if val == int(val): 
-        return f"{val:.1f}"
-    else: 
-        return f"{val:.2f}"
-
-
-def generate_export_script(obj):
-    data = extract_polygon_data(obj)
-    texture_name = get_dds_from_polygon(obj)
-
-    vertex_str = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
-        
-    tile_x = obj.get("tile_x", 1)
-    tile_y = obj.get("tile_y", 1)
-    
-    optional_attrs = []
-    
-    material_index = data['material_index']
-    if material_index not in [0, '0']:
-        material_str = f"material_index = {MATERIAL_MAP.get(material_index, material_index)}"
-        optional_attrs.append(material_str) 
-
-    if data['sort_vertices'] == 1:
-        optional_attrs.append("sort_vertices = True")
-        
-    cell_type = data['cell_type']
-    if cell_type in CELL_MAP:
-        optional_attrs.append(f"cell_type = {CELL_MAP[cell_type]}")
-    elif cell_type != 0:
-        optional_attrs.append(f"cell_type = {cell_type}")
-        
-    if data['always_visible'] == 1:
-        optional_attrs.append(f"always_visible = True")
-    if data['rotate'] != 0.0:
-        optional_attrs.append(f"rotate = {data['rotate']}")
-
-    hud_color = data['hud_color']
-    if hud_color not in [0, '0']:
-        if hud_color in HUD_MAP:
-            hud_color_str = f"hud_color = {HUD_MAP[hud_color]}"
-        else:
-            hud_color_str = f"hud_color = '{hud_color}'"
-        optional_attrs.append(hud_color_str)
-    
-    optional_strs = ",\n\t".join(optional_attrs)
-
-    # Construct export string
-    export_data = f"""
-create_polygon(
-    bound_number = {data['bound_number']},
-    {optional_strs},
-    vertex_coordinates = [
-        {vertex_str}])
-
-save_bms(
-    texture_name = ["{texture_name}"],
-    tex_coords = compute_uv(bound_number = {data['bound_number']}, mode = "r.H", tile_x = {tile_x}, tile_y = {tile_y}))
-"""
-
-    return export_data
-
-
-def get_script_path():
-    try:
-        return Path(__file__).parent
-    except NameError:
-        print("Warning: Unable to return script path.")
-        return None
-
-
-class ExportBlenderPolygons(bpy.types.Operator):
-    bl_idname = "script.export_blender_polygons"
-    bl_label = "Export Blender Polygons"
-    
-    select_all: bpy.props.BoolProperty(default = True)
-
-    def execute(self, context):
-        script_path = get_script_path()
-        if script_path:
-            output_folder = script_path / 'Blender Export'
-        else:
-            print("Warning: Falling back to directory: Desktop / Blender Export")
-            # Path.cwd() "incorrectly" returns the user's desktop directory 
-            output_folder = Path.cwd() / 'Blender Export'
-        
-        if not output_folder.exists():
-            os.mkdir(output_folder)
-        
-        base_file_name = "Map_Editor_Blender_Export.txt"
-        export_file = output_folder / base_file_name
-        
-        count = 1
-        while os.path.exists(export_file):
-            export_file = output_folder / f"{count}_{base_file_name}"
-            count += 1
-        
-        # Conditionally select all meshes or use selected ones based on the 'select_all' property
-        if self.select_all:
-            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
-        else:
-            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
-        
-        if mesh_objects:
-            context.view_layer.objects.active = mesh_objects[0]
-
-            # Apply location transformation (to get Global coordinates)
-            bpy.ops.object.transform_apply(location = True, rotation = False, scale = True)
-    
-        try:
-            with open(export_file, 'w') as file:
-                for obj in mesh_objects:
-                    export_script = generate_export_script(obj) 
-                    file.write(export_script + '\n\n')
-                    
-            subprocess.Popen(["notepad.exe", export_file])
-            self.report({'INFO'}, f"Saved data to {export_file}")
-            bpy.ops.object.select_all(action = 'DESELECT')
-            
-        except Exception as e:
-            self.report({'ERROR'}, str(e))
-            return {'CANCELLED'}
-        
-        return {'FINISHED'}
-    
-    
-def set_blender_keybinding() -> None:
-    if is_blender_running():
-        wm = bpy.context.window_manager
-        kc = wm.keyconfigs.addon
-        if kc:
-            km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
-            
-            # Shift + E to export all polygons
-            kmi_export_all = km.keymap_items.new("script.export_blender_polygons", 'E', 'PRESS', shift = True)
-            kmi_export_all.properties.select_all = True
-            
-            # Ctrl + E to export selected polygons
-            kmi_export_selected = km.keymap_items.new("script.export_blender_polygons", 'E', 'PRESS', ctrl = True)
-            kmi_export_selected.properties.select_all = False
-            
-            # Shift + P to assign custom properties
-            kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
-
-################################################################################################################               
-################################################################################################################ 
-
 #? ==================CREATING YOUR CITY================== #?
 
 def user_notes(x):
@@ -1988,58 +1451,41 @@ def user_notes(x):
     Intersections: 860+
     """
     
+#! N.B.: If you wish to change or add Cell and/or Material constants and are working with Blender,
+#! then you must also modify the respective Blender IMPORTS and EXPORTS
+#! (For Cells) -> Control + F and search for: "CELL_IMPORT" and "CELL_EXPORT"
+
+# Cell / Room types 
+DEFAULT = 0
+TUNNEL = 1
+INDOORS = 2
+WATER_DRIFT = 4         
+NO_SKIDS = 200 
+                  
 # Material types
+DEFAULT_MTL = 0 
 GRASS_MTL = 87
 WATER_MTL = 91
 STICKY_MTL = 97
 NO_FRICTION_MTL = 98 
 
-# Cell / Room types
-TUNNEL = 1
-INDOORS = 2
-WATER_DRIFT = 4         # only works with 'T_WATER{}' textures
-NO_SKIDS = 200 
-
-# HUD map colors (feel free to add more)
+# Road types
+LANDMARK = 0
+STREET = 201
+INTERSECTION = 860
+                      
+# HUD map colors
 WOOD_HUD = '#7b5931'
 SNOW_HUD = '#cdcecd'
-WATER_HUD = '#5d8096' 
-ROAD_HUD = '#414441'  
+WATER_HUD = '#5d8096'
+ROAD_HUD = '#414441'
 GRASS_HUD = '#396d18'
 DARK_RED = '#af0000'
 ORANGE = "#ffa500"
 LIGHT_RED = "#ff7f7f"
 LIGHT_YELLOW = '#ffffe0'
 
-# Road types
-LANDMARK = 0
-STREET = 201
-INTERSECTION = 860
 
-# Blender Export Mapping
-MATERIAL_MAP = {
-    GRASS_MTL: "GRASS_MTL",
-    WATER_MTL: "WATER_MTL",
-    NO_FRICTION_MTL: "NO_FRICTION_MTL"}
-
-CELL_MAP = {
-    TUNNEL: "TUNNEL",
-    INDOORS: "INDOORS",
-    WATER_DRIFT: "WATER_DRIFT",
-    NO_SKIDS: "NO_SKIDS"}
-
-HUD_MAP = {
-    WOOD_HUD: "WOOD_HUD",
-    SNOW_HUD: "SNOW_HUD",
-    WATER_HUD: "WATER_HUD",
-    ROAD_HUD: "ROAD_HUD",
-    GRASS_HUD: "GRASS_HUD",
-    DARK_RED: "DARK_RED",
-    ORANGE: "ORANGE",
-    LIGHT_RED: "LIGHT_RED",
-    LIGHT_YELLOW: "LIGHT_YELLOW"}
-    
-    
 #! N.B.: The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
 
 #! ======================== MAIN AREA ======================== #*
@@ -2768,7 +2214,7 @@ save_bms(
 create_polygon(
     bound_number = 777,
     material_index = 0,
-    fix_faulty_quad = True,
+    fix_faulty_quads = True,
     vertex_coordinates = [
         (-89.09, 0.41, -43.12),
         (-89.09, 0.41, -55.62),
@@ -2906,7 +2352,7 @@ save_bms(
 
 create_polygon(
 	bound_number = 924,
-    # fix_faulty_quad = True,
+    # fix_faulty_quads = True,
     sort_vertices = True,
 	always_visible = True,
 	vertex_coordinates = [
@@ -2922,12 +2368,12 @@ save_bms(
 
 create_polygon(
 	bound_number = 923,
-    fix_faulty_quad = True,
+    fix_faulty_quads = True,
 	always_visible = True,
 	vertex_coordinates = [
 		(-79.0, -15.00, -254.51),
 		(-90.0, -15.00, -254.51),
-         (-90.0, 14.75, -120.0),
+        (-90.0, 14.75, -120.0),
 		(-79.0, 14.75, -120.0)],
 	hud_color = ROAD_HUD)
 
@@ -2952,7 +2398,7 @@ def create_bounds(vertices: List[Vector3], polys: List[Polygon], city_name: str,
   
   
 # Create SHOP and FOLDER structure   
-def create_folders(city_name: str):
+def create_folders(city_name: str) -> None:
     FOLDER_STRUCTURE = [
         BASE_DIR / "build", 
         SHOP / "BMP16", 
@@ -2970,7 +2416,7 @@ def create_folders(city_name: str):
         os.makedirs(path, exist_ok = True)
         
         
-def create_city_info(): 
+def create_city_info() -> None: 
     cinfo_folder = SHOP / "TUNE"
     cinfo_file = f"{city_name}.CINFO"
     
@@ -3028,7 +2474,7 @@ def edit_and_copy_mmbangerdata(bangerdata_properties):
                 f.writelines(lines)
                 
                 
-def copy_core_tune_files():
+def copy_core_tune_files() -> None:
     editor_tune_folder = Path(BASE_DIR) / 'Core AR' / 'TUNE'
     shop_tune_folder = Path(SHOP) / 'TUNE'
     
@@ -3051,6 +2497,8 @@ def copy_dev_folder(mm1_folder: Path, city_name: str) -> None:
     
 ################################################################################################################               
 ################################################################################################################ 
+
+#! ================== THIS SECTION IS RELATED TO RACE FILES ================== !#
 
 def ordinal(n):
     if 10 <= n % 100 <= 13:
@@ -3178,7 +2626,6 @@ def write_aimap(city_name, race_type, race_index, aimap_config, opponent_cars, n
     MOVE(aimap_file_name, SHOP / "RACE" / city_name / aimap_file_name)
 
     
-    
 def create_races(city_name, race_data):
     for race_type, race_configs in race_data.items():
         if race_type == 'RACE':  # For Checkpoint races
@@ -3234,9 +2681,13 @@ def create_cnr(city_name, cnr_waypoints):
 
         MOVE(cnr_csv_file, SHOP / "RACE" / city_name / cnr_csv_file)
   
+################################################################################################################               
+################################################################################################################              
+
 _H = 8
-_A2 = 32                    
-                                
+_A2 = 32
+
+# Create Cells                     
 def create_cells(city_name: str, truncate_cells: bool = False):
     bms_files = []
     bms_a2_files = set()
@@ -3255,7 +2706,6 @@ def create_cells(city_name: str, truncate_cells: bool = False):
                 if file.name.endswith("_A2.bms"):
                     bms_a2_files.add(bound_number)
     
-    # Create the CELLS file
     with open(cells_file, "w") as f:
         f.write(f"{len(bms_files)}\n")
         f.write(str(max(bms_files) + 1000) + "\n")
@@ -3343,57 +2793,23 @@ def create_cells(city_name: str, truncate_cells: bool = False):
             *************\n
             """
             print(warning_message)
-                        
+                                                
 
-# Create Animations                              
-def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
-    if set_anim:
-        anim_folder = SHOP_CITY / city_name
+# Create EXT file                      
+def create_ext(city_name, polygons):
+    x_coords = [vertex[0] for poly in polygons for vertex in poly]
+    z_coords = [vertex[2] for poly in polygons for vertex in poly]
+    
+    min_x, max_x = min(x_coords), max(x_coords)
+    min_z, max_z = min(z_coords), max(z_coords)
 
-        # Create ANIM.CSV file and write anim names
-        with open(anim_folder / "ANIM.CSV", 'w', newline = '') as f:
-            writer = csv.writer(f)
-            for obj in anim_data.keys():
-                writer.writerow([f"anim_{obj}"])
+    ext_folder = SHOP_CITY
+    ext_file = f"{city_name}.EXT"
 
-        # Create the individual anim files and write coordinates
-        for obj, coordinates in anim_data.items():
-            unique_anims = anim_folder / f"ANIM_{obj.upper()}.CSV"
-            with open(unique_anims, 'w', newline = '') as file:
-                writer = csv.writer(file)
-                if coordinates:
-                    for coordinate in coordinates:
-                        writer.writerow(coordinate)
-                        
-                        
-# Create AR file and delete folders
-def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> None:
-    for file in Path("angel").iterdir():
-        if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
-            shutil.copy(file, SHOP / file.name)
-    
-    os.chdir(SHOP)
-    ar_command = f"CMD.EXE /C run !!!!!{city_name}"
-    subprocess.run(ar_command, shell = True)
-    os.chdir(BASE_DIR)  
-    
-    build_dir = BASE_DIR / 'build'
-    for file in build_dir.iterdir():
-        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{city_name}"):
-            MOVE(file, Path(mm1_folder) / file.name)
-            
-    # Delete the build folder
-    try:
-        shutil.rmtree(build_dir)
-    except Exception as e:
-        print(f"Failed to delete the BUILD directory. Reason: {e}")
-    
-    # Delete the SHOP folder
-    if delete_shop:
-        try:
-            shutil.rmtree(SHOP)
-        except Exception as e:
-            print(f"Failed to delete the SHOP directory. Reason: {e}")
+    with open(ext_folder / ext_file, 'w') as f:
+        f.write(f"{min_x} {min_z} {max_x} {max_z}")
+        
+    return min_x, max_x, min_z, max_z
 
 
 def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
@@ -3441,6 +2857,7 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
         trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
         for line in ax.lines:
             line.set_transform(trans)       
+            
         # Save JPG 640 and 320 Pictures            
         plt.savefig(bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
         plt.savefig(bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
@@ -3463,21 +2880,25 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
             plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
 
 
-# Create EXT file                      
-def create_ext(city_name, polygons):
-    x_coords = [vertex[0] for poly in polygons for vertex in poly]
-    z_coords = [vertex[2] for poly in polygons for vertex in poly]
-    
-    min_x, max_x = min(x_coords), max(x_coords)
-    min_z, max_z = min(z_coords), max(z_coords)
+# Create Animations                              
+def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
+    if set_anim:
+        anim_folder = SHOP_CITY / city_name
 
-    ext_folder = SHOP_CITY
-    ext_file = f"{city_name}.EXT"
+        # Create ANIM.CSV file and write anim names
+        with open(anim_folder / "ANIM.CSV", 'w', newline = '') as f:
+            writer = csv.writer(f)
+            for obj in anim_data.keys():
+                writer.writerow([f"anim_{obj}"])
 
-    with open(ext_folder / ext_file, 'w') as f:
-        f.write(f"{min_x} {min_z} {max_x} {max_z}")
-        
-    return min_x, max_x, min_z, max_z
+        # Create the individual anim files and write coordinates
+        for obj, coordinates in anim_data.items():
+            unique_anims = anim_folder / f"ANIM_{obj.upper()}.CSV"
+            with open(unique_anims, 'w', newline = '') as file:
+                writer = csv.writer(file)
+                if coordinates:
+                    for coordinate in coordinates:
+                        writer.writerow(coordinate)
 
 
 def create_bridges(all_bridges, set_bridges):
@@ -3576,7 +2997,7 @@ mmBridgeMgr :076850a0 {{
         "BridgeOffDelay": 0.0,
         "GateOnDelay": 5.0,
         "Mode": SINGLE,
-    }
+}
     
     if set_bridges:
         for config in configs:
@@ -3604,8 +3025,12 @@ mmBridgeMgr :076850a0 {{
             for filename in filenames:
                 (tune_folder / filename).write_text(config_str)
                 
-                
-#!########### Code by 0x1F9F1 / Brick (Modified) ############      
+################################################################################################################               
+################################################################################################################
+
+#! ================== THIS SECTION IS RELATED TO PORTALS ================== !#
+
+#! ########### Code by 0x1F9F1 / Brick (Modified) ############ !#      
                  
 MIN_Y = -20
 MAX_Y = 50
@@ -3753,7 +3178,7 @@ class Cell:
 
 
 # Prepare PTL
-def prepare_portals(polys, vertices):
+def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
     cells = {}
 
     for poly in polys:
@@ -3830,7 +3255,10 @@ def prepare_portals(polys, vertices):
 
 
 # Create PTL
-def create_portals(city_name, polys, vertices, empty_portals = False, debug_portals = False):
+def create_portals(
+    city_name: str, polys: List[Polygon], vertices: List[Vector3], 
+    empty_portals: bool = False, debug_portals: bool = False) -> None:
+    
     portals_folder = SHOP_CITY
     portals_file = f"{city_name}.PTL"
     
@@ -3879,8 +3307,10 @@ def create_portals(city_name, polys, vertices, empty_portals = False, debug_port
     if debug_portals:
         debug_file.close()
 
-#!########### Code by 0x1F9F1 / Brick (Modified) ############                   
-                    
+#! ########### Code by 0x1F9F1 / Brick (Modified) ############ !#                   
+
+################################################################################################################               
+################################################################################################################            
                                
 # BINARYBANGER CLASS                            
 class BinaryBanger:
@@ -3892,7 +3322,7 @@ class BinaryBanger:
         self.name = name
         
     @classmethod
-    def read_bng_main(cls, f):
+    def read_banger_params(cls, f):
         room, flags = read_unpack(f, '<HH')
         start_x, start_y, start_z = read_unpack(f, '<3f')
         end_x, end_y, end_z = read_unpack(f, '<3f')
@@ -3938,14 +3368,14 @@ class Prop_Editor:
                 prop_data[name] = Vector3(float(value_x), float(value_y), float(value_z))
         return prop_data
     
-    def read_bng_count(self):
+    def read_bangers(self):
         with open(self.filename, mode = "rb") as f:
             num_objects = read_unpack(f, '<I')[0]
             
             for _ in range(num_objects):
-                self.objects.append(BinaryBanger.read_bng_main(f))
+                self.objects.append(BinaryBanger.read_banger_params(f))
             
-    def write_bng_file(self, set_props: bool = False):
+    def write_bangers(self, set_props: bool = False):
         if not set_props:
             return
 
@@ -3954,15 +3384,15 @@ class Prop_Editor:
 
             for index, obj in enumerate(self.objects, 1):
                 if self.debug_props:
-                    self.write_debug_info(index, obj)
-                self.write_object_data(f, obj)
+                    self.write_banger_debug(index, obj)
+                self.write_banger_data(f, obj)
 
-    def write_object_data(self, f, obj):
+    def write_banger_data(self, f, obj):
         write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
         for char in obj.name:
             write_pack(f, '<s', bytes(char, encoding = 'utf8'))
 
-    def write_debug_info(self, index, obj):
+    def write_banger_debug(self, index, obj):
         cleaned_name = obj.name.rstrip('\x00')
         
         with open(self.debug_filename, "a") as debug_f:
@@ -4050,14 +3480,15 @@ class Prop_Editor:
         
         return new_objects
 
-
 #################################################################################
 #################################################################################
 
 # MATERIALEDITOR CLASS
 class Material_Editor:
-    def __init__(self, name: str, friction: float, elasticity: float, drag: float, bump_height: float, bump_width: float, bump_depth: float, sink_depth: float, 
+    def __init__(self, name: str, friction: float, elasticity: float, drag: float, 
+                 bump_height: float, bump_width: float, bump_depth: float, sink_depth: float, 
                  type: int, sound: int, velocity: Vector2, ptx_color: Vector3):
+        
         self.name = name
         self.friction = friction
         self.elasticity = elasticity
@@ -4083,18 +3514,21 @@ class Material_Editor:
     def readn(f, count):
         return [Material_Editor.read_materials(f) for _ in range(count)]
 
-    def write_materials(self, f):        
+    def write_material_data(self, f):        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
-        write_pack(f, '>7f2I', self.friction, self.elasticity, self.drag, self.bump_height, self.bump_width, self.bump_depth, self.sink_depth, self.type, self.sound)
+        write_pack(f, '>7f2I', 
+                   self.friction, self.elasticity, self.drag, 
+                   self.bump_height, self.bump_width, self.bump_depth, 
+                   self.sink_depth, self.type, self.sound)
         self.velocity.write(f)
         self.ptx_color.write(f)
 
     @staticmethod
-    def write_materials_file(file_name, agi_phys_parameters):
+    def write_materials(file_name, agi_phys_parameters):
         with open(file_name, 'wb') as f:
             write_pack(f, '>I', len(agi_phys_parameters))
             for param in agi_phys_parameters:                
-                param.write_materials(f)
+                param.write_material_data(f)
                 
     @classmethod    
     def edit_materials(cls, materials_properties, physics_output_file, debug_physics):
@@ -4110,28 +3544,28 @@ class Material_Editor:
             for prop, value in properties.items():
                 setattr(read_material_file[material_index - 1], prop, value)
             
-        cls.write_materials_file(physics_output_file, read_material_file)
+        cls.write_materials(physics_output_file, read_material_file)
         MOVE(physics_output_file, physics_folder / physics_output_file)
         
         if debug_physics:
-            cls.write_debug_file("PHYSICS_DB_debug.txt", read_material_file)
-   
+            cls.write_materials_debug("PHYSICS_DB_debug.txt", read_material_file)
+            
     @classmethod
-    def write_debug_file(cls, debug_filename, material_list):
+    def write_materials_debug(cls, debug_filename, material_list):
         with open(debug_filename, 'w') as debug_file:
             for idx, material in enumerate(material_list):
                 debug_file.write(material.__repr__(idx))
                 debug_file.write("\n")
 
     def __repr__(self, idx = None):
-        cleaned_name = self.name.rstrip("\x00 Í")
+        cleaned_agi_name = self.name.rstrip("\x00 Í")
         formatted_velocity = f"x = {self.velocity.x:.2f}, y = {self.velocity.y:.2f}"
         
-        header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
+        agi_header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
         
         return f"""
-{header}
-    name        = '{cleaned_name}',
+{agi_header}
+    name        = '{cleaned_agi_name}',
     friction    = {self.friction:.2f},
     elasticity  = {self.elasticity:.2f},
     drag        = {self.drag:.2f},
@@ -4144,7 +3578,6 @@ class Material_Editor:
     velocity    = {formatted_velocity},
     ptx_color   = {self.ptx_color}
     """
-
 
 ###################################################################################################################
 ###################################################################################################################
@@ -4276,14 +3709,16 @@ mmRoadSect :0 {{
     def create_streets(city_name, street_data, ai_streets, ai_reverse, ai_map):
         street_names = [StreetFile_Editor(city_name, data, ai_reverse, ai_streets).street_name for data in street_data]
         return BAI_Editor(city_name, street_names, ai_map)
-        
+    
+################################################################################################################               
+################################################################################################################    
         
 def get_first_and_last_street_vertices(street_list, process_vertices = False):
     vertices_set = set()
     
     for street in street_list:
         vertices = street["vertices"]
-        if vertices: # Check if the list is not empty
+        if vertices:  # Check if the list is not empty
             vertices_set.add(vertices[0])
             vertices_set.add(vertices[-1])
 
@@ -4564,8 +3999,40 @@ def create_facades(filename, facade_params, target_fcd_dir, set_facades = False,
 ###################################################################################################################
 ###################################################################################################################  
 
-def create_commandline(city_name: str, mm1_folder: Path, no_ui: bool = False, no_ui_type: str = "", 
-                       quiet_logs: bool = False, more_logs: bool = False):
+# Create AR file and delete folders
+def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> None:
+    for file in Path("angel").iterdir():
+        if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
+            shutil.copy(file, SHOP / file.name)
+    
+    os.chdir(SHOP)
+    ar_command = f"CMD.EXE /C run !!!!!{city_name}"
+    subprocess.run(ar_command, shell = True)
+    os.chdir(BASE_DIR)  
+    
+    build_dir = BASE_DIR / 'build'
+    for file in build_dir.iterdir():
+        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{city_name}"):
+            MOVE(file, Path(mm1_folder) / file.name)
+            
+    # Delete the build folder
+    try:
+        shutil.rmtree(build_dir)
+    except Exception as e:
+        print(f"Failed to delete the BUILD directory. Reason: {e}")
+    
+    # Delete the SHOP folder
+    if delete_shop:
+        try:
+            shutil.rmtree(SHOP)
+        except Exception as e:
+            print(f"Failed to delete the SHOP directory. Reason: {e}")
+            
+            
+def create_commandline(
+    city_name: str, mm1_folder: Path, no_ui: bool = False, no_ui_type: str = "", 
+    quiet_logs: bool = False, more_logs: bool = False):
+    
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
     
@@ -4603,7 +4070,713 @@ def create_commandline(city_name: str, mm1_folder: Path, no_ui: bool = False, no
 def start_game(mm1_folder: str, play_game: bool = False) -> None:
     if play_game and not is_blender_running():
         subprocess.run(str(Path(mm1_folder) / "Open1560.exe"), cwd = str(mm1_folder), shell = True)
+
+###################################################################################################################
+################################################################################################################### 
+
+#! ================== THIS SECTION IS RELATED TO BLENDER SETUP / PRELOADING ================== !#
+
+def enable_developer_extras() -> None:
+    prefs = bpy.context.preferences
+    view = prefs.view
+    
+    # Set "Developer Extra's" if not already enabled
+    if not view.show_developer_ui:
+        view.show_developer_ui = True
+        bpy.ops.wm.save_userpref()
+        print("Developer Extras enabled!")
+    else:
+        print("Developer Extras already enabled!")
         
+           
+def adjust_3D_view_settings() -> None:
+    for area in bpy.context.screen.areas:
+        if area.type == 'VIEW_3D':
+            for space in area.spaces:
+                if space.type == 'VIEW_3D':
+                    
+                    # Clip distance
+                    space.clip_end = 5000.0
+                    
+                    # Set the shading mode to Solid
+                    shading = space.shading
+                    shading.type = 'SOLID'
+                    
+                    # Uniform Lighting
+                    shading.light = 'FLAT'
+                    shading.color_type = 'TEXTURE'
+
+              
+def load_all_dds_to_blender(dds_directory: Path) -> None:
+    for file_name in os.listdir(dds_directory):
+        if file_name.lower().endswith(".dds"):
+            texture_path = os.path.join(dds_directory, file_name)
+            if texture_path not in bpy.data.images:
+                bpy.data.images.load(texture_path)
+
+
+def preload_all_dds_materials(dds_directory: Path) -> None:
+    for file_name in os.listdir(dds_directory):
+        if file_name.lower().endswith(".dds"):
+            texture_path = os.path.join(dds_directory, file_name)
+
+            # Load the DDS texture into Blender
+            if texture_path not in bpy.data.images:
+                texture_image = bpy.data.images.load(texture_path)
+            else:
+                texture_image = bpy.data.images[texture_path]
+
+            # Create a material using the DDS texture
+            material_name = os.path.splitext(os.path.basename(texture_path))[0]
+            if material_name not in bpy.data.materials:
+                create_material_from_texture(material_name, texture_image)
+
+
+def create_material_from_texture(material_name, texture_image):
+    mat = bpy.data.materials.new(name = material_name)
+    mat.use_nodes = True
+
+    nodes = mat.node_tree.nodes
+    for node in nodes:
+        nodes.remove(node)
+
+    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
+    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+    texture_node.image = texture_image
+
+    links = mat.node_tree.links
+    link = links.new
+    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+
+    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])      
+    
+###################################################################################################################
+###################################################################################################################
+
+#! ================== THIS SECTION IS RELATED TO BLENDER UV MAPPING ================== !#
+
+def unwrap_uv_to_aspect_ratio(obj, image):
+    bpy.ops.object.select_all(action = 'DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    
+    # Enter edit mode and select all
+    bpy.ops.object.mode_set(mode = 'EDIT')
+    bpy.ops.mesh.select_all(action = 'SELECT')
+    
+    # Perform UV unwrap
+    bpy.ops.uv.unwrap(method = 'ANGLE_BASED', margin = 0.001)
+    
+    # Enter UV edit mode
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    obj.data.uv_layers.active.active = True
+
+    # Normalize the UVs to ensure they use the entire texture
+    bbox = [obj.data.uv_layers.active.data[i].uv for i in range(len(obj.data.uv_layers.active.data))]
+    uvs_min = [min(co[0] for co in bbox), min(co[1] for co in bbox)]
+    uvs_max = [max(co[0] for co in bbox), max(co[1] for co in bbox)]
+    
+    for uv_loop in obj.data.uv_layers.active.data:
+        uv_loop.uv[0] = (uv_loop.uv[0] - uvs_min[0]) / (uvs_max[0] - uvs_min[0])
+        uv_loop.uv[1] = (uv_loop.uv[1] - uvs_min[1]) / (uvs_max[1] - uvs_min[1])
+    
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+    
+    
+def tile_uvs(obj, tile_x = 1, tile_y = 1):
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    # Get the active UV layer of the object
+    uv_layer = obj.data.uv_layers.active.data
+
+    # Restore original UVs
+    original_uvs = obj["original_uvs"]
+    for i, uv_data in enumerate(uv_layer):
+        uv_data.uv[0] = original_uvs[i][0]
+        uv_data.uv[1] = original_uvs[i][1]
+
+    # Loop over each UV coordinate and scale it
+    for uv_data in uv_layer:
+        uv_data.uv[0] *= tile_x
+        uv_data.uv[1] *= tile_y
+
+
+def rotate_uvs(obj, angle_degrees):    
+    bpy.ops.object.mode_set(mode = 'OBJECT')
+
+    bpy.ops.object.select_all(action = 'DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+
+    # Get the active UV layer of the object
+    uv_layer = obj.data.uv_layers.active.data
+    
+    angle_rad = math.radians(angle_degrees)
+
+    cos_angle = math.cos(angle_rad)
+    sin_angle = math.sin(angle_rad)
+
+    # Rotate each UV coordinate around the UV center (0.5, 0.5)
+    for uv_data in uv_layer:
+        u, v = uv_data.uv
+        u -= 0.5
+        v -= 0.5
+        rotated_u = u * cos_angle - v * sin_angle
+        rotated_v = u * sin_angle + v * cos_angle
+        uv_data.uv = (rotated_u + 0.5, rotated_v + 0.5)
+
+      
+def update_uv_tiling(self, context):
+    tile_x = self.tile_x
+    tile_y = self.tile_y
+    rotate_angle = self.rotate 
+
+    bpy.ops.object.select_all(action = 'DESELECT')
+    self.select_set(True)
+    bpy.context.view_layer.objects.active = self
+
+    # Update the UV mapping of the object based on its custom properties
+    tile_uvs(self, tile_x, tile_y)
+    rotate_uvs(self, rotate_angle)
+    
+    
+# UV MAPPING OPERATOR
+class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
+    bl_idname = "object.update_uv_mapping"
+    bl_label = "Update UV Mapping"
+    bl_description = "Updates UV mapping based on object's custom properties"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        for obj in bpy.context.selected_objects:
+            
+            # Check if the object has the necessary custom properties
+            if all(prop in obj.keys() for prop in ["tile_x", "tile_y", "rotate"]):
+                tile_x = obj["tile_x"]
+                tile_y = obj["tile_y"]
+                rotate_angle = obj["rotate"]
+
+                # Update the UV mapping of the object based on its custom properties
+                tile_uvs(obj, tile_x, tile_y)
+                rotate_uvs(obj, rotate_angle)
+
+        return {"FINISHED"}
+    
+###################################################################################################################
+###################################################################################################################
+
+#! ================== THIS SECTION IS RELATED TO CREATING BLENDER POLYGONS ================== !#
+
+def apply_texture_to_object(obj, texture_path):
+    # Extract the filename (without extension) from the texture_path
+    material_name = os.path.splitext(os.path.basename(texture_path))[0]
+    
+    # Check if the material with this name already exists
+    if material_name in bpy.data.materials:
+        mat = bpy.data.materials[material_name]
+    else:
+        mat = bpy.data.materials.new(name = material_name)
+
+    obj.data.materials.append(mat)
+    obj.active_material = mat
+
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+
+    for node in nodes:
+        nodes.remove(node)
+
+    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
+    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+
+    texture_image = bpy.data.images.load(texture_path)
+    texture_node.image = texture_image
+
+    links = mat.node_tree.links
+    link = links.new
+    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+
+    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+
+    unwrap_uv_to_aspect_ratio(obj, texture_image)
+    
+    
+def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
+    name = f"P{polygon_data['bound_number']}"
+    coords = polygon_data["vertex_coordinates"]
+
+    edges = []
+    faces = [range(len(coords))]
+
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(name, mesh)
+
+    obj["cell_type"] = str(polygon_data["cell_type"])
+    obj["material_index"] = str(polygon_data["material_index"])
+    
+    # TESTING
+    obj["hud_color"] = (polygon_data["hud_color"])
+    
+    bpy.context.collection.objects.link(obj)
+    mesh.from_pydata(coords, edges, faces)
+    mesh.update()
+    
+    # custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
+    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
+    for prop in custom_properties:
+        if prop in polygon_data:
+            obj[prop] = polygon_data[prop]
+    
+    if not obj.data.uv_layers:
+        obj.data.uv_layers.new()
+
+    # Retrieve the original UVs after creating the object and before tiling
+    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
+    obj["original_uvs"] = original_uvs
+    
+    bpy.types.Object.tile_x = bpy.props.FloatProperty(name = "Tile X", default = 2.0, update = update_uv_tiling)
+    bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
+    bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
+    
+    bound_number = polygon_data['bound_number']
+    tile_x, tile_y = 1, 1  
+
+    if bound_number in texcoords_data.get('entries', {}):
+        
+        tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
+        tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
+        
+    obj.tile_x = tile_x
+    obj.tile_y = tile_y
+    
+    obj.rotate = polygon_data.get('rotate', 0)
+
+    if dds_directory:
+        apply_texture_to_object(obj, dds_directory)    
+        rotate_angle = polygon_data.get('rotate', 0) 
+
+        tile_uvs(obj, tile_x, tile_y)
+        rotate_uvs(obj, rotate_angle)  
+        
+        obj.data.update()
+        
+    # Rotate the created Blender model to match the game's coordinate system
+    bpy.ops.object.select_all(action = 'DESELECT')
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis = 'X')
+    
+    return obj
+
+
+def create_blender_meshes() -> None:
+    if is_blender_running():
+        enable_developer_extras()
+        adjust_3D_view_settings()
+        
+        load_all_dds_to_blender(dds_directory)
+        preload_all_dds_materials(dds_directory)
+                    
+        texture_paths = [os.path.join(dds_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+
+        bpy.ops.object.select_all(action = 'SELECT')
+        bpy.ops.object.delete()
+
+        for polygon, texture_path in zip(polygons_data, texture_paths):
+            create_mesh_from_polygon_data(polygon, texture_path)
+
+###################################################################################################################
+###################################################################################################################
+
+#! ================== THIS SECTION IS RELATED TO BLENDER PANELS ================== !#
+
+# CELL PANEL
+CELL_IMPORT = [
+    (str(DEFAULT), "Default", "", "", DEFAULT),
+    (str(TUNNEL), "Tunnel", "", "", TUNNEL),
+    (str(INDOORS), "Indoors", "", "", INDOORS),
+    (str(WATER_DRIFT), "Water Drift", "", "", WATER_DRIFT),
+    (str(NO_SKIDS), "No Skids", "", "", NO_SKIDS)]
+
+CELL_EXPORT = {
+    # We do not want to export the Default Cell Type
+    "1": "TUNNEL",
+    "2": "INDOORS",
+    "4": "WATER_DRIFT",
+    "200": "NO_SKIDS"}
+
+bpy.types.Object.cell_type = bpy.props.EnumProperty(
+    items = CELL_IMPORT,
+    name = "Cell Type",
+    description = "Select the type of cell")
+
+class OBJECT_PT_CellTypePanel(bpy.types.Panel):
+    bl_label = "Cell Type"
+    bl_idname = "OBJECT_PT_cell_type"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.active_object
+        if obj:
+            layout.prop(obj, "cell_type", text = "Cell Type")
+        else:
+            layout.label(text = "No active object")
+            
+
+# MATERIAL PANEL
+MATERIAL_IMPORT = [
+    (str(DEFAULT_MTL), "Road", "", "", DEFAULT_MTL),
+    (str(GRASS_MTL), "Grass", "", "", GRASS_MTL),
+    (str(WATER_MTL), "Water", "", "", WATER_MTL),
+    (str(STICKY_MTL), "Sticky", "", "", STICKY_MTL),
+    (str(NO_FRICTION_MTL), "No Friction", "", "", NO_FRICTION_MTL)]
+
+bpy.types.Object.material_index = bpy.props.EnumProperty(
+    items = MATERIAL_IMPORT,
+    name = "Material Type",
+    description = "Select the type of material")
+
+MATERIAL_EXPORT = {
+    # We do not want to export the Default Material Type
+    str(GRASS_MTL): "GRASS_MTL",
+    str(WATER_MTL): "WATER_MTL",
+    str(STICKY_MTL): "STICKY_MTL",
+    str(NO_FRICTION_MTL): "NO_FRICTION_MTL"}
+
+class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
+    bl_label = "Material Type"
+    bl_idname = "OBJECT_PT_material_index"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.active_object
+        if obj:
+            layout.prop(obj, "material_index", text = "Material")
+        else:
+            layout.label(text = "No active object")
+
+
+# MISC PANEL
+bpy.types.Object.always_visible = bpy.props.BoolProperty(
+    name = "Always Visible",
+    description = "If true, the object is always visible",
+    default = False)
+
+bpy.types.Object.sort_vertices = bpy.props.BoolProperty(
+    name = "Sort Vertices",
+    description = "If true, sort the vertices",
+    default = False)
+
+class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
+    bl_label = "Polygon Options"
+    bl_idname = "OBJECT_PT_polygon_options"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.active_object
+        if obj:
+            layout.prop(obj, "always_visible", text = "Always Visible")
+            layout.prop(obj, "sort_vertices", text = "Sort Vertices")
+        else:
+            layout.label(text = "No active object")
+            
+        
+# HUD PANEL (not operational)         
+HUD_IMPORT = [
+    (WOOD_HUD, "Wood", "", "", 1),
+    (SNOW_HUD, "Snow", "", "", 2),
+    (WATER_HUD, "Water", "", "", 3),
+    (ROAD_HUD, "Road", "", "", 4),
+    (GRASS_HUD, "Grass", "", "", 5),
+    (DARK_RED, "Dark Red", "", "", 6),
+    (ORANGE, "Orange", "", "", 7),
+    (LIGHT_RED, "Light Red", "", "", 8),
+    (LIGHT_YELLOW, "Light Yellow", "", "", 9)]
+
+HUD_EXPORT = {
+    '#7b5931': "WOOD_HUD",
+    '#cdcecd': "SNOW_HUD",
+    '#5d8096': "WATER_HUD",
+    '#414441': "ROAD_HUD",
+    '#396d18': "GRASS_HUD",
+    '#af0000': "DARK_RED",
+    '#ffa500': "ORANGE",
+    '#ff7f7f': "LIGHT_RED",
+    '#ffffe0': "LIGHT_YELLOW"}
+
+bpy.types.Object.hud_color = bpy.props.EnumProperty(
+    items = HUD_IMPORT,
+    name = "HUD Type",
+    description = "Select the type of HUD")
+
+class OBJECT_PT_HUDTypePanel(bpy.types.Panel):
+    bl_label = "HUD Type"
+    bl_idname = "OBJECT_PT_hud_type"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+
+    def draw(self, context):
+        layout = self.layout
+        obj = context.active_object
+        if obj:
+            layout.prop(obj, "hud_color", text = "HUD")
+            
+        else:
+            layout.label(text = "No active object")
+
+###################################################################################################################
+################################################################################################################### 
+
+#! ================== THIS SECTION IS RELATED TO BLENDER EXPORTING ================== !#
+
+def format_decimal(value):
+    if value == int(value): 
+        return f"{value:.1f}"
+    else: 
+        return f"{value:.2f}"
+    
+    
+def get_editor_script_path():
+    try:
+        return Path(__file__).parent
+    except NameError:
+        print("Warning: Unable to return editor script path.")
+        return None
+
+    
+def extract_polygon_data(obj):
+    if obj.name.startswith("P"):
+        bound_number = int(obj.name[1:])
+    elif obj.name.startswith("Shape_"):
+        bound_number = int(obj.name.split("_")[1])
+    else:
+        raise ValueError(f"Unrecognized object name format: {obj.name}")
+    
+    extracted_polygon_data = {
+        "bound_number": bound_number,
+        "material_index": obj["material_index"],
+        "cell_type": obj["cell_type"],
+        "always_visible": obj["always_visible"], 
+        "sort_vertices": obj["sort_vertices"],
+        "vertex_coordinates": obj.data.vertices,
+        "hud_color": obj["hud_color"],
+        "rotate": obj["rotate"]}
+    
+    return extracted_polygon_data
+
+
+def extract_texture_from_polygon(obj):
+    if obj.material_slots:
+        mat = obj.material_slots[0].material
+        if mat and mat.use_nodes:
+            for node in mat.node_tree.nodes:
+                if isinstance(node, bpy.types.ShaderNodeTexImage):
+                    return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
+    return "CHECK04"  # if no texture is applied to the polygon, use CHECK04 as a placeholder
+    
+
+def export_blender_polygon_data(obj):
+    data = extract_polygon_data(obj)
+    texture_name = extract_texture_from_polygon(obj)
+    vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
+                
+    tile_x = obj.get("tile_x", 1)
+    tile_y = obj.get("tile_y", 1)
+    
+    optional_attributes  = []
+    
+    material_index = MATERIAL_EXPORT.get(str(data['material_index']), None)
+    if material_index:
+        optional_attributes.append(f"material_index = {material_index}")
+
+    cell_type = CELL_EXPORT.get(str(data['cell_type']), None)
+    if cell_type:
+        optional_attributes.append(f"cell_type = {cell_type}")
+    
+    if data['sort_vertices']:
+        optional_attributes.append("sort_vertices = True")
+    if data['always_visible']:
+        optional_attributes.append("always_visible = True")
+        
+    if data['rotate'] != 0.0:
+        optional_attributes.append(f"rotate = {data['rotate']}")
+        
+    # WIP
+    hud_color = data['hud_color']
+    if hud_color in HUD_EXPORT:
+        hud_color_str = f"hud_color = {HUD_EXPORT[hud_color]}"
+    else:
+        hud_color_str = f"hud_color = {hud_color}"  
+    optional_attributes.append(hud_color_str)
+    
+    # Packing the optional attributes into a string    
+    optional_variables = ",\n\t".join(optional_attributes)
+
+    # Construct export string
+    polygon_export_data = f"""
+create_polygon(
+    bound_number = {data['bound_number']},
+    {optional_variables},
+    vertex_coordinates = [
+        {vertex_export}])
+
+save_bms(
+    texture_name = ["{texture_name}"],
+    tex_coords = compute_uv(bound_number = {data['bound_number']}, mode = "r.H", tile_x = {tile_x}, tile_y = {tile_y}))"""
+
+    return polygon_export_data
+
+
+# EXPORT POLYGONS OPERATOR
+class OBJECT_OT_ExportPolygons(bpy.types.Operator):
+    bl_idname = "object.export_polygons"
+    bl_label = "Export Blender Polygons"
+    
+    select_all: bpy.props.BoolProperty(default = True)
+
+    def execute(self, context):
+        script_path = get_editor_script_path()
+        if script_path:
+            output_folder = script_path / 'Blender Export'
+        else:
+            print("Warning: Falling back to directory: Desktop / Blender Export")
+            # Path.cwd() "incorrectly" returns the user's desktop directory 
+            output_folder = Path.cwd() / 'Blender Export'
+        
+        if not output_folder.exists():
+            os.mkdir(output_folder)
+        
+        base_file_name = "Map_Editor_Blender_Export.txt"
+        export_file = output_folder / base_file_name
+        
+        count = 1
+        while os.path.exists(export_file):
+            export_file = output_folder / f"{count}_{base_file_name}"
+            count += 1
+        
+        # Conditionally select all meshes or use selected ones based on the 'select_all' property
+        if self.select_all:
+            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
+        else:
+            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+        
+        if mesh_objects:
+            context.view_layer.objects.active = mesh_objects[0]
+
+            # Apply location transformation (to get Global coordinates)
+            bpy.ops.object.transform_apply(location = True, rotation = False, scale = True)
+    
+        try:
+            with open(export_file, 'w') as file:
+                for obj in mesh_objects:
+                    export_script = export_blender_polygon_data(obj) 
+                    file.write(export_script + '\n\n')
+                    
+            subprocess.Popen(["notepad.exe", export_file])
+            self.report({'INFO'}, f"Saved data to {export_file}")
+            bpy.ops.object.select_all(action = 'DESELECT')
+            
+        except Exception as e:
+            self.report({'ERROR'}, str(e))
+            return {'CANCELLED'}
+        
+        return {'FINISHED'}
+    
+###################################################################################################################   
+###################################################################################################################    
+    
+#! ================== THIS SECTION IS RELATED TO MISC BLENDER FUNCTIONS / CLASSES ================== !#
+
+# CLASS ASSIGN CUSTOM PROPERTIES
+class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
+    bl_idname = "object.assign_custom_properties"
+    bl_label = "Assign Custom Properties to Polygons"
+    bl_description = "Assign Custom Properties to polygons that do not have them yet"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        for obj in bpy.context.scene.objects:
+            if obj.type == 'MESH':
+                
+                # Cell & Material
+                if "cell_type" not in obj:
+                    obj["cell_type"] = 0
+                if "material_index" not in obj:
+                    obj["material_index"] = 0
+                
+                # Hud Color 
+                if "hud_color" not in obj:
+                    obj["hud_color"] = 0
+                    
+                # Misc
+                if "sort_vertices" not in obj:
+                    obj["sort_vertices"] = 0
+                if "always_visible" not in obj:
+                    obj["always_visible"] = 0
+                if "rotate" not in obj:
+                    obj["rotate"] = 0.0
+                
+                # UV mapping
+                if "tile_x" not in obj:
+                    obj["tile_x"] = 2.0
+                if "tile_y" not in obj:
+                    obj["tile_y"] = 2.0
+                
+                if "original_uvs" not in obj:
+                    # Check if the object has an active UV layer, and if not, create one
+                    uv_layer = obj.data.uv_layers.active
+                    if uv_layer is None:
+                        uv_layer = obj.data.uv_layers.new(name = "UVMap")
+
+                    # Now save the original UVs
+                    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in uv_layer.data]
+                    obj["original_uvs"] = original_uvs
+                    
+        self.report({'INFO'}, "Assigned Custom Properties")
+        return {"FINISHED"}
+    
+    
+def is_blender_running() -> bool:
+    try:
+        import bpy
+        # Trying to access a bpy.context attribute to see if we get an exception
+        _ = bpy.context.window_manager
+        return True
+    except (AttributeError, ImportError):
+        return False
+  
+  
+def set_blender_keybinding() -> None:
+    if is_blender_running():
+        wm = bpy.context.window_manager
+        kc = wm.keyconfigs.addon
+        if kc:
+            km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
+            
+            # Shift + E to export all polygons
+            kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
+            kmi_export_all.properties.select_all = True
+            
+            # Ctrl + E to export selected polygons
+            kmi_export_selected = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', ctrl = True)
+            kmi_export_selected.properties.select_all = False
+            
+            # Shift + P to assign custom properties
+            kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
+
+###################################################################################################################   
 ################################################################################################################### 
 
 #* FACADE NOTES
@@ -4693,6 +4866,7 @@ fcd_list = [
     fcd_orange_building_1, fcd_orange_building_2, fcd_orange_building_3, fcd_orange_building_4, 
     fcd_white_hotel_long_road, fcd_red_hotel_long_road]
 
+###################################################################################################################   
 ###################################################################################################################
 
 # SET AI PATHS
@@ -4761,8 +4935,6 @@ main_barricade_wood_path = {
          (130.0, 0.0, 70.0),
          (40.0, 0.0, 100.0)]}
 
-# perfect angled grass path:    (40.0, 0.0, 102.5)
-
 main_double_triangle_path = {
     "street_name": "main_double_triangle_path",
     "vertices": [
@@ -4820,7 +4992,8 @@ street_list = [cruise_start,
                main_west_path, main_grass_horz_path, main_barricade_wood_path, main_double_triangle_path, 
                orange_hill_path]
 
-################################################################################################################               
+###################################################################################################################   
+###################################################################################################################               
 
 # SET PROPS
 china_gate = {'offset': (0, 0.0, -20), 
@@ -4884,7 +5057,8 @@ bangerdata_properties = {
     VW_BEETLE: {'ImpulseLimit2': HUGE, 'AudioId': GLASS_AUD},
     CITY_BUS:  {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_AUD, 'Size': '18 6 5', 'CG': '0 0 0'}}
 
-################################################################################################################     
+###################################################################################################################   
+###################################################################################################################    
 
 # SET MATERIAL PROPERTIES
 # available indices: 94, 95, 96, 97, 98,
@@ -4895,7 +5069,8 @@ new_physics_properties = {
     98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0},   # slippery
 }
 
-################################################################################################################   
+###################################################################################################################   
+###################################################################################################################  
 
 # Call FUNCTIONS
 print("\n===============================================\n")
@@ -4915,11 +5090,10 @@ StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse,
 prop_editor = Prop_Editor(city_name, debug_props, input_bng_file = False)
 
 for i in random_parameters:
-    randomized_objects = prop_editor.place_props_randomly(**i)
-    prop_list.extend(randomized_objects)
+    prop_list.extend(prop_editor.place_props_randomly(**i))
     
 prop_editor.add_props(prop_list)
-prop_editor.write_bng_file(set_props)
+prop_editor.write_bangers(set_props)
 
 copy_dev_folder(mm1_folder, city_name)
 edit_and_copy_mmbangerdata(bangerdata_properties)
@@ -4941,18 +5115,22 @@ create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs, more_logs)
 
-# Blender (w.i.p.)
-create_blender_meshes()
-bpy.utils.register_class(UpdateUVMapping)
-bpy.utils.register_class(ExportBlenderPolygons)
-bpy.utils.register_class(AssignCustomProperties)
-set_blender_keybinding()
+start_game(mm1_folder, play_game)
 
 print("\n===============================================\n")
 print("Succesfully created " + f"{race_locale_name}!")
 print("\n===============================================\n")
 
-start_game(mm1_folder, play_game)
+bpy.utils.register_class(OBJECT_PT_CellTypePanel)
+bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
+# bpy.utils.register_class(OBJECT_PT_HUDTypePanel)
+bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
+
+create_blender_meshes()
+bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
+bpy.utils.register_class(OBJECT_OT_ExportPolygons)
+bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
+set_blender_keybinding()
 
 #? ============ For Reference ============
 
