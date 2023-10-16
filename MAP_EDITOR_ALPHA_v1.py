@@ -221,7 +221,7 @@ ELTRAIN = "r_l_train"
 ELTRAIN_SUPPORT_SLIM = "dp_left"
 ELTRAIN_SUPPORT_WIDE = "dp_left6"
 
-PLANE_LARGE = "vaboeing"  # no collision
+PLANE_LARGE = "vaboeing"  # No collision
  
 ################################################################################################################               
 ################################################################################################################
@@ -4307,9 +4307,8 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
 
     obj["cell_type"] = str(polygon_data["cell_type"])
     obj["material_index"] = str(polygon_data["material_index"])
-    
-    # TESTING
-    obj["hud_color"] = (polygon_data["hud_color"])
+        
+    set_hud_checkbox(polygon_data["hud_color"], obj)
     
     bpy.context.collection.objects.link(obj)
     mesh.from_pydata(coords, edges, faces)
@@ -4367,8 +4366,7 @@ def create_blender_meshes() -> None:
         enable_developer_extras()
         adjust_3D_view_settings()
         
-        load_all_dds_to_blender(dds_directory)
-        preload_all_dds_materials(dds_directory)
+        load_dds_resources(dds_directory, load_dds_materials)
                     
         texture_paths = [os.path.join(dds_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
 
@@ -4455,6 +4453,58 @@ class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
             layout.label(text = "No active object")
 
 
+# HUD PANEL
+HUD_IMPORT = [
+    (ROAD_HUD, "Road", "", "", 1),
+    (GRASS_HUD, "Grass", "", "", 2),
+    (WATER_HUD, "Water", "", "", 3),
+    (SNOW_HUD, "Snow", "", "", 4),
+    (WOOD_HUD, "Wood", "", "", 5),
+    (ORANGE, "Orange", "", "", 6),
+    (LIGHT_RED, "Light Red", "", "", 7),
+    (DARK_RED, "Dark Red", "", "", 8),
+    (LIGHT_YELLOW, "Light Yellow", "", "", 9)]
+
+def set_hud_checkbox(color, obj):
+    for i, (color_value, _, _, _, _) in enumerate(HUD_IMPORT):
+        if color_value == color:
+            obj.hud_colors[i] = True
+            break
+
+bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
+    name = "HUD Colors",
+    description = "Select the color of the HUD",
+    size = 9, 
+    default = (False, False, False, False, False, False, False, False, False))
+
+HUD_EXPORT = {
+    '#7b5931': "WOOD_HUD",
+    '#cdcecd': "SNOW_HUD",
+    '#5d8096': "WATER_HUD",
+    '#414441': "ROAD_HUD",
+    '#396d18': "GRASS_HUD",
+    '#af0000': "DARK_RED",
+    '#ffa500': "ORANGE",
+    '#ff7f7f': "LIGHT_RED",
+    '#ffffe0': "LIGHT_YELLOW"}
+
+class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
+    bl_label = "HUD Type"
+    bl_idname = "OBJECT_PT_hud_type"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+    
+    def draw(self, context):
+        layout = self.layout
+        obj = context.active_object
+        if obj:
+            for i, (_, name, _, _, _) in enumerate(HUD_IMPORT):
+                layout.prop(obj, "hud_colors", index=i, text=name, toggle=True)
+        else:
+            layout.label(text="No active object")
+            
+                
 # MISC PANEL
 bpy.types.Object.always_visible = bpy.props.BoolProperty(
     name = "Always Visible",
@@ -4479,51 +4529,6 @@ class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
         if obj:
             layout.prop(obj, "always_visible", text = "Always Visible")
             layout.prop(obj, "sort_vertices", text = "Sort Vertices")
-        else:
-            layout.label(text = "No active object")
-            
-        
-# HUD PANEL (not operational)         
-HUD_IMPORT = [
-    (WOOD_HUD, "Wood", "", "", 1),
-    (SNOW_HUD, "Snow", "", "", 2),
-    (WATER_HUD, "Water", "", "", 3),
-    (ROAD_HUD, "Road", "", "", 4),
-    (GRASS_HUD, "Grass", "", "", 5),
-    (DARK_RED, "Dark Red", "", "", 6),
-    (ORANGE, "Orange", "", "", 7),
-    (LIGHT_RED, "Light Red", "", "", 8),
-    (LIGHT_YELLOW, "Light Yellow", "", "", 9)]
-
-HUD_EXPORT = {
-    '#7b5931': "WOOD_HUD",
-    '#cdcecd': "SNOW_HUD",
-    '#5d8096': "WATER_HUD",
-    '#414441': "ROAD_HUD",
-    '#396d18': "GRASS_HUD",
-    '#af0000': "DARK_RED",
-    '#ffa500': "ORANGE",
-    '#ff7f7f': "LIGHT_RED",
-    '#ffffe0': "LIGHT_YELLOW"}
-
-bpy.types.Object.hud_color = bpy.props.EnumProperty(
-    items = HUD_IMPORT,
-    name = "HUD Type",
-    description = "Select the type of HUD")
-
-class OBJECT_PT_HUDTypePanel(bpy.types.Panel):
-    bl_label = "HUD Type"
-    bl_idname = "OBJECT_PT_hud_type"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
-    bl_context = "object"
-
-    def draw(self, context):
-        layout = self.layout
-        obj = context.active_object
-        if obj:
-            layout.prop(obj, "hud_color", text = "HUD")
-            
         else:
             layout.label(text = "No active object")
 
@@ -4575,17 +4580,14 @@ def extract_texture_from_polygon(obj):
             for node in mat.node_tree.nodes:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
-    return "CHECK04"  # if no texture is applied to the polygon, use CHECK04 as a placeholder
+    return "CHECK04"  # If no texture is applied to the polygon, use CHECK04 as a placeholder
     
 
 def export_blender_polygon_data(obj):
     data = extract_polygon_data(obj)
     texture_name = extract_texture_from_polygon(obj)
     vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
-                
-    tile_x = obj.get("tile_x", 1)
-    tile_y = obj.get("tile_y", 1)
-    
+        
     optional_attributes  = []
     
     material_index = MATERIAL_EXPORT.get(str(data['material_index']), None)
@@ -4595,27 +4597,25 @@ def export_blender_polygon_data(obj):
     cell_type = CELL_EXPORT.get(str(data['cell_type']), None)
     if cell_type:
         optional_attributes.append(f"cell_type = {cell_type}")
-    
+                    
+    hud_color = HUD_EXPORT.get(next((HUD_IMPORT[i][0] for i, checked in enumerate(obj.hud_colors) if checked), None), None)
+    if hud_color:
+        optional_attributes.append(f"hud_color = {hud_color}")
+
     if data['sort_vertices']:
         optional_attributes.append("sort_vertices = True")
     if data['always_visible']:
         optional_attributes.append("always_visible = True")
-        
     if data['rotate'] != 0.0:
         optional_attributes.append(f"rotate = {data['rotate']}")
         
-    # WIP
-    hud_color = data['hud_color']
-    if hud_color in HUD_EXPORT:
-        hud_color_str = f"hud_color = {HUD_EXPORT[hud_color]}"
-    else:
-        hud_color_str = f"hud_color = {hud_color}"  
-    optional_attributes.append(hud_color_str)
-    
     # Packing the optional attributes into a string    
     optional_variables = ",\n\t".join(optional_attributes)
+    
+    tile_x = obj.get("tile_x", 1)
+    tile_y = obj.get("tile_y", 1)
 
-    # Construct export string
+    # Create_polygon() template
     polygon_export_data = f"""
 create_polygon(
     bound_number = {data['bound_number']},
@@ -5114,8 +5114,8 @@ print("\n===============================================\n")
 
 bpy.utils.register_class(OBJECT_PT_CellTypePanel)
 bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
-# bpy.utils.register_class(OBJECT_PT_HUDTypePanel)
 bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
+bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
 
 create_blender_meshes()
 bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
