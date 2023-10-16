@@ -63,6 +63,11 @@ ai_streets = True               # change both to "True" if you want AI paths ## 
 ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
 lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
 
+# HUD
+shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
+debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
+debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
+
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
 cruise_start_pos = (60.0, 27.0, 330.0)
@@ -73,6 +78,7 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR
 
 # Blender
 dds_directory = Path.cwd() / 'DDS' 
+load_dds_materials = False      # change to "True" if you want to load all DDS materials (all textures are available regardless) (takes a few extra seconds to load)
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
@@ -82,11 +88,6 @@ debug_physics = False           # change to "True" if you want a PHYSICS Debug t
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
-
-# HUD
-shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
-debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
-debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
 # Advanced
 quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
@@ -2772,18 +2773,8 @@ def create_cells(city_name: str, truncate_cells: bool = False):
                 max_error_count = max(max_error_count, row_length)
             
             f.write(row)
-        
-        if max_error_count >= 254:
-            error_message = f"""
-            ***ERROR***
-            Character limit of 254 exceeded in .CELLS file.
-            Maximum character count encountered is {max_error_count}.
-            To solve the problem, set 'always_visible' to False for some polygons.
-            If the 'bound_number' is 99 (2 charachters), then it consumes 3 characters in the CELLS file.
-            """
-            raise ValueError(error_message)
-        
-        elif 200 <= max_warning_count < 254:
+            
+        if 200 <= max_warning_count < 254:
             warning_message = f"""
             ***WARNING***
             Close to row character limit 254 in .CELLS file. 
@@ -2793,7 +2784,17 @@ def create_cells(city_name: str, truncate_cells: bool = False):
             *************\n
             """
             print(warning_message)
-                                                
+        
+        elif max_error_count >= 254:
+            error_message = f"""
+            ***ERROR***
+            Character limit of 254 exceeded in .CELLS file.
+            Maximum character count encountered is {max_error_count}.
+            To solve the problem, set 'always_visible' to False for some polygons.
+            If the 'bound_number' is 99 (2 charachters), then it consumes 3 characters in the CELLS file.
+            """
+            raise ValueError(error_message)
+        
 
 # Create EXT file                      
 def create_ext(city_name, polygons):
@@ -4107,29 +4108,20 @@ def adjust_3D_view_settings() -> None:
                     shading.color_type = 'TEXTURE'
 
               
-def load_all_dds_to_blender(dds_directory: Path) -> None:
-    for file_name in os.listdir(dds_directory):
-        if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(dds_directory, file_name)
-            if texture_path not in bpy.data.images:
-                bpy.data.images.load(texture_path)
-
-
-def preload_all_dds_materials(dds_directory: Path) -> None:
+def load_dds_resources(dds_directory: Path, load_dds_materials: bool = False) -> None:
     for file_name in os.listdir(dds_directory):
         if file_name.lower().endswith(".dds"):
             texture_path = os.path.join(dds_directory, file_name)
 
-            # Load the DDS texture into Blender
             if texture_path not in bpy.data.images:
                 texture_image = bpy.data.images.load(texture_path)
             else:
                 texture_image = bpy.data.images[texture_path]
 
-            # Create a material using the DDS texture
-            material_name = os.path.splitext(os.path.basename(texture_path))[0]
-            if material_name not in bpy.data.materials:
-                create_material_from_texture(material_name, texture_image)
+            if load_dds_materials:
+                material_name = os.path.splitext(os.path.basename(texture_path))[0]
+                if material_name not in bpy.data.materials:
+                    create_material_from_texture(material_name, texture_image)
 
 
 def create_material_from_texture(material_name, texture_image):
@@ -4323,7 +4315,6 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
     mesh.from_pydata(coords, edges, faces)
     mesh.update()
     
-    # custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
     custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
     for prop in custom_properties:
         if prop in polygon_data:
@@ -4400,17 +4391,17 @@ CELL_IMPORT = [
     (str(WATER_DRIFT), "Water Drift", "", "", WATER_DRIFT),
     (str(NO_SKIDS), "No Skids", "", "", NO_SKIDS)]
 
-CELL_EXPORT = {
-    # We do not want to export the Default Cell Type
-    "1": "TUNNEL",
-    "2": "INDOORS",
-    "4": "WATER_DRIFT",
-    "200": "NO_SKIDS"}
-
 bpy.types.Object.cell_type = bpy.props.EnumProperty(
     items = CELL_IMPORT,
     name = "Cell Type",
     description = "Select the type of cell")
+
+CELL_EXPORT = {
+    # We do not want to export the Default Cell Type
+    str(TUNNEL): "TUNNEL",
+    str(INDOORS): "INDOORS",
+    str(WATER_DRIFT): "WATER_DRIFT",
+    str(NO_SKIDS): "NO_SKIDS"}
 
 class OBJECT_PT_CellTypePanel(bpy.types.Panel):
     bl_label = "Cell Type"
