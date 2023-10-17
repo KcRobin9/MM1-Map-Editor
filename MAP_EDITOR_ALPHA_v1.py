@@ -25,6 +25,7 @@ import re
 import bpy
 import csv
 import math
+import time
 import shutil
 import struct
 import random
@@ -95,6 +96,9 @@ more_logs = False               # change to "True" if you want to see additional
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
+
+# Time
+start_time = time.time()
 
 ################################################################################################################               
 ################################################################################################################
@@ -2983,7 +2987,7 @@ mmBridgeMgr :076850a0 {{
     GateOffDelay {GateOffDelay}
     BridgeOffDelay {BridgeOffDelay}
     GateOnDelay {GateOnDelay}
-    }}
+}}
     """
 
     default_config = {
@@ -2997,8 +3001,7 @@ mmBridgeMgr :076850a0 {{
         "GateOffDelay": 5.26,
         "BridgeOffDelay": 0.0,
         "GateOnDelay": 5.0,
-        "Mode": SINGLE,
-}
+        "Mode": SINGLE}
     
     if set_bridges:
         for config in configs:
@@ -4310,6 +4313,11 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
         
     set_hud_checkbox(polygon_data["hud_color"], obj)
     
+    
+    for coord in coords:
+        vertex_item = obj.vertex_coords.add()
+        vertex_item.x, vertex_item.y, vertex_item.z = coord
+    
     bpy.context.collection.objects.link(obj)
     mesh.from_pydata(coords, edges, faces)
     mesh.update()
@@ -4494,15 +4502,16 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "object"
+    bl_options = {'DEFAULT_CLOSED'}
     
     def draw(self, context):
         layout = self.layout
         obj = context.active_object
         if obj:
             for i, (_, name, _, _, _) in enumerate(HUD_IMPORT):
-                layout.prop(obj, "hud_colors", index=i, text=name, toggle=True)
+                layout.prop(obj, "hud_colors", index = i, text = name, toggle = True)
         else:
-            layout.label(text="No active object")
+            layout.label(text = "No active object")
             
                 
 # MISC PANEL
@@ -4531,7 +4540,45 @@ class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
             layout.prop(obj, "sort_vertices", text = "Sort Vertices")
         else:
             layout.label(text = "No active object")
+            
+            
+# VERTEX COORDINATES PANEL
+def update_vertex_coordinates(self, context):
+    obj = self.id_data
+    if obj and hasattr(obj.data, "vertices"):
+        for i, coord in enumerate(obj.vertex_coords):
+            if len(obj.data.vertices) > i:
+                obj.data.vertices[i].co = (coord.x, coord.y, coord.z)
+        obj.data.update()
 
+class VertexGroup(bpy.types.PropertyGroup):
+    x: bpy.props.FloatProperty(name = "X", update = update_vertex_coordinates)
+    y: bpy.props.FloatProperty(name = "Y", update = update_vertex_coordinates)
+    z: bpy.props.FloatProperty(name = "Z", update = update_vertex_coordinates)
+    
+bpy.utils.register_class(VertexGroup)
+
+bpy.types.Object.vertex_coords = bpy.props.CollectionProperty(type = VertexGroup)
+
+class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
+    bl_label = "Vertices"
+    bl_idname = "OBJECT_PT_vertex_coordinates"
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "object"
+
+    def draw(self, context):
+        obj = context.active_object
+        layout = self.layout
+        if obj:
+            for vertex in obj.vertex_coords:
+                col = layout.column(align = True)
+                col.prop(vertex, "x")
+                col.prop(vertex, "y")
+                col.prop(vertex, "z")
+        else:
+            layout.label(text = "No active object")
+            
 ###################################################################################################################
 ################################################################################################################### 
 
@@ -5064,9 +5111,9 @@ new_physics_properties = {
 ###################################################################################################################  
 
 # Call FUNCTIONS
-print("\n===============================================\n")
+print("\n======================================================\n")
 print("Generating " + f"{race_locale_name}...")
-print("\n===============================================\n")
+print("\n======================================================\n")
 
 create_folders(city_name)
 create_city_info()
@@ -5106,16 +5153,20 @@ create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices
 create_ar(city_name, mm1_folder, delete_shop)
 create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs, more_logs)
 
-start_game(mm1_folder, play_game)
+end_time = time.time()
+editor_time = end_time - start_time
 
-print("\n===============================================\n")
-print("Succesfully created " + f"{race_locale_name}!")
-print("\n===============================================\n")
+print("\n======================================================\n")
+print("Succesfully created " + f"{race_locale_name}! (in {editor_time:.4f} seconds)")
+print("\n======================================================\n")
+
+# start_game(mm1_folder, play_game)
 
 bpy.utils.register_class(OBJECT_PT_CellTypePanel)
 bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
 bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
 bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
+bpy.utils.register_class(OBJECT_PT_VertexCoordinates)
 
 create_blender_meshes()
 bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
