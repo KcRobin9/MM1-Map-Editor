@@ -51,23 +51,25 @@ delete_shop = True              # change to "True" to delete the raw city files 
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 
-set_props = True                # change to "True" if you want PROPS
 set_facades = True              # change to "True" if you want FACADES
-
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = True              # change to "True" if you want BRIDGES
 
-set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
+# PROPS
+set_props = True                # change to "True" if you want PROPS
+append_props = False            # change to "True" if you want to append props from an input props file
+input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  
+appended_props_f = "NEW_CHICAGO.BNG"  
 
+# HUD
+set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
+shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'
+
+# AI
 ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
 ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
 lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
-
-# HUD
-shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'         
-debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
-debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
@@ -88,6 +90,8 @@ debug_facades = False           # change to "True" if you want a FACADES Debug t
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
+debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
+debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # Advanced
@@ -3351,18 +3355,26 @@ Start: {self.start}
 End: {self.end}
 Name: {self.name}
     '''
-  
-  
+
+# PROP EDITOR CLASS
 class Prop_Editor:
-    def __init__(self, city_name: str, debug_props: bool = False, input_bng_file: bool = False):
+    def __init__(
+        self, city_name: str, debug_props: bool = False, 
+        input_banger_file: bool = False, output_banger_file: bool = False):
+        
         self.objects = []
         self.debug_props = debug_props
-        self.input_bng_file = input_bng_file
-        self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_bng_file else BASE_DIR / f"{city_name}"
+        self.input_banger_file = input_banger_file
+        self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_banger_file else BASE_DIR / f"{city_name}"
         self.debug_filename = "PROPS_debug.txt"
         self.prop_file_path = BASE_DIR / "EditorResources" / "Prop Dimensions.txt"
-        self.prop_data = self.load_prop_dimensions()    
-          
+        self.prop_data = self.load_prop_dimensions()   
+        
+        self.output_banger_file = output_banger_file or self.filename
+        
+        if self.input_banger_file:
+            self.read_bangers() 
+                                            
     def load_prop_dimensions(self):
         prop_data = {}
         
@@ -3483,6 +3495,33 @@ class Prop_Editor:
                 new_objects.append(new_object_dict)
         
         return new_objects
+    
+    
+    def append_props(self, new_objects, input_banger_file):
+        if input_banger_file:
+            original_count = len(self.objects)
+            
+            self.add_props(new_objects)
+            
+            new_count = len(self.objects)
+            
+            with open(self.filename, mode = "rb") as input_file:
+                current_count = read_unpack(input_file, '<I')[0]
+
+                # Create a new file to write combined data
+                with open(self.output_banger_file, mode = "wb") as output_file:
+                    write_pack(output_file, '<I', current_count + new_count - original_count)
+                    
+                    # Copy the original banger data
+                    output_file.write(input_file.read())
+                    
+                    # Write the new props
+                    for obj in self.objects[original_count:]:
+                        self.write_banger_data(output_file, obj)
+
+            if self.debug_props:
+                for index, obj in enumerate(self.objects[original_count:], original_count + 1):
+                    self.write_banger_debug(index, obj)
 
 #################################################################################
 #################################################################################
@@ -5033,7 +5072,7 @@ street_list = [cruise_start,
 ###################################################################################################################   
 ###################################################################################################################               
 
-# SET PROPS
+# ADD PROPS
 china_gate = {'offset': (0, 0.0, -20), 
               'face': (1 * HUGE, 0.0, -20), 
               'name': CHINATOWN_GATE}
@@ -5062,14 +5101,23 @@ random_sailboats = {
 
 random_cars = {
         'offset_y': 0.0,
-          'separator': 10.0,
-          'name': [VW_BEETLE, CITY_BUS, CADILLAC, CRUISER, FORD_F350, FASTBACK, MUSTANG99, ROADSTER, PANOZ_GTR1, SEMI]}
+        'separator': 10.0,
+        'name': [VW_BEETLE, CITY_BUS, CADILLAC, CRUISER, FORD_F350, FASTBACK, MUSTANG99, ROADSTER, PANOZ_GTR1, SEMI]}
 
 # Configure your random props here
-random_parameters = [
+random_params = [
     {"seed": 123, "num_objects": 1, "object_dict": random_trees, "x_range": (65, 135), "z_range": (-65, 65)},
     {"seed": 99, "num_objects": 1, "object_dict": random_sailboats, "x_range": (55, 135), "z_range": (-145, -205)},
     {"seed": 1, "num_objects": 2, "object_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}]
+
+# APPEND PROPS
+app_panoz_gtr = {
+    'offset': (5, 2, 5),
+    'end': (999, 2, 990),
+    'name': PANOZ_GTR1}
+
+appended_props = [app_panoz_gtr]
+
 
 # AudioIds
 MALLDOOR_AUD = 1
@@ -5125,9 +5173,14 @@ create_cnr(city_name, cnr_waypoints)
 Material_Editor.edit_materials(new_physics_properties, "physics.db", debug_physics)
 StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse, ai_map)
 
-prop_editor = Prop_Editor(city_name, debug_props, input_bng_file = False)
+# Append props
+prop_editor_app = Prop_Editor(input_props_f, debug_props, input_banger_file = append_props, output_banger_file = appended_props_f)
+prop_editor_app.append_props(appended_props, append_props)
 
-for i in random_parameters:
+# Add / Place props
+prop_editor = Prop_Editor(city_name, debug_props, input_banger_file = False)
+
+for i in random_params:
     prop_list.extend(prop_editor.place_props_randomly(**i))
     
 prop_editor.add_props(prop_list)
@@ -5160,7 +5213,7 @@ print("\n======================================================\n")
 print("Succesfully created " + f"{race_locale_name}! (in {editor_time:.4f} seconds)")
 print("\n======================================================\n")
 
-# start_game(mm1_folder, play_game)
+start_game(mm1_folder, play_game)
 
 bpy.utils.register_class(OBJECT_PT_CellTypePanel)
 bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
@@ -5173,11 +5226,3 @@ bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
 bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
 set_blender_keybinding()
-
-#? ============ For Reference ============
-
-# # Print the contents of a BNG file in the current working directory
-# prop_editor = Prop_Editor("CHICAGO.BNG", debug_props = debug_props, input_bng_file = True)
-# prop_editor.read_bng_file()
-# for objects in prop_editor.objects:
-#    print(objects)
