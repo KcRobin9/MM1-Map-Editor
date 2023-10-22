@@ -123,17 +123,17 @@ FOLLOW, ROADBLOCK, SPINOUT, PUSH, MIX = 0, 3, 4, 8, 15
 STATIONARY = 0 
 IN_TRAFFIC = 2
 
+# Waypoint Width
+LANE_4 = 15
+LANE_6 = 19
+LANE_ALLEY = 3
+
 # Waypoint Rotation
 ROT_S = 179.99
 ROT_W = -90
 ROT_E = 90
 ROT_N = 0.01
 ROT_AUTO = 0
-
-# Waypoint Width
-LANE_4 = 15
-LANE_6 = 19
-LANE_ALLEY = 3
 
 # Circuit Laps
 LAPS_2 = 2
@@ -3369,65 +3369,84 @@ Name: {self.name}
 
 # PROP EDITOR CLASS
 class Prop_Editor:
-    def __init__(
-        self, city_name: str, debug_props: bool = False, 
-        input_banger_file: bool = False, output_banger_file: bool = False):
+    def __init__(self, city_name: str, debug_props: bool = False, 
+                 input_banger_file: bool = False, output_banger_file: bool = False):
         
-        self.objects = []
-        self.debug_props = debug_props
-        self.input_banger_file = input_banger_file
+        self.objects = []  
+        self.city_name = city_name  
+         
         self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_banger_file else BASE_DIR / f"{city_name}"
+
+        self.debug_props = debug_props
         self.debug_filename = "PROPS_debug.txt"
-        self.prop_file_path = BASE_DIR / "EditorResources" / "Prop Dimensions.txt"
-        self.prop_data = self.load_prop_dimensions()   
         
+        self.prop_dim_file = BASE_DIR / "EditorResources" / "Prop Dimensions.txt"
+        self.loaded_prop_dimension = self.load_prop_dimensions()   
+        
+        self.input_banger_file = input_banger_file
         self.output_banger_file = output_banger_file or self.filename
         
         if self.input_banger_file:
             self.read_bangers() 
-                                            
-    def load_prop_dimensions(self):
-        prop_data = {}
+
+    def process_props(self, props: list):
+        racewise_props = {'DEFAULT': []}  # Dictionary to hold categorized props
+
+        # Categorize props by race mode and number
+        for prop in props:
+            race_mode = prop.get('race_mode', 'DEFAULT')
+            race_num = prop.get('race_num', '')
+            race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
+
+            racewise_props.setdefault(race_key, []).append(prop)
+
+        # Set the initial filename
+        current_filename = self.filename
         
-        with open(self.prop_file_path, "r") as f:
-            for line in f:
-                name, value_x, value_y, value_z = line.split()
-                prop_data[name] = Vector3(float(value_x), float(value_y), float(value_z))
-        return prop_data
-    
+        # Process and write each categorized group of props
+        for race_key, race_props in racewise_props.items():
+            self._reset_objects()  # Clear the previous objects
+            self.add_props(race_props)
+            
+            # Modify the filename based on the race_key and update current_filename
+            current_filename = self._set_filename_suffix(race_key, current_filename)
+            
+            # Write the props to the modified filename
+            self.write_bangers(True, current_filename)
+
     def read_bangers(self):
         with open(self.filename, mode = "rb") as f:
             num_objects = read_unpack(f, '<I')[0]
             
             for _ in range(num_objects):
                 self.objects.append(BinaryBanger.read_banger_params(f))
-            
-    def write_bangers(self, set_props: bool = False):
+     
+    def write_bangers(self, set_props: bool = False, filename = None):
+        target_filename = filename or self.filename
+
         if not set_props:
             return
 
-        with open(self.filename, mode = "wb") as f:
+        with open(target_filename, mode = "wb") as f:
             write_pack(f, '<I', len(self.objects))
 
-            for index, obj in enumerate(self.objects, 1):
+            for idx, obj in enumerate(self.objects, 1):
                 if self.debug_props:
-                    self.write_banger_debug(index, obj)
-                self.write_banger_data(f, obj)
+                    self.write_banger_debug(idx, obj)
+        
+                write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
+                for char in obj.name:
+                    write_pack(f, '<s', bytes(char, encoding = 'utf8'))
 
-    def write_banger_data(self, f, obj):
-        write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
-        for char in obj.name:
-            write_pack(f, '<s', bytes(char, encoding = 'utf8'))
-
-    def write_banger_debug(self, index, obj):
-        cleaned_name = obj.name.rstrip('\x00')
+    def write_banger_debug(self, idx, obj):
+        cleaned_prop_name = obj.name.rstrip('\x00')
         
         with open(self.debug_filename, "a") as debug_f:
             debug_f.write(textwrap.dedent(f'''
-                Prop {index}
+                Prop {idx}
                 Start: {obj.start}
                 End: {obj.end}
-                Name: {cleaned_name}
+                Name: {cleaned_prop_name}
             '''))
                       
     def add_props(self, new_objects):
@@ -3445,7 +3464,7 @@ class Prop_Editor:
             
             separator = obj.get('separator', default_separator_value)
             if isinstance(separator, str) and separator.lower() in ["x", "y", "z"]:
-                prop_dims = self.prop_data.get(name, Vector3(1, 1, 1))
+                prop_dims = self.loaded_prop_dimension.get(name, Vector3(1, 1, 1))
                 separator = getattr(prop_dims, separator.lower())
                 
             elif not isinstance(separator, (int, float)):
@@ -3519,20 +3538,46 @@ class Prop_Editor:
             with open(self.filename, mode = "rb") as input_file:
                 current_count = read_unpack(input_file, '<I')[0]
 
-                # Create a new file to write combined data
                 with open(self.output_banger_file, mode = "wb") as output_file:
                     write_pack(output_file, '<I', current_count + new_count - original_count)
                     
-                    # Copy the original banger data
                     output_file.write(input_file.read())
                     
-                    # Write the new props
-                    for obj in self.objects[original_count:]:
-                        self.write_banger_data(output_file, obj)
+                    self.write_bangers(set_props = True, filename = self.output_banger_file)
 
             if self.debug_props:
                 for index, obj in enumerate(self.objects[original_count:], original_count + 1):
                     self.write_banger_debug(index, obj)
+                                        
+    def _race_mode_to_short(self, race_mode: str) -> str:
+        mode_mapping = {
+            CIRCUIT: 'C',
+            RACE: 'R',
+            BLITZ: 'B',
+        }
+        return mode_mapping.get(race_mode, race_mode)
+    
+    def _reset_objects(self):
+        self.objects.clear()
+
+    def _set_filename_suffix(self, race_key, current_filename):
+        if race_key == 'DEFAULT':
+            return current_filename
+
+        race_parts = race_key.split('_')
+        if len(race_parts) == 2:
+            race_mode, race_num = race_parts
+            short_race_mode = self._race_mode_to_short(race_mode)
+            return current_filename.parent / f"{current_filename.stem}_{short_race_mode}{race_num}{current_filename.suffix}"
+                                                                     
+    def load_prop_dimensions(self):
+        extracted_prop_dim = {}
+        
+        with open(self.prop_dim_file, "r") as f:
+            for line in f:
+                prop_name, value_x, value_y, value_z = line.split()
+                extracted_prop_dim[prop_name] = Vector3(float(value_x), float(value_y), float(value_z))
+        return extracted_prop_dim
 
 #################################################################################
 #################################################################################
@@ -5083,10 +5128,14 @@ street_list = [cruise_start,
 ###################################################################################################################   
 ###################################################################################################################               
 
+# lmao
+
 # ADD PROPS
 china_gate = {'offset': (0, 0.0, -20), 
               'face': (1 * HUGE, 0.0, -20), 
-              'name': CHINATOWN_GATE}
+              'name': CHINATOWN_GATE,
+              'race_mode': CIRCUIT,
+              'race_num': 0}
 
 trailer_set = {'offset': (60, 0.0, 70), 
                'end': (60, 0.0, -50), 
@@ -5124,7 +5173,7 @@ random_params = [
 # APPEND PROPS
 app_panoz_gtr = {
     'offset': (5, 2, 5),
-    'end': (999, 2, 990),
+    'end': (999, 2, 999),
     'name': PANOZ_GTR1}
 
 appended_props = [app_panoz_gtr]
@@ -5193,9 +5242,9 @@ prop_editor = Prop_Editor(city_name, debug_props, input_banger_file = False)
 
 for i in random_params:
     prop_list.extend(prop_editor.place_props_randomly(**i))
-    
-prop_editor.add_props(prop_list)
-prop_editor.write_bangers(set_props)
+
+prop_editor.process_props(prop_list)
+
 
 copy_dev_folder(mm1_folder, city_name)
 edit_and_copy_mmbangerdata(bangerdata_properties)
