@@ -41,7 +41,7 @@ import matplotlib.transforms as mtransforms
 #! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
 city_name = "First_City"                        # One word (no spaces)  --- name of the .ar file
 race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
-mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM game that comes with the Editor
+mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM game that comes with the repo download
 
 
 #* SETUP II (Map Creation)      
@@ -57,7 +57,7 @@ set_bridges = True              # change to "True" if you want BRIDGES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
-append_props = False            # change to "True" if you want to append props from an input props file
+append_props = False            # change to "True" if you want to append props to an input props file
 input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  
 appended_props_f = "NEW_CHICAGO.BNG"  
 
@@ -369,31 +369,31 @@ anim_data = {
 
 
 #* SETUP VI (optional, Bridges)
-bridge_object = "vpmustang99"       # you can pass any object
+f"""
+    INFO
+    1) You can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
+    2) You can set a bridge without any attributes like this:
+        (-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [])
+    
+    
+    3) Supported orientations:
+    NORTH, SOUTH, EAST, WEST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST
+    Or you can manually set the orientation in degrees (0.0 - 360.0).
+"""
+
+bridge_object = "vpmustang99"  # you add/pass any prop/car
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
-# N.B.: you can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
 bridges = [
     ((-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [
     ((-50.0, 0.15, -115.0), 270, 2, CROSSGATE),
     ((-50.0, 0.15, -85.0), -270, 2, CROSSGATE)
     ]),  
-    ((-119.0, 0.01, -100.0), "H.E", 3, BRIDGE_WIDE, [
+    ((-119.0, 0.01, -100.0), "EAST", 3, BRIDGE_WIDE, [
     ((-119.0, 0.15, -115.0), 270, 3, CROSSGATE),
     ((-119.0, 0.15, -85.0), -270, 3, CROSSGATE)
     ]),
 ] 
-
-# Here's how you set a bridge without any attributes
-# ((-119.01, 0.01, -100.0), "H.E", 3, BRIDGE_WIDE, [])
-
-# Supported orientations
-f"""
-    'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.
-    Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
-    Or you can manually set the orientation in degrees (0 - 360).
-"""
-
 
 #* SETUP VII (optional, Custom Bridge Configs)
 bridge_race_0 = {
@@ -2911,74 +2911,85 @@ def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_ani
 
 
 def create_bridges(all_bridges, set_bridges):
-    bridge_folder = SHOP_CITY
-    bridge_file = f"{city_name}.GIZMO"
-    
-    if set_bridges:
-        bridge_gizmo = bridge_folder / bridge_file
+    if not set_bridges:
+        return
+
+    bridge_gizmo = SHOP_CITY / f"{city_name}.GIZMO"
+
+    # Remove any existing bridge gizmo file since we are appending bridges to it
+    if bridge_gizmo.exists():
+        os.remove(bridge_gizmo)
+
+    def calculate_facing(offset: Tuple[float, float, float], orientation: Union[str, float]) -> List[float]:
+        ORIENTATION_MAPPINGS = {
+            "NORTH": (-10, 0, 0),
+            "SOUTH": (10, 0, 0),
+            "EAST": (0, 0, 10),
+            "WEST": (0, 0, -10),
+            "NORTH_EAST": (10, 0, 10),
+            "NORTH_WEST": (10, 0, -10),
+            "SOUTH_EAST": (-10, 0, 10),
+            "SOUTH_WEST": (-10, 0, -10)
+        }
+
+        if isinstance(orientation, (float, int)):
+            angle_radians = math.radians(orientation)
+            return [
+                offset[0] + 10 * math.cos(angle_radians),
+                offset[1],
+                offset[2] + 10 * math.sin(angle_radians)
+            ]
+
+        if orientation in ORIENTATION_MAPPINGS:
+            return [offset[i] + ORIENTATION_MAPPINGS[orientation][i] for i in range(3)]
         
-        if bridge_gizmo.exists():
-            os.remove(bridge_gizmo)
+        raise ValueError(
+            """
+            ***ERROR***
+            Invalid Bridge Orientation.
+            Please choose from one of the following: NORTH, SOUTH, EAST, WEST, 
+            NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST or set the orientation 
+            using a numeric value between 0 and 360 degrees.
+            """
+        )
 
-        def calculate_facing(offset, orientation):
-            if isinstance(orientation, (float, int)): 
-                angle_radians = math.radians(orientation)  
-                return [
-                    offset[0] + 10 * math.cos(angle_radians), 
-                    offset[1], 
-                    offset[2] + 10 * math.sin(angle_radians)
-                ]
-            elif isinstance(orientation, str):
-                mappings = {
-                    "V": (-10, 0, 0),
-                    "V.F": (10, 0, 0),
-                    "H.E": (0, 0, 10),
-                    "H.W": (0, 0, -10),
-                    "N.E": (10, 0, 10),
-                    "N.W": (10, 0, -10),
-                    "S.E": (-10, 0, 10),
-                    "S.W": (-10, 0, -10)
-                }
-                try:
-                    return [offset[i] + mappings[orientation][i] for i in range(3)]
-                except KeyError:
-                    raise ValueError(f"""
-                    Invalid Bridge Orientation.
-                    Please choose from 'V', 'V.F', 'H.E', 'H.W', 'N.E', 'N.W', 'S.E', or 'S.W'.
-                    Where 'V' is vertical, 'H' is horizontal, 'F' is flipped, and e.g. 'N.E' is (diagonal) North East.
-                    Or set the orientation using a numeric value between 0 and 360 degrees.
-                    """)
-            else:
-                raise TypeError("Invalid type for bridge orientation. Expected a string or a number.")
+    def generate_additional_objects_lines(additional_objects):
+        lines = ""
+        for obj in additional_objects:
+            obj_offset, obj_orientation, obj_id, obj_type = obj
+            obj_facing = calculate_facing(obj_offset, obj_orientation)
+            
+            line = f"\t{obj_type},{obj_id},{','.join(map(str, obj_offset))},{','.join(map(str, obj_facing))}\n"
+            lines += line
+        return lines
 
-        with bridge_gizmo.open("a") as f: 
-            for bridge in all_bridges:
-                bridge_offset, bridge_orientation, bridge_number, bridge_object, additional_objects = bridge
-                bridge_facing = calculate_facing(bridge_offset, bridge_orientation)
+    with open(bridge_gizmo, "a") as f:
+        for bridge in all_bridges:
+            bridge_offset, bridge_orientation, bridge_number, bridge_object, additional_objects = bridge
+            bridge_facing = calculate_facing(bridge_offset, bridge_orientation)
 
-                drawbridge_values = f"{bridge_object},0,{bridge_offset[0]},{bridge_offset[1]},{bridge_offset[2]},{bridge_facing[0]},{bridge_facing[1]},{bridge_facing[2]}"
-                
-                additional_objects_lines = ""
-                for obj in additional_objects:
-                    obj_offset, obj_orientation, obj_id, obj_type = obj
-                    obj_facing = calculate_facing(obj_offset, obj_orientation)
-                    
-                    additional_objects_lines += f"\t{obj_type},{obj_id},{obj_offset[0]},{obj_offset[1]},{obj_offset[2]},{obj_facing[0]},{obj_facing[1]},{obj_facing[2]}\n"
+            drawbridge_values = f"{bridge_object},0,{','.join(map(str, bridge_offset))},{','.join(map(str, bridge_facing))}"
 
-                num_fillers = 5 - len(additional_objects)
-                bridge_filler = f"{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99"
-                bridge_fillers = "".join([f"\t{bridge_filler}\n" for _ in range(num_fillers)])
-                
-                bridge_data = f"""DrawBridge{bridge_number}
-\t{drawbridge_values} 
-{additional_objects_lines}{bridge_fillers}DrawBridge{bridge_number}"""
+            additional_objects_lines = generate_additional_objects_lines(additional_objects)
 
-                if bridge_data:
-                    f.write(bridge_data)
-                    f.write("\n")
-                    
-                    
-def custom_bridge_config(configs, set_bridges, tune_folder = SHOP / 'TUNE'):    
+            num_fillers = 5 - len(additional_objects)
+            bridge_filler = f"\t{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"
+            bridge_fillers = "".join([bridge_filler for _ in range(num_fillers)])
+            
+            bridge_data = (
+                f"DrawBridge{bridge_number}\n"
+                f"\t{drawbridge_values}\n"
+                f"{additional_objects_lines}"
+                f"{bridge_fillers}"
+                f"DrawBridge{bridge_number}"
+            )
+
+            if bridge_data:
+                f.write(bridge_data)
+                f.write("\n")
+
+
+def custom_bridge_config(configs, set_bridges, tune_folder):    
     bridge_config_template = """
 mmBridgeMgr :076850a0 {{
     BridgeDelta {BridgeDelta}
