@@ -57,7 +57,7 @@ set_bridges = True              # change to "True" if you want BRIDGES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
-append_props = False            # change to "True" if you want to append props to an input props file
+append_props = True             # change to "True" if you want to append props to an input props file
 input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  
 appended_props_f = "NEW_CHICAGO.BNG"  
 
@@ -486,7 +486,7 @@ class Vector2:
     def tuple(self):
         return (self.x, self.y)
 
-    def Cross(self, rhs=None):
+    def Cross(self, rhs = None):
         if rhs is None:
             return Vector2(self.y, -self.x)
 
@@ -2812,10 +2812,9 @@ def create_ext(city_name, polygons):
     min_x, max_x = min(x_coords), max(x_coords)
     min_z, max_z = min(z_coords), max(z_coords)
 
-    ext_folder = SHOP_CITY
     ext_file = f"{city_name}.EXT"
 
-    with open(ext_folder / ext_file, 'w') as f:
+    with open(SHOP_CITY / ext_file, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
     return min_x, max_x, min_z, max_z
@@ -2930,7 +2929,7 @@ def create_bridges(all_bridges, set_bridges):
             "NORTH_WEST": (10, 0, -10),
             "SOUTH_EAST": (-10, 0, 10),
             "SOUTH_WEST": (-10, 0, -10)
-        }
+}
 
         if isinstance(orientation, (float, int)):
             angle_radians = math.radians(orientation)
@@ -3333,110 +3332,113 @@ def create_portals(
                                
 # BINARYBANGER CLASS                            
 class BinaryBanger:
-    def __init__(self, start: Vector3, end: Vector3, name: str, room: int = 4, flags: int = 0x800):
+    def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, name: str):
         self.room = room
         self.flags = flags
-        self.start = start
-        self.end = end
+        self.offset = offset
+        self.face = face
         self.name = name
         
     @classmethod
-    def read_banger_params(cls, f):
-        room, flags = read_unpack(f, '<HH')
-        start_x, start_y, start_z = read_unpack(f, '<3f')
-        end_x, end_y, end_z = read_unpack(f, '<3f')
-        
-        name = ''
-        char = f.read(1).decode('utf8')
-        while char != "\x00":
-            name += char
-            char = f.read(1).decode('utf8')
+    def readn(cls, f):
+        return read_unpack(f, '<I')[0]
             
-        start = Vector3(start_x, start_y, start_z)
-        end = Vector3(end_x, end_y, end_z)
-        
-        return cls(start, end, name, room, flags)
-        
+    @classmethod
+    def read(cls, f):
+        room, flags = read_unpack(f, '<HH')
+        offset = Vector3.read(f)
+        face = Vector3.read(f)  
+        name = cls.read_name(f)
+        return cls(room, flags, offset, face, name)
+    
+    @staticmethod
+    def read_name(f):
+        name_data = bytearray()
+        while True:
+            char = f.read(1)
+            if char == b'\x00':
+                break
+            name_data.extend(char)
+        return name_data.decode('utf-8')
+                
     def __repr__(self):
         return f'''
 BinaryBanger
 Room: {self.room}
 Flags: {self.flags}
-Start: {self.start}
-End: {self.end}
-Name: {self.name}
+Start: {self.offset}
+Face: {self.face}
+Prop Name: {self.name}
     '''
 
 # PROP EDITOR CLASS
 class Prop_Editor:
-    def __init__(self, city_name: str, debug_props: bool = False, 
-                 input_banger_file: bool = False, output_banger_file: bool = False):
-        
+    def __init__(self, city_name: str, debug_props: bool = False, append_props: bool = False, output_prop_f: str = None):
         self.objects = []  
         self.city_name = city_name  
-         
-        self.filename = SHOP_CITY / f"{city_name}.BNG" if not input_banger_file else BASE_DIR / f"{city_name}"
 
+        if append_props:
+            self.filename = city_name 
+            self.read_bangers()
+        else:
+            self.filename = SHOP_CITY / f"{city_name}.BNG"
+        
         self.debug_props = debug_props
         self.debug_filename = "PROPS_debug.txt"
         
         self.prop_dim_file = BASE_DIR / "EditorResources" / "Prop Dimensions.txt"
-        self.loaded_prop_dimension = self.load_prop_dimensions()   
+        self.loaded_prop_dimension = self.load_dimensions()   
+                    
+        self.output_prop_f = output_prop_f or self.filename
         
-        self.input_banger_file = input_banger_file
-        self.output_banger_file = output_banger_file or self.filename
-        
-        if self.input_banger_file:
-            self.read_bangers() 
-
     def process_props(self, props: list):
-        racewise_props = {'DEFAULT': []}  # Dictionary to hold categorized props
+        per_race_props = {'DEFAULT': []}  
 
-        # Categorize props by race mode and number
         for prop in props:
             race_mode = prop.get('race_mode', 'DEFAULT')
             race_num = prop.get('race_num', '')
+            
             race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
+            per_race_props.setdefault(race_key, []).append(prop)
 
-            racewise_props.setdefault(race_key, []).append(prop)
-
-        # Set the initial filename
         current_filename = self.filename
         
-        # Process and write each categorized group of props
-        for race_key, race_props in racewise_props.items():
-            self._reset_objects()  # Clear the previous objects
+        for race_key, race_props in per_race_props.items():
+            self._reset_objects()  
             self.add_props(race_props)
             
-            # Modify the filename based on the race_key and update current_filename
+            # Update the filename based on the race key
             current_filename = self._set_filename_suffix(race_key, current_filename)
             
-            # Write the props to the modified filename
             self.write_bangers(True, current_filename)
 
-    def read_bangers(self):
-        with open(self.filename, mode = "rb") as f:
-            num_objects = read_unpack(f, '<I')[0]
+    def read_bangers(self, filename = None):
+        if filename is None:
+            filename = self.filename
             
-            for _ in range(num_objects):
-                self.objects.append(BinaryBanger.read_banger_params(f))
-     
+        with open(filename, mode = "rb") as f:
+            num_props = BinaryBanger.readn(f)
+            for _ in range(num_props):
+                prop_data = BinaryBanger.read(f)
+                self.objects.append(prop_data)
+                
+    # robin  
     def write_bangers(self, set_props: bool = False, filename = None):
         target_filename = filename or self.filename
 
-        if not set_props:
-            return
+        if set_props:
+            with open(target_filename, mode = "wb") as f:
+                write_pack(f, '<I', len(self.objects))
 
-        with open(target_filename, mode = "wb") as f:
-            write_pack(f, '<I', len(self.objects))
-
-            for idx, obj in enumerate(self.objects, 1):
-                if self.debug_props:
-                    self.write_banger_debug(idx, obj)
-        
-                write_pack(f, '<HH3f3f', obj.room, obj.flags, obj.start.x, obj.start.y, obj.start.z, obj.end.x, obj.end.y, obj.end.z)
-                for char in obj.name:
-                    write_pack(f, '<s', bytes(char, encoding = 'utf8'))
+                for idx, obj in enumerate(self.objects, 1):
+                    if self.debug_props:
+                        self.write_banger_debug(idx, obj)
+            
+                    write_pack(f, '<HH', 4, 0x800)  # Hardcoded Room and Flags values to ensure player's car can collide with props                  
+                    obj.offset.write(f)		
+                    obj.face.write(f)		
+                    for char in obj.name:
+                        write_pack(f, '<s', bytes(char, encoding = 'utf8'))
 
     def write_banger_debug(self, idx, obj):
         cleaned_prop_name = obj.name.rstrip('\x00')
@@ -3444,123 +3446,112 @@ class Prop_Editor:
         with open(self.debug_filename, "a") as debug_f:
             debug_f.write(textwrap.dedent(f'''
                 Prop {idx}
-                Start: {obj.start}
-                End: {obj.end}
+                Room: {obj.room}
+                Flags: {obj.flags}
+                Offset: {obj.offset}
+                Face: {obj.face}
                 Name: {cleaned_prop_name}
             '''))
                       
-    def add_props(self, new_objects):
-        default_separator_value = 10.0
-    
-        for obj in new_objects:
-            offset = Vector3(*obj['offset'])
-            end = Vector3(*obj.get('end', obj['offset']))  
-            face = obj.get('face')  
-            name = obj['name']
+    def add_props(self, new_props):    
+        for prop in new_props:
+            offset = Vector3(*prop['offset'])
+            end = Vector3(*prop.get('end', prop['offset']))  
+            face = prop.get('face')  
+            name = prop['name']
 
             # Compute diagonal and its length
             diagonal = end - offset
             diagonal_length = diagonal.Mag()
             
-            separator = obj.get('separator', default_separator_value)
+            separator = prop.get('separator', 10.0)  # Use 10.0 as default separator
             if isinstance(separator, str) and separator.lower() in ["x", "y", "z"]:
                 prop_dims = self.loaded_prop_dimension.get(name, Vector3(1, 1, 1))
                 separator = getattr(prop_dims, separator.lower())
-                
             elif not isinstance(separator, (int, float)):
-                separator = default_separator_value
+                separator = 10.0
 
-            if face is None:
-                # Create a facing vector that points from offset to end
+            if face is None:  # Create a facing vector that points from offset to end
                 face = (Vector3(diagonal.x * 1e6, diagonal.y * 1e6, diagonal.z * 1e6))
             else:
-                face = Vector3(*face)
+                face = Vector3(*face)  # Transform the user-input face to a Vector3
 
-            self.objects.append(BinaryBanger(offset, face, name + "\x00"))
+            self.objects.append(BinaryBanger(4, 0x800, offset, face, name + "\x00"))
 
-            # Number of props is determined by the length of the diagonal and separator
+            # The number of props is determined by the length of the diagonal and separator
             num_props = int(diagonal_length / separator)
 
             # Add objects along the diagonal
             for i in range(1, num_props):
                 # Compute new offset along the diagonal
                 new_offset = offset + (diagonal.Normalize() * (i * separator))
-                self.objects.append(BinaryBanger(new_offset, face, name + "\x00"))
+                self.objects.append(BinaryBanger(4, 0x800, new_offset, face, name + "\x00"))
   
-    def place_props_randomly(self, seed, num_objects, object_dict, x_range, z_range):
+    def place_props_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: float, z_range: float):
         new_objects = []
 
         # Ensure 'name' is a list for consistent handling later
-        if isinstance(object_dict.get('name'), str):
-            object_dict['name'] = [object_dict['name']]
+        if isinstance(props_dict.get('name'), str):
+            props_dict['name'] = [props_dict['name']]
             
         random.seed(seed)
 
-        for name in object_dict['name']:
-            for _ in range(num_objects):
+        for name in props_dict['name']:
+            for _ in range(num_props):
                 x = random.uniform(*x_range)
                 z = random.uniform(*z_range)
-                y = object_dict.get('offset_y', 0.0)  
+                y = props_dict.get('offset_y', 0.0)  
 
-                # Creating a new object dict, ensuring the name is not a list
-                new_object_dict = {
+                new_prop_dict = {
                     'name': name,
-                    'offset': (x, y, z)
-                }
-
-                # If face is not defined, create random face vector
-                if 'face' not in object_dict:
+                    'offset': (x, y, z)}
+                
+                if 'face' not in props_dict:  # If face is not defined, create random face vectors
                     face_x = random.uniform(-1e6, 1e6)
-                    face_y = random.uniform(-1e6, 1e6)  # N / A
+                    face_y = random.uniform(-1e6, 1e6)  # Not applicable
                     face_z = random.uniform(-1e6, 1e6)
-                    new_object_dict['face'] = (face_x, face_y, face_z)
+                    new_prop_dict['face'] = (face_x, face_y, face_z)
                 else:
-                    new_object_dict['face'] = object_dict['face']
+                    new_prop_dict['face'] = props_dict['face']
 
-                # Copy additional properties from object_dict if they exist
-                for key, value in object_dict.items():
-                    if key not in new_object_dict:
-                        new_object_dict[key] = value
+                # Copy additional prop properties if they exist
+                for key, value in props_dict.items():
+                    if key not in new_prop_dict:
+                        new_prop_dict[key] = value
 
-                new_objects.append(new_object_dict)
+                new_objects.append(new_prop_dict)
         
         return new_objects
     
-    
-    def append_props(self, new_objects, input_banger_file):
-        if input_banger_file:
-            original_count = len(self.objects)
-            
-            self.add_props(new_objects)
-            
-            new_count = len(self.objects)
-            
-            with open(self.filename, mode = "rb") as input_file:
-                current_count = read_unpack(input_file, '<I')[0]
+    def append_props(self, new_objects):
+        original_count = len(self.objects)
+        self.add_props(new_objects)
 
-                with open(self.output_banger_file, mode = "wb") as output_file:
-                    write_pack(output_file, '<I', current_count + new_count - original_count)
-                    
-                    output_file.write(input_file.read())
-                    
-                    self.write_bangers(set_props = True, filename = self.output_banger_file)
+        new_count = len(self.objects)
 
-            if self.debug_props:
-                for index, obj in enumerate(self.objects[original_count:], original_count + 1):
-                    self.write_banger_debug(index, obj)
+        with open(self.filename, mode = "rb") as in_f:
+            current_count = read_unpack(in_f, '<I')[0]
+                    
+            with open(self.output_prop_f, mode = "wb") as out_f:
+                write_pack(out_f, '<I', current_count + new_count - original_count)
+                out_f.write(in_f.read())
+                self.write_bangers(set_props = True, filename = self.output_prop_f)    
+                    
+        if self.debug_props:
+            for idx, obj in enumerate(self.objects[original_count:], original_count + 1):
+                self.write_banger_debug(idx, obj)
                                         
     def _race_mode_to_short(self, race_mode: str) -> str:
         mode_mapping = {
             CIRCUIT: 'C',
             RACE: 'R',
-            BLITZ: 'B',
-        }
+            BLITZ: 'B'}
         return mode_mapping.get(race_mode, race_mode)
     
     def _reset_objects(self):
         self.objects.clear()
 
-    def _set_filename_suffix(self, race_key, current_filename):
+    def _set_filename_suffix(self, race_key, current_filename):        
         if race_key == 'DEFAULT':
             return current_filename
 
@@ -3570,7 +3561,7 @@ class Prop_Editor:
             short_race_mode = self._race_mode_to_short(race_mode)
             return current_filename.parent / f"{current_filename.stem}_{short_race_mode}{race_num}{current_filename.suffix}"
                                                                      
-    def load_prop_dimensions(self):
+    def load_dimensions(self):
         extracted_prop_dim = {}
         
         with open(self.prop_dim_file, "r") as f:
@@ -3600,20 +3591,20 @@ class Material_Editor:
         self.sound = sound
         self.velocity = velocity
         self.ptx_color = ptx_color 
+        
+    @staticmethod
+    def readn(f, count):
+        return [Material_Editor.read(f) for _ in range(count)]
 
     @staticmethod
-    def read_materials(f):
+    def read(f):
         name = f.read(32).decode("latin-1").rstrip('\x00')
         params = read_unpack(f, '>7f2I')
         velocity = Vector2.read(f)
         ptx_color = Vector3.read(f)
         return Material_Editor(name, *params, velocity, ptx_color)
 
-    @staticmethod
-    def readn(f, count):
-        return [Material_Editor.read_materials(f) for _ in range(count)]
-
-    def write_material_data(self, f):        
+    def write(self, f):        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
         write_pack(f, '>7f2I', 
                    self.friction, self.elasticity, self.drag, 
@@ -3623,11 +3614,11 @@ class Material_Editor:
         self.ptx_color.write(f)
 
     @staticmethod
-    def write_materials(file_name, agi_phys_parameters):
-        with open(file_name, 'wb') as f:
-            write_pack(f, '>I', len(agi_phys_parameters))
-            for param in agi_phys_parameters:                
-                param.write_material_data(f)
+    def write_all(physics_db, physics_params):
+        with open(physics_db, 'wb') as f:
+            write_pack(f, '>I', len(physics_params))
+            for param in physics_params:                
+                param.write(f)
                 
     @classmethod    
     def edit_materials(cls, materials_properties, physics_output_file, debug_physics):
@@ -3643,7 +3634,7 @@ class Material_Editor:
             for prop, value in properties.items():
                 setattr(read_material_file[material_index - 1], prop, value)
             
-        cls.write_materials(physics_output_file, read_material_file)
+        cls.write_all(physics_output_file, read_material_file)
         MOVE(physics_output_file, physics_folder / physics_output_file)
         
         if debug_physics:
@@ -3983,118 +3974,134 @@ canvas.addEventListener('mousedown', function(e) {{
 
 # FACADE CLASS
 class Facade_Editor:
-    def __init__(self, flags: int, start: Vector3, end: Vector3, sides: Vector3, scale: float, name: str) -> None:
-        self.room = 0x1
+    def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, sides: Vector3, scale: float, name: str) -> None:
+        self.room = room
         self.flags = flags
-        self.start = start
-        self.end = end
+        self.offset = offset
+        self.face = face
         self.sides = sides
         self.scale = scale
         self.name = name
 
     @classmethod
-    def read_facades(cls, f):
-        _, flags = read_unpack(f, '2H')
-        start = Vector3.read(f)
-        end = Vector3.read(f)
+    def read(cls, f):
+        room, flags = read_unpack(f, '2H')
+        offset = Vector3.read(f)
+        face = Vector3.read(f)
         sides = Vector3.read(f)
         scale = read_unpack(f, 'f')[0]
-
+        name = cls.read_name(f)
+        return cls(room, flags, offset, face, sides, scale, name)
+    
+    @staticmethod
+    def read_name(f):
         name_data = bytearray()
         while True:
             char = f.read(1)
             if char == b'\x00':
                 break
             name_data.extend(char)
-        name = name_data.decode('utf-8')
-        
-        return cls(flags, start, end, sides, scale, name)
+        return name_data.decode('utf-8')
+    
+    @staticmethod
+    def read_scales(scales_file):
+        scales = {}
+        with open(scales_file, 'r') as f:
+            for line in f:
+                name, scale = line.strip().split(": ")
+                scales[name] = float(scale)
+        return scales
 
-    def write_facades(self, f):
-        write_pack(f, '2H', self.room, self.flags)
-        write_pack(f, '6f', *self.start, *self.end)
+    def write(self, f):
+        write_pack(f, '2H', 0x1, self.flags)  # Hardcoded the Room value such that all facades are visible in the game       
+        write_pack(f, '3f', *self.offset)
+        write_pack(f, '3f', *self.face)
         write_pack(f, '3f', *self.sides)
         write_pack(f, 'f', self.scale)
         f.write(self.name.encode('utf-8'))
         f.write(b'\x00')
+                
+    @classmethod
+    def create(cls, filename, packed_facades, output_dir, set_facades = False, debug_facades = False):
+        if set_facades:
+            facades = cls.build(packed_facades)
+            cls.finalize(filename, facades)
+            MOVE(filename, output_dir / filename)
+
+            if debug_facades:
+                cls.debug(facades)
+
+    @classmethod
+    def build(cls, packed_facades):
+        facades = []
+        axis_dict = {'x': 0, 'y': 1, 'z': 2}
+        scales = cls.read_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
+
+        for params in packed_facades:
+            axis = axis_dict[params['axis']]
+            start_coord = params['offset'][axis]
+            end_coord = params['end'][axis]
+            
+            direction = 1 if start_coord < end_coord else -1
+            
+            num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
+
+            for i in range(num_facades):
+                flags = params['flags']
+                
+                current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
+                
+                sides = params.get('sides', (0.0, 0.0, 0.0))
+                scale = scales.get(params['name'], params.get('scale', 1.0))
+                name = params['name']
+
+                facade = Facade_Editor(0x1, flags, current_start, current_end, sides, scale, name)
+                facades.append(facade)
+
+        return facades
+
+    @staticmethod
+    def calculate_start_end(params, axis, direction, start_coord, i):
+        current_start = list(params['offset'])
+        current_end = list(params['end'])
+        
+        shift = direction * params['separator'] * i
+        
+        current_start[axis] = start_coord + shift
+        end_coord = params['end'][axis]
+        
+        if direction == 1:
+            current_end[axis] = min(start_coord + shift + params['separator'], end_coord)
+        else:
+            current_end[axis] = max(start_coord + shift - params['separator'], end_coord)
+            
+        return tuple(current_start), tuple(current_end)
+
+    @staticmethod
+    def finalize(filename, facades):
+        with open(filename, mode = 'wb') as f:
+            write_pack(f, '<I', len(facades))
+            for facade in facades:
+                facade.write(f)
+
+    @staticmethod
+    def debug(facades):
+        with open("FACADES_debug.txt", mode = 'w', encoding = 'utf-8') as f:
+            for facade in facades:
+                f.write(str(facade))
         
     def __repr__(self):
         return f"""
 Facade Editor
     Room: {self.room}
     Flags: {self.flags}
-    Start: {self.start}
-    End: {self.end}
+    Start: {self.offset}
+    Face: {self.face}
     Sides: {self.sides}
     Scale: {self.scale}
     Name: {self.name}
     """
-    
-    
-def read_facade_scales(scales_file):
-    scales = {}
-    
-    with open(scales_file, 'r') as f:
-        for line in f:
-            facade_name, scale = line.strip().split(": ")
-            scales[facade_name] = float(scale)
-    return scales
-
-    
-def create_facades(filename, facade_params, target_fcd_dir, set_facades = False, debug_facades = False):
-    if set_facades:
-        facades = []
-        axis_dict = {'x': 0, 'y': 1, 'z': 2}
-
-        scales = read_facade_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
-
-        for params in facade_params:
-            axis_idx = axis_dict[params['axis']]
-            start_coord = params['start'][axis_idx]
-            end_coord = params['end'][axis_idx]
-
-            # Determine the direction in which to move along the axis.
-            direction = 1 if start_coord < end_coord else -1
-
-            num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
-            
-            for i in range(num_facades):
-                flags = params['flags']
-                current_start = list(params['start'])
-                current_end = list(params['end'])
-
-                # Apply the separator in the appropriate direction.
-                shift = direction * params['separator'] * i
-                current_start[axis_idx] = start_coord + shift
-                
-                # Make sure the next end doesn't overshoot the given end.
-                if direction == 1:
-                    current_end[axis_idx] = min(start_coord + shift + params['separator'], end_coord)
-                else:
-                    current_end[axis_idx] = max(start_coord + shift - params['separator'], end_coord)
-
-                current_start = tuple(current_start)
-                current_end = tuple(current_end)
-
-                sides = params.get('sides', (0.0, 0.0, 0.0))
-                scale = scales.get(params['facade_name'], params.get('scale', 1.0))
-                name = params['facade_name']
-
-                facade = Facade_Editor(flags, current_start, current_end, sides, scale, name)
-                facades.append(facade)
-
-        with open(filename, mode = 'wb') as f:
-            write_pack(f, '<I', len(facades))
-            for facade in facades:
-                facade.write_facades(f)
-
-        MOVE(filename, target_fcd_dir / filename)
-
-        if debug_facades:
-            with open("FACADES_debug.txt", mode = 'w', encoding = 'utf-8') as f:
-                for facade in facades:
-                    f.write(str(facade))
-                
+ 
 ###################################################################################################################
 ###################################################################################################################  
 
@@ -4158,12 +4165,9 @@ def create_commandline(
             base_cmd += f" -noui -{race_type} {race_index} -keyboard"
     
     processed_cmd = base_cmd
-        
-    cmd_file_path = mm1_folder / cmd_file
     
-    with cmd_file_path.open("w") as file:
-        file.write(processed_cmd)
-
+    with open(mm1_folder / cmd_file, "w") as f:
+        f.write(processed_cmd)
         
 # Start game
 def start_game(mm1_folder: str, play_game: bool = False) -> None:
@@ -4407,7 +4411,6 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
     obj["material_index"] = str(polygon_data["material_index"])
         
     set_hud_checkbox(polygon_data["hud_color"], obj)
-    
     
     for coord in coords:
         vertex_item = obj.vertex_coords.add()
@@ -4947,51 +4950,50 @@ ALL_SIDES = 1273
 
 fcd_orange_building_1 = {
 	'flags': FRONT_BRIGHT,
-	'start': (-10.0, 0.0, -50.0),
+	'offset': (-10.0, 0.0, -50.0),
 	'end': (10, 0.0, -50.0),
-	# 'sides': (27.8, 0.0, 0.0),
 	'separator': 10.0,
-	'facade_name': "ofbldg02",
+	'name': "ofbldg02",
 	'axis': 'x'}
 
 fcd_orange_building_2 = {
 	'flags': FRONT_BRIGHT,
-	'start': (10.0, 0.0, -70.0),
+	'offset': (10.0, 0.0, -70.0),
 	'end': (-10, 0.0, -70.0),
 	'separator': 10.0,
-	'facade_name': "ofbldg02",
+	'name': "ofbldg02",
 	'axis': 'x'}
 
 fcd_orange_building_3 = {
 	'flags': FRONT_BRIGHT,
-	'start': (-10.0, 0.0, -70.0),
+	'offset': (-10.0, 0.0, -70.0),
 	'end': (-10.0, 0.0, -50.0),
 	'separator': 10.0,
-	'facade_name': "ofbldg02",
+	'name': "ofbldg02",
 	'axis': 'z'}
 
 fcd_orange_building_4 = {
 	'flags': FRONT_BRIGHT,
-	'start': (10.0, 0.0, -50.0),
+	'offset': (10.0, 0.0, -50.0),
 	'end': (10.0, 0.0, -70.0),
-	'facade_name': "ofbldg02",
+	'name': "ofbldg02",
     'axis': 'z',
     'separator': 10.0}
 
 fcd_white_hotel_long_road = {
     'flags': FRONT_BRIGHT,
-	'start': (-160.0, 0.0, -80.0),
+	'offset': (-160.0, 0.0, -80.0),
 	'end': (-160.0, 0.0, 20.0),
 	'separator': 25.0, 
-	'facade_name': "rfbldg05",
+	'name': "rfbldg05",
 	'axis': 'z'}
 
 fcd_red_hotel_long_road = {
     'flags': FRONT_BRIGHT,
-	'start': (-160.0, 0.0, 40.0),
+	'offset': (-160.0, 0.0, 40.0),
 	'end': (-160.0, 0.0, 140.0),
 	'separator': 20.0, 
-	'facade_name': "dfbldg06",
+	'name': "dfbldg06",
 	'axis': 'z'}
 
 # Pack all Facades for processing
@@ -5128,8 +5130,6 @@ street_list = [cruise_start,
 ###################################################################################################################   
 ###################################################################################################################               
 
-# lmao
-
 # ADD PROPS
 china_gate = {'offset': (0, 0.0, -20), 
               'face': (1 * HUGE, 0.0, -20), 
@@ -5166,9 +5166,9 @@ random_cars = {
 
 # Configure your random props here
 random_params = [
-    {"seed": 123, "num_objects": 1, "object_dict": random_trees, "x_range": (65, 135), "z_range": (-65, 65)},
-    {"seed": 99, "num_objects": 1, "object_dict": random_sailboats, "x_range": (55, 135), "z_range": (-145, -205)},
-    {"seed": 1, "num_objects": 2, "object_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}]
+    {"seed": 123, "num_props": 1, "props_dict": random_trees, "x_range": (65, 135), "z_range": (-65, 65)},
+    {"seed": 99, "num_props": 1, "props_dict": random_sailboats, "x_range": (55, 135), "z_range": (-145, -205)},
+    {"seed": 1, "num_props": 2, "props_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}]
 
 # APPEND PROPS
 app_panoz_gtr = {
@@ -5232,19 +5232,16 @@ create_cnr(city_name, cnr_waypoints)
 
 Material_Editor.edit_materials(new_physics_properties, "physics.db", debug_physics)
 StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse, ai_map)
+Facade_Editor.create(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
-# Append props
-prop_editor_app = Prop_Editor(input_props_f, debug_props, input_banger_file = append_props, output_banger_file = appended_props_f)
-prop_editor_app.append_props(appended_props, append_props)
+prop_editor_app = Prop_Editor(input_props_f, debug_props, append_props, appended_props_f)
+prop_editor_app.append_props(appended_props)
 
 # Add / Place props
-prop_editor = Prop_Editor(city_name, debug_props, input_banger_file = False)
-
+prop_editor = Prop_Editor(city_name, debug_props)
 for i in random_params:
     prop_list.extend(prop_editor.place_props_randomly(**i))
-
 prop_editor.process_props(prop_list)
-
 
 copy_dev_folder(mm1_folder, city_name)
 edit_and_copy_mmbangerdata(bangerdata_properties)
@@ -5255,8 +5252,8 @@ create_ext(city_name, hudmap_vertices)
 create_animations(city_name, anim_data, set_anim)   
 create_bridges(bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
-create_facades(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 create_portals(city_name, polys, vertices, empty_portals, debug_portals)
+
 
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
