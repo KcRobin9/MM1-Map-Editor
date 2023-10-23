@@ -66,9 +66,9 @@ set_minimap = True              # change to "True" if you want a MINIMAP (defaul
 shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'
 
 # AI
-ai_map = True                   # change both to "True" if you want AI paths ## (do not change this to "False")
-ai_streets = True               # change both to "True" if you want AI paths ## (do not change this to "False")
-ai_reverse = False              # change to "True" if you want to automatically add a reverse AI path for each lane
+set_ai_map = True               # create the Map file          keep both set to "True" if you want functional AI
+set_streets = True              # create the Streets files     keep both set to "True" if you want functional AI
+set_reverse_streets = False     # change to "True" if you want to automatically add a reverse AI path for each lane
 lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
@@ -95,6 +95,7 @@ debug_hud_bound_id = False      # change to "True" if you want to see the Bound 
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # Advanced
+no_ai = False                   # change to "True" if you want to disable the AI
 quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
 more_logs = False               # change to "True" if you want to see additional logs and open a logging console
 empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
@@ -758,7 +759,7 @@ class BND:
         self.row_heights = row_heights
                   
     @classmethod
-    def read_bnd(cls, f: BinaryIO) -> 'BND':        
+    def read(cls, f: BinaryIO) -> 'BND':        
         magic = read_unpack(f, '<4s')[0]
         offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
@@ -794,7 +795,7 @@ class BND:
                    hot_verts, edges_0, edges_1, edge_normals, edge_floats,
                    row_offsets, row_shorts, row_indices, row_heights)
     
-    def write_bnd(self, f: BinaryIO) -> None:
+    def write(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
         self.offset.write(f)         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
@@ -812,7 +813,7 @@ class BND:
         for poly in self.polys:           
             poly.to_file(f)              
                 
-    def write_bnd_debug(self, debug_filename: str, debug_bounds: bool = False) -> None:
+    def debug(self, debug_filename: str, debug_bounds: bool = False) -> None:
         if debug_bounds:
             with open(debug_filename, 'w') as f:
                 f.write(str(self))
@@ -872,7 +873,7 @@ class BMS:
         self.indices_sides = indices_sides
         
     @classmethod
-    def read_bms(cls, file_name: str):
+    def read(cls, file_name: str):
         with open(file_name, 'rb') as f:
             magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')            
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
@@ -903,7 +904,7 @@ class BMS:
                    texture_count, flags, string_name, coordinates, 
                    texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
         
-    def write_bms(self, path: Path) -> None:
+    def write(self, path: Path) -> None:
         with open(path, 'wb') as f:
             write_pack(f, '16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
             write_pack(f, '4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
@@ -934,7 +935,7 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                                     
-    def write_bms_debug(self, file_name: str, debug_dir = "Debug BMS") -> None:
+    def debug(self, file_name: str, debug_dir = "Debug BMS") -> None:
         Path(debug_dir).mkdir(parents = True, exist_ok = True)
 
         if DEBUG_BMS:
@@ -1096,10 +1097,10 @@ def save_bms(
     single_poly = [poly_filler, poly]
     
     bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
-    bms.write_bms(target_dir / bms_filename)
+    bms.write(target_dir / bms_filename)
     
     if DEBUG_BMS:
-        bms.write_bms_debug(bms_filename + ".txt")
+        bms.debug(bms_filename + ".txt")
             
              
 # Create BMS      
@@ -2394,16 +2395,15 @@ save_bms(
 ################################################################################################################ 
 
 # # Create BND file
-def create_bounds(vertices: List[Vector3], polys: List[Polygon], city_name: str, debug_bounds: bool = False):    
+def create_bounds(vertices: List[Vector3], polys: List[Polygon], city_name: str, debug_bounds: bool = False) -> None:    
     bnd = initialize_bounds(vertices, polys)
     
     bnd_folder = SHOP / "BND"
     bnd_file = f"{city_name}_HITID.BND"
-        
+    
     with open(bnd_folder / bnd_file, "wb") as f:
-        bnd.write_bnd(f)
-        
-    bnd.write_bnd_debug("BOUNDS_debug.txt", debug_bounds)
+        bnd.write(f)
+    bnd.debug("BOUNDS_debug.txt", debug_bounds)
   
   
 # Create SHOP and FOLDER structure   
@@ -2451,11 +2451,11 @@ CheckpointNames={checkpoint_names}
         
                     
 def copy_custom_textures() -> None: 
-    custom_texs_folder = BASE_DIR / "Custom Textures"
-    dest_tex16o_folder = SHOP / "TEX16O"
+    input_folder = BASE_DIR / "Custom Textures"
+    output_folder = SHOP / "TEX16O"
 
-    for custom_texs in custom_texs_folder.iterdir():
-        shutil.copy(custom_texs, dest_tex16o_folder / custom_texs.name)
+    for custom_texs in input_folder.iterdir():
+        shutil.copy(custom_texs, output_folder / custom_texs.name)
 
 
 def edit_and_copy_mmbangerdata(bangerdata_properties):
@@ -2701,13 +2701,10 @@ def create_cells(city_name: str, truncate_cells: bool = False):
     bms_files = []
     bms_a2_files = set()
     
-    lm_folder = SHOP / "BMS" / f"{city_name}LM"
+    landmark_folder = SHOP / "BMS" / f"{city_name}LM"
     city_folder = SHOP / "BMS" / f"{city_name}CITY"
     
-    cells_folder = SHOP_CITY
-    cells_file = cells_folder / f"{city_name}.CELLS"
-
-    for folder in [lm_folder, city_folder]:
+    for folder in [landmark_folder, city_folder]:
         for file in folder.iterdir():
             if file.name.endswith(".bms"):
                 bound_number = int(re.findall(r'\d+', file.name)[0])
@@ -2715,7 +2712,10 @@ def create_cells(city_name: str, truncate_cells: bool = False):
                 if file.name.endswith("_A2.bms"):
                     bms_a2_files.add(bound_number)
     
-    with open(cells_file, "w") as f:
+    cells_folder = SHOP_CITY
+    cells_file = f"{city_name}.CELLS"
+    
+    with open(cells_folder / cells_file, "w") as f:
         f.write(f"{len(bms_files)}\n")
         f.write(str(max(bms_files) + 1000) + "\n")
         
@@ -2805,16 +2805,17 @@ def create_cells(city_name: str, truncate_cells: bool = False):
         
 
 # Create EXT file                      
-def create_ext(city_name, polygons):
+def create_ext(city_name: str, polygons: List[Vector3]):
     x_coords = [vertex[0] for poly in polygons for vertex in poly]
     z_coords = [vertex[2] for poly in polygons for vertex in poly]
     
     min_x, max_x = min(x_coords), max(x_coords)
     min_z, max_z = min(z_coords), max(z_coords)
 
+    ext_folder = SHOP_CITY
     ext_file = f"{city_name}.EXT"
 
-    with open(SHOP_CITY / ext_file, 'w') as f:
+    with open(ext_folder / ext_file, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
     return min_x, max_x, min_z, max_z
@@ -2891,10 +2892,12 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
 # Create Animations                              
 def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
     if set_anim:
-        anim_folder = SHOP_CITY / city_name
 
+        anim_folder = SHOP_CITY / city_name
+        anim_file = "ANIM.CSV"
+        
         # Create ANIM.CSV file and write anim names
-        with open(anim_folder / "ANIM.CSV", 'w', newline = '') as f:
+        with open(anim_folder / anim_file, 'w', newline = '') as f:
             writer = csv.writer(f)
             for obj in anim_data.keys():
                 writer.writerow([f"anim_{obj}"])
@@ -3422,7 +3425,6 @@ class Prop_Editor:
                 prop_data = BinaryBanger.read(f)
                 self.objects.append(prop_data)
                 
-    # robin  
     def write_bangers(self, set_props: bool = False, filename = None):
         target_filename = filename or self.filename
 
@@ -3621,41 +3623,40 @@ class Material_Editor:
                 param.write(f)
                 
     @classmethod    
-    def edit_materials(cls, materials_properties, physics_output_file, debug_physics):
-        physics_input_file = BASE_DIR / "EditorResources" / "PHYSICS.DB"
-        physics_folder = SHOP / "MTL"
+    def edit(cls, materials_properties, physics_output_f, debug_physics):
+        physics_input_f = BASE_DIR / "EditorResources" / "PHYSICS.DB"
         
-        with physics_input_file.open('rb') as file:
-            count = read_unpack(file, '>I')[0]
-            read_material_file = cls.readn(file, count)
-            
+        with open(physics_input_f, 'rb') as f:
+            count = read_unpack(f, '>I')[0]
+            physics_data = cls.readn(f, count)
+          
         # Loop through material properties dictionary
         for material_index, properties in materials_properties.items():
             for prop, value in properties.items():
-                setattr(read_material_file[material_index - 1], prop, value)
+                setattr(physics_data[material_index - 1], prop, value)
             
-        cls.write_all(physics_output_file, read_material_file)
-        MOVE(physics_output_file, physics_folder / physics_output_file)
+        cls.write_all(physics_output_f, physics_data)
+        MOVE(physics_output_f, SHOP / "MTL" / physics_output_f)
         
         if debug_physics:
-            cls.write_materials_debug("PHYSICS_DB_debug.txt", read_material_file)
+            cls.debug("PHYSICS_DB_debug.txt", physics_data)
             
     @classmethod
-    def write_materials_debug(cls, debug_filename, material_list):
-        with open(debug_filename, 'w') as debug_file:
+    def debug(cls, debug_filename, material_list):
+        with open(debug_filename, 'w') as debug_f:
             for idx, material in enumerate(material_list):
-                debug_file.write(material.__repr__(idx))
-                debug_file.write("\n")
+                debug_f.write(material.__repr__(idx))
+                debug_f.write("\n")
 
     def __repr__(self, idx = None):
-        cleaned_agi_name = self.name.rstrip("\x00 Í")
+        cleaned_name = self.name.rstrip("\x00 Í")
         formatted_velocity = f"x = {self.velocity.x:.2f}, y = {self.velocity.y:.2f}"
         
-        agi_header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
+        header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
         
         return f"""
-{agi_header}
-    name        = '{cleaned_agi_name}',
+{header}
+    name        = '{cleaned_name}',
     friction    = {self.friction:.2f},
     elasticity  = {self.elasticity:.2f},
     drag        = {self.drag:.2f},
@@ -3686,24 +3687,23 @@ YES = 1
 
 # BAI EDITOR CLASS
 class BAI_Editor:
-    def __init__(self, city_name, streets, ai_map = True):
-        self.city_name = f"{city_name}"
+    def __init__(self, city_name, streets, set_ai_map):
+        self.city_name = city_name
         self.streets = streets
-        
-        self.ai_dir = BASE_DIR / "dev" / "CITY" / self.city_name
+        self.output_dir = BASE_DIR / "dev" / "CITY" / self.city_name
                 
-        if ai_map:
+        if set_ai_map:
             self.write_map()
 
     def write_map(self):        
-        self.ai_map_file = self.ai_dir / f"{self.city_name}.map"
-        self.ai_dir.mkdir(parents = True, exist_ok = True)
+        self.output_dir.mkdir(parents = True, exist_ok = True)
         
-        with open(self.ai_map_file, 'w') as file:
-            file.write(self.map_template())
+        with open(self.output_dir / f"{self.city_name}.map", 'w') as f:
+            f.write(self.map_template())
     
     def map_template(self):
-        streets_representation = '\n\t\t'.join([f'"{street}"' for street in self.streets])
+        streets_representation = '\n\t\t'.join(
+            [f'"{street}"' for street in self.streets])
 
         map_data = f"""
 mmMapData :0 {{
@@ -3717,70 +3717,85 @@ mmMapData :0 {{
        
        
 # STREETFILE CLASS
-class StreetFile_Editor:    
-    def __init__(self, city_name, street_data, ai_reverse = False, ai_streets = ai_streets): # do not change
-        self.street_name = street_data["street_name"]
-        self.ai_reverse = ai_reverse
+class StreetFileEditor:
+    def __init__(self, city_name, data, set_streets, set_reverse_streets):
+        self.city_name = city_name
+        self.street_name = data["street_name"]
+        self.set_reverse_streets = set_reverse_streets
+        self.process_lanes(data)
+        self.set_properties(data)
 
-        if "lanes" in street_data:
-            self.original_lanes = street_data["lanes"]
-            
-            if self.ai_reverse:
-                self.lanes = {key: values + values[::-1] for key, values in self.original_lanes.items()}  
-            else:
-                self.lanes = self.original_lanes
-                
-        elif "vertices" in street_data:
-            self.original_lanes = {"lane_1": street_data["vertices"]}
-            if self.ai_reverse:
-                self.lanes = {"lane_1": street_data["vertices"] + street_data["vertices"][::-1]}  
-            else:
-                self.lanes = self.original_lanes
+        if set_streets:
+            self.write()
+                    
+    @classmethod
+    def create(cls, city_name, dataset, set_ai_map, set_streets, set_reverse_streets):
+        street_editors = [StreetFileEditor(city_name, data, set_streets, set_reverse_streets) for data in dataset]
+        street_names = [editor.street_name for editor in street_editors]
+        return BAI_Editor(city_name, street_names, set_ai_map)
 
-        self.intersection_types = street_data.get("intersection_types", [CONTINUE, CONTINUE])
-        self.stop_light_positions = street_data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
-        self.stop_light_names = street_data.get("stop_light_names", [STOP_LIGHT_SINGLE, STOP_LIGHT_SINGLE])
-        self.traffic_blocked = street_data.get("traffic_blocked", [NO, NO])
-        self.ped_blocked =  street_data.get("ped_blocked", [NO, NO])
-        self.road_divided = street_data.get("road_divided", NO)
-        self.alley = street_data.get("alley", NO)
+    def process_lanes(self, data):
+        if "lanes" in data:
+            self.original_lanes = data["lanes"]
+        elif "vertices" in data:
+            self.original_lanes = {"lane_1": data["vertices"]}
+        else:
+            raise ValueError("Street data must have either 'lanes' or 'vertices'")
 
-        if ai_streets:
-            self.write_streets()
+        # Add reverse lanes if set by the user
+        self.lanes = self.original_lanes.copy()
+        if self.set_reverse_streets:
+            for key, values in self.original_lanes.items():
+                self.lanes[key].extend(values[::-1])
 
-    def write_streets(self):
-        self.filepath = BASE_DIR / "dev" / "CITY" / city_name / f"{self.street_name}.road"
-        self.filepath.parent.mkdir(parents = True, exist_ok = True)
+    def set_properties(self, data):
+        self.intersection_types = data.get("intersection_types", [CONTINUE, CONTINUE])
+        self.stop_light_positions = data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
+        self.stop_light_names = data.get("stop_light_names", [STOP_LIGHT_SINGLE, STOP_LIGHT_SINGLE])
+        self.traffic_blocked = data.get("traffic_blocked", [NO, NO])
+        self.ped_blocked = data.get("ped_blocked", [NO, NO])
+        self.road_divided = data.get("road_divided", NO)
+        self.alley = data.get("alley", NO)
+
+    def write(self):
+        output_folder = BASE_DIR / "dev" / "CITY" / self.city_name        
+        output_folder.mkdir(parents = True, exist_ok = True)
+    
+        with open(output_folder / f"{self.street_name}.road", 'w') as f:
+            f.write(self.set_template())
+
+    def set_template(self):
+        lane_one = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
+        num_vertices_per_lane = len(self.original_lanes[lane_one])
+        num_total_vertices = num_vertices_per_lane * len(self.lanes) * (2 if self.set_reverse_streets else 1)
         
-        with self.filepath.open('w') as file:
-            file.write(self.street_template())
-
-    def street_template(self):
-        lane_1_key = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
-        num_vertex_per_lane = len(self.original_lanes[lane_1_key])
-        num_total_vertex = num_vertex_per_lane * len(self.lanes) * (2 if self.ai_reverse else 1)
-        vertex_string = '\n\t\t'.join('\n\t\t'.join(f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
+        vertices = '\n\t\t'.join('\n\t\t'.join(
+            f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
         
-        normals_string = '\n\t\t'.join('0.0 1.0 0.0' for _ in range(num_vertex_per_lane))
-        stop_light_positions_strings = '\n\t'.join(f'StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}' for i, pos in enumerate(self.stop_light_positions))
+        normals = '\n\t\t'.join(
+            '0.0 1.0 0.0' for _ in range(num_vertices_per_lane))
+        
+        stop_light_positions = '\n\t'.join(
+            f"""StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}"""
+            for i, pos in enumerate(self.stop_light_positions))
 
         street_template = f"""
 mmRoadSect :0 {{
-    NumVertexs {num_vertex_per_lane}
+    NumVertexs {num_vertices_per_lane}
     NumLanes[0] {len(self.lanes)}
-    NumLanes[1] {len(self.lanes) if self.ai_reverse else 0}
+    NumLanes[1] {len(self.lanes) if self.set_reverse_streets else 0}
     NumSidewalks[0] 0
     NumSidewalks[1] 0
-    TotalVertexs {num_total_vertex}
+    TotalVertexs {num_total_vertices}
     Vertexs [
-        {vertex_string}
+        {vertices}
     ]
     Normals [
-        {normals_string}
+        {normals}
     ]
     IntersectionType[0] {self.intersection_types[0]}
     IntersectionType[1] {self.intersection_types[1]}
-    {stop_light_positions_strings}
+    {stop_light_positions}
     Blocked[0] {self.traffic_blocked[0]}
     Blocked[1] {self.traffic_blocked[1]}
     PedBlocked[0] {self.ped_blocked[0]}
@@ -3793,12 +3808,7 @@ mmRoadSect :0 {{
     Alley {self.alley}
 }}
         """
-        
         return textwrap.dedent(street_template).strip()
-    
-    def create_streets(city_name, street_data, ai_streets, ai_reverse, ai_map):
-        street_names = [StreetFile_Editor(city_name, data, ai_reverse, ai_streets).street_name for data in street_data]
-        return BAI_Editor(city_name, street_names, ai_map)
     
 ################################################################################################################               
 ################################################################################################################    
@@ -4137,7 +4147,7 @@ def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> No
             
 def create_commandline(
     city_name: str, mm1_folder: Path, no_ui: bool = False, no_ui_type: str = "", 
-    quiet_logs: bool = False, more_logs: bool = False):
+    no_ai: bool = False, quiet_logs: bool = False, more_logs: bool = False):
     
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
@@ -4152,6 +4162,9 @@ def create_commandline(
         
     if more_logs and quiet_logs:
         print("\nWARNING: You can't have both 'quiet' and 'more logs' enabled. Please choose one.")
+        
+    if no_ai:
+        base_cmd += " -noai"
     
     if no_ui:
         if not no_ui_type or no_ui_type.lower() == "cruise":
@@ -5230,8 +5243,9 @@ create_cells(city_name, truncate_cells)
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
-Material_Editor.edit_materials(new_physics_properties, "physics.db", debug_physics)
-StreetFile_Editor.create_streets(city_name, street_list, ai_streets, ai_reverse, ai_map)
+StreetFileEditor.create(city_name, street_list, set_ai_map, set_streets, set_reverse_streets)
+
+Material_Editor.edit(new_physics_properties, "physics.db", debug_physics)
 Facade_Editor.create(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
 prop_editor_app = Prop_Editor(input_props_f, debug_props, append_props, appended_props_f)
@@ -5261,7 +5275,7 @@ create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
 create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices = True)
 
 create_ar(city_name, mm1_folder, delete_shop)
-create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, quiet_logs, more_logs)
+create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
 end_time = time.time()
 editor_time = end_time - start_time
