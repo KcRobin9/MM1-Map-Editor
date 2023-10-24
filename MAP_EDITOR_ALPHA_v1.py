@@ -58,7 +58,7 @@ set_bridges = True              # change to "True" if you want BRIDGES
 # PROPS
 set_props = True                # change to "True" if you want PROPS
 append_props = True             # change to "True" if you want to append props to an input props file
-input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  
+input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"
 appended_props_f = "NEW_CHICAGO.BNG"  
 
 # HUD
@@ -3375,7 +3375,7 @@ Prop Name: {self.name}
     '''
 
 # PROP EDITOR CLASS
-class Prop_Editor:
+class PropEditor:
     def __init__(self, city_name: str, debug_props: bool = False, append_props: bool = False, output_prop_f: str = None):
         self.objects = []  
         self.city_name = city_name  
@@ -3576,7 +3576,7 @@ class Prop_Editor:
 #################################################################################
 
 # MATERIALEDITOR CLASS
-class Material_Editor:
+class MaterialEditor:
     def __init__(self, name: str, friction: float, elasticity: float, drag: float, 
                  bump_height: float, bump_width: float, bump_depth: float, sink_depth: float, 
                  type: int, sound: int, velocity: Vector2, ptx_color: Vector3):
@@ -3596,7 +3596,7 @@ class Material_Editor:
         
     @staticmethod
     def readn(f, count):
-        return [Material_Editor.read(f) for _ in range(count)]
+        return [MaterialEditor.read(f) for _ in range(count)]
 
     @staticmethod
     def read(f):
@@ -3604,7 +3604,7 @@ class Material_Editor:
         params = read_unpack(f, '>7f2I')
         velocity = Vector2.read(f)
         ptx_color = Vector3.read(f)
-        return Material_Editor(name, *params, velocity, ptx_color)
+        return MaterialEditor(name, *params, velocity, ptx_color)
 
     def write(self, f):        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
@@ -3716,8 +3716,8 @@ mmMapData :0 {{
         return textwrap.dedent(map_data).strip()
        
        
-# STREETFILE CLASS
-class StreetFileEditor:
+# STREET CLASS
+class StreetEditor:
     def __init__(self, city_name, data, set_streets, set_reverse_streets):
         self.city_name = city_name
         self.street_name = data["street_name"]
@@ -3730,7 +3730,7 @@ class StreetFileEditor:
                     
     @classmethod
     def create(cls, city_name, dataset, set_ai_map, set_streets, set_reverse_streets):
-        street_editors = [StreetFileEditor(city_name, data, set_streets, set_reverse_streets) for data in dataset]
+        street_editors = [StreetEditor(city_name, data, set_streets, set_reverse_streets) for data in dataset]
         street_names = [editor.street_name for editor in street_editors]
         return BAI_Editor(city_name, street_names, set_ai_map)
 
@@ -4619,16 +4619,23 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
         layout = self.layout
         obj = context.active_object
         if obj:
+            row = layout.row(align = True)
+            col = row.column(align = True)
+            half_length = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
+            
             for i, (_, name, _, _, _) in enumerate(HUD_IMPORT):
-                layout.prop(obj, "hud_colors", index = i, text = name, toggle = True)
+                if i == half_length:
+                    col = row.column(align = True)
+                
+                col.prop(obj, "hud_colors", index = i, text = name, toggle = True)
         else:
             layout.label(text = "No active object")
-            
-                
+
+        
 # MISC PANEL
 bpy.types.Object.always_visible = bpy.props.BoolProperty(
     name = "Always Visible",
-    description = "If true, the object is always visible",
+    description = "If true, the polygon is always visible",
     default = False)
 
 bpy.types.Object.sort_vertices = bpy.props.BoolProperty(
@@ -4741,7 +4748,7 @@ def extract_texture_from_polygon(obj):
     return "CHECK04"  # If no texture is applied to the polygon, use CHECK04 as a placeholder
     
 
-def export_blender_polygon_data(obj):
+def export_blender_polygon_data(obj) -> str:
     data = extract_polygon_data(obj)
     texture_name = extract_texture_from_polygon(obj)
     vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
@@ -4773,8 +4780,8 @@ def export_blender_polygon_data(obj):
     tile_x = obj.get("tile_x", 1)
     tile_y = obj.get("tile_y", 1)
 
-    # Create_polygon() template
-    polygon_export_data = f"""
+    # create_polygon() template
+    polygon_export = f"""
 create_polygon(
     bound_number = {data['bound_number']},
     {optional_variables},
@@ -4785,7 +4792,7 @@ save_bms(
     texture_name = ["{texture_name}"],
     tex_coords = compute_uv(bound_number = {data['bound_number']}, mode = "r.H", tile_x = {tile_x}, tile_y = {tile_y}))"""
 
-    return polygon_export_data
+    return polygon_export
 
 
 # EXPORT POLYGONS OPERATOR
@@ -4932,25 +4939,23 @@ def set_blender_keybinding() -> None:
 #* Separator: (max_x - min_x) / separator(value) = number of facades
 #* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
-#* Facade name --> name of the facade in the game files
+#* Name --> name of the facade in the game files
 
 #* All relevant Facade information can be found in: /UserResources/FACADES.
 #* Each facade is photographed and documented (see: "FACADE_DATA.txt")
 
-#* A few Facade_name examples are: ofbldg02, dt11_front, tunnel01, t_rail01, ramp01
-
 # Flags (if applicable, consult the documentation for more info)
-FRONT = 1 # sometimes 1 is also used for the full model
+FRONT = 1  # Sometimes 1 is also used for the full model
 FRONT_BRIGHT = 3
 
 FRONT_LEFT = 9
 FRONT_BACK = 25
 FRONT_ROOFTOP = 33
-FRONT_LEFT = 41 # value 73 is also commonly used for this
+FRONT_LEFT = 41  # Value 73 is also commonly used for this
 FRONT_RIGHT = 49
 
 FRONT_LEFT_ROOF = 105 
-FRONT_RIGHT_ROOF = 145 # value 177 is also commonly used for this
+FRONT_RIGHT_ROOF = 145  # Value 177 is also commonly used for this
 FRONT_LEFT_RIGHT = 217
 FRONT_LEFT_RIGHT_ROOF = 249
 
@@ -4961,39 +4966,47 @@ FRONT_RIGHT_ROOF_BACK = 1201
 ALL_SIDES = 1273
 
 
-fcd_orange_building_1 = {
+# Facade names (a few examples are listed below)
+ORANGE_W_WINDOWS = "ofbldg02"  # The main facade used in Super Squeeze 
+WALL_FREEWAY = "freewaywall02"
+SUIT_STORE = "dfsuitstore"
+PIZZA_PLACE = "hfpizza"  # 
+RAIL_WATER = "t_rail01"  
+
+
+orange_building_1 = {
 	'flags': FRONT_BRIGHT,
 	'offset': (-10.0, 0.0, -50.0),
 	'end': (10, 0.0, -50.0),
 	'separator': 10.0,
-	'name': "ofbldg02",
+	'name': ORANGE_W_WINDOWS,
 	'axis': 'x'}
 
-fcd_orange_building_2 = {
+orange_building_2 = {
 	'flags': FRONT_BRIGHT,
 	'offset': (10.0, 0.0, -70.0),
 	'end': (-10, 0.0, -70.0),
 	'separator': 10.0,
-	'name': "ofbldg02",
+	'name': ORANGE_W_WINDOWS,
 	'axis': 'x'}
 
-fcd_orange_building_3 = {
+orange_building_3 = {
 	'flags': FRONT_BRIGHT,
 	'offset': (-10.0, 0.0, -70.0),
 	'end': (-10.0, 0.0, -50.0),
 	'separator': 10.0,
-	'name': "ofbldg02",
+	'name': ORANGE_W_WINDOWS,
 	'axis': 'z'}
 
-fcd_orange_building_4 = {
+orange_building_4 = {
 	'flags': FRONT_BRIGHT,
 	'offset': (10.0, 0.0, -50.0),
 	'end': (10.0, 0.0, -70.0),
-	'name': "ofbldg02",
+	'name': ORANGE_W_WINDOWS,
     'axis': 'z',
     'separator': 10.0}
 
-fcd_white_hotel_long_road = {
+white_hotel_highway = {
     'flags': FRONT_BRIGHT,
 	'offset': (-160.0, 0.0, -80.0),
 	'end': (-160.0, 0.0, 20.0),
@@ -5001,7 +5014,7 @@ fcd_white_hotel_long_road = {
 	'name': "rfbldg05",
 	'axis': 'z'}
 
-fcd_red_hotel_long_road = {
+red_hotel_highway = {
     'flags': FRONT_BRIGHT,
 	'offset': (-160.0, 0.0, 40.0),
 	'end': (-160.0, 0.0, 140.0),
@@ -5011,8 +5024,8 @@ fcd_red_hotel_long_road = {
 
 # Pack all Facades for processing
 fcd_list = [
-    fcd_orange_building_1, fcd_orange_building_2, fcd_orange_building_3, fcd_orange_building_4, 
-    fcd_white_hotel_long_road, fcd_red_hotel_long_road]
+    orange_building_1, orange_building_2, orange_building_3, orange_building_4, 
+    white_hotel_highway, red_hotel_highway]
 
 ###################################################################################################################   
 ###################################################################################################################
@@ -5022,19 +5035,18 @@ fcd_list = [
 f"""
 # The following variables are OPTIONAL: 
 
-# Intersection_types, defaults to: "CONTINUE"
-(possbile types: "STOP", "STOP_LIGHT", "YIELD", "CONTINUE")
+# Intersection_types, defaults to: {CONTINUE}
+(possbile types: {STOP}, {STOP_LIGHT}, {YIELD}, {CONTINUE}
 
-# Stop_light_names, defaults to: "STOP_LIGHT_SINGLE"
-(possbile names: "STOP_SIGN", "STOP_LIGHT_SINGLE", "STOP_LIGHT_DUAL")
+# Stop_light_names, defaults to: {STOP_LIGHT_SINGLE}
+(possbile names: {STOP_SIGN}, {STOP_LIGHT_SINGLE}, {STOP_LIGHT_DUAL}
 
-# Stop_light_positions, defaults to: (0, 0, 0)
-# Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: "NO"
-(possbile values: "YES", "NO")
+# Stop_light_positions, defaults to: {(0, 0, 0)}
+# Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: {NO}
+(possbile values: {YES}, {NO}
 
 Note:
-# Stop lights will only show if the Intersection_type is "stoplight"
-# Each lane will automatically have an identical reversed lane  
+# Stop lights will only show if the Intersection_type is {STOP_LIGHT}
 """
 
 #! Do not delete this Street
@@ -5044,8 +5056,8 @@ cruise_start = {
         (0,0,0),            # keep this
         cruise_start_pos]}  # starting position in Cruise mode
 
-main_west_path = {
-     "street_name": "main_west_path",
+main_west = {
+     "street_name": "main_west",
      "vertices": [
          (0.0, 0.0, 77.5),
          (0.0, 0.0, 70.0),
@@ -5056,8 +5068,8 @@ main_west_path = {
          (0.0, 0.0, -70.0),
          (0.0, 0.0, -100.0)]}
 
-main_grass_horz_path = {
-     "street_name": "main_grass_horz_path",
+main_grass_horz = {
+     "street_name": "main_grass_horz",
      "vertices": [
          (0.0, 0.0, -100.0),
          (20.0, 0.0, -100.0),
@@ -5069,8 +5081,8 @@ main_grass_horz_path = {
          (50.0, 0.0, -100.0),
          (95.0, 0.0, -110.0)]}
 
-main_barricade_wood_path = {
-     "street_name": "east_path",
+main_barricade_wood = {
+     "street_name": "barricade_wood",
      "vertices": [
          (95.0, 0.0, -110.0),
          (95.0, 0.0, -70.0),
@@ -5083,8 +5095,8 @@ main_barricade_wood_path = {
          (130.0, 0.0, 70.0),
          (40.0, 0.0, 100.0)]}
 
-main_double_triangle_path = {
-    "street_name": "main_double_triangle_path",
+double_triangle = {
+    "street_name": "double_triangle",
     "vertices": [
         (40.0, 0.0, 100.0),
         (-50.0, 0.0, 135.0),
@@ -5095,8 +5107,8 @@ main_double_triangle_path = {
         (-20, 0.0, 70.0),
         (0.0, 0.0, 77.5)]}
 
-orange_hill_path = {
-    "street_name": "orange_hill_path",
+orange_hill = {
+    "street_name": "orange_hill",
     "vertices": [
         (0.0, 245.0, -850.0),
         (0.0, 0.0, -210.0),
@@ -5105,7 +5117,7 @@ orange_hill_path = {
 
 # Street examples with multiple lanes and all optional settings
 street_example = {
-    "street_name": "example_path",
+    "street_name": "example",
     "lanes": {
         "lane_1": [
             (-40.0, 1.0, -20.0),
@@ -5117,7 +5129,7 @@ street_example = {
             (-40.0, 1.0, -30.0),
             (-40.0, 1.0, -50.0),
         ],
-        "lane_3": [
+        "lane_3": [  # Add more lanes if desired
             (-40.0, 1.0, -20.0),
             (-50.0, 1.0, -30.0),
             (-50.0, 1.0, -50.0),
@@ -5135,10 +5147,10 @@ street_example = {
     "road_divided": NO,
     "alley": NO}
 
-# Pack all AI paths for processing
+# Pack all AI streets for processing
 street_list = [cruise_start, 
-               main_west_path, main_grass_horz_path, main_barricade_wood_path, main_double_triangle_path, 
-               orange_hill_path]
+               main_west, main_grass_horz, main_barricade_wood, double_triangle, 
+               orange_hill]
 
 ###################################################################################################################   
 ###################################################################################################################               
@@ -5243,16 +5255,16 @@ create_cells(city_name, truncate_cells)
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
 
-StreetFileEditor.create(city_name, street_list, set_ai_map, set_streets, set_reverse_streets)
+StreetEditor.create(city_name, street_list, set_ai_map, set_streets, set_reverse_streets)
 
-Material_Editor.edit(new_physics_properties, "physics.db", debug_physics)
+MaterialEditor.edit(new_physics_properties, "physics.db", debug_physics)
 Facade_Editor.create(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
-prop_editor_app = Prop_Editor(input_props_f, debug_props, append_props, appended_props_f)
-prop_editor_app.append_props(appended_props)
+# Append props
+PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props)
 
 # Add / Place props
-prop_editor = Prop_Editor(city_name, debug_props)
+prop_editor = PropEditor(city_name, debug_props)
 for i in random_params:
     prop_list.extend(prop_editor.place_props_randomly(**i))
 prop_editor.process_props(prop_list)
