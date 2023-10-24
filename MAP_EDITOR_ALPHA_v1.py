@@ -45,11 +45,8 @@ mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM gam
 
 
 #* SETUP II (Map Creation)      
-play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = True              # change to "True" to delete the raw city files after the .ar file has been created
-
-no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
+play_game = False                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
+delete_shop = False              # change to "True" to delete the raw city files after the .ar file has been created
 
 set_facades = True              # change to "True" if you want FACADES
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
@@ -57,9 +54,9 @@ set_bridges = True              # change to "True" if you want BRIDGES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
-append_props = True             # change to "True" if you want to append props to an input props file
-input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"
-appended_props_f = "NEW_CHICAGO.BNG"  
+append_props = True             # change to "True" if you want to append props to an input props file (keep "set_props" set to "True" for now)
+input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
+appended_props_f = "NEW_CHICAGO.BNG"  # the appended props file will be saved in the main folder
 
 # HUD
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
@@ -76,6 +73,7 @@ cruise_start_pos = (35.0, 31.0, 10.0)
 cruise_start_pos = (60.0, 27.0, 330.0)
 cruise_start_pos = (0.0, 0.0, 0.0)
 
+# Misc
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
@@ -95,6 +93,8 @@ debug_hud_bound_id = False      # change to "True" if you want to see the Bound 
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # Advanced
+no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
+no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 no_ai = False                   # change to "True" if you want to disable the AI
 quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
 more_logs = False               # change to "True" if you want to see additional logs and open a logging console
@@ -143,7 +143,8 @@ LAPS_5 = 5
 LAPS_10 = 10
 
 # Race Types
-CRUISE = "ROAM"
+ROAM = "ROAM"
+CRUISE = "CRUISE"
 BLITZ = "BLITZ"
 RACE = "RACE"
 CIRCUIT = "CIRCUIT"
@@ -393,8 +394,7 @@ bridges = [
     ((-119.0, 0.01, -100.0), "EAST", 3, BRIDGE_WIDE, [
     ((-119.0, 0.15, -115.0), 270, 3, CROSSGATE),
     ((-119.0, 0.15, -85.0), -270, 3, CROSSGATE)
-    ]),
-] 
+    ])] 
 
 #* SETUP VII (optional, Custom Bridge Configs)
 bridge_race_0 = {
@@ -460,12 +460,6 @@ class Vector2:
     def write(self, file):
         write_pack(file, '<2f', self.x, self.y)
                 
-    def __repr__(self, round_values = round_debug_values):
-        if round_values:
-            return '{:.2f}, {:.2f}'.format(round(self.x, 2), round(self.y, 2))
-        else:
-            return '{:f}, {:f}'.format(self.x, self.y)
-
     def __add__(self, other):
         return Vector2(self.x + other.x, self.y + other.y)
 
@@ -499,16 +493,22 @@ class Vector2:
     def Mag2(self):
         return (self.x * self.x) + (self.y * self.y)
 
-    def Normalize(self):
-        return self * (self.Mag2() ** -0.5)
-
     def Dist2(self, other):
         return (other - self).Mag2()
 
     def Dist(self, other):
         return self.Dist2(other) ** 0.5
     
+    def Normalize(self):
+        return self * (self.Mag2() ** -0.5)
     
+    def __repr__(self, round_values = round_debug_values):
+        if round_values:
+            return '{:.2f}, {:.2f}'.format(round(self.x, 2), round(self.y, 2))
+        else:
+            return '{:f}, {:f}'.format(self.x, self.y)
+
+
 # VECTOR3 CLASS
 class Vector3:
     def __init__(self, x, y, z):
@@ -526,9 +526,6 @@ class Vector3:
     def write(self, file):
         write_pack(file, '<3f', self.x, self.y, self.z)
         
-    def to_bytes(self):
-        return struct.pack('<3f', self.x, self.y, self.z)
-    
     def copy(self):
         return Vector3(self.x, self.y, self.z)
     
@@ -542,12 +539,6 @@ class Vector3:
         else:
             raise ValueError("Invalid key: {}. Use 'x', 'y', or 'z'.".format(key))
         
-    def __repr__(self, round_values = round_debug_values):
-        if round_values:
-            return '{{{:.2f},{:.2f},{:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
-        else:
-            return '{{{:f},{:f},{:f}}}'.format(self.x, self.y, self.z)
-
     def __add__(self, other):
         return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
 
@@ -597,55 +588,16 @@ class Vector3:
         self.x = x
         self.y = y
         self.z = z
+        
+    def __repr__(self, round_values = round_debug_values):
+        if round_values:
+            return '{{{:.2f},{:.2f},{:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
+        else:
+            return '{{{:f},{:f},{:f}}}'.format(self.x, self.y, self.z)
        
+################################################################################################################               
+################################################################################################################  
        
-# Calculate BND center, min, max, radius, radius squared    
-def calculate_max(vertices: List[Vector3]):
-    max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
-    for vertex in vertices:
-        max_.x = max(max_.x, vertex.x)
-        max_.y = max(max_.y, vertex.y)
-        max_.z = max(max_.z, vertex.z)
-    return max_
-
-def calculate_min(vertices: List[Vector3]):
-    min_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
-    for vertex in vertices:
-        min_.x = min(min_.x, vertex.x)
-        min_.y = min(min_.y, vertex.y)
-        min_.z = min(min_.z, vertex.z)
-    return min_
-
-def calculate_center(vertices: List[Vector3]):
-    center = Vector3(0, 0, 0)
-    for vertex in vertices:
-        center.x += vertex.x
-        center.y += vertex.y
-        center.z += vertex.z
-    center.x /= len(vertices)
-    center.y /= len(vertices)
-    center.z /= len(vertices)
-    return center
-
-def calculate_center_tuples(vertices: List[Tuple[float, float, float]]):
-    center = [0, 0, 0]
-    for vertex in vertices:
-        center[0] += vertex[0]
-        center[1] += vertex[1]
-        center[2] += vertex[2]
-    center[0] /= len(vertices)
-    center[1] /= len(vertices)
-    center[2] /= len(vertices)
-    return center
-
-def calculate_radius(vertices: List[Vector3], center: Vector3):
-    radius_sqr = 0
-    for vertex in vertices:
-        diff = Vector3(vertex.x - center.x, vertex.y - center.y, vertex.z - center.z)
-        radius_sqr = max(radius_sqr, diff.x ** 2 + diff.y ** 2 + diff.z ** 2)
-    return radius_sqr ** 0.5
-
-
 # POLYGON CLASS
 class Polygon:
     def __init__(self, cell_id: int, mtl_index: int, flags: int, vert_indices: List[int],
@@ -685,7 +637,8 @@ class Polygon:
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
     def to_file(self, f: BinaryIO) -> None:
-        if len(self.vert_indices) < 4:  # each polygon requires four vertex indices
+        # Each polygon requires four vertex indices
+        if len(self.vert_indices) < 4:  
             self.vert_indices += (0,) * (4 - len(self.vert_indices))
         
         write_pack(f, '<HBB4H', self.cell_id, self.mtl_index, self.flags, *self.vert_indices)
@@ -711,6 +664,8 @@ class Polygon:
             f"Plane N: {self.plane_n}\n"
             f"Plane D: [{plane_d_str}]\n")
         
+################################################################################################################               
+################################################################################################################          
         
 # BND CLASS
 class BND:
@@ -813,9 +768,9 @@ class BND:
         for poly in self.polys:           
             poly.to_file(f)              
                 
-    def debug(self, debug_filename: str, debug_bounds: bool = False) -> None:
+    def debug(self, filename: str, debug_bounds: bool) -> None:
         if debug_bounds:
-            with open(debug_filename, 'w') as f:
+            with open(filename, 'w') as f:
                 f.write(str(self))
                 
     def __repr__(self) -> str:
@@ -844,7 +799,9 @@ class BND:
             f"Cache Size: {self.cache_size}\n\n"
             f"Vertices:\n{self.vertices}\n\n"
             f"======= Polys =======\n\n{polys_representation}\n")
-
+        
+################################################################################################################               
+################################################################################################################  
 
 # BMS CLASS
 class BMS:
@@ -963,6 +920,55 @@ Enclosed_shape: {self.enclosed_shape}
 SurfaceSides: {self.surface_sides}
 IndicesSides: {self.indices_sides}
         '''
+             
+################################################################################################################               
+################################################################################################################       
+        
+# Calculate BND center, min, max, radius, radius squared    
+def calculate_max(vertices: List[Vector3]):
+    max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
+    for vertex in vertices:
+        max_.x = max(max_.x, vertex.x)
+        max_.y = max(max_.y, vertex.y)
+        max_.z = max(max_.z, vertex.z)
+    return max_
+
+def calculate_min(vertices: List[Vector3]):
+    min_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
+    for vertex in vertices:
+        min_.x = min(min_.x, vertex.x)
+        min_.y = min(min_.y, vertex.y)
+        min_.z = min(min_.z, vertex.z)
+    return min_
+
+def calculate_center(vertices: List[Vector3]):
+    center = Vector3(0, 0, 0)
+    for vertex in vertices:
+        center.x += vertex.x
+        center.y += vertex.y
+        center.z += vertex.z
+    center.x /= len(vertices)
+    center.y /= len(vertices)
+    center.z /= len(vertices)
+    return center
+
+def calculate_center_tuples(vertices: List[Tuple[float, float, float]]):
+    center = [0, 0, 0]
+    for vertex in vertices:
+        center[0] += vertex[0]
+        center[1] += vertex[1]
+        center[2] += vertex[2]
+    center[0] /= len(vertices)
+    center[1] /= len(vertices)
+    center[2] /= len(vertices)
+    return center
+
+def calculate_radius(vertices: List[Vector3], center: Vector3):
+    radius_sqr = 0
+    for vertex in vertices:
+        diff = Vector3(vertex.x - center.x, vertex.y - center.y, vertex.z - center.z)
+        radius_sqr = max(radius_sqr, diff.x ** 2 + diff.y ** 2 + diff.z ** 2)
+    return radius_sqr ** 0.5
 
 ################################################################################################################               
 ################################################################################################################       
@@ -971,6 +977,7 @@ IndicesSides: {self.indices_sides}
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
+
 MOVE = shutil.move
 
 # INITIALIZATIONS | do not change
@@ -1007,7 +1014,8 @@ def compute_uv(
             (0, 0),
             (tile_x, 0),
             (tile_x, tile_y),
-            (0, tile_y)]
+            (0, tile_y)
+            ]
 
         rotated_coords = [rotate(x, y, 0) if i < 2 else rotate(x, y, 1) for i, (x, y) in enumerate(coords)]
         return [coord for point in rotated_coords for coord in point]
@@ -1193,11 +1201,9 @@ def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     
     dot_product = np.dot(normal, reference_up)
     
-    if dot_product < 0:
-        # If it's clockwise, swap the order of the vertices
+    if dot_product < 0:  # If clockwise, swap the order of the vertices
         return [v1, v3, v2]
-    else:
-        # If it's counterclockwise, no changes needed
+    else:  # If counterclockwise, no changes needed
         return [v1, v2, v3]
     
     
@@ -1250,7 +1256,7 @@ def compute_plane_edgenormals(p1, p2, p3):  # Only 3 vertices are being used
     return planeN, planeD
 
 
-def compute_edges(vertex_coordinates):
+def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
     planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
 
@@ -1305,9 +1311,10 @@ def compute_edges(vertex_coordinates):
 
 
 # Sort BND Vertices
-def sort_coordinates(vertex_coordinates):
+def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
     min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
+    
     max_z_for_max_x = max([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
     min_z_for_max_x = min([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
     max_z_for_min_x = max([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
@@ -1317,10 +1324,10 @@ def sort_coordinates(vertex_coordinates):
 
 
 def create_polygon(
-    bound_number, vertex_coordinates, 
+    bound_number: int, vertex_coordinates: List[Vector3], 
     vertices = vertices, polys = polys,
-    material_index = 0, cell_type = 0, 
-    flags = None, plane_edges = None, wall_side = None, sort_vertices = False,
+    material_index: int = 0, cell_type: int = 0, 
+    flags: int = None, plane_edges = None, wall_side = None, sort_vertices: bool = False,
     hud_color = None, shape_outline_color = shape_outline_color,
     rotate = 0, always_visible = True, fix_faulty_quads = fix_faulty_quads):
 
@@ -1434,7 +1441,7 @@ def user_notes(x):
     Please find some Polygons and Texture examples below this text.
     You can already run this the script and create the Test Map yourself
     
-    If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are accepted)
+    If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are acceptable)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
     The Material Index (optional variable, defaults to 0). You can use the constants under 'Material types'.    
@@ -1456,14 +1463,18 @@ def user_notes(x):
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
     To properly set up the AI, adhere to the following for 'bound_number = x':
-    Open Areas: 0-199
+    Open Areas: 1-199
     Roads: 201-859
     Intersections: 860+
     """
+
+#! Extra notes:
+#! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
+#! There must exist a polygon with 'bound_number = 1'
     
-#! N.B.: If you wish to change or add Cell and/or Material constants and are working with Blender,
-#! then you must also modify the respective Blender IMPORTS and EXPORTS
-#! (For Cells) -> Control + F and search for: "CELL_IMPORT" and "CELL_EXPORT"
+#! If you wish to modify or add Material, Cell or HUD constants you are importing/exporting to Blender
+#! then you must also modify the respective IMPORTS and EXPORTS
+#! For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
 
 # Cell / Room types 
 DEFAULT = 0
@@ -1495,8 +1506,6 @@ ORANGE = "#ffa500"
 LIGHT_RED = "#ff7f7f"
 LIGHT_YELLOW = '#ffffe0'
 
-
-#! N.B.: The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
 
 #! ======================== MAIN AREA ======================== #*
 
@@ -2425,7 +2434,7 @@ def create_folders(city_name: str) -> None:
         os.makedirs(path, exist_ok = True)
         
         
-def create_city_info() -> None: 
+def create_city_info(city_name: str) -> None: 
     cinfo_folder = SHOP / "TUNE"
     cinfo_file = f"{city_name}.CINFO"
     
@@ -2458,19 +2467,19 @@ def copy_custom_textures() -> None:
         shutil.copy(custom_texs, output_folder / custom_texs.name)
 
 
-def edit_and_copy_mmbangerdata(bangerdata_properties):
-    editor_tune_folder = Path(BASE_DIR) / 'Core AR' / 'TUNE'
-    shop_tune_folder = Path(SHOP) / 'TUNE'
+def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
+    input_folder = BASE_DIR / 'Core AR' / 'TUNE'
+    output_folder = SHOP / 'TUNE'
 
-    for file in editor_tune_folder.glob('*.MMBANGERDATA'):
+    for file in input_folder.glob('*.MMBANGERDATA'):
         if file.stem not in bangerdata_properties:
-            shutil.copy(file, shop_tune_folder)
+            shutil.copy(file, output_folder)
             
     for prop_key, properties in bangerdata_properties.items():
-        file = editor_tune_folder / f"{prop_key}.MMBANGERDATA"
+        banger_files = input_folder / f"{prop_key}.MMBANGERDATA"
         
-        if file.exists():
-            with open(file, 'r') as f: 
+        if banger_files.exists():
+            with open(banger_files, 'r') as f: 
                 lines = f.readlines()
 
             for i, line in enumerate(lines):
@@ -2478,31 +2487,31 @@ def edit_and_copy_mmbangerdata(bangerdata_properties):
                     if line.strip().startswith(key):
                         lines[i] = f'\t{key} {new_value}\n'
             
-            tweaked_tune_files = shop_tune_folder / file.name
-            with open(tweaked_tune_files, 'w') as f:
+            tweaked_banger_files = output_folder / banger_files.name
+            with open(tweaked_banger_files, 'w') as f:
                 f.writelines(lines)
                 
                 
 def copy_core_tune_files() -> None:
-    editor_tune_folder = Path(BASE_DIR) / 'Core AR' / 'TUNE'
-    shop_tune_folder = Path(SHOP) / 'TUNE'
+    input_folder = BASE_DIR / 'Core AR' / 'TUNE'
+    output_folder = SHOP / 'TUNE'
     
-    non_mmbangerdata_files = [f for f in editor_tune_folder.glob('*') if not f.name.endswith('.MMBANGERDATA')]
+    non_mmbangerdata_files = [f for f in input_folder.glob('*') if not f.name.endswith('.MMBANGERDATA')]
     
     for file in non_mmbangerdata_files:
-        shutil.copy(file, shop_tune_folder)
+        shutil.copy(file, output_folder)
                 
                 
 def copy_dev_folder(mm1_folder: Path, city_name: str) -> None:
     dev_folder = BASE_DIR / 'dev'
     mm1_folder = Path(mm1_folder) / 'dev'
     
-    shutil.rmtree(mm1_folder, ignore_errors = True)  # remove any existing AI files in the dev folder
+    shutil.rmtree(mm1_folder, ignore_errors = True)  # Remove any existing AI files in the dev folder
     shutil.copytree(dev_folder, mm1_folder)
     
-    # Delete AI files in CWD
-    ai_files = dev_folder / 'CITY' / city_name
-    shutil.rmtree(ai_files, ignore_errors = True)
+    # Delete amy AI files in the Mitown Madness / dev folder
+    mm1_dev_ai_files = dev_folder / 'CITY' / city_name
+    shutil.rmtree(mm1_dev_ai_files, ignore_errors = True)
     
 ################################################################################################################               
 ################################################################################################################ 
@@ -2533,30 +2542,29 @@ race_type_to_extension = {
     'BLITZ': '.B_'}
 
 
-def fill_mm_date_values(race_type, user_values):
+def fill_mm_date_values(race_type: str, user_values):
     # Default values that are common to all modes.
-    default_values = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    # default_values = [44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44] ## Debug
+    default_values = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  # Debug: [44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44]
     
     # Mappings to determine which positions in default_values are replaced by user values.
-    replace_positions = {
-        'BLITZ': [1, 2, 3, 4, 5, 6, 7, 8],  # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
-        'CIRCUIT': [1, 2, 3, 4, 5, 6, 7],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
-        'RACE': [1, 2, 3, 4, 5, 6]}         # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
-
-    filled = default_values.copy()
+    replace_values = {        
+        BLITZ: [1, 2, 3, 4, 5, 6, 7, 8],  # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
+        CIRCUIT: [1, 2, 3, 4, 5, 6, 7],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
+        RACE: [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
+    }
+        
+    modified_list = default_values.copy()
     
-    for idx, value in zip(replace_positions[race_type], user_values):
-        filled[idx] = value
+    for idx, value in zip(replace_values[race_type], user_values):
+        modified_list[idx] = value
 
     # Return only the needed portion of the filled list (i.e. removing the repeated "Difficulty")
-    return filled[:10]  
+    return modified_list[:10]  
 
 
 def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num = None):
     with open(opp_wp_file, "w") as f:
-        if opponent_num is not None:
-            # Opponent waypoint header
+        if opponent_num is not None:  # Opponent waypoint header
             f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
             
             # Writing waypoints for Opponents and adding the filler values
@@ -2576,8 +2584,9 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
     
     
 def write_mm_data(mm_data_file, configs, race_type, prefix):
+    header = ",".join(["Description"] + 2 * ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"])
+    
     with open(mm_data_file, 'w') as f:
-        header = ",".join(["Description"] + 2 * ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"])
         f.write(header + "\n")
         
         for race_index, config in configs.items():
@@ -2591,13 +2600,14 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
                         
             data_string = race_desc + "," + ",".join(map(str, ama_filled_values)) + "," + ",".join(map(str, pro_filled_values))
             
-            f.write(data_string + "\n") # Write the data string to file
+            f.write(data_string + "\n")  # Write the data string to file
             
     MOVE(mm_data_file, SHOP / "RACE" / city_name / mm_data_file)
 
 
-def write_aimap(city_name, race_type, race_index, aimap_config, opponent_cars, num_of_opponents):
+def write_aimap(city_name: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):
     aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
+    
     with open(aimap_file_name, "w") as f:
         
         aimap_content = f"""
@@ -2635,11 +2645,16 @@ def write_aimap(city_name, race_type, race_index, aimap_config, opponent_cars, n
     MOVE(aimap_file_name, SHOP / "RACE" / city_name / aimap_file_name)
 
     
-def create_races(city_name, race_data):
+def create_races(city_name: str, race_data) -> None:
     for race_type, race_configs in race_data.items():
         if race_type == 'RACE':  # For Checkpoint races
             if len(race_configs) > len(checkpoint_prefixes):
-                raise ValueError("Number of Checkpoint races cannot be more than 12")
+                race_num_error = """
+                ***ERROR***
+                Number of Checkpoint races cannot be more than 12
+                """
+                raise ValueError(race_num_error)
+                        
             for idx, (race_index, config) in enumerate(race_configs.items()):
                 prefix = checkpoint_prefixes[race_index]
                 
@@ -2650,7 +2665,7 @@ def create_races(city_name, race_data):
                 for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
                     write_waypoints(
                         f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
-                        opp_waypoints, race_type, race_index, opponent_num=opp_idx)
+                        opp_waypoints, race_type, race_index, opponent_num = opp_idx)
                 
                 write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
                 write_aimap(city_name, race_type, race_index, 
@@ -2676,19 +2691,19 @@ def create_races(city_name, race_data):
                             num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
 
                 
-def create_cnr(city_name, cnr_waypoints):
-        cnr_csv_file = "COPSWAYPOINTS.CSV"
-        cnr_header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
-        cnr_filler = ",0,0,0,0,0,\n"
+def create_cnr(city_name: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
+        cnr_file = "COPSWAYPOINTS.CSV"
+        header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
+        filler = ",0,0,0,0,0,\n"
         
-        with open(cnr_csv_file, "w") as f:
-            f.write(cnr_header)
+        with open(cnr_file, "w") as f:
+            f.write(header)
             for i in range(0, len(cnr_waypoints), 3):
-                f.write(", ".join(map(str, cnr_waypoints[i])) + cnr_filler) 
-                f.write(", ".join(map(str, cnr_waypoints[i+1])) + cnr_filler)
-                f.write(", ".join(map(str, cnr_waypoints[i+2])) + cnr_filler)
+                f.write(", ".join(map(str, cnr_waypoints[i])) + filler) 
+                f.write(", ".join(map(str, cnr_waypoints[i+1])) + filler)
+                f.write(", ".join(map(str, cnr_waypoints[i+2])) + filler)
 
-        MOVE(cnr_csv_file, SHOP / "RACE" / city_name / cnr_csv_file)
+        MOVE(cnr_file, SHOP / "RACE" / city_name / cnr_file)
   
 ################################################################################################################               
 ################################################################################################################              
@@ -2697,7 +2712,7 @@ _H = 8
 _A2 = 32
 
 # Create Cells                     
-def create_cells(city_name: str, truncate_cells: bool = False):
+def create_cells(city_name: str, truncate_cells: bool) -> None:
     bms_files = []
     bms_a2_files = set()
     
@@ -2805,7 +2820,7 @@ def create_cells(city_name: str, truncate_cells: bool = False):
         
 
 # Create EXT file                      
-def create_ext(city_name: str, polygons: List[Vector3]):
+def create_ext(city_name: str, polygons: List[Vector3]) -> Tuple[float, float, float, float]:
     x_coords = [vertex[0] for poly in polygons for vertex in poly]
     z_coords = [vertex[2] for poly in polygons for vertex in poly]
     
@@ -2821,23 +2836,22 @@ def create_ext(city_name: str, polygons: List[Vector3]):
     return min_x, max_x, min_z, max_z
 
 
-def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
-                        x_offset = 0, y_offset = 0, line_width = 1, background_color = 'black') -> None:
+def create_hudmap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, shape_outline_color: str,
+                        x_offset: float, y_offset: float, line_width: float, background_color: str) -> None:
 
     if set_minimap and not is_blender_running():
         global hudmap_vertices
         global hudmap_properties
-        bmp_folder = SHOP / 'BMP16'
-        
+                
         min_x = min(point[0] for polygon in hudmap_vertices for point in polygon)
         max_x = max(point[0] for polygon in hudmap_vertices for point in polygon)
         min_z = min(point[2] for polygon in hudmap_vertices for point in polygon)
         max_z = max(point[2] for polygon in hudmap_vertices for point in polygon)
-
+        
         width = int(max_x - min_x)
         height = int(max_z - min_z)
 
-        def draw_polygon(ax, polygon, shape_outline_color, 
+        def draw_polygon(ax, polygon, shape_outline_color: str, 
                         label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
             
             xs, ys = zip(*[(point[0], point[2]) for point in polygon])
@@ -2851,7 +2865,8 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
                 
             if add_label: 
                 center = calculate_center_tuples(polygon)
-                ax.text(center[0], center[2], label, color = 'white', ha = 'center', va = 'center', fontsize = 4.0)
+                ax.text(center[0], center[2], label, color = 'white', 
+                        ha = 'center', va = 'center', fontsize = 4.0)
 
         # Regular Export (320 and 640 versions)
         _, ax = plt.subplots()
@@ -2867,9 +2882,11 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
         for line in ax.lines:
             line.set_transform(trans)       
             
-        # Save JPG 640 and 320 Pictures            
-        plt.savefig(bmp_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-        plt.savefig(bmp_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
+        # Save JPG 640 and 320 Pictures  
+        output_folder = SHOP / 'BMP16'
+                  
+        plt.savefig(output_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+        plt.savefig(output_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
             
         if debug_hud or lars_race_maker:
             fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
@@ -2877,63 +2894,60 @@ def create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_colo
             
             for i, polygon in enumerate(hudmap_vertices):
                 hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
+                
                 draw_polygon(ax_debug, polygon, shape_outline_color, 
                             label = bound_label if debug_hud_bound_id else None, 
                             add_label = True, hud_fill = hud_fill, hud_color = hud_color)
-            
+                        
             ax_debug.axis('off')
             ax_debug.set_xlim([min_x, max_x])
-            ax_debug.set_ylim([max_z, min_z])  # flip the image vertically
+            ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
             ax_debug.set_position([0, 0, 1, 1])
 
             plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
 
 
 # Create Animations                              
-def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool = False) -> None: 
+def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool) -> None: 
     if set_anim:
-
         anim_folder = SHOP_CITY / city_name
         anim_file = "ANIM.CSV"
         
-        # Create ANIM.CSV file and write anim names
-        with open(anim_folder / anim_file, 'w', newline = '') as f:
-            writer = csv.writer(f)
-            for obj in anim_data.keys():
-                writer.writerow([f"anim_{obj}"])
-
-        # Create the individual anim files and write coordinates
-        for obj, coordinates in anim_data.items():
-            unique_anims = anim_folder / f"ANIM_{obj.upper()}.CSV"
-            with open(unique_anims, 'w', newline = '') as file:
-                writer = csv.writer(file)
-                if coordinates:
-                    for coordinate in coordinates:
-                        writer.writerow(coordinate)
-
-
-def create_bridges(all_bridges, set_bridges):
+        # List the Plane and Eltrain in the ANIM.CSV file
+        with open(anim_folder / anim_file, 'w', newline = '') as main_f:
+            for obj in anim_data:
+                csv.writer(main_f).writerow([f"anim_{obj}"])
+                
+                unique_anims = anim_folder / f"ANIM_{obj.upper()}.CSV"
+                
+                # Write their coordinates to the individual anim files
+                with open(unique_anims, 'w', newline = '') as anim_f:                    
+                    for coordinates in anim_data[obj]:
+                        csv.writer(anim_f).writerow(coordinates)
+                        
+                        
+def create_bridges(city_name: str, all_bridges, set_bridges: bool):
     if not set_bridges:
         return
+    
+    ORIENTATION_MAPPINGS = {
+        "NORTH": (-10, 0, 0),
+        "SOUTH": (10, 0, 0),
+        "EAST": (0, 0, 10),
+        "WEST": (0, 0, -10),
+        "NORTH_EAST": (10, 0, 10),
+        "NORTH_WEST": (10, 0, -10),
+        "SOUTH_EAST": (-10, 0, 10),
+        "SOUTH_WEST": (-10, 0, -10)
+    }
 
-    bridge_gizmo = SHOP_CITY / f"{city_name}.GIZMO"
+    bridge_file = SHOP_CITY / f"{city_name}.GIZMO"
 
-    # Remove any existing bridge gizmo file since we are appending bridges to it
-    if bridge_gizmo.exists():
-        os.remove(bridge_gizmo)
+    # Remove any existing bridge files since we append to the file
+    if bridge_file.exists():
+        os.remove(bridge_file)
 
     def calculate_facing(offset: Tuple[float, float, float], orientation: Union[str, float]) -> List[float]:
-        ORIENTATION_MAPPINGS = {
-            "NORTH": (-10, 0, 0),
-            "SOUTH": (10, 0, 0),
-            "EAST": (0, 0, 10),
-            "WEST": (0, 0, -10),
-            "NORTH_EAST": (10, 0, 10),
-            "NORTH_WEST": (10, 0, -10),
-            "SOUTH_EAST": (-10, 0, 10),
-            "SOUTH_WEST": (-10, 0, -10)
-}
-
         if isinstance(orientation, (float, int)):
             angle_radians = math.radians(orientation)
             return [
@@ -2944,55 +2958,55 @@ def create_bridges(all_bridges, set_bridges):
 
         if orientation in ORIENTATION_MAPPINGS:
             return [offset[i] + ORIENTATION_MAPPINGS[orientation][i] for i in range(3)]
+         
+        orientation_error = f"""
+        ***ERROR***
+        Invalid Bridge Orientation.
+        Please choose from one of the following: NORTH, SOUTH, EAST, WEST,
+        NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST or set the orientation
+        using a numeric value between 0 and 360 degrees.
+        """
+        raise ValueError(orientation_error)
         
-        raise ValueError(
-            """
-            ***ERROR***
-            Invalid Bridge Orientation.
-            Please choose from one of the following: NORTH, SOUTH, EAST, WEST, 
-            NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST or set the orientation 
-            using a numeric value between 0 and 360 degrees.
-            """
-        )
-
-    def generate_additional_objects_lines(additional_objects):
+    def generate_attribute_lines(bridge_attributes):
         lines = ""
-        for obj in additional_objects:
-            obj_offset, obj_orientation, obj_id, obj_type = obj
-            obj_facing = calculate_facing(obj_offset, obj_orientation)
+        for attr in bridge_attributes:
+            attr_offset, attr_orientation, attr_id, attr_type = attr
+            attr_facing = calculate_facing(attr_offset, attr_orientation)
             
-            line = f"\t{obj_type},{obj_id},{','.join(map(str, obj_offset))},{','.join(map(str, obj_facing))}\n"
+            line = f"\t{attr_type},{attr_id},{','.join(map(str, attr_offset))},{','.join(map(str, attr_facing))}\n"
             lines += line
         return lines
 
-    with open(bridge_gizmo, "a") as f:
-        for bridge in all_bridges:
-            bridge_offset, bridge_orientation, bridge_number, bridge_object, additional_objects = bridge
-            bridge_facing = calculate_facing(bridge_offset, bridge_orientation)
+    bridge_data = []  
 
-            drawbridge_values = f"{bridge_object},0,{','.join(map(str, bridge_offset))},{','.join(map(str, bridge_facing))}"
+    for bridge in all_bridges:
+        offset, orientation, id, drawbridge, bridge_attributes = bridge
 
-            additional_objects_lines = generate_additional_objects_lines(additional_objects)
+        face = calculate_facing(offset, orientation)
+        drawbridge_values = f"{drawbridge},0,{','.join(map(str, offset))},{','.join(map(str, face))}"
+        attributes = generate_attribute_lines(bridge_attributes)
 
-            num_fillers = 5 - len(additional_objects)
-            bridge_filler = f"\t{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"
-            bridge_fillers = "".join([bridge_filler for _ in range(num_fillers)])
-            
-            bridge_data = (
-                f"DrawBridge{bridge_number}\n"
-                f"\t{drawbridge_values}\n"
-                f"{additional_objects_lines}"
-                f"{bridge_fillers}"
-                f"DrawBridge{bridge_number}"
+        num_fillers = 5 - len(bridge_attributes)
+        filler = f"\t{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"     
+        fillers = filler * num_fillers
+
+        data = (
+            f"DrawBridge{id}\n"
+            f"\t{drawbridge_values}\n"
+            f"{attributes}"
+            f"{fillers}"
+            f"DrawBridge{id}\n"  
             )
 
-            if bridge_data:
-                f.write(bridge_data)
-                f.write("\n")
+        bridge_data.append(data)
+
+    with open(bridge_file, "a") as f:
+        f.writelines(bridge_data)
 
 
-def custom_bridge_config(configs, set_bridges, tune_folder):    
-    bridge_config_template = """
+def custom_bridge_config(configs, set_bridges, output_folder):    
+    config_template = """
 mmBridgeMgr :076850a0 {{
     BridgeDelta {BridgeDelta}
     BridgeOffGoal {BridgeOffGoal}
@@ -3004,7 +3018,7 @@ mmBridgeMgr :076850a0 {{
     GateOffDelay {GateOffDelay}
     BridgeOffDelay {BridgeOffDelay}
     GateOnDelay {GateOnDelay}
-}}
+    }}
     """
 
     default_config = {
@@ -3018,33 +3032,40 @@ mmBridgeMgr :076850a0 {{
         "GateOffDelay": 5.26,
         "BridgeOffDelay": 0.0,
         "GateOnDelay": 5.0,
-        "Mode": SINGLE}
+        "Mode": SINGLE
+        }
     
     if set_bridges:
         for config in configs:
             final_config = {**default_config, **config}
-            config_str = bridge_config_template.format(**final_config)
+            config_str = config_template.format(**final_config)
             
             race_type = final_config["RaceType"]
             filenames = []
 
-            if race_type in [CRUISE, COPS_N_ROBBERS]:
-                base_name = CRUISE if race_type == CRUISE else COPS_N_ROBBERS
+            if race_type in [ROAM, COPS_N_ROBBERS]:
+                base_name = ROAM if race_type == ROAM else COPS_N_ROBBERS
+                
                 if final_config["Mode"] in [SINGLE, ALL_MODES]:
                     filenames.append(f"{base_name}.MMBRIDGEMGR")
                 if final_config["Mode"] in [MULTI, ALL_MODES]:
                     filenames.append(f"{base_name}M.MMBRIDGEMGR")
             else:
-                if race_type not in [RACE, CIRCUIT, BLITZ]:
-                    raise ValueError(f"Invalid RaceType. Must be one of {RACE}, {CIRCUIT}, {BLITZ}, {CRUISE}, or {COPS_N_ROBBERS}.")
-
+                if race_type not in [RACE, CIRCUIT, BLITZ]:                
+                    type_error_message = f"""\n
+                    ***ERROR***
+                    Invalid RaceType. 
+                    Must be one of {ROAM}, {BLITZ}, {RACE}, {CIRCUIT}, or {COPS_N_ROBBERS}.
+                    """
+                    raise ValueError(type_error_message)
+                
                 if final_config["Mode"] in [SINGLE, ALL_MODES]:
                     filenames.append(f"{race_type}{final_config['RaceNum']}.MMBRIDGEMGR")
                 if final_config["Mode"] in [MULTI, ALL_MODES]:
                     filenames.append(f"{race_type}{final_config['RaceNum']}M.MMBRIDGEMGR")
             
             for filename in filenames:
-                (tune_folder / filename).write_text(config_str)
+                (output_folder / filename).write_text(config_str)
                 
 ################################################################################################################               
 ################################################################################################################
@@ -3278,7 +3299,7 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
 # Create PTL
 def create_portals(
     city_name: str, polys: List[Polygon], vertices: List[Vector3], 
-    empty_portals: bool = False, debug_portals: bool = False) -> None:
+    empty_portals: bool, debug_portals: bool) -> None:
     
     portals_folder = SHOP_CITY
     portals_file = f"{city_name}.PTL"
@@ -3376,7 +3397,7 @@ Prop Name: {self.name}
 
 # PROP EDITOR CLASS
 class PropEditor:
-    def __init__(self, city_name: str, debug_props: bool = False, append_props: bool = False, output_prop_f: str = None):
+    def __init__(self, city_name: str, debug_props: bool, append_props: bool = False, output_prop_f: str = None):  # Do not change
         self.objects = []  
         self.city_name = city_name  
 
@@ -3425,7 +3446,7 @@ class PropEditor:
                 prop_data = BinaryBanger.read(f)
                 self.objects.append(prop_data)
                 
-    def write_bangers(self, set_props: bool = False, filename = None):
+    def write_bangers(self, set_props: bool, filename = None):
         target_filename = filename or self.filename
 
         if set_props:
@@ -3837,7 +3858,7 @@ def get_first_and_last_street_vertices(street_list, process_vertices = False):
     return result
 
 
-def create_lars_race_maker(city_name, street_list, lars_race_maker = False, process_vertices = True):
+def create_lars_race_maker(city_name: str, street_list, lars_race_maker: bool, process_vertices: bool = True):
     #!########### Code by Lars (Modified) ############    
     vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
     
@@ -3972,8 +3993,8 @@ canvas.addEventListener('mousedown', function(e) {{
     new_html_content = html_start + coords_string + html_end
         
     if lars_race_maker:
-        with open("Lars_Race_Maker.html", "w") as file:
-            file.write(new_html_content)
+        with open("Lars_Race_Maker.html", "w") as f:
+            f.write(new_html_content)
 
     return new_html_content
 
@@ -4116,7 +4137,7 @@ Facade Editor
 ###################################################################################################################  
 
 # Create AR file and delete folders
-def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> None:
+def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
@@ -4127,12 +4148,13 @@ def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> No
     os.chdir(BASE_DIR)  
     
     build_dir = BASE_DIR / 'build'
+    
     for file in build_dir.iterdir():
         if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{city_name}"):
-            MOVE(file, Path(mm1_folder) / file.name)
+            MOVE(file, mm1_folder / file.name)
             
     # Delete the build folder
-    try:
+    try:  
         shutil.rmtree(build_dir)
     except Exception as e:
         print(f"Failed to delete the BUILD directory. Reason: {e}")
@@ -4146,23 +4168,27 @@ def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool = False) -> No
             
             
 def create_commandline(
-    city_name: str, mm1_folder: Path, no_ui: bool = False, no_ui_type: str = "", 
-    no_ai: bool = False, quiet_logs: bool = False, more_logs: bool = False):
+    city_name: str, mm1_folder: Path, no_ui: bool, no_ui_type: str, 
+    no_ai: bool, quiet_logs: bool, more_logs: bool) -> None:
     
     city_name = city_name.lower()
     cmd_file = "commandline.txt"
     
     base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {city_name}"
     
-    if quiet_logs and not more_logs:
+    if quiet_logs and more_logs:    
+        log_error_message = f"""\n
+        ***ERROR***
+        You can't have both 'quiet' and 'more logs' enabled. Please choose one."
+        """
+        raise ValueError(log_error_message)
+    
+    if quiet_logs:
         base_cmd += " -quiet"
         
-    if more_logs and not quiet_logs:
+    if more_logs:
         base_cmd += " -logopen -agiVerbose -console"
-        
-    if more_logs and quiet_logs:
-        print("\nWARNING: You can't have both 'quiet' and 'more logs' enabled. Please choose one.")
-        
+    
     if no_ai:
         base_cmd += " -noai"
     
@@ -4172,9 +4198,19 @@ def create_commandline(
         else:
             race_type, race_index = no_ui_type.split()
             if race_type not in ["circuit", "race", "blitz"]:
-                raise ValueError("Invalid race type provided. Available types are 'circuit, 'race, and 'blitz'.")
+                type_error_message = f"""\n
+                ***ERROR***
+                Invalid Race Type provided. Available types are {BLITZ}, {RACE}, and {CIRCUIT}.
+                """
+                raise ValueError(type_error_message)
+                                            
             if not 0 <= int(race_index) <= 14:
-                raise ValueError("The race index should be between 0 and 14.")
+                index_error_message = """\n
+                ***ERROR***
+                Invalid Race Index provided. It should be between 0 and 14.
+                """
+                raise ValueError(index_error_message)
+            
             base_cmd += f" -noui -{race_type} {race_index} -keyboard"
     
     processed_cmd = base_cmd
@@ -4182,11 +4218,12 @@ def create_commandline(
     with open(mm1_folder / cmd_file, "w") as f:
         f.write(processed_cmd)
         
+        
 # Start game
-def start_game(mm1_folder: str, play_game: bool = False) -> None:
+def start_game(mm1_folder: str, play_game: bool) -> None:
     if play_game and not is_blender_running():
-        subprocess.run(str(Path(mm1_folder) / "Open1560.exe"), cwd = str(mm1_folder), shell = True)
-
+        subprocess.run(mm1_folder / "Open1560.exe", cwd = mm1_folder)
+        
 ###################################################################################################################
 ################################################################################################################### 
 
@@ -4223,7 +4260,7 @@ def adjust_3D_view_settings() -> None:
                     shading.color_type = 'TEXTURE'
 
               
-def load_dds_resources(dds_directory: Path, load_dds_materials: bool = False) -> None:
+def load_dds_resources(dds_directory: Path, load_dds_materials: bool) -> None:
     for file_name in os.listdir(dds_directory):
         if file_name.lower().endswith(".dds"):
             texture_path = os.path.join(dds_directory, file_name)
@@ -5204,7 +5241,7 @@ app_panoz_gtr = {
 appended_props = [app_panoz_gtr]
 
 
-# AudioIds
+# AudioIDs
 MALLDOOR_AUD = 1
 POLE_AUD = 3           
 SIGN_AUD = 4          
@@ -5237,8 +5274,7 @@ bangerdata_properties = {
 
 new_physics_properties = {
     97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # sticky
-    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0},   # slippery
-}
+    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # slippery
 
 ###################################################################################################################   
 ###################################################################################################################  
@@ -5249,7 +5285,7 @@ print("Generating " + f"{race_locale_name}...")
 print("\n======================================================\n")
 
 create_folders(city_name)
-create_city_info()
+create_city_info(city_name)
 create_bounds(vertices, polys, city_name, debug_bounds)
 create_cells(city_name, truncate_cells)
 create_races(city_name, race_data)
@@ -5276,7 +5312,7 @@ copy_custom_textures()
 
 create_ext(city_name, hudmap_vertices)
 create_animations(city_name, anim_data, set_anim)   
-create_bridges(bridges, set_bridges) 
+create_bridges(city_name, bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 
