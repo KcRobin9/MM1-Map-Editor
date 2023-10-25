@@ -45,12 +45,12 @@ mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM gam
 
 
 #* SETUP II (Map Creation)      
-play_game = False                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = False              # change to "True" to delete the raw city files after the .ar file has been created
+play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
+delete_shop = True              # change to "True" to delete the raw city files after the .ar file has been created
 
-set_facades = True              # change to "True" if you want FACADES
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = True              # change to "True" if you want BRIDGES
+set_facades = True              # change to "True" if you want FACADES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
@@ -636,7 +636,7 @@ class Polygon:
         plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
-    def to_file(self, f: BinaryIO) -> None:
+    def write(self, f: BinaryIO) -> None:
         # Each polygon requires four vertex indices
         if len(self.vert_indices) < 4:  
             self.vert_indices += (0,) * (4 - len(self.vert_indices))
@@ -724,6 +724,7 @@ class BND:
         bb_max = Vector3.read(f)
         num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<5l')
         x_scale, z_scale, num_indices, height_scale, cache_size = read_unpack(f, '<2f3l')
+        
         vertices = [Vector3.read(f) for _ in range(num_verts)]
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
         
@@ -750,6 +751,32 @@ class BND:
                    hot_verts, edges_0, edges_1, edge_normals, edge_floats,
                    row_offsets, row_shorts, row_indices, row_heights)
     
+    @classmethod
+    def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'BND':
+        magic = b'2DNB\0'
+        offset = Vector3(0.0, 0.0, 0.0)
+        x_dim, y_dim, z_dim = 0, 0, 0
+        center = calculate_center(vertices)
+        radius = calculate_radius(vertices, center)
+        radius_sqr = radius ** 2
+        bb_min = calculate_min(vertices)
+        bb_max = calculate_max(vertices)
+        num_hot_verts1, num_hot_verts2, num_edges = 0, 0, 0
+        x_scale, z_scale = 0.0, 0.0
+        num_indices, height_scale, cache_size = 0, 0, 0
+        
+        hot_verts = [Vector3(0.0, 0.0, 0.0)]  
+        edges_0, edges_1 = [0], [1] 
+        edge_normals = [Vector3(0.0, 0.0, 0.0)] 
+        edge_floats = [0.0]  
+        row_offsets, row_shorts, row_indices, row_heights = [0], [0], [0], [0]  
+
+        return BND(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
+                len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, x_scale, z_scale, 
+                num_indices, height_scale, cache_size, vertices, polys,
+                hot_verts, edges_0, edges_1, edge_normals, edge_floats,
+                row_offsets, row_shorts, row_indices, row_heights)
+            
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
         self.offset.write(f)         
@@ -766,7 +793,18 @@ class BND:
             vertex.write(f)   
         
         for poly in self.polys:           
-            poly.to_file(f)              
+            poly.write(f)    
+            
+    @staticmethod
+    def create(vertices: List[Vector3], polys: List[Polygon], city_name: str, debug_bounds: bool) -> None:
+        bnd = BND.initialize(vertices, polys)
+    
+        bnd_folder = SHOP / "BND"
+        bnd_file = f"{city_name}_HITID.BND"
+    
+        with open(bnd_folder / bnd_file, "wb") as f:
+            bnd.write(f)
+        bnd.debug("BOUNDS_debug.txt", debug_bounds)          
                 
     def debug(self, filename: str, debug_bounds: bool) -> None:
         if debug_bounds:
@@ -977,7 +1015,6 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
-
 MOVE = shutil.move
 
 # INITIALIZATIONS | do not change
@@ -1159,36 +1196,6 @@ def create_bms(
 
 ################################################################################################################               
 ################################################################################################################  
-
-def initialize_bounds(vertices: List[Vector3], polys: List[Polygon]) -> BND:
-    magic = b'2DNB\0'
-    offset = Vector3(0.0, 0.0, 0.0)
-    x_dim, y_dim, z_dim = 0, 0, 0
-    center = calculate_center(vertices)
-    radius = calculate_radius(vertices, center)
-    radius_sqr = radius ** 2
-    bb_min = calculate_min(vertices)
-    bb_max = calculate_max(vertices)
-    num_hot_verts1, num_hot_verts2, num_edges = 0, 0, 0
-    x_scale, z_scale = 0.0, 0.0
-    num_indices, height_scale, cache_size = 0, 0, 0
-    
-    hot_verts = [Vector3(0.0, 0.0, 0.0)]  
-    edges_0, edges_1 = [0], [1] 
-    edge_normals = [Vector3(0.0, 0.0, 0.0)] 
-    edge_floats = [0.0]  
-    row_offsets, row_shorts, row_indices, row_heights = [0], [0], [0], [0]  
-
-    return BND(magic, offset, x_dim, y_dim, z_dim, 
-               center, radius, radius_sqr, bb_min, bb_max, 
-               len(vertices), len(polys) - 1,
-               num_hot_verts1, num_hot_verts2, num_edges, 
-               x_scale, z_scale, 
-               num_indices, height_scale, cache_size,
-               vertices, polys,
-               hot_verts, edges_0, edges_1, edge_normals, edge_floats,
-               row_offsets, row_shorts, row_indices, row_heights)
-
 
 def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     v1, v2, v3 = vertex_coordinates
@@ -2403,18 +2410,6 @@ save_bms(
 ################################################################################################################               
 ################################################################################################################ 
 
-# # Create BND file
-def create_bounds(vertices: List[Vector3], polys: List[Polygon], city_name: str, debug_bounds: bool = False) -> None:    
-    bnd = initialize_bounds(vertices, polys)
-    
-    bnd_folder = SHOP / "BND"
-    bnd_file = f"{city_name}_HITID.BND"
-    
-    with open(bnd_folder / bnd_file, "wb") as f:
-        bnd.write(f)
-    bnd.debug("BOUNDS_debug.txt", debug_bounds)
-  
-  
 # Create SHOP and FOLDER structure   
 def create_folders(city_name: str) -> None:
     FOLDER_STRUCTURE = [
@@ -5286,7 +5281,7 @@ print("\n======================================================\n")
 
 create_folders(city_name)
 create_city_info(city_name)
-create_bounds(vertices, polys, city_name, debug_bounds)
+BND.create(vertices, polys, city_name, debug_bounds)
 create_cells(city_name, truncate_cells)
 create_races(city_name, race_data)
 create_cnr(city_name, cnr_waypoints)
@@ -5316,14 +5311,13 @@ create_bridges(city_name, bridges, set_bridges)
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_portals(city_name, polys, vertices, empty_portals, debug_portals)
 
-
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
 create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices = True)
 
 create_ar(city_name, mm1_folder, delete_shop)
-create_commandline(city_name, Path(mm1_folder), no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
+create_commandline(city_name, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
 end_time = time.time()
 editor_time = end_time - start_time
