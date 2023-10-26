@@ -870,33 +870,39 @@ class BMS:
     @classmethod
     def read(cls, file_name: str):
         with open(file_name, 'rb') as f:
-            magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')            
+            magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')  
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
             radius, radius_sq, bounding_box_radius = read_unpack(f, '3f')
             texture_count, flags = read_unpack(f, 'bb')
+            f.read(6)
+                        
+            string_names = []
+            for _ in range(texture_count):
+                string_name = read_unpack(f, '32s')[0].decode('utf-8').rstrip('\x00')
+                string_names.append(string_name)
+                f.read(16)   
+                    
+            if vertex_count <= 15:
+                coordinates = Vector3.readn(f, vertex_count)
+            else:
+                coordinates = Vector3.readn(f, vertex_count + 8)
             
-            f.read(6)  
-            string_name = read_unpack(f, '32s')[0].decode('utf-8').rstrip('\x00')
-            f.read(16) 
-
-            coordinates = []
-            for _ in range(vertex_count):
-                x, y, z = read_unpack(f, '3f')
-                coordinates.append(Vector3(x, y, z))
-
             texture_darkness = list(read_unpack(f, str(adjunct_count) + 'b'))
             tex_coords = list(read_unpack(f, str(adjunct_count * 2) + 'f'))
             enclosed_shape = list(read_unpack(f, str(adjunct_count) + 'H'))
             surface_sides = list(read_unpack(f, str(surface_count) + 'b'))
 
+            indices_per_surface = indices_count // surface_count
             indices_sides = []
+
             for _ in range(surface_count):
-                indices_side = list(read_unpack(f, str(indices_count) + 'H'))
+                indices_side_format = f"<{indices_per_surface}H"
+                indices_side = list(read_unpack(f, indices_side_format))
                 indices_sides.append(indices_side)
 
         return cls(magic, vertex_count, adjunct_count, surface_count, indices_count, 
                    radius, radius_sq, bounding_box_radius, 
-                   texture_count, flags, string_name, coordinates, 
+                   texture_count, flags, string_names, coordinates, 
                    texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
         
     def write(self, path: Path) -> None:
@@ -938,6 +944,7 @@ class BMS:
                 f.write(str(self))
                 
     def __repr__(self):
+        rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
         return f'''
 BMS
 Magic: {self.magic}
@@ -945,16 +952,16 @@ VertexCount: {self.vertex_count}
 AdjunctCount: {self.adjunct_count}
 SurfaceCount: {self.surface_count}
 IndicesCount: {self.indices_count}
-Radius: {self.radius}
-Radiussq: {self.radius_sq}
-BoundingBoxRadius: {self.bounding_box_radius}
+Radius: {self.radius:.2f}
+RadiusSq: {self.radius_sq:.2f}
+BoundingBoxRadius: {self.bounding_box_radius:.2f}
 TextureCount: {self.texture_count}
 Flags: {self.flags}
 StringName: {self.string_name}
 Coordinates: {self.coordinates}
 TextureDarkness: {self.texture_darkness}
-TexCoords: {self.tex_coords}
-Enclosed_shape: {self.enclosed_shape}
+TexCoords: {rounded_tex_coords}
+Enclosed Shape: {self.enclosed_shape}
 SurfaceSides: {self.surface_sides}
 IndicesSides: {self.indices_sides}
         '''
@@ -1350,7 +1357,8 @@ def create_polygon(
         "rotate": rotate,
         "sort_vertices": sort_vertices,
         "cell_type": cell_type,
-        "hud_color": hud_color}
+        "hud_color": hud_color
+    }
     
     polygons_data.append(polygon_info)
     
@@ -5339,3 +5347,11 @@ bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
 bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
 set_blender_keybinding()
+
+###################################################################################################################   
+################################################################################################################### 
+
+#? Extra
+
+# Read any BMS file in the current directory
+# print(BMS.read("CULL17_H2.BMS"))
