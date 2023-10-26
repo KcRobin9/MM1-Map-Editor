@@ -915,14 +915,18 @@ class BMS:
 
             for name in self.string_name:
                 write_pack(f, '32s', name.encode('utf-8').ljust(32, b'\x00'))
-                f.write(b'\x00' * (4 * 4))
-
+                f.write(b'\x00' * 16)
+                            
             for coordinate in self.coordinates:
-                write_pack(f, '3f', coordinate.x, coordinate.y, coordinate.z)
+                coordinate.write(f)
 
+            if self.vertex_count >= 16:
+                for _ in range(8):
+                    Vector3(0, 0, 0).write(f)
+                    
             write_pack(f, str(self.adjunct_count) + 'b', *self.texture_darkness)
                         
-            # Temporary solution, ensuring tex_coords is not longer than adjunct_count * 2
+            # Temporary solution - ensuring tex_coords is not longer than adjunct_count * 2
             if len(self.tex_coords) > self.adjunct_count * 2:
                 self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
                 
@@ -930,12 +934,12 @@ class BMS:
             write_pack(f, str(self.adjunct_count) + 'H', *self.enclosed_shape)
             write_pack(f, str(self.surface_count) + 'b', *self.surface_sides)
 
-            # Even with three vertices, four indices are still required // (indices_sides: [[0, 1, 2, 0]])
+            # A triangle still requires 4 indices ([0, 1, 2, 0])
             for indices_side in self.indices_sides:
                 while len(indices_side) < 4:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
-                                    
+                        
     def debug(self, file_name: str, debug_dir = "Debug BMS") -> None:
         Path(debug_dir).mkdir(parents = True, exist_ok = True)
 
