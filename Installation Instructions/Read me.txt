@@ -32,12 +32,14 @@ However, it showcases some critical steps to set the right permissions and conne
 If after going through all steps it's not working, send me a message. I'm happy to help out.
 
 8) Build your First City
-Open the script and direct the Editor to your Midtown Madness folder, e.g. "mm1_folder = r"C:\Users\robin\Desktop\MM1_game" 
+Open the script (MAP_EDITOR_ALPHA_v1.py) with Visual Studio Code.
+The Editor comes with a Test Map (i.e. geometry and texture) and allows you to immediately build the Test Map.
 
-The Editor comes with a test city (i.e. polygons) and has options set in a way such that you can immediately build the city.
 To do this, open "powershell".exe in the main directory. Then type:
-"python m [press the Tab] key" and press enter.
-Pressing the Tab key after you entered "m" will autofill the name into "python MAP_EDITOR_ALPHA_v1.py"
-The script will now build the city, and immediately boot you into the game. Click Cruise, pick a car, and start driving.
+"python m [press the Tab key]" and press enter.
+
+Pressing the Tab key after you entered "python m" will autofill the name into "python MAP_EDITOR_ALPHA_v1.py"
+The editor will now build the map, and immediately boot you into the game. 
+Click Cruise, pick a car, and start driving.
 
 ~~~
