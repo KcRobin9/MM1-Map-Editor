@@ -39,8 +39,8 @@ from typing import List, Dict, Union, Tuple, Optional, BinaryIO
   
 
 #! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
-city_name = "First_City"                        # One word (no spaces)  --- name of the .ar file
-race_locale_name = "My First City"              # Can be multiple words --- name of the city in the Race Locale Menu
+map_name = "My First City"                      # Can be multiple words --- name of the map in the Race Menu
+map_filename = "First_City"                     # One word (no spaces)  --- name of the .ar file
 mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM game that comes with the repo download
 
 
@@ -108,7 +108,7 @@ fix_faulty_quads = False        # change to "True" if you want to fix faulty qua
 start_time = time.time()
 
 print("\n======================================================\n")
-print("Generating " + f"{race_locale_name}...")
+print("Generating " + f"{map_name}...")
 print("\n======================================================\n")
 
 ################################################################################################################               
@@ -800,11 +800,11 @@ class BND:
             poly.write(f)    
             
     @staticmethod
-    def create(vertices: List[Vector3], polys: List[Polygon], city_name: str, debug_bounds: bool) -> None:
+    def create(vertices: List[Vector3], polys: List[Polygon], map_filename: str, debug_bounds: bool) -> None:
         bnd = BND.initialize(vertices, polys)
     
         bnd_folder = SHOP / "BND"
-        bnd_file = f"{city_name}_HITID.BND"
+        bnd_file = f"{map_filename}_HITID.BND"
     
         with open(bnd_folder / bnd_file, "wb") as f:
             bnd.write(f)
@@ -1090,9 +1090,9 @@ def save_bms(
         
     # Determine the target directory
     if bound_number < 200:
-        target_dir = SHOP / "BMS" / f"{city_name}LM"
+        target_dir = SHOP / "BMS" / f"{map_filename}LM"
     else:
-        target_dir = SHOP / "BMS" / f"{city_name}CITY"
+        target_dir = SHOP / "BMS" / f"{map_filename}CITY"
     target_dir.mkdir(parents = True, exist_ok = True)  # Ensure the directory exists
     
     # Randomize Textures
@@ -2308,40 +2308,37 @@ save_bms(
 ################################################################################################################ 
 
 # Create SHOP and FOLDER structure   
-def create_folders(city_name: str) -> None:
+def create_folders(map_filename: str) -> None:
     FOLDER_STRUCTURE = [
         BASE_DIR / "build", 
         SHOP / "BMP16", 
         SHOP / "TEX16O", 
         SHOP / "TUNE", 
         SHOP / "MTL", 
-        SHOP / "CITY" / city_name,
-        SHOP / "RACE" / city_name,
-        SHOP / "BMS" / f"{city_name}CITY",
-        SHOP / "BMS" / f"{city_name}LM",
-        SHOP / "BND" / f"{city_name}CITY",
-        SHOP / "BND" / f"{city_name}LM"]
+        SHOP / "CITY" / map_filename,
+        SHOP / "RACE" / map_filename,
+        SHOP / "BMS" / f"{map_filename}CITY",
+        SHOP / "BMS" / f"{map_filename}LM",
+        SHOP / "BND" / f"{map_filename}CITY",
+        SHOP / "BND" / f"{map_filename}LM"]
     
     for path in FOLDER_STRUCTURE:
         os.makedirs(path, exist_ok = True)
         
         
-def create_city_info(city_name: str) -> None: 
+def create_city_info(map_name: str, map_filename: str) -> None: 
     cinfo_folder = SHOP / "TUNE"
-    cinfo_file = f"{city_name}.CINFO"
+    cinfo_file = f"{map_filename}.CINFO"
     
     with open(cinfo_folder / cinfo_file, "w") as f:
-        localized_name = race_locale_name
-        map_name = city_name.lower()
-        race_dir = city_name.lower()
         blitz_names = '|'.join(blitz_race_names)
         circuit_names = '|'.join(circuit_race_names)
         checkpoint_names = '|'.join(checkpoint_race_names)
 
         f.write(f"""
-LocalizedName={localized_name}
-MapName={map_name}
-RaceDir={race_dir}
+LocalizedName={map_name}
+MapName={map_filename}
+RaceDir={map_filename.lower()}
 BlitzCount={len(blitz_race_names)}
 CircuitCount={len(circuit_race_names)}
 CheckpointCount={len(circuit_race_names)}
@@ -2394,7 +2391,7 @@ def copy_core_tune_files() -> None:
         shutil.copy(file, output_folder)
                 
                 
-def copy_dev_folder(mm1_folder: Path, city_name: str) -> None:
+def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
     dev_folder = BASE_DIR / 'dev'
     mm1_folder = Path(mm1_folder) / 'dev'
     
@@ -2402,7 +2399,7 @@ def copy_dev_folder(mm1_folder: Path, city_name: str) -> None:
     shutil.copytree(dev_folder, mm1_folder)
     
     # Delete amy AI files in the Mitown Madness / dev folder
-    mm1_dev_ai_files = dev_folder / 'CITY' / city_name
+    mm1_dev_ai_files = dev_folder / 'CITY' / map_filename
     shutil.rmtree(mm1_dev_ai_files, ignore_errors = True)
     
 ################################################################################################################               
@@ -2472,7 +2469,7 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
                 waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
                 f.write(waypoint_line)
 
-    MOVE(opp_wp_file, SHOP / "RACE" / city_name / opp_wp_file)
+    MOVE(opp_wp_file, SHOP / "RACE" / map_filename / opp_wp_file)
     
     
 def write_mm_data(mm_data_file, configs, race_type, prefix):
@@ -2494,10 +2491,10 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
             
             f.write(data_string + "\n")  # Write the data string to file
             
-    MOVE(mm_data_file, SHOP / "RACE" / city_name / mm_data_file)
+    MOVE(mm_data_file, SHOP / "RACE" / map_filename / mm_data_file)
 
 
-def write_aimap(city_name: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):
+def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):
     aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
     
     with open(aimap_file_name, "w") as f:
@@ -2534,10 +2531,10 @@ def write_aimap(city_name: str, race_type: str, race_index: int, aimap_config, o
         for idx, opp_car in enumerate(opponent_cars):
             f.write(f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}\n")
             
-    MOVE(aimap_file_name, SHOP / "RACE" / city_name / aimap_file_name)
+    MOVE(aimap_file_name, SHOP / "RACE" / map_filename / aimap_file_name)
 
     
-def create_races(city_name: str, race_data) -> None:
+def create_races(map_filename: str, race_data) -> None:
     for race_type, race_configs in race_data.items():
         if race_type == 'RACE':  # For Checkpoint races
             if len(race_configs) > len(checkpoint_prefixes):
@@ -2560,7 +2557,7 @@ def create_races(city_name: str, race_data) -> None:
                         opp_waypoints, race_type, race_index, opponent_num = opp_idx)
                 
                 write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
-                write_aimap(city_name, race_type, race_index, 
+                write_aimap(map_filename, race_type, race_index, 
                             config['aimap'], config['opponent_cars'], 
                             num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
                 
@@ -2578,12 +2575,12 @@ def create_races(city_name: str, race_data) -> None:
                         opp_waypoints, race_type, idx, opponent_num=opp_idx)
                 
                 write_mm_data(f"MM{race_type}DATA.CSV", race_configs, race_type, prefix)
-                write_aimap(city_name, race_type, idx, 
+                write_aimap(map_filename, race_type, idx, 
                             config['aimap'], config['opponent_cars'],
                             num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
 
                 
-def create_cnr(city_name: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
+def create_cnr(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
         cnr_file = "COPSWAYPOINTS.CSV"
         header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
         filler = ",0,0,0,0,0,\n"
@@ -2595,7 +2592,7 @@ def create_cnr(city_name: str, cnr_waypoints: List[Tuple[float, float, float]]) 
                 f.write(", ".join(map(str, cnr_waypoints[i+1])) + filler)
                 f.write(", ".join(map(str, cnr_waypoints[i+2])) + filler)
 
-        MOVE(cnr_file, SHOP / "RACE" / city_name / cnr_file)
+        MOVE(cnr_file, SHOP / "RACE" / map_filename / cnr_file)
   
 ################################################################################################################               
 ################################################################################################################              
@@ -2604,12 +2601,12 @@ _H = 8
 _A2 = 32
 
 # Create Cells                     
-def create_cells(city_name: str, truncate_cells: bool) -> None:
+def create_cells(map_filename: str, truncate_cells: bool) -> None:
     bms_files = []
     bms_a2_files = set()
     
-    landmark_folder = SHOP / "BMS" / f"{city_name}LM"
-    city_folder = SHOP / "BMS" / f"{city_name}CITY"
+    landmark_folder = SHOP / "BMS" / f"{map_filename}LM"
+    city_folder = SHOP / "BMS" / f"{map_filename}CITY"
     
     for folder in [landmark_folder, city_folder]:
         for file in folder.iterdir():
@@ -2620,7 +2617,7 @@ def create_cells(city_name: str, truncate_cells: bool) -> None:
                     bms_a2_files.add(bound_number)
     
     cells_folder = SHOP_CITY
-    cells_file = f"{city_name}.CELLS"
+    cells_file = f"{map_filename}.CELLS"
     
     with open(cells_folder / cells_file, "w") as f:
         f.write(f"{len(bms_files)}\n")
@@ -2712,7 +2709,7 @@ def create_cells(city_name: str, truncate_cells: bool) -> None:
         
 
 # Create EXT file                      
-def create_ext(city_name: str, polygons: List[Vector3]) -> Tuple[float, float, float, float]:
+def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float, float, float]:
     x_coords = [vertex[0] for poly in polygons for vertex in poly]
     z_coords = [vertex[2] for poly in polygons for vertex in poly]
     
@@ -2720,7 +2717,7 @@ def create_ext(city_name: str, polygons: List[Vector3]) -> Tuple[float, float, f
     min_z, max_z = min(z_coords), max(z_coords)
 
     ext_folder = SHOP_CITY
-    ext_file = f"{city_name}.EXT"
+    ext_file = f"{map_filename}.EXT"
 
     with open(ext_folder / ext_file, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
@@ -2777,8 +2774,8 @@ def create_hudmap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, 
         # Save JPG 640 and 320 Pictures  
         output_folder = SHOP / 'BMP16'
                   
-        plt.savefig(output_folder / f"{city_name}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-        plt.savefig(output_folder / f"{city_name}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
+        plt.savefig(output_folder / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+        plt.savefig(output_folder / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
             
         if debug_hud or lars_race_maker:
             fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
@@ -2796,13 +2793,13 @@ def create_hudmap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, 
             ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
             ax_debug.set_position([0, 0, 1, 1])
 
-            plt.savefig(BASE_DIR / f"{city_name}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
+            plt.savefig(BASE_DIR / f"{map_filename}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
 
 
 # Create Animations                              
-def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_anim: bool) -> None: 
+def create_animations(map_filename: str, anim_data: Dict[str, List[Tuple]], set_anim: bool) -> None: 
     if set_anim:
-        anim_folder = SHOP_CITY / city_name
+        anim_folder = SHOP_CITY / map_filename
         anim_file = "ANIM.CSV"
         
         # List the Plane and Eltrain in the ANIM.CSV file
@@ -2818,7 +2815,7 @@ def create_animations(city_name: str, anim_data: Dict[str, List[Tuple]], set_ani
                         csv.writer(anim_f).writerow(coordinates)
                         
                         
-def create_bridges(city_name: str, all_bridges, set_bridges: bool):
+def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
     if not set_bridges:
         return
     
@@ -2833,7 +2830,7 @@ def create_bridges(city_name: str, all_bridges, set_bridges: bool):
         "SOUTH_WEST": (-10, 0, -10)
     }
 
-    bridge_file = SHOP_CITY / f"{city_name}.GIZMO"
+    bridge_file = SHOP_CITY / f"{map_filename}.GIZMO"
 
     # Remove any existing bridge files since we append to the file
     if bridge_file.exists():
@@ -3190,11 +3187,11 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
 
 # Create PTL
 def create_portals(
-    city_name: str, polys: List[Polygon], vertices: List[Vector3], 
+    map_filename: str, polys: List[Polygon], vertices: List[Vector3], 
     empty_portals: bool, debug_portals: bool) -> None:
     
     portals_folder = SHOP_CITY
-    portals_file = f"{city_name}.PTL"
+    portals_file = f"{map_filename}.PTL"
     
     if debug_portals:
         debug_filename = "PORTALS_debug.txt"
@@ -3289,15 +3286,15 @@ Prop Name: {self.name}
 
 # PROP EDITOR CLASS
 class PropEditor:
-    def __init__(self, city_name: str, debug_props: bool, append_props: bool = False, output_prop_f: str = None):  # Do not change
+    def __init__(self, map_filename: str, debug_props: bool, append_props: bool = False, output_prop_f: str = None):  # Do not change
         self.objects = []  
-        self.city_name = city_name  
+        self.map_filename = map_filename  
 
         if append_props:
-            self.filename = city_name 
+            self.filename = map_filename 
             self.read_bangers()
         else:
-            self.filename = SHOP_CITY / f"{city_name}.BNG"
+            self.filename = SHOP_CITY / f"{map_filename}.BNG"
         
         self.debug_props = debug_props
         self.debug_filename = "PROPS_debug.txt"
@@ -3600,10 +3597,10 @@ YES = 1
 
 # BAI EDITOR CLASS
 class BAI_Editor:
-    def __init__(self, city_name, streets, set_ai_map):
-        self.city_name = city_name
+    def __init__(self, map_filename, streets, set_ai_map):
+        self.map_filename = map_filename
         self.streets = streets
-        self.output_dir = BASE_DIR / "dev" / "CITY" / self.city_name
+        self.output_dir = BASE_DIR / "dev" / "CITY" / self.map_filename
                 
         if set_ai_map:
             self.write_map()
@@ -3611,7 +3608,7 @@ class BAI_Editor:
     def write_map(self):        
         self.output_dir.mkdir(parents = True, exist_ok = True)
         
-        with open(self.output_dir / f"{self.city_name}.map", 'w') as f:
+        with open(self.output_dir / f"{self.map_filename}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
@@ -3631,8 +3628,8 @@ mmMapData :0 {{
        
 # STREET CLASS
 class StreetEditor:
-    def __init__(self, city_name, data, set_streets, set_reverse_streets):
-        self.city_name = city_name
+    def __init__(self, map_filename, data, set_streets, set_reverse_streets):
+        self.map_filename = map_filename
         self.street_name = data["street_name"]
         self.set_reverse_streets = set_reverse_streets
         self.process_lanes(data)
@@ -3642,10 +3639,10 @@ class StreetEditor:
             self.write()
                     
     @classmethod
-    def create(cls, city_name, dataset, set_ai_map, set_streets, set_reverse_streets):
-        street_editors = [StreetEditor(city_name, data, set_streets, set_reverse_streets) for data in dataset]
+    def create(cls, map_filename, dataset, set_ai_map, set_streets, set_reverse_streets):
+        street_editors = [StreetEditor(map_filename, data, set_streets, set_reverse_streets) for data in dataset]
         street_names = [editor.street_name for editor in street_editors]
-        return BAI_Editor(city_name, street_names, set_ai_map)
+        return BAI_Editor(map_filename, street_names, set_ai_map)
 
     def process_lanes(self, data):
         if "lanes" in data:
@@ -3671,7 +3668,7 @@ class StreetEditor:
         self.alley = data.get("alley", NO)
 
     def write(self):
-        output_folder = BASE_DIR / "dev" / "CITY" / self.city_name        
+        output_folder = BASE_DIR / "dev" / "CITY" / self.map_filename        
         output_folder.mkdir(parents = True, exist_ok = True)
     
         with open(output_folder / f"{self.street_name}.road", 'w') as f:
@@ -3750,12 +3747,12 @@ def get_first_and_last_street_vertices(street_list, process_vertices = False):
     return result
 
 
-def create_lars_race_maker(city_name: str, street_list, lars_race_maker: bool, process_vertices: bool = True):
+def create_lars_race_maker(map_filename: str, street_list, lars_race_maker: bool, process_vertices: bool = True):
     #!########### Code by Lars (Modified) ############    
     vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
     
     polygons = hudmap_vertices
-    min_x, max_x, min_z, max_z = create_ext(city_name, polygons)
+    min_x, max_x, min_z, max_z = create_ext(map_filename, polygons)
     
     canvas_width = int(max_x - min_x)
     canvas_height = int(max_z - min_z)
@@ -3780,7 +3777,7 @@ def create_lars_race_maker(city_name: str, street_list, lars_race_maker: bool, p
     </style>
 </head>
 
-<img id = "scream" width = "{canvas_width}" height = {canvas_height} src = "{city_name}_HUD_debug.jpg" alt = "The Scream" style = "display:none;">
+<img id = "scream" width = "{canvas_width}" height = {canvas_height} src = "{map_filename}_HUD_debug.jpg" alt = "The Scream" style = "display:none;">
 
 <canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height} style = "background-color: #2b2b2b;">
 Your browser does not support the HTML5 canvas tag.
@@ -4029,20 +4026,20 @@ Facade Editor
 ###################################################################################################################  
 
 # Create AR file and delete folders
-def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool) -> None:
+def create_ar(map_filename: str, mm1_folder: Path, delete_shop: bool) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
     
     os.chdir(SHOP)
-    ar_command = f"CMD.EXE /C run !!!!!{city_name}"
+    ar_command = f"CMD.EXE /C run !!!!!{map_filename}"
     subprocess.run(ar_command, shell = True)
     os.chdir(BASE_DIR)  
     
     build_dir = BASE_DIR / 'build'
     
     for file in build_dir.iterdir():
-        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{city_name}"):
+        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{map_filename}"):
             MOVE(file, mm1_folder / file.name)
             
     # Delete the build folder
@@ -4060,13 +4057,13 @@ def create_ar(city_name: str, mm1_folder: Path, delete_shop: bool) -> None:
             
             
 def create_commandline(
-    city_name: str, mm1_folder: Path, no_ui: bool, no_ui_type: str, 
+    map_filename: str, mm1_folder: Path, no_ui: bool, no_ui_type: str, 
     no_ai: bool, quiet_logs: bool, more_logs: bool) -> None:
     
-    city_name = city_name.lower()
+    map_filename = map_filename.lower()
     cmd_file = "commandline.txt"
     
-    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {city_name}"
+    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {map_filename}"
     
     if quiet_logs and more_logs:    
         log_error_message = f"""\n
@@ -4385,23 +4382,13 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
         
         tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
         tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
-        
         obj.rotate = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
-        
         
     obj.tile_x = tile_x
     obj.tile_y = tile_y
     
-    
-    
-    # obj.rotate = polygon_data.get('rotate', 0)
-
-
-
-
     if dds_directory:
         apply_texture_to_object(obj, dds_directory)    
-        # rotate_angle = polygon_data.get('rotate', 0) 
         rotate_angle = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
 
         tile_uvs(obj, tile_x, tile_y)
@@ -5181,46 +5168,46 @@ new_physics_properties = {
 ###################################################################################################################  
 
 # Call FUNCTIONS
-create_folders(city_name)
-create_city_info(city_name)
-BND.create(vertices, polys, city_name, debug_bounds)
-create_cells(city_name, truncate_cells)
-create_races(city_name, race_data)
-create_cnr(city_name, cnr_waypoints)
+create_folders(map_filename)
+create_city_info(map_name, map_filename)
+BND.create(vertices, polys, map_filename, debug_bounds)
+create_cells(map_filename, truncate_cells)
+create_races(map_filename, race_data)
+create_cnr(map_filename, cnr_waypoints)
 
-StreetEditor.create(city_name, street_list, set_ai_map, set_streets, set_reverse_streets)
+StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
 
 MaterialEditor.edit(new_physics_properties, "physics.db", debug_physics)
-Facade_Editor.create(f"{city_name}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
+Facade_Editor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
 # Not best practice, yet concise
 PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props) 
-PropEditor(city_name, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(city_name, debug_props).place_props_randomly(**i)])
+PropEditor(map_filename, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(map_filename, debug_props).place_props_randomly(**i)])
 
-copy_dev_folder(mm1_folder, city_name)
+copy_dev_folder(mm1_folder, map_filename)
 edit_and_copy_mmbangerdata(bangerdata_properties)
 copy_core_tune_files()
 copy_custom_textures()
 
-create_ext(city_name, hudmap_vertices)
-create_animations(city_name, anim_data, set_anim)   
-create_bridges(city_name, bridges, set_bridges) 
+create_ext(map_filename, hudmap_vertices)
+create_animations(map_filename, anim_data, set_anim)   
+create_bridges(map_filename, bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
-create_portals(city_name, polys, vertices, empty_portals, debug_portals)
+create_portals(map_filename, polys, vertices, empty_portals, debug_portals)
 
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
-create_lars_race_maker(city_name, street_list, lars_race_maker, process_vertices = True)
+create_lars_race_maker(map_filename, street_list, lars_race_maker, process_vertices = True)
 
-create_ar(city_name, mm1_folder, delete_shop)
-create_commandline(city_name, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
+create_ar(map_filename, mm1_folder, delete_shop)
+create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
 end_time = time.time()
 editor_time = end_time - start_time
 
 print("\n======================================================\n")
-print("Succesfully created " + f"{race_locale_name}! (in {editor_time:.4f} seconds)")
+print("Succesfully created " + f"{map_name}! (in {editor_time:.4f} seconds)")
 print("\n======================================================\n")
 
 start_game(mm1_folder, play_game)
@@ -5241,7 +5228,7 @@ final_time = time.time()
 total_time = final_time - start_time 
 
 print("\n======================================================\n")
-print("Succesfully created and imported " + f"{race_locale_name}! (in {total_time:.4f} seconds)")
+print("Succesfully created and imported " + f"{map_name}! (in {total_time:.4f} seconds)")
 print("\n======================================================\n")
 
 ###################################################################################################################   
