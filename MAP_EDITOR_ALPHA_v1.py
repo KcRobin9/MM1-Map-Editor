@@ -26,15 +26,18 @@ import bpy
 import csv
 import math
 import time
+import pickle
 import shutil
 import struct
 import random
 import textwrap
+import threading
 import subprocess
 import numpy as np   
 from pathlib import Path 
 import matplotlib.pyplot as plt                
-import matplotlib.transforms as mtransforms    
+import matplotlib.transforms as mtransforms  
+from colorama import Fore, Back, Style, init
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
   
 
@@ -104,12 +107,92 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-# Time
-start_time = time.time()
+# Progress Bar, Colors, & Run Time
+init(autoreset = True)
 
-print("\n======================================================\n")
-print("Generating " + f"{map_name}...")
-print("\n======================================================\n")
+colors1 = [
+    Fore.RED, Fore.LIGHTRED_EX, 
+    Fore.YELLOW, Fore.LIGHTYELLOW_EX, 
+    Fore.GREEN, Fore.LIGHTGREEN_EX, 
+    Fore.CYAN, Fore.LIGHTCYAN_EX, 
+    Fore.BLUE, Fore.LIGHTBLUE_EX, 
+    Fore.MAGENTA, Fore.LIGHTMAGENTA_EX
+    ]
+
+colors2 = [    
+    Fore.LIGHTGREEN_EX, Fore.GREEN,
+    Fore.CYAN, Fore.LIGHTCYAN_EX,
+    Fore.BLUE, Fore.LIGHTBLUE_EX
+]
+
+def create_divider(colors):
+    divider = "=" * 60  
+    color_divider = ''.join(colors[i % len(colors)] + char for i, char in enumerate(divider))
+    return "\n" + color_divider + "\n"
+
+# Set the progress bar colors
+top_divider = create_divider(colors1)
+bottom_divider = create_divider(colors1)
+buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
+
+
+def clear_screen():
+    print("\033[H\033[J", end = '')
+
+
+def update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider):
+    if progress < 33:
+        color = Style.BRIGHT + Fore.RED
+    elif progress < 66:
+        color = Style.BRIGHT + Fore.YELLOW
+    else:
+        color = Style.BRIGHT + Fore.GREEN
+    
+    prog_int = int(progress)
+    prog_line = color + f"   Creating.. {map_name} [{'#' * (prog_int // 5)}{'.' * (20 - prog_int // 5)}] {prog_int}%" + Style.RESET_ALL
+
+    buffer = top_divider + "\n" + prog_line + "\n" + bottom_divider + "\n"
+    clear_screen()
+    print(buffer, end = '')
+
+
+def continuous_progress_bar(duration, map_name, buffer, top_divider, bottom_divider):
+    start_time = time.time()
+    while True:
+        elapsed_time = time.time() - start_time
+        progress = (elapsed_time / duration) * 100
+        progress = min(100, max(0, progress))  
+        update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider)
+        if progress >= 100:
+            break
+        time.sleep(0.025)  # Update every 0.025 seconds
+
+
+def save_run_time(run_time):
+    os.chdir(Path.cwd().parent)
+    with open("last_editor_run_time.pkl", "wb") as f:
+        pickle.dump(run_time, f)
+
+
+def load_last_run_time():
+    if os.path.exists("last_editor_run_time.pkl"):
+        try:
+            with open("last_editor_run_time.pkl", "rb") as f:
+                return pickle.load(f)
+        except EOFError:
+            return 4  # Default to 0.1 seconds if the file is empty or corrupted
+    return 4  # Default to 0.1 seconds if no previous data
+
+
+# Load the Last Run Time, Start the Progress Bar Thread and set the Start Time
+last_run_time = load_last_run_time()
+
+progress_thread = threading.Thread(
+    target = continuous_progress_bar, 
+    args = (last_run_time, map_name, buffer, top_divider, bottom_divider))
+
+progress_thread.start()
+start_time = time.time()
 
 ################################################################################################################               
 ################################################################################################################
@@ -389,7 +472,7 @@ f"""
     Or you can manually set the orientation in degrees (0.0 - 360.0).
 """
 
-bridge_object = "vpmustang99"  # you add/pass any prop/car
+bridge_object = "vpmustang99"  # you pass any prop/car
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
 bridges = [
@@ -1482,7 +1565,6 @@ ORANGE = "#ffa500"
 LIGHT_RED = "#ff7f7f"
 LIGHT_YELLOW = '#ffffe0'
 
-
 #! ======================== MAIN AREA ======================== #*
 
 # Main Area Colored Checkpoints
@@ -2395,10 +2477,9 @@ def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
     dev_folder = BASE_DIR / 'dev'
     mm1_folder = Path(mm1_folder) / 'dev'
     
-    shutil.rmtree(mm1_folder, ignore_errors = True)  # Remove any existing AI files in the dev folder
+    shutil.rmtree(mm1_folder, ignore_errors = True)  
     shutil.copytree(dev_folder, mm1_folder)
     
-    # Delete amy AI files in the Mitown Madness / dev folder
     mm1_dev_ai_files = dev_folder / 'CITY' / map_filename
     shutil.rmtree(mm1_dev_ai_files, ignore_errors = True)
     
@@ -3534,7 +3615,7 @@ class MaterialEditor:
                 
     @classmethod    
     def edit(cls, materials_properties, physics_output_f, debug_physics):
-        physics_input_f = BASE_DIR / "EditorResources" / "PHYSICS.DB"
+        physics_input_f = Path.cwd() / "EditorResources" / "PHYSICS.DB"
         
         with open(physics_input_f, 'rb') as f:
             count = read_unpack(f, '>I')[0]
@@ -4025,37 +4106,44 @@ Facade Editor
 ###################################################################################################################
 ###################################################################################################################  
 
-# Create AR file and delete folders
-def create_ar(map_filename: str, mm1_folder: Path, delete_shop: bool) -> None:
+def create_ar(map_filename: str, mm1_folder: Path) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
-    
+
     os.chdir(SHOP)
-    ar_command = f"CMD.EXE /C run !!!!!{map_filename}"
-    subprocess.run(ar_command, shell = True)
-    os.chdir(BASE_DIR)  
+    ar_command = f"run !!!!!{map_filename}"
+
+    subprocess.Popen(f"cmd.exe /c {ar_command}", creationflags = subprocess.CREATE_NO_WINDOW)
     
     build_dir = BASE_DIR / 'build'
+    os.chdir(build_dir)
     
     for file in build_dir.iterdir():
         if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{map_filename}"):
             MOVE(file, mm1_folder / file.name)
             
-    # Delete the build folder
-    try:  
-        shutil.rmtree(build_dir)
-    except Exception as e:
-        print(f"Failed to delete the BUILD directory. Reason: {e}")
-    
-    # Delete the SHOP folder
+
+def post_ar_cleanup(delete_shop: bool) -> None:
     if delete_shop:
+        build_dir = BASE_DIR / 'build'
+        shop_dir = BASE_DIR / 'SHOP'
+
+        os.chdir(BASE_DIR)
+        
+        time.sleep(1)
+        
+        try:  
+            shutil.rmtree(build_dir)
+        except Exception as e:
+            print(f"Failed to delete the BUILD directory. Reason: {e}")
+        
         try:
-            shutil.rmtree(SHOP)
+            shutil.rmtree(shop_dir)
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
-            
-            
+
+   
 def create_commandline(
     map_filename: str, mm1_folder: Path, no_ui: bool, no_ui_type: str, 
     no_ai: bool, quiet_logs: bool, more_logs: bool) -> None:
@@ -5180,7 +5268,7 @@ StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reve
 MaterialEditor.edit(new_physics_properties, "physics.db", debug_physics)
 Facade_Editor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
-# Not best practice, yet concise
+# Not efficient, but a concise one-liner
 PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props) 
 PropEditor(map_filename, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(map_filename, debug_props).place_props_randomly(**i)])
 
@@ -5200,15 +5288,18 @@ create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
 
 create_lars_race_maker(map_filename, street_list, lars_race_maker, process_vertices = True)
 
-create_ar(map_filename, mm1_folder, delete_shop)
+create_ar(map_filename, mm1_folder)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
 end_time = time.time()
 editor_time = end_time - start_time
 
-print("\n======================================================\n")
-print("Succesfully created " + f"{map_name}! (in {editor_time:.4f} seconds)")
-print("\n======================================================\n")
+save_run_time(editor_time)
+progress_thread.join()
+
+print("\n" + create_divider(colors2))
+print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{map_name}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
+print(create_divider(colors2))
 
 start_game(mm1_folder, play_game)
 
@@ -5224,12 +5315,7 @@ bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
 set_blender_keybinding()
 
-final_time = time.time()
-total_time = final_time - start_time 
-
-print("\n======================================================\n")
-print("Succesfully created and imported " + f"{map_name}! (in {total_time:.4f} seconds)")
-print("\n======================================================\n")
+post_ar_cleanup(delete_shop)
 
 ###################################################################################################################   
 ################################################################################################################### 
