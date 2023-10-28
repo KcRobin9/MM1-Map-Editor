@@ -44,7 +44,7 @@ from typing import List, Dict, Union, Tuple, Optional, BinaryIO
 #! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
 map_name = "My First City"                      # Can be multiple words --- name of the map in the Race Menu
 map_filename = "First_City"                     # One word (no spaces)  --- name of the .ar file
-mm1_folder = Path.cwd() / 'Midtown Madness'     # The Editor will use the MM game that comes with the repo download
+mm1_folder = Path.cwd() / 'MidtownMadness'      # The Editor will use the MM game that comes with the repo download (name can not have any spaces)
 
 
 #* SETUP II (Map Creation)      
@@ -107,6 +107,11 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly Errors and Warnings again)
+
+################################################################################################################               
+################################################################################################################
+
 # Progress Bar, Colors, & Run Time
 init(autoreset = True)
 
@@ -136,8 +141,9 @@ bottom_divider = create_divider(colors1)
 buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
 
 
-def clear_screen():
-    print("\033[H\033[J", end = '')
+def clear_screen(disable_progress_bar: bool):
+    if not disable_progress_bar:
+        print("\033[H\033[J", end = '')
 
 
 def update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider):
@@ -152,11 +158,11 @@ def update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider)
     prog_line = color + f"   Creating.. {map_name} [{'#' * (prog_int // 5)}{'.' * (20 - prog_int // 5)}] {prog_int}%" + Style.RESET_ALL
 
     buffer = top_divider + "\n" + prog_line + "\n" + bottom_divider + "\n"
-    clear_screen()
+    clear_screen(disable_progress_bar)
     print(buffer, end = '')
 
 
-def continuous_progress_bar(duration, map_name, buffer, top_divider, bottom_divider):
+def continuous_progress_bar(duration, map_name, buffer, top_divider, bottom_divider, disable_progress_bar):
     start_time = time.time()
     while True:
         elapsed_time = time.time() - start_time
@@ -189,7 +195,7 @@ last_run_time = load_last_run_time()
 
 progress_thread = threading.Thread(
     target = continuous_progress_bar, 
-    args = (last_run_time, map_name, buffer, top_divider, bottom_divider))
+    args = (last_run_time, map_name, buffer, top_divider, bottom_divider, disable_progress_bar))
 
 progress_thread.start()
 start_time = time.time()
@@ -3374,6 +3380,7 @@ class PropEditor:
         if append_props:
             self.filename = map_filename 
             self.read_bangers()
+            # self.append_props(new_objects)
         else:
             self.filename = SHOP_CITY / f"{map_filename}.BNG"
         
@@ -4106,7 +4113,7 @@ Facade Editor
 ###################################################################################################################
 ###################################################################################################################  
 
-def create_ar(map_filename: str, mm1_folder: Path) -> None:
+def create_ar(map_filename: str) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
@@ -4115,14 +4122,7 @@ def create_ar(map_filename: str, mm1_folder: Path) -> None:
     ar_command = f"run !!!!!{map_filename}"
 
     subprocess.Popen(f"cmd.exe /c {ar_command}", creationflags = subprocess.CREATE_NO_WINDOW)
-    
-    build_dir = BASE_DIR / 'build'
-    os.chdir(build_dir)
-    
-    for file in build_dir.iterdir():
-        if file.name.endswith(".ar") and file.name.startswith(f"!!!!!{map_filename}"):
-            MOVE(file, mm1_folder / file.name)
-            
+
 
 def post_ar_cleanup(delete_shop: bool) -> None:
     if delete_shop:
@@ -4131,7 +4131,7 @@ def post_ar_cleanup(delete_shop: bool) -> None:
 
         os.chdir(BASE_DIR)
         
-        time.sleep(1)
+        time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
         
         try:  
             shutil.rmtree(build_dir)
@@ -5288,7 +5288,7 @@ create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
 
 create_lars_race_maker(map_filename, street_list, lars_race_maker, process_vertices = True)
 
-create_ar(map_filename, mm1_folder)
+create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
 end_time = time.time()

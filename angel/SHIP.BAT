@@ -30,12 +30,12 @@ copy _whl0.mmbangerdata ..\shop\tune\%1_whl0.mmbangerdata
 cd \vck\shop
 
 echo Build a Shiplist and archive
-..\angel\find . -type f > ..\build\shiplist.%1
-..\angel\mkar.exe ..\build\%1.ar ..\build\shiplist.%1
+..\angel\find . -type f > ..\MidtownMadness\shiplist.%1
+..\angel\mkar.exe ..\MidtownMadness\%1.ar ..\MidtownMadness\shiplist.%1
 
 echo Copy the archive into the Midtown install directory
-cd \vck\build
-copy %1.ar D:\"Midtown"\.
+cd \vck\MidtownMadness
+copy %1.ar D:\"MidtownMadness"\.
 goto done
 
 :usage
