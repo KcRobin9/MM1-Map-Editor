@@ -57,7 +57,7 @@ set_facades = True              # change to "True" if you want FACADES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
-append_props = True             # change to "True" if you want to append props to an input props file (keep "set_props" set to "True" for now)
+append_props = True            # change to "True" if you want to append props to an input props file
 input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
 appended_props_f = "NEW_CHICAGO.BNG"  # the appended props file will be saved in the main folder
 
@@ -3379,11 +3379,9 @@ class PropEditor:
 
         if append_props:
             self.filename = map_filename 
-            self.read_bangers()
-            # self.append_props(new_objects)
         else:
             self.filename = SHOP_CITY / f"{map_filename}.BNG"
-        
+                    
         self.debug_props = debug_props
         self.debug_filename = "PROPS_debug.txt"
         
@@ -3523,7 +3521,13 @@ class PropEditor:
         
         return new_objects
     
-    def append_props(self, new_objects):
+    def append_props(self, new_objects, append_props):
+        if not append_props:
+            return
+        
+        if not self.objects:  
+            self.read_bangers()
+            
         original_count = len(self.objects)
         self.add_props(new_objects)
 
@@ -5269,7 +5273,7 @@ MaterialEditor.edit(new_physics_properties, "physics.db", debug_physics)
 Facade_Editor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
 # Not efficient, but a concise one-liner
-PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props) 
+PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props, append_props) 
 PropEditor(map_filename, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(map_filename, debug_props).place_props_randomly(**i)])
 
 copy_dev_folder(mm1_folder, map_filename)
