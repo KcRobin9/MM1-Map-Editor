@@ -57,7 +57,7 @@ set_facades = True              # change to "True" if you want FACADES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
-append_props = True            # change to "True" if you want to append props to an input props file
+append_props = False            # change to "True" if you want to append props to an input props file
 input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
 appended_props_f = "NEW_CHICAGO.BNG"  # the appended props file will be saved in the main folder
 
@@ -1397,7 +1397,7 @@ def create_polygon(
     vertices = vertices, polys = polys,
     material_index: int = 0, cell_type: int = 0, 
     flags: int = None, plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
-    hud_color: str = None, shape_outline_color: str = shape_outline_color,
+    hud_color: str = '#414441', shape_outline_color: str = shape_outline_color,  # '#414441' is the ROAD_HUD defined later in the script
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads):
 
     # Vertex indices
@@ -1571,8 +1571,8 @@ ORANGE = "#ffa500"
 LIGHT_RED = "#ff7f7f"
 LIGHT_YELLOW = '#ffffe0'
 
-#! ======================== MAIN AREA ======================== #*
 
+#! ======================== MAIN AREA ======================== #*
 # Main Area Colored Checkpoints
 create_polygon(
     bound_number = 9999,
@@ -1580,12 +1580,10 @@ create_polygon(
         (-25.0, 0.0, 85.0),
         (25.0, 0.0, 85.0),
         (25.0, 0.0, 70.0),
-        (-25.0, 0.0, 70.0)], 
-        hud_color = ROAD_HUD)
+        (-25.0, 0.0, 70.0)])
 
-save_bms(
-    texture_name = ["CHECK04"],
-    tex_coords = compute_uv(bound_number = 9999, tile_x = 5, tile_y = 1, angle_degrees = 0))
+save_bms(texture_name = ["CHECK04"],
+         tex_coords = compute_uv(bound_number = 9999, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
 # Main Area w/ Building | Road
 create_polygon(
@@ -1594,8 +1592,7 @@ create_polygon(
         (-50.0, 0.0, 70.0),
         (50.0, 0.0, 70.0),
         (50.0, 0.0, -70.0),
-        (-50.0, 0.0, -70.0)],
-        hud_color = ROAD_HUD)
+        (-50.0, 0.0, -70.0)])
 
 save_bms(
     texture_name = ["R6"], texture_darkness = [40, 2, 50, 1],
@@ -1751,7 +1748,6 @@ save_bms(
 
 
 #! ======================== ORANGE BUILDING ======================== #*
-
 # Orange Building Wall "South" | Landmark
 create_polygon(
     bound_number = 4,
@@ -1824,9 +1820,7 @@ save_bms(
     tex_coords = compute_uv(bound_number = 900, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 
-
 #! ======================== BRIDGES AND FREEWAY ======================== #*
-
 # Bridge I East | Road
 create_polygon(
 	bound_number = 250,
@@ -1834,9 +1828,7 @@ create_polygon(
 		(-82.6, 0.0, -80.0),
 		(-50.0, 0.0, -80.0),
 		(-50.0, 0.0, -120.0),
-		(-82.6, 0.0, -120.0)],
-        hud_color = ROAD_HUD)
-
+		(-82.6, 0.0, -120.0)])
 save_bms(
     texture_name = ["RINTER"], 
     tex_coords = compute_uv(bound_number = 250, tile_x = 5, tile_y = 5, angle_degrees = 0))
@@ -1848,8 +1840,7 @@ create_polygon(
 		(-119.01, 0.0, -80.0),
 		(-90.0, 0.0, -80.0),
 		(-90.0, 0.0, -120.0),
-		(-119.01, 0.0, -120.0)],
-        hud_color = ROAD_HUD)
+		(-119.01, 0.0, -120.0)])
 
 save_bms(
     texture_name = ["T_GRASS"], 
@@ -1862,8 +1853,7 @@ create_polygon(
         (-160.0, 0.0, -80.0),
 		(-119.1, 0.0, -80.0),
         (-119.1, 0.0, -120.0),
-		(-160.0, 0.0, -120.0)],
-        hud_color = ROAD_HUD)
+		(-160.0, 0.0, -120.0)])
 
 save_bms(
     texture_name = ["R6"], 
@@ -1876,8 +1866,7 @@ create_polygon(
         (-200.0, 0.0, -80.0),
 		(-160.0, 0.0, -80.0),
         (-160.0, 0.0, -120.0),
-		(-200.0, 0.0, -120.0)],
-        hud_color = ROAD_HUD)
+		(-200.0, 0.0, -120.0)])
 
 save_bms(
     texture_name = ["RINTER"], 
@@ -1890,8 +1879,7 @@ create_polygon(
 		(-196.0, 0.0, 320.0),
 		(-164.0, 0.0, 320.0),
 		(-164.0, 0.0, -80.0),
-		(-196.0, 0.0, -80.0)],
-        hud_color = ROAD_HUD)
+		(-196.0, 0.0, -80.0)])
 
 save_bms(
     texture_name = ["FREEWAY2"], 
@@ -1904,8 +1892,7 @@ create_polygon(
         (-164.0, 0.0, 320.0),
         (-160.0, 0.0, 320.0),
         (-160.0, 0.0, -80.0),
-		(-164.0, 0.0, -80.0)],
-        hud_color = ROAD_HUD)
+		(-164.0, 0.0, -80.0)])
 
 save_bms(
     texture_name = ["SDWLK2"], 
@@ -1918,8 +1905,7 @@ create_polygon(
         (-200.0, 0.0, 320.0),
         (-196.0, 0.0, 320.0),
         (-196.0, 0.0, -80.0),
-        (-200.0, 0.0, -80.0)],
-        hud_color = ROAD_HUD)
+        (-200.0, 0.0, -80.0)])
 
 save_bms(
     texture_name = ["SDWLK2"], 
@@ -1932,8 +1918,7 @@ create_polygon(
         (-200.0, 0.0, 360.0),
         (-160.0, 0.0, 360.0),
         (-160.0, 0.0, 320.0),
-        (-200.0, 0.0, 320.0)],
-        hud_color = ROAD_HUD)
+        (-200.0, 0.0, 320.0)])
 
 save_bms(
     texture_name = ["RINTER"], 
@@ -1946,17 +1931,14 @@ create_polygon(
         (-160.0, 0.0, 360.0),
         (0.0, 26.75, 360.0),
         (0.0, 26.75, 320.0),
-        (-160.0, 0.0, 320.0)],
-        hud_color = ROAD_HUD)
+        (-160.0, 0.0, 320.0)])
 
 save_bms(
     texture_name = ["R4"], 
     tex_coords = compute_uv(bound_number = 256, tile_x = 10, tile_y = 4, angle_degrees = 0))
 
 
-
 #! ======================== BRIDGE SPLIT SOUTH SECTION ======================== #*
-
 # Bridge Road Split | Intersection
 create_polygon(
 	bound_number = 925,
@@ -1964,8 +1946,7 @@ create_polygon(
 		(-90.0, 14.75, -80.0),
 		(-79.0, 14.75, -80.0),
 		(-79.0, 14.75, -120.0),
-		(-90.0, 14.75, -120.0)],
-        hud_color = ROAD_HUD)
+		(-90.0, 14.75, -120.0)])
 
 save_bms(
     texture_name = ["RINTER"], 
@@ -1978,8 +1959,7 @@ create_polygon(
 		(-90.0, 14.75, -35.0),
 		(-79.0, 14.75, -35.0),
 		(-79.0, 14.75, -80.0),
-		(-90.0, 14.75, -80.0)],
-        hud_color = ROAD_HUD)
+		(-90.0, 14.75, -80.0)])
 
 save_bms(
     texture_name = ["RWALK"], 
@@ -1992,8 +1972,7 @@ create_polygon(
 		(-90.0, 14.75, -15.0),
 		(-79.0, 14.75, -15.0),
 		(-79.0, 14.75, -35.0),
-		(-90.0, 14.75, -35.0)],
-        hud_color = ROAD_HUD)
+		(-90.0, 14.75, -35.0)])
 
 save_bms(
     texture_name = ["RINTER"], 
@@ -2006,8 +1985,7 @@ create_polygon(
 		(-79.0, 14.75, -15.0),
 		(-90.0, 14.75, -15.0),
 		(-80.0, 26.75, 85.0),
-		(-69.0, 26.75, 85.0)],
-        hud_color = ROAD_HUD)
+		(-69.0, 26.75, 85.0)])
 
 save_bms(
     texture_name = ["RWALK"], 
@@ -2020,8 +1998,7 @@ create_polygon(
 		(-160.0, 0.0, 20.0),
 		(-160.0, 0.0, 40.0),
 		(-110.0, 10.0, 20.0),
-        (-110.0, 10.0, 0.0)],
-        hud_color = ROAD_HUD)
+        (-110.0, 10.0, 0.0)])
 
 save_bms(
     texture_name = ["OT_SHOP03_BRICK"], 
@@ -2034,8 +2011,7 @@ create_polygon(
 		(-69.0, 26.75, 85.0),
 		(-80.0, 26.75, 85.0),
 		(0.0, 26.75, 320.0),
-		(11.0, 26.75, 320.0)],
-        hud_color = ROAD_HUD)
+		(11.0, 26.75, 320.0)])
 
 save_bms(
     texture_name = ["RWALK"], 
@@ -2048,8 +2024,7 @@ create_polygon(
 		(-90.0, 14.75, -15.0),
 		(-90.0, 14.75, -40.0),
 		(-110.0, 10.0, 0.0),
-		(-110.0, 10.0, 20.0)],
-        hud_color = ROAD_HUD)
+		(-110.0, 10.0, 20.0)])
 
 save_bms(
     texture_name = ["RWALK"], 
@@ -2065,8 +2040,7 @@ create_polygon(
 		(0.0, 26.75, 360.0),
 		(80.0, 26.75, 360.0),
 		(80.0, 26.75, 320.0),
-		(0.0, 26.75, 320.0)],
-        hud_color = ROAD_HUD)
+		(0.0, 26.75, 320.0)])
 
 save_bms(
     texture_name = ["RINTER"], 
@@ -2079,8 +2053,7 @@ create_polygon(
 		(50.0, 26.75, 320.0),
 		(80.0, 26.75, 320.0),
         (80.0, 26.75, 200.0),
-		(50.0, 26.75, 200.0)],
-        hud_color = ROAD_HUD)
+		(50.0, 26.75, 200.0)])
 
 save_bms(
     texture_name = ["R4"], 
@@ -2093,8 +2066,7 @@ create_polygon(
 		(50.0, 26.75, 200.0),
 		(80.0, 26.75, 200.0),
 		(50.0, 26.75, 50.0),
-		(20.0, 26.75, 50.0)],
-        hud_color = ROAD_HUD)
+		(20.0, 26.75, 50.0)])
 
 save_bms(
     texture_name = ["R4"], 
@@ -2107,8 +2079,7 @@ create_polygon(
 		(50.0, 26.75, 200.0),
 		(80.0, 26.75, 200.0),
 		(50.0, 26.75, 50.0),
-		(20.0, 26.75, 50.0)],
-        hud_color = ROAD_HUD)
+		(20.0, 26.75, 50.0)])
 
 save_bms(
     texture_name = ["R4"], 
@@ -2121,8 +2092,7 @@ create_polygon(
 		(20.0, 26.75, 50.0),
 		(50.0, 26.75, 50.0),
 		(50.0, 30.00, 40.0),
-		(20.0, 30.30, 40.0)],
-        hud_color = ROAD_HUD)
+		(20.0, 30.30, 40.0)])
 
 save_bms(
     texture_name = ["R4"], 
@@ -2130,7 +2100,6 @@ save_bms(
 
 
 #! ======================== ORANGE BUILDING ROADS AND CONNECTION TO ELEVATED PART ======================== #*
-
 # Hill Connected to Bridge Prop (Jump) | Road
 create_polygon(
 	bound_number = 501,
@@ -2138,8 +2107,7 @@ create_polygon(
 		(20.0, 30.0, 0.0),
         (50.0, 30.0, 0.0),
         (50.0, 12.0, -69.9),
-        (20.0, 12.0, -69.9)],
-        hud_color = ROAD_HUD)
+        (20.0, 12.0, -69.9)])
 
 save_bms(
     texture_name = ["R6"], 
@@ -2152,8 +2120,7 @@ create_polygon(
 		(20.0, 30.0, 40.0),
         (50.0, 30.0, 40.0),
         (50.0, 30.0, 0.0),
-        (20.0, 30.0, 0.0)],
-        hud_color = ROAD_HUD)
+        (20.0, 30.0, 0.0)])
 
 save_bms(
     texture_name = ["CT_FOOD_BRICK"], 
@@ -2166,8 +2133,7 @@ create_polygon(
 		(-10.0, 30.0, 40.0),
         (20.0, 30.0, 40.0),
         (20.0, 30.0, 0.0),
-        (-10.0, 30.0, 0.0)],
-        hud_color = ROAD_HUD)
+        (-10.0, 30.0, 0.0)])
 
 save_bms(
     texture_name = ["VPBUSRED_TP_BK"], 
@@ -2180,8 +2146,7 @@ create_polygon(
 		(-10.0, 30.0, 0.0),
         (10.0, 30.0, 0.0),
         (10.0, 30.0, -50.0),
-        (-10.0, 30.0, -50.0)],
-        hud_color = ROAD_HUD)
+        (-10.0, 30.0, -50.0)])
 
 save_bms(
     texture_name = ["R_WIN_01"], 
@@ -2189,7 +2154,6 @@ save_bms(
 
 
 #! ======================== SPEEDBUMPS ======================== #*
-
 # Speed Bump Front | No Type
 create_polygon(
 	bound_number = 206,
@@ -2244,14 +2208,12 @@ save_bms(
 
 
 #! ======================== HIGHWAY CURVED TUNNEL ======================== #* 
-
 create_polygon(
 	bound_number = 2220,
 	vertex_coordinates = [
 		(-160.0, -0.00, -120.0),
 		(-200.0, -0.00, -120.0),
-		(-160.0, -3.0, -160.0)],
-	hud_color = ROAD_HUD)
+		(-160.0, -3.0, -160.0)])
 
 save_bms(texture_name = ["FREEWAY2"],
 	tex_coords = compute_uv(bound_number = 2220, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
@@ -2261,8 +2223,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-200.0, -0.00, -120.0),
         (-160.0, -3.0, -160.0),
-		(-200.0, -3.0, -160.0)],
-	hud_color = ROAD_HUD)
+		(-200.0, -3.0, -160.0)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2273,8 +2234,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-160.0, -3.0, -160.0),
 		(-156.59, -6.00, -204.88),
-		(-200.0, -3.0, -160.0)],
-	hud_color = ROAD_HUD)
+		(-200.0, -3.0, -160.0)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2285,8 +2245,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-156.59, -6.00, -204.88),
 		(-200.0, -3.0, -160.0),
-		(-191.82, -6.00, -223.82)],
-	hud_color = ROAD_HUD)
+		(-191.82, -6.00, -223.82)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2297,8 +2256,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-156.59, -6.00, -204.88),
 		(-140.06, -9.00, -229.75),
-		(-191.82, -6.00, -223.82)],
-	hud_color = ROAD_HUD)
+		(-191.82, -6.00, -223.82)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2309,8 +2267,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-140.06, -9.00, -229.75),
 		(-191.82, -6.00, -223.82),
-		(-165.59, -9.00, -260.54)],
-	hud_color = ROAD_HUD)
+		(-165.59, -9.00, -260.54)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2321,8 +2278,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-140.06, -9.00, -229.75),
 		(-117.58, -12.00, -247.47),
-		(-165.59, -9.00, -260.54)],
-	hud_color = ROAD_HUD)
+		(-165.59, -9.00, -260.54)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2333,8 +2289,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-117.58, -12.00, -247.47),
 		(-165.59, -9.00, -260.54),
-		(-127.21, -12.00, -286.30)],
-	hud_color = ROAD_HUD)
+		(-127.21, -12.00, -286.30)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2345,8 +2300,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-117.58, -12.00, -247.47),
 		(-90.0, -15.00, -254.51),
-		(-127.21, -12.00, -286.30)],
-	hud_color = ROAD_HUD)
+		(-127.21, -12.00, -286.30)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2357,8 +2311,7 @@ create_polygon(
 	vertex_coordinates = [
 		(-90.0, -15.00, -254.51),
 		(-127.21, -12.00, -286.30),
-		(-90.0, -15.00, -294.48)],
-	hud_color = ROAD_HUD)
+		(-90.0, -15.00, -294.48)])
 
 save_bms(
 	texture_name = ["FREEWAY2"],
@@ -2385,8 +2338,7 @@ create_polygon(
         (-90.0, -15.00, -254.51),
         (-79.0, -15.00, -254.51),
         (-79.0, -15.00, -294.48),
-        (-90.0, -15.00, -294.48)],
-	hud_color = ROAD_HUD)
+        (-90.0, -15.00, -294.48)])
 
 save_bms(
 	texture_name = ["RINTER"],
@@ -4481,7 +4433,7 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
     
     if dds_directory:
         apply_texture_to_object(obj, dds_directory)    
-        rotate_angle = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
+        rotate_angle = obj.rotate
 
         tile_uvs(obj, tile_x, tile_y)
         rotate_uvs(obj, rotate_angle)  
@@ -4617,7 +4569,7 @@ HUD_EXPORT = {
     '#7b5931': "WOOD_HUD",
     '#cdcecd': "SNOW_HUD",
     '#5d8096': "WATER_HUD",
-    '#414441': "ROAD_HUD",
+    # '#414441': "ROAD_HUD",
     '#396d18': "GRASS_HUD",
     '#af0000': "DARK_RED",
     '#ffa500': "ORANGE",
@@ -4788,6 +4740,7 @@ def export_blender_polygon_data(obj) -> str:
         optional_attributes.append("sort_vertices = True")
     if data['always_visible']:
         optional_attributes.append("always_visible = True")
+        
     if data['rotate'] != 0.0:
         optional_attributes.append(f"rotate = {data['rotate']}")
         
@@ -4807,7 +4760,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["{texture_name}"],
-    tex_coords = compute_uv(bound_number = {data['bound_number']}, mode = "r.H", tile_x = {tile_x}, tile_y = {tile_y}))"""
+    tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x}, tile_y = {tile_y}, angle_degrees = ))"""
 
     return polygon_export
 

@@ -4,7 +4,7 @@
 /SHOP/
 /Blender Export/
 
-Midtown Madness/commandline.txt
-Midtown Madness/*.log
-Midtown Madness/!*.ar
-Midtown Madness/dev/
+MidtownMadness/commandline.txt
+MidtownMadness/*.log
+MidtownMadness/!*.ar
+MidtownMadness/dev/
