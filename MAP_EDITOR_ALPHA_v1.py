@@ -2111,7 +2111,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R6"], 
-    tex_coords = compute_uv(bound_number = 232, tile_x = 3, tile_y = 2, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 501, tile_x = 3, tile_y = 2, angle_degrees = 90))
 
 # Intersection Orange Building
 create_polygon(
@@ -2124,7 +2124,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["CT_FOOD_BRICK"], 
-    tex_coords = compute_uv(bound_number = 232, tile_x = 10, tile_y = 10, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 1100, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Road To Rooftop (Red Bus Color) | Road
 create_polygon(
@@ -2137,7 +2137,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["VPBUSRED_TP_BK"], 
-    tex_coords = compute_uv(bound_number = 232, tile_x = 4, tile_y = 3, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 502, tile_x = 4, tile_y = 3, angle_degrees = 0))
 
 # Road To Orange Building I | Road
 create_polygon(
@@ -2150,7 +2150,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["R_WIN_01"], 
-    tex_coords = compute_uv(bound_number = 232, tile_x = 5, tile_y = 12, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 503, tile_x = 5, tile_y = 12, angle_degrees = 0))
 
 
 #! ======================== SPEEDBUMPS ======================== #*
@@ -2192,7 +2192,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_STOP"], 
-    tex_coords = compute_uv(bound_number = 207, tile_x = 30, tile_y = 30, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 # Speed Bump Triangle Side II | No Type
 create_polygon(
@@ -2204,7 +2204,7 @@ create_polygon(
 
 save_bms(
     texture_name = ["T_STOP"], 
-    tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 209, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 
 #! ======================== HIGHWAY CURVED TUNNEL ======================== #* 
@@ -2293,7 +2293,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_uv(bound_number = 2240, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
+	tex_coords = compute_uv(bound_number = 2227, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
 	bound_number = 2228,
@@ -2304,7 +2304,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_uv(bound_number = 2227, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+	tex_coords = compute_uv(bound_number = 2228, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
 	bound_number = 2229,
@@ -2315,7 +2315,7 @@ create_polygon(
 
 save_bms(
 	texture_name = ["FREEWAY2"],
-	tex_coords = compute_uv(bound_number = 2228, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
+	tex_coords = compute_uv(bound_number = 2229, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 # Hill Downwards from Bridges | Road
 create_polygon(
@@ -4721,46 +4721,44 @@ def export_blender_polygon_data(obj) -> str:
     data = extract_polygon_data(obj)
     texture_name = extract_texture_from_polygon(obj)
     vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
-        
-    optional_attributes  = []
+
+    optional_variables = []
+    
+    cell_type = CELL_EXPORT.get(str(data['cell_type']), None)
+    if cell_type:
+        optional_variables.append(f"cell_type = {cell_type}")
     
     material_index = MATERIAL_EXPORT.get(str(data['material_index']), None)
     if material_index:
-        optional_attributes.append(f"material_index = {material_index}")
+        optional_variables.append(f"material_index = {material_index}")
 
-    cell_type = CELL_EXPORT.get(str(data['cell_type']), None)
-    if cell_type:
-        optional_attributes.append(f"cell_type = {cell_type}")
-                    
     hud_color = HUD_EXPORT.get(next((HUD_IMPORT[i][0] for i, checked in enumerate(obj.hud_colors) if checked), None), None)
     if hud_color:
-        optional_attributes.append(f"hud_color = {hud_color}")
+        optional_variables.append(f"hud_color = {hud_color}")
 
     if data['sort_vertices']:
-        optional_attributes.append("sort_vertices = True")
-    if data['always_visible']:
-        optional_attributes.append("always_visible = True")
+        optional_variables.append("sort_vertices = True")
+    if not data['always_visible']:
+        optional_variables.append("always_visible = False")
         
-    if data['rotate'] != 0.0:
-        optional_attributes.append(f"rotate = {data['rotate']}")
-        
-    # Packing the optional attributes into a string    
-    optional_variables = ",\n\t".join(optional_attributes)
-    
+    # Combining optional variables
+    optional_variables_str = ",\n\t".join(optional_variables)
+    if optional_variables_str:
+        optional_variables_str = "\n\t" + optional_variables_str + ","
+
     tile_x = obj.get("tile_x", 1)
     tile_y = obj.get("tile_y", 1)
+    rotate = data.get('rotate', 999.0)  
 
-    # create_polygon() template
     polygon_export = f"""
 create_polygon(
-    bound_number = {data['bound_number']},
-    {optional_variables},
+    bound_number = {data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
         {vertex_export}])
 
 save_bms(
     texture_name = ["{texture_name}"],
-    tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x}, tile_y = {tile_y}, angle_degrees = ))"""
+    tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x}, tile_y = {tile_y}, angle_degrees = {rotate}))"""
 
     return polygon_export
 
@@ -4836,29 +4834,27 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
         for obj in bpy.context.scene.objects:
             if obj.type == 'MESH':
                 
-                # Cell & Material
+                # Cell & Material & HUD Color
                 if "cell_type" not in obj:
                     obj["cell_type"] = 0
                 if "material_index" not in obj:
                     obj["material_index"] = 0
-                
-                # Hud Color 
                 if "hud_color" not in obj:
-                    obj["hud_color"] = 0
+                    obj["hud_color"] = ROAD_HUD
                     
                 # Misc
                 if "sort_vertices" not in obj:
                     obj["sort_vertices"] = 0
                 if "always_visible" not in obj:
-                    obj["always_visible"] = 0
-                if "rotate" not in obj:
-                    obj["rotate"] = 0.0
-                
+                    obj["always_visible"] = 1
+                                
                 # UV mapping
                 if "tile_x" not in obj:
                     obj["tile_x"] = 2.0
                 if "tile_y" not in obj:
                     obj["tile_y"] = 2.0
+                if "rotate" not in obj:
+                    obj["rotate"] = 0.01
                 
                 if "original_uvs" not in obj:
                     # Check if the object has an active UV layer, and if not, create one
