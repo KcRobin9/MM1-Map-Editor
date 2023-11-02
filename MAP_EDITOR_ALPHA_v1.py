@@ -41,15 +41,15 @@ from colorama import Fore, Back, Style, init
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
   
 
-#! SETUP I (Map Name and Directory)             Control + F    "city=="  to jump to The City Creation section
-map_name = "My First City"                      # Can be multiple words --- name of the map in the Race Menu
-map_filename = "First_City"                     # One word (no spaces)  --- name of the .ar file
-mm1_folder = Path.cwd() / 'MidtownMadness'      # The Editor will use the MM game that comes with the repo download (name can not have any spaces)
+#! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
+map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Menu
+map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file
+mm1_folder = Path.cwd() / 'MidtownMadness'      # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
 
 
 #* SETUP II (Map Creation)      
 play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = True              # change to "True" to delete the raw city files after the .ar file has been created
+delete_shop = True              # change to "True" to delete the raw city files after the .AR file has been created
 
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = True              # change to "True" if you want BRIDGES
@@ -57,13 +57,13 @@ set_facades = True              # change to "True" if you want FACADES
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
-append_props = False            # change to "True" if you want to append props to an input props file
+append_props = False            # change to "True" if you want to append props
 input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
 appended_props_f = "NEW_CHICAGO.BNG"  # the appended props file will be saved in the main folder
 
 # HUD
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-shape_outline_color = None      # change to any other color (e.g. 'Red'), if you don't want any color, set to 'None'
+shape_outline_color = None      # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
 
 # AI
 set_ai_map = True               # create the Map file          keep both set to "True" if you want functional AI
@@ -83,8 +83,8 @@ randomize_textures = False      # change to "True" if you want to randomize all 
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
 # Blender
-dds_directory = Path.cwd() / 'DDS' 
 load_dds_materials = False      # change to "True" if you want to load all DDS materials (all textures are available regardless) (takes a few extra seconds to load)
+dds_directory = Path.cwd() / 'DDS'
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
@@ -103,11 +103,11 @@ no_ui_type = "cruise"           # other race types are currently not supported b
 no_ai = False                   # change to "True" if you want to disable the AI
 quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
 more_logs = False               # change to "True" if you want to see additional logs and open a logging console
-empty_portals = False           # change to "True" if you want to create an empty portal file (used for testing very large cities)
-truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (used for testing very large cities)
+empty_portals = False           # change to "True" if you want to create an empty portal file (useful for testing very large cities)
+truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly Errors and Warnings again)
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################               
 ################################################################################################################
@@ -115,7 +115,7 @@ disable_progress_bar = False    # change to "True" if you want to disable the pr
 # Progress Bar, Colors, & Run Time
 init(autoreset = True)
 
-colors1 = [
+colors_one = [
     Fore.RED, Fore.LIGHTRED_EX, 
     Fore.YELLOW, Fore.LIGHTYELLOW_EX, 
     Fore.GREEN, Fore.LIGHTGREEN_EX, 
@@ -124,7 +124,7 @@ colors1 = [
     Fore.MAGENTA, Fore.LIGHTMAGENTA_EX
     ]
 
-colors2 = [    
+colors_two = [    
     Fore.LIGHTGREEN_EX, Fore.GREEN,
     Fore.CYAN, Fore.LIGHTCYAN_EX,
     Fore.BLUE, Fore.LIGHTBLUE_EX
@@ -136,8 +136,8 @@ def create_divider(colors):
     return "\n" + color_divider + "\n"
 
 # Set the progress bar colors
-top_divider = create_divider(colors1)
-bottom_divider = create_divider(colors1)
+top_divider = create_divider(colors_one)
+bottom_divider = create_divider(colors_one)
 buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
 
 
@@ -186,11 +186,11 @@ def load_last_run_time():
             with open("last_editor_run_time.pkl", "rb") as f:
                 return pickle.load(f)
         except EOFError:
-            return 4  # Default to 0.1 seconds if the file is empty or corrupted
-    return 4  # Default to 0.1 seconds if no previous data
+            return 3  # Default to 3.0 seconds if the file is empty or corrupted
+    return 3  # Default to 3.0 seconds if no previous data
 
 
-# Load the Last Run Time, Start the Progress Bar Thread and set the Start Time
+# Load the Last Run Time, Start the Progress Bar Thread, Start the Time
 last_run_time = load_last_run_time()
 
 progress_thread = threading.Thread(
@@ -203,7 +203,22 @@ start_time = time.time()
 ################################################################################################################               
 ################################################################################################################
 
-# Race Data Constants
+##### CONSTANTS & INITIALIZATIONS #####
+
+# Editor
+BASE_DIR = Path.cwd()
+SHOP = BASE_DIR / 'SHOP'
+SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
+MOVE = shutil.move
+
+# Variables
+vertices = []
+hudmap_vertices = []
+hudmap_properties = {}
+polygons_data = []
+stored_texture_names = []
+texcoords_data = {}
+
 # Time & Weather
 MORNING, NOON, EVENING, NIGHT = 0, 1, 2, 3  
 CLEAR, CLOUDY, RAIN, SNOW = 0, 1, 2, 3     
@@ -219,6 +234,17 @@ FOLLOW, ROADBLOCK, SPINOUT, PUSH, MIX = 0, 3, 4, 8, 15
 STATIONARY = 0 
 IN_TRAFFIC = 2
 
+# Circuit Laps
+LAPS_2 = 2
+LAPS_3 = 3
+LAPS_5 = 5
+LAPS_10 = 10
+
+# Race Data
+ZERO_COPS, FULL_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
+ZERO_PED, HALF_PED, FULL_PED = 0.0, 0.5, 1.0
+ZERO_AMBIENT, HALF_AMBIENT, FULL_AMBIENT = 0.0, 0.5, 1.0
+
 # Waypoint Width
 LANE_4 = 15
 LANE_6 = 19
@@ -230,12 +256,6 @@ ROT_W = -90
 ROT_E = 90
 ROT_N = 0.01
 ROT_AUTO = 0
-
-# Circuit Laps
-LAPS_2 = 2
-LAPS_3 = 3
-LAPS_5 = 5
-LAPS_10 = 10
 
 # Race Types
 ROAM = "ROAM"
@@ -250,8 +270,19 @@ SINGLE = "SINGLE"
 MULTI = "MULTI"
 ALL_MODES = "All Modes"
 
+# AI Intersection types
+STOP = 0 
+STOP_LIGHT = 1 
+YIELD = 2
+CONTINUE = 3
+
+# AI Road properties, e.g. set True/False for the variable "traffic_blocked"
+NO = 0
+YES = 1
+
 # Misc
 HUGE = 100000000000
+
 
 # Player Cars (also usable as Opponent cars, Cop cars, and Props)
 VW_BEETLE = "vpbug"
@@ -264,6 +295,7 @@ MUSTANG99 = "vpmustang99"
 ROADSTER = "vppanoz"
 PANOZ_GTR1 = "vppanozgt"
 SEMI = "vpsemi"
+
 
 # Ambient Cars (also usable as Opponent cars, Cop cars, and Props)
 TINY_CAR = "vacompact"
@@ -283,6 +315,7 @@ BLACK_LIMO = "valimoangel"
 
 TRAFFIC_BUS = "vabus"
 PLANE_SMALL = "vaboeing_small"
+
 
 # Props
 BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
@@ -355,8 +388,8 @@ race_data = {
             'mm_data': {
                 #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds, Checkpoints, TimeLimit (s) (8 arguments)
                 #* N.B.: if you set 4 'waypoints', you should set 3 'Checkpoints' (n - 1)
-                'ama': [NOON, CLOUDY, MAX_OPP_8, 1.0, 1.0, 1.0, 3, 999],        
-                'pro': [EVENING, CLOUDY, MAX_OPP_8, 1.0, 1.0, 1.0, 3, 999], 
+                'ama': [NOON, CLOUDY, MAX_OPP_8, FULL_COPS, FULL_AMBIENT, FULL_PED, 3, 999],        
+                'pro': [EVENING, CLOUDY, MAX_OPP_8, FULL_COPS, FULL_AMBIENT, FULL_PED, 3, 999], 
             },
             'aimap': {
                 'density': 0.25,
@@ -387,8 +420,8 @@ race_data = {
                 ],
             'mm_data': {
                 #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds (6 arguments)
-                'ama': [NOON, CLEAR, MAX_OPP_8, 1.0, 1.0, 1.0],
-                'pro': [NOON, CLOUDY, MAX_OPP_8, 0.0, 0.0, 0.0],
+                'ama': [NOON, CLEAR, MAX_OPP_8, ZERO_COPS, ZERO_AMBIENT, ZERO_PED],
+                'pro': [NOON, CLOUDY, MAX_OPP_8, ZERO_COPS, ZERO_AMBIENT, ZERO_PED],
             },
             'aimap': {
                 'density': 0.2,
@@ -399,7 +432,7 @@ race_data = {
                 'num_of_opponents': 2,
             },
             'opponent_cars': {
-                WHITE_LIMO:      [[-10.0, 245, -850], 
+                WHITE_LIMO:    [[-10.0, 245, -850], 
                                 [0.0, 0.0, -100],
                                 [-10.0, 0.0, -75.0]],
                 
@@ -419,8 +452,8 @@ race_data = {
                 ],
             'mm_data': {
                 #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds, Laps (7 arguments)
-                'ama': [NIGHT, RAIN, MAX_OPP_8, 1.0, 1.0, 1.0, LAPS_2],
-                'pro': [NIGHT, SNOW, MAX_OPP_8, 1.0, 1.0, 1.0, LAPS_3],
+                'ama': [NIGHT, RAIN, MAX_OPP_8, ZERO_COPS, HALF_AMBIENT, HALF_PED, LAPS_2],
+                'pro': [NIGHT, SNOW, MAX_OPP_8, ZERO_COPS, HALF_AMBIENT, HALF_PED, LAPS_3],
             },
             'aimap': {
                 'density': 0.75,
@@ -490,6 +523,7 @@ bridges = [
     ((-119.0, 0.15, -115.0), 270, 3, CROSSGATE),
     ((-119.0, 0.15, -85.0), -270, 3, CROSSGATE)
     ])] 
+
 
 #* SETUP VII (optional, Custom Bridge Configs)
 bridge_race_0 = {
@@ -758,6 +792,13 @@ class Polygon:
             f"Plane D: [{plane_d_str}]\n")
         
 ################################################################################################################               
+################################################################################################################     
+        
+DEFAULT_VECTOR3 = Vector3(0.0, 0.0, 0.0) 
+poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [DEFAULT_VECTOR3 for _ in range(4)], DEFAULT_VECTOR3, [0.0], 0)
+polys = [poly_filler]
+        
+################################################################################################################               
 ################################################################################################################          
         
 # BND CLASS
@@ -847,7 +888,7 @@ class BND:
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'BND':
         magic = b'2DNB\0'
-        offset = Vector3(0.0, 0.0, 0.0)
+        offset = DEFAULT_VECTOR3
         x_dim, y_dim, z_dim = 0, 0, 0
         center = calculate_center(vertices)
         radius = calculate_radius(vertices, center)
@@ -858,9 +899,9 @@ class BND:
         x_scale, z_scale = 0.0, 0.0
         num_indices, height_scale, cache_size = 0, 0, 0
         
-        hot_verts = [Vector3(0.0, 0.0, 0.0)]  
+        hot_verts = [DEFAULT_VECTOR3]  
         edges_0, edges_1 = [0], [1] 
-        edge_normals = [Vector3(0.0, 0.0, 0.0)] 
+        edge_normals = [DEFAULT_VECTOR3] 
         edge_floats = [0.0]  
         row_offsets, row_shorts, row_indices, row_heights = [0], [0], [0], [0]  
 
@@ -1015,7 +1056,7 @@ class BMS:
 
             if self.vertex_count >= 16:
                 for _ in range(8):
-                    Vector3(0, 0, 0).write(f)
+                    DEFAULT_VECTOR3.write(f)
                     
             write_pack(f, str(self.adjunct_count) + 'b', *self.texture_darkness)
                         
@@ -1084,7 +1125,7 @@ def calculate_min(vertices: List[Vector3]):
     return min_
 
 def calculate_center(vertices: List[Vector3]):
-    center = Vector3(0, 0, 0)
+    center = Vector3(0.0, 0.0, 0.0)  # Do not change
     for vertex in vertices:
         center.x += vertex.x
         center.y += vertex.y
@@ -1111,25 +1152,6 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
         diff = Vector3(vertex.x - center.x, vertex.y - center.y, vertex.z - center.z)
         radius_sqr = max(radius_sqr, diff.x ** 2 + diff.y ** 2 + diff.z ** 2)
     return radius_sqr ** 0.5
-
-################################################################################################################               
-################################################################################################################       
-
-# SCRIPT CONSTANTS
-BASE_DIR = Path.cwd()
-SHOP = BASE_DIR / 'SHOP'
-SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
-MOVE = shutil.move
-
-# INITIALIZATIONS | do not change
-vertices = []
-hudmap_vertices = []
-hudmap_properties = {}
-polygons_data = []
-stored_texture_names = []
-texcoords_data = {}
-poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [Vector3(0, 0, 0) for _ in range(4)], Vector3(0, 0, 0), [0.0], 0)
-polys = [poly_filler]
 
 ################################################################################################################ 
 ################################################################################################################               
@@ -1374,7 +1396,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     
     # Add a required empty edge for triangles to match the BND binary structure
     if len(vertices) == 3:
-        edges.append(Vector3(0.0, 0.0, 0.0))
+        edges.append(DEFAULT_VECTOR3)
     
     return edges
 
@@ -1506,7 +1528,7 @@ def create_polygon(
 ################################################################################################################               
 ################################################################################################################  
 
-#? ==================CREATING YOUR CITY================== #?
+#? ==================CREATING YOUR MAP================== #?
 
 def user_notes(x):
     f""" 
@@ -1524,7 +1546,7 @@ def user_notes(x):
     "tex_coords = compute_uv(bound_number = 2, tile_x = 5, tile_y = 2, angle_degrees = 90)"
         
     The variable "texture_darkness" in the function "save_bms()" makes the texture edges darker / lighter. 
-    If there are four vertices, you can for example set: "texture_darkness = [40,2,50,1]"
+    If there are four vertices, you can for example set: "texture_darkness = [40, 2, 50, 1]"
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
     To properly set up the AI, adhere to the following for 'bound_number = x':
@@ -1542,7 +1564,7 @@ def user_notes(x):
 #! For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
 
 # Cell / Room types 
-DEFAULT = 0
+DEFAULT = 0   
 TUNNEL = 1
 INDOORS = 2
 WATER_DRIFT = 4         
@@ -1555,11 +1577,34 @@ WATER_MTL = 91
 STICKY_MTL = 97
 NO_FRICTION_MTL = 98 
 
-# Road types
-LANDMARK = 0
-STREET = 201
-INTERSECTION = 860
-                      
+# Textures
+SNOW_TX = "SNOW"
+WOOD_TX = "T_WOOD"
+WATER_TX = "T_WATER"
+WATER_WINTER_TX = "T_WATER_WIN"
+GRASS_TX = "T_GRASS"
+GRASS_WINTER_TX = "T_GRASS_WIN"
+GRASS_BASEBALL_TX = "24_GRASS"
+
+SIDEWALK_TX = "SDWLK2"
+ZEBRA_CROSSING_TX = "RWALK"
+INTERSECTION_TX = "RINTER"
+
+FREEWAY_TX = "FREEWAY2"
+ROAD_1_LANE_TX = "R2"
+ROAD_2_LANE_TX = "R4"
+ROAD_3_LANE_TX = "R6"
+
+BRICKS_MALL_TX = "OT_MALL_BRICK"
+BRICKS_SAND_TX = "OT_SHOP03_BRICK"
+BRICKS_GREY_TX = "CT_FOOD_BRICK"
+
+GLASS_TX = "R_WIN_01"
+STOP_SIGN_TX = "T_STOP"
+BARRICADE_TX = "T_BARRICADE"
+CHECKPOINT_TX = "CHECK04"
+BUS_RED_TOP = "VPBUSRED_TP_BK"
+             
 # HUD map colors
 WOOD_HUD = '#7b5931'
 SNOW_HUD = '#cdcecd'
@@ -1582,7 +1627,7 @@ create_polygon(
         (25.0, 0.0, 70.0),
         (-25.0, 0.0, 70.0)])
 
-save_bms(texture_name = ["CHECK04"],
+save_bms(texture_name = [CHECKPOINT_TX],
          tex_coords = compute_uv(bound_number = 9999, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
 # Main Area w/ Building | Road
@@ -1595,7 +1640,7 @@ create_polygon(
         (-50.0, 0.0, -70.0)])
 
 save_bms(
-    texture_name = ["R6"], texture_darkness = [40, 2, 50, 1],
+    texture_name = [ROAD_3_LANE_TX], texture_darkness = [40, 2, 50, 1],
     tex_coords = compute_uv(bound_number = 201, tile_x = 10, tile_y = 10, angle_degrees = 45))
 
 # Main Grass Area | Intersection 
@@ -1610,7 +1655,7 @@ create_polygon(
         hud_color = GRASS_HUD)
 
 save_bms(
-    texture_name = ["24_GRASS"], 
+    texture_name = [GRASS_BASEBALL_TX], 
     tex_coords = compute_uv(bound_number = 861, tile_x = 7, tile_y = 7, angle_degrees = 90))
 
 # Main Grass Area Brown | Road
@@ -1625,7 +1670,7 @@ create_polygon(
         hud_color = WATER_HUD)
 
 save_bms(
-    texture_name = ["T_GRASS_WIN"], 
+    texture_name = [GRASS_WINTER_TX], 
     tex_coords = compute_uv(bound_number = 202, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Main Snow Area | Landmark (change?)
@@ -1641,7 +1686,7 @@ create_polygon(
          hud_color = SNOW_HUD)
 
 save_bms(
-    texture_name = ["SNOW"], 
+    texture_name = [SNOW_TX], 
     tex_coords = compute_uv(bound_number = 1, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Main Barricade Area | Intersection 
@@ -1656,7 +1701,7 @@ create_polygon(
         hud_color = DARK_RED)
 
 save_bms(
-    texture_name = ["T_BARRICADE"], 
+    texture_name = [BARRICADE_TX], 
     tex_coords = compute_uv(bound_number = 862, tile_x = 50, tile_y = 50, angle_degrees = 0))
 
 # Main Wood Area | Road
@@ -1670,7 +1715,7 @@ create_polygon(
         hud_color = WOOD_HUD)
 
 save_bms(
-    texture_name = ["T_WOOD"], 
+    texture_name = [WOOD_TX], 
     tex_coords = compute_uv(bound_number = 203, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Main Water Area | Landmark
@@ -1686,7 +1731,7 @@ create_polygon(
         hud_color = WATER_HUD)
 
 save_bms(
-    texture_name = ["T_WATER_WIN"], 
+    texture_name = [WATER_WINTER_TX], 
     tex_coords = compute_uv(bound_number = 2, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Main Diagonal Grass Road 
@@ -1700,7 +1745,7 @@ create_polygon(
         hud_color = GRASS_HUD)
 
 save_bms(
-    texture_name = ["24_GRASS"],
+    texture_name = [GRASS_BASEBALL_TX],
     tex_coords=compute_uv(bound_number = 863, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Triangle Brick I |
@@ -1714,7 +1759,7 @@ create_polygon(
         hud_color = LIGHT_YELLOW)
 
 save_bms(
-    texture_name = ["OT_MALL_BRICK"],
+    texture_name = [BRICKS_MALL_TX],
     tex_coords = compute_uv(bound_number = 204, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Triangle Brick II | to be decided
@@ -1728,7 +1773,7 @@ create_polygon(
         hud_color = LIGHT_YELLOW)
 
 save_bms(
-    texture_name = ["OT_MALL_BRICK"],
+    texture_name = [BRICKS_MALL_TX],
     tex_coords = compute_uv(bound_number = 205, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Main Orange Hill | 
@@ -1743,7 +1788,7 @@ create_polygon(
         hud_color = ORANGE)
 
 save_bms(
-    texture_name = ["T_WATER"], 
+    texture_name = [WATER_TX], 
     tex_coords = compute_uv(bound_number = 3, tile_x = 10, tile_y = 100, angle_degrees = 90))
 
 
@@ -1759,7 +1804,7 @@ create_polygon(
         (-10.0, 30.0, -50.11)])
 
 save_bms(
-    texture_name = ["SNOW"],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 4, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # Orange Building Wall "North" | Landmark
@@ -1773,7 +1818,7 @@ create_polygon(
         (10.0, 0.0, -70.00)])
 
 save_bms(
-    texture_name = ["SNOW"],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 5, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # Orange Building Wall "West" | Landmark
@@ -1787,7 +1832,7 @@ create_polygon(
         (-10.0, 0.0, -50.0)])
 
 save_bms(
-    texture_name = ["SNOW"],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 6, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # Orange Building Wall "East" | Landmark
@@ -1801,7 +1846,7 @@ create_polygon(
         (10.0, 0.0, -50.0)])
 
 save_bms(
-    texture_name = ["SNOW"],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 7, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # Orange Building Rooftop | Intersection
@@ -1816,7 +1861,7 @@ create_polygon(
         (10.0, 30.0, -50.0)])
 
 save_bms(
-    texture_name = ["SNOW"],
+    texture_name = [SNOW_TX],
     tex_coords = compute_uv(bound_number = 900, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 
@@ -1830,7 +1875,7 @@ create_polygon(
 		(-50.0, 0.0, -120.0),
 		(-82.6, 0.0, -120.0)])
 save_bms(
-    texture_name = ["RINTER"], 
+    texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 250, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Bridge II West | Road
@@ -1843,7 +1888,7 @@ create_polygon(
 		(-119.01, 0.0, -120.0)])
 
 save_bms(
-    texture_name = ["T_GRASS"], 
+    texture_name = [GRASS_TX], 
     tex_coords = compute_uv(bound_number = 251, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Road West of West Bridge | Road
@@ -1856,7 +1901,7 @@ create_polygon(
 		(-160.0, 0.0, -120.0)])
 
 save_bms(
-    texture_name = ["R6"], 
+    texture_name = [ROAD_3_LANE_TX], 
     tex_coords = compute_uv(bound_number = 252, tile_x = 5, tile_y = 3, angle_degrees = 0))
 
 # Intersection West of Bridges | Intersection
@@ -1869,7 +1914,7 @@ create_polygon(
 		(-200.0, 0.0, -120.0)])
 
 save_bms(
-    texture_name = ["RINTER"], 
+    texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 950, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Far West Freeway | Road
@@ -1882,7 +1927,7 @@ create_polygon(
 		(-196.0, 0.0, -80.0)])
 
 save_bms(
-    texture_name = ["FREEWAY2"], 
+    texture_name = [FREEWAY_TX], 
     tex_coords = compute_uv(bound_number = 253, tile_x = 15, tile_y = 2, angle_degrees = 90))
 
 # West Freeway Sidewalk I | Road
@@ -1895,7 +1940,7 @@ create_polygon(
 		(-164.0, 0.0, -80.0)])
 
 save_bms(
-    texture_name = ["SDWLK2"], 
+    texture_name = [SIDEWALK_TX], 
     tex_coords = compute_uv(bound_number = 254, tile_x = 50, tile_y = 1, angle_degrees = 90))
 
 # West Freeway Sidewalk II | Road
@@ -1908,7 +1953,7 @@ create_polygon(
         (-200.0, 0.0, -80.0)])
 
 save_bms(
-    texture_name = ["SDWLK2"], 
+    texture_name = [SIDEWALK_TX], 
     tex_coords = compute_uv(bound_number = 255, tile_x = 50, tile_y = 1, angle_degrees = 270))
 
 # West Freeway South Intersection | Intersection
@@ -1921,7 +1966,7 @@ create_polygon(
         (-200.0, 0.0, 320.0)])
 
 save_bms(
-    texture_name = ["RINTER"], 
+    texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 951, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Road Hill South West | Road
@@ -1934,7 +1979,7 @@ create_polygon(
         (-160.0, 0.0, 320.0)])
 
 save_bms(
-    texture_name = ["R4"], 
+    texture_name = [ROAD_2_LANE_TX], 
     tex_coords = compute_uv(bound_number = 256, tile_x = 10, tile_y = 4, angle_degrees = 0))
 
 
@@ -1949,7 +1994,7 @@ create_polygon(
 		(-90.0, 14.75, -120.0)])
 
 save_bms(
-    texture_name = ["RINTER"], 
+    texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 925, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Striped Bridge Road South | Road
@@ -1962,7 +2007,7 @@ create_polygon(
 		(-90.0, 14.75, -80.0)])
 
 save_bms(
-    texture_name = ["RWALK"], 
+    texture_name = [ZEBRA_CROSSING_TX], 
     tex_coords = compute_uv(bound_number = 226, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Bridge Road South Intersection | Intersection
@@ -1975,7 +2020,7 @@ create_polygon(
 		(-90.0, 14.75, -35.0)])
 
 save_bms(
-    texture_name = ["RINTER"], 
+    texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 926, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Striped Bridge Road South Hill UP I | Road
@@ -1988,7 +2033,7 @@ create_polygon(
 		(-69.0, 26.75, 85.0)])
 
 save_bms(
-    texture_name = ["RWALK"], 
+    texture_name = [ZEBRA_CROSSING_TX], 
     tex_coords = compute_uv(bound_number = 227, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Striped Bridge Road South Hill UP II | Road
@@ -2001,7 +2046,7 @@ create_polygon(
         (-110.0, 10.0, 0.0)])
 
 save_bms(
-    texture_name = ["OT_SHOP03_BRICK"], 
+    texture_name = [BRICKS_SAND_TX], 
     tex_coords = compute_uv(bound_number = 228, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Bridge Road South Hill Freeway I | Road
@@ -2014,7 +2059,7 @@ create_polygon(
 		(11.0, 26.75, 320.0)])
 
 save_bms(
-    texture_name = ["RWALK"], 
+    texture_name = [ZEBRA_CROSSING_TX], 
     tex_coords = compute_uv(bound_number = 233, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Bridge Road South Hill Freeway II | Road
@@ -2027,7 +2072,7 @@ create_polygon(
 		(-110.0, 10.0, 20.0)])
 
 save_bms(
-    texture_name = ["RWALK"], 
+    texture_name = [ZEBRA_CROSSING_TX], 
     tex_coords = compute_uv(bound_number = 234, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 
@@ -2043,7 +2088,7 @@ create_polygon(
 		(0.0, 26.75, 320.0)])
 
 save_bms(
-    texture_name = ["RINTER"], 
+    texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 952, tile_x = 4, tile_y = 5, angle_degrees = 90))
 
 # Elevated South East Intersection I | Road
@@ -2056,7 +2101,7 @@ create_polygon(
 		(50.0, 26.75, 200.0)])
 
 save_bms(
-    texture_name = ["R4"], 
+    texture_name = [ROAD_2_LANE_TX], 
     tex_coords = compute_uv(bound_number = 300, tile_x = 15, tile_y = 4, angle_degrees = 90))
 
 # Elevated South East Road I | Road
@@ -2069,7 +2114,7 @@ create_polygon(
 		(20.0, 26.75, 50.0)])
 
 save_bms(
-    texture_name = ["R4"], 
+    texture_name = [ROAD_2_LANE_TX], 
     tex_coords = compute_uv(bound_number = 953, tile_x = 5, tile_y = 15, angle_degrees = 90))
 
 # Elevated South East Road I | Road
@@ -2082,7 +2127,7 @@ create_polygon(
 		(20.0, 26.75, 50.0)])
 
 save_bms(
-    texture_name = ["R4"], 
+    texture_name = [ROAD_2_LANE_TX], 
     tex_coords = compute_uv(bound_number = 301, tile_x = 15, tile_y = 4, angle_degrees = 90))
 
 # Bump to Elevated Building Rooftop Section | Road
@@ -2095,7 +2140,7 @@ create_polygon(
 		(20.0, 30.30, 40.0)])
 
 save_bms(
-    texture_name = ["R4"], 
+    texture_name = [ROAD_2_LANE_TX], 
     tex_coords = compute_uv(bound_number = 302, tile_x = 2, tile_y = 4, angle_degrees = 90))
 
 
@@ -2110,7 +2155,7 @@ create_polygon(
         (20.0, 12.0, -69.9)])
 
 save_bms(
-    texture_name = ["R6"], 
+    texture_name = [ROAD_3_LANE_TX], 
     tex_coords = compute_uv(bound_number = 501, tile_x = 3, tile_y = 2, angle_degrees = 90))
 
 # Intersection Orange Building
@@ -2123,7 +2168,7 @@ create_polygon(
         (20.0, 30.0, 0.0)])
 
 save_bms(
-    texture_name = ["CT_FOOD_BRICK"], 
+    texture_name = [BRICKS_GREY_TX], 
     tex_coords = compute_uv(bound_number = 1100, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Road To Rooftop (Red Bus Color) | Road
@@ -2136,7 +2181,7 @@ create_polygon(
         (-10.0, 30.0, 0.0)])
 
 save_bms(
-    texture_name = ["VPBUSRED_TP_BK"], 
+    texture_name = [BUS_RED_TOP], 
     tex_coords = compute_uv(bound_number = 502, tile_x = 4, tile_y = 3, angle_degrees = 0))
 
 # Road To Orange Building I | Road
@@ -2149,7 +2194,7 @@ create_polygon(
         (-10.0, 30.0, -50.0)])
 
 save_bms(
-    texture_name = ["R_WIN_01"], 
+    texture_name = [GLASS_TX], 
     tex_coords = compute_uv(bound_number = 503, tile_x = 5, tile_y = 12, angle_degrees = 0))
 
 
@@ -2165,7 +2210,7 @@ create_polygon(
     hud_color = LIGHT_RED)
 
 save_bms(
-    texture_name = ["T_STOP"], 
+    texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 206, tile_x = 15, tile_y = 1, angle_degrees = 90))
 
 # Speed Bump Front | No Type
@@ -2179,7 +2224,7 @@ create_polygon(
          hud_color = LIGHT_RED)
 
 save_bms(
-    texture_name = ["T_STOP"], 
+    texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 207, tile_x = 1, tile_y = 10, angle_degrees = 0))
 
 # Speed Bump Triangle Side I | No Type
@@ -2191,7 +2236,7 @@ create_polygon(
 		(-50.0, 3.0, -135.0)])
 
 save_bms(
-    texture_name = ["T_STOP"], 
+    texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 # Speed Bump Triangle Side II | No Type
@@ -2203,7 +2248,7 @@ create_polygon(
 		(50.0, 3.0, -135.0)])
 
 save_bms(
-    texture_name = ["T_STOP"], 
+    texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 209, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 
@@ -2215,7 +2260,7 @@ create_polygon(
 		(-200.0, -0.00, -120.0),
 		(-160.0, -3.0, -160.0)])
 
-save_bms(texture_name = ["FREEWAY2"],
+save_bms(texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2220, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2226,7 +2271,7 @@ create_polygon(
 		(-200.0, -3.0, -160.0)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2221, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2237,7 +2282,7 @@ create_polygon(
 		(-200.0, -3.0, -160.0)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2222, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2248,7 +2293,7 @@ create_polygon(
 		(-191.82, -6.00, -223.82)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2223, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
@@ -2259,7 +2304,7 @@ create_polygon(
 		(-191.82, -6.00, -223.82)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2224, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2270,7 +2315,7 @@ create_polygon(
 		(-165.59, -9.00, -260.54)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2225, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
@@ -2281,7 +2326,7 @@ create_polygon(
 		(-165.59, -9.00, -260.54)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2226, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2292,7 +2337,7 @@ create_polygon(
 		(-127.21, -12.00, -286.30)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2227, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
@@ -2303,7 +2348,7 @@ create_polygon(
 		(-127.21, -12.00, -286.30)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2228, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2314,7 +2359,7 @@ create_polygon(
 		(-90.0, -15.00, -294.48)])
 
 save_bms(
-	texture_name = ["FREEWAY2"],
+	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2229, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 # Hill Downwards from Bridges | Road
@@ -2328,7 +2373,7 @@ create_polygon(
 	hud_color = LIGHT_YELLOW)
 
 save_bms(
-	texture_name = ["RWALK"],
+	texture_name = [ZEBRA_CROSSING_TX],
 	tex_coords = compute_uv(bound_number = 923, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
 # Slim Intersection connected to Downwards Hill
@@ -2341,7 +2386,7 @@ create_polygon(
         (-90.0, -15.00, -294.48)])
 
 save_bms(
-	texture_name = ["RINTER"],
+	texture_name = [INTERSECTION_TX],
 	tex_coords = compute_uv(bound_number = 924, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
 ################################################################################################################               
@@ -3626,18 +3671,6 @@ class MaterialEditor:
 
 ###################################################################################################################
 ###################################################################################################################
-
-# AI constants
-# Intersection types
-STOP = 0 
-STOP_LIGHT = 1 
-YIELD = 2
-CONTINUE = 3
-
-# True or False for e.g. "traffic_blocked"
-NO = 0
-YES = 1
-
 
 # BAI EDITOR CLASS
 class BAI_Editor:
@@ -4931,14 +4964,12 @@ FRONT_LEFT_ROOF_BACK = 1129
 FRONT_RIGHT_ROOF_BACK = 1201
 ALL_SIDES = 1273
 
-
-# Facade names (a few examples are listed below)
-ORANGE_W_WINDOWS = "ofbldg02"  # The main facade used in Super Squeeze 
+# Facade names (feel free to add more)
+ORANGE_W_WINDOWS = "ofbldg02"  
 WALL_FREEWAY = "freewaywall02"
 SUIT_STORE = "dfsuitstore"
-PIZZA_PLACE = "hfpizza"  # 
+PIZZA_PLACE = "hfpizza"   
 RAIL_WATER = "t_rail01"  
-
 
 orange_building_1 = {
 	'flags': FRONT_BRIGHT,
@@ -5250,9 +5281,9 @@ editor_time = end_time - start_time
 save_run_time(editor_time)
 progress_thread.join()
 
-print("\n" + create_divider(colors2))
+print("\n" + create_divider(colors_two))
 print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{map_name}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
-print(create_divider(colors2))
+print(create_divider(colors_two))
 
 start_game(mm1_folder, play_game)
 

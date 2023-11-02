@@ -1,10 +1,10 @@
 *.pkl
 *.BNG
-/crashes/
 /SHOP/
 /Blender Export/
 
 MidtownMadness/commandline.txt
+MidtownMadness/crashes
 MidtownMadness/*.log
 MidtownMadness/!*.ar
 MidtownMadness/dev/
