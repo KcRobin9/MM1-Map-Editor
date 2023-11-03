@@ -1,0 +1,310 @@
+TIME					WEATHER	
+morning = 0				clear = 0	
+noon = 1 				cloudy = 1
+evening = 2				rain = 2
+night = 3				snow = 3
+
+
+LightingSettings
+Time of Day: 0
+Weather: 0
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 0.8, 0.5)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.6, 0.7, 0.85)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.35, 0.4, 0.6)
+Ambient Color: (0.1, 0.1, 0.1)
+Fog End: 1000.00
+Fog Color: (215.0, 175.0, 165.0)
+Shadow Alpha: 100.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 0
+Weather: 1
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 0.8, 0.5)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.6, 0.7, 0.85)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.35, 0.4, 0.6)
+Ambient Color: (0.1, 0.1, 0.1)
+Fog End: 600.00
+Fog Color: (170.0, 175.0, 180.0)
+Shadow Alpha: 100.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 0
+Weather: 2
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 0.8, 0.5)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.6, 0.7, 0.85)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.35, 0.4, 0.6)
+Ambient Color: (0.1, 0.1, 0.1)
+Fog End: 400.00
+Fog Color: (140.0, 130.0, 125.0)
+Shadow Alpha: 100.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 0
+Weather: 3
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 0.8, 0.5)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.6, 0.7, 0.85)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.35, 0.4, 0.6)
+Ambient Color: (0.1, 0.1, 0.1)
+Fog End: 100.00
+Fog Color: (160.0, 160.0, 160.0)
+Shadow Alpha: 100.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 1
+Weather: 0
+Sun Heading: 1.70
+Sun Pitch: 1.20
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.7, 0.8, 0.9)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.5, 0.6, 0.7)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 1000.00
+Fog Color: (180.0, 185.0, 215.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 1
+Weather: 1
+Sun Heading: 1.70
+Sun Pitch: 1.20
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.7, 0.8, 0.9)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.5, 0.6, 0.7)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 600.00
+Fog Color: (150.0, 165.0, 185.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 1
+Weather: 2
+Sun Heading: 1.70
+Sun Pitch: 1.20
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.7, 0.8, 0.9)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.5, 0.6, 0.7)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 400.00
+Fog Color: (60.0, 50.0, 50.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 1
+Weather: 3
+Sun Heading: 1.70
+Sun Pitch: 1.20
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.7, 0.8, 0.9)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.5, 0.6, 0.7)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 200.00
+Fog Color: (160.0, 160.0, 160.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 2
+Weather: 0
+Sun Heading: 3.14
+Sun Pitch: 0.65
+Sun Color: (1.0, 0.6, 0.3)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 1000.00
+Fog Color: (170.0, 140.0, 180.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 2
+Weather: 1
+Sun Heading: 3.14
+Sun Pitch: 0.65
+Sun Color: (1.0, 0.6, 0.3)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 600.00
+Fog Color: (230.0, 100.0, 35.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 2
+Weather: 2
+Sun Heading: 3.14
+Sun Pitch: 0.65
+Sun Color: (1.0, 0.6, 0.3)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 400.00
+Fog Color: (60.0, 50.0, 70.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 2
+Weather: 3
+Sun Heading: 3.14
+Sun Pitch: 0.65
+Sun Color: (1.0, 0.6, 0.3)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 0.00
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.2)
+Fog End: 250.00
+Fog Color: (175.0, 165.0, 160.0)
+Shadow Alpha: 180.00
+Shadow Color: (15.0, 20.0, 30.0)
+
+
+LightingSettings
+Time of Day: 3
+Weather: 0
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.15)
+Fog End: 1000.00
+Fog Color: (25.0, 30.0, 40.0)
+Shadow Alpha: 100.00
+Shadow Color: (0.0, 0.0, 0.0)
+
+
+LightingSettings
+Time of Day: 3
+Weather: 1
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.15)
+Fog End: 600.00
+Fog Color: (25.0, 30.0, 40.0)
+Shadow Alpha: 100.00
+Shadow Color: (0.0, 0.0, 0.0)
+
+
+LightingSettings
+Time of Day: 3
+Weather: 2
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.15)
+Fog End: 400.00
+Fog Color: (25.0, 30.0, 40.0)
+Shadow Alpha: 100.00
+Shadow Color: (0.0, 0.0, 0.0)
+
+
+LightingSettings
+Time of Day: 3
+Weather: 3
+Sun Heading: 0.00
+Sun Pitch: 0.50
+Sun Color: (1.0, 1.0, 1.0)
+Fill1 Heading: -2.50
+Fill1 Pitch: 0.45
+Fill1 Color: (0.8, 0.9, 1.0)
+Fill2 Heading: 2.50
+Fill2 Pitch: 0.45
+Fill2 Color: (0.75, 0.8, 1.0)
+Ambient Color: (0.1, 0.1, 0.15)
+Fog End: 300.00
+Fog Color: (25.0, 30.0, 40.0)
+Shadow Alpha: 100.00
+Shadow Color: (0.0, 0.0, 0.0)
+
