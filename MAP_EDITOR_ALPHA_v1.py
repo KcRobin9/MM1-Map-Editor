@@ -776,10 +776,9 @@ class Polygon:
         self.plane_n.write(f)
         write_pack(f, '<f', self.plane_d)
    
-    def __repr__(self, bnd_instance, round_values = round_debug_values):
+    def __repr__(self, bnd_instance):
         vertices_coordinates = [bnd_instance.vertices[index] for index in self.vert_indices]
-        plane_d_str = f'{round(self.plane_d, 2):.2f}' if round_values else f'{self.plane_d:f}'
-        
+        plane_d_str = ', '.join(f'{d:.2f}' for d in self.plane_d)
         return (
             f"Polygon\n"
             f"Bound Number: {self.cell_id}\n"
@@ -790,10 +789,11 @@ class Polygon:
             f"Plane Edges: {self.plane_edges}\n"
             f"Plane N: {self.plane_n}\n"
             f"Plane D: [{plane_d_str}]\n")
-        
+    
 ################################################################################################################               
 ################################################################################################################     
-        
+
+DEFVAULT_VECTOR2 = Vector2(0.0, 0.0)  
 DEFAULT_VECTOR3 = Vector3(0.0, 0.0, 0.0) 
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [DEFAULT_VECTOR3 for _ in range(4)], DEFAULT_VECTOR3, [0.0], 0)
 polys = [poly_filler]
@@ -1105,7 +1105,170 @@ IndicesSides: {self.indices_sides}
         '''
              
 ################################################################################################################               
-################################################################################################################       
+################################################################################################################   
+
+# DLP CLASSES
+class DLPVertex: 
+    def __init__(self, id: int, normal: Vector3, uv: Vector2, color: int):
+        self.id = id
+        self.normal = normal
+        self.uv = uv
+        self.color = color
+        
+    @classmethod
+    def read(cls, f):
+        id = read_unpack(f, '>H')
+        normal = Vector3.read(f)
+        uv = Vector2.read(f)
+        color = read_unpack(f, '>I')       
+        return cls(id, normal, uv, color)
+    
+    def write(self, f):
+        write_pack(f, '>H', self.id)
+        write_pack(f, '>3f', *self.normal)       
+        write_pack(f, '>ff', *self.uv)
+        write_pack(f, '>I', self.color)
+           
+    def __repr__(self):
+        return f'''
+DLPVertex
+Id: {self.id}
+Normal: {self.normal}
+UV: {self.uv}
+Color: {self.color}
+        '''
+        
+        
+class DLPPatch:
+    def __init__(self, s_res: int, t_res: int, flags: int, r_opts: int, mtl_idx: int, tex_idx: int, phys_idx: int, 
+                 vertices: List[DLPVertex], name: str):
+        self.s_res = s_res
+        self.t_res = t_res
+        self.flags = flags
+        self.r_opts = r_opts
+        self.mtl_idx = mtl_idx
+        self.tex_idx = tex_idx
+        self.phys_idx = phys_idx
+        self.vertices = vertices
+        self.name = name
+        
+    @classmethod
+    def read(cls, f):
+        s_res, t_res = read_unpack(f, '>HH')
+        flags, r_opts = read_unpack(f, '>HH')
+        mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
+        vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
+        name_length = read_unpack(f, '>I')[0]
+        name = read_unpack(f, f'>{name_length}s')[0].decode()        
+        return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
+    
+    def write(self, f):
+        write_pack(f, '>HH', self.s_res, self.t_res) 
+        write_pack(f, '>HH', self.flags, self.r_opts)
+        write_pack(f, '>3H', self.mtl_idx, self.tex_idx, self.phys_idx)
+        
+        for vertex in self.vertices:
+            vertex.write(f)
+            
+        write_pack(f, '>I', len(self.name))
+        write_pack(f, f'>{len(self.name)}s', self.name.encode())
+        
+    def __repr__(self):
+        return f'''
+DLPPatch
+S Res: {self.s_res}
+T Res: {self.t_res}
+Flags: {self.flags}
+R Opts: {self.r_opts}
+Mtl Idx: {self.mtl_idx}
+Tex Idx: {self.tex_idx}
+Phys Idx: {self.phys_idx}
+Verticesfff: {self.vertices}
+Name: {self.name}
+        '''
+
+
+class DLPGroup:
+    def __init__(self, name: str, num_vertices: int, num_patches: int, 
+                 vertex_indices: tuple[int, ...], patch_indices: tuple[int, ...]):
+        self.name = name
+        self.num_vertices = num_vertices
+        self.num_patches = num_patches
+        self.vertex_indices = vertex_indices
+        self.patch_indices = patch_indices
+        
+    @classmethod
+    def read(cls, f):
+        name_length = read_unpack(f, '>B')[0]
+        name = read_unpack(f, f'>{name_length}s')[0].decode()
+        num_vertices, num_patches = read_unpack(f, '>II')        
+        vertex_indices = [read_unpack(f, '>H')[0] for _ in range(num_vertices)]
+        patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
+        return cls(name, num_vertices, num_patches, vertex_indices, patch_indices)
+
+    def write(self, f):
+        write_pack(f, '>B', len(self.name))
+        write_pack(f, f'>{len(self.name)}s', self.name.encode())
+        write_pack(f, '>II', self.num_vertices, self.num_patches)
+        write_pack(f, f'>{self.num_vertices}H', *self.vertex_indices)
+        write_pack(f, f'>{self.num_patches}H', *self.patch_indices)
+        
+    def __repr__(self):
+        return f'''
+DLPGroup
+Name: {self.name}
+Num Vertices: {self.num_vertices}
+Num Patches: {self.num_patches}
+Vertex Indices: {self.vertex_indices}
+Patch Indices: {self.patch_indices}
+        '''
+
+
+class DLP:
+    def __init__(self, magic: str, num_groups: int, num_patches: int, num_vertices: int, 
+                 groups: List[DLPGroup], patches: List[DLPPatch], vertices: List[Vector3]):
+        self.magic = magic
+        self.num_groups = num_groups
+        self.num_patches = num_patches
+        self.num_vertices = num_vertices
+        self.groups = groups
+        self.patches = patches
+        self.vertices = vertices 
+        
+    @classmethod
+    def read(cls, f):
+        magic = read_unpack(f, '>4s')[0].decode()              
+        num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
+        groups = [DLPGroup.read(f) for _ in range(num_groups)]
+        patches = [DLPPatch.read(f) for _ in range(num_patches)]
+        vertices = [Vector3(*read_unpack(f, '>3f')) for _ in range(num_vertices)]    
+        return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
+
+    def write(self, file):
+        with open(file, 'wb') as f:
+            write_pack(f, '>4s', self.magic.encode())
+            write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)
+
+            for group in self.groups:
+                group.write(f) 
+
+            for patch in self.patches:
+                patch.write(f)        
+                                        
+    def __repr__(self):
+        return f'''
+DLP
+Magic: {self.magic}
+Num Groups: {self.num_groups}
+Num Patches: {self.num_patches}
+Num Vertices: {self.num_vertices}
+Groups: {self.groups}
+Patches: {self.patches}
+Vertices: {self.vertices}
+        '''
+        
+################################################################################################################               
+################################################################################################################     
         
 # Calculate BND center, min, max, radius, radius squared    
 def calculate_max(vertices: List[Vector3]):
@@ -5492,6 +5655,8 @@ post_ar_cleanup(delete_shop)
 ################################################################################################################### 
 
 #? Extra
-
 # Read any BMS file in the current directory
 # print(BMS.read("CULL17_H2.BMS"))
+
+# Read any DLP file in the current directory
+# print((lambda f: DLP.read(f))((open("VPCADDIE_BND.DLP", 'rb'))))
