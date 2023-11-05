@@ -37,7 +37,7 @@ import numpy as np
 from pathlib import Path 
 import matplotlib.pyplot as plt                
 import matplotlib.transforms as mtransforms  
-from colorama import Fore, Back, Style, init
+from colorama import Fore, Style, init
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
   
 
@@ -793,7 +793,7 @@ class Polygon:
 ################################################################################################################               
 ################################################################################################################     
 
-DEFVAULT_VECTOR2 = Vector2(0.0, 0.0)  
+DEFAULT_VECTOR2 = Vector2(0.0, 0.0)  
 DEFAULT_VECTOR3 = Vector3(0.0, 0.0, 0.0) 
 poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [DEFAULT_VECTOR3 for _ in range(4)], DEFAULT_VECTOR3, [0.0], 0)
 polys = [poly_filler]
@@ -944,6 +944,29 @@ class BND:
         if debug_bounds:
             with open(filename, 'w') as f:
                 f.write(str(self))
+                
+    @staticmethod
+    def debug_file(input_file: Path, output_file: Path) -> None:
+        with open(input_file, 'rb') as in_f:
+            bnd = BND.read(in_f)
+            
+        with open(output_file, 'w') as out_f:
+            out_f.write(repr(bnd))
+            
+    @staticmethod
+    def debug_directory(input_dir: Path, output_dir: Path) -> None:
+        if not input_dir.exists():
+            print(f"The directory {dir} does not exist.")
+            return
+        
+        if not output_dir.exists():
+            print(f"The output directory {output_dir} does not exist. Creating it.")
+            output_dir.mkdir(parents = True, exist_ok = True)
+            
+        for file_path in input_dir.glob('*.BND'):
+            output_file_path = output_dir / (file_path.stem + '.txt')  
+            BND.debug_file(file_path, output_file_path)
+            print(f"Processed {file_path.name} to {output_file_path.name}")
                 
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
@@ -5660,3 +5683,7 @@ post_ar_cleanup(delete_shop)
 
 # Read any DLP file in the current directory
 # print((lambda f: DLP.read(f))((open("VPCADDIE_BND.DLP", 'rb'))))
+
+# Read the contents of existing BND files
+# BND.debug_file(Path.cwd() / "UserResources" / "BOUNDS" / "CHICAGO_HITID.BND", Path.cwd() / "UserResources" / "BOUNDS" / "CHICAGO_HIT_ID.txt")
+# BND.debug_directory(Path.cwd() / "UserResources" / "BOUNDS" / "Raw files", Path.cwd() / "UserResources" / "BOUNDS" / "Text files")
