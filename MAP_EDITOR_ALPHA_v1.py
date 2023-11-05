@@ -58,7 +58,7 @@ set_facades = True              # change to "True" if you want FACADES
 # PROPS
 set_props = True                # change to "True" if you want PROPS
 append_props = False            # change to "True" if you want to append props
-input_props_f = Path.cwd() / "EditorResources" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
+input_props_f = Path.cwd() / "Resources" / "EditorResources" / "PROPS" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
 appended_props_f = "NEW_CHICAGO.BNG"  # the appended props file will be saved in the main folder
 
 # HUD
@@ -84,7 +84,7 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR
 
 # Blender
 load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
-texture_dir = Path.cwd() / 'EditorResources' / 'Textures'
+texture_dir = Path.cwd() / "Resources" / "EditorResources" / "TEXTURES"
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
@@ -107,7 +107,7 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
+disable_progress_bar = True    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################               
 ################################################################################################################
@@ -3568,7 +3568,7 @@ class PropEditor:
         self.debug_props = debug_props
         self.debug_filename = "PROPS_debug.txt"
         
-        self.prop_dim_file = BASE_DIR / "EditorResources" / "Prop Dimensions.txt"
+        self.prop_dim_file = BASE_DIR / "Resources" / "EditorResources" / "PROPS" / "Prop Dimensions.txt"
         self.loaded_prop_dimension = self.load_dimensions()   
                     
         self.output_prop_f = output_prop_f or self.filename
@@ -3809,7 +3809,7 @@ class MaterialEditor:
                 
     @classmethod    
     def edit(cls, materials_properties, physics_output_f, debug_physics):
-        physics_input_f = Path.cwd() / "EditorResources" / "PHYSICS.DB"
+        physics_input_f = Path.cwd() / "Resources" / "EditorResources" / "PHYSICS" / "PHYSICS.DB"
         
         with open(physics_input_f, 'rb') as f:
             count = read_unpack(f, '>I')[0]
@@ -4218,7 +4218,7 @@ class Facade_Editor:
     def build(cls, packed_facades):
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(BASE_DIR / "EditorResources" / 'FCD scales.txt')
+        scales = cls.read_scales(BASE_DIR / "Resources" / "EditorResources" / "FACADES" / "FCD scales.txt")
 
         for params in packed_facades:
             axis = axis_dict[params['axis']]
@@ -5624,9 +5624,9 @@ Facade_Editor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_
 PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props, append_props) 
 PropEditor(map_filename, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(map_filename, debug_props).place_props_randomly(**i)])
 
-#instances = LightingEditor.read_file(Path("EditorResources") / "LIGHTING.CSV")
-#LightingEditor.process_changes(instances, lighting_configs)
-#LightingEditor.write_file(instances, SHOP / "TUNE" / "LIGHTING.CSV")
+# instances = LightingEditor.read_file(Path("Resources") / "EditorResources" / "LIGHTING" /  "LIGHTING.CSV")
+# LightingEditor.process_changes(instances, lighting_configs)
+# LightingEditor.write_file(instances, SHOP / "TUNE" / "LIGHTING.CSV")
 # LightingEditor.debug(instances, "LIGHTING_DATA.txt")
 
 copy_dev_folder(mm1_folder, map_filename)

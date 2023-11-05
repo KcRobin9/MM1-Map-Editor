@@ -11,7 +11,7 @@ Created patch 'Static Constructor' at 0x558160 of size 1: Disable static constru
 Created patch 'Static Constructor' at 0x5570E0 of size 1: Disable static constructor
 Created patch 'Static Constructor' at 0x55B970 of size 1: Disable static constructor
 Processed 8 Early Init Functions
-Created jmp hook 'arts_strdup' from 0x5A4720 to 0x63F15120: 
+Created jmp hook 'arts_strdup' from 0x5A4720 to 0x58435120: 
 Created patch 'sfPointer::Update' at 0x4BDAA4 of size 2: Enable cursor in windowed mode
 Created patch 'PolarCamCS' at 0x4FAFF4 of size 1: No Collision
 Created patch 'PolarCamCS' at 0x620340 of size 4: Increase Max XCAM Distance
@@ -111,23 +111,23 @@ Created patch 'Software Renderer' at 0x537452 of size 1: Max Software Resolution
 Created patch 'TestResolution' at 0x575E6F of size 2: Max Software Resolution
 Created patch 'TestResolution' at 0x575E75 of size 2: Max Software Resolution
 Created patch 'mmPlayer::Update' at 0x42C096 of size 54: DeclareMover Order
-Created jmp hook 'EnumZ' from 0x575FD0 to 0x63F08AE0: 
+Created jmp hook 'EnumZ' from 0x575FD0 to 0x58428AE0: 
 Created patch 'TestResolution' at 0x575E34 of size 1: Unsigned Comparison
 Created patch 'TestResolution' at 0x575E38 of size 1: Unsigned Comparison
 Created patch 'Res String' at 0x661890 of size 27: Unsigned Printf
 Created patch 'EliminatingRes String' at 0x6618AC of size 46: Unsigned Printf
-Created pointer hook 'DirectDrawCreate' from 0x5A2EF2 to 0x63FCC520: Dynamically load DDRAW
-Created pointer hook 'DirectDrawEnumerateA' from 0x5A2EF8 to 0x63FCC524: Dynamically load DDRAW
-Created call hook 'mmInterface::ShowMain' from 0x4086B4 to 0x63F06AC0: Menu Switching
-Created call hook 'mmInterface::ShowMain' from 0x4086D7 to 0x63F06AC0: Menu Switching
-Created call hook 'mmInterface::ShowMain' from 0x40870A to 0x63F06AC0: Menu Switching
-Created call hook 'mmInterface::ShowMain' from 0x408722 to 0x63F06AC0: Menu Switching
+Created pointer hook 'DirectDrawCreate' from 0x5A2EF2 to 0x584EC520: Dynamically load DDRAW
+Created pointer hook 'DirectDrawEnumerateA' from 0x5A2EF8 to 0x584EC524: Dynamically load DDRAW
+Created call hook 'mmInterface::ShowMain' from 0x4086B4 to 0x58426AC0: Menu Switching
+Created call hook 'mmInterface::ShowMain' from 0x4086D7 to 0x58426AC0: Menu Switching
+Created call hook 'mmInterface::ShowMain' from 0x40870A to 0x58426AC0: Menu Switching
+Created call hook 'mmInterface::ShowMain' from 0x408722 to 0x58426AC0: Menu Switching
 Created patch 'PUDebug' at 0x4AA4E2 of size 4: Widget Width
 Created patch 'PUDebug' at 0x4AA549 of size 4: Widget Width
 Created patch 'AboutMenu' at 0x4A5F8D of size 31: AboutMenu PID
-Created push hook 'AboutMenu' from 0x4A5EB7 to 0x63F3E5C4: Credits Image
+Created push hook 'AboutMenu' from 0x4A5EB7 to 0x5845E5C4: Credits Image
 Created patch 'mmPhysicsMGR::Cull' at 0x4D54F5 of size 2: Always Reset MoverCount
-Created jmp hook 'DirectPlayCreate' from 0x5A429A to 0x63F03330: Dynamically load DPLAYX
+Created jmp hook 'DirectPlayCreate' from 0x5A429A to 0x58423330: Dynamically load DPLAYX
 Created patch 'mmInput::BuildCaptureIO' at 0x4E1F56 of size 3: Fix controller button mask
 Created patch 'mmSingleCircuit::OppNumCheck' at 0x4154FC of size 6: Support More Icons
 Created patch 'mmSingleCircuit::OppNumCheck' at 0x415620 of size 6: Support More Icons
@@ -135,7 +135,7 @@ Created patch 'mmSingleCircuit::OppNumCheck' at 0x415E0E of size 6: Support More
 Created patch 'mmSingleCircuit::OppFinishPositions' at 0x415502 of size 6: Support More Icons
 Created patch 'mmSingleCircuit::OppFinishPositions' at 0x415632 of size 6: Support More Icons
 Created patch 'mmSingleCircuit::OppFinishPositions' at 0x415E08 of size 6: Support More Icons
-Created call hook 'mmPlayer::~mmPlayer' from 0x42D453 to 0x63EFD8C0: Call mmHudMap Destructor
+Created call hook 'mmPlayer::~mmPlayer' from 0x42D453 to 0x5841D8C0: Call mmHudMap Destructor
 Created patch 'mmMultiCR::OppStealGold' at 0x41D942 of size 4: Icon Number
 Created patch 'mmIcons::Cull' at 0x426606 of size 2: Cull Loop
 Created patch 'mmIcons::Cull' at 0x4267B5 of size 2: Cull Loop
@@ -151,7 +151,7 @@ Created patch 'mmGameSingle::OppNumCheck' at 0x418050 of size 6: Support More Ic
 Created patch 'mmGameSingle::OppFinishPositions' at 0x417D1E of size 6: Support More Icons
 Created patch 'mmGameSingle::OppFinishPositions' at 0x417F32 of size 6: Support More Icons
 Created patch 'mmGameSingle::OppFinishPositions' at 0x418062 of size 6: Support More Icons
-Created jmp hook 'ShowGameManagerStats' from 0x404280 to 0x63EFCBE0: 
+Created jmp hook 'ShowGameManagerStats' from 0x404280 to 0x5841CBE0: 
 Created patch 'mmGame::OppIconInfo' at 0x40E994 of size 6: Support More Icons
 Created patch 'mmGame::OppIconInfo' at 0x40F223 of size 6: Support More Icons
 Created patch 'mmGame::OppIconInfo' at 0x40F27E of size 6: Support More Icons
@@ -166,8 +166,8 @@ Created patch 'mmGame::OppIconInfo' at 0x431C37 of size 6: Support More Icons
 Created patch 'mmGame::OppIconInfo' at 0x431EEB of size 6: Support More Icons
 Created patch 'mmGame::OppIconInfo' at 0x431FA4 of size 6: Support More Icons
 Created patch 'mmGame::OppIconInfo' at 0x4311AD of size 7: Support More Icons
-Created call hook 'mmVehList' from 0x403EEC to 0x63EF6780: Size of mmVehList
-Created call hook 'mmVehList' from 0x406B8B to 0x63EF6780: Size of mmVehList
+Created call hook 'mmVehList' from 0x403EEC to 0x58416780: Size of mmVehList
+Created call hook 'mmVehList' from 0x406B8B to 0x58416780: Size of mmVehList
 Created patch 'Mirror Render Distance' at 0x490E97 of size 4: Adjust mirror render distance
 Created patch 'mmWheel::ComputeDwtdw' at 0x47DCAA of size 1: Avoid Probe Poly Caching
 Created patch 'mmCarSim::UpdateDamage' at 0x46E3F4 of size 9: Use EnableSmoke
@@ -183,24 +183,24 @@ Created patch 'AudioOptions::AudioOptions' at 0x49C846 of size 5: Fix Device Nam
 Created patch 'DSGlobal::InitPrimarySoundBuffer' at 0x4EFC2B of size 2: Better device priority
 Created patch 'mmHUD Font Size' at 0x404D63 of size 7: Disable scaling CD Player Font
 Created patch 'mmPopup::DisablePU' at 0x4270C5 of size 2: Always Resume CD Player
-Created call hook 'aiPoliceForce' from 0x43506A to 0x63EEFB20: Size of aiPoliceForce
+Created call hook 'aiPoliceForce' from 0x43506A to 0x5840FB20: Size of aiPoliceForce
 Created patch 'aiPedestrian::DetectBangerCollision' at 0x44B6F2 of size 19: Banger Check
-Created pointer hook 'Cop Speed Boost' from 0x461024 to 0x63F74150: Fix cop speed boost
-Created pointer hook 'Cop Speed Boost' from 0x461036 to 0x63F74150: Fix cop speed boost
-Created pointer hook 'Cop Speed Boost' from 0x461044 to 0x63F74150: Fix cop speed boost
-Created pointer hook 'Cop Brake Boost' from 0x462B1B to 0x63F74154: Fix cop brake boost
-Created pointer hook 'Cop Brake Boost' from 0x462B23 to 0x63F74154: Fix cop brake boost
-Created pointer hook 'Cop Brake Boost' from 0x462B2B to 0x63F74154: Fix cop brake boost
-Created pointer hook 'Cop Steer Boost 1' from 0x460FBE to 0x63F74158: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 1' from 0x460FCA to 0x63F74158: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 1' from 0x460FD4 to 0x63F74158: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 2' from 0x4627F2 to 0x63F7415C: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 2' from 0x4627FA to 0x63F7415C: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 2' from 0x462802 to 0x63F7415C: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 2' from 0x462A0F to 0x63F7415C: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 2' from 0x462A17 to 0x63F7415C: Fix steer brake boost
-Created pointer hook 'Cop Steer Boost 2' from 0x462A1F to 0x63F7415C: Fix steer brake boost
-Created call hook 'new asMidgets' from 0x521A1C to 0x63EE0980: Size of asMidgets
+Created pointer hook 'Cop Speed Boost' from 0x461024 to 0x58494150: Fix cop speed boost
+Created pointer hook 'Cop Speed Boost' from 0x461036 to 0x58494150: Fix cop speed boost
+Created pointer hook 'Cop Speed Boost' from 0x461044 to 0x58494150: Fix cop speed boost
+Created pointer hook 'Cop Brake Boost' from 0x462B1B to 0x58494154: Fix cop brake boost
+Created pointer hook 'Cop Brake Boost' from 0x462B23 to 0x58494154: Fix cop brake boost
+Created pointer hook 'Cop Brake Boost' from 0x462B2B to 0x58494154: Fix cop brake boost
+Created pointer hook 'Cop Steer Boost 1' from 0x460FBE to 0x58494158: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 1' from 0x460FCA to 0x58494158: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 1' from 0x460FD4 to 0x58494158: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 2' from 0x4627F2 to 0x5849415C: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 2' from 0x4627FA to 0x5849415C: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 2' from 0x462802 to 0x5849415C: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 2' from 0x462A0F to 0x5849415C: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 2' from 0x462A17 to 0x5849415C: Fix steer brake boost
+Created pointer hook 'Cop Steer Boost 2' from 0x462A1F to 0x5849415C: Fix steer brake boost
+Created call hook 'new asMidgets' from 0x521A1C to 0x58400980: Size of asMidgets
 Created patch 'asCullManager::Update' at 0x5250A4 of size 2: Don't set colors
 Created patch 'BigVtxSize' at 0x503D7B of size 4: agiTexSorter::BeginVerts2
 Created patch 'BigIdxSize' at 0x503D84 of size 4: agiTexSorter::BeginVerts2
@@ -209,7 +209,7 @@ Processed 32 Init Functions
 WARNING: Running with high priority class.
 Midtown Madness! - Open1560: Oct  4 2023 15:31:13 / Dev
 WARNING: **** PAGING: As specified in UI
-Avail Phys: 4996M  Avail Page: 10144M  Avail addr: 1966M
+Avail Phys: 4939M  Avail Page: 9518M  Avail addr: 1966M
 dxiInit returned.
 OpenGL Version: 3.2.0 NVIDIA 536.99
 OpenGL Vendor: NVIDIA Corporation
@@ -234,20 +234,20 @@ Adding 'audio.ar' to autosearch...
 Adding 'core.ar' to autosearch...
 Adding 'ui.ar' to autosearch...
 Adding 'vp66stangGT.ar' to autosearch...
-WARNING:  MemStat: 'ARTS Init' 105K before, 400K after, 295K difference
+WARNING:  MemStat: 'ARTS Init' 105K before, 398K after, 293K difference
 DSGlobal::SetDeviceRating name is Primary Sound Driver rating is 113
 DSGlobal::SetDeviceRating name is Headphones (Bose NC 700 Headphones) rating is 113
 DSGlobal::SetDeviceRating name is SONY TV (Intel(R) Display Audio) rating is 113
 DSGlobal::SetDeviceRating name is Speakers (Realtek(R) Audio) rating is 113
 DSGlobal::InitPrimarySoundBuffer name specified Primary Sound Driver rating is 113
 DSGlobal::InitPrimarySoundBuffer device used Primary Sound Driver rating is 113
-WARNING:  MemStat: 'Audio manager' 400K before, 402K after, 1K difference
+WARNING:  MemStat: 'Audio manager' 398K before, 400K after, 1K difference
 CreateDevice() failed - 80040154h  no JOYSTICK device found.
-WARNING:  MemStat: 'GameInput' 402K before, 433K after, 31K difference
-WARNING:  MemStat: 'Cache and pager.' 484K before, 6700K after, 6216K difference
-*********Load time 1.000000 = 0.655679 seconds, 14506K Allocated
-*********Load time 1.010000 = 0.688989 seconds, 14539K Allocated
-*********Load time 1.020000 = 0.806812 seconds, 14966K Allocated
+WARNING:  MemStat: 'GameInput' 400K before, 432K after, 31K difference
+WARNING:  MemStat: 'Cache and pager.' 483K before, 6699K after, 6216K difference
+*********Load time 1.000000 = 1.062401 seconds, 14505K Allocated
+*********Load time 1.010000 = 1.118067 seconds, 14537K Allocated
+*********Load time 1.020000 = 1.288502 seconds, 14964K Allocated
 Using Mixer 'Headphones (Bose NC 700 Headpho' (0) for Device 'Primary Sound Driver' (0)
 Audio DEVICE DD: Primary Sound Driver|Headphones (Bose NC 700 Headphones)|SONY TV (Intel(R) Display Audio)|Speakers (Realtek(R) Audio)
 Audio Stereo FX DD: Mono|Stereo
@@ -257,21 +257,21 @@ ERROR: Can't open widget data file 'widgettest'
 ERROR: CreateOn.FileStream.Create: Access is denied.
 
 ERROR: Can't open menu data file 'menutest'
-*********Load time 2.000000 = 1.258741 seconds, 15481K Allocated
-*********Load time 2.500000 = 1.258752 seconds, 15481K Allocated
+*********Load time 2.000000 = 2.009238 seconds, 15479K Allocated
+*********Load time 2.500000 = 2.009251 seconds, 15479K Allocated
 WARNING: Robin profile loaded...
-*********Load time 2.510000 = 1.263434 seconds, 15494K Allocated
-*********Load time 2.520000 = 1.264652 seconds, 15672K Allocated
+*********Load time 2.510000 = 2.013709 seconds, 15493K Allocated
+*********Load time 2.520000 = 2.015128 seconds, 15671K Allocated
 Using Mixer 'Headphones (Bose NC 700 Headpho' (0) for Device 'Primary Sound Driver' (0)
-*********Load time 2.600000 = 1.265448 seconds, 15672K Allocated
+*********Load time 2.600000 = 2.016055 seconds, 15671K Allocated
 Initializing lobby
 Lobby interface created or already created.
 asNetwork::JoinLobbySession()
 Couldn't get connection settings: 8877042E
-*********Load time 3.000000 = 1.266581 seconds, 15672K Allocated
-WARNING: MemStat: 'Module init' 0K before, 15671K after, 15671K difference
-********* Load time = 1.273781 seconds; 15671K allocated.
+*********Load time 3.000000 = 2.017449 seconds, 15671K Allocated
+WARNING: MemStat: 'Module init' 0K before, 15669K after, 15669K difference
+********* Load time = 2.026563 seconds; 15669K allocated.
 Texture 'REFL_NC' 0/0 still in TexLib
-WARNING: MemStat: 'mmInterface Destructor' 15663K before, 15230K after, -433K difference
+WARNING: MemStat: 'mmInterface Destructor' 15661K before, 15229K after, -433K difference
 ERROR: Pipeline didn't release all its objects.
 Good bye.

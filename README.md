@@ -31,14 +31,14 @@ If you have any questions or suggestions, feel free to reach out to me via Disco
 
 ## Gallery
 
-![Preview](EditorResources/Gallery/Gallery_1.png)
+![Preview](Resources/EditorResources/GALLERY/Gallery_1.png)
 
-![Preview](EditorResources/Gallery/Gallery_2.png)
+![Preview](Resources/EditorResources/GALLERY/Gallery_2.png)
 
-![Preview](EditorResources/Gallery/Gallery_3.png)
+![Preview](Resources/EditorResources/GALLERY/Gallery_3.png)
 
-![Preview](EditorResources/Gallery/Gallery_4.png)
+![Preview](Resources/EditorResources/GALLERY/Gallery_4.png)
 
-![Preview](EditorResources/Gallery/Gallery_5.png)
+![Preview](Resources/EditorResources/GALLERY/Gallery_5.png)
 
-![Preview](EditorResources/Gallery/Gallery_6.png)
+![Preview](Resources/EditorResources/GALLERY/Gallery_6.png)
