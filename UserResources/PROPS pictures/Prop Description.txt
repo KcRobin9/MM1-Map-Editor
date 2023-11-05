@@ -1,0 +1,45 @@
+tpsstop - Stop Sign
+tpsoneleft - One way sign, points left
+tpsone - One way sign, points right
+tpcrshcan - Yellow highway end barrirer
+tptrashalley02 - Trash boxes
+tpsailboat - Flat sailboat, one visible from one side.
+tpplanter_mall - Potted bush.
+tpleft - Only left turn sign.
+tpfw_sign_ot - Highway sign for Oldtown off ramp
+tpfw_sign_ls - Highway sign for Lake Shore Drive off ramp
+tpfw_sign_dt - Highway sign for Download off ramp
+tpfw_sign_ct - Highway sign for Chinatown off ramp 
+tp_barricade - Race barricade
+tpdmpstr - Large blue dumpster
+tpcboxm - Single box
+tpcboxbreak - Stack of three boxes
+tpboxalley - Stack of boxes plus wooden plank
+tpbench_mall - Wooden bench no back rest
+tp_tree15m - Large tree
+tp_trailer - Ramp trailer
+cpgate - China town gate
+dp_left - Support and side section for El Train 
+tppmtr - Parking meter
+tptcanc - Trash can
+tpltst - Street light
+tpsbus - Bus stop sign
+tpnews01- Blue newpaper box
+tpnews04 - Blue newspaper box
+tpmail - Mail box
+tpnews03 - Yellow newspaper box
+tpphone - Payphone
+tpnews02 - Red newspaper box
+tpbarrelblue - Blue barrel
+tpbench - Park bench
+tpmboxs - Steel box
+tp_tree10m - Small tree
+opstlite - Old style street light
+tpcone - Traffic cone
+tpsawhrslt - Traffic Barrier
+tptpole - Telephone pole
+tpcallbox - Emergancy callbox
+tptree_sparce - Same as tree10m
+tpfirehy - Fire hydrent
+tpswrng - Do not enter sign
+tpwrongway - Large wrong way sign

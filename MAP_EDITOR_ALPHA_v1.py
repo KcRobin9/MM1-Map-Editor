@@ -83,8 +83,8 @@ randomize_textures = False      # change to "True" if you want to randomize all 
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
 # Blender
-load_dds_materials = False      # change to "True" if you want to load all DDS materials (all textures are available regardless) (takes a few extra seconds to load)
-dds_directory = Path.cwd() / 'DDS'
+load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
+texture_dir = Path.cwd() / 'EditorResources' / 'Textures'
 
 # Debug
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
@@ -4559,17 +4559,17 @@ def adjust_3D_view_settings() -> None:
                     shading.color_type = 'TEXTURE'
 
               
-def load_dds_resources(dds_directory: Path, load_dds_materials: bool) -> None:
-    for file_name in os.listdir(dds_directory):
+def load_dds_resources(texture_dir: Path, load_tex_materials: bool) -> None:
+    for file_name in os.listdir(texture_dir):
         if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(dds_directory, file_name)
+            texture_path = os.path.join(texture_dir, file_name)
 
             if texture_path not in bpy.data.images:
                 texture_image = bpy.data.images.load(texture_path)
             else:
                 texture_image = bpy.data.images[texture_path]
 
-            if load_dds_materials:
+            if load_tex_materials:
                 material_name = os.path.splitext(os.path.basename(texture_path))[0]
                 if material_name not in bpy.data.materials:
                     create_material_from_texture(material_name, texture_image)
@@ -4746,7 +4746,7 @@ def apply_texture_to_object(obj, texture_path):
     unwrap_uv_to_aspect_ratio(obj, texture_image)
     
     
-def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
+def create_mesh_from_polygon_data(polygon_data, texture_dir = None):
     name = f"P{polygon_data['bound_number']}"
     coords = polygon_data["vertex_coordinates"]
 
@@ -4797,8 +4797,8 @@ def create_mesh_from_polygon_data(polygon_data, dds_directory = None):
     obj.tile_x = tile_x
     obj.tile_y = tile_y
     
-    if dds_directory:
-        apply_texture_to_object(obj, dds_directory)    
+    if texture_dir:
+        apply_texture_to_object(obj, texture_dir)    
         rotate_angle = obj.rotate
 
         tile_uvs(obj, tile_x, tile_y)
@@ -4820,9 +4820,9 @@ def create_blender_meshes() -> None:
         enable_developer_extras()
         adjust_3D_view_settings()
         
-        load_dds_resources(dds_directory, load_dds_materials)
+        load_dds_resources(texture_dir, load_tex_materials)
                     
-        texture_paths = [os.path.join(dds_directory, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+        texture_paths = [os.path.join(texture_dir, f"{texture_name}.DDS") for texture_name in stored_texture_names]
 
         bpy.ops.object.select_all(action = 'SELECT')
         bpy.ops.object.delete()
@@ -5624,9 +5624,9 @@ Facade_Editor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_
 PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props, append_props) 
 PropEditor(map_filename, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(map_filename, debug_props).place_props_randomly(**i)])
 
-instances = LightingEditor.read_file(Path("EditorResources") / "LIGHTING.CSV")
-LightingEditor.process_changes(instances, lighting_configs)
-LightingEditor.write_file(instances, SHOP / "TUNE" / "LIGHTING.CSV")
+#instances = LightingEditor.read_file(Path("EditorResources") / "LIGHTING.CSV")
+#LightingEditor.process_changes(instances, lighting_configs)
+#LightingEditor.write_file(instances, SHOP / "TUNE" / "LIGHTING.CSV")
 # LightingEditor.debug(instances, "LIGHTING_DATA.txt")
 
 copy_dev_folder(mm1_folder, map_filename)
