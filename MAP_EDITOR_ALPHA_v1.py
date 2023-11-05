@@ -92,6 +92,7 @@ debug_props = False             # change to "True" if you want a PROPS Debug tex
 debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
+debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
 DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
 debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
@@ -107,7 +108,7 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-disable_progress_bar = True    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################               
 ################################################################################################################
@@ -186,8 +187,8 @@ def load_last_run_time():
             with open("last_editor_run_time.pkl", "rb") as f:
                 return pickle.load(f)
         except EOFError:
-            return 3  # Default to 3.0 seconds if the file is empty or corrupted
-    return 3  # Default to 3.0 seconds if no previous data
+            return 3.0  # Default to 3.0 seconds if the file is empty or corrupted
+    return 3.0  # Default to 3.0 seconds if no previous data
 
 
 # Load the Last Run Time, Start the Progress Bar Thread, Start the Time
@@ -1025,7 +1026,7 @@ class BMS:
         self.indices_sides = indices_sides
         
     @classmethod
-    def read(cls, file_name: str):
+    def read(cls, file_name: str) -> 'BMS':
         with open(file_name, 'rb') as f:
             magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')  
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
@@ -1139,7 +1140,7 @@ class DLPVertex:
         self.color = color
         
     @classmethod
-    def read(cls, f):
+    def read(cls, f) -> 'DLPVertex':
         id = read_unpack(f, '>H')
         normal = Vector3.read(f)
         uv = Vector2.read(f)
@@ -1176,7 +1177,7 @@ class DLPPatch:
         self.name = name
         
     @classmethod
-    def read(cls, f):
+    def read(cls, f) -> 'DLPPatch':
         s_res, t_res = read_unpack(f, '>HH')
         flags, r_opts = read_unpack(f, '>HH')
         mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
@@ -1221,7 +1222,7 @@ class DLPGroup:
         self.patch_indices = patch_indices
         
     @classmethod
-    def read(cls, f):
+    def read(cls, f) -> 'DLPGroup':
         name_length = read_unpack(f, '>B')[0]
         name = read_unpack(f, f'>{name_length}s')[0].decode()
         num_vertices, num_patches = read_unpack(f, '>II')        
@@ -1259,7 +1260,7 @@ class DLP:
         self.vertices = vertices 
         
     @classmethod
-    def read(cls, f):
+    def read(cls, f) -> 'DLP':
         magic = read_unpack(f, '>4s')[0].decode()              
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
@@ -1342,9 +1343,7 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
 ################################################################################################################ 
 ################################################################################################################               
 
-def compute_uv(
-    bound_number: int, tile_x: int = 1, tile_y: int = 1, 
-    angle_degrees: Union[float, Tuple[float, float]] = 0.0) -> List[float]:
+def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degrees: float = 0.0) -> List[float]:
 
     def rotate_point(x: float, y: float, angle: float) -> Tuple[float, float]:
         rad = math.radians(angle)
@@ -1421,7 +1420,7 @@ def save_bms(
 # Create BMS      
 def create_bms(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
-    texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None):
+    texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> BMS:
     
     shapes = []
     
@@ -1462,7 +1461,8 @@ def create_bms(
         
     return BMS(magic, vertex_count, adjunct_count, surface_count, indices_count, 
                radius, radiussq, bounding_box_radius, 
-               texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, enclosed_shape, texture_indices, indices_sides)
+               texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, 
+               enclosed_shape, texture_indices, indices_sides)
 
 ################################################################################################################               
 ################################################################################################################  
@@ -2628,7 +2628,7 @@ def copy_custom_textures() -> None:
 
 
 def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
-    input_folder = BASE_DIR / 'Core AR' / 'TUNE'
+    input_folder = BASE_DIR / 'Resources' / 'EditorResources' / 'TUNE'
     output_folder = SHOP / 'TUNE'
 
     for file in input_folder.glob('*.MMBANGERDATA'):
@@ -2653,7 +2653,7 @@ def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
                 
                 
 def copy_core_tune_files() -> None:
-    input_folder = BASE_DIR / 'Core AR' / 'TUNE'
+    input_folder = BASE_DIR / 'Resources' / 'EditorResources' / 'TUNE'
     output_folder = SHOP / 'TUNE'
     
     non_mmbangerdata_files = [f for f in input_folder.glob('*') if not f.name.endswith('.MMBANGERDATA')]
@@ -2663,14 +2663,14 @@ def copy_core_tune_files() -> None:
                 
                 
 def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
-    dev_folder = BASE_DIR / 'dev'
-    mm1_folder = Path(mm1_folder) / 'dev'
+    input_folder = BASE_DIR / 'dev'
+    output_folder = mm1_folder / 'dev'
     
-    shutil.rmtree(mm1_folder, ignore_errors = True)  
-    shutil.copytree(dev_folder, mm1_folder)
+    shutil.rmtree(output_folder, ignore_errors = True)  
+    shutil.copytree(input_folder, output_folder)
     
-    mm1_dev_ai_files = dev_folder / 'CITY' / map_filename
-    shutil.rmtree(mm1_dev_ai_files, ignore_errors = True)
+    dev_ai_files = input_folder / 'CITY' / map_filename
+    shutil.rmtree(dev_ai_files, ignore_errors = True)
     
 ################################################################################################################               
 ################################################################################################################ 
@@ -3037,6 +3037,7 @@ def create_hudmap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, 
             
         ax.set_aspect('equal', 'box')
         ax.axis('off')
+        
         trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
         for line in ax.lines:
             line.set_transform(trans)       
@@ -3231,7 +3232,7 @@ mmBridgeMgr :076850a0 {{
 
 #! ================== THIS SECTION IS RELATED TO PORTALS ================== !#
 
-#! ########### Code by 0x1F9F1 / Brick (Modified) ############ !#      
+#! ########### Code by 0x1F9F1 (Modified) ############ !#      
                  
 MIN_Y = -20
 MAX_Y = 50
@@ -3508,7 +3509,7 @@ def create_portals(
     if debug_portals:
         debug_file.close()
 
-#! ########### Code by 0x1F9F1 / Brick (Modified) ############ !#                   
+#! ########### Code by 0x1F9F1 (Modified) ############ !#                   
 
 ################################################################################################################               
 ################################################################################################################            
@@ -3527,7 +3528,7 @@ class BinaryBanger:
         return read_unpack(f, '<I')[0]
             
     @classmethod
-    def read(cls, f):
+    def read(cls, f) -> 'BinaryBanger':
         room, flags = read_unpack(f, '<HH')
         offset = Vector3.read(f)
         face = Vector3.read(f)  
@@ -3535,7 +3536,7 @@ class BinaryBanger:
         return cls(room, flags, offset, face, name)
     
     @staticmethod
-    def read_name(f):
+    def read_name(f) -> str:
         name_data = bytearray()
         while True:
             char = f.read(1)
@@ -3761,7 +3762,7 @@ class PropEditor:
 #################################################################################
 
 # MATERIALEDITOR CLASS
-class MaterialEditor:
+class PhysicsEditor:
     def __init__(self, name: str, friction: float, elasticity: float, drag: float, 
                  bump_height: float, bump_width: float, bump_depth: float, sink_depth: float, 
                  type: int, sound: int, velocity: Vector2, ptx_color: Vector3):
@@ -3781,22 +3782,21 @@ class MaterialEditor:
         
     @staticmethod
     def readn(f, count):
-        return [MaterialEditor.read(f) for _ in range(count)]
+        return [PhysicsEditor.read(f) for _ in range(count)]
 
     @staticmethod
-    def read(f):
+    def read(f) -> 'PhysicsEditor':
         name = f.read(32).decode("latin-1").rstrip('\x00')
         params = read_unpack(f, '>7f2I')
         velocity = Vector2.read(f)
         ptx_color = Vector3.read(f)
-        return MaterialEditor(name, *params, velocity, ptx_color)
+        return PhysicsEditor(name, *params, velocity, ptx_color)
 
     def write(self, f):        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
-        write_pack(f, '>7f2I', 
-                   self.friction, self.elasticity, self.drag, 
-                   self.bump_height, self.bump_width, self.bump_depth, 
-                   self.sink_depth, self.type, self.sound)
+        write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
+        write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
+        write_pack(f, '>2I', self.type, self.sound)
         self.velocity.write(f)
         self.ptx_color.write(f)
 
@@ -3859,8 +3859,8 @@ class MaterialEditor:
 ###################################################################################################################
 
 # BAI EDITOR CLASS
-class BAI_Editor:
-    def __init__(self, map_filename, streets, set_ai_map):
+class BaiEditor:
+    def __init__(self, map_filename: str, streets, set_ai_map: bool):
         self.map_filename = map_filename
         self.streets = streets
         self.output_dir = BASE_DIR / "dev" / "CITY" / self.map_filename
@@ -3891,7 +3891,7 @@ mmMapData :0 {{
        
 # STREET CLASS
 class StreetEditor:
-    def __init__(self, map_filename, data, set_streets, set_reverse_streets):
+    def __init__(self, map_filename: str, data, set_streets: bool, set_reverse_streets: bool):
         self.map_filename = map_filename
         self.street_name = data["street_name"]
         self.set_reverse_streets = set_reverse_streets
@@ -3902,10 +3902,10 @@ class StreetEditor:
             self.write()
                     
     @classmethod
-    def create(cls, map_filename, dataset, set_ai_map, set_streets, set_reverse_streets):
+    def create(cls, map_filename: str, dataset, set_ai_map: bool, set_streets: bool, set_reverse_streets: bool):
         street_editors = [StreetEditor(map_filename, data, set_streets, set_reverse_streets) for data in dataset]
         street_names = [editor.street_name for editor in street_editors]
-        return BAI_Editor(map_filename, street_names, set_ai_map)
+        return BaiEditor(map_filename, street_names, set_ai_map)
 
     def process_lanes(self, data):
         if "lanes" in data:
@@ -3986,33 +3986,29 @@ mmRoadSect :0 {{
 ################################################################################################################               
 ################################################################################################################    
         
-def get_first_and_last_street_vertices(street_list, process_vertices = False):
-    vertices_set = set()
+def get_first_and_last_street_vertices(street_list):
+    processed_vertices = []
     
     for street in street_list:
         vertices = street["vertices"]
-        if vertices:  # Check if the list is not empty
-            vertices_set.add(vertices[0])
-            vertices_set.add(vertices[-1])
+        if vertices: 
+            for vertex in (vertices[0], vertices[-1]):
+                processed = [vertex[0], vertex[1], vertex[2], ROT_AUTO, LANE_6, 0.0, 0.0, 0.0, 0.0]
+                processed_vertices.append(processed)  
 
-    result = list(vertices_set)
-
-    if process_vertices:
-        processed_vertices = []
-
-        for vertex in result:
-            # Take x, y, z from the vertex and expand it with filler data
-            processed = [vertex[0], vertex[1], vertex[2], 0, 20.0, 0.0, 0.0, 0.0, 0.0]
-            processed_vertices.append(processed)
-        
-        return processed_vertices
-
-    return result
+    # Remove duplicates by converting the lists to tuples for set uniqueness
+    vertices_set = set(tuple(v) for v in processed_vertices)
+    
+    # Convert back to lists and then to the final list
+    unique_processed_vertices = [list(v) for v in vertices_set]
+    return unique_processed_vertices
 
 
-def create_lars_race_maker(map_filename: str, street_list, lars_race_maker: bool, process_vertices: bool = True):
-    #!########### Code by Lars (Modified) ############    
-    vertices_processed = get_first_and_last_street_vertices(street_list, process_vertices)
+#!########### Code by Lars (Modified) ############
+
+def create_lars_race_maker(map_filename: str, street_list, lars_race_maker: bool):
+      
+    vertices_processed = get_first_and_last_street_vertices(street_list)
     
     polygons = hudmap_vertices
     min_x, max_x, min_z, max_z = create_ext(map_filename, polygons)
@@ -4156,7 +4152,7 @@ canvas.addEventListener('mousedown', function(e) {{
 ################################################################################################################### 
 
 # FACADE CLASS
-class Facade_Editor:
+class FacadeEditor:
     def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, sides: Vector3, scale: float, name: str) -> None:
         self.room = room
         self.flags = flags
@@ -4167,7 +4163,7 @@ class Facade_Editor:
         self.name = name
 
     @classmethod
-    def read(cls, f):
+    def read(cls, f) -> 'FacadeEditor':
         room, flags = read_unpack(f, '2H')
         offset = Vector3.read(f)
         face = Vector3.read(f)
@@ -4177,7 +4173,7 @@ class Facade_Editor:
         return cls(room, flags, offset, face, sides, scale, name)
     
     @staticmethod
-    def read_name(f):
+    def read_name(f) -> str:
         name_data = bytearray()
         while True:
             char = f.read(1)
@@ -4196,7 +4192,7 @@ class Facade_Editor:
         return scales
 
     def write(self, f):
-        write_pack(f, '2H', 0x1, self.flags)  # Hardcoded the Room value such that all facades are visible in the game       
+        write_pack(f, '2H', 0x1, self.flags)  # Hardcoded the Room value such that all facades are visible in the game    
         write_pack(f, '3f', *self.offset)
         write_pack(f, '3f', *self.face)
         write_pack(f, '3f', *self.sides)
@@ -4205,11 +4201,11 @@ class Facade_Editor:
         f.write(b'\x00')
                 
     @classmethod
-    def create(cls, filename, packed_facades, output_dir, set_facades = False, debug_facades = False):
+    def create(cls, facade_file: str, packed_facades, output_dir: Path, set_facades: bool, debug_facades: bool):
         if set_facades:
             facades = cls.build(packed_facades)
-            cls.finalize(filename, facades)
-            MOVE(filename, output_dir / filename)
+            cls.finalize(facade_file, facades)
+            MOVE(facade_file, output_dir / facade_file)
 
             if debug_facades:
                 cls.debug(facades)
@@ -4238,7 +4234,7 @@ class Facade_Editor:
                 scale = scales.get(params['name'], params.get('scale', 1.0))
                 name = params['name']
 
-                facade = Facade_Editor(0x1, flags, current_start, current_end, sides, scale, name)
+                facade = FacadeEditor(0x1, flags, current_start, current_end, sides, scale, name)
                 facades.append(facade)
 
         return facades
@@ -4315,7 +4311,7 @@ class LightingEditor:
         self.shadow_color = shadow_color
         
     @classmethod
-    def read_rows(cls, row):
+    def read_rows(cls, row: list[Union[int, float, str]]) -> 'LightingEditor':
         return cls(
             time_of_day = int(row[0]),
             weather = int(row[1]),
@@ -4405,11 +4401,12 @@ class LightingEditor:
                 writer.writerow(instance.write_rows())
                 
     @classmethod
-    def debug(cls, instances, filename):
-        with open(filename, 'w') as f:
-            for instance in instances:
-                f.write(instance.__repr__())
-                f.write("\n")
+    def debug(cls, instances, debug_file: str, debug_lighting: bool) -> None:
+        if debug_lighting:
+            with open(debug_file, 'w') as debug_f:
+                for instance in instances:
+                    debug_f.write(instance.__repr__())
+                    debug_f.write("\n")
                 
     def __repr__(self):
         return f'''
@@ -5383,7 +5380,7 @@ Note:
 cruise_start = {
     "street_name": "cruise_start",
     "vertices": [
-        (0,0,0),            # keep this
+        (0, 0, 0),            # keep this
         cruise_start_pos]}  # starting position in Cruise mode
 
 main_west = {
@@ -5596,9 +5593,8 @@ lighting_configs = [
 ###################################################################################################################   
 ################################################################################################################### 
 
-# SET MATERIAL PROPERTIES
+# SET PHYSICS PROPERTIES
 # available indices: 94, 95, 96, 97, 98,
-# see: /UserResources/PHYSICS/PHYSICS.DB.txt for more information
 
 new_physics_properties = {
     97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # sticky
@@ -5616,18 +5612,20 @@ create_races(map_filename, race_data)
 create_cnr(map_filename, cnr_waypoints)
 
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
+PhysicsEditor.edit(new_physics_properties, "physics.db", debug_physics)
+FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 
-MaterialEditor.edit(new_physics_properties, "physics.db", debug_physics)
-Facade_Editor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
-
-# Not efficient, but a concise one-liner
 PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props, append_props) 
-PropEditor(map_filename, debug_props).process_props(prop_list + [prop for i in random_props for prop in PropEditor(map_filename, debug_props).place_props_randomly(**i)])
 
-# instances = LightingEditor.read_file(Path("Resources") / "EditorResources" / "LIGHTING" /  "LIGHTING.CSV")
-# LightingEditor.process_changes(instances, lighting_configs)
-# LightingEditor.write_file(instances, SHOP / "TUNE" / "LIGHTING.CSV")
-# LightingEditor.debug(instances, "LIGHTING_DATA.txt")
+prop_editor = PropEditor(map_filename, debug_props)
+for prop in random_props:
+    prop_list.extend(prop_editor.place_props_randomly(**prop))
+prop_editor.process_props(prop_list)
+
+lighting_instances = LightingEditor.read_file(Path("Resources") / "EditorResources" / "LIGHTING" /  "LIGHTING.CSV")
+LightingEditor.process_changes(lighting_instances, lighting_configs)
+LightingEditor.write_file(lighting_instances, SHOP / "TUNE" / "LIGHTING.CSV")
+LightingEditor.debug(lighting_instances, "LIGHTING_DATA.txt", debug_lighting)
 
 copy_dev_folder(mm1_folder, map_filename)
 edit_and_copy_mmbangerdata(bangerdata_properties)
@@ -5643,7 +5641,7 @@ create_portals(map_filename, polys, vertices, empty_portals, debug_portals)
 create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
                x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
 
-create_lars_race_maker(map_filename, street_list, lars_race_maker, process_vertices = True)
+create_lars_race_maker(map_filename, street_list, lars_race_maker)
 
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)

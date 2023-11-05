@@ -1,6 +1,6 @@
 # Midtown Madness 1 Map Editor
 
-![Preview](EditorResources/Gallery/Preview.png)
+![Preview](Resources/EditorResources/GALLERY/Preview.png)
 
 [![Download Latest Version](https://img.shields.io/badge/download-latest-brightgreen?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHdpZHRoPSIyNCI%2BPHBhdGggZmlsbD0iIzRjMSIgZD0iTTUgMjBoMTR2LTJINXYyek0xOSA5aC00VjNIOXY2SDVsNyA3IDctN3oiLz48L3N2Zz4%3D)](https://github.com/KcRobin9/MM1-Map-Editor/archive/refs/heads/main.zip)
 [![Chat On Discord](https://img.shields.io/discord/239900961731117059?color=7289DA&logo=discord)](https://discord.gg/tjTQAbFdqQ)
