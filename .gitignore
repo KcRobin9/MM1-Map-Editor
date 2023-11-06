@@ -9,3 +9,4 @@ MidtownMadness/crashes
 MidtownMadness/*.log
 MidtownMadness/!*.ar
 MidtownMadness/dev/
+MidtownMadness/shiplist.!*

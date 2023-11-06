@@ -1,11 +1,5 @@
-TIME					WEATHER	
-morning = 0				clear = 0	
-noon = 1 				cloudy = 1
-evening = 2				rain = 2
-night = 3				snow = 3
 
-
-LightingSettings
+LightingEditor
 Time of Day: 0
 Weather: 0
 Sun Heading: 0.00
@@ -24,7 +18,7 @@ Shadow Alpha: 100.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 0
 Weather: 1
 Sun Heading: 0.00
@@ -43,7 +37,7 @@ Shadow Alpha: 100.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 0
 Weather: 2
 Sun Heading: 0.00
@@ -62,7 +56,7 @@ Shadow Alpha: 100.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 0
 Weather: 3
 Sun Heading: 0.00
@@ -81,7 +75,7 @@ Shadow Alpha: 100.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 1
 Weather: 0
 Sun Heading: 1.70
@@ -100,7 +94,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 1
 Weather: 1
 Sun Heading: 1.70
@@ -119,7 +113,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 1
 Weather: 2
 Sun Heading: 1.70
@@ -138,7 +132,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 1
 Weather: 3
 Sun Heading: 1.70
@@ -157,7 +151,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 2
 Weather: 0
 Sun Heading: 3.14
@@ -176,7 +170,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 2
 Weather: 1
 Sun Heading: 3.14
@@ -195,7 +189,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 2
 Weather: 2
 Sun Heading: 3.14
@@ -214,7 +208,7 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 2
 Weather: 3
 Sun Heading: 3.14
@@ -233,18 +227,18 @@ Shadow Alpha: 180.00
 Shadow Color: (15.0, 20.0, 30.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 3
 Weather: 0
 Sun Heading: 0.00
-Sun Pitch: 0.50
-Sun Color: (1.0, 1.0, 1.0)
+Sun Pitch: 10.00
+Sun Color: (40.0, 0.0, 40.0)
 Fill1 Heading: -2.50
-Fill1 Pitch: 0.45
-Fill1 Color: (0.8, 0.9, 1.0)
+Fill1 Pitch: 10.00
+Fill1 Color: (40.0, 0.0, 40.0)
 Fill2 Heading: 2.50
-Fill2 Pitch: 0.45
-Fill2 Color: (0.75, 0.8, 1.0)
+Fill2 Pitch: 10.00
+Fill2 Color: (40.0, 0.0, 40.0)
 Ambient Color: (0.1, 0.1, 0.15)
 Fog End: 1000.00
 Fog Color: (25.0, 30.0, 40.0)
@@ -252,7 +246,7 @@ Shadow Alpha: 100.00
 Shadow Color: (0.0, 0.0, 0.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 3
 Weather: 1
 Sun Heading: 0.00
@@ -271,7 +265,7 @@ Shadow Alpha: 100.00
 Shadow Color: (0.0, 0.0, 0.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 3
 Weather: 2
 Sun Heading: 0.00
@@ -290,7 +284,7 @@ Shadow Alpha: 100.00
 Shadow Color: (0.0, 0.0, 0.0)
 
 
-LightingSettings
+LightingEditor
 Time of Day: 3
 Weather: 3
 Sun Heading: 0.00

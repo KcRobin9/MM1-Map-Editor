@@ -210,6 +210,8 @@ start_time = time.time()
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
+USER_RESOURCES = BASE_DIR / "Resources" / "UserResources"
+EDITOR_RESOURCES = BASE_DIR / "Resources" / "EditorResources"
 MOVE = shutil.move
 
 # Variables
@@ -947,27 +949,29 @@ class BND:
                 f.write(str(self))
                 
     @staticmethod
-    def debug_file(input_file: Path, output_file: Path) -> None:
-        with open(input_file, 'rb') as in_f:
-            bnd = BND.read(in_f)
-            
-        with open(output_file, 'w') as out_f:
-            out_f.write(repr(bnd))
+    def debug_file(debug_bounds: bool, input_file: Path, output_file: Path) -> None:
+        if debug_bounds:
+            with open(input_file, 'rb') as in_f:
+                bnd = BND.read(in_f)
+                
+            with open(output_file, 'w') as out_f:
+                out_f.write(repr(bnd))
             
     @staticmethod
-    def debug_directory(input_dir: Path, output_dir: Path) -> None:
-        if not input_dir.exists():
-            print(f"The directory {dir} does not exist.")
-            return
-        
-        if not output_dir.exists():
-            print(f"The output directory {output_dir} does not exist. Creating it.")
-            output_dir.mkdir(parents = True, exist_ok = True)
+    def debug_directory(debug_bounds: bool, input_dir: Path, output_dir: Path) -> None:
+        if debug_bounds:
+            if not input_dir.exists():
+                print(f"The directory {dir} does not exist.")
+                return
             
-        for file_path in input_dir.glob('*.BND'):
-            output_file_path = output_dir / (file_path.stem + '.txt')  
-            BND.debug_file(file_path, output_file_path)
-            print(f"Processed {file_path.name} to {output_file_path.name}")
+            if not output_dir.exists():
+                print(f"The output directory {output_dir} does not exist. Creating it.")
+                output_dir.mkdir(parents = True, exist_ok = True)
+                
+            for file_path in input_dir.glob('*.BND'):
+                output_file_path = output_dir / (file_path.stem + '.txt')  
+                BND.debug_file(file_path, output_file_path)
+                print(f"Processed {file_path.name} to {output_file_path.name}")
                 
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
@@ -4268,6 +4272,24 @@ class FacadeEditor:
         with open("FACADES_debug.txt", mode = 'w', encoding = 'utf-8') as f:
             for facade in facades:
                 f.write(str(facade))
+                
+    @classmethod
+    def debug_file(cls, debug_facades: bool, input_file: Path, output_file: Path) -> None:
+        if debug_facades:
+            with open(input_file, 'rb') as in_f:
+                try:
+                    facades = []
+                    num_facades = read_unpack(in_f, '<I')[0]
+                    for _ in range(num_facades):
+                        facade = cls.read(in_f)
+                        facades.append(facade)
+                except Exception as e:
+                    print(f"Failed to process {input_file.name}: {e}")
+                    return
+
+            with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                for facade in facades:
+                    out_f.write(repr(facade))
         
     def __repr__(self):
         return f"""
@@ -4277,7 +4299,7 @@ Facade Editor
     Start: {self.offset}
     Face: {self.face}
     Sides: {self.sides}
-    Scale: {self.scale}
+    Scale: {self.scale:.2f}
     Name: {self.name}
     """
     
@@ -5611,9 +5633,14 @@ create_cells(map_filename, truncate_cells)
 create_races(map_filename, race_data)
 create_cnr(map_filename, cnr_waypoints)
 
+BND.debug_file(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND", USER_RESOURCES / "BOUNDS" / "CHICAGO_HITID.txt")
+BND.debug_directory(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "BND FILES", USER_RESOURCES / "BOUNDS" / "BND TEXT FILES")
+
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
-PhysicsEditor.edit(new_physics_properties, "physics.db", debug_physics)
+PhysicsEditor.edit(new_physics_properties, "PHYSICS.DB", debug_physics)
+
 FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
+FacadeEditor.debug_file(debug_facades, EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD", USER_RESOURCES / "FACADES" / "CHICAGO_FCD.txt")
 
 PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props, append_props) 
 
@@ -5622,10 +5649,10 @@ for prop in random_props:
     prop_list.extend(prop_editor.place_props_randomly(**prop))
 prop_editor.process_props(prop_list)
 
-lighting_instances = LightingEditor.read_file(Path("Resources") / "EditorResources" / "LIGHTING" /  "LIGHTING.CSV")
+lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.process_changes(lighting_instances, lighting_configs)
 LightingEditor.write_file(lighting_instances, SHOP / "TUNE" / "LIGHTING.CSV")
-LightingEditor.debug(lighting_instances, "LIGHTING_DATA.txt", debug_lighting)
+LightingEditor.debug(lighting_instances, USER_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
 copy_dev_folder(mm1_folder, map_filename)
 edit_and_copy_mmbangerdata(bangerdata_properties)
@@ -5681,7 +5708,3 @@ post_ar_cleanup(delete_shop)
 
 # Read any DLP file in the current directory
 # print((lambda f: DLP.read(f))((open("VPCADDIE_BND.DLP", 'rb'))))
-
-# Read the contents of existing BND files
-# BND.debug_file(Path.cwd() / "UserResources" / "BOUNDS" / "CHICAGO_HITID.BND", Path.cwd() / "UserResources" / "BOUNDS" / "CHICAGO_HIT_ID.txt")
-# BND.debug_directory(Path.cwd() / "UserResources" / "BOUNDS" / "Raw files", Path.cwd() / "UserResources" / "BOUNDS" / "Text files")
