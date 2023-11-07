@@ -27,6 +27,7 @@ import csv
 import math
 import time
 import pickle
+import psutil
 import shutil
 import struct
 import random
@@ -4561,11 +4562,19 @@ def create_commandline(
         f.write(processed_cmd)
         
         
+def is_game_running(process_name: str) -> bool:
+    for proc in psutil.process_iter(['name']):
+        if process_name.lower() in proc.info['name'].lower():
+            return True
+    return False
+        
+        
 # Start game
 def start_game(mm1_folder: str, play_game: bool) -> None:
-    if play_game and not is_blender_running():
-        subprocess.run(mm1_folder / "Open1560.exe", cwd = mm1_folder)
-        
+    game_exe = "Open1560.exe"
+    if play_game and not is_game_running(game_exe) and not is_blender_running():
+        subprocess.run(mm1_folder / game_exe, cwd = mm1_folder)
+            
 ###################################################################################################################
 ################################################################################################################### 
 
