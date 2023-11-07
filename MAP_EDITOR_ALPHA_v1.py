@@ -78,6 +78,9 @@ cruise_start_pos = (0.0, 0.0, 0.0)
 cruise_start_pos = (-83.0, 18.0, -114.0)
 cruise_start_pos = (40.0, 30.0, -40.0)
 
+# DLP
+set_dlp = False                 # change to "True" if you want to create a DLP file (scroll to the end of the script)
+
 # Misc
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
@@ -579,15 +582,15 @@ class Vector2:
     def __init__(self, x, y):
         self.x = x
         self.y = y
+            
+    def read(file, byte_order = '<'):
+        return Vector2(*read_unpack(file, f'{byte_order}2f'))
 
-    def read(file):
-        return Vector2(*read_unpack(file, '<2f'))
-
-    def readn(file, count):
-        return [Vector2.read(file) for _ in range(count)]
-
-    def write(self, file):
-        write_pack(file, '<2f', self.x, self.y)
+    def readn(file, count, byte_order = '<'):
+        return [Vector2.read(file, byte_order) for _ in range(count)]
+            
+    def write(self, file, byte_order = '<'):
+        write_pack(file, f'{byte_order}2f', self.x, self.y)
                 
     def __add__(self, other):
         return Vector2(self.x + other.x, self.y + other.y)
@@ -646,14 +649,14 @@ class Vector3:
         self.z = z
         self._data = {"x": x, "y": y, "z": z}
         
-    def read(file):
-        return Vector3(*read_unpack(file, '<3f'))
+    def read(file, byte_order = '<'):
+        return Vector3(*read_unpack(file, f'{byte_order}3f'))
 
-    def readn(file, count):
-        return [Vector3.read(file) for _ in range(count)]
-
-    def write(self, file):
-        write_pack(file, '<3f', self.x, self.y, self.z)
+    def readn(file, count, byte_order = '<'):
+        return [Vector3.read(file, byte_order) for _ in range(count)]
+    
+    def write(self, file, byte_order = '<'):
+        write_pack(file, f'{byte_order}3f', self.x, self.y, self.z)
         
     def copy(self):
         return Vector3(self.x, self.y, self.z)
@@ -1145,15 +1148,15 @@ class DLPVertex:
     @classmethod
     def read(cls, f) -> 'DLPVertex':
         id = read_unpack(f, '>H')
-        normal = Vector3.read(f)
-        uv = Vector2.read(f)
+        normal = Vector3.read(f, byte_order = '>')
+        uv = Vector2.read(f, byte_order = '>')
         color = read_unpack(f, '>I')       
         return cls(id, normal, uv, color)
     
     def write(self, f):
         write_pack(f, '>H', self.id)
-        write_pack(f, '>3f', *self.normal)       
-        write_pack(f, '>ff', *self.uv)
+        self.normal.write(f, byte_order = '>')    
+        self.uv.write(f, byte_order = '>')       
         write_pack(f, '>I', self.color)
            
     def __repr__(self):
@@ -1210,7 +1213,7 @@ R Opts: {self.r_opts}
 Mtl Idx: {self.mtl_idx}
 Tex Idx: {self.tex_idx}
 Phys Idx: {self.phys_idx}
-Verticesfff: {self.vertices}
+Vertices: {self.vertices}
 Name: {self.name}
         '''
 
@@ -1268,19 +1271,23 @@ class DLP:
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
         patches = [DLPPatch.read(f) for _ in range(num_patches)]
-        vertices = [Vector3(*read_unpack(f, '>3f')) for _ in range(num_vertices)]    
+        vertices = Vector3.readn(f, num_vertices, byte_order = '>')
         return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
 
-    def write(self, file):
-        with open(file, 'wb') as f:
-            write_pack(f, '>4s', self.magic.encode())
-            write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)
+    def write(self, file, set_dlp):
+        if set_dlp:
+            with open(file, 'wb') as f:
+                write_pack(f, '>4s', self.magic.encode())
+                write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)
 
-            for group in self.groups:
-                group.write(f) 
+                for group in self.groups:
+                    group.write(f) 
 
-            for patch in self.patches:
-                patch.write(f)        
+                for patch in self.patches:
+                    patch.write(f)    
+                    
+                for vertex in self.vertices: 
+                    vertex.write(f, byte_order = '>') 
                                         
     def __repr__(self):
         return f'''
@@ -1608,7 +1615,7 @@ def create_polygon(
     vertices = vertices, polys = polys,
     material_index: int = 0, cell_type: int = 0, 
     flags: int = None, plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
-    hud_color: str = '#414441', shape_outline_color: str = shape_outline_color,  # '#414441' is the ROAD_HUD defined later in the script
+    hud_color: str = '#414441', shape_outline_color: str = shape_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads):
 
     # Vertex indices
@@ -5640,7 +5647,51 @@ new_physics_properties = {
     98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # slippery
 
 ###################################################################################################################   
-###################################################################################################################  
+################################################################################################################### 
+
+dlp_magic = "DLP7"
+
+s_res = 4
+t_res = 1
+r_opts = 636
+dlp_flags = 1289  # 1513
+mtl_idx = 0
+tex_idx = 0
+phys_idx = 0
+color = 4294967295
+
+dlp_patch_name = ""
+dlp_group_name = "BOUND\x00" 
+
+# DLP Vertices
+dlp_normals = [
+    DLPVertex(0, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color),
+    DLPVertex(1, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color),
+    DLPVertex(2, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color),
+    DLPVertex(3, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color)
+    ]
+
+# Geometry Vertices
+dlp_vertices = [ 
+      Vector3(-50.0, 0.0, 80.0),
+      Vector3(-140.0, 0.0, 50.0),
+      Vector3(-100.0, 0.0, 10.0),
+      Vector3(-50.0, 0.0, 30.0)
+      ]
+
+# DLP Groups
+dlp_groups = [DLPGroup(dlp_group_name, 0, 2, [], [0, 1])]
+
+# DLP Patches                  
+dlp_patches = [
+    DLPPatch(s_res, t_res, dlp_flags, r_opts, mtl_idx, tex_idx, phys_idx, 
+             [dlp_normals[0], dlp_normals[1], dlp_normals[2], dlp_normals[3]], dlp_patch_name),
+    DLPPatch(s_res, t_res, dlp_flags, r_opts, mtl_idx, tex_idx, phys_idx, 
+             [dlp_normals[3], dlp_normals[2], dlp_normals[1], dlp_normals[0]], dlp_patch_name)
+    ] 
+
+###################################################################################################################   
+################################################################################################################### 
 
 # Call FUNCTIONS
 create_folders(map_filename)
@@ -5723,5 +5774,7 @@ post_ar_cleanup(delete_shop)
 # Read any BMS file in the current directory
 # print(BMS.read("CULL17_H2.BMS"))
 
-# Read any DLP file in the current directory
-# print((lambda f: DLP.read(f))((open("VPCADDIE_BND.DLP", 'rb'))))
+# DLP Writing and Reading
+# DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp)
+# time.sleep(1.0)
+# print((lambda f: DLP.read(f))((open("TEST.DLP", 'rb'))))
