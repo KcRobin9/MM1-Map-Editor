@@ -507,14 +507,13 @@ f"""
     1) You can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
     2) You can set a bridge without any attributes like this:
         (-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [])
-    
-    
+        
     3) Supported orientations:
     NORTH, SOUTH, EAST, WEST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST
     Or you can manually set the orientation in degrees (0.0 - 360.0).
 """
 
-bridge_object = "vpmustang99"  # you pass any prop/car
+bridge_object = "vpmustang99"  # pass any prop/car here
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
 bridges = [
@@ -3548,6 +3547,24 @@ class BinaryBanger:
                 break
             name_data.extend(char)
         return name_data.decode('utf-8')
+    
+    @staticmethod
+    def debug(debug_props: bool, input_file: Path, output_file: Path) -> None:
+        if debug_props:
+            try:
+                with input_file.open('rb') as in_f:
+                    num_bangers = BinaryBanger.readn(in_f)
+                    bangers_repr = []
+                    for _ in range(num_bangers):
+                        banger = BinaryBanger.read(in_f)
+                        bangers_repr.append(repr(banger))
+
+                with output_file.open('w', encoding = 'utf-8') as out_f:
+                    for b_repr in bangers_repr:
+                        out_f.write(b_repr)
+                print(f"Processed {input_file.name} to {output_file.name}")
+            except Exception as e:
+                print(f"Failed to process {input_file.name}: {e}")
                 
     def __repr__(self):
         return f'''
@@ -5649,6 +5666,8 @@ for prop in random_props:
     prop_list.extend(prop_editor.place_props_randomly(**prop))
 prop_editor.process_props(prop_list)
 
+BinaryBanger.debug(debug_props, EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG", USER_RESOURCES / "PROPS" / "CHICAGO_BNG.txt")
+
 lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.process_changes(lighting_instances, lighting_configs)
 LightingEditor.write_file(lighting_instances, SHOP / "TUNE" / "LIGHTING.CSV")
@@ -5673,9 +5692,7 @@ create_lars_race_maker(map_filename, street_list, lars_race_maker)
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
-end_time = time.time()
-editor_time = end_time - start_time
-
+editor_time = time.time() - start_time
 save_run_time(editor_time)
 progress_thread.join()
 
