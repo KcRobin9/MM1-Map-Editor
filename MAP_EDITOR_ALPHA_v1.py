@@ -35,17 +35,26 @@ import textwrap
 import threading
 import subprocess
 import numpy as np   
-from pathlib import Path 
+from pathlib import Path
 import matplotlib.pyplot as plt                
 import matplotlib.transforms as mtransforms  
 from colorama import Fore, Style, init
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
+
+
+#! SETUP 0 (Editor)                             
+BASE_DIR = Path.cwd()
+SHOP = BASE_DIR / 'SHOP'
+SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
+USER_RESOURCES = BASE_DIR / "Resources" / "UserResources"
+EDITOR_RESOURCES = BASE_DIR / "Resources" / "EditorResources"
+MOVE = shutil.move
   
 
 #! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
 map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Menu
 map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file
-mm1_folder = Path.cwd() / 'MidtownMadness'      # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
+mm1_folder = BASE_DIR / 'MidtownMadness'      # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
 
 
 #* SETUP II (Map Creation)      
@@ -59,8 +68,8 @@ set_facades = True              # change to "True" if you want FACADES
 # PROPS
 set_props = True                # change to "True" if you want PROPS
 append_props = False            # change to "True" if you want to append props
-input_props_f = Path.cwd() / "Resources" / "EditorResources" / "PROPS" / "CHICAGO.BNG"  # feel free to change this to any other .BNG file
-appended_props_f = "NEW_CHICAGO.BNG"  # the appended props file will be saved in the main folder
+input_props_f = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
+appended_props_f = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
 # HUD
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
@@ -88,16 +97,16 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR
 
 # Blender
 load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
-texture_dir = Path.cwd() / "Resources" / "EditorResources" / "TEXTURES"
+texture_dir = EDITOR_RESOURCES / "TEXTURES"
 
 # Debug
-debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
+debug_bms = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
 debug_props = False             # change to "True" if you want a PROPS Debug text file
+debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
 debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
-DEBUG_BMS = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
 debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
 debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
@@ -106,8 +115,8 @@ round_debug_values = True       # change to "True" if you want to round (some) d
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 no_ai = False                   # change to "True" if you want to disable the AI
-quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
 more_logs = False               # change to "True" if you want to see additional logs and open a logging console
+quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
 empty_portals = False           # change to "True" if you want to create an empty portal file (useful for testing very large cities)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
@@ -209,14 +218,13 @@ start_time = time.time()
 ################################################################################################################
 
 ##### CONSTANTS & INITIALIZATIONS #####
+TRIANGLE = 3
+QUAD = 4
+HIGH_MODEL = 8
+DRIFT_MODEL = 32
+MESH_THRESHOLD = 16
+CELL_THRESHOLD = 254
 
-# Editor
-BASE_DIR = Path.cwd()
-SHOP = BASE_DIR / 'SHOP'
-SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
-USER_RESOURCES = BASE_DIR / "Resources" / "UserResources"
-EDITOR_RESOURCES = BASE_DIR / "Resources" / "EditorResources"
-MOVE = shutil.move
 
 # Variables
 vertices = []
@@ -755,26 +763,28 @@ class Polygon:
         
     @property
     def is_quad(self) -> bool:
-        return bool(self.flags & 4)
+        return bool(self.flags & QUAD)
 
     @property
     def num_verts(self) -> int:
-        return 4 if self.is_quad else 3
+        return QUAD if self.is_quad else TRIANGLE
           
     @classmethod
     def read(cls, f: BinaryIO) -> 'Polygon':
-        cell_id, mtl_index, flags, *vert_indices = read_unpack(f, '<HBB4H')
-        plane_edges = [Vector3.read(f) for _ in range(4)]
+        cell_id, mtl_index, flags = read_unpack(f, '<H2B')
+        vert_indices = read_unpack(f, '<4H') 
+        plane_edges = Vector3.readn(f, 4)
         plane_n = Vector3.read(f)
         plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
     def write(self, f: BinaryIO) -> None:
         # Each polygon requires four vertex indices
-        if len(self.vert_indices) < 4:  
+        if len(self.vert_indices) <= TRIANGLE:  
             self.vert_indices += (0,) * (4 - len(self.vert_indices))
         
-        write_pack(f, '<HBB4H', self.cell_id, self.mtl_index, self.flags, *self.vert_indices)
+        write_pack(f, '<H2B', self.cell_id, self.mtl_index, self.flags)
+        write_pack(f, '<4H', *self.vert_indices)
 
         for edge in self.plane_edges:
             edge.write(f)
@@ -862,10 +872,12 @@ class BND:
         radius, radius_sqr = read_unpack(f, '<2f')
         bb_min = Vector3.read(f)
         bb_max = Vector3.read(f)
-        num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<5l')
-        x_scale, z_scale, num_indices, height_scale, cache_size = read_unpack(f, '<2f3l')
+        num_verts, num_polys = read_unpack(f, '<2l')
+        num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<3l')
+        x_scale, z_scale = read_unpack(f, '<2f')
+        num_indices, height_scale, cache_size = read_unpack(f, '<3l')
         
-        vertices = [Vector3.read(f) for _ in range(num_verts)]
+        vertices = Vector3.readn(f, num_verts)
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
         
         hot_verts = Vector3.readn(f, num_hot_verts2)
@@ -925,7 +937,8 @@ class BND:
         write_pack(f, '<2f', self.radius, self.radius_sqr)
         self.bb_min.write(f)
         self.bb_max.write(f)
-        write_pack(f, '<5l', self.num_verts, self.num_polys, self.num_hot_verts1, self.num_hot_verts2, self.num_edges)
+        write_pack(f, '<2l', self.num_verts, self.num_polys)
+        write_pack(f, '<3l', self.num_hot_verts1, self.num_hot_verts2, self.num_edges)
         write_pack(f, '<2f', self.x_scale, self.z_scale)
         write_pack(f, '<3l', self.num_indices, self.height_scale, self.cache_size)
  
@@ -1006,6 +1019,7 @@ class BND:
 ################################################################################################################               
 ################################################################################################################  
 
+
 # BMS CLASS
 class BMS:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
@@ -1038,7 +1052,7 @@ class BMS:
             magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')  
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
             radius, radius_sq, bounding_box_radius = read_unpack(f, '3f')
-            texture_count, flags = read_unpack(f, 'bb')
+            texture_count, flags = read_unpack(f, '2b')
             f.read(6)
                         
             string_names = []
@@ -1047,7 +1061,7 @@ class BMS:
                 string_names.append(string_name)
                 f.read(16)   
                     
-            if vertex_count <= 15:
+            if vertex_count < MESH_THRESHOLD:
                 coordinates = Vector3.readn(f, vertex_count)
             else:
                 coordinates = Vector3.readn(f, vertex_count + 8)
@@ -1075,7 +1089,7 @@ class BMS:
             write_pack(f, '16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
             write_pack(f, '4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '3f', self.radius, self.radius_sq, self.bounding_box_radius)
-            write_pack(f, 'bb', self.texture_count, self.flags)
+            write_pack(f, '2b', self.texture_count, self.flags)
             f.write(b'\x00' * 6) 
 
             for name in self.string_name:
@@ -1085,7 +1099,7 @@ class BMS:
             for coordinate in self.coordinates:
                 coordinate.write(f)
 
-            if self.vertex_count >= 16:
+            if self.vertex_count >= MESH_THRESHOLD:
                 for _ in range(8):
                     DEFAULT_VECTOR3.write(f)
                     
@@ -1101,15 +1115,14 @@ class BMS:
 
             # A triangle still requires 4 indices ([0, 1, 2, 0])
             for indices_side in self.indices_sides:
-                while len(indices_side) < 4:
+                while len(indices_side) <= TRIANGLE:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                         
-    def debug(self, file_name: str, debug_dir = "Debug BMS") -> None:
-        Path(debug_dir).mkdir(parents = True, exist_ok = True)
-
-        if DEBUG_BMS:
-            with open(debug_dir / Path(file_name), 'w') as f:
+    def debug(self, file_name: str, debug_bms: bool, debug_dir: Path = "Debug BMS") -> None:
+        if debug_bms:
+            Path(debug_dir).mkdir(parents = True, exist_ok = True)
+            with open(debug_dir / Path(file_name), 'w') as f:       
                 f.write(str(self))
                 
     def __repr__(self):
@@ -1185,8 +1198,8 @@ class DLPPatch:
         
     @classmethod
     def read(cls, f) -> 'DLPPatch':
-        s_res, t_res = read_unpack(f, '>HH')
-        flags, r_opts = read_unpack(f, '>HH')
+        s_res, t_res = read_unpack(f, '>2H')
+        flags, r_opts = read_unpack(f, '>2H')
         mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
         vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
         name_length = read_unpack(f, '>I')[0]
@@ -1194,8 +1207,8 @@ class DLPPatch:
         return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
     
     def write(self, f):
-        write_pack(f, '>HH', self.s_res, self.t_res) 
-        write_pack(f, '>HH', self.flags, self.r_opts)
+        write_pack(f, '>2H', self.s_res, self.t_res) 
+        write_pack(f, '>2H', self.flags, self.r_opts)
         write_pack(f, '>3H', self.mtl_idx, self.tex_idx, self.phys_idx)
         
         for vertex in self.vertices:
@@ -1232,7 +1245,7 @@ class DLPGroup:
     def read(cls, f) -> 'DLPGroup':
         name_length = read_unpack(f, '>B')[0]
         name = read_unpack(f, f'>{name_length}s')[0].decode()
-        num_vertices, num_patches = read_unpack(f, '>II')        
+        num_vertices, num_patches = read_unpack(f, '>2I')        
         vertex_indices = [read_unpack(f, '>H')[0] for _ in range(num_vertices)]
         patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
         return cls(name, num_vertices, num_patches, vertex_indices, patch_indices)
@@ -1240,7 +1253,7 @@ class DLPGroup:
     def write(self, f):
         write_pack(f, '>B', len(self.name))
         write_pack(f, f'>{len(self.name)}s', self.name.encode())
-        write_pack(f, '>II', self.num_vertices, self.num_patches)
+        write_pack(f, '>2I', self.num_vertices, self.num_patches)
         write_pack(f, f'>{self.num_vertices}H', *self.vertex_indices)
         write_pack(f, f'>{self.num_patches}H', *self.patch_indices)
         
@@ -1390,7 +1403,7 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
 def save_bms(
     texture_name: str, texture_indices: List[int] = [1], vertices = vertices, polys = polys, 
     texture_darkness: List[int] = None, tex_coords: List[float] = None, tex_coord_mode = None, tex_coord_params = None, 
-    randomize_textures = randomize_textures, random_texture_exclude: bool = False, random_textures = random_textures):
+    randomize_textures = randomize_textures, random_texture_exclude: bool = False, random_textures = random_textures, debug_bms = debug_bms):
         
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
@@ -1424,8 +1437,8 @@ def save_bms(
     bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
     bms.write(target_dir / bms_filename)
     
-    if DEBUG_BMS:
-        bms.debug(bms_filename + ".txt")
+    if debug_bms:
+        bms.debug(bms_filename + ".txt", debug_bms)
             
              
 # Create BMS      
@@ -1440,7 +1453,8 @@ def create_bms(
         shapes.append(vertex_coordinates)
     
     # Default BMS values | do not change
-    magic, flags, radius, radiussq, bounding_box_radius = "3HSM", 3, 0.0, 0.0, 0.0  
+    magic, flags = "3HSM", 3
+    radius, radiussq, bounding_box_radius = 0.0, 0.0, 0.0  
     texture_count = len(texture_name)
     coordinates = [coord for shape in shapes for coord in shape]
     vertex_count = len(coordinates)
@@ -1448,9 +1462,9 @@ def create_bms(
     surface_count = len(texture_indices)   
     
     # Even with three vertices, we still require four indices (indices_sides: [[0, 1, 2, 0]])
-    if len(coordinates) == 4:
+    if len(coordinates) == QUAD:
         indices_count = surface_count * 4
-    elif len(coordinates) == 3:
+    elif len(coordinates) == TRIANGLE:
         indices_count = surface_count * 4
                      
     enclosed_shape = list(range(adjunct_count))
@@ -1548,7 +1562,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
     planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
 
-    num_verts = len(vertices)  # 3 for triangle, 4 for quad
+    num_verts = len(vertices)  
     plane_edges = []
 
     abs_plane_x = abs(planeN[0])
@@ -1592,7 +1606,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
     
     # Add a required empty edge for triangles to match the BND binary structure
-    if len(vertices) == 3:
+    if len(vertices) == TRIANGLE:
         edges.append(DEFAULT_VECTOR3)
     
     return edges
@@ -1636,7 +1650,7 @@ def create_polygon(
     polygons_data.append(polygon_info)
     
     # Ensure 3 or 4 vertices
-    if len(vertex_coordinates) != 3 and len(vertex_coordinates) != 4:
+    if len(vertex_coordinates) != TRIANGLE and len(vertex_coordinates) != QUAD:
         error_message = f"""\n
         ***ERROR***
         Unsupported number of vertices.
@@ -1655,17 +1669,17 @@ def create_polygon(
 
     
     # Ensure Counterclockwise Winding
-    if len(vertex_coordinates) == 3:
+    if len(vertex_coordinates) == TRIANGLE:
         vertex_coordinates = ensure_ccw_order(vertex_coordinates)
         
-    elif len(vertex_coordinates) == 4 and fix_faulty_quads:
+    elif len(vertex_coordinates) == QUAD and fix_faulty_quads:
         vertex_coordinates = ensure_quad_ccw_order(vertex_coordinates)
            
     # Flags
     if flags is None:
-        if len(vertex_coordinates) == 4:
+        if len(vertex_coordinates) == QUAD:
             flags = 6
-        elif len(vertex_coordinates) == 3:
+        elif len(vertex_coordinates) == TRIANGLE:
             flags = 3
 
     # Sorting        
@@ -2639,7 +2653,7 @@ def copy_custom_textures() -> None:
 
 
 def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
-    input_folder = BASE_DIR / 'Resources' / 'EditorResources' / 'TUNE'
+    input_folder = EDITOR_RESOURCES / 'TUNE'
     output_folder = SHOP / 'TUNE'
 
     for file in input_folder.glob('*.MMBANGERDATA'):
@@ -2664,7 +2678,7 @@ def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
                 
                 
 def copy_core_tune_files() -> None:
-    input_folder = BASE_DIR / 'Resources' / 'EditorResources' / 'TUNE'
+    input_folder = EDITOR_RESOURCES / 'TUNE'
     output_folder = SHOP / 'TUNE'
     
     non_mmbangerdata_files = [f for f in input_folder.glob('*') if not f.name.endswith('.MMBANGERDATA')]
@@ -2758,9 +2772,9 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
     
     with open(mm_data_file, 'w') as f:
         f.write(header + "\n")
-        
+                
         for race_index, config in configs.items():
-            if race_type == 'RACE':
+            if race_type == RACE:
                 race_desc = prefix  
             else:
                 race_desc = prefix + str(race_index)
@@ -2772,7 +2786,7 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
             
             f.write(data_string + "\n")  # Write the data string to file
             
-    MOVE(mm_data_file, SHOP / "RACE" / map_filename / mm_data_file)
+    MOVE(mm_data_file, SHOP / RACE / map_filename / mm_data_file)
 
 
 def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):
@@ -2817,7 +2831,7 @@ def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config
     
 def create_races(map_filename: str, race_data) -> None:
     for race_type, race_configs in race_data.items():
-        if race_type == 'RACE':  # For Checkpoint races
+        if race_type == RACE:  # For Checkpoint races
             if len(race_configs) > len(checkpoint_prefixes):
                 race_num_error = """
                 ***ERROR***
@@ -2878,9 +2892,6 @@ def create_cnr(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]
 ################################################################################################################               
 ################################################################################################################              
 
-_H = 8
-_A2 = 32
-
 # Create Cells                     
 def create_cells(map_filename: str, truncate_cells: bool) -> None:
     bms_files = []
@@ -2933,16 +2944,16 @@ def create_cells(map_filename: str, truncate_cells: bool) -> None:
                 always_visible_data = ",0"
 
             if bound_number in bms_a2_files:
-                row = f"{bound_number},{_A2},{cell_type}{always_visible_data}\n"
+                row = f"{bound_number},{DRIFT_MODEL},{cell_type}{always_visible_data}\n"
             else:
-                row = f"{bound_number},{_H},{cell_type}{always_visible_data}\n"
+                row = f"{bound_number},{HIGH_MODEL},{cell_type}{always_visible_data}\n"
             
             # Check for row length and update the max warning/error count
             row_length = len(row)
             
-            if truncate_cells and row_length >= 254:
+            if truncate_cells and row_length >= CELL_THRESHOLD:
                 # Truncate the always_visible_bound_numbers until the row length is less than 254
-                while len(row) >= 254:
+                while len(row) >= CELL_THRESHOLD:
                     # Remove the last element from the list
                     always_visible_bound_numbers.pop()
                     
@@ -2952,22 +2963,22 @@ def create_cells(map_filename: str, truncate_cells: bool) -> None:
                     
                     # Reconstruct the row string
                     if bound_number in bms_a2_files:
-                        row = f"{bound_number},{_A2},{cell_type}{always_visible_data}\n"
+                        row = f"{bound_number},{DRIFT_MODEL},{cell_type}{always_visible_data}\n"
                     else:
-                        row = f"{bound_number},{_H},{cell_type}{always_visible_data}\n"
+                        row = f"{bound_number},{HIGH_MODEL},{cell_type}{always_visible_data}\n"
                     
                     # Update the row length
                     row_length = len(row)
 
             # Update the max warning/error count based on the new row length
-            if 200 <= row_length < 254:
+            if 200 <= row_length < CELL_THRESHOLD:
                 max_warning_count = max(max_warning_count, row_length)
-            elif row_length >= 254:
+            elif row_length >= CELL_THRESHOLD:
                 max_error_count = max(max_error_count, row_length)
             
             f.write(row)
             
-        if 200 <= max_warning_count < 254:
+        if 200 <= max_warning_count < CELL_THRESHOLD:
             warning_message = f"""
             ***WARNING***
             Close to row character limit 254 in .CELLS file. 
@@ -2978,7 +2989,7 @@ def create_cells(map_filename: str, truncate_cells: bool) -> None:
             """
             print(warning_message)
         
-        elif max_error_count >= 254:
+        elif max_error_count >= CELL_THRESHOLD:
             error_message = f"""
             ***ERROR***
             Character limit of 254 exceeded in .CELLS file.
@@ -3596,9 +3607,9 @@ class PropEditor:
             self.filename = SHOP_CITY / f"{map_filename}.BNG"
                     
         self.debug_props = debug_props
-        self.debug_filename = "PROPS_debug.txt"
+        self.debug_filename = "PROPS_debug.txt"        
+        self.prop_dim_file = EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt"
         
-        self.prop_dim_file = BASE_DIR / "Resources" / "EditorResources" / "PROPS" / "Prop Dimensions.txt"
         self.loaded_prop_dimension = self.load_dimensions()   
                     
         self.output_prop_f = output_prop_f or self.filename
@@ -3645,7 +3656,7 @@ class PropEditor:
                     if self.debug_props:
                         self.write_banger_debug(idx, obj)
             
-                    write_pack(f, '<HH', 4, 0x800)  # Hardcoded Room and Flags values to ensure player's car can collide with props                  
+                    write_pack(f, '<2H', 4, 0x800)  # Hardcoded Room and Flags values to ensure player's car can collide with props                  
                     obj.offset.write(f)		
                     obj.face.write(f)		
                     for char in obj.name:
@@ -3683,7 +3694,7 @@ class PropEditor:
                 separator = 10.0
 
             if face is None:  # Create a facing vector that points from offset to end
-                face = (Vector3(diagonal.x * 1e6, diagonal.y * 1e6, diagonal.z * 1e6))
+                face = (Vector3(diagonal.x * HUGE, diagonal.y * HUGE, diagonal.z * HUGE))
             else:
                 face = Vector3(*face)  # Transform the user-input face to a Vector3
 
@@ -3838,7 +3849,7 @@ class PhysicsEditor:
                 
     @classmethod    
     def edit(cls, materials_properties, physics_output_f, debug_physics):
-        physics_input_f = Path.cwd() / "Resources" / "EditorResources" / "PHYSICS" / "PHYSICS.DB"
+        physics_input_f = EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB"
         
         with open(physics_input_f, 'rb') as f:
             count = read_unpack(f, '>I')[0]
@@ -4243,7 +4254,7 @@ class FacadeEditor:
     def build(cls, packed_facades):
         facades = []
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(BASE_DIR / "Resources" / "EditorResources" / "FACADES" / "FCD scales.txt")
+        scales = cls.read_scales(EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
 
         for params in packed_facades:
             axis = axis_dict[params['axis']]
@@ -4483,29 +4494,25 @@ def create_ar(map_filename: str) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
-
+            
     os.chdir(SHOP)
     ar_command = f"run !!!!!{map_filename}"
-
+    
     subprocess.Popen(f"cmd.exe /c {ar_command}", creationflags = subprocess.CREATE_NO_WINDOW)
 
 
-def post_ar_cleanup(delete_shop: bool) -> None:
+def post_editor_cleanup(delete_shop: bool) -> None:
     if delete_shop:
-        build_dir = BASE_DIR / 'build'
-        shop_dir = BASE_DIR / 'SHOP'
-
         os.chdir(BASE_DIR)
-        
         time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
         
         try:  
-            shutil.rmtree(build_dir)
+            shutil.rmtree(BASE_DIR / 'build')
         except Exception as e:
             print(f"Failed to delete the BUILD directory. Reason: {e}")
         
         try:
-            shutil.rmtree(shop_dir)
+            shutil.rmtree(SHOP)
         except Exception as e:
             print(f"Failed to delete the SHOP directory. Reason: {e}")
 
@@ -4569,7 +4576,6 @@ def is_game_running(process_name: str) -> bool:
     return False
         
         
-# Start game
 def start_game(mm1_folder: str, play_game: bool) -> None:
     game_exe = "Open1560.exe"
     if play_game and not is_game_running(game_exe) and not is_blender_running():
@@ -4584,7 +4590,7 @@ def enable_developer_extras() -> None:
     prefs = bpy.context.preferences
     view = prefs.view
     
-    # Set "Developer Extra's" if not already enabled
+    # Set Developer Extra's if not already enabled
     if not view.show_developer_ui:
         view.show_developer_ui = True
         bpy.ops.wm.save_userpref()
@@ -4871,7 +4877,6 @@ def create_blender_meshes() -> None:
     if is_blender_running():
         enable_developer_extras()
         adjust_3D_view_settings()
-        
         load_dds_resources(texture_dir, load_tex_materials)
                     
         texture_paths = [os.path.join(texture_dir, f"{texture_name}.DDS") for texture_name in stored_texture_names]
@@ -5290,10 +5295,9 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     
 def is_blender_running() -> bool:
     try:
-        import bpy
-        # Trying to access a bpy.context attribute to see if we get an exception
+        import bpy   # Trying to access a bpy.context attribute to see if we get an exception
         _ = bpy.context.window_manager
-        return True
+        return True 
     except (AttributeError, ImportError):
         return False
   
@@ -5435,7 +5439,7 @@ Note:
 cruise_start = {
     "street_name": "cruise_start",
     "vertices": [
-        (0, 0, 0),            # keep this
+        (0, 0, 0),          # keep this
         cruise_start_pos]}  # starting position in Cruise mode
 
 main_west = {
@@ -5537,7 +5541,8 @@ street_list = [cruise_start,
 ###################################################################################################################   
 ###################################################################################################################               
 
-# ADD PROPS
+# SET PROPS
+
 china_gate = {'offset': (0, 0.0, -20), 
               'face': (1 * HUGE, 0.0, -20), 
               'name': CHINATOWN_GATE,
@@ -5613,6 +5618,8 @@ bangerdata_properties = {
 ###################################################################################################################   
 ###################################################################################################################   
 
+# SET LIGHTING
+
 lighting_configs = [
     {
         # Actual lighting data for Evening and Cloudy
@@ -5648,7 +5655,7 @@ lighting_configs = [
 ###################################################################################################################   
 ################################################################################################################### 
 
-# SET PHYSICS PROPERTIES
+# SET PHYSICS
 # available indices: 94, 95, 96, 97, 98,
 
 new_physics_properties = {
@@ -5657,6 +5664,8 @@ new_physics_properties = {
 
 ###################################################################################################################   
 ################################################################################################################### 
+
+# SET DLP
 
 dlp_magic = "DLP7"
 
@@ -5774,7 +5783,7 @@ bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
 set_blender_keybinding()
 
-post_ar_cleanup(delete_shop)
+post_editor_cleanup(delete_shop)
 
 ###################################################################################################################   
 ################################################################################################################### 
