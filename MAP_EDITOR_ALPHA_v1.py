@@ -823,10 +823,10 @@ class BND:
                  num_verts: int, num_polys: int, num_hot_verts1: int, num_hot_verts2: int, num_edges: int, 
                  x_scale: float, z_scale: float, num_indices: int, height_scale: float, cache_size: int, 
                  vertices: List[Vector3], polys: List[Polygon],
-                 hot_verts: List[Vector3], edges_0: List[int], edges_1: List[int], 
-                 edge_normals: List[Vector3], edge_floats: List[float],
-                 row_offsets: Optional[List[int]], row_shorts: Optional[List[int]], 
-                 row_indices: Optional[List[int]], row_heights: Optional[List[int]]) -> None:
+                 hot_verts: List[Vector3], edge_verts1: List[int], edge_verts2: List[int], 
+                 edge_plane_n: List[Vector3], edge_plane_d: List[float],
+                 row_offsets: Optional[List[int]], bucket_offsets: Optional[List[int]], 
+                 row_buckets: Optional[List[int]], fixed_heights: Optional[List[int]]) -> None:
         
         self.magic = magic
         self.offset = offset    
@@ -853,14 +853,14 @@ class BND:
         self.polys = polys   
         
         self.hot_verts = hot_verts
-        self.edges_0 = edges_0
-        self.edges_1 = edges_1
-        self.edge_normals = edge_normals
-        self.edge_floats = edge_floats
+        self.edge_verts1 = edge_verts1
+        self.edge_verts2 = edge_verts2
+        self.edge_plane_n = edge_plane_n
+        self.edge_plane_d = edge_plane_d
         self.row_offsets = row_offsets
-        self.row_shorts = row_shorts
-        self.row_indices = row_indices
-        self.row_heights = row_heights
+        self.bucket_offsets = bucket_offsets
+        self.row_buckets = row_buckets
+        self.fixed_heights = fixed_heights
                   
     @classmethod
     def read(cls, f: BinaryIO) -> 'BND':        
@@ -880,27 +880,27 @@ class BND:
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
         
         hot_verts = Vector3.readn(f, num_hot_verts2)
-        edges_0 = read_unpack(f, '<{}I'.format(num_edges))
-        edges_1 = read_unpack(f, '<{}I'.format(num_edges))
-        edge_normals = Vector3.readn(f, num_edges)
-        edge_floats = read_unpack(f, '<{}f'.format(num_edges))
-        
-        row_offsets = None
-        row_shorts = None
-        row_indices = None
-        row_heights = None
+        edge_verts1 = read_unpack(f, '<{}I'.format(num_edges))
+        edge_verts2 = read_unpack(f, '<{}I'.format(num_edges))
+        edge_plane_n = Vector3.readn(f, num_edges)
+        edge_plane_d = read_unpack(f, '<{}f'.format(num_edges))
 
-        if x_dim and y_dim:
+        row_offsets = None
+        bucket_offsets = None
+        row_buckets = None
+        fixed_heights = None
+
+        if x_dim and y_dim and z_dim:
             row_offsets = read_unpack(f, '<{}I'.format(z_dim))
-            row_shorts = read_unpack(f, '<{}H'.format(x_dim * z_dim))
-            row_indices = read_unpack(f, '<{}H'.format(num_indices))
-            row_heights = read_unpack(f, '<{}B'.format(x_dim * x_dim))
+            bucket_offsets = read_unpack(f, '<{}H'.format(x_dim * z_dim))
+            row_buckets = read_unpack(f, '<{}H'.format(num_indices))
+            fixed_heights = read_unpack(f, '<{}B'.format(x_dim * z_dim))
 
         return cls(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
                    num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
                    x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
-                   hot_verts, edges_0, edges_1, edge_normals, edge_floats,
-                   row_offsets, row_shorts, row_indices, row_heights)
+                   hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+                   row_offsets, bucket_offsets, row_buckets, fixed_heights)
     
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'BND':
@@ -917,16 +917,16 @@ class BND:
         num_indices, height_scale, cache_size = 0, 0, 0
         
         hot_verts = [DEFAULT_VECTOR3]  
-        edges_0, edges_1 = [0], [1] 
-        edge_normals = [DEFAULT_VECTOR3] 
-        edge_floats = [0.0]  
-        row_offsets, row_shorts, row_indices, row_heights = [0], [0], [0], [0]  
+        edge_verts1, edge_verts2 = [0], [1] 
+        edge_plane_n = [DEFAULT_VECTOR3] 
+        edge_plane_d = [0.0]  
+        row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
         return BND(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
                 len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, x_scale, z_scale, 
                 num_indices, height_scale, cache_size, vertices, polys,
-                hot_verts, edges_0, edges_1, edge_normals, edge_floats,
-                row_offsets, row_shorts, row_indices, row_heights)
+                hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+                row_offsets, bucket_offsets, row_buckets, fixed_heights)
             
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
@@ -999,7 +999,7 @@ class BND:
             f"ZDim: {self.z_dim}\n"
             f"Center: {self.center}\n"
             f"Radius: {self.radius:.2f}\n" 
-            f"Radius_sqr: {self.radius_sqr:.2f}\n"  
+            f"Radius Sqr: {self.radius_sqr:.2f}\n"  
             f"BBMin: {self.bb_min}\n"
             f"BBMax: {self.bb_max}\n"
             f"Num Verts: {self.num_verts}\n"
@@ -1007,13 +1007,28 @@ class BND:
             f"Num Hot Verts1: {self.num_hot_verts1}\n"
             f"Num Hot Verts2: {self.num_hot_verts2}\n"
             f"Num Edges: {self.num_edges}\n"
-            f"XScale: {self.x_scale}\n"
-            f"ZScale: {self.z_scale}\n"
+            f"XScale: {self.x_scale:.5f}\n"
+            f"ZScale: {self.z_scale:.5f}\n"
             f"Num Indices: {self.num_indices}\n"
             f"Height Scale: {self.height_scale}\n"
             f"Cache Size: {self.cache_size}\n\n"
             f"Vertices:\n{self.vertices}\n\n"
-            f"======= Polys =======\n\n{polys_representation}\n")
+            f"======= Polys =======\n\n{polys_representation}\n"
+            f"======= Split =======\n\n"
+            f"Hot Verts: {self.hot_verts}\n"
+            f"Edge Verts1: {self.edge_verts1}\n"
+            f"Edge Verts2: {self.edge_verts2}\n"
+            f"Edge Plane N: {self.edge_plane_n}\n"  
+            f"Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n\n"      
+            f"======= Split =======\n\n"
+            f"Row Offsets: {self.row_offsets}\n\n"
+            f"======= Split =======\n\n"
+            f"Bucket Offsets: {self.bucket_offsets}\n\n"
+            f"======= Split =======\n\n"
+            f"Row Buckets: {self.row_buckets}\n\n"
+            f"======= Split =======\n\n"
+            f"Fixed Heights: {self.fixed_heights}\n"
+            )
         
 ################################################################################################################               
 ################################################################################################################  
