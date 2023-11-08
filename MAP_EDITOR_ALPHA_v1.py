@@ -37,7 +37,6 @@ import subprocess
 import numpy as np   
 from pathlib import Path
 import matplotlib.pyplot as plt                
-import matplotlib.transforms as mtransforms  
 from colorama import Fore, Style, init
 from typing import List, Dict, Union, Tuple, Optional, BinaryIO
 
@@ -3017,8 +3016,8 @@ def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float
     return min_x, max_x, min_z, max_z
 
 
-def create_hudmap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, shape_outline_color: str,
-                        x_offset: float, y_offset: float, line_width: float, background_color: str) -> None:
+def create_minimap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, 
+                  shape_outline_color: str, line_width: float, background_color: str) -> None:
 
     if set_minimap and not is_blender_running():
         global hudmap_vertices
@@ -3055,15 +3054,13 @@ def create_hudmap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, 
         
         for i, polygon in enumerate(hudmap_vertices):
             hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
-            draw_polygon(ax, polygon, shape_outline_color, add_label = False, hud_fill = hud_fill, hud_color = hud_color)
+            
+            draw_polygon(ax, polygon, shape_outline_color, 
+                         add_label = False, hud_fill = hud_fill, hud_color = hud_color)
             
         ax.set_aspect('equal', 'box')
         ax.axis('off')
-        
-        trans = mtransforms.Affine2D().translate(x_offset, y_offset) + ax.transData
-        for line in ax.lines:
-            line.set_transform(trans)       
-            
+                    
         # Save JPG 640 and 320 Pictures  
         output_folder = SHOP / 'BMP16'
                   
@@ -4494,10 +4491,10 @@ def create_ar(map_filename: str) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
-            
+
     os.chdir(SHOP)
     ar_command = f"run !!!!!{map_filename}"
-    
+
     subprocess.Popen(f"cmd.exe /c {ar_command}", creationflags = subprocess.CREATE_NO_WINDOW)
 
 
@@ -5752,9 +5749,7 @@ create_animations(map_filename, anim_data, set_anim)
 create_bridges(map_filename, bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_portals(map_filename, polys, vertices, empty_portals, debug_portals)
-
-create_hudmap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color,
-               x_offset = 0.0, y_offset = 0.0, line_width = 0.7, background_color = 'black')
+create_minimap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, line_width = 0.7, background_color = 'black')
 
 create_lars_race_maker(map_filename, street_list, lars_race_maker)
 
