@@ -3553,6 +3553,16 @@ def create_portals(
 
 ################################################################################################################               
 ################################################################################################################            
+   
+def read_binary_name(f) -> str:
+    name_data = bytearray()
+    while True:
+        char = f.read(1)
+        if char == b'\x00':
+            break
+        name_data.extend(char)
+    return name_data.decode('utf-8')
+     
                                
 # BINARYBANGER CLASS                            
 class BinaryBanger:
@@ -3562,17 +3572,7 @@ class BinaryBanger:
         self.offset = offset
         self.face = face
         self.name = name
-        
-    @staticmethod
-    def read_name(f) -> str:
-        name_data = bytearray()
-        while True:
-            char = f.read(1)
-            if char == b'\x00':
-                break
-            name_data.extend(char)
-        return name_data.decode('utf-8')
-        
+                
     @classmethod
     def readn(cls, f) -> int:
         return read_unpack(f, '<I')[0]
@@ -3582,7 +3582,7 @@ class BinaryBanger:
         room, flags = read_unpack(f, '<2H')
         offset = Vector3.read(f)
         face = Vector3.read(f)  
-        name = cls.read_name(f)
+        name = read_binary_name(f)
         return cls(room, flags, offset, face, name)
     
     @classmethod
@@ -3630,6 +3630,9 @@ Start: {self.offset}
 Face: {self.face}
 Prop Name: {self.name}
     '''
+    
+################################################################################################################               
+###############################################################################################################
 
 # PROP EDITOR CLASS
 class PropEditor:
@@ -3751,7 +3754,148 @@ class PropEditor:
 #################################################################################
 #################################################################################
 
-# MATERIALEDITOR CLASS
+# FACADE EDITOR CLASS
+class FacadeEditor:
+    def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, sides: Vector3, scale: float, name: str) -> None:
+        self.room = room
+        self.flags = flags
+        self.offset = offset
+        self.face = face
+        self.sides = sides
+        self.scale = scale
+        self.name = name
+
+    @classmethod
+    def read(cls, f) -> 'FacadeEditor':
+        room, flags = read_unpack(f, '<2H')
+        offset = Vector3.read(f)
+        face = Vector3.read(f)
+        sides = Vector3.read(f)
+        scale = read_unpack(f, '<f')[0]
+        name = read_binary_name(f)
+        return cls(room, flags, offset, face, sides, scale, name)
+        
+    @staticmethod
+    def read_scales(scales_file):
+        scales = {}
+        with open(scales_file, 'r') as f:
+            for line in f:
+                name, scale = line.strip().split(": ")
+                scales[name] = float(scale)
+        return scales
+
+    def write(self, f):
+        write_pack(f, '<2H', ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
+        write_pack(f, '<3f', *self.offset)
+        write_pack(f, '<3f', *self.face)
+        write_pack(f, '<3f', *self.sides)
+        write_pack(f, '<f', self.scale)
+        f.write(self.name.encode('utf-8'))
+        f.write(b'\x00')
+                
+    @classmethod
+    def create(cls, facade_file: str, packed_facades, output_dir: Path, set_facades: bool, debug_facades: bool):
+        if set_facades:
+            facades = cls.build(packed_facades)
+            cls.finalize(facade_file, facades)
+            MOVE(facade_file, output_dir / facade_file)
+
+            if debug_facades:
+                cls.debug(facades)
+
+    @classmethod
+    def build(cls, packed_facades):
+        facades = []
+        axis_dict = {'x': 0, 'y': 1, 'z': 2}
+        scales = cls.read_scales(EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
+
+        for params in packed_facades:
+            axis = axis_dict[params['axis']]
+            start_coord = params['offset'][axis]
+            end_coord = params['end'][axis]
+            
+            direction = 1 if start_coord < end_coord else -1
+            
+            num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
+
+            for i in range(num_facades):
+                flags = params['flags']
+                
+                current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
+                
+                sides = params.get('sides', (0.0, 0.0, 0.0))
+                scale = scales.get(params['name'], params.get('scale', 1.0))
+                name = params['name']
+
+                facade = FacadeEditor(ROOM, flags, current_start, current_end, sides, scale, name)
+                facades.append(facade)
+
+        return facades
+
+    @staticmethod
+    def calculate_start_end(params, axis, direction, start_coord, i):
+        current_start = list(params['offset'])
+        current_end = list(params['end'])
+        
+        shift = direction * params['separator'] * i
+        
+        current_start[axis] = start_coord + shift
+        end_coord = params['end'][axis]
+        
+        if direction == 1:
+            current_end[axis] = min(start_coord + shift + params['separator'], end_coord)
+        else:
+            current_end[axis] = max(start_coord + shift - params['separator'], end_coord)
+            
+        return tuple(current_start), tuple(current_end)
+
+    @staticmethod
+    def finalize(filename, facades):
+        with open(filename, mode = 'wb') as f:
+            write_pack(f, '<I', len(facades))
+            for facade in facades:
+                facade.write(f)
+
+    @staticmethod
+    def debug(facades):
+        with open("FACADES_debug.txt", mode = 'w', encoding = 'utf-8') as f:
+            for facade in facades:
+                f.write(str(facade))
+                
+    @classmethod
+    def debug_file(cls, debug_facades: bool, input_file: Path, output_file: Path) -> None:
+        if debug_facades:
+            with open(input_file, 'rb') as in_f:
+                try:
+                    facades = []
+                    num_facades = read_unpack(in_f, '<I')[0]
+                    for _ in range(num_facades):
+                        facade = cls.read(in_f)
+                        facades.append(facade)
+                except Exception as e:
+                    print(f"Failed to process {input_file.name}: {e}")
+                    return
+
+            with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                for facade in facades:
+                    out_f.write(repr(facade))
+        
+    def __repr__(self):
+        return f"""
+Facade Editor
+    Room: {self.room}
+    Flags: {self.flags}
+    Start: {self.offset}
+    Face: {self.face}
+    Sides: {self.sides}
+    Scale: {self.scale:.2f}
+    Name: {self.name}
+    """
+
+#################################################################################
+#################################################################################
+
+# PHYSICS EDITOR CLASS
 class PhysicsEditor:
     def __init__(self, name: str, friction: float, elasticity: float, drag: float, 
                  bump_height: float, bump_width: float, bump_depth: float, sink_depth: float, 
@@ -3848,6 +3992,155 @@ class PhysicsEditor:
 ###################################################################################################################
 ###################################################################################################################
 
+# LIGHTING EDITOR CLASS
+class LightingEditor:
+    def __init__(self, time_of_day: int, weather: int, 
+                 sun_heading: float, sun_pitch: float, sun_color: Tuple[float, float, float], 
+                 fill1_heading: float, fill1_pitch: float, fill1_color: Tuple[float, float, float], 
+                 fill2_heading: float, fill2_pitch: float, fill2_color: Tuple[float, float, float], 
+                 ambient_color: Tuple[float, float, float],  
+                 fog_end: float, fog_color: Tuple[float, float, float], 
+                 shadow_alpha: float, shadow_color: Tuple[float, float, float]):
+        
+        self.time_of_day = time_of_day
+        self.weather = weather
+        self.sun_heading = sun_heading
+        self.sun_pitch = sun_pitch
+        self.sun_color = sun_color
+        self.fill1_heading = fill1_heading
+        self.fill1_pitch = fill1_pitch
+        self.fill1_color = fill1_color
+        self.fill2_heading = fill2_heading
+        self.fill2_pitch = fill2_pitch
+        self.fill2_color = fill2_color
+        self.ambient_color = ambient_color
+        self.fog_end = fog_end
+        self.fog_color = fog_color
+        self.shadow_alpha = shadow_alpha
+        self.shadow_color = shadow_color
+        
+    @classmethod
+    def read_rows(cls, row: list[Union[int, float, str]]) -> 'LightingEditor':
+        return cls(
+            time_of_day = int(row[0]),
+            weather = int(row[1]),
+            sun_heading = float(row[2]),
+            sun_pitch = float(row[3]),
+            sun_color = (float(row[4]), float(row[5]), float(row[6])),
+            fill1_heading = float(row[7]),
+            fill1_pitch = float(row[8]),
+            fill1_color = (float(row[9]), float(row[10]), float(row[11])),
+            fill2_heading = float(row[12]),
+            fill2_pitch = float(row[13]),
+            fill2_color = (float(row[14]), float(row[15]), float(row[16])),
+            ambient_color = (float(row[17]), float(row[18]), float(row[19])),
+            fog_end = float(row[20]),
+            fog_color = (float(row[21]), float(row[22]), float(row[23])),
+            shadow_alpha = float(row[24]),
+            shadow_color = (float(row[25]), float(row[26]), float(row[27]))
+        )
+    
+    @classmethod
+    def read_file(cls, filename: Path):
+        instances = []
+        with open(filename, newline = '') as f:
+            reader = csv.reader(f)
+            next(reader)  
+            for data in reader:
+                instance = cls.read_rows(data)
+                instances.append(instance)
+        return instances
+        
+    def apply_changes(self, changes):
+        for attribute, new_value in changes.items():
+            if hasattr(self, attribute):
+                current_value = getattr(self, attribute)
+                if isinstance(current_value, tuple) and isinstance(new_value, tuple):
+                    # Update only the specified components for tuple attributes
+                    updated_value = tuple(new_value[i] if i < len(new_value) else current_value[i] for i in range(len(current_value)))
+                    setattr(self, attribute, updated_value)
+                else:
+                    setattr(self, attribute, new_value)
+            
+    @staticmethod
+    def process_changes(instances, config_list):
+        for config in config_list:
+            for instance in instances:
+                if instance.time_of_day == config['time_of_day'] and instance.weather == config['weather']:
+                    instance.apply_changes(config)
+        return instances
+                
+    def write_rows(self):
+        def format_value(value):
+            return int(value) if isinstance(value, float) and value.is_integer() else value
+
+        return [
+            format_value(self.time_of_day),
+            format_value(self.weather),
+            format_value(self.sun_heading),
+            format_value(self.sun_pitch),
+            *map(format_value, self.sun_color),
+            format_value(self.fill1_heading),
+            format_value(self.fill1_pitch),
+            *map(format_value, self.fill1_color),
+            format_value(self.fill2_heading),
+            format_value(self.fill2_pitch),
+            *map(format_value, self.fill2_color),
+            *map(format_value, self.ambient_color),
+            format_value(self.fog_end),
+            *map(format_value, self.fog_color),
+            format_value(self.shadow_alpha),
+            *map(format_value, self.shadow_color)
+        ]
+        
+    @classmethod
+    def write_file(cls, instances, filename: Path):
+        with open(filename, mode = 'w', newline = '') as f:
+            writer = csv.writer(f)
+        
+            header = ['TimeOfDay', ' Weather', ' Sun Heading', ' Sun Pitch', ' Sun Red', ' Sun Green', ' Sun Blue',
+                    ' Fill-1 Heading', ' Fill-1 Pitch', ' Fill-1 Red', ' Fill-1 Green', ' Fill-1 Blue',
+                    ' Fill-2 Heading', ' Fill-2 Pitch', ' Fill-2 Red', ' Fill-2 Green', ' Fill-2 Blue',
+                    ' Ambient Red', ' Ambient Green', ' Ambient Blue', 
+                    ' Fog End', ' Fog Red', ' Fog Green', ' Fog Blue', 
+                    ' Shadow Alpha', ' Shadow Red', ' Shadow Green', ' Shadow Blue']
+
+            writer.writerow(header)
+            for instance in instances:
+                writer.writerow(instance.write_rows())
+                
+    @classmethod
+    def debug(cls, instances, debug_file: str, debug_lighting: bool) -> None:
+        if debug_lighting:
+            with open(debug_file, 'w') as debug_f:
+                for instance in instances:
+                    debug_f.write(instance.__repr__())
+                    debug_f.write("\n")
+                
+    def __repr__(self):
+        return f'''
+LightingEditor
+Time of Day: {self.time_of_day}
+Weather: {self.weather}
+Sun Heading: {self.sun_heading:.2f}
+Sun Pitch: {self.sun_pitch:.2f}
+Sun Color: {self.sun_color}
+Fill1 Heading: {self.fill1_heading:.2f}
+Fill1 Pitch: {self.fill1_pitch:.2f}
+Fill1 Color: {self.fill1_color}
+Fill2 Heading: {self.fill2_heading:.2f}
+Fill2 Pitch: {self.fill2_pitch:.2f}
+Fill2 Color: {self.fill2_color}
+Ambient Color: {self.ambient_color}
+Fog End: {self.fog_end:.2f}
+Fog Color: {self.fog_color}
+Shadow Alpha: {self.shadow_alpha:.2f}
+Shadow Color: {self.shadow_color}
+'''
+
+###################################################################################################################
+###################################################################################################################
+
 # BAI EDITOR CLASS
 class BaiEditor:
     def __init__(self, map_filename: str, streets, set_ai_map: bool):
@@ -3878,8 +4171,10 @@ mmMapData :0 {{
         """
         return textwrap.dedent(map_data).strip()
        
+###################################################################################################################
+###################################################################################################################
        
-# STREET CLASS
+# STREET EDITOR CLASS
 class StreetEditor:
     def __init__(self, map_filename: str, data, set_streets: bool, set_reverse_streets: bool):
         self.map_filename = map_filename
@@ -4137,305 +4432,6 @@ canvas.addEventListener('mousedown', function(e) {{
     return new_html_content
 
 #!########### Code by Lars (Modified) ############   
-
-###################################################################################################################
-################################################################################################################### 
-
-# FACADE CLASS
-class FacadeEditor:
-    def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, sides: Vector3, scale: float, name: str) -> None:
-        self.room = room
-        self.flags = flags
-        self.offset = offset
-        self.face = face
-        self.sides = sides
-        self.scale = scale
-        self.name = name
-
-    @classmethod
-    def read(cls, f) -> 'FacadeEditor':
-        room, flags = read_unpack(f, '2H')
-        offset = Vector3.read(f)
-        face = Vector3.read(f)
-        sides = Vector3.read(f)
-        scale = read_unpack(f, 'f')[0]
-        name = cls.read_name(f)
-        return cls(room, flags, offset, face, sides, scale, name)
-    
-    @staticmethod
-    def read_name(f) -> str:
-        name_data = bytearray()
-        while True:
-            char = f.read(1)
-            if char == b'\x00':
-                break
-            name_data.extend(char)
-        return name_data.decode('utf-8')
-    
-    @staticmethod
-    def read_scales(scales_file):
-        scales = {}
-        with open(scales_file, 'r') as f:
-            for line in f:
-                name, scale = line.strip().split(": ")
-                scales[name] = float(scale)
-        return scales
-
-    def write(self, f):
-        write_pack(f, '2H', ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
-        write_pack(f, '3f', *self.offset)
-        write_pack(f, '3f', *self.face)
-        write_pack(f, '3f', *self.sides)
-        write_pack(f, 'f', self.scale)
-        f.write(self.name.encode('utf-8'))
-        f.write(b'\x00')
-                
-    @classmethod
-    def create(cls, facade_file: str, packed_facades, output_dir: Path, set_facades: bool, debug_facades: bool):
-        if set_facades:
-            facades = cls.build(packed_facades)
-            cls.finalize(facade_file, facades)
-            MOVE(facade_file, output_dir / facade_file)
-
-            if debug_facades:
-                cls.debug(facades)
-
-    @classmethod
-    def build(cls, packed_facades):
-        facades = []
-        axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
-
-        for params in packed_facades:
-            axis = axis_dict[params['axis']]
-            start_coord = params['offset'][axis]
-            end_coord = params['end'][axis]
-            
-            direction = 1 if start_coord < end_coord else -1
-            
-            num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
-
-            for i in range(num_facades):
-                flags = params['flags']
-                
-                current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
-                
-                sides = params.get('sides', (0.0, 0.0, 0.0))
-                scale = scales.get(params['name'], params.get('scale', 1.0))
-                name = params['name']
-
-                facade = FacadeEditor(ROOM, flags, current_start, current_end, sides, scale, name)
-                facades.append(facade)
-
-        return facades
-
-    @staticmethod
-    def calculate_start_end(params, axis, direction, start_coord, i):
-        current_start = list(params['offset'])
-        current_end = list(params['end'])
-        
-        shift = direction * params['separator'] * i
-        
-        current_start[axis] = start_coord + shift
-        end_coord = params['end'][axis]
-        
-        if direction == 1:
-            current_end[axis] = min(start_coord + shift + params['separator'], end_coord)
-        else:
-            current_end[axis] = max(start_coord + shift - params['separator'], end_coord)
-            
-        return tuple(current_start), tuple(current_end)
-
-    @staticmethod
-    def finalize(filename, facades):
-        with open(filename, mode = 'wb') as f:
-            write_pack(f, '<I', len(facades))
-            for facade in facades:
-                facade.write(f)
-
-    @staticmethod
-    def debug(facades):
-        with open("FACADES_debug.txt", mode = 'w', encoding = 'utf-8') as f:
-            for facade in facades:
-                f.write(str(facade))
-                
-    @classmethod
-    def debug_file(cls, debug_facades: bool, input_file: Path, output_file: Path) -> None:
-        if debug_facades:
-            with open(input_file, 'rb') as in_f:
-                try:
-                    facades = []
-                    num_facades = read_unpack(in_f, '<I')[0]
-                    for _ in range(num_facades):
-                        facade = cls.read(in_f)
-                        facades.append(facade)
-                except Exception as e:
-                    print(f"Failed to process {input_file.name}: {e}")
-                    return
-
-            with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                for facade in facades:
-                    out_f.write(repr(facade))
-        
-    def __repr__(self):
-        return f"""
-Facade Editor
-    Room: {self.room}
-    Flags: {self.flags}
-    Start: {self.offset}
-    Face: {self.face}
-    Sides: {self.sides}
-    Scale: {self.scale:.2f}
-    Name: {self.name}
-    """
-    
-###################################################################################################################
-###################################################################################################################
-    
-class LightingEditor:
-    def __init__(self, time_of_day: int, weather: int, 
-                 sun_heading: float, sun_pitch: float, sun_color: Tuple[float, float, float], 
-                 fill1_heading: float, fill1_pitch: float, fill1_color: Tuple[float, float, float], 
-                 fill2_heading: float, fill2_pitch: float, fill2_color: Tuple[float, float, float], 
-                 ambient_color: Tuple[float, float, float],  
-                 fog_end: float, fog_color: Tuple[float, float, float], 
-                 shadow_alpha: float, shadow_color: Tuple[float, float, float]):
-        
-        self.time_of_day = time_of_day
-        self.weather = weather
-        self.sun_heading = sun_heading
-        self.sun_pitch = sun_pitch
-        self.sun_color = sun_color
-        self.fill1_heading = fill1_heading
-        self.fill1_pitch = fill1_pitch
-        self.fill1_color = fill1_color
-        self.fill2_heading = fill2_heading
-        self.fill2_pitch = fill2_pitch
-        self.fill2_color = fill2_color
-        self.ambient_color = ambient_color
-        self.fog_end = fog_end
-        self.fog_color = fog_color
-        self.shadow_alpha = shadow_alpha
-        self.shadow_color = shadow_color
-        
-    @classmethod
-    def read_rows(cls, row: list[Union[int, float, str]]) -> 'LightingEditor':
-        return cls(
-            time_of_day = int(row[0]),
-            weather = int(row[1]),
-            sun_heading = float(row[2]),
-            sun_pitch = float(row[3]),
-            sun_color = (float(row[4]), float(row[5]), float(row[6])),
-            fill1_heading = float(row[7]),
-            fill1_pitch = float(row[8]),
-            fill1_color = (float(row[9]), float(row[10]), float(row[11])),
-            fill2_heading = float(row[12]),
-            fill2_pitch = float(row[13]),
-            fill2_color = (float(row[14]), float(row[15]), float(row[16])),
-            ambient_color = (float(row[17]), float(row[18]), float(row[19])),
-            fog_end = float(row[20]),
-            fog_color = (float(row[21]), float(row[22]), float(row[23])),
-            shadow_alpha = float(row[24]),
-            shadow_color = (float(row[25]), float(row[26]), float(row[27]))
-        )
-    
-    @classmethod
-    def read_file(cls, filename: Path):
-        instances = []
-        with open(filename, newline = '') as f:
-            reader = csv.reader(f)
-            next(reader)  
-            for data in reader:
-                instance = cls.read_rows(data)
-                instances.append(instance)
-        return instances
-        
-    def apply_changes(self, changes):
-        for attribute, new_value in changes.items():
-            if hasattr(self, attribute):
-                current_value = getattr(self, attribute)
-                if isinstance(current_value, tuple) and isinstance(new_value, tuple):
-                    # Update only the specified components for tuple attributes
-                    updated_value = tuple(new_value[i] if i < len(new_value) else current_value[i] for i in range(len(current_value)))
-                    setattr(self, attribute, updated_value)
-                else:
-                    setattr(self, attribute, new_value)
-            
-    @staticmethod
-    def process_changes(instances, config_list):
-        for config in config_list:
-            for instance in instances:
-                if instance.time_of_day == config['time_of_day'] and instance.weather == config['weather']:
-                    instance.apply_changes(config)
-        return instances
-                
-    def write_rows(self):
-        def format_value(value):
-            return int(value) if isinstance(value, float) and value.is_integer() else value
-
-        return [
-            format_value(self.time_of_day),
-            format_value(self.weather),
-            format_value(self.sun_heading),
-            format_value(self.sun_pitch),
-            *map(format_value, self.sun_color),
-            format_value(self.fill1_heading),
-            format_value(self.fill1_pitch),
-            *map(format_value, self.fill1_color),
-            format_value(self.fill2_heading),
-            format_value(self.fill2_pitch),
-            *map(format_value, self.fill2_color),
-            *map(format_value, self.ambient_color),
-            format_value(self.fog_end),
-            *map(format_value, self.fog_color),
-            format_value(self.shadow_alpha),
-            *map(format_value, self.shadow_color)
-        ]
-        
-    @classmethod
-    def write_file(cls, instances, filename: Path):
-        with open(filename, mode = 'w', newline = '') as f:
-            writer = csv.writer(f)
-        
-            header = ['TimeOfDay', ' Weather', ' Sun Heading', ' Sun Pitch', ' Sun Red', ' Sun Green', ' Sun Blue',
-                    ' Fill-1 Heading', ' Fill-1 Pitch', ' Fill-1 Red', ' Fill-1 Green', ' Fill-1 Blue',
-                    ' Fill-2 Heading', ' Fill-2 Pitch', ' Fill-2 Red', ' Fill-2 Green', ' Fill-2 Blue',
-                    ' Ambient Red', ' Ambient Green', ' Ambient Blue', 
-                    ' Fog End', ' Fog Red', ' Fog Green', ' Fog Blue', 
-                    ' Shadow Alpha', ' Shadow Red', ' Shadow Green', ' Shadow Blue']
-
-            writer.writerow(header)
-            for instance in instances:
-                writer.writerow(instance.write_rows())
-                
-    @classmethod
-    def debug(cls, instances, debug_file: str, debug_lighting: bool) -> None:
-        if debug_lighting:
-            with open(debug_file, 'w') as debug_f:
-                for instance in instances:
-                    debug_f.write(instance.__repr__())
-                    debug_f.write("\n")
-                
-    def __repr__(self):
-        return f'''
-LightingEditor
-Time of Day: {self.time_of_day}
-Weather: {self.weather}
-Sun Heading: {self.sun_heading:.2f}
-Sun Pitch: {self.sun_pitch:.2f}
-Sun Color: {self.sun_color}
-Fill1 Heading: {self.fill1_heading:.2f}
-Fill1 Pitch: {self.fill1_pitch:.2f}
-Fill1 Color: {self.fill1_color}
-Fill2 Heading: {self.fill2_heading:.2f}
-Fill2 Pitch: {self.fill2_pitch:.2f}
-Fill2 Color: {self.fill2_color}
-Ambient Color: {self.ambient_color}
-Fog End: {self.fog_end:.2f}
-Fog Color: {self.fog_color}
-Shadow Alpha: {self.shadow_alpha:.2f}
-Shadow Color: {self.shadow_color}
-'''
 
 ###################################################################################################################
 ###################################################################################################################  
