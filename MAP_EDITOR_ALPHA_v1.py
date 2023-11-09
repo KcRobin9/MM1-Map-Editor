@@ -3563,18 +3563,6 @@ class BinaryBanger:
         self.face = face
         self.name = name
         
-    @classmethod
-    def readn(cls, f):
-        return read_unpack(f, '<I')[0]
-            
-    @classmethod
-    def read(cls, f) -> 'BinaryBanger':
-        room, flags = read_unpack(f, '<HH')
-        offset = Vector3.read(f)
-        face = Vector3.read(f)  
-        name = cls.read_name(f)
-        return cls(room, flags, offset, face, name)
-    
     @staticmethod
     def read_name(f) -> str:
         name_data = bytearray()
@@ -3584,24 +3572,54 @@ class BinaryBanger:
                 break
             name_data.extend(char)
         return name_data.decode('utf-8')
+        
+    @classmethod
+    def readn(cls, f) -> int:
+        return read_unpack(f, '<I')[0]
+            
+    @classmethod
+    def read(cls, f) -> 'BinaryBanger':
+        room, flags = read_unpack(f, '<2H')
+        offset = Vector3.read(f)
+        face = Vector3.read(f)  
+        name = cls.read_name(f)
+        return cls(room, flags, offset, face, name)
     
-    @staticmethod
-    def debug(debug_props: bool, input_file: Path, output_file: Path) -> None:
-        if debug_props:
-            try:
-                with input_file.open('rb') as in_f:
-                    num_bangers = BinaryBanger.readn(in_f)
-                    bangers_repr = []
-                    for _ in range(num_bangers):
-                        banger = BinaryBanger.read(in_f)
-                        bangers_repr.append(repr(banger))
-
-                with output_file.open('w', encoding = 'utf-8') as out_f:
-                    for b_repr in bangers_repr:
-                        out_f.write(b_repr)
-                print(f"Processed {input_file.name} to {output_file.name}")
-            except Exception as e:
-                print(f"Failed to process {input_file.name}: {e}")
+    @classmethod
+    def read_all(cls, f) -> 'List[BinaryBanger]':
+        return [cls.read(f) for _ in range(cls.readn(f))]
+    
+    @classmethod
+    def write_n(cls, f, bangers):
+        write_pack(f, '<I', len(bangers))
+    
+    @classmethod
+    def write_all(cls, filename: Path, bangers, debug_props: bool):
+        with open(filename, mode = "wb") as f:
+            cls.write_n(f, bangers)
+        
+            for banger in bangers:
+                write_pack(f, '<2H', ROOM, COLLIDE_FLAG)  
+                banger.offset.write(f)
+                banger.face.write(f)
+                f.write(banger.name.encode('utf-8'))
+                    
+                if debug_props:
+                    cls.debug(bangers, USER_RESOURCES / "PROPS" / f"{filename}.txt")
+    
+    @classmethod
+    def debug(cls, input_file: Path, output_file: Path) -> None:
+        try:
+            with open(input_file, 'rb') as in_f:
+                bangers = cls.read_all(in_f)       
+                  
+            with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                for banger in bangers:
+                    out_f.write(repr(banger))
+                    
+            print(f"Processed {input_file.name} to {output_file.name}")
+        except Exception as e:
+            print(f"Failed to process {input_file.name}: {e}")
                 
     def __repr__(self):
         return f'''
@@ -3615,85 +3633,28 @@ Prop Name: {self.name}
 
 # PROP EDITOR CLASS
 class PropEditor:
-    def __init__(self, map_filename: str, debug_props: bool, append_props: bool = False, output_prop_f: str = None):  # Do not change
-        self.objects = []  
-        self.map_filename = map_filename  
-
-        if append_props:
-            self.filename = map_filename 
-        else:
-            self.filename = SHOP_CITY / f"{map_filename}.BNG"
-                    
-        self.debug_props = debug_props
-        self.debug_filename = "PROPS_debug.txt"        
+    def __init__(self, map_filename: str):  
+        self.map_filename = Path(map_filename)                      
+        self.props = [] 
         
-        self.loaded_prop_dimension = self.load_dimensions()   
-                    
-        self.output_prop_f = output_prop_f or self.filename
-        
-    def process_props(self, props: list):
-        per_race_props = {'DEFAULT': []}  
+    def process_all(self, user_set_props: list, set_props: bool):
+        if set_props: 
+            per_race_props = {}
 
-        for prop in props:
-            race_mode = prop.get('race_mode', 'DEFAULT')
-            race_num = prop.get('race_num', '')
+            for prop in user_set_props:
+                race_mode = prop.get('race_mode', 'DEFAULT')
+                race_num = prop.get('race_num', '')
+                race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
+                per_race_props.setdefault(race_key, []).append(prop)
+
+            for race_key, race_props in per_race_props.items():                
+                self.props.clear()
+                self.add_multiple(race_props)
+                current_filename = self._filename_with_suffix(race_key)
+                BinaryBanger.write_all(SHOP_CITY / current_filename, self.props, debug_props) 
             
-            race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
-            per_race_props.setdefault(race_key, []).append(prop)
-
-        current_filename = self.filename
-        
-        for race_key, race_props in per_race_props.items():
-            self._reset_objects()  
-            self.add_props(race_props)
-            
-            # Update the filename based on the race key
-            current_filename = self._set_filename_suffix(race_key, current_filename)
-            
-            self.write_bangers(True, current_filename)
-
-    def read_bangers(self, filename = None):
-        if filename is None:
-            filename = self.filename
-            
-        with open(filename, mode = "rb") as f:
-            num_props = BinaryBanger.readn(f)
-            for _ in range(num_props):
-                prop_data = BinaryBanger.read(f)
-                self.objects.append(prop_data)
-                
-    def write_bangers(self, set_props: bool, filename = None):
-        target_filename = filename or self.filename
-
-        if set_props:
-            with open(target_filename, mode = "wb") as f:
-                write_pack(f, '<I', len(self.objects))
-
-                for idx, obj in enumerate(self.objects, 1):
-                    if self.debug_props:
-                        self.write_banger_debug(idx, obj)
-            
-                    write_pack(f, '<2H', ROOM, COLLIDE_FLAG)  # Hardcoded Room and Flags values to ensure player's car can collide with props                  
-                    obj.offset.write(f)		
-                    obj.face.write(f)		
-                    for char in obj.name:
-                        write_pack(f, '<s', bytes(char, encoding = 'utf8'))
-
-    def write_banger_debug(self, idx, obj):
-        cleaned_prop_name = obj.name.rstrip('\x00')
-        
-        with open(self.debug_filename, "a") as debug_f:
-            debug_f.write(textwrap.dedent(f'''
-                Prop {idx}
-                Room: {obj.room}
-                Flags: {obj.flags}
-                Offset: {obj.offset}
-                Face: {obj.face}
-                Name: {cleaned_prop_name}
-            '''))
-                      
-    def add_props(self, new_props):    
-        for prop in new_props:
+    def add_multiple(self, user_set_props):    
+        for prop in user_set_props:
             offset = Vector3(*prop['offset']) 
             end = Vector3(*prop['end']) if 'end' in prop else None
             face = Vector3(*prop.get('face', (HUGE, HUGE, HUGE)))
@@ -3719,91 +3680,63 @@ class PropEditor:
                 
                 for i in range(1, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
-                    self.objects.append(BinaryBanger(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
-                    
+                    self.props.append(BinaryBanger(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
+
             else:
-                self.objects.append(BinaryBanger(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
-
-    def place_props_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: float, z_range: float):
-        new_objects = []
-
-        # Ensure 'name' is a list for consistent handling later
-        if isinstance(props_dict.get('name'), str):
-            props_dict['name'] = [props_dict['name']]
+                self.props.append(BinaryBanger(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
+                
+    def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
+        if append_props:
+            with open(input_props_f, 'rb') as f:
+                original_props = BinaryBanger.read_all(f)
+                  
+            self.props = original_props
+            self.add_multiple(props_to_append)
             
-        random.seed(seed)
+            BinaryBanger.write_all(appended_props_f, self.props, debug_props)
+                            
+    def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
+        assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
 
-        for name in props_dict['name']:
+        random.seed(seed)
+        names = props_dict.get('name', [])
+        names = names if isinstance(names, list) else [names]
+        
+        random_props = []
+        
+        for name in names:
             for _ in range(num_props):
                 x = random.uniform(*x_range)
                 z = random.uniform(*z_range)
-                y = props_dict.get('offset_y', 0.0)  
-
-                new_prop_dict = {
+                y = props_dict.get('offset_y', 0.0)
+                new_prop = {
                     'name': name,
-                    'offset': (x, y, z)}
-                
-                if 'face' not in props_dict:  # If face is not defined, create random face vectors
-                    face_x = random.uniform(-1e6, 1e6)
-                    face_y = random.uniform(-1e6, 1e6)  # Not applicable
-                    face_z = random.uniform(-1e6, 1e6)
-                    new_prop_dict['face'] = (face_x, face_y, face_z)
+                    'offset': (x, y, z)
+                } 
+
+                if 'face' not in props_dict:
+                    new_prop['face'] = (
+                        random.uniform(-1e6, 1e6),
+                        random.uniform(-1e6, 1e6), 
+                        random.uniform(-1e6, 1e6)
+                    )
                 else:
-                    new_prop_dict['face'] = props_dict['face']
+                    new_prop['face'] = props_dict['face']
 
-                # Copy additional prop properties if they exist
-                for key, value in props_dict.items():
-                    if key not in new_prop_dict:
-                        new_prop_dict[key] = value
-
-                new_objects.append(new_prop_dict)
-        
-        return new_objects
+                new_prop.update({k: v for k, v in props_dict.items() if k not in new_prop})
+                random_props.append(new_prop)
+                
+        return random_props
     
-    def append_props(self, new_objects, append_props):
-        if not append_props:
-            return
-        
-        if not self.objects:  
-            self.read_bangers()
-            
-        original_count = len(self.objects)
-        self.add_props(new_objects)
-
-        new_count = len(self.objects)
-
-        with open(self.filename, mode = "rb") as in_f:
-            current_count = read_unpack(in_f, '<I')[0]
-                    
-            with open(self.output_prop_f, mode = "wb") as out_f:
-                write_pack(out_f, '<I', current_count + new_count - original_count)
-                out_f.write(in_f.read())
-                self.write_bangers(set_props = True, filename = self.output_prop_f)    
-                    
-        if self.debug_props:
-            for idx, obj in enumerate(self.objects[original_count:], original_count + 1):
-                self.write_banger_debug(idx, obj)
-                                        
-    def _race_mode_to_short(self, race_mode: str) -> str:
-        mode_mapping = {
-            CIRCUIT: 'C',
-            RACE: 'R',
-            BLITZ: 'B'}
-        return mode_mapping.get(race_mode, race_mode)
-    
-    def _reset_objects(self):
-        self.objects.clear()
-
-    def _set_filename_suffix(self, race_key, current_filename):        
+    def _filename_with_suffix(self, race_key):        
         if race_key == 'DEFAULT':
-            return current_filename
-
-        race_parts = race_key.split('_')
-        if len(race_parts) == 2:
-            race_mode, race_num = race_parts
-            short_race_mode = self._race_mode_to_short(race_mode)
-            return current_filename.parent / f"{current_filename.stem}_{short_race_mode}{race_num}{current_filename.suffix}"
-                                                                     
+            return self.map_filename.with_suffix(".BNG")
+            
+        race_mode, race_num = race_key.split('_')
+        short_race_mode = {CIRCUIT: 'C', RACE: 'R', BLITZ: 'B'}.get(race_mode, race_mode)
+        race_num = race_num or '0'        
+        return self.map_filename.parent / f"{self.map_filename.stem}_{short_race_mode}{race_num}.BNG"
+                                                                            
     @staticmethod  
     def load_dimensions() -> dict:
         dimensions_file = EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt"
@@ -3854,8 +3787,8 @@ class PhysicsEditor:
         write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
         write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
         write_pack(f, '>2I', self.type, self.sound)
-        self.velocity.write(f)
-        self.ptx_color.write(f)
+        self.velocity.write(f, byte_order = '>')
+        self.ptx_color.write(f, byte_order = '>')
 
     @staticmethod
     def write_all(physics_db, physics_params):
@@ -5605,7 +5538,7 @@ app_panoz_gtr = {
     'end': (999, 2, 999),
     'name': PANOZ_GTR1}
 
-appended_props = [app_panoz_gtr]
+props_to_append = [app_panoz_gtr]
 
 
 # AudioIDs
@@ -5745,14 +5678,14 @@ PhysicsEditor.edit(new_physics_properties, "PHYSICS.DB", debug_physics)
 FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 FacadeEditor.debug_file(debug_facades, EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD", USER_RESOURCES / "FACADES" / "CHICAGO_FCD.txt")
 
-PropEditor(input_props_f, debug_props, append_props, appended_props_f).append_props(appended_props, append_props) 
+PropEditor(map_filename).append_to_file(input_props_f, props_to_append, appended_props_f, append_props) 
 
-prop_editor = PropEditor(map_filename, debug_props)
+prop_editor = PropEditor(map_filename)
 for prop in random_props:
-    prop_list.extend(prop_editor.place_props_randomly(**prop))
-prop_editor.process_props(prop_list)
+    prop_list.extend(prop_editor.place_randomly(**prop))
+prop_editor.process_all(prop_list, set_props)
 
-BinaryBanger.debug(debug_props, EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG", USER_RESOURCES / "PROPS" / "CHICAGO_BNG.txt")
+BinaryBanger.debug(EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG", USER_RESOURCES / "PROPS" / "CHICAGO_BNGKEK.txt")
 
 lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.process_changes(lighting_instances, lighting_configs)
