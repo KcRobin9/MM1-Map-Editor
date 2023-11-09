@@ -223,6 +223,8 @@ HIGH_MODEL = 8
 DRIFT_MODEL = 32
 MESH_THRESHOLD = 16
 CELL_THRESHOLD = 254
+ROOM = 0x1
+COLLIDE_FLAG = 0x800
 
 
 # Variables
@@ -3327,7 +3329,9 @@ class Edge:
         return Vector2(
              (self.line.y * pos) - (self.line.x * self.line.z),
             -(self.line.x * pos) - (self.line.y * self.line.z))
-
+        
+################################################################################################################               
+################################################################################################################
 
 # CELL CLASS
 class Cell:
@@ -3411,7 +3415,9 @@ class Cell:
 
     def check_radius(self, other, fudge):
         return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
-
+    
+################################################################################################################               
+################################################################################################################
 
 # Prepare PTL
 def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
@@ -3525,9 +3531,9 @@ def create_portals(
             for cell_1, cell_2, v1, v2 in portals:
                 flags = 0x2
                 edge_count = 2
-                write_pack(f, '<BB', flags, edge_count)
+                write_pack(f, '<2B', flags, edge_count)
                 write_pack(f, '<H', 101)
-                write_pack(f, '<HH', cell_2, cell_1)  
+                write_pack(f, '<2H', cell_2, cell_1)  
                   
                 # TODO: Change height
                 height = MAX_Y - MIN_Y
@@ -3620,7 +3626,6 @@ class PropEditor:
                     
         self.debug_props = debug_props
         self.debug_filename = "PROPS_debug.txt"        
-        self.prop_dim_file = EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt"
         
         self.loaded_prop_dimension = self.load_dimensions()   
                     
@@ -3668,7 +3673,7 @@ class PropEditor:
                     if self.debug_props:
                         self.write_banger_debug(idx, obj)
             
-                    write_pack(f, '<2H', 4, 0x800)  # Hardcoded Room and Flags values to ensure player's car can collide with props                  
+                    write_pack(f, '<2H', ROOM, COLLIDE_FLAG)  # Hardcoded Room and Flags values to ensure player's car can collide with props                  
                     obj.offset.write(f)		
                     obj.face.write(f)		
                     for char in obj.name:
@@ -3689,38 +3694,36 @@ class PropEditor:
                       
     def add_props(self, new_props):    
         for prop in new_props:
-            offset = Vector3(*prop['offset'])
-            end = Vector3(*prop.get('end', prop['offset']))  
-            face = prop.get('face')  
+            offset = Vector3(*prop['offset']) 
+            end = Vector3(*prop['end']) if 'end' in prop else None
+            face = Vector3(*prop.get('face', (HUGE, HUGE, HUGE)))
             name = prop['name']
-
-            # Compute diagonal and its length
-            diagonal = end - offset
-            diagonal_length = diagonal.Mag()
             
-            separator = prop.get('separator', 10.0)  # Use 10.0 as default separator
-            if isinstance(separator, str) and separator.lower() in ["x", "y", "z"]:
-                prop_dims = self.loaded_prop_dimension.get(name, Vector3(1, 1, 1))
-                separator = getattr(prop_dims, separator.lower())
-            elif not isinstance(separator, (int, float)):
-                separator = 10.0
-
-            if face is None:  # Create a facing vector that points from offset to end
-                face = (Vector3(diagonal.x * HUGE, diagonal.y * HUGE, diagonal.z * HUGE))
+            if end is not None:
+                diagonal = end - offset
+                diagonal_length = diagonal.Mag()
+                normalized_diagonal = diagonal.Normalize()
+                
+                if face == Vector3(HUGE, HUGE, HUGE):
+                    face = normalized_diagonal * HUGE
+                
+                separator = prop.get('separator', 10.0)
+            
+                if isinstance(separator, str) and separator.lower() in ["x", "y", "z"]:
+                    prop_dims = self.load_dimensions().get(name, Vector3(1, 1, 1))
+                    separator = getattr(prop_dims, separator.lower())
+                elif not isinstance(separator, (int, float)):
+                    separator = 10.0
+                                            
+                num_props = int(diagonal_length / separator)
+                
+                for i in range(1, num_props):
+                    dynamic_offset = offset + normalized_diagonal * (i * separator)
+                    self.objects.append(BinaryBanger(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
+                    
             else:
-                face = Vector3(*face)  # Transform the user-input face to a Vector3
+                self.objects.append(BinaryBanger(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
 
-            self.objects.append(BinaryBanger(4, 0x800, offset, face, name + "\x00"))
-
-            # The number of props is determined by the length of the diagonal and separator
-            num_props = int(diagonal_length / separator)
-
-            # Add objects along the diagonal
-            for i in range(1, num_props):
-                # Compute new offset along the diagonal
-                new_offset = offset + (diagonal.Normalize() * (i * separator))
-                self.objects.append(BinaryBanger(4, 0x800, new_offset, face, name + "\x00"))
-  
     def place_props_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: float, z_range: float):
         new_objects = []
 
@@ -3801,10 +3804,12 @@ class PropEditor:
             short_race_mode = self._race_mode_to_short(race_mode)
             return current_filename.parent / f"{current_filename.stem}_{short_race_mode}{race_num}{current_filename.suffix}"
                                                                      
-    def load_dimensions(self):
+    @staticmethod  
+    def load_dimensions() -> dict:
+        dimensions_file = EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt"
         extracted_prop_dim = {}
         
-        with open(self.prop_dim_file, "r") as f:
+        with open(dimensions_file, "r") as f:
             for line in f:
                 prop_name, value_x, value_y, value_z = line.split()
                 extracted_prop_dim[prop_name] = Vector3(float(value_x), float(value_y), float(value_z))
@@ -4244,7 +4249,7 @@ class FacadeEditor:
         return scales
 
     def write(self, f):
-        write_pack(f, '2H', 0x1, self.flags)  # Hardcoded the Room value such that all facades are visible in the game    
+        write_pack(f, '2H', ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
         write_pack(f, '3f', *self.offset)
         write_pack(f, '3f', *self.face)
         write_pack(f, '3f', *self.sides)
@@ -4286,7 +4291,7 @@ class FacadeEditor:
                 scale = scales.get(params['name'], params.get('scale', 1.0))
                 name = params['name']
 
-                facade = FacadeEditor(0x1, flags, current_start, current_end, sides, scale, name)
+                facade = FacadeEditor(ROOM, flags, current_start, current_end, sides, scale, name)
                 facades.append(facade)
 
         return facades
