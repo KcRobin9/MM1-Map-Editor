@@ -3914,19 +3914,25 @@ class PhysicsEditor:
         self.velocity = velocity
         self.ptx_color = ptx_color 
         
-    @staticmethod
-    def readn(f, count):
-        return [PhysicsEditor.read(f) for _ in range(count)]
+    @classmethod
+    def readn(cls, f) -> int:
+        return read_unpack(f, '>I')[0]
 
     @staticmethod
     def read(f) -> 'PhysicsEditor':
         name = f.read(32).decode("latin-1").rstrip('\x00')
-        params = read_unpack(f, '>7f2I')
+        friction, elasticity, drag = read_unpack(f, '>3f')
+        bump_height, bump_width, bump_depth, sink_depth = read_unpack(f, '>4f')
+        type, sound = read_unpack(f, '>2I')
         velocity = Vector2.read(f)
         ptx_color = Vector3.read(f)
-        return PhysicsEditor(name, *params, velocity, ptx_color)
+        return PhysicsEditor(name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color)
+    
+    @classmethod
+    def read_all(cls, f) -> List['PhysicsEditor']:
+        return [cls.read(f) for _ in range(cls.readn(f))]
 
-    def write(self, f):        
+    def write(self, f) -> None:        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
         write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
         write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
@@ -3935,43 +3941,38 @@ class PhysicsEditor:
         self.ptx_color.write(f, byte_order = '>')
 
     @staticmethod
-    def write_all(physics_db, physics_params):
-        with open(physics_db, 'wb') as f:
+    def write_all(output_file: Path, physics_params: List['PhysicsEditor']) -> None:
+        with open(output_file, 'wb') as f:
             write_pack(f, '>I', len(physics_params))
             for param in physics_params:                
                 param.write(f)
                 
     @classmethod    
-    def edit(cls, materials_properties, physics_output_f, debug_physics):
-        physics_input_f = EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB"
-        
-        with open(physics_input_f, 'rb') as f:
-            count = read_unpack(f, '>I')[0]
-            physics_data = cls.readn(f, count)
-          
-        # Loop through material properties dictionary
-        for material_index, properties in materials_properties.items():
-            for prop, value in properties.items():
-                setattr(physics_data[material_index - 1], prop, value)
+    def edit(cls, input_file: Path, output_file: Path, user_set_properties: dict, debug_physics: bool) -> None:
+        with open(input_file, 'rb') as f:
+            original_data = cls.read_all(f)
+
+        for phys_index, properties in user_set_properties.items():
+            physics_obj = original_data[phys_index - 1]
             
-        cls.write_all(physics_output_f, physics_data)
-        MOVE(physics_output_f, SHOP / "MTL" / physics_output_f)
+            for attr , value in properties.items():
+                setattr(physics_obj, attr, value)
+                    
+        cls.write_all(output_file, original_data)
         
         if debug_physics:
-            cls.debug("PHYSICS_DB_debug.txt", physics_data)
-            
+            cls.debug(USER_RESOURCES / "PHYSICS" / "PHYSICS_DBss.txt", original_data)
+                        
     @classmethod
-    def debug(cls, debug_filename, material_list):
+    def debug(cls, debug_filename: Path, physics_params: List['PhysicsEditor']) -> None: 
         with open(debug_filename, 'w') as debug_f:
-            for idx, material in enumerate(material_list):
-                debug_f.write(material.__repr__(idx))
+            for idx, physics_param in enumerate(physics_params):
+                debug_f.write(physics_param.__repr__(idx))
                 debug_f.write("\n")
 
-    def __repr__(self, idx = None):
-        cleaned_name = self.name.rstrip("\x00 Í")
-        formatted_velocity = f"x = {self.velocity.x:.2f}, y = {self.velocity.y:.2f}"
-        
+    def __repr__(self, idx = None) -> str:
         header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
+        cleaned_name = self.name.rstrip('\x00' + 'Í')
         
         return f"""
 {header}
@@ -3985,7 +3986,7 @@ class PhysicsEditor:
     sink_depth  = {self.sink_depth:.2f},
     type        = {self.type},
     sound       = {self.sound},
-    velocity    = {formatted_velocity},
+    velocity    = {self.velocity},
     ptx_color   = {self.ptx_color}
     """
 
@@ -5604,7 +5605,7 @@ lighting_configs = [
 # SET PHYSICS
 # available indices: 94, 95, 96, 97, 98,
 
-new_physics_properties = {
+custom_physics = {
     97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # sticky
     98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # slippery
 
@@ -5669,7 +5670,10 @@ BND.debug_file(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND", 
 BND.debug_directory(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "BND FILES", USER_RESOURCES / "BOUNDS" / "BND TEXT FILES")
 
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
-PhysicsEditor.edit(new_physics_properties, "PHYSICS.DB", debug_physics)
+
+
+PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, debug_physics)
+
 
 FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 FacadeEditor.debug_file(debug_facades, EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD", USER_RESOURCES / "FACADES" / "CHICAGO_FCD.txt")
