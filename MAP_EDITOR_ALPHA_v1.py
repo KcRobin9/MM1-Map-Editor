@@ -63,6 +63,7 @@ delete_shop = True              # change to "True" to delete the raw city files 
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
 set_bridges = True              # change to "True" if you want BRIDGES
 set_facades = True              # change to "True" if you want FACADES
+set_physics = True              # change to "True" if you want PHYSICS
 
 # PROPS
 set_props = True                # change to "True" if you want PROPS
@@ -568,17 +569,6 @@ bridge_configs = [bridge_race_0, bridge_cnr]
 ################################################################################################################               
 ################################################################################################################     
  
-def to_do_list(x): # this list only contains a small number of main topics, many smaller tasks are excluded
-            """            
-            Correctly set walls (currently they are infinite in height collision-wise)
-            Improve Facades setting (e.g. diagonal facades)
-            Develop Blender BAI importer/exporter
-            Investigate Breakable Parts (see {}.MMBANGERDATA)
-            """               
-                        
-################################################################################################################               
-################################################################################################################        
-
 # Simplify Struct usage
 def read_unpack(file, fmt):
     return struct.unpack(fmt, file.read(struct.calcsize(fmt)))
@@ -3948,20 +3938,21 @@ class PhysicsEditor:
                 param.write(f)
                 
     @classmethod    
-    def edit(cls, input_file: Path, output_file: Path, user_set_properties: dict, debug_physics: bool) -> None:
-        with open(input_file, 'rb') as f:
-            original_data = cls.read_all(f)
+    def edit(cls, input_file: Path, output_file: Path, user_set_properties: dict, set_physics: bool, debug_physics: bool) -> None:
+        if set_physics:
+            with open(input_file, 'rb') as f:
+                original_data = cls.read_all(f)
 
-        for phys_index, properties in user_set_properties.items():
-            physics_obj = original_data[phys_index - 1]
+            for phys_index, properties in user_set_properties.items():
+                physics_obj = original_data[phys_index - 1]
+                
+                for attr , value in properties.items():
+                    setattr(physics_obj, attr, value)
+                        
+            cls.write_all(output_file, original_data)
             
-            for attr , value in properties.items():
-                setattr(physics_obj, attr, value)
-                    
-        cls.write_all(output_file, original_data)
-        
-        if debug_physics:
-            cls.debug(USER_RESOURCES / "PHYSICS" / "PHYSICS_DBss.txt", original_data)
+            if debug_physics:
+                cls.debug(USER_RESOURCES / "PHYSICS" / "PHYSICS_DBss.txt", original_data)
                         
     @classmethod
     def debug(cls, debug_filename: Path, physics_params: List['PhysicsEditor']) -> None: 
@@ -5242,7 +5233,7 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     
 def is_blender_running() -> bool:
     try:
-        import bpy   # Trying to access a bpy.context attribute to see if we get an exception
+        import bpy   
         _ = bpy.context.window_manager
         return True 
     except (AttributeError, ImportError):
@@ -5671,9 +5662,7 @@ BND.debug_directory(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "BND FILES", USE
 
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
 
-
-PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, debug_physics)
-
+PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
 FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
 FacadeEditor.debug_file(debug_facades, EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD", USER_RESOURCES / "FACADES" / "CHICAGO_FCD.txt")
@@ -5685,7 +5674,7 @@ for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
 prop_editor.process_all(prop_list, set_props)
 
-BinaryBanger.debug(EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG", USER_RESOURCES / "PROPS" / "CHICAGO_BNGKEK.txt")
+# BinaryBanger.debug(EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG", USER_RESOURCES / "PROPS" / "CHICAGO_BNG_x.txt")
 
 lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.process_changes(lighting_instances, lighting_configs)
