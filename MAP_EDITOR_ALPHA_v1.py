@@ -4109,7 +4109,8 @@ class LightingEditor:
         ]
         
     @classmethod
-    def write_file(cls, instances, filename: Path):
+    def write_file(cls, instances, lighting_configs, filename: Path):
+        cls.process_changes(instances, lighting_configs)
         with open(filename, mode = 'w', newline = '') as f:
             writer = csv.writer(f)
         
@@ -5690,8 +5691,7 @@ for prop in random_props:
 prop_editor.process_all(prop_list, set_props)
 
 lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
-LightingEditor.process_changes(lighting_instances, lighting_configs)
-LightingEditor.write_file(lighting_instances, SHOP / "TUNE" / "LIGHTING.CSV")
+LightingEditor.write_file(lighting_instances, lighting_configs, SHOP / "TUNE" / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, DEBUG_FOLDER / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
 # Misc
