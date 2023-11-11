@@ -47,31 +47,28 @@ SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
 USER_RESOURCES = BASE_DIR / "Resources" / "UserResources"
 EDITOR_RESOURCES = BASE_DIR / "Resources" / "EditorResources"
+DEBUG_FOLDER = BASE_DIR / "Resources" / "Debug"
 MOVE = shutil.move
   
 
 #! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
 map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Menu
 map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file
-mm1_folder = BASE_DIR / 'MidtownMadness'      # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
+mm1_folder = BASE_DIR / 'MidtownMadness'        # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
 
 
 #* SETUP II (Map Creation)      
 play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
 delete_shop = True              # change to "True" to delete the raw city files after the .AR file has been created
 
+# Map Attributes
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
+set_props = True                # change to "True" if you want PROPS
 set_bridges = True              # change to "True" if you want BRIDGES
 set_facades = True              # change to "True" if you want FACADES
 set_physics = True              # change to "True" if you want PHYSICS
 
-# PROPS
-set_props = True                # change to "True" if you want PROPS
-append_props = False            # change to "True" if you want to append props
-input_props_f = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
-appended_props_f = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
-
-# HUD
+# Minimap
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
 shape_outline_color = None      # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
 
@@ -88,10 +85,13 @@ cruise_start_pos = (0.0, 0.0, 0.0)
 cruise_start_pos = (-83.0, 18.0, -114.0)
 cruise_start_pos = (40.0, 30.0, -40.0)
 
-# DLP
+# Misc
 set_dlp = False                 # change to "True" if you want to create a DLP file (scroll to the end of the script)
 
-# Misc
+append_props = False            # change to "True" if you want to append props
+append_input_props_f = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
+append_output_props_f = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
+
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
@@ -99,17 +99,30 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR
 load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
 texture_dir = EDITOR_RESOURCES / "TEXTURES"
 
-# Debug
-debug_bms = False               # change to "True" if you want BMS Debug text files (in the folder "Debug BMS")
+# Editor Debugging
+debug_bms = False               # change to "True" if you want BMS Debug text files 
 debug_props = False             # change to "True" if you want a PROPS Debug text file
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
 debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
-debug_hud = False               # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
-debug_hud_bound_id = False      # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
+debug_minimap = False           # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
+debug_minimap_id = False        # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
+
+# Input File Debugging // the output files are written to: "Resources / Debug / ..."
+debug_props_file = False
+debug_props_data_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
+
+debug_facade_file = False
+debug_facade_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"       # Change the input Facade file here
+
+debug_bounds_file = False
+debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
+
+debug_bounds_dir = False
+debug_bounds_data_dir = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"           # Change the input Bound directory here
 
 # Advanced
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
@@ -785,7 +798,7 @@ class Polygon:
    
     def __repr__(self, bnd_instance):
         vertices_coordinates = [bnd_instance.vertices[index] for index in self.vert_indices]
-        plane_d_str = ', '.join(f'{d:.2f}' for d in self.plane_d)
+        #plane_d_str = ', '.join(f'{d:.2f}' for d in self.plane_d)
         return (
             f"Polygon\n"
             f"Bound Number: {self.cell_id}\n"
@@ -795,7 +808,7 @@ class Polygon:
             f"Vertices Coordinates: {vertices_coordinates}\n"
             f"Plane Edges: {self.plane_edges}\n"
             f"Plane N: {self.plane_n}\n"
-            f"Plane D: [{plane_d_str}]\n")
+            f"Plane D: [{self.plane_d}]\n")
     
 ################################################################################################################               
 ################################################################################################################     
@@ -948,7 +961,7 @@ class BND:
     
         with open(bnd_folder / bnd_file, "wb") as f:
             bnd.write(f)
-        bnd.debug("BOUNDS_debug.txt", debug_bounds)          
+            bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt") , debug_bounds)          
                 
     def debug(self, filename: str, debug_bounds: bool) -> None:
         if debug_bounds:
@@ -956,8 +969,8 @@ class BND:
                 f.write(str(self))
                 
     @staticmethod
-    def debug_file(debug_bounds: bool, input_file: Path, output_file: Path) -> None:
-        if debug_bounds:
+    def debug_file(input_file: Path, output_file: Path, debug_bounds_file: bool) -> None:
+        if debug_bounds_file:
             with open(input_file, 'rb') as in_f:
                 bnd = BND.read(in_f)
                 
@@ -965,8 +978,8 @@ class BND:
                 out_f.write(repr(bnd))
             
     @staticmethod
-    def debug_directory(debug_bounds: bool, input_dir: Path, output_dir: Path) -> None:
-        if debug_bounds:
+    def debug_directory(input_dir: Path, output_dir: Path, debug_bounds_dir: bool) -> None:
+        if debug_bounds_dir:
             if not input_dir.exists():
                 print(f"The directory {dir} does not exist.")
                 return
@@ -1125,7 +1138,7 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                         
-    def debug(self, file_name: str, debug_bms: bool, debug_dir: Path = "Debug BMS") -> None:
+    def debug(self, file_name: str, debug_bms: bool, debug_dir: Path) -> None:
         if debug_bms:
             Path(debug_dir).mkdir(parents = True, exist_ok = True)
             with open(debug_dir / Path(file_name), 'w') as f:       
@@ -1294,9 +1307,9 @@ class DLP:
         vertices = Vector3.readn(f, num_vertices, byte_order = '>')
         return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
 
-    def write(self, file, set_dlp):
+    def write(self, output_file: str, set_dlp: bool):
         if set_dlp:
-            with open(file, 'wb') as f:
+            with open(output_file, 'wb') as f:
                 write_pack(f, '>4s', self.magic.encode())
                 write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)
 
@@ -1444,7 +1457,7 @@ def save_bms(
     bms.write(target_dir / bms_filename)
     
     if debug_bms:
-        bms.debug(bms_filename + ".txt", debug_bms)
+        bms.debug(bms_filename + ".txt", debug_bms, DEBUG_FOLDER / "BMS" / map_filename)
             
              
 # Create BMS      
@@ -2628,11 +2641,10 @@ def create_folders(map_filename: str) -> None:
         os.makedirs(path, exist_ok = True)
         
         
-def create_city_info(map_name: str, map_filename: str) -> None: 
-    cinfo_folder = SHOP / "TUNE"
+def create_map_info(map_name: str, map_filename: str) -> None: 
     cinfo_file = f"{map_filename}.CINFO"
     
-    with open(cinfo_folder / cinfo_file, "w") as f:
+    with open(SHOP / "TUNE" / cinfo_file, "w") as f:
         blitz_names = '|'.join(blitz_race_names)
         circuit_names = '|'.join(circuit_race_names)
         checkpoint_names = '|'.join(checkpoint_race_names)
@@ -3023,7 +3035,7 @@ def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float
     return min_x, max_x, min_z, max_z
 
 
-def create_minimap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool, 
+def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   shape_outline_color: str, line_width: float, background_color: str) -> None:
 
     if set_minimap and not is_blender_running():
@@ -3074,7 +3086,7 @@ def create_minimap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool,
         plt.savefig(output_folder / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
         plt.savefig(output_folder / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
             
-        if debug_hud or lars_race_maker:
+        if debug_minimap or lars_race_maker:
             fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
             ax_debug.set_facecolor('black')
             
@@ -3082,7 +3094,7 @@ def create_minimap(set_minimap: bool, debug_hud: bool, debug_hud_bound_id: bool,
                 hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
                 
                 draw_polygon(ax_debug, polygon, shape_outline_color, 
-                            label = bound_label if debug_hud_bound_id else None, 
+                            label = bound_label if debug_minimap_id else None, 
                             add_label = True, hud_fill = hud_fill, hud_color = hud_color)
                         
             ax_debug.axis('off')
@@ -3495,7 +3507,7 @@ def create_portals(
     portals_file = f"{map_filename}.PTL"
     
     if debug_portals:
-        debug_filename = "PORTALS_debug.txt"
+        debug_filename = DEBUG_FOLDER / "PORTALS"/ "PORTALS.txt"
         
         if os.path.exists(debug_filename):
             os.remove(debug_filename)
@@ -3584,8 +3596,8 @@ class BinaryBanger:
         write_pack(f, '<I', len(bangers))
     
     @classmethod
-    def write_all(cls, filename: Path, bangers, debug_props: bool):
-        with open(filename, mode = "wb") as f:
+    def write_all(cls, output_file: Path, bangers, debug_props: bool):
+        with open(output_file, mode = "wb") as f:
             cls.write_n(f, bangers)
         
             for banger in bangers:
@@ -3594,23 +3606,34 @@ class BinaryBanger:
                 banger.face.write(f)
                 f.write(banger.name.encode('utf-8'))
                     
-                if debug_props:
-                    cls.debug(bangers, USER_RESOURCES / "PROPS" / f"{filename}.txt")
-    
+            if debug_props:
+                cls.debug(bangers, DEBUG_FOLDER / "PROPS" / f"{output_file}.txt")
+                         
     @classmethod
-    def debug(cls, input_file: Path, output_file: Path) -> None:
+    def debug(cls, bangers, output_file: Path) -> None:
         try:
-            with open(input_file, 'rb') as in_f:
-                bangers = cls.read_all(in_f)       
-                  
             with open(output_file, 'w', encoding = 'utf-8') as out_f:
                 for banger in bangers:
                     out_f.write(repr(banger))
-                    
-            print(f"Processed {input_file.name} to {output_file.name}")
+            print(f"Processed banger data to {output_file.name}")
         except Exception as e:
-            print(f"Failed to process {input_file.name}: {e}")
-                
+            print(f"Failed to write to {output_file.name}: {e}")
+    
+    @classmethod
+    def debug_file(cls, input_file: Path, output_file: Path, debug_props_file: bool) -> None:
+        if debug_props_file:
+            try:
+                with open(input_file, 'rb') as in_f:
+                    bangers = cls.read_all(in_f)       
+                    
+                with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                    for banger in bangers:
+                        out_f.write(repr(banger))
+                        
+                print(f"Processed {input_file.name} to {output_file.name}")
+            except Exception as e:
+                print(f"Failed to process {input_file.name}: {e}")
+                                    
     def __repr__(self):
         return f'''
 BinaryBanger
@@ -3848,13 +3871,13 @@ class FacadeEditor:
 
     @staticmethod
     def debug(facades):
-        with open("FACADES_debug.txt", mode = 'w', encoding = 'utf-8') as f:
+        with open(DEBUG_FOLDER / "FACADES" / f"{map_filename}" + ".txt", mode = 'w', encoding = 'utf-8') as f:
             for facade in facades:
                 f.write(str(facade))
                 
     @classmethod
-    def debug_file(cls, debug_facades: bool, input_file: Path, output_file: Path) -> None:
-        if debug_facades:
+    def debug_file(cls, input_file: Path, output_file: Path, debug_facade_file: bool) -> None:
+        if debug_facade_file:
             with open(input_file, 'rb') as in_f:
                 try:
                     facades = []
@@ -3952,7 +3975,7 @@ class PhysicsEditor:
             cls.write_all(output_file, original_data)
             
             if debug_physics:
-                cls.debug(USER_RESOURCES / "PHYSICS" / "PHYSICS_DBss.txt", original_data)
+                cls.debug(DEBUG_FOLDER / "PHYSICS" / "PHYSICS_DB.txt", original_data)
                         
     @classmethod
     def debug(cls, debug_filename: Path, physics_params: List['PhysicsEditor']) -> None: 
@@ -5649,52 +5672,49 @@ dlp_patches = [
 ###################################################################################################################   
 ################################################################################################################### 
 
-# Call FUNCTIONS
+# Call Editor Functions
 create_folders(map_filename)
-create_city_info(map_name, map_filename)
+create_map_info(map_name, map_filename)
 BND.create(vertices, polys, map_filename, debug_bounds)
 create_cells(map_filename, truncate_cells)
 create_races(map_filename, race_data)
 create_cnr(map_filename, cnr_waypoints)
 
-BND.debug_file(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND", USER_RESOURCES / "BOUNDS" / "CHICAGO_HITID.txt")
-BND.debug_directory(debug_bounds, EDITOR_RESOURCES / "BOUNDS" / "BND FILES", USER_RESOURCES / "BOUNDS" / "BND TEXT FILES")
-
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
-
-PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
-
 FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
-FacadeEditor.debug_file(debug_facades, EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD", USER_RESOURCES / "FACADES" / "CHICAGO_FCD.txt")
-
-PropEditor(map_filename).append_to_file(input_props_f, props_to_append, appended_props_f, append_props) 
+PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
 prop_editor = PropEditor(map_filename)
 for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
 prop_editor.process_all(prop_list, set_props)
 
-# BinaryBanger.debug(EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG", USER_RESOURCES / "PROPS" / "CHICAGO_BNG_x.txt")
-
 lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.process_changes(lighting_instances, lighting_configs)
 LightingEditor.write_file(lighting_instances, SHOP / "TUNE" / "LIGHTING.CSV")
-LightingEditor.debug(lighting_instances, USER_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
+LightingEditor.debug(lighting_instances, DEBUG_FOLDER / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
+
+# Misc
+PropEditor(map_filename).append_to_file(append_input_props_f, props_to_append, append_output_props_f, append_props)
+DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
+
+# File Debugging
+BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
+FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
+BND.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
+BND.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
 
 copy_dev_folder(mm1_folder, map_filename)
 edit_and_copy_mmbangerdata(bangerdata_properties)
 copy_core_tune_files()
 copy_custom_textures()
-
 create_ext(map_filename, hudmap_vertices)
 create_animations(map_filename, anim_data, set_anim)   
 create_bridges(map_filename, bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_portals(map_filename, polys, vertices, empty_portals, debug_portals)
-create_minimap(set_minimap, debug_hud, debug_hud_bound_id, shape_outline_color, line_width = 0.7, background_color = 'black')
-
+create_minimap(set_minimap, debug_minimap, debug_minimap_id, shape_outline_color, line_width = 0.7, background_color = 'black')
 create_lars_race_maker(map_filename, street_list, lars_race_maker)
-
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
@@ -5730,6 +5750,5 @@ post_editor_cleanup(delete_shop)
 # print(BMS.read("CULL17_H2.BMS"))
 
 # DLP Writing and Reading
-# DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp)
 # time.sleep(1.0)
 # print((lambda f: DLP.read(f))((open("TEST.DLP", 'rb'))))
