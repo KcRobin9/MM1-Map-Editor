@@ -271,9 +271,9 @@ LAPS_5 = 5
 LAPS_10 = 10
 
 # Race Data
-ZERO_COPS, FULL_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
-ZERO_PED, HALF_PED, FULL_PED = 0.0, 0.5, 1.0
-ZERO_AMBIENT, HALF_AMBIENT, FULL_AMBIENT = 0.0, 0.5, 1.0
+NO_COPS, MAX_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
+NO_PEDS, MID_PEDS, MAX_PEDS = 0.0, 0.5, 1.0
+NO_AMBIENT, MID_AMBIENT, MAX_AMBIENT = 0.0, 0.5, 1.0
 
 # Waypoint Width
 LANE_4 = 15
@@ -303,7 +303,7 @@ ALL_MODES = "All Modes"
 # AI Intersection types
 STOP = 0 
 STOP_LIGHT = 1 
-YIELD = 2
+YIELD = 2  # Unused, but works
 CONTINUE = 3
 
 # AI Road properties, e.g. set True/False for the variable "traffic_blocked"
@@ -418,8 +418,8 @@ race_data = {
             'mm_data': {
                 #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds, Checkpoints, TimeLimit (s) (8 arguments)
                 #* N.B.: if you set 4 'waypoints', you should set 3 'Checkpoints' (n - 1)
-                'ama': [NOON, CLOUDY, MAX_OPP_8, FULL_COPS, FULL_AMBIENT, FULL_PED, 3, 999],        
-                'pro': [EVENING, CLOUDY, MAX_OPP_8, FULL_COPS, FULL_AMBIENT, FULL_PED, 3, 999], 
+                'ama': [NOON, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
+                'pro': [EVENING, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999], 
             },
             'aimap': {
                 'density': 0.25,
@@ -450,8 +450,8 @@ race_data = {
                 ],
             'mm_data': {
                 #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds (6 arguments)
-                'ama': [NOON, CLEAR, MAX_OPP_8, ZERO_COPS, ZERO_AMBIENT, ZERO_PED],
-                'pro': [NOON, CLOUDY, MAX_OPP_8, ZERO_COPS, ZERO_AMBIENT, ZERO_PED],
+                'ama': [NOON, CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
+                'pro': [NOON, CLOUDY, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
             },
             'aimap': {
                 'density': 0.2,
@@ -482,8 +482,8 @@ race_data = {
                 ],
             'mm_data': {
                 #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds, Laps (7 arguments)
-                'ama': [NIGHT, RAIN, MAX_OPP_8, ZERO_COPS, HALF_AMBIENT, HALF_PED, LAPS_2],
-                'pro': [NIGHT, SNOW, MAX_OPP_8, ZERO_COPS, HALF_AMBIENT, HALF_PED, LAPS_3],
+                'ama': [NIGHT, RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
+                'pro': [NIGHT, SNOW, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_3],
             },
             'aimap': {
                 'density': 0.75,
@@ -2720,6 +2720,22 @@ def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
 
 #! ================== THIS SECTION IS RELATED TO RACE FILES ================== !#
 
+# List for CHECKPOINT prefixes
+checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
+
+race_type_to_prefix = {
+    BLITZ: 'ABL',
+    CIRCUIT: 'CIR',
+    RACE: checkpoint_prefixes
+    }
+
+race_type_to_extension = {
+    BLITZ: '.B_',
+    CIRCUIT: '.C_',
+    RACE: '.R_',
+    }
+
+
 def ordinal(n):
     if 10 <= n % 100 <= 13:
         return f"{n}th"
@@ -2728,20 +2744,6 @@ def ordinal(n):
         2: f"{n}nd",
         3: f"{n}rd",
 }.get(n % 10, f"{n}th")
-    
-    
-# List for CHECKPOINT prefixes
-checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
-
-race_type_to_prefix = {
-    'BLITZ': 'ABL',
-    'CIRCUIT': 'CIR',
-    'RACE': checkpoint_prefixes}
-
-race_type_to_extension = {
-    'RACE': '.R_',
-    'CIRCUIT': '.C_',
-    'BLITZ': '.B_'}
 
 
 def fill_mm_date_values(race_type: str, user_values):
@@ -2782,7 +2784,7 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
                 waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
                 f.write(waypoint_line)
 
-    MOVE(opp_wp_file, SHOP / "RACE" / map_filename / opp_wp_file)
+    MOVE(opp_wp_file, SHOP / RACE / map_filename / opp_wp_file)
     
     
 def write_mm_data(mm_data_file, configs, race_type, prefix):
@@ -2844,7 +2846,7 @@ def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config
         for idx, opp_car in enumerate(opponent_cars):
             f.write(f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}\n")
             
-    MOVE(aimap_file_name, SHOP / "RACE" / map_filename / aimap_file_name)
+    MOVE(aimap_file_name, SHOP / RACE / map_filename / aimap_file_name)
 
     
 def create_races(map_filename: str, race_data) -> None:
@@ -2905,7 +2907,7 @@ def create_cnr(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]
                 f.write(", ".join(map(str, cnr_waypoints[i+1])) + filler)
                 f.write(", ".join(map(str, cnr_waypoints[i+2])) + filler)
 
-        MOVE(cnr_file, SHOP / "RACE" / map_filename / cnr_file)
+        MOVE(cnr_file, SHOP / RACE / map_filename / cnr_file)
   
 ################################################################################################################               
 ################################################################################################################              
