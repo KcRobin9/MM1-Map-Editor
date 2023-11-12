@@ -76,7 +76,7 @@ shape_outline_color = None      # change the outline of the minimap shapes to an
 set_ai_map = True               # create the Map file          keep both set to "True" if you want functional AI
 set_streets = True              # create the Streets files     keep both set to "True" if you want functional AI
 set_reverse_streets = False     # change to "True" if you want to automatically add a reverse AI path for each lane
-lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
+set_lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
@@ -107,7 +107,7 @@ debug_facades = False           # change to "True" if you want a FACADES Debug t
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
-debug_minimap = False           # change to "True" if you want a HUD Debug jpg file (defaults to True when "lars_race_maker" is set to True)
+debug_minimap = False           # change to "True" if you want a HUD Debug jpg file (defaults to True when "set_lars_race_maker" is set to True)
 debug_minimap_id = False        # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
@@ -2663,7 +2663,7 @@ CheckpointNames={checkpoint_names}
         
                     
 def copy_custom_textures() -> None: 
-    input_folder = BASE_DIR / "Custom Textures"
+    input_folder = EDITOR_RESOURCES / "CUSTOM TEXTURES"
     output_folder = SHOP / "TEX16O"
 
     for custom_texs in input_folder.iterdir():
@@ -3088,7 +3088,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         plt.savefig(output_folder / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
         plt.savefig(output_folder / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
             
-        if debug_minimap or lars_race_maker:
+        if debug_minimap or set_lars_race_maker:
             fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
             ax_debug.set_facecolor('black')
             
@@ -4177,7 +4177,8 @@ class BaiEditor:
     
     def map_template(self):
         streets_representation = '\n\t\t'.join(
-            [f'"{street}"' for street in self.streets])
+            [f'"{street}"' for street in self.streets]
+            )
 
         map_data = f"""
 mmMapData :0 {{
@@ -4309,10 +4310,7 @@ def get_first_and_last_street_vertices(street_list):
 
 #!########### Code by Lars (Modified) ############
 
-def create_lars_race_maker(map_filename: str, street_list, lars_race_maker: bool):
-      
-    vertices_processed = get_first_and_last_street_vertices(street_list)
-    
+def create_lars_race_maker(map_filename: str, street_list, set_lars_race_maker: bool):    
     polygons = hudmap_vertices
     min_x, max_x, min_z, max_z = create_ext(map_filename, polygons)
     
@@ -4440,10 +4438,11 @@ canvas.addEventListener('mousedown', function(e) {{
 </html>
     """
 
+    vertices_processed = get_first_and_last_street_vertices(street_list)
     coords_string = ",\n".join([str(coord) for coord in vertices_processed])
     new_html_content = html_start + coords_string + html_end
         
-    if lars_race_maker:
+    if set_lars_race_maker:
         with open("Lars_Race_Maker.html", "w") as f:
             f.write(new_html_content)
 
@@ -5716,7 +5715,7 @@ create_bridges(map_filename, bridges, set_bridges)
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_portals(map_filename, polys, vertices, empty_portals, debug_portals)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, shape_outline_color, line_width = 0.7, background_color = 'black')
-create_lars_race_maker(map_filename, street_list, lars_race_maker)
+create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 

@@ -8,5 +8,6 @@ MidtownMadness/commandline.txt
 MidtownMadness/crashes
 MidtownMadness/*.log
 MidtownMadness/!*.ar
+MidtownMadness/!*.cfg
 MidtownMadness/dev/
 MidtownMadness/shiplist.!*
