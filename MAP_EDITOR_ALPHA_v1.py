@@ -815,8 +815,8 @@ class Polygon:
 
 DEFAULT_VECTOR2 = Vector2(0.0, 0.0)  
 DEFAULT_VECTOR3 = Vector3(0.0, 0.0, 0.0) 
-poly_filler = Polygon(0, 0, 0, [0, 0, 0, 0], [DEFAULT_VECTOR3 for _ in range(4)], DEFAULT_VECTOR3, [0.0], 0)
-polys = [poly_filler]
+POLYGON_FILLER = Polygon(0, 0, 0, [0, 0, 0, 0], [DEFAULT_VECTOR3 for _ in range(4)], DEFAULT_VECTOR3, [0.0], 0)
+polys = [POLYGON_FILLER]
         
 ################################################################################################################               
 ################################################################################################################          
@@ -1138,7 +1138,7 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                         
-    def debug(self, file_name: str, debug_bms: bool, debug_dir: Path) -> None:
+    def debug(self, file_name: str, debug_dir: Path, debug_bms: bool) -> None:
         if debug_bms:
             Path(debug_dir).mkdir(parents = True, exist_ok = True)
             with open(debug_dir / Path(file_name), 'w') as f:       
@@ -1417,92 +1417,74 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
 
     return adjust_and_rotate_coords(coords, angle_degrees)
         
-               
-# SAVE BMS
-def save_bms(
-    texture_name: str, texture_indices: List[int] = [1], vertices = vertices, polys = polys, 
-    texture_darkness: List[int] = None, tex_coords: List[float] = None, tex_coord_mode = None, tex_coord_params = None, 
-    randomize_textures = randomize_textures, random_texture_exclude: bool = False, random_textures = random_textures, debug_bms = debug_bms):
-        
-    poly = polys[-1]  # Get the last polygon added
-    bound_number = poly.cell_id
-        
+
+def determine_bms_dir_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
     # Determine the target directory
     if bound_number < 200:
         target_dir = SHOP / "BMS" / f"{map_filename}LM"
     else:
         target_dir = SHOP / "BMS" / f"{map_filename}CITY"
-    target_dir.mkdir(parents = True, exist_ok = True)  # Ensure the directory exists
+    target_dir.mkdir(parents = True, exist_ok = True)
+
+    # Determine BMS filename
+    if any(name.startswith("T_WATER") for name in texture_name):
+        bms_filename = f"CULL{bound_number:02d}_A2.bms"
+    else:
+        bms_filename = f"CULL{bound_number:02d}_H.bms"
+
+    return target_dir, bms_filename
+
+           
+def save_bms(
+    texture_name: str, texture_indices: List[int] = [1], vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
+    texture_darkness: List[int] = None, tex_coords: List[float] = None, 
+    randomize_textures: bool = randomize_textures, random_texture_exclude: bool = False, random_textures: List[str] = random_textures, 
+    debug_bms: bool = debug_bms):
+        
+    poly = polys[-1]  # Get the last polygon added
+    bound_number = poly.cell_id
+
+    target_dir, bms_filename = determine_bms_dir_and_filename(bound_number, texture_name, map_filename)
     
     # Randomize Textures
     if randomize_textures and not random_texture_exclude:
         texture_name = [random.choice(random_textures)]
         
     stored_texture_names.append(texture_name[0])
+    single_poly = [POLYGON_FILLER, poly]
     
-    # Create correct BMS file for Water textures
-    if any(name.startswith("T_WATER") for name in texture_name):
-        bms_filename = "CULL{:02d}_A2.bms".format(bound_number)
-    else:
-        bms_filename = "CULL{:02d}_H.bms".format(bound_number)
-        
-    if tex_coord_mode is not None:
-        if tex_coord_params is None:
-            tex_coord_params = {}
-        tex_coords = compute_uv(tex_coord_mode, **tex_coord_params)
-        
-    single_poly = [poly_filler, poly]
-    
-    bms = create_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
+    bms = initialize_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
     bms.write(target_dir / bms_filename)
     
     if debug_bms:
-        bms.debug(bms_filename + ".txt", debug_bms, DEBUG_FOLDER / "BMS" / map_filename)
+        bms.debug(bms_filename + ".txt", DEBUG_FOLDER / "BMS" / map_filename, debug_bms)
             
-             
-# Create BMS      
-def create_bms(
+                 
+def initialize_bms(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> BMS:
     
-    shapes = []
-    
-    for poly in polys[1:]:  # Skip the first filler polygon
-        vertex_coordinates = [vertices[i] for i in poly.vert_indices]
-        shapes.append(vertex_coordinates)
-    
-    # Default BMS values | do not change
     magic, flags = "3HSM", 3
     radius, radiussq, bounding_box_radius = 0.0, 0.0, 0.0  
-    texture_count = len(texture_name)
+    
+    shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
+
     coordinates = [coord for shape in shapes for coord in shape]
     vertex_count = len(coordinates)
     adjunct_count = len(coordinates)
     surface_count = len(texture_indices)   
+    texture_count = len(texture_name)
     
-    # Even with three vertices, we still require four indices (indices_sides: [[0, 1, 2, 0]])
-    if len(coordinates) == QUAD:
+    # The file always requires four indices, with a Triangle that would be: (indices_sides: [[0, 1, 2, 0]])
+    if len(coordinates) in [QUAD, TRIANGLE]:
         indices_count = surface_count * 4
-    elif len(coordinates) == TRIANGLE:
-        indices_count = surface_count * 4
-                     
+
     enclosed_shape = list(range(adjunct_count))
-
-    # Texture Darkness and TexCoords        
-    if texture_darkness is None:
-        texture_darkness = [2] * adjunct_count  # 2 is default texture "brightness"
-        
-    if tex_coords is None:
-        tex_coords = [0.0 for _ in range(adjunct_count * 2)]
-
-    # Create a list of Indices Sides, one for each shape
-    indices_sides = []
-    index_start = 0
-    for shape in shapes:
-        shape_indices = list(range(index_start, index_start + len(shape)))
-        indices_sides.append(shape_indices)
-        index_start += len(shape)
-        
+    texture_darkness = texture_darkness or [2] * adjunct_count  # 2 is default texture "brightness"
+    tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]
+    
+    indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
+  
     return BMS(magic, vertex_count, adjunct_count, surface_count, indices_count, 
                radius, radiussq, bounding_box_radius, 
                texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, 
@@ -1976,7 +1958,7 @@ create_polygon(
 
 save_bms(
     texture_name = [GRASS_BASEBALL_TX],
-    tex_coords=compute_uv(bound_number = 863, tile_x = 10, tile_y = 10, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 863, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Triangle Brick I |
 create_polygon(
