@@ -38,7 +38,7 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt                
 from colorama import Fore, Style, init
-from typing import List, Dict, Union, Tuple, Optional, BinaryIO
+from typing import List, Dict, Set, Union, Tuple, Optional, BinaryIO
 
 
 #! SETUP 0 (Editor)                             
@@ -2894,99 +2894,99 @@ def create_cnr(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]
 ################################################################################################################               
 ################################################################################################################              
 
-# Create Cells                     
-def create_cells(map_filename: str, truncate_cells: bool) -> None:
+def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
     bms_files = []
     bms_a2_files = set()
     
-    landmark_folder = SHOP / "BMS" / f"{map_filename}LM"
-    city_folder = SHOP / "BMS" / f"{map_filename}CITY"
-    
     for folder in [landmark_folder, city_folder]:
         for file in folder.iterdir():
-            if file.name.endswith(".bms"):
-                bound_number = int(re.findall(r'\d+', file.name)[0])
-                bms_files.append(bound_number)
-                if file.name.endswith("_A2.bms"):
-                    bms_a2_files.add(bound_number)
-    
-    cells_folder = SHOP_CITY
-    cells_file = f"{map_filename}.CELLS"
-    
-    with open(cells_folder / cells_file, "w") as f:
+            
+            if file.name.endswith("_A2.bms"):
+                cell_id = int(re.findall(r'\d+', file.name)[0])
+                bms_files.append(cell_id)
+                bms_a2_files.add(cell_id)
+                
+            elif file.name.endswith(".bms"):
+                cell_id = int(re.findall(r'\d+', file.name)[0])
+                bms_files.append(cell_id)
+                
+    return bms_files, bms_a2_files
+
+
+def get_cell_visiblity(polys: List[Polygon]) -> List[int]:
+    always_visible_cell_ids = [poly.cell_id for poly in polys if poly.always_visible]
+    if 1 not in always_visible_cell_ids:
+        always_visible_cell_ids.insert(0, 1)
+    return always_visible_cell_ids
+
+
+def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:  
+    for poly in polys:
+        if poly.cell_id == cell_id:
+            return poly.cell_type
+    return DEFAULT
+
+
+def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, cell_type: int, bms_a2_files: Set[int]) -> Tuple[str, int]:
+    always_visible_count = len(always_visible_cell_ids)
+    always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
+    row = write_row(cell_id, cell_type, always_visible_data, bms_a2_files)
+
+    while len(row) >= CELL_THRESHOLD:
+        always_visible_cell_ids.pop()
+        always_visible_count = len(always_visible_cell_ids)
+        always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
+        row = write_row(cell_id, cell_type, always_visible_data, bms_a2_files)
+    return row, len(row) 
+        
+ 
+def write_row(cell_id: int, cell_type: int, always_visible_data: str, bms_a2_files: Set[int]) -> str:       
+    model = DRIFT_MODEL if cell_id in bms_a2_files else HIGH_MODEL
+    return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
+
+
+def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) -> None:
+    landmark_folder = SHOP / "BMS" / f"{map_filename}LM"
+    city_folder = SHOP / "BMS" / f"{map_filename}CITY"
+
+    bms_files, bms_a2_files = get_cell_ids(landmark_folder, city_folder)
+
+    cells_file = SHOP_CITY / f"{map_filename}.CELLS"
+
+    with open(cells_file, "w") as f:
         f.write(f"{len(bms_files)}\n")
         f.write(str(max(bms_files) + 1000) + "\n")
-        
-        sorted_bms_files = sorted(bms_files)
-        
-        # Collect all polygons with 'always_visible' set to True
-        always_visible_bound_numbers = [poly.cell_id for poly in polys if poly.always_visible]
-        if 1 not in always_visible_bound_numbers:  # Ensure that 1 is always in the list
-            always_visible_bound_numbers.insert(0, 1)
-        always_visible_count = len(always_visible_bound_numbers)
-        
-        max_warning_count = 0  
-        max_error_count = 0  
-        
-        for bound_number in sorted_bms_files:
-            # Get cell type
-            cell_type = None
-            for poly in polys:
-                if poly.cell_id == bound_number:
-                    cell_type = poly.cell_type
-                    break
 
-            if cell_type is None:
-                cell_type = 0
+        always_visible_cell_ids = get_cell_visiblity(polys)
+        always_visible_cell_count = len(always_visible_cell_ids)
+
+        max_warning_count = max_error_count = 0
+
+        for cell_id in sorted(bms_files):
+            cell_type = get_cell_type(cell_id, polys)
+            always_visible_data = ",0" if not always_visible_cell_count else f",{always_visible_cell_count},{','.join(map(str, always_visible_cell_ids))}"            
+            row = write_row(cell_id, cell_type, always_visible_data, bms_a2_files)
             
-            # Write cells data
-            if always_visible_count:
-                always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_bound_numbers))}"
+            if truncate_cells:
+                row, row_length = truncate_always_visible(always_visible_cell_ids.copy(), cell_id, cell_type, bms_a2_files)
             else:
-                always_visible_data = ",0"
+                row_length = len(row)
 
-            if bound_number in bms_a2_files:
-                row = f"{bound_number},{DRIFT_MODEL},{cell_type}{always_visible_data}\n"
-            else:
-                row = f"{bound_number},{HIGH_MODEL},{cell_type}{always_visible_data}\n"
-            
-            # Check for row length and update the max warning/error count
-            row_length = len(row)
-            
-            if truncate_cells and row_length >= CELL_THRESHOLD:
-                # Truncate the always_visible_bound_numbers until the row length is less than 254
-                while len(row) >= CELL_THRESHOLD:
-                    # Remove the last element from the list
-                    always_visible_bound_numbers.pop()
-                    
-                    # Reconstruct the always_visible_data string
-                    always_visible_count = len(always_visible_bound_numbers)
-                    always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_bound_numbers))}"
-                    
-                    # Reconstruct the row string
-                    if bound_number in bms_a2_files:
-                        row = f"{bound_number},{DRIFT_MODEL},{cell_type}{always_visible_data}\n"
-                    else:
-                        row = f"{bound_number},{HIGH_MODEL},{cell_type}{always_visible_data}\n"
-                    
-                    # Update the row length
-                    row_length = len(row)
-
-            # Update the max warning/error count based on the new row length
+            # Update max warning / error count
             if 200 <= row_length < CELL_THRESHOLD:
                 max_warning_count = max(max_warning_count, row_length)
             elif row_length >= CELL_THRESHOLD:
                 max_error_count = max(max_error_count, row_length)
-            
+
             f.write(row)
-            
+
         if 200 <= max_warning_count < CELL_THRESHOLD:
             warning_message = f"""
             ***WARNING***
             Close to row character limit 254 in .CELLS file. 
             Maximum character count encountered is {max_warning_count}.
-            To reduce the charachter count, consider setting 'always_visible' to False for some polygons.
-            If the 'bound_number' is 99 (2 charachters), then it consumes 3 characters in the CELLS file.
+            To reduce the character count, consider setting 'always_visible' to False for some polygons.
+            If the 'cell_id' is 99 (2 characters), then it consumes 3 characters in the CELLS file.
             *************\n
             """
             print(warning_message)
@@ -2997,10 +2997,12 @@ def create_cells(map_filename: str, truncate_cells: bool) -> None:
             Character limit of 254 exceeded in .CELLS file.
             Maximum character count encountered is {max_error_count}.
             To solve the problem, set 'always_visible' to False for some polygons.
-            If the 'bound_number' is 99 (2 charachters), then it consumes 3 characters in the CELLS file.
+            If the 'cell_id' is 99 (2 characters), then it consumes 3 characters in the CELLS file.
             """
             raise ValueError(error_message)
         
+################################################################################################################               
+################################################################################################################
 
 # Create EXT file                      
 def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float, float, float]:
@@ -5668,7 +5670,7 @@ dlp_patches = [
 create_folders(map_filename)
 create_map_info(map_name, map_filename)
 BND.create(vertices, polys, map_filename, debug_bounds)
-create_cells(map_filename, truncate_cells)
+create_cells(map_filename, polys, truncate_cells)
 create_races(map_filename, race_data)
 create_cnr(map_filename, cnr_waypoints)
 
