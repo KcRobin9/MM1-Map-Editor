@@ -4560,8 +4560,15 @@ def adjust_3D_view_settings() -> None:
                     # Uniform Lighting
                     shading.light = 'FLAT'
                     shading.color_type = 'TEXTURE'
+                    
+                    
+def enable_vertex_snapping() -> None:
+    bpy.context.tool_settings.use_snap = True
+    bpy.context.tool_settings.snap_elements = {'VERTEX'}
+    bpy.context.tool_settings.snap_target = 'CLOSEST'  
 
-              
+
+
 def load_dds_resources(texture_dir: Path, load_tex_materials: bool) -> None:
     for file_name in os.listdir(texture_dir):
         if file_name.lower().endswith(".dds"):
@@ -4822,6 +4829,7 @@ def create_blender_meshes() -> None:
     if is_blender_running():
         enable_developer_extras()
         adjust_3D_view_settings()
+        enable_vertex_snapping()
         load_dds_resources(texture_dir, load_tex_materials)
                     
         texture_paths = [os.path.join(texture_dir, f"{texture_name}.DDS") for texture_name in stored_texture_names]
