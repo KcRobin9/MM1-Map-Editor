@@ -3750,8 +3750,8 @@ class PropEditor:
                 extracted_prop_dim[prop_name] = Vector3(float(value_x), float(value_y), float(value_z))
         return extracted_prop_dim
 
-#################################################################################
-#################################################################################
+################################################################################################################               
+################################################################################################################
 
 # FACADE EDITOR CLASS
 class FacadeEditor:
@@ -3763,6 +3763,10 @@ class FacadeEditor:
         self.sides = sides
         self.scale = scale
         self.name = name
+        
+    @classmethod
+    def readn(cls, f) -> int:
+        return read_unpack(f, '<I')[0]
 
     @classmethod
     def read(cls, f) -> 'FacadeEditor':
@@ -3773,112 +3777,50 @@ class FacadeEditor:
         scale = read_unpack(f, '<f')[0]
         name = read_binary_name(f)
         return cls(room, flags, offset, face, sides, scale, name)
+    
+    @classmethod
+    def read_all(cls, f) -> 'List[FacadeEditor]':
+        return [cls.read(f) for _ in range(cls.readn(f))]
+    
+    @classmethod
+    def write_n(self, f, facades):
+        return write_pack(f, '<I', len(facades))
         
-    @staticmethod
-    def read_scales(scales_file):
-        scales = {}
-        with open(scales_file, 'r') as f:
-            for line in f:
-                name, scale = line.strip().split(": ")
-                scales[name] = float(scale)
-        return scales
-
-    def write(self, f):
+    def write(self, f):  
         write_pack(f, '<2H', ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
-        write_pack(f, '<3f', *self.offset)
+        write_pack(f, '<3f', *self.offset)  
         write_pack(f, '<3f', *self.face)
         write_pack(f, '<3f', *self.sides)
         write_pack(f, '<f', self.scale)
         f.write(self.name.encode('utf-8'))
         f.write(b'\x00')
-                
-    @classmethod
-    def create(cls, facade_file: str, packed_facades, output_dir: Path, set_facades: bool, debug_facades: bool):
-        if set_facades:
-            facades = cls.build(packed_facades)
-            cls.finalize(facade_file, facades)
-            MOVE(facade_file, output_dir / facade_file)
-
-            if debug_facades:
-                cls.debug(facades)
 
     @classmethod
-    def build(cls, packed_facades):
-        facades = []
-        axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
-
-        for params in packed_facades:
-            axis = axis_dict[params['axis']]
-            start_coord = params['offset'][axis]
-            end_coord = params['end'][axis]
-            
-            direction = 1 if start_coord < end_coord else -1
-            
-            num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
-
-            for i in range(num_facades):
-                flags = params['flags']
-                
-                current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
-                
-                sides = params.get('sides', (0.0, 0.0, 0.0))
-                scale = scales.get(params['name'], params.get('scale', 1.0))
-                name = params['name']
-
-                facade = FacadeEditor(ROOM, flags, current_start, current_end, sides, scale, name)
-                facades.append(facade)
-
-        return facades
-
-    @staticmethod
-    def calculate_start_end(params, axis, direction, start_coord, i):
-        current_start = list(params['offset'])
-        current_end = list(params['end'])
-        
-        shift = direction * params['separator'] * i
-        
-        current_start[axis] = start_coord + shift
-        end_coord = params['end'][axis]
-        
-        if direction == 1:
-            current_end[axis] = min(start_coord + shift + params['separator'], end_coord)
-        else:
-            current_end[axis] = max(start_coord + shift - params['separator'], end_coord)
-            
-        return tuple(current_start), tuple(current_end)
-
-    @staticmethod
-    def finalize(filename, facades):
-        with open(filename, mode = 'wb') as f:
-            write_pack(f, '<I', len(facades))
+    def write_all(cls, output_file, facades):
+        with open(output_file, mode = 'wb') as f:
+            cls.write_n(f, facades)
             for facade in facades:
                 facade.write(f)
-
+                         
     @staticmethod
     def debug(facades):
         with open(DEBUG_FOLDER / "FACADES" / f"{map_filename}" + ".txt", mode = 'w', encoding = 'utf-8') as f:
             for facade in facades:
                 f.write(str(facade))
-                
+                               
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_facade_file: bool) -> None:
         if debug_facade_file:
-            with open(input_file, 'rb') as in_f:
-                try:
-                    facades = []
-                    num_facades = read_unpack(in_f, '<I')[0]
-                    for _ in range(num_facades):
-                        facade = cls.read(in_f)
-                        facades.append(facade)
-                except Exception as e:
-                    print(f"Failed to process {input_file.name}: {e}")
-                    return
+            try:
+                with open(input_file, 'rb') as in_f:
+                    facades = cls.read_all(in_f)
 
-            with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                for facade in facades:
-                    out_f.write(repr(facade))
-        
+                with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                    for facade in facades:
+                        out_f.write(repr(facade))
+            except Exception as e:
+                print(f"Failed to process {input_file.name}: {e}")
+
     def __repr__(self):
         return f"""
 Facade Editor
@@ -3890,9 +3832,68 @@ Facade Editor
     Scale: {self.scale:.2f}
     Name: {self.name}
     """
+    
+################################################################################################################               
+################################################################################################################
+        
+class FacadeProcessor:
+    scales_file = EDITOR_RESOURCES / "FACADES" / "FCD scales.txt"
+    
+    @classmethod
+    def create(cls, output_file: str, user_set_facades, set_facades: bool, debug_facades: bool):
+        if set_facades:
+            facades = cls.process(user_set_facades)
+            FacadeEditor.write_all(output_file, facades)
+            
+            if debug_facades:
+                FacadeEditor.debug(facades)
 
-#################################################################################
-#################################################################################
+    @staticmethod
+    def read_scales(scales_file: Path):
+        with open(scales_file, 'r') as f:
+            return {name: float(scale) for name, scale in (line.strip().split(": ") for line in f)}
+
+    @classmethod
+    def process(cls, user_set_facades):
+        axis_dict = {'x': 0, 'y': 1, 'z': 2}
+        scales = cls.read_scales(cls.scales_file)
+
+        facades = []
+        for params in user_set_facades:
+            axis = axis_dict[params['axis']]
+            start_coord = params['offset'][axis]
+            end_coord = params['end'][axis]
+
+            direction = 1 if start_coord < end_coord else -1
+
+            num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
+
+            for i in range(num_facades):
+                current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
+                sides = params.get('sides', (0.0, 0.0, 0.0))
+                scale = scales.get(params['name'], params.get('scale', 1.0))
+                facades.append(FacadeEditor(ROOM, params['flags'], current_start, current_end, sides, scale, params['name']))
+
+        return facades
+    
+    @staticmethod
+    def calculate_start_end(params, axis, direction, start_coord, i):
+        shift = direction * params['separator'] * i
+        current_start = list(params['offset'])
+        current_end = list(params['end'])
+
+        current_start[axis] = start_coord + shift
+        end_coord = params['end'][axis]
+        
+        if direction == 1:
+            current_end[axis] = min(start_coord + shift + params['separator'], end_coord)
+        else:
+            current_end[axis] = max(start_coord + shift - params['separator'], end_coord)
+
+        return tuple(current_start), tuple(current_end)
+    
+################################################################################################################               
+################################################################################################################
 
 # PHYSICS EDITOR CLASS
 class PhysicsEditor:
@@ -3990,8 +3991,8 @@ class PhysicsEditor:
     ptx_color   = {self.ptx_color}
     """
 
-###################################################################################################################
-###################################################################################################################
+################################################################################################################               
+################################################################################################################
 
 # LIGHTING EDITOR CLASS
 class LightingEditor:
@@ -5675,7 +5676,7 @@ create_races(map_filename, race_data)
 create_cnr(map_filename, cnr_waypoints)
 
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
-FacadeEditor.create(f"{map_filename}.FCD", fcd_list, BASE_DIR / SHOP_CITY, set_facades, debug_facades)
+FacadeProcessor.create(SHOP_CITY / f"{map_filename}.FCD", fcd_list, set_facades, debug_facades)
 PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
 prop_editor = PropEditor(map_filename)
