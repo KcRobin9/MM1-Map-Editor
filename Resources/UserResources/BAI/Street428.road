@@ -1,0 +1,40 @@
+mmRoadSect :0 {
+    NumVertexs 4
+    NumLanes[0] 1
+    NumLanes[1] 1
+    NumSidewalks[0] 0
+    NumSidewalks[1] 0
+    TotalVertexs 8
+    Vertexs [
+        666.67474 8e-05 -692.8747
+        628.34894 9e-05 -731.92377
+        589.3434 1e-04 -803.04285
+        549.6061 1e-04 -842.2811
+        549.6061 1e-04 -842.2811
+        589.3434 1e-04 -803.04285
+        628.34894 9e-05 -731.92377
+        666.67474 8e-05 -692.8747
+    ]
+    Normals [
+        0.0 1.0 0.0
+        0.0 1.0 0.0
+        0.0 1.0 0.0
+        0.0 1.0 0.0
+    ]
+    IntersectionType[0] 3
+    IntersectionType[1] 3
+    StopLightPos[0] 0.0 0.0 0.0
+    StopLightPos[1] 0.0 0.0 0.0
+    StopLightPos[2] 0.0 0.0 0.0
+    StopLightPos[3] 0.0 0.0 0.0
+    Blocked[0] 1
+    Blocked[1] 1
+    PedBlocked[0] 1
+    PedBlocked[1] 1
+    StopLightName [
+        "tplttrafc"
+        "tplttrafc"
+    ]
+    Divided 0
+    Alley 0
+}
