@@ -76,7 +76,7 @@ shape_outline_color = None      # change the outline of the minimap shapes to an
 set_ai_map = True               # create the Map file          keep both set to "True" if you want functional AI
 set_streets = True              # create the Streets files     keep both set to "True" if you want functional AI
 set_reverse_streets = False     # change to "True" if you want to automatically add a reverse AI path for each lane
-set_lars_race_maker = False         # change to "True" if you want to create "lars race maker" 
+set_lars_race_maker = False     # change to "True" if you want to create "lars race maker" 
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
@@ -129,6 +129,9 @@ debug_bounds_data_dir = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"           # Ch
 
 debug_bms_file = False
 debug_bms_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"             # Change the input BMS file here
+
+debug_bms_dir = False
+debug_bms_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"                 # Change the input BMS directory here
 
 # Advanced
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
@@ -1165,6 +1168,13 @@ class BMS:
         if debug_bms_file:
             with open(output_file, 'w') as out_f:
                 out_f.write(str(cls.read(input_file)))
+                
+    @classmethod
+    def debug_directory(cls, input_dir: Path, output_dir: Path, debug_bms_dir: bool) -> None:
+        if debug_bms_dir:
+            for file in input_dir.iterdir():
+                if file.suffix == '.BMS':  
+                    cls.debug_file(file, output_dir / (file.stem + ".txt"), True)
                                 
     def __repr__(self):
         rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
@@ -3034,10 +3044,9 @@ def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float
     min_x, max_x = min(x_coords), max(x_coords)
     min_z, max_z = min(z_coords), max(z_coords)
 
-    ext_folder = SHOP_CITY
-    ext_file = f"{map_filename}.EXT"
+    ext_file = SHOP_CITY / f"{map_filename}.EXT"
 
-    with open(ext_folder / ext_file, 'w') as f:
+    with open(ext_file, 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
     return min_x, max_x, min_z, max_z
@@ -6070,6 +6079,7 @@ DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups,
 BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
 FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
 BMS.debug_file(debug_bms_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_FILE.txt", debug_bms_file)
+BMS.debug_directory(debug_bms_data_dir, DEBUG_FOLDER / "BMS" / "BMS TEXT FILES", debug_bms_dir) 
 BND.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
 BND.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
 debug_bai(debug_bai_data_file, debug_bai_file)
@@ -6116,9 +6126,6 @@ post_editor_cleanup(delete_shop)
 ################################################################################################################### 
 
 #? Extra
-# Read any BMS file in the current directory
-# print(BMS.read("CULL17_H2.BMS"))
-
 # DLP Writing and Reading
 # time.sleep(1.0)
 # print((lambda f: DLP.read(f))((open("TEST.DLP", 'rb'))))
