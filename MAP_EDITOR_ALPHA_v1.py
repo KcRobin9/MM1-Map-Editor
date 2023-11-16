@@ -127,6 +127,9 @@ debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Ch
 debug_bounds_dir = False
 debug_bounds_data_dir = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"           # Change the input Bound directory here
 
+debug_bms_file = False
+debug_bms_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"             # Change the input BMS file here
+
 # Advanced
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
@@ -1157,6 +1160,12 @@ class BMS:
             with open(debug_dir / Path(file_name), 'w') as f:       
                 f.write(str(self))
                 
+    @classmethod
+    def debug_file(cls, input_file: Path, output_file: Path, debug_bms_file: bool) -> None:
+        if debug_bms_file:
+            with open(output_file, 'w') as out_f:
+                out_f.write(str(cls.read(input_file)))
+                                
     def __repr__(self):
         rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
         return f'''
@@ -6060,6 +6069,7 @@ DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups,
 # File Debugging
 BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
 FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
+BMS.debug_file(debug_bms_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_FILE.txt", debug_bms_file)
 BND.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
 BND.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
 debug_bai(debug_bai_data_file, debug_bai_file)
