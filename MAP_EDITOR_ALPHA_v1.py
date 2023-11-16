@@ -4306,11 +4306,11 @@ class MiniParser:
         elif isinstance(value, float):
             self.print(repr(np.float32(value)))
         elif isinstance(value, Vector3):
-            self.value(value.x)
+            self.print('{:.2f}'.format(value.x))
             self.print(' ')
-            self.value(value.y)
+            self.print('{:.2f}'.format(value.y))
             self.print(' ')
-            self.value(value.z)
+            self.print('{:.2f}'.format(value.z))
         else:
             raise Exception('Invalid Value Type {}'.format(type(value)))
 
