@@ -118,6 +118,9 @@ debug_props_data_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Ch
 debug_facade_file = False
 debug_facade_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"       # Change the input Facade file here
 
+debug_portals_file = False
+debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
+
 debug_bai_file = False
 debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"
 
@@ -3514,62 +3517,112 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
                     
     return cells, portals
 
+#! ########### Code by 0x1F9F1 (Modified) ############ !#   
 
-# Create PTL
-def create_portals(
-    map_filename: str, polys: List[Polygon], vertices: List[Vector3], 
-    empty_portals: bool, debug_portals: bool) -> None:
-    
-    portals_folder = SHOP_CITY
-    portals_file = f"{map_filename}.PTL"
-    
-    if debug_portals:
-        debug_filename = DEBUG_FOLDER / "PORTALS"/ "PORTALS.txt"
+################################################################################################################               
+################################################################################################################
+
+# PORTAL CLASS 
+class Portals:
+    def __init__(self, flags: int, edge_count: int, gap2: int, cell_1: int, cell_2: int, height: float, _min: Vector3, _max: Vector3):
+        self.flags = flags
+        self.edge_count = edge_count
+        self.gap2 = gap2
+        self.cell_1 = cell_1
+        self.cell_2 = cell_2
+        self.height = height
+        self._min = _min 
+        self._max = _max
         
-        if os.path.exists(debug_filename):
-            os.remove(debug_filename)
-            
-        debug_file = open(debug_filename, "a")
-        debug_file.write("Portal Debug File\n")
-        debug_file.write("=================\n")
-    
-    if empty_portals:
-        with open(portals_folder / portals_file, 'wb') as f:
-            pass
+    @classmethod
+    def readn(cls, f) -> int:
+        return read_unpack(f, '<I')[0]
         
-    else:
-        _, portals = prepare_portals(polys, vertices)    
-        with open(portals_folder / portals_file, 'wb') as f:
-            
-            write_pack(f, '<I', 0)
-            write_pack(f, '<I', len(portals))    
-            
-            if debug_portals:
-                debug_file.write(f"{len(portals)} portals prepared.\n\n")
-            
-            for cell_1, cell_2, v1, v2 in portals:
-                flags = 0x2
-                edge_count = 2
-                write_pack(f, '<2B', flags, edge_count)
-                write_pack(f, '<H', 101)
-                write_pack(f, '<2H', cell_2, cell_1)  
-                  
-                # TODO: Change height
-                height = MAX_Y - MIN_Y
-                write_pack(f, '<f', height)
-                    
-                Vector3(v1.x, 0, v1.y).write(f)
-                Vector3(v2.x, 0, v2.y).write(f)
+    @classmethod
+    def read(cls, f) -> 'Portals':
+        flags, edge_count = read_unpack(f, '<2H')
+        gap2 = read_unpack(f, '<h')
+        cell_1, cell_2 = read_unpack(f, '<2h')  
+        height = read_unpack(f, '<f')   
+        _min = Vector3.read(f)
+        _max = Vector3.read(f)
+        return cls(flags, edge_count, gap2, cell_1, cell_2, height, _min, _max)
+    
+    @classmethod
+    def read_all(cls, f) -> 'List[Portals]':
+        return [cls.read(f) for _ in range(cls.readn(f))]
+    
+    @classmethod
+    def write_n(cls, f, portals) -> None:
+        write_pack(f, '<I', len(portals))
                 
-                if debug_portals:
-                    debug_file.write(f"Portal between Cell {cell_1} and Cell {cell_2}\n")
-                    debug_file.write(f"Vertices ({v1}), ({v2})\n\n")
+    @classmethod
+    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], empty_portals: bool, debug_portals: bool):        
+        with open(SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
+            if empty_portals:
+                pass
+            else:
+                _, portals = prepare_portals(polys, vertices)
+                
+                write_pack(f, '<I', 0)
+                cls.write_n(f, portals)
+                            
+                for cell_1, cell_2, v1, v2 in portals:
+                    flags = 0x2
+                    edge_count = 2
+                    gap2 = 101
+                    write_pack(f, '<2B', flags, edge_count)
+                    write_pack(f, '<H', gap2)
+                    write_pack(f, '<2H', cell_2, cell_1)  
                     
-    if debug_portals:
-        debug_file.close()
-
-#! ########### Code by 0x1F9F1 (Modified) ############ !#                   
-
+                    # TODO: Change height
+                    height = MAX_Y - MIN_Y
+                    write_pack(f, '<f', height)
+                        
+                    Vector3(v1.x, 0, v1.y).write(f)
+                    Vector3(v2.x, 0, v2.y).write(f)
+                    
+                    if debug_portals:  
+                        cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")
+            
+    @classmethod  # TODO: Fix me
+    def debug(cls, portals, output_file: Path): 
+        try:
+            with open(output_file, 'w') as out_f:
+                for portal in portals:
+                    out_f.write(repr(portal))
+            print(f"Processed portal data to {output_file.name}")
+        except Exception as e:
+            print(f"Failed to write to {output_file.name}: {e}")
+                    
+    @classmethod  # TODO: Fix me
+    def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool):
+        if debug_portals_file:
+            try:
+                with open(input_file, 'rb') as in_f:
+                    portals = cls.read_all(in_f)       
+                    
+                with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                    for portal in portals:
+                        out_f.write(repr(portal))
+                        
+                print(f"Processed {input_file.name} to {output_file.name}")
+            except Exception as e:
+                print(f"Failed to process {input_file.name}: {e}")
+                
+    def __repr__(self):
+            return f'''
+Portals
+Flags: {self.flags}
+EdgeCount: {self.edge_count}
+Gap2: {self.gap2}
+Cell 1: {self.cell_1}
+Cell 2: {self.cell_2}
+Height: {self.height}
+Min: {self._min}
+Max: {self._max}
+    ''' 
+              
 ################################################################################################################               
 ################################################################################################################            
    
@@ -6054,6 +6107,7 @@ dlp_patches = [
 create_folders(map_filename)
 create_map_info(map_name, map_filename)
 BND.create(vertices, polys, map_filename, debug_bounds)
+Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
 create_cells(map_filename, polys, truncate_cells)
 create_races(map_filename, race_data)
 create_cnr(map_filename, cnr_waypoints)
@@ -6076,8 +6130,10 @@ PropEditor(map_filename).append_to_file(append_input_props_f, props_to_append, a
 DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
 
 # File Debugging
+debug_bai(debug_bai_data_file, debug_bai_file)
 BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
 FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
+Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
 BMS.debug_file(debug_bms_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_FILE.txt", debug_bms_file)
 BMS.debug_directory(debug_bms_data_dir, DEBUG_FOLDER / "BMS" / "BMS TEXT FILES", debug_bms_dir) 
 BND.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
@@ -6092,7 +6148,6 @@ create_ext(map_filename, hudmap_vertices)
 create_animations(map_filename, anim_data, set_anim)   
 create_bridges(map_filename, bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
-create_portals(map_filename, polys, vertices, empty_portals, debug_portals)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, shape_outline_color, line_width = 0.7, background_color = 'black')
 create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
 create_ar(map_filename)
