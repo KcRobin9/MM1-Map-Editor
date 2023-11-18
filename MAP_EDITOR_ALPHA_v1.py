@@ -122,10 +122,7 @@ debug_portals_file = False
 debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
 debug_bai_file = False
-debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"
-
-debug_dlp_file = False
-debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"
+debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"              # Change the input BAI file here
 
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
@@ -138,6 +135,12 @@ debug_bms_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"             # Ch
 
 debug_bms_dir = False
 debug_bms_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"                 # Change the input BMS directory here
+
+debug_dlp_file = False
+debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"        # Change the input DLP file here
+
+debug_dlp_dir = False    
+debug_dlp_data_dir = EDITOR_RESOURCES / "DLP" / "DLP FILES"                 # Change the input DLP directory here
 
 # Advanced
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
@@ -1360,8 +1363,7 @@ class DLP:
                     
                 for vertex in self.vertices: 
                     vertex.write(f, byte_order = '>') 
-                    
-                    
+                          
     @staticmethod          
     def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
         if debug_dlp_file:
@@ -1370,7 +1372,17 @@ class DLP:
                 
             with open(output_file, 'w') as f:
                 f.write(repr(dlp_data))
-                                    
+                         
+    @staticmethod
+    def debug_directory(input_dir: Path, output_dir: Path, debug_dlp_dir: bool):
+        if debug_dlp_dir:
+            output_dir.mkdir(parents = True, exist_ok = True)
+
+            for file in input_dir.glob('*.DLP'):  
+                if file.is_file():
+                    output_file = output_dir / (file.stem + '_.txt')
+                    DLP.debug_file(file, output_file, True)
+                                                        
     def __repr__(self):
         return f'''
 DLP
@@ -6145,7 +6157,6 @@ DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups,
 
 # File Debugging
 debug_bai(debug_bai_data_file, debug_bai_file)
-DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
 BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
 FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
 Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
@@ -6153,6 +6164,8 @@ BMS.debug_file(debug_bms_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_F
 BMS.debug_directory(debug_bms_data_dir, DEBUG_FOLDER / "BMS" / "BMS TEXT FILES", debug_bms_dir) 
 BND.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
 BND.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
+DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
+DLP.debug_directory(debug_dlp_data_dir, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_dir)
 debug_bai(debug_bai_data_file, debug_bai_file)
 
 copy_dev_folder(mm1_folder, map_filename)
@@ -6194,8 +6207,3 @@ post_editor_cleanup(delete_shop)
 
 ###################################################################################################################   
 ################################################################################################################### 
-
-#? Extra
-# DLP Writing and Reading
-# time.sleep(1.0)
-# print((lambda f: DLP.read(f))((open("TEST.DLP", 'rb'))))
