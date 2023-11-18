@@ -1,0 +1,227 @@
+
+DLP
+Magic: DLP7
+Num Groups: 1
+Num Patches: 6
+Num Vertices: 8
+Groups: [
+DLPGroup
+Name: BOUND
+Num Vertices: 0
+Num Patches: 6
+Vertex Indices: []
+Patch Indices: [0, 1, 2, 3, 4, 5]
+        ]
+Patches: [
+DLPPatch
+S Res: 4
+T Res: 1
+Flags: 1513
+R Opts: 636
+Mtl Idx: 0
+Tex Idx: 0
+Phys Idx: 0
+Vertices: [
+DLPVertex
+Id: (1,)
+Normal: {1.00,0.00,0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (0,)
+Normal: {1.00,0.00,0.00}
+UV: 0.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (2,)
+Normal: {1.00,0.00,0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (3,)
+Normal: {1.00,0.00,0.00}
+UV: 1.00, 1.00
+Color: (4294967295,)
+        ]
+Name: 
+        , 
+DLPPatch
+S Res: 4
+T Res: 1
+Flags: 1289
+R Opts: 636
+Mtl Idx: 0
+Tex Idx: 0
+Phys Idx: 0
+Vertices: [
+DLPVertex
+Id: (6,)
+Normal: {-1.00,0.00,0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (4,)
+Normal: {-1.00,0.00,0.00}
+UV: 0.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (5,)
+Normal: {-1.00,0.00,0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (7,)
+Normal: {-1.00,0.00,0.00}
+UV: 1.00, 1.00
+Color: (4294967295,)
+        ]
+Name: 
+        , 
+DLPPatch
+S Res: 4
+T Res: 1
+Flags: 1289
+R Opts: 636
+Mtl Idx: 0
+Tex Idx: 0
+Phys Idx: 0
+Vertices: [
+DLPVertex
+Id: (4,)
+Normal: {0.00,-1.00,0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (0,)
+Normal: {0.00,-1.00,0.00}
+UV: 0.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (1,)
+Normal: {0.00,-1.00,0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (5,)
+Normal: {0.00,-1.00,0.00}
+UV: 1.00, 1.00
+Color: (4294967295,)
+        ]
+Name: 
+        , 
+DLPPatch
+S Res: 4
+T Res: 1
+Flags: 1289
+R Opts: 636
+Mtl Idx: 0
+Tex Idx: 0
+Phys Idx: 0
+Vertices: [
+DLPVertex
+Id: (5,)
+Normal: {0.00,0.00,1.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (1,)
+Normal: {0.00,0.00,1.00}
+UV: 0.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (3,)
+Normal: {0.00,0.00,1.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (7,)
+Normal: {0.00,0.00,1.00}
+UV: 1.00, 1.00
+Color: (4294967295,)
+        ]
+Name: 
+        , 
+DLPPatch
+S Res: 4
+T Res: 1
+Flags: 1289
+R Opts: 636
+Mtl Idx: 0
+Tex Idx: 0
+Phys Idx: 0
+Vertices: [
+DLPVertex
+Id: (7,)
+Normal: {0.00,1.00,-0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (3,)
+Normal: {0.00,1.00,-0.00}
+UV: 0.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (2,)
+Normal: {0.00,1.00,-0.00}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (6,)
+Normal: {0.00,1.00,-0.00}
+UV: 1.00, 1.00
+Color: (4294967295,)
+        ]
+Name: 
+        , 
+DLPPatch
+S Res: 4
+T Res: 1
+Flags: 1289
+R Opts: 636
+Mtl Idx: 0
+Tex Idx: 0
+Phys Idx: 0
+Vertices: [
+DLPVertex
+Id: (6,)
+Normal: {0.00,-0.20,-0.98}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (2,)
+Normal: {0.00,-0.20,-0.98}
+UV: 0.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (0,)
+Normal: {0.00,-0.20,-0.98}
+UV: 1.00, 0.00
+Color: (4294967295,)
+        , 
+DLPVertex
+Id: (4,)
+Normal: {0.00,-0.20,-0.98}
+UV: 1.00, 1.00
+Color: (4294967295,)
+        ]
+Name: 
+        ]
+Vertices: [{1.00,0.10,-2.03}, {1.00,0.10,2.35}, {1.00,1.07,-2.33}, {1.00,1.07,2.35}, {-0.97,0.10,-2.03}, {-0.97,0.10,2.35}, {-0.97,1.07,-2.33}, {-0.97,1.07,2.35}]
+        

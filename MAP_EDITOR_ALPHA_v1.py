@@ -70,7 +70,7 @@ set_physics = True              # change to "True" if you want PHYSICS
 
 # Minimap
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-shape_outline_color = None      # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
+minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
 
 # AI
 set_ai_map = True               # create the Map file          keep both set to "True" if you want functional AI
@@ -123,6 +123,9 @@ debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Ch
 
 debug_bai_file = False
 debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"
+
+debug_dlp_file = False
+debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"
 
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
@@ -270,17 +273,18 @@ MAX_OPP_8 = 8
 MAX_OPP_128 = 128 
 
 # Cop Behavior
-FOLLOW, ROADBLOCK, SPINOUT, PUSH, MIX = 0, 3, 4, 8, 15   
+FOLLOW = 0 
+ROADBLOCK = 3
+SPINOUT = 4
+PUSH = 8
+MIX = 15   
 
 # Cop Start Lane
 STATIONARY = 0 
 IN_TRAFFIC = 2
 
 # Circuit Laps
-LAPS_2 = 2
-LAPS_3 = 3
-LAPS_5 = 5
-LAPS_10 = 10
+LAPS_2, LAPS_3, LAPS_5, LAPS_10 = 2, 3, 5, 10
 
 # Race Data
 NO_COPS, MAX_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
@@ -515,7 +519,7 @@ race_data = {
 
 
 #* SETUP IV (optional, Cops and Robbers)
-cnr_waypoints = [                           # set Cops and Robbers Waypoints 
+cnr_waypoints = [                           
     ## 1st set, Name: ... ## 
     (20.0, 1.0, 80.0),                      #? Bank / Blue Team Hideout
     (80.0, 1.0, 20.0),                      #? Gold
@@ -548,11 +552,11 @@ f"""
         (-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [])
         
     3) Supported orientations:
-    NORTH, SOUTH, EAST, WEST, NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST
+    NORTH, NORTH_EAST, EAST, SOUTH_EAST SOUTH, SOUTH WEST, WEST, NORTH_WEST
     Or you can manually set the orientation in degrees (0.0 - 360.0).
 """
 
-bridge_object = "vpmustang99"  # pass any prop/car here
+bridge_object = "vpmustang99"  # pass any prop / car 
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
 bridges = [
@@ -975,20 +979,20 @@ class BND:
             poly.write(f)    
             
     @staticmethod
-    def create(vertices: List[Vector3], polys: List[Polygon], map_filename: str, debug_bounds: bool) -> None:
+    def create(map_filename: str, vertices: List[Vector3], polys: List[Polygon], debug_bounds: bool) -> None:
         bnd = BND.initialize(vertices, polys)
     
-        bnd_folder = SHOP / "BND"
-        bnd_file = f"{map_filename}_HITID.BND"
+        bnd_file = SHOP / "BND" / f"{map_filename}_HITID.BND"
     
-        with open(bnd_folder / bnd_file, "wb") as f:
+        with open(bnd_file, "wb") as f:
             bnd.write(f)
-            bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt") , debug_bounds)          
+            
+            if debug_bounds:
+                bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt") , debug_bounds)          
                 
-    def debug(self, filename: str, debug_bounds: bool) -> None:
-        if debug_bounds:
-            with open(filename, 'w') as f:
-                f.write(str(self))
+    def debug(self, output_file: str) -> None:
+        with open(output_file, 'w') as out_f:
+            out_f.write(str(self))
                 
     @staticmethod
     def debug_file(input_file: Path, output_file: Path, debug_bounds_file: bool) -> None:
@@ -1003,17 +1007,17 @@ class BND:
     def debug_directory(input_dir: Path, output_dir: Path, debug_bounds_dir: bool) -> None:
         if debug_bounds_dir:
             if not input_dir.exists():
-                print(f"The directory {dir} does not exist.")
+                print(f"The directory {input_dir} does not exist.")
                 return
             
             if not output_dir.exists():
                 print(f"The output directory {output_dir} does not exist. Creating it.")
                 output_dir.mkdir(parents = True, exist_ok = True)
                 
-            for file_path in input_dir.glob('*.BND'):
-                output_file_path = output_dir / (file_path.stem + '.txt')  
-                BND.debug_file(file_path, output_file_path)
-                print(f"Processed {file_path.name} to {output_file_path.name}")
+            for file in input_dir.glob('*.BND'):
+                output_file_path = output_dir / (file.stem + '.txt')  
+                BND.debug_file(file, output_file_path)
+                print(f"Processed {file.name} to {output_file_path.name}")
                 
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
@@ -1125,8 +1129,8 @@ class BMS:
                    texture_count, flags, string_names, coordinates, 
                    texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
         
-    def write(self, path: Path) -> None:
-        with open(path, 'wb') as f:
+    def write(self, output_file: Path) -> None:
+        with open(output_file, 'wb') as f:
             write_pack(f, '16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
             write_pack(f, '4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '3f', self.radius, self.radius_sq, self.bounding_box_radius)
@@ -1143,10 +1147,10 @@ class BMS:
             if self.vertex_count >= MESH_THRESHOLD:
                 for _ in range(8):
                     DEFAULT_VECTOR3.write(f)
-                    
+                                        
             write_pack(f, str(self.adjunct_count) + 'b', *self.texture_darkness)
                         
-            # Temporary solution - ensuring tex_coords is not longer than adjunct_count * 2
+            # Ensure Tex Coords is not larger than Adjunct Count * 2
             if len(self.tex_coords) > self.adjunct_count * 2:
                 self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
                 
@@ -1160,10 +1164,10 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                         
-    def debug(self, file_name: str, debug_dir: Path, debug_bms: bool) -> None:
+    def debug(self, output_file: str, debug_dir: Path, debug_bms: bool) -> None:
         if debug_bms:
             Path(debug_dir).mkdir(parents = True, exist_ok = True)
-            with open(debug_dir / Path(file_name), 'w') as f:       
+            with open(debug_dir / Path(output_file), 'w') as f:       
                 f.write(str(self))
                 
     @classmethod
@@ -1356,7 +1360,17 @@ class DLP:
                     
                 for vertex in self.vertices: 
                     vertex.write(f, byte_order = '>') 
-                                        
+                    
+                    
+    @staticmethod          
+    def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
+        if debug_dlp_file:
+            with open(input_file, 'rb') as f:
+                dlp_data = DLP.read(f)
+                
+            with open(output_file, 'w') as f:
+                f.write(repr(dlp_data))
+                                    
     def __repr__(self):
         return f'''
 DLP
@@ -1666,7 +1680,7 @@ def create_polygon(
     vertices = vertices, polys = polys,
     material_index: int = 0, cell_type: int = 0, 
     flags: int = None, plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
-    hud_color: str = '#414441', shape_outline_color: str = shape_outline_color, 
+    hud_color: str = '#414441', minimap_outline_color: str = minimap_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads):
 
     # Vertex indices
@@ -1770,7 +1784,7 @@ def create_polygon(
     # Create JPG (for the HUD)
     hud_fill = hud_color is not None
     hudmap_vertices.append(vertex_coordinates)
-    hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, hud_color, shape_outline_color, str(bound_number))
+    hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, hud_color, minimap_outline_color, str(bound_number))
     
 ################################################################################################################               
 ################################################################################################################  
@@ -3056,7 +3070,7 @@ def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float
 
 
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
-                  shape_outline_color: str, line_width: float, background_color: str) -> None:
+                  minimap_outline_color: str, line_width: float, background_color: str) -> None:
 
     if set_minimap and not is_blender_running():
         global hudmap_vertices
@@ -3070,14 +3084,14 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         width = int(max_x - min_x)
         height = int(max_z - min_z)
 
-        def draw_polygon(ax, polygon, shape_outline_color: str, 
+        def draw_polygon(ax, polygon, minimap_outline_color: str, 
                         label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
             
             xs, ys = zip(*[(point[0], point[2]) for point in polygon])
             xs, ys = xs + (xs[0],), ys + (ys[0],)  # the commas after [0] should not be removed
             
-            if shape_outline_color:
-                ax.plot(xs, ys, color = shape_outline_color, linewidth = line_width)
+            if minimap_outline_color:
+                ax.plot(xs, ys, color = minimap_outline_color, linewidth = line_width)
             
             if hud_fill:
                 ax.fill(xs, ys, hud_color)
@@ -3094,7 +3108,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         for i, polygon in enumerate(hudmap_vertices):
             hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
             
-            draw_polygon(ax, polygon, shape_outline_color, 
+            draw_polygon(ax, polygon, minimap_outline_color, 
                          add_label = False, hud_fill = hud_fill, hud_color = hud_color)
             
         ax.set_aspect('equal', 'box')
@@ -3113,7 +3127,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
             for i, polygon in enumerate(hudmap_vertices):
                 hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
                 
-                draw_polygon(ax_debug, polygon, shape_outline_color, 
+                draw_polygon(ax_debug, polygon, minimap_outline_color, 
                             label = bound_label if debug_minimap_id else None, 
                             add_label = True, hud_fill = hud_fill, hud_color = hud_color)
                         
@@ -6106,7 +6120,7 @@ dlp_patches = [
 # Call Editor Functions
 create_folders(map_filename)
 create_map_info(map_name, map_filename)
-BND.create(vertices, polys, map_filename, debug_bounds)
+BND.create(map_filename, vertices, polys, debug_bounds)
 Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
 create_cells(map_filename, polys, truncate_cells)
 create_races(map_filename, race_data)
@@ -6131,6 +6145,7 @@ DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups,
 
 # File Debugging
 debug_bai(debug_bai_data_file, debug_bai_file)
+DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
 BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
 FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
 Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
@@ -6148,7 +6163,7 @@ create_ext(map_filename, hudmap_vertices)
 create_animations(map_filename, anim_data, set_anim)   
 create_bridges(map_filename, bridges, set_bridges) 
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
-create_minimap(set_minimap, debug_minimap, debug_minimap_id, shape_outline_color, line_width = 0.7, background_color = 'black')
+create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
 create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
