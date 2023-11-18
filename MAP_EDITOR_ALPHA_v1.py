@@ -63,7 +63,7 @@ delete_shop = True              # change to "True" to delete the raw city files 
 
 # Map Attributes
 set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
-set_props = True                # change to "True" if you want PROPS
+set_props = True                # change to "True" if you want PROPS (bangers)
 set_bridges = True              # change to "True" if you want BRIDGES
 set_facades = True              # change to "True" if you want FACADES
 set_physics = True              # change to "True" if you want PHYSICS
@@ -100,8 +100,8 @@ load_tex_materials = False      # change to "True" if you want to load all textu
 texture_dir = EDITOR_RESOURCES / "TEXTURES"
 
 # Editor Debugging
-debug_bms = False               # change to "True" if you want BMS Debug text files 
 debug_props = False             # change to "True" if you want a PROPS Debug text file
+debug_meshes = False            # change to "True" if you want BMS Debug text files 
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
 debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
@@ -124,17 +124,17 @@ debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Ch
 debug_bai_file = False
 debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"              # Change the input BAI file here
 
+debug_meshes_file = False
+debug_meshes_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"             # Change the input BMS file here
+
+debug_meshes_dir = False
+debug_meshes_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"                 # Change the input BMS directory here
+
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
 
 debug_bounds_dir = False
 debug_bounds_data_dir = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"           # Change the input Bound directory here
-
-debug_bms_file = False
-debug_bms_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"             # Change the input BMS file here
-
-debug_bms_dir = False
-debug_bms_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"                 # Change the input BMS directory here
 
 debug_dlp_file = False
 debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"        # Change the input DLP file here
@@ -152,7 +152,7 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
+disable_progress_bar = True    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################               
 ################################################################################################################
@@ -850,8 +850,8 @@ polys = [POLYGON_FILLER]
 ################################################################################################################               
 ################################################################################################################          
         
-# BND CLASS
-class BND:
+# BOUNDS CLASS
+class Bounds:
     def __init__(self, magic: str, offset: Vector3, x_dim: int, y_dim: int, z_dim: int, 
                  center: Vector3, radius: float, radius_sqr: float, bb_min: Vector3, bb_max: Vector3, 
                  num_verts: int, num_polys: int, num_hot_verts1: int, num_hot_verts2: int, num_edges: int, 
@@ -897,7 +897,7 @@ class BND:
         self.fixed_heights = fixed_heights
                   
     @classmethod
-    def read(cls, f: BinaryIO) -> 'BND':        
+    def read(cls, f: BinaryIO) -> 'Bounds':        
         magic = read_unpack(f, '<4s')[0]
         offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
@@ -937,7 +937,7 @@ class BND:
                    row_offsets, bucket_offsets, row_buckets, fixed_heights)
     
     @classmethod
-    def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'BND':
+    def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
         magic = b'2DNB\0'
         offset = DEFAULT_VECTOR3
         x_dim, y_dim, z_dim = 0, 0, 0
@@ -956,7 +956,7 @@ class BND:
         edge_plane_d = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
-        return BND(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
+        return Bounds(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
                 len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, x_scale, z_scale, 
                 num_indices, height_scale, cache_size, vertices, polys,
                 hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
@@ -983,11 +983,9 @@ class BND:
             
     @staticmethod
     def create(map_filename: str, vertices: List[Vector3], polys: List[Polygon], debug_bounds: bool) -> None:
-        bnd = BND.initialize(vertices, polys)
+        bnd = Bounds.initialize(vertices, polys)
     
-        bnd_file = SHOP / "BND" / f"{map_filename}_HITID.BND"
-    
-        with open(bnd_file, "wb") as f:
+        with open(SHOP / "BND" / f"{map_filename}_HITID.BND", "wb") as f:
             bnd.write(f)
             
             if debug_bounds:
@@ -1001,7 +999,7 @@ class BND:
     def debug_file(input_file: Path, output_file: Path, debug_bounds_file: bool) -> None:
         if debug_bounds_file:
             with open(input_file, 'rb') as in_f:
-                bnd = BND.read(in_f)
+                bnd = Bounds.read(in_f)
                 
             with open(output_file, 'w') as out_f:
                 out_f.write(repr(bnd))
@@ -1019,30 +1017,30 @@ class BND:
                 
             for file in input_dir.glob('*.BND'):
                 output_file_path = output_dir / (file.stem + '.txt')  
-                BND.debug_file(file, output_file_path)
+                Bounds.debug_file(file, output_file_path)
                 print(f"Processed {file.name} to {output_file_path.name}")
                 
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
         return (
-            f"BND\n"
+            f"BOUNDS\n"
             f"Magic: 2DNB\n"
             f"Offset: {self.offset}\n"
-            f"XDim: {self.x_dim}\n"
-            f"YDim: {self.y_dim}\n"
-            f"ZDim: {self.z_dim}\n"
+            f"X Dim: {self.x_dim}\n"
+            f"Y Dim: {self.y_dim}\n"
+            f"Z Dim: {self.z_dim}\n"
             f"Center: {self.center}\n"
             f"Radius: {self.radius:.2f}\n" 
             f"Radius Sqr: {self.radius_sqr:.2f}\n"  
-            f"BBMin: {self.bb_min}\n"
-            f"BBMax: {self.bb_max}\n"
+            f"BB Min: {self.bb_min}\n"
+            f"BB Max: {self.bb_max}\n"
             f"Num Verts: {self.num_verts}\n"
             f"Num Polys: {self.num_polys}\n"
             f"Num Hot Verts1: {self.num_hot_verts1}\n"
             f"Num Hot Verts2: {self.num_hot_verts2}\n"
             f"Num Edges: {self.num_edges}\n"
-            f"XScale: {self.x_scale:.5f}\n"
-            f"ZScale: {self.z_scale:.5f}\n"
+            f"X Scale: {self.x_scale:.5f}\n"
+            f"Z Scale: {self.z_scale:.5f}\n"
             f"Num Indices: {self.num_indices}\n"
             f"Height Scale: {self.height_scale}\n"
             f"Cache Size: {self.cache_size}\n\n"
@@ -1069,7 +1067,7 @@ class BND:
 
 
 # BMS CLASS
-class BMS:
+class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sq: float, bounding_box_radius: float,
                  texture_count: int, flags: int, string_name: List[str], coordinates: List[Vector3],
@@ -1095,7 +1093,7 @@ class BMS:
         self.indices_sides = indices_sides
         
     @classmethod
-    def read(cls, file_name: str) -> 'BMS':
+    def read(cls, file_name: str) -> 'Meshes':
         with open(file_name, 'rb') as f:
             magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')  
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
@@ -1167,21 +1165,21 @@ class BMS:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                         
-    def debug(self, output_file: str, debug_dir: Path, debug_bms: bool) -> None:
-        if debug_bms:
+    def debug(self, output_file: str, debug_dir: Path, debug_meshes: bool) -> None:
+        if debug_meshes:
             Path(debug_dir).mkdir(parents = True, exist_ok = True)
             with open(debug_dir / Path(output_file), 'w') as f:       
                 f.write(str(self))
                 
     @classmethod
-    def debug_file(cls, input_file: Path, output_file: Path, debug_bms_file: bool) -> None:
-        if debug_bms_file:
+    def debug_file(cls, input_file: Path, output_file: Path, debug_meshes_file: bool) -> None:
+        if debug_meshes_file:
             with open(output_file, 'w') as out_f:
                 out_f.write(str(cls.read(input_file)))
                 
     @classmethod
-    def debug_directory(cls, input_dir: Path, output_dir: Path, debug_bms_dir: bool) -> None:
-        if debug_bms_dir:
+    def debug_directory(cls, input_dir: Path, output_dir: Path, debug_meshes_dir: bool) -> None:
+        if debug_meshes_dir:
             for file in input_dir.iterdir():
                 if file.suffix == '.BMS':  
                     cls.debug_file(file, output_dir / (file.stem + ".txt"), True)
@@ -1189,7 +1187,7 @@ class BMS:
     def __repr__(self):
         rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
         return f'''
-BMS
+MESHES
 Magic: {self.magic}
 VertexCount: {self.vertex_count}
 AdjunctCount: {self.adjunct_count}
@@ -1479,33 +1477,31 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
     return adjust_and_rotate_coords(coords, angle_degrees)
         
 
-def determine_bms_dir_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
-    # Determine the target directory
+def determine_mesh_dir_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
     if bound_number < 200:
         target_dir = SHOP / "BMS" / f"{map_filename}LM"
     else:
         target_dir = SHOP / "BMS" / f"{map_filename}CITY"
     target_dir.mkdir(parents = True, exist_ok = True)
 
-    # Determine BMS filename
     if any(name.startswith("T_WATER") for name in texture_name):
-        bms_filename = f"CULL{bound_number:02d}_A2.bms"
+        mesh_filename = f"CULL{bound_number:02d}_A2.bms"
     else:
-        bms_filename = f"CULL{bound_number:02d}_H.bms"
+        mesh_filename = f"CULL{bound_number:02d}_H.bms"
 
-    return target_dir, bms_filename
+    return target_dir, mesh_filename
 
            
 def save_bms(
     texture_name: str, texture_indices: List[int] = [1], vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
     texture_darkness: List[int] = None, tex_coords: List[float] = None, 
     randomize_textures: bool = randomize_textures, random_texture_exclude: bool = False, random_textures: List[str] = random_textures, 
-    debug_bms: bool = debug_bms):
+    debug_meshes: bool = debug_meshes):
         
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
 
-    target_dir, bms_filename = determine_bms_dir_and_filename(bound_number, texture_name, map_filename)
+    target_dir, mesh_filename = determine_mesh_dir_and_filename(bound_number, texture_name, map_filename)
     
     # Randomize Textures
     if randomize_textures and not random_texture_exclude:
@@ -1514,16 +1510,16 @@ def save_bms(
     stored_texture_names.append(texture_name[0])
     single_poly = [POLYGON_FILLER, poly]
     
-    bms = initialize_bms(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
-    bms.write(target_dir / bms_filename)
+    mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
+    mesh.write(target_dir / mesh_filename)
     
-    if debug_bms:
-        bms.debug(bms_filename + ".txt", DEBUG_FOLDER / "BMS" / map_filename, debug_bms)
+    if debug_meshes:
+        mesh.debug(mesh_filename + ".txt", DEBUG_FOLDER / "BMS" / map_filename, debug_meshes)
             
                  
-def initialize_bms(
+def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
-    texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> BMS:
+    texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
     magic, flags = "3HSM", 3
     radius, radiussq, bounding_box_radius = 0.0, 0.0, 0.0  
@@ -1546,7 +1542,7 @@ def initialize_bms(
     
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
-    return BMS(magic, vertex_count, adjunct_count, surface_count, indices_count, 
+    return Meshes(magic, vertex_count, adjunct_count, surface_count, indices_count, 
                radius, radiussq, bounding_box_radius, 
                texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, 
                enclosed_shape, texture_indices, indices_sides)
@@ -1893,7 +1889,7 @@ LIGHT_YELLOW = '#ffffe0'
 #! ======================== MAIN AREA ======================== #*
 # Main Area Colored Checkpoints
 create_polygon(
-    bound_number = 9999,
+    bound_number = 999,
     vertex_coordinates = [
         (-25.0, 0.0, 85.0),
         (25.0, 0.0, 85.0),
@@ -1901,7 +1897,7 @@ create_polygon(
         (-25.0, 0.0, 70.0)])
 
 save_bms(texture_name = [CHECKPOINT_TX],
-         tex_coords = compute_uv(bound_number = 9999, tile_x = 5, tile_y = 1, angle_degrees = 0))
+         tex_coords = compute_uv(bound_number = 999, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
 # Main Area w/ Building | Road
 create_polygon(
@@ -2938,40 +2934,38 @@ def create_races(map_filename: str, race_data) -> None:
                             num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
 
                 
-def create_cnr(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
+def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
         cnr_file = "COPSWAYPOINTS.CSV"
         header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
         filler = ",0,0,0,0,0,\n"
         
-        with open(cnr_file, "w") as f:
+        with open(SHOP / RACE / map_filename / Path(cnr_file), "w") as f:
             f.write(header)
             for i in range(0, len(cnr_waypoints), 3):
                 f.write(", ".join(map(str, cnr_waypoints[i])) + filler) 
                 f.write(", ".join(map(str, cnr_waypoints[i+1])) + filler)
                 f.write(", ".join(map(str, cnr_waypoints[i+2])) + filler)
-
-        MOVE(cnr_file, SHOP / RACE / map_filename / cnr_file)
   
 ################################################################################################################               
 ################################################################################################################              
 
 def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
-    bms_files = []
-    bms_a2_files = set()
+    mesh_files = []
+    mesh_a2_files = set()
     
     for folder in [landmark_folder, city_folder]:
         for file in folder.iterdir():
             
             if file.name.endswith("_A2.bms"):
                 cell_id = int(re.findall(r'\d+', file.name)[0])
-                bms_files.append(cell_id)
-                bms_a2_files.add(cell_id)
+                mesh_files.append(cell_id)
+                mesh_a2_files.add(cell_id)
                 
             elif file.name.endswith(".bms"):
                 cell_id = int(re.findall(r'\d+', file.name)[0])
-                bms_files.append(cell_id)
+                mesh_files.append(cell_id)
                 
-    return bms_files, bms_a2_files
+    return mesh_files, mesh_a2_files
 
 
 def get_cell_visiblity(polys: List[Polygon]) -> List[int]:
@@ -2988,21 +2982,21 @@ def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:
     return DEFAULT
 
 
-def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, cell_type: int, bms_a2_files: Set[int]) -> Tuple[str, int]:
+def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, cell_type: int, mesh_a2_files: Set[int]) -> Tuple[str, int]:
     always_visible_count = len(always_visible_cell_ids)
     always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
-    row = write_row(cell_id, cell_type, always_visible_data, bms_a2_files)
+    row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
 
     while len(row) >= CELL_THRESHOLD:
         always_visible_cell_ids.pop()
         always_visible_count = len(always_visible_cell_ids)
         always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
-        row = write_row(cell_id, cell_type, always_visible_data, bms_a2_files)
+        row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
     return row, len(row) 
         
  
-def write_row(cell_id: int, cell_type: int, always_visible_data: str, bms_a2_files: Set[int]) -> str:       
-    model = DRIFT_MODEL if cell_id in bms_a2_files else HIGH_MODEL
+def write_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
+    model = DRIFT_MODEL if cell_id in mesh_a2_files else HIGH_MODEL
     return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
 
@@ -3010,26 +3004,26 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
     landmark_folder = SHOP / "BMS" / f"{map_filename}LM"
     city_folder = SHOP / "BMS" / f"{map_filename}CITY"
 
-    bms_files, bms_a2_files = get_cell_ids(landmark_folder, city_folder)
+    mesh_files, mesh_a2_files = get_cell_ids(landmark_folder, city_folder)
 
     cells_file = SHOP_CITY / f"{map_filename}.CELLS"
 
     with open(cells_file, "w") as f:
-        f.write(f"{len(bms_files)}\n")
-        f.write(str(max(bms_files) + 1000) + "\n")
+        f.write(f"{len(mesh_files)}\n")
+        f.write(str(max(mesh_files) + 1000) + "\n")
 
         always_visible_cell_ids = get_cell_visiblity(polys)
         always_visible_cell_count = len(always_visible_cell_ids)
 
         max_warning_count = max_error_count = 0
 
-        for cell_id in sorted(bms_files):
+        for cell_id in sorted(mesh_files):
             cell_type = get_cell_type(cell_id, polys)
             always_visible_data = ",0" if not always_visible_cell_count else f",{always_visible_cell_count},{','.join(map(str, always_visible_cell_ids))}"            
-            row = write_row(cell_id, cell_type, always_visible_data, bms_a2_files)
+            row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
             
             if truncate_cells:
-                row, row_length = truncate_always_visible(always_visible_cell_ids.copy(), cell_id, cell_type, bms_a2_files)
+                row, row_length = truncate_always_visible(always_visible_cell_ids.copy(), cell_id, cell_type, mesh_a2_files)
             else:
                 row_length = len(row)
 
@@ -3662,8 +3656,8 @@ def read_binary_name(f) -> str:
     return name_data.decode('utf-8')
      
                                
-# BINARYBANGER CLASS                            
-class BinaryBanger:
+# BANGERS CLASS                            
+class Bangers:
     def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, name: str):
         self.room = room
         self.flags = flags
@@ -3676,7 +3670,7 @@ class BinaryBanger:
         return read_unpack(f, '<I')[0]
             
     @classmethod
-    def read(cls, f) -> 'BinaryBanger':
+    def read(cls, f) -> 'Bangers':
         room, flags = read_unpack(f, '<2H')
         offset = Vector3.read(f)
         face = Vector3.read(f)  
@@ -3684,7 +3678,7 @@ class BinaryBanger:
         return cls(room, flags, offset, face, name)
     
     @classmethod
-    def read_all(cls, f) -> 'List[BinaryBanger]':
+    def read_all(cls, f) -> 'List[Bangers]':
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
@@ -3732,7 +3726,7 @@ class BinaryBanger:
                                     
     def __repr__(self):
         return f'''
-BinaryBanger
+BANGERS
 Room: {self.room}
 Flags: {self.flags}
 Start: {self.offset}
@@ -3743,8 +3737,8 @@ Prop Name: {self.name}
 ################################################################################################################               
 ###############################################################################################################
 
-# PROP EDITOR CLASS
-class PropEditor:
+# BANGER EDITOR CLASS
+class BangerEditor:
     def __init__(self, map_filename: str):  
         self.map_filename = Path(map_filename)                      
         self.props = [] 
@@ -3763,7 +3757,7 @@ class PropEditor:
                 self.props.clear()
                 self.add_multiple(race_props)
                 current_filename = self._filename_with_suffix(race_key)
-                BinaryBanger.write_all(SHOP_CITY / current_filename, self.props, debug_props) 
+                Bangers.write_all(SHOP_CITY / current_filename, self.props, debug_props) 
             
     def add_multiple(self, user_set_props):    
         for prop in user_set_props:
@@ -3792,20 +3786,20 @@ class PropEditor:
                 
                 for i in range(1, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
-                    self.props.append(BinaryBanger(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
+                    self.props.append(Bangers(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
 
             else:
-                self.props.append(BinaryBanger(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
+                self.props.append(Bangers(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
                 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if append_props:
             with open(input_props_f, 'rb') as f:
-                original_props = BinaryBanger.read_all(f)
+                original_props = Bangers.read_all(f)
                   
             self.props = original_props
             self.add_multiple(props_to_append)
             
-            BinaryBanger.write_all(appended_props_f, self.props, debug_props)
+            Bangers.write_all(appended_props_f, self.props, debug_props)
                             
     def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
         assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
@@ -3863,8 +3857,8 @@ class PropEditor:
 ################################################################################################################               
 ################################################################################################################
 
-# FACADE EDITOR CLASS
-class FacadeEditor:
+# FACADES CLASS
+class Facades:
     def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, sides: Vector3, scale: float, name: str) -> None:
         self.room = room
         self.flags = flags
@@ -3879,7 +3873,7 @@ class FacadeEditor:
         return read_unpack(f, '<I')[0]
 
     @classmethod
-    def read(cls, f) -> 'FacadeEditor':
+    def read(cls, f) -> 'Facades':
         room, flags = read_unpack(f, '<2H')
         offset = Vector3.read(f)
         face = Vector3.read(f)
@@ -3889,7 +3883,7 @@ class FacadeEditor:
         return cls(room, flags, offset, face, sides, scale, name)
     
     @classmethod
-    def read_all(cls, f) -> 'List[FacadeEditor]':
+    def read_all(cls, f) -> 'List[Facades]':
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
@@ -3946,17 +3940,18 @@ Facade Editor
 ################################################################################################################               
 ################################################################################################################
         
-class FacadeProcessor:
+# FACADE EDITOR CLASS
+class FacadeEditor:
     scales_file = EDITOR_RESOURCES / "FACADES" / "FCD scales.txt"
     
     @classmethod
     def create(cls, output_file: str, user_set_facades, set_facades: bool, debug_facades: bool):
         if set_facades:
             facades = cls.process(user_set_facades)
-            FacadeEditor.write_all(output_file, facades)
+            Facades.write_all(output_file, facades)
             
             if debug_facades:
-                FacadeEditor.debug(facades)
+                Facades.debug(facades)
 
     @staticmethod
     def read_scales(scales_file: Path):
@@ -3982,7 +3977,7 @@ class FacadeProcessor:
                 current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
                 sides = params.get('sides', (0.0, 0.0, 0.0))
                 scale = scales.get(params['name'], params.get('scale', 1.0))
-                facades.append(FacadeEditor(ROOM, params['flags'], current_start, current_end, sides, scale, params['name']))
+                facades.append(Facades(ROOM, params['flags'], current_start, current_end, sides, scale, params['name']))
 
         return facades
     
@@ -6132,17 +6127,17 @@ dlp_patches = [
 # Call Editor Functions
 create_folders(map_filename)
 create_map_info(map_name, map_filename)
-BND.create(map_filename, vertices, polys, debug_bounds)
-Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
-create_cells(map_filename, polys, truncate_cells)
 create_races(map_filename, race_data)
-create_cnr(map_filename, cnr_waypoints)
+create_cops_and_robbers(map_filename, cnr_waypoints)
 
+create_cells(map_filename, polys, truncate_cells)
+Bounds.create(map_filename, vertices, polys, debug_bounds)
+Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
-FacadeProcessor.create(SHOP_CITY / f"{map_filename}.FCD", fcd_list, set_facades, debug_facades)
+FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", fcd_list, set_facades, debug_facades)
 PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
-prop_editor = PropEditor(map_filename)
+prop_editor = BangerEditor(map_filename)
 for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
 prop_editor.process_all(prop_list, set_props)
@@ -6150,23 +6145,6 @@ prop_editor.process_all(prop_list, set_props)
 lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.write_file(lighting_instances, lighting_configs, SHOP / "TUNE" / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, DEBUG_FOLDER / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
-
-# Misc
-PropEditor(map_filename).append_to_file(append_input_props_f, props_to_append, append_output_props_f, append_props)
-DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
-
-# File Debugging
-debug_bai(debug_bai_data_file, debug_bai_file)
-BinaryBanger.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
-FacadeEditor.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
-Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
-BMS.debug_file(debug_bms_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_FILE.txt", debug_bms_file)
-BMS.debug_directory(debug_bms_data_dir, DEBUG_FOLDER / "BMS" / "BMS TEXT FILES", debug_bms_dir) 
-BND.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
-BND.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
-DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
-DLP.debug_directory(debug_dlp_data_dir, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_dir)
-debug_bai(debug_bai_data_file, debug_bai_file)
 
 copy_dev_folder(mm1_folder, map_filename)
 edit_and_copy_mmbangerdata(bangerdata_properties)
@@ -6178,6 +6156,23 @@ create_bridges(map_filename, bridges, set_bridges)
 custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
 create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
+
+# Misc
+BangerEditor(map_filename).append_to_file(append_input_props_f, props_to_append, append_output_props_f, append_props)
+DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
+
+# File Debugging
+debug_bai(debug_bai_data_file, debug_bai_file)
+Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
+Facades.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
+Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
+Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_FILE.txt", debug_meshes_file)
+Meshes.debug_directory(debug_meshes_data_dir, DEBUG_FOLDER / "BMS" / "BMS TEXT FILES", debug_meshes_dir) 
+Bounds.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
+Bounds.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
+DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
+DLP.debug_directory(debug_dlp_data_dir, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_dir)
+
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
 
