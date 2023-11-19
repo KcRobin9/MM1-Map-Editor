@@ -1873,6 +1873,10 @@ STOP_SIGN_TX = "T_STOP"
 BARRICADE_TX = "T_BARRICADE"
 CHECKPOINT_TX = "CHECK04"
 BUS_RED_TOP = "VPBUSRED_TP_BK"
+
+#* Custom Textures
+LAVA_TX = "T_WATER_LAVA"
+RED_BLACK_BARRICADE_TX = "T_RED_BLACK_BARRICADE"
              
 # HUD map colors
 WOOD_HUD = '#7b5931'
@@ -1889,7 +1893,7 @@ LIGHT_YELLOW = '#ffffe0'
 #! ======================== MAIN AREA ======================== #*
 # Main Area Colored Checkpoints
 create_polygon(
-    bound_number = 999,
+    bound_number = 99,
     vertex_coordinates = [
         (-25.0, 0.0, 85.0),
         (25.0, 0.0, 85.0),
@@ -1897,7 +1901,7 @@ create_polygon(
         (-25.0, 0.0, 70.0)])
 
 save_bms(texture_name = [CHECKPOINT_TX],
-         tex_coords = compute_uv(bound_number = 999, tile_x = 5, tile_y = 1, angle_degrees = 0))
+         tex_coords = compute_uv(bound_number = 99, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
 # Main Area w/ Building | Road
 create_polygon(
@@ -1970,7 +1974,7 @@ create_polygon(
         hud_color = DARK_RED)
 
 save_bms(
-    texture_name = [BARRICADE_TX], 
+    texture_name = [RED_BLACK_BARRICADE_TX], 
     tex_coords = compute_uv(bound_number = 862, tile_x = 50, tile_y = 50, angle_degrees = 0))
 
 # Main Wood Area | Road
@@ -2057,7 +2061,7 @@ create_polygon(
         hud_color = ORANGE)
 
 save_bms(
-    texture_name = [WATER_TX], 
+    texture_name = [LAVA_TX], 
     tex_coords = compute_uv(bound_number = 3, tile_x = 10, tile_y = 100, angle_degrees = 90))
 
 
@@ -2668,7 +2672,7 @@ def create_folders(map_filename: str) -> None:
         SHOP / "BMP16", 
         SHOP / "TEX16O", 
         SHOP / "TUNE", 
-        SHOP / "MTL", 
+        SHOP / "MTL",
         SHOP / "CITY" / map_filename,
         SHOP / "RACE" / map_filename,
         SHOP / "BMS" / f"{map_filename}CITY",
@@ -2680,14 +2684,9 @@ def create_folders(map_filename: str) -> None:
         os.makedirs(path, exist_ok = True)
         
         
-def create_map_info(map_name: str, map_filename: str) -> None: 
-    cinfo_file = f"{map_filename}.CINFO"
-    
-    with open(SHOP / "TUNE" / cinfo_file, "w") as f:
-        blitz_names = '|'.join(blitz_race_names)
-        circuit_names = '|'.join(circuit_race_names)
-        checkpoint_names = '|'.join(checkpoint_race_names)
-
+def create_map_info(map_name: str, map_filename: str) -> None:
+    with open(SHOP / "TUNE" / f"{map_filename}.CINFO", "w") as f:
+        
         f.write(f"""
 LocalizedName={map_name}
 MapName={map_filename}
@@ -2695,14 +2694,14 @@ RaceDir={map_filename.lower()}
 BlitzCount={len(blitz_race_names)}
 CircuitCount={len(circuit_race_names)}
 CheckpointCount={len(circuit_race_names)}
-BlitzNames={blitz_names}
-CircuitNames={circuit_names}
-CheckpointNames={checkpoint_names}
+BlitzNames={'|'.join(blitz_race_names)}
+CircuitNames={'|'.join(circuit_race_names)}
+CheckpointNames={'|'.join(checkpoint_race_names)}
 """)
         
                     
 def copy_custom_textures() -> None: 
-    input_folder = EDITOR_RESOURCES / "CUSTOM TEXTURES"
+    input_folder = BASE_DIR / "Custom Textures"
     output_folder = SHOP / "TEX16O"
 
     for custom_texs in input_folder.iterdir():
@@ -4245,6 +4244,43 @@ Fog Color: {self.fog_color}
 Shadow Alpha: {self.shadow_alpha:.2f}
 Shadow Color: {self.shadow_color}
 '''
+
+###################################################################################################################
+###################################################################################################################
+
+# TODO: Expand capabilities if needed or useful
+class TextureSheet:
+    def __init__(self, name: str = "", neighborhood: int = 0, h: int = 0, m: int = 0, l: int = 1, flags: str = "", alternate: str = "", 
+                 sibling: str = "", xres: int = 64, yres: int = 64, hexcolor: str = "000000"):
+        self.name = name
+        self.neighborhood = neighborhood
+        self.h = h
+        self.m = m
+        self.l = l
+        self.flags = flags
+        self.alternate = alternate
+        self.sibling = sibling
+        self.xres = xres
+        self.yres = yres
+        self.hexcolor = hexcolor
+
+    @classmethod
+    def read_filenames(cls):
+        return [f.stem for f in (BASE_DIR / "Custom Textures").glob("*.DDS")]
+
+    @classmethod
+    def write(cls):      
+        with open(EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", 'r' ) as in_f:
+            sheet_lines = in_f.readlines()
+            
+        sheet_names = set(line.split(',')[0].strip() for line in sheet_lines)
+        
+        with open(SHOP / "MTL" / "GLOBAL.TSH", 'w') as out_f:  
+            out_f.writelines(sheet_lines)
+            
+            for custom_tex in cls.read_filenames():
+                if custom_tex not in sheet_names:
+                    out_f.write(f"{custom_tex},0,0,0,1,,{custom_tex},,64,64,000000\n")
 
 ###################################################################################################################
 ###################################################################################################################
@@ -6133,6 +6169,7 @@ create_cops_and_robbers(map_filename, cnr_waypoints)
 create_cells(map_filename, polys, truncate_cells)
 Bounds.create(map_filename, vertices, polys, debug_bounds)
 Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
+TextureSheet().write()
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
 FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", fcd_list, set_facades, debug_facades)
 PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
