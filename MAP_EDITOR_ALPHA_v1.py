@@ -146,8 +146,8 @@ debug_dlp_data_dir = EDITOR_RESOURCES / "DLP" / "DLP FILES"                 # Ch
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 no_ai = False                   # change to "True" if you want to disable the AI
+less_logs = False               # change to "True" if you want to hide most logs. Can prevent frame drops when the game prints ton of error/warnings per second
 more_logs = False               # change to "True" if you want to see additional logs and open a logging console
-quiet_logs = False              # change to "True" if you want to hide most logs. The game e.g. prints a ton of messages if an AI car can't find its path, causing FPS drops
 empty_portals = False           # change to "True" if you want to create an empty portal file (useful for testing very large cities)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
@@ -410,7 +410,7 @@ ELTRAIN_SUPPORT_WIDE = "dp_left6"
 
 PLANE_LARGE = "vaboeing"  # No collision
  
-################################################################################################################               
+################################################################################################################   
 ################################################################################################################
 
 #* SETUP III (optional, Race Editor)
@@ -1065,12 +1065,11 @@ class Bounds:
 ################################################################################################################               
 ################################################################################################################  
 
-
 # BMS CLASS
 class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sq: float, bounding_box_radius: float,
-                 texture_count: int, flags: int, string_name: List[str], coordinates: List[Vector3],
+                 texture_count: int, flags: int, texture_names: List[str], coordinates: List[Vector3],
                  texture_darkness: List[int], tex_coords: List[float], enclosed_shape: List[int],
                  surface_sides: List[int], indices_sides: List[List[int]]) -> None:
 
@@ -1084,7 +1083,7 @@ class Meshes:
         self.bounding_box_radius = bounding_box_radius
         self.texture_count = texture_count
         self.flags = flags
-        self.string_name = string_name
+        self.texture_names = texture_names
         self.coordinates = coordinates
         self.texture_darkness = texture_darkness
         self.tex_coords = tex_coords  
@@ -1095,24 +1094,21 @@ class Meshes:
     @classmethod
     def read(cls, file_name: str) -> 'Meshes':
         with open(file_name, 'rb') as f:
-            magic = read_unpack(f, '16s')[0].decode('utf-8').rstrip('\x00')  
-            vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '4I')
-            radius, radius_sq, bounding_box_radius = read_unpack(f, '3f')
-            texture_count, flags = read_unpack(f, '2b')
+            magic = read_unpack(f, '<16s')[0].decode('utf-8').rstrip('\x00')             
+            vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
+            radius, radius_sq, bounding_box_radius = read_unpack(f, '<3f')
+            texture_count, flags = read_unpack(f, '<2b')
             f.read(6)
-                        
-            string_names = []
-            for _ in range(texture_count):
-                string_name = read_unpack(f, '32s')[0].decode('utf-8').rstrip('\x00')
-                string_names.append(string_name)
-                f.read(16)   
+                                        
+            texture_names = [read_unpack(f, '<32s')[0].decode('utf-8').rstrip('\x00') for _ in range(texture_count)]
+            f.read(16 * texture_count)
                     
             if vertex_count < MESH_THRESHOLD:
                 coordinates = Vector3.readn(f, vertex_count)
             else:
                 coordinates = Vector3.readn(f, vertex_count + 8)
             
-            texture_darkness = list(read_unpack(f, str(adjunct_count) + 'b'))
+            texture_darkness = list(read_unpack(f, str(adjunct_count) + 'b'))  # Note: do not add "<" to the format strings
             tex_coords = list(read_unpack(f, str(adjunct_count * 2) + 'f'))
             enclosed_shape = list(read_unpack(f, str(adjunct_count) + 'H'))
             surface_sides = list(read_unpack(f, str(surface_count) + 'b'))
@@ -1127,19 +1123,19 @@ class Meshes:
 
         return cls(magic, vertex_count, adjunct_count, surface_count, indices_count, 
                    radius, radius_sq, bounding_box_radius, 
-                   texture_count, flags, string_names, coordinates, 
+                   texture_count, flags, texture_names, coordinates, 
                    texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
         
     def write(self, output_file: Path) -> None:
         with open(output_file, 'wb') as f:
-            write_pack(f, '16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
-            write_pack(f, '4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
-            write_pack(f, '3f', self.radius, self.radius_sq, self.bounding_box_radius)
-            write_pack(f, '2b', self.texture_count, self.flags)
+            write_pack(f, '<16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
+            write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
+            write_pack(f, '<3f', self.radius, self.radius_sq, self.bounding_box_radius)
+            write_pack(f, '<2B', self.texture_count, self.flags)
             f.write(b'\x00' * 6) 
 
-            for name in self.string_name:
-                write_pack(f, '32s', name.encode('utf-8').ljust(32, b'\x00'))
+            for tex_name in self.texture_names:
+                write_pack(f, '<32s', tex_name.encode('utf-8').ljust(32, b'\x00'))
                 f.write(b'\x00' * 16)
                             
             for coordinate in self.coordinates:
@@ -1198,7 +1194,7 @@ RadiusSq: {self.radius_sq:.2f}
 BoundingBoxRadius: {self.bounding_box_radius:.2f}
 TextureCount: {self.texture_count}
 Flags: {self.flags}
-StringName: {self.string_name}
+TextureNames: {self.texture_names}
 Coordinates: {self.coordinates}
 TextureDarkness: {self.texture_darkness}
 TexCoords: {rounded_tex_coords}
@@ -1262,7 +1258,7 @@ class DLPPatch:
         mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
         vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
         name_length = read_unpack(f, '>I')[0]
-        name = read_unpack(f, f'>{name_length}s')[0].decode()        
+        name = read_unpack(f, f'>{name_length}s')[0].decode()       
         return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
     
     def write(self, f):
@@ -1516,7 +1512,7 @@ def save_bms(
     if debug_meshes:
         mesh.debug(mesh_filename + ".txt", DEBUG_FOLDER / "BMS" / map_filename, debug_meshes)
             
-                 
+
 def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
@@ -1685,9 +1681,8 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
 def create_polygon(
     bound_number: int, vertex_coordinates: List[Vector3], 
-    vertices = vertices, polys = polys,
-    material_index: int = 0, cell_type: int = 0, 
-    flags: int = None, plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
+    material_index: int = 0, cell_type: int = 0, flags: int = None, 
+    plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
     hud_color: str = '#414441', minimap_outline_color: str = minimap_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads):
 
@@ -1716,7 +1711,7 @@ def create_polygon(
         """
         raise ValueError(error_message)
 
-    if bound_number == 0 or bound_number == 200 or bound_number >= 32767:
+    if bound_number <= 0 or bound_number == 200 or bound_number >= 32767:
         error_message = """
         ***ERROR***
         Possible problems:
@@ -1801,7 +1796,7 @@ def create_polygon(
 
 def user_notes(x):
     f""" 
-    Please find some Polygons and Texture examples below this text.
+    Find some Polygons and Texture examples below this text.
     You can already run this the script and create the Test Map yourself
     
     If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are acceptable)
@@ -2678,7 +2673,9 @@ def create_folders(map_filename: str) -> None:
         SHOP / "BMS" / f"{map_filename}CITY",
         SHOP / "BMS" / f"{map_filename}LM",
         SHOP / "BND" / f"{map_filename}CITY",
-        SHOP / "BND" / f"{map_filename}LM"]
+        SHOP / "BND" / f"{map_filename}LM",
+        BASE_DIR / "dev" / "CITY" / map_filename,
+        ]
     
     for path in FOLDER_STRUCTURE:
         os.makedirs(path, exist_ok = True)
@@ -2701,11 +2698,8 @@ CheckpointNames={'|'.join(checkpoint_race_names)}
         
                     
 def copy_custom_textures() -> None: 
-    input_folder = BASE_DIR / "Custom Textures"
-    output_folder = SHOP / "TEX16O"
-
-    for custom_texs in input_folder.iterdir():
-        shutil.copy(custom_texs, output_folder / custom_texs.name)
+    for custom_tex in (BASE_DIR / "Custom Textures").iterdir():
+        shutil.copy(custom_tex, SHOP / "TEX16O" / custom_tex.name)
 
 
 def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
@@ -2732,15 +2726,11 @@ def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
             with open(tweaked_banger_files, 'w') as f:
                 f.writelines(lines)
                 
-                
-def copy_core_tune_files() -> None:
-    input_folder = EDITOR_RESOURCES / 'TUNE'
-    output_folder = SHOP / 'TUNE'
-    
-    non_mmbangerdata_files = [f for f in input_folder.glob('*') if not f.name.endswith('.MMBANGERDATA')]
-    
-    for file in non_mmbangerdata_files:
-        shutil.copy(file, output_folder)
+                        
+def copy_core_tune_files() -> None:    
+    for file in (EDITOR_RESOURCES / 'TUNE').glob('*'):
+        if not file.name.endswith('.MMBANGERDATA'):
+            shutil.copy(file, SHOP / 'TUNE')
                 
                 
 def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
@@ -3644,7 +3634,7 @@ Max: {self._max}
               
 ################################################################################################################               
 ################################################################################################################            
-   
+
 def read_binary_name(f) -> str:
     name_data = bytearray()
     while True:
@@ -3653,8 +3643,8 @@ def read_binary_name(f) -> str:
             break
         name_data.extend(char)
     return name_data.decode('utf-8')
-     
-                               
+                      
+                      
 # BANGERS CLASS                            
 class Bangers:
     def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, name: str):
@@ -4642,15 +4632,12 @@ class BaiEditor:
     def __init__(self, map_filename: str, streets, set_ai_map: bool):
         self.map_filename = map_filename
         self.streets = streets
-        self.output_dir = BASE_DIR / "dev" / "CITY" / self.map_filename
                 
         if set_ai_map:
             self.write_map()
 
-    def write_map(self):        
-        self.output_dir.mkdir(parents = True, exist_ok = True)
-        
-        with open(self.output_dir / f"{self.map_filename}.map", 'w') as f:
+    def write_map(self):           
+        with open(BASE_DIR / "dev" / "CITY" / map_filename / f"{map_filename}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
@@ -4712,11 +4699,8 @@ class StreetEditor:
         self.road_divided = data.get("road_divided", NO)
         self.alley = data.get("alley", NO)
 
-    def write(self):
-        output_folder = BASE_DIR / "dev" / "CITY" / self.map_filename        
-        output_folder.mkdir(parents = True, exist_ok = True)
-    
-        with open(output_folder / f"{self.street_name}.road", 'w') as f:
+    def write(self):    
+        with open(BASE_DIR / "dev" / "CITY" / self.map_filename  / f"{self.street_name}.road", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):
@@ -4789,6 +4773,9 @@ def get_first_and_last_street_vertices(street_list):
 #!########### Code by Lars (Modified) ############
 
 def create_lars_race_maker(map_filename: str, street_list, set_lars_race_maker: bool):    
+    if not set_lars_race_maker:
+        return
+    
     polygons = hudmap_vertices
     min_x, max_x, min_z, max_z = create_ext(map_filename, polygons)
     
@@ -4920,9 +4907,8 @@ canvas.addEventListener('mousedown', function(e) {{
     coords_string = ",\n".join([str(coord) for coord in vertices_processed])
     new_html_content = html_start + coords_string + html_end
         
-    if set_lars_race_maker:
-        with open("Lars_Race_Maker.html", "w") as f:
-            f.write(new_html_content)
+    with open("Lars_Race_Maker.html", "w") as f:
+        f.write(new_html_content)
 
     return new_html_content
 
@@ -5648,8 +5634,8 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             output_folder = script_path / 'Blender Export'
         else:
             print("Warning: Falling back to directory: Desktop / Blender Export")
-            # Path.cwd() "incorrectly" returns the user's desktop directory 
-            output_folder = Path.cwd() / 'Blender Export'
+            
+            output_folder = Path.cwd() / 'Blender Export' # Use BASE_DIR (?)
         
         if not output_folder.exists():
             os.mkdir(output_folder)
@@ -6211,7 +6197,7 @@ DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_F
 DLP.debug_directory(debug_dlp_data_dir, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_dir)
 
 create_ar(map_filename)
-create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, quiet_logs, more_logs)
+create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
 editor_time = time.time() - start_time
 save_run_time(editor_time)
