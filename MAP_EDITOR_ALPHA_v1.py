@@ -4949,7 +4949,6 @@ def create_commandline(
     no_ai: bool, quiet_logs: bool, more_logs: bool) -> None:
     
     map_filename = map_filename.lower()
-    cmd_file = "commandline.txt"
     
     base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {map_filename}"
     
@@ -4992,7 +4991,7 @@ def create_commandline(
     
     processed_cmd = base_cmd
     
-    with open(mm1_folder / cmd_file, "w") as f:
+    with open(mm1_folder / "commandline.txt", "w") as f:
         f.write(processed_cmd)
         
         
@@ -5010,20 +5009,39 @@ def start_game(mm1_folder: str, play_game: bool) -> None:
             
 ###################################################################################################################
 ################################################################################################################### 
-
 #! ================== THIS SECTION IS RELATED TO BLENDER SETUP / PRELOADING ================== !#
+
+
+def is_blender_running() -> bool:
+    try:
+        import bpy   
+        _ = bpy.context.window_manager
+        return True 
+    except (AttributeError, ImportError):
+        return False
+
+
+def delete_existing_meshes() -> None:
+    bpy.ops.object.select_all(action = 'SELECT')
+    bpy.ops.object.delete()
+
 
 def enable_developer_extras() -> None:
     prefs = bpy.context.preferences
     view = prefs.view
     
-    # Set Developer Extra's if not already enabled
     if not view.show_developer_ui:
         view.show_developer_ui = True
         bpy.ops.wm.save_userpref()
         print("Developer Extras enabled!")
     else:
         print("Developer Extras already enabled!")
+        
+        
+def enable_vertex_snapping() -> None:
+    bpy.context.tool_settings.use_snap = True
+    bpy.context.tool_settings.snap_elements = {'VERTEX'}
+    bpy.context.tool_settings.snap_target = 'CLOSEST'  
         
            
 def adjust_3D_view_settings() -> None:
@@ -5044,15 +5062,8 @@ def adjust_3D_view_settings() -> None:
                     shading.color_type = 'TEXTURE'
                     
                     
-def enable_vertex_snapping() -> None:
-    bpy.context.tool_settings.use_snap = True
-    bpy.context.tool_settings.snap_elements = {'VERTEX'}
-    bpy.context.tool_settings.snap_target = 'CLOSEST'  
-
-
-
-def load_dds_resources(texture_dir: Path, load_tex_materials: bool) -> None:
-    for file_name in os.listdir(texture_dir):
+def load_textures(texture_folder: Path, load_tex_materials: bool) -> None:
+    for file_name in os.listdir(texture_folder):
         if file_name.lower().endswith(".dds"):
             texture_path = os.path.join(texture_dir, file_name)
 
@@ -5086,10 +5097,18 @@ def create_material_from_texture(material_name, texture_image):
     output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])      
     
+    
+def rotate_meshes(objects) -> None:
+    bpy.ops.object.select_all(action = 'DESELECT')
+    for obj in objects:
+        obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
+    bpy.ops.transform.rotate(value=math.radians(-90), orient_axis = 'X')
+    
 ###################################################################################################################
 ###################################################################################################################
-
 #! ================== THIS SECTION IS RELATED TO BLENDER UV MAPPING ================== !#
+
 
 def unwrap_uv_to_aspect_ratio(obj, image):
     bpy.ops.object.select_all(action = 'DESELECT')
@@ -5200,8 +5219,8 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
     
 ###################################################################################################################
 ###################################################################################################################
-
 #! ================== THIS SECTION IS RELATED TO CREATING BLENDER POLYGONS ================== !#
+
 
 def apply_texture_to_object(obj, texture_path):
     # Extract the filename (without extension) from the texture_path
@@ -5237,7 +5256,7 @@ def apply_texture_to_object(obj, texture_path):
 
     unwrap_uv_to_aspect_ratio(obj, texture_image)
     
-    
+        
 def create_mesh_from_polygon_data(polygon_data, texture_dir = None):
     name = f"P{polygon_data['bound_number']}"
     coords = polygon_data["vertex_coordinates"]
@@ -5281,7 +5300,6 @@ def create_mesh_from_polygon_data(polygon_data, texture_dir = None):
     tile_x, tile_y = 1, 1  
 
     if bound_number in texcoords_data.get('entries', {}):
-        
         tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
         tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
         obj.rotate = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
@@ -5297,35 +5315,32 @@ def create_mesh_from_polygon_data(polygon_data, texture_dir = None):
         rotate_uvs(obj, rotate_angle)  
         
         obj.data.update()
-        
-    # Rotate the created Blender model to match the game's coordinate system
-    bpy.ops.object.select_all(action = 'DESELECT')
-    obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis = 'X')
-    
+            
     return obj
 
 
 def create_blender_meshes() -> None:
     if is_blender_running():
+        delete_existing_meshes()
         enable_developer_extras()
-        adjust_3D_view_settings()
         enable_vertex_snapping()
-        load_dds_resources(texture_dir, load_tex_materials)
+        adjust_3D_view_settings()
+        
+        load_textures(texture_dir, load_tex_materials)
                     
-        texture_paths = [os.path.join(texture_dir, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+        textures = [os.path.join(texture_dir, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+            
+        created_objects = []
+        for poly, tex in zip(polygons_data, textures):
+            obj = create_mesh_from_polygon_data(poly, tex)
+            created_objects.append(obj)
 
-        bpy.ops.object.select_all(action = 'SELECT')
-        bpy.ops.object.delete()
-
-        for polygon, texture_path in zip(polygons_data, texture_paths):
-            create_mesh_from_polygon_data(polygon, texture_path)
-
+        rotate_meshes(created_objects)
+            
 ###################################################################################################################
 ###################################################################################################################
-
 #! ================== THIS SECTION IS RELATED TO BLENDER PANELS ================== !#
+
 
 # CELL PANEL
 CELL_IMPORT = [
@@ -5362,6 +5377,9 @@ class OBJECT_PT_CellTypePanel(bpy.types.Panel):
         else:
             layout.label(text = "No active object")
             
+            
+###################################################################################################################?
+
 
 # MATERIAL PANEL
 MATERIAL_IMPORT = [
@@ -5399,6 +5417,9 @@ class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
             layout.label(text = "No active object")
 
 
+###################################################################################################################?
+
+
 # HUD PANEL
 HUD_IMPORT = [
     (ROAD_HUD, "Road", "", "", 1),
@@ -5409,7 +5430,8 @@ HUD_IMPORT = [
     (ORANGE, "Orange", "", "", 6),
     (LIGHT_RED, "Light Red", "", "", 7),
     (DARK_RED, "Dark Red", "", "", 8),
-    (LIGHT_YELLOW, "Light Yellow", "", "", 9)]
+    (LIGHT_YELLOW, "Light Yellow", "", "", 9)
+    ]
 
 def set_hud_checkbox(color, obj):
     for i, (color_value, _, _, _, _) in enumerate(HUD_IMPORT):
@@ -5424,15 +5446,16 @@ bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
     default = (False, False, False, False, False, False, False, False, False))
 
 HUD_EXPORT = {
+    # '#414441': "ROAD_HUD",
     '#7b5931': "WOOD_HUD",
     '#cdcecd': "SNOW_HUD",
     '#5d8096': "WATER_HUD",
-    # '#414441': "ROAD_HUD",
     '#396d18': "GRASS_HUD",
     '#af0000': "DARK_RED",
     '#ffa500': "ORANGE",
     '#ff7f7f': "LIGHT_RED",
-    '#ffffe0': "LIGHT_YELLOW"}
+    '#ffffe0': "LIGHT_YELLOW"
+    }
 
 class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
     bl_label = "HUD Type"
@@ -5457,6 +5480,9 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
                 col.prop(obj, "hud_colors", index = i, text = name, toggle = True)
         else:
             layout.label(text = "No active object")
+
+            
+###################################################################################################################?
 
         
 # MISC PANEL
@@ -5485,6 +5511,9 @@ class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
             layout.prop(obj, "sort_vertices", text = "Sort Vertices")
         else:
             layout.label(text = "No active object")
+            
+            
+###################################################################################################################?
             
             
 # VERTEX COORDINATES PANEL
@@ -5526,7 +5555,6 @@ class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
             
 ###################################################################################################################
 ################################################################################################################### 
-
 #! ================== THIS SECTION IS RELATED TO BLENDER EXPORTING ================== !#
 
 def format_decimal(value):
@@ -5678,8 +5706,8 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
 ###################################################################################################################   
 ###################################################################################################################    
-    
 #! ================== THIS SECTION IS RELATED TO MISC BLENDER FUNCTIONS / CLASSES ================== !#
+
 
 # CLASS ASSIGN CUSTOM PROPERTIES
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
@@ -5727,16 +5755,9 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
         self.report({'INFO'}, "Assigned Custom Properties")
         return {"FINISHED"}
     
-    
-def is_blender_running() -> bool:
-    try:
-        import bpy   
-        _ = bpy.context.window_manager
-        return True 
-    except (AttributeError, ImportError):
-        return False
-  
-  
+###################################################################################################################   
+###################################################################################################################  
+      
 def set_blender_keybinding() -> None:
     if is_blender_running():
         wm = bpy.context.window_manager
