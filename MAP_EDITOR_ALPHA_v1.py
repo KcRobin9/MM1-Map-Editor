@@ -1823,7 +1823,7 @@ def user_notes(x):
 #! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
 #! There must exist a polygon with 'bound_number = 1'
     
-#! If you wish to modify or add Material, Cell or HUD constants you are importing/exporting to Blender
+#! If you wish to modify or add Material, Cell, Textures or HUD constants you are importing / exporting to Blender
 #! then you must also modify the respective IMPORTS and EXPORTS
 #! For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
 
@@ -5009,7 +5009,7 @@ def start_game(mm1_folder: str, play_game: bool) -> None:
             
 ###################################################################################################################
 ################################################################################################################### 
-#! ================== THIS SECTION IS RELATED TO BLENDER SETUP / PRELOADING ================== !#
+#! ======================= BLENDER SETUP ======================= !#
 
 
 def is_blender_running() -> bool:
@@ -5107,7 +5107,7 @@ def rotate_meshes(objects) -> None:
     
 ###################################################################################################################
 ###################################################################################################################
-#! ================== THIS SECTION IS RELATED TO BLENDER UV MAPPING ================== !#
+#! ======================= BLENDER UV MAPPING ======================= !#
 
 
 def unwrap_uv_to_aspect_ratio(obj, image):
@@ -5219,7 +5219,7 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
     
 ###################################################################################################################
 ###################################################################################################################
-#! ================== THIS SECTION IS RELATED TO CREATING BLENDER POLYGONS ================== !#
+#! ======================= CREATE BLENDER POLYGONS ======================= !#
 
 
 def apply_texture_to_object(obj, texture_path):
@@ -5339,8 +5339,37 @@ def create_blender_meshes() -> None:
             
 ###################################################################################################################
 ###################################################################################################################
-#! ================== THIS SECTION IS RELATED TO BLENDER PANELS ================== !#
 
+TEXTURE_EXPORT = {
+    "SNOW": "SNOW_TX",
+    "T_WOOD": "WOOD_TX",
+    "T_WATER": "WATER_TX",
+    "T_WATER_WIN": "WATER_WINTER_TX",
+    "T_GRASS": "GRASS_TX",
+    "T_GRASS_WIN": "GRASS_WINTER_TX",
+    "24_GRASS": "GRASS_BASEBALL_TX",
+    "SDWLK2": "SIDEWALK_TX",
+    "RWALK": "ZEBRA_CROSSING_TX",
+    "RINTER": "INTERSECTION_TX",
+    "FREEWAY2": "FREEWAY_TX",
+    "R2": "ROAD_1_LANE_TX",
+    "R4": "ROAD_2_LANE_TX",
+    "R6": "ROAD_3_LANE_TX",
+    "OT_MALL_BRICK": "BRICKS_MALL_TX",
+    "OT_SHOP03_BRICK": "BRICKS_SAND_TX",
+    "CT_FOOD_BRICK": "BRICKS_GREY_TX",
+    "R_WIN_01": "GLASS_TX",
+    "T_STOP": "STOP_SIGN_TX",
+    "T_BARRICADE": "BARRICADE_TX",
+    "CHECK04": "CHECKPOINT_TX",
+    "VPBUSRED_TP_BK": "BUS_RED_TOP",
+    "T_WATER_LAVA": "LAVA_TX",
+    "T_RED_BLACK_BARRICADE": "RED_BLACK_BARRICADE_TX"
+}
+
+###################################################################################################################
+###################################################################################################################
+#! ======================= BLENDER PANELS ======================= !#
 
 # CELL PANEL
 CELL_IMPORT = [
@@ -5555,7 +5584,7 @@ class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
             
 ###################################################################################################################
 ################################################################################################################### 
-#! ================== THIS SECTION IS RELATED TO BLENDER EXPORTING ================== !#
+#! ======================= BLENDER EXPORTING ======================= !#
 
 def format_decimal(value):
     if value == int(value): 
@@ -5600,12 +5629,13 @@ def extract_texture_from_polygon(obj):
             for node in mat.node_tree.nodes:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
-    return "CHECK04"  # If no texture is applied to the polygon, use CHECK04 as a placeholder
+    return "CHECK04"  # Default value
     
 
 def export_blender_polygon_data(obj) -> str:
     data = extract_polygon_data(obj)
     texture_name = extract_texture_from_polygon(obj)
+    texture_constant = TEXTURE_EXPORT.get(texture_name, f'"{texture_name}"')
     vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
 
     optional_variables = []
@@ -5643,7 +5673,7 @@ create_polygon(
         {vertex_export}])
 
 save_bms(
-    texture_name = ["{texture_name}"],
+    texture_name = [{texture_constant}],
     tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x}, tile_y = {tile_y}, angle_degrees = {rotate}))"""
 
     return polygon_export
@@ -5706,7 +5736,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
 ###################################################################################################################   
 ###################################################################################################################    
-#! ================== THIS SECTION IS RELATED TO MISC BLENDER FUNCTIONS / CLASSES ================== !#
+#! ======================= MISC BLENDER ======================= !#
 
 
 # CLASS ASSIGN CUSTOM PROPERTIES
