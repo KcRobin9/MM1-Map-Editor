@@ -5785,6 +5785,33 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
         self.report({'INFO'}, "Assigned Custom Properties")
         return {"FINISHED"}
     
+    
+###################################################################################################################?
+
+class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
+    """Custom Edit Operator"""
+    bl_idname = "object.process_post_extrude"
+    bl_label = "Process Post Extrude"
+    bl_options = {'REGISTER', 'UNDO'}
+    
+    triangulate: bpy.props.BoolProperty(name = "Triangulate", default = False)
+
+    def execute(self, context):
+        if context.object and context.object.type == 'MESH':
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            bpy.ops.mesh.select_all(action = 'SELECT')
+            
+            if self.triangulate:
+                bpy.ops.mesh.quads_convert_to_tris()
+            
+            bpy.ops.mesh.edge_split()
+            bpy.ops.mesh.separate(type = 'LOOSE')
+            bpy.ops.object.mode_set(mode = 'OBJECT')
+            return {'FINISHED'}
+        else:
+            self.report({'WARNING'}, "No mesh object selected")
+            return {'CANCELLED'}
+    
 ###################################################################################################################   
 ###################################################################################################################  
       
@@ -5799,12 +5826,20 @@ def set_blender_keybinding() -> None:
             kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
             kmi_export_all.properties.select_all = True
             
-            # Ctrl + E to export selected polygons
+            # Ctrl + E to export selected polygon(s)
             kmi_export_selected = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', ctrl = True)
             kmi_export_selected.properties.select_all = False
             
             # Shift + P to assign custom properties
             kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
+                        
+            # Shift + X to process an extruded mesh without triangulation
+            kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', shift = True)
+            kmi_custom_extrude_no_triangulate.properties.triangulate = False
+
+            # Ctrl + Shift + X to process an extruded mesh with triangulation
+            kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', ctrl = True, shift = True)
+            kmi_custom_extrude_triangulate.properties.triangulate = True
 
 ###################################################################################################################   
 ################################################################################################################### 
@@ -6267,9 +6302,12 @@ bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
 bpy.utils.register_class(OBJECT_PT_VertexCoordinates)
 
 create_blender_meshes()
+
 bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
 bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
+bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
+
 set_blender_keybinding()
 
 post_editor_cleanup(delete_shop)
