@@ -1,2 +1,2 @@
 @echo off
-start /D "%CD%" powershell -ExecutionPolicy Bypass -File "./Installer.ps1"
+start /D "%CD%" ..\powershell -ExecutionPolicy Bypass -File "./Installer.ps1"

@@ -6,6 +6,7 @@
 
 MidtownMadness/commandline.txt
 MidtownMadness/crashes
+MidtownMadness/screen
 MidtownMadness/*.log
 MidtownMadness/!*.ar
 MidtownMadness/!*.cfg
