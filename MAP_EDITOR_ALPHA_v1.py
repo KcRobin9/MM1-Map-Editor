@@ -3773,7 +3773,7 @@ class BangerEditor:
                                             
                 num_props = int(diagonal_length / separator)
                 
-                for i in range(1, num_props):
+                for i in range(0, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
                     self.props.append(Bangers(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
 
