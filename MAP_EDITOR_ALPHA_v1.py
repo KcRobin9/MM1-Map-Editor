@@ -5788,8 +5788,8 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     
 ###################################################################################################################?
 
+
 class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
-    """Custom Edit Operator"""
     bl_idname = "object.process_post_extrude"
     bl_label = "Process Post Extrude"
     bl_options = {'REGISTER', 'UNDO'}
@@ -5812,8 +5812,38 @@ class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
             self.report({'WARNING'}, "No mesh object selected")
             return {'CANCELLED'}
     
+    
+###################################################################################################################? 
+
+
+class OBJECT_OT_RenameChildren(bpy.types.Operator):
+    bl_idname = "object.auto_rename_children"
+    bl_label = "Auto Rename Children Objects"
+
+    def execute(self, context):
+        mothers_dict = {}
+
+        for obj in context.scene.objects:
+            if re.match(r'P\d+$', obj.name):
+                mothers_dict[obj.name] = []
+
+        for obj in context.scene.objects:
+            match = re.match(r'(P\d+)\.(\d+)', obj.name)
+            if match:
+                mother_name, child_suffix = match.groups()
+                if mother_name in mothers_dict:
+                    mothers_dict[mother_name].append((int(child_suffix), obj))
+
+        for mother_name, children in mothers_dict.items():
+            children.sort(key = lambda x: x[0])
+            for index, (suffix, child_obj) in enumerate(children):
+                new_name = f"{mother_name}{index+1}"
+                child_obj.name = new_name
+
+        return {'FINISHED'}
+            
 ###################################################################################################################   
-###################################################################################################################  
+################################################################################################################### 
       
 def set_blender_keybinding() -> None:
     if is_blender_running():
@@ -5840,6 +5870,9 @@ def set_blender_keybinding() -> None:
             # Ctrl + Shift + X to process an extruded mesh with triangulation
             kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', ctrl = True, shift = True)
             kmi_custom_extrude_triangulate.properties.triangulate = True
+            
+            # Ctrl + Shift + Q to rename children objects
+            kmi_rename_children = km.keymap_items.new("object.auto_rename_children", 'Q', 'PRESS', ctrl = True, shift = True)
 
 ###################################################################################################################   
 ################################################################################################################### 
@@ -6307,7 +6340,7 @@ bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
 bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
 bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
-
+bpy.utils.register_class(OBJECT_OT_RenameChildren)
 set_blender_keybinding()
 
 post_editor_cleanup(delete_shop)
