@@ -152,7 +152,7 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-disable_progress_bar = True    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################               
 ################################################################################################################
@@ -420,102 +420,92 @@ PLANE_LARGE = "vaboeing"  # No collision
 
 # Race Names
 blitz_race_names = ["Chaotic Tower"]
-circuit_race_names = ["City Lapper"]
+circuit_race_names = ["Photo Finish"]   
 checkpoint_race_names = ["Photo Finish"]
 
-# Races
+# # Races
 race_data = {
-    BLITZ: {
-        0: {
-            'waypoints': [
-                #! (x, y, z, rotation, width)
-                [0.0, 0.0, 55.0, ROT_N, 12.0], 
-                [0.0, 0.0, 15.0, ROT_N, 12.0], 
-                [0.0, 0.0, -40.0, ROT_N, 12.0], 
-                [0.0, 0.0, -130.0, ROT_N, 12.0], 
-                ],
-            'mm_data': {
-                #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds, Checkpoints, TimeLimit (s) (8 arguments)
-                #* N.B.: if you set 4 'waypoints', you should set 3 'Checkpoints' (n - 1)
-                'ama': [NOON, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
-                'pro': [EVENING, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999], 
-            },
-            'aimap': {
-                'density': 0.25,
-                'num_of_police': 2,
-                'police_data': [
-                    #! (x, y, z, rotation, start lane, behavior)
-                    f'{CRUISER} 10.0 0.0 65.0 {ROT_N} {STATIONARY} {PUSH}',
-                    f'{CRUISER} -10.0 0.0 65.0 {ROT_N} {IN_TRAFFIC} {MIX}',
-                ],
-                'num_of_opponents': 1,
-            },
+    'BLITZ_0': {
+        'waypoints': [
+            [0.0, 0.0, 55.0, ROT_N, 12.0], 
+            [0.0, 0.0, 15.0, ROT_N, 12.0], 
+            [0.0, 0.0, -40.0, ROT_N, 12.0], 
+            [0.0, 0.0, -130.0, ROT_N, 12.0], 
+        ],
+        'mm_data': {
+            'ama': [NOON, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
+            'pro': [EVENING, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999], 
+        },
+        'aimap': {
+            'density': 0.25,
+            'num_of_police': 2,
+            'police_data': [
+                f'{CRUISER} 10.0 0.0 65.0 {ROT_N} {STATIONARY} {PUSH}',
+                f'{CRUISER} -10.0 0.0 65.0 {ROT_N} {IN_TRAFFIC} {MIX}',
+            ],
+            'num_of_opponents': 1,
+        },
             'opponent_cars': {
-                VW_BEETLE:      [[5.0, 0.0, 35.0], 
-                                 [5.0, 0.0, -130.0]], 
-            }
+                VW_BEETLE: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
         }
     },
-    RACE: {
-        0: {
-            'waypoints': [
-                # [-83.0, 18.0, -114.0, ROT_N, 12.0],
-                [0.0, 245, -850, ROT_S, LANE_4], 
-                [0.0, 110, -500, ROT_S, 30.0],    
-                [25.0, 45.0, -325, ROT_S, 25.0],   
-                [35.0, 12.0, -95.0, ROT_S, LANE_4], 
-                [35.0, 30.0, 0.0, ROT_S, LANE_4], 
-                [35.0, 30.0, 40.0, ROT_S, LANE_4], 
-                ],
-            'mm_data': {
-                #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds (6 arguments)
-                'ama': [NOON, CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
-                'pro': [NOON, CLOUDY, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
-            },
-            'aimap': {
-                'density': 0.2,
-                'num_of_police': 0,
-                'police_data': [
-                    f'{CRUISER} 15.0 0.0 75.0 {ROT_N} {STATIONARY} {ROADBLOCK}',
-                ],
-                'num_of_opponents': 2,
-            },
+    'RACE_0': {
+        'waypoints': [
+            [0.0, 245, -850, ROT_S, LANE_4], 
+            [0.0, 110, -500, ROT_S, 30.0],    
+            [25.0, 45.0, -325, ROT_S, 25.0],   
+            [35.0, 12.0, -95.0, ROT_S, LANE_4], 
+            [35.0, 30.0, 0.0, ROT_S, LANE_4], 
+            [35.0, 30.0, 40.0, ROT_S, LANE_4], 
+        ],
+        'mm_data': {
+            'ama': [NOON, CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
+            'pro': [NOON, CLOUDY, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
+        },
+        'aimap': {
+            'density': 0.2,
+            'num_of_police': 0,
+            'police_data': [
+                f'{CRUISER} 15.0 0.0 75.0 {ROT_N} {STATIONARY} {ROADBLOCK}',
+            ],
+            'num_of_opponents': 1,
+        },
             'opponent_cars': {
-                WHITE_LIMO:    [[-10.0, 245, -850], 
-                                [0.0, 0.0, -100],
-                                [-10.0, 0.0, -75.0]],
-                
-                BLACK_LIMO:    [[10.0, 245, -850],
-                                [0.0, 0.0, -100],
-                                [10.0, 0.0, -75.0]],
-            }
+                PANOZ_GTR1: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
         }
     },
-    CIRCUIT: {
-        0: {
-            'waypoints': [
-                [0.0, 0.0, 40.0, ROT_AUTO, LANE_4], 
-                [10.0, 0.0, 20.0, ROT_AUTO, LANE_4], 
-                [20.0, 0.0, 0.0, ROT_AUTO, LANE_4], 
-                [30.0, 0.0, -20.0, ROT_AUTO, LANE_4], 
-                ],
-            'mm_data': {
-                #! TimeofDay, Weather, Opponents, Cops, Ambient, Peds, Laps (7 arguments)
-                'ama': [NIGHT, RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
-                'pro': [NIGHT, SNOW, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_3],
-            },
-            'aimap': {
-                'density': 0.75,
-                'num_of_police': 1,
-                'police_data': [
-                    f'{CRUISER} 0.0 0.0 50.0 {ROT_N} {STATIONARY} {SPINOUT}',
-                ],
-                'num_of_opponents': 1,
-            },
-            'opponent_cars': {
-                CADILLAC:      [[5.0, 0.0, 35.0], 
-                                [5.0, 0.0, -130.0]], 
-            }
+    'CIRCUIT_0': {
+        'waypoints': [
+            [0.0, 245, -850, ROT_S, LANE_4], 
+            [0.0, 110, -500, ROT_S, 30.0],    
+            [25.0, 45.0, -325, ROT_S, 25.0],   
+            [35.0, 12.0, -95.0, ROT_S, LANE_4], 
+            [35.0, 30.0, 0.0, ROT_S, LANE_4], 
+            [35.0, 30.0, 40.0, ROT_S, LANE_4], 
+        ],
+        'mm_data': {
+            'ama': [NIGHT, RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
+            'pro': [NIGHT, SNOW, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_3],
+        },
+        'aimap': {
+            'density': 0.2,
+            'num_of_police': 0,
+            'police_data': [
+                f'{CRUISER} 15.0 0.0 75.0 {ROT_N} {STATIONARY} {ROADBLOCK}',
+            ],
+            'num_of_opponents': 2,
+        },
+        'opponent_cars': {
+            WHITE_LIMO: [
+                [-10.0, 245, -850], 
+                [0.0, 0.0, -100],
+                [-10.0, 0.0, -75.0]
+            ],
+            BLACK_LIMO: [
+                [10.0, 245, -850],
+                [0.0, 0.0, -100],
+                [10.0, 0.0, -75.0]
+            ],
         }
     }
 }
@@ -2878,57 +2868,58 @@ def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config
 
     
 def create_races(map_filename: str, race_data) -> None:
-    for race_type, race_configs in race_data.items():
-        if race_type == RACE:  # For Checkpoint races
-            if len(race_configs) > len(checkpoint_prefixes):
+    for race_key, config in race_data.items():
+        race_type, race_index_str = race_key.split('_')
+        race_index = int(race_index_str)
+
+        # For Checkpoint races
+        if race_type == RACE:  
+            if len(config) > len(checkpoint_prefixes):
                 race_num_error = """
                 ***ERROR***
                 Number of Checkpoint races cannot be more than 12
                 """
                 raise ValueError(race_num_error)
-                        
-            for idx, (race_index, config) in enumerate(race_configs.items()):
-                prefix = checkpoint_prefixes[race_index]
-                
-                # Player Waypoints with Checkpoint prefix
-                write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config['waypoints'], race_type, race_index)
-                
-                # Opponent-specific Waypoints
-                for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
-                    write_waypoints(
-                        f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
-                        opp_waypoints, race_type, race_index, opponent_num = opp_idx)
-                
-                write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
-                write_aimap(map_filename, race_type, race_index, 
-                            config['aimap'], config['opponent_cars'], 
-                            num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
-                
-        else:  # For other race types
-            prefix = race_type_to_prefix[race_type]  # Directly assign the prefix string
-            for idx, config in race_configs.items():
-                
-                # Player Waypoints for Blizes and Circuits
-                write_waypoints(f"{race_type}{idx}WAYPOINTS.CSV", config['waypoints'], race_type, idx)
-                
-                # Opponent-specific Waypoints
-                for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
-                    write_waypoints(
-                        f"OPP{opp_idx}{race_type}{idx}{race_type_to_extension[race_type]}{idx}", 
-                        opp_waypoints, race_type, idx, opponent_num=opp_idx)
-                
-                write_mm_data(f"MM{race_type}DATA.CSV", race_configs, race_type, prefix)
-                write_aimap(map_filename, race_type, idx, 
-                            config['aimap'], config['opponent_cars'],
-                            num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
+
+            prefix = checkpoint_prefixes[race_index]
+
+            # Player Waypoints with Checkpoint prefix
+            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config['waypoints'], race_type, race_index)
+            
+            # Opponent-specific Waypoints
+            for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
+                write_waypoints(
+                    f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
+                    opp_waypoints, race_type, race_index, opponent_num = opp_idx)
+            
+            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
+            write_aimap(map_filename, race_type, race_index, 
+                        config['aimap'], config['opponent_cars'], 
+                        num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
+
+        else:  # For other race types (Circuit & Blitz)
+            prefix = race_type_to_prefix[race_type] + str(race_index)
+
+            # Player Waypoints
+            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config['waypoints'], race_type, race_index)
+            
+            # Opponent-specific Waypoints
+            for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
+                write_waypoints(
+                    f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
+                    opp_waypoints, race_type, race_index, opponent_num=opp_idx)
+            
+            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
+            write_aimap(map_filename, race_type, race_index, 
+                        config['aimap'], config['opponent_cars'],
+                        num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
 
                 
 def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
-        cnr_file = "COPSWAYPOINTS.CSV"
         header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
         filler = ",0,0,0,0,0,\n"
         
-        with open(SHOP / RACE / map_filename / Path(cnr_file), "w") as f:
+        with open(SHOP / RACE / map_filename / "COPSWAYPOINTS.CSV", "w") as f:
             f.write(header)
             for i in range(0, len(cnr_waypoints), 3):
                 f.write(", ".join(map(str, cnr_waypoints[i])) + filler) 
@@ -5956,8 +5947,8 @@ white_hotel_highway = {
 
 red_hotel_highway = {
     'flags': FRONT_BRIGHT,
-	'offset': (-160.0, 0.0, 40.0),
-	'end': (-160.0, 0.0, 140.0),
+	'offset': (-160.0, 0.0, 35.0),
+	'end': (-160.0, 0.0, 135.0),
 	'separator': 20.0, 
 	'name': "dfbldg06",
 	'axis': 'z'}
