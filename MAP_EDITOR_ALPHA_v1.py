@@ -1786,20 +1786,20 @@ def create_polygon(
 
 def user_notes(x):
     f""" 
-    Find some Polygons and Texture examples below this text.
+    Find some Polygons and Textures examples below this text.
     You can already run this the script and create the Test Map yourself
     
-    If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are acceptable)
+    If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are OK)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    The Material Index (optional variable, defaults to 0). You can use the constants under 'Material types'.    
-    Note that you can also set custom Material / Physics  Properties (search for: 'new_physics_properties' in the script)
+    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the constants under 'Material types'.    
+    Note that you can also set custom Material / Physics Properties (search for: 'new_physics_properties' in the script)
     
     Texture (UV) mapping examples:
     "tex_coords = compute_uv(bound_number = 1, tile_x = 4, tile_y = 2, angle_degrees = 0)"
     "tex_coords = compute_uv(bound_number = 2, tile_x = 5, tile_y = 2, angle_degrees = 90)"
         
-    The variable "texture_darkness" in the function "save_bms()" makes the texture edges darker / lighter. 
+    The variable "texture_darkness" (an optional variable) in the function "save_bms()" makes the texture edges darker / lighter. 
     If there are four vertices, you can for example set: "texture_darkness = [40, 2, 50, 1]"
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
@@ -1813,9 +1813,8 @@ def user_notes(x):
 #! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
 #! There must exist a polygon with 'bound_number = 1'
     
-#! If you wish to modify or add Material, Cell, Textures or HUD constants you are importing / exporting to Blender
-#! then you must also modify the respective IMPORTS and EXPORTS
-#! For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
+#! If you wish to modify or add a Material, Cell, Texture or HUD constant and you are importing / exporting to Blender,
+#! then you must also modify the respective IMPORTS and EXPORTS. For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
 
 # Cell / Room types 
 DEFAULT = 0   
@@ -1875,8 +1874,8 @@ LIGHT_RED = "#ff7f7f"
 LIGHT_YELLOW = '#ffffe0'
 
 
-#! ======================== MAIN AREA ======================== #*
-# Main Area Colored Checkpoints
+#! ==============================  MAIN AREA ============================== #*
+# Colored Checkpoints
 create_polygon(
     bound_number = 99,
     vertex_coordinates = [
@@ -1885,10 +1884,11 @@ create_polygon(
         (25.0, 0.0, 70.0),
         (-25.0, 0.0, 70.0)])
 
-save_bms(texture_name = [CHECKPOINT_TX],
-         tex_coords = compute_uv(bound_number = 99, tile_x = 5, tile_y = 1, angle_degrees = 0))
+save_bms(
+    texture_name = [CHECKPOINT_TX],
+    tex_coords = compute_uv(bound_number = 99, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
-# Main Area w/ Building | Road
+# Road with Buildings
 create_polygon(
     bound_number = 201,
     vertex_coordinates = [
@@ -1901,7 +1901,7 @@ save_bms(
     texture_name = [ROAD_3_LANE_TX], texture_darkness = [40, 2, 50, 1],
     tex_coords = compute_uv(bound_number = 201, tile_x = 10, tile_y = 10, angle_degrees = 45))
 
-# Main Grass Area | Intersection 
+# Grass Area 
 create_polygon(
 	bound_number = 861,
 	material_index = GRASS_MTL,
@@ -1916,7 +1916,7 @@ save_bms(
     texture_name = [GRASS_BASEBALL_TX], 
     tex_coords = compute_uv(bound_number = 861, tile_x = 7, tile_y = 7, angle_degrees = 90))
 
-# Main Grass Area Brown | Road
+# Brown Grass Area
 create_polygon(
 	bound_number = 202,
 	material_index = GRASS_MTL,
@@ -1931,7 +1931,7 @@ save_bms(
     texture_name = [GRASS_WINTER_TX], 
     tex_coords = compute_uv(bound_number = 202, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
-# Main Snow Area | Landmark (change?)
+# Snow Area
 create_polygon(
 	bound_number = 1,
     cell_type = NO_SKIDS,
@@ -1947,7 +1947,7 @@ save_bms(
     texture_name = [SNOW_TX], 
     tex_coords = compute_uv(bound_number = 1, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
-# Main Barricade Area | Intersection 
+# Barricade (Car) Area
 create_polygon(
 	bound_number = 862,
     cell_type = TUNNEL,
@@ -1962,7 +1962,7 @@ save_bms(
     texture_name = [RED_BLACK_BARRICADE_TX], 
     tex_coords = compute_uv(bound_number = 862, tile_x = 50, tile_y = 50, angle_degrees = 0))
 
-# Main Wood Area | Road
+# Wood (Tree) Area
 create_polygon(
 	bound_number = 203,
 	vertex_coordinates = [
@@ -1976,7 +1976,7 @@ save_bms(
     texture_name = [WOOD_TX], 
     tex_coords = compute_uv(bound_number = 203, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
-# Main Water Area | Landmark
+# Water (Sailboat) Area
 create_polygon(
 	bound_number = 2,
     cell_type = WATER_DRIFT,
@@ -1992,21 +1992,21 @@ save_bms(
     texture_name = [WATER_WINTER_TX], 
     tex_coords = compute_uv(bound_number = 2, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
-# Main Diagonal Grass Road 
+# Diagonal Grass Road 
 create_polygon(
     bound_number = 863,
+	hud_color = GRASS_HUD,
     vertex_coordinates = [
         (-50.0, 0.0, 110.0),
-        (-50.0, 0.0, 140.0),
-        (220.0, 0.0, 70.0),
-        (110.0, 0.0, 70.0)],
-        hud_color = GRASS_HUD)
+		(-50.0, 0.0, 140.0),
+		(140.0, 0.0, 70.0),
+		(93.01, 0.0, 70.0)])
 
 save_bms(
     texture_name = [GRASS_BASEBALL_TX],
-    tex_coords = compute_uv(bound_number = 863, tile_x = 10, tile_y = 10, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 863, tile_x = 10.0, tile_y = 10.0, angle_degrees = 90.0))
 
-# Triangle Brick I |
+# Triangle Brick I 
 create_polygon(
     bound_number = 204,
     cell_type = NO_SKIDS,
@@ -2020,7 +2020,7 @@ save_bms(
     texture_name = [BRICKS_MALL_TX],
     tex_coords = compute_uv(bound_number = 204, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
-# Triangle Brick II | to be decided
+# Triangle Brick II
 create_polygon(
     bound_number = 205,
     cell_type = NO_SKIDS,
@@ -2034,7 +2034,7 @@ save_bms(
     texture_name = [BRICKS_MALL_TX],
     tex_coords = compute_uv(bound_number = 205, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
-# Main Orange Hill | 
+# Huge Orange Hill 
 create_polygon(
 	bound_number = 3,
     cell_type = WATER_DRIFT,
@@ -2050,8 +2050,8 @@ save_bms(
     tex_coords = compute_uv(bound_number = 3, tile_x = 10, tile_y = 100, angle_degrees = 90))
 
 
-#! ======================== ORANGE BUILDING ======================== #*
-# Orange Building Wall "South" | Landmark
+#! ============================== ORANGE BUILDING ============================== #*
+# South Wall
 create_polygon(
     bound_number = 4,
     always_visible = False,
@@ -2065,7 +2065,7 @@ save_bms(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 4, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
-# Orange Building Wall "North" | Landmark
+# North Wall
 create_polygon(
     bound_number = 5,
     always_visible = False,
@@ -2079,7 +2079,7 @@ save_bms(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 5, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
-# Orange Building Wall "West" | Landmark
+# West Wall
 create_polygon(
     bound_number = 6,
     always_visible = False,
@@ -2093,7 +2093,7 @@ save_bms(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 6, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
-# Orange Building Wall "East" | Landmark
+# East Wall
 create_polygon(
     bound_number = 7,
     always_visible = False,
@@ -2107,7 +2107,7 @@ save_bms(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 7, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
-# Orange Building Rooftop | Intersection
+# Rooftop
 create_polygon(
     bound_number = 900,
     cell_type = NO_SKIDS,
@@ -2123,8 +2123,8 @@ save_bms(
     tex_coords = compute_uv(bound_number = 900, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 
-#! ======================== BRIDGES AND FREEWAY ======================== #*
-# Bridge I East | Road
+#! ============================== BRIDGES ============================== #*
+# Bridge I East
 create_polygon(
 	bound_number = 250,
 	vertex_coordinates = [
@@ -2136,113 +2136,7 @@ save_bms(
     texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 250, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
-# Bridge II West | Road
-create_polygon(
-	bound_number = 251,
-	vertex_coordinates = [
-		(-119.01, 0.0, -80.0),
-		(-90.0, 0.0, -80.0),
-		(-90.0, 0.0, -120.0),
-		(-119.01, 0.0, -120.0)])
-
-save_bms(
-    texture_name = [GRASS_TX], 
-    tex_coords = compute_uv(bound_number = 251, tile_x = 5, tile_y = 5, angle_degrees = 0))
-
-# Road West of West Bridge | Road
-create_polygon(
-	bound_number = 252,
-	vertex_coordinates = [
-        (-160.0, 0.0, -80.0),
-		(-119.1, 0.0, -80.0),
-        (-119.1, 0.0, -120.0),
-		(-160.0, 0.0, -120.0)])
-
-save_bms(
-    texture_name = [ROAD_3_LANE_TX], 
-    tex_coords = compute_uv(bound_number = 252, tile_x = 5, tile_y = 3, angle_degrees = 0))
-
-# Intersection West of Bridges | Intersection
-create_polygon(
-	bound_number = 950,
-	vertex_coordinates = [
-        (-200.0, 0.0, -80.0),
-		(-160.0, 0.0, -80.0),
-        (-160.0, 0.0, -120.0),
-		(-200.0, 0.0, -120.0)])
-
-save_bms(
-    texture_name = [INTERSECTION_TX], 
-    tex_coords = compute_uv(bound_number = 950, tile_x = 5, tile_y = 5, angle_degrees = 90))
-
-# Far West Freeway | Road
-create_polygon(
-	bound_number = 253,
-	vertex_coordinates = [
-		(-196.0, 0.0, 320.0),
-		(-164.0, 0.0, 320.0),
-		(-164.0, 0.0, -80.0),
-		(-196.0, 0.0, -80.0)])
-
-save_bms(
-    texture_name = [FREEWAY_TX], 
-    tex_coords = compute_uv(bound_number = 253, tile_x = 15, tile_y = 2, angle_degrees = 90))
-
-# West Freeway Sidewalk I | Road
-create_polygon(
-	bound_number = 254,
-	vertex_coordinates = [
-        (-164.0, 0.0, 320.0),
-        (-160.0, 0.0, 320.0),
-        (-160.0, 0.0, -80.0),
-		(-164.0, 0.0, -80.0)])
-
-save_bms(
-    texture_name = [SIDEWALK_TX], 
-    tex_coords = compute_uv(bound_number = 254, tile_x = 50, tile_y = 1, angle_degrees = 90))
-
-# West Freeway Sidewalk II | Road
-create_polygon(
-	bound_number = 255,
-	vertex_coordinates = [
-        (-200.0, 0.0, 320.0),
-        (-196.0, 0.0, 320.0),
-        (-196.0, 0.0, -80.0),
-        (-200.0, 0.0, -80.0)])
-
-save_bms(
-    texture_name = [SIDEWALK_TX], 
-    tex_coords = compute_uv(bound_number = 255, tile_x = 50, tile_y = 1, angle_degrees = 270))
-
-# West Freeway South Intersection | Intersection
-create_polygon(
-	bound_number = 951,
-	vertex_coordinates = [
-        (-200.0, 0.0, 360.0),
-        (-160.0, 0.0, 360.0),
-        (-160.0, 0.0, 320.0),
-        (-200.0, 0.0, 320.0)])
-
-save_bms(
-    texture_name = [INTERSECTION_TX], 
-    tex_coords = compute_uv(bound_number = 951, tile_x = 5, tile_y = 5, angle_degrees = 0))
-
-# Road Hill South West | Road
-create_polygon(
-	bound_number = 256,
-	vertex_coordinates = [
-        (-160.0, 0.0, 360.0),
-        (0.0, 26.75, 360.0),
-        (0.0, 26.75, 320.0),
-        (-160.0, 0.0, 320.0)])
-
-save_bms(
-    texture_name = [ROAD_2_LANE_TX], 
-    tex_coords = compute_uv(bound_number = 256, tile_x = 10, tile_y = 4, angle_degrees = 0))
-
-
-#! ======================== BRIDGE SPLIT SOUTH SECTION ======================== #*
-# Bridge Road Split | Intersection
+# Road split
 create_polygon(
 	bound_number = 925,
 	vertex_coordinates = [
@@ -2255,155 +2149,48 @@ save_bms(
     texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 925, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
-# Striped Bridge Road South | Road
+# Bridge II West
 create_polygon(
-	bound_number = 226,
+	bound_number = 251,
 	vertex_coordinates = [
-		(-90.0, 14.75, -35.0),
-		(-79.0, 14.75, -35.0),
-		(-79.0, 14.75, -80.0),
-		(-90.0, 14.75, -80.0)])
+		(-119.01, 0.0, -80.0),
+		(-90.0, 0.0, -80.0),
+		(-90.0, 0.0, -120.0),
+		(-119.01, 0.0, -120.0)])
 
 save_bms(
-    texture_name = [ZEBRA_CROSSING_TX], 
-    tex_coords = compute_uv(bound_number = 226, tile_x = 5, tile_y = 5, angle_degrees = 90))
+    texture_name = [GRASS_TX], 
+    tex_coords = compute_uv(bound_number = 251, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
-# Bridge Road South Intersection | Intersection
+# Road West of Bridge
 create_polygon(
-	bound_number = 926,
+	bound_number = 252,
 	vertex_coordinates = [
-		(-90.0, 14.75, -15.0),
-		(-79.0, 14.75, -15.0),
-		(-79.0, 14.75, -35.0),
-		(-90.0, 14.75, -35.0)])
+        (-160.0, 0.0, -80.0),
+		(-119.1, 0.0, -80.0),
+        (-119.1, 0.0, -120.0),
+		(-160.0, 0.0, -120.0)])
 
 save_bms(
-    texture_name = [INTERSECTION_TX], 
-    tex_coords = compute_uv(bound_number = 926, tile_x = 5, tile_y = 5, angle_degrees = 90))
+    texture_name = [ROAD_3_LANE_TX], 
+    tex_coords = compute_uv(bound_number = 252, tile_x = 5, tile_y = 3, angle_degrees = 0))
 
-# Striped Bridge Road South Hill UP I | Road
+# Intersection West of Bridge
 create_polygon(
-	bound_number = 227,
+	bound_number = 950,
 	vertex_coordinates = [
-		(-79.0, 14.75, -15.0),
-		(-90.0, 14.75, -15.0),
-		(-80.0, 26.75, 85.0),
-		(-69.0, 26.75, 85.0)])
-
-save_bms(
-    texture_name = [ZEBRA_CROSSING_TX], 
-    tex_coords = compute_uv(bound_number = 227, tile_x = 5, tile_y = 5, angle_degrees = 90))
-
-# Striped Bridge Road South Hill UP II | Road
-create_polygon(
-	bound_number = 228,
-	vertex_coordinates = [
-		(-160.0, 0.0, 20.0),
-		(-160.0, 0.0, 40.0),
-		(-110.0, 10.0, 20.0),
-        (-110.0, 10.0, 0.0)])
-
-save_bms(
-    texture_name = [BRICKS_SAND_TX], 
-    tex_coords = compute_uv(bound_number = 228, tile_x = 5, tile_y = 5, angle_degrees = 90))
-
-# Bridge Road South Hill Freeway I | Road
-create_polygon(
-	bound_number = 233,
-	vertex_coordinates = [
-		(-69.0, 26.75, 85.0),
-		(-80.0, 26.75, 85.0),
-		(0.0, 26.75, 320.0),
-		(11.0, 26.75, 320.0)])
-
-save_bms(
-    texture_name = [ZEBRA_CROSSING_TX], 
-    tex_coords = compute_uv(bound_number = 233, tile_x = 5, tile_y = 5, angle_degrees = 90))
-
-# Bridge Road South Hill Freeway II | Road
-create_polygon(
-	bound_number = 234,
-	vertex_coordinates = [
-		(-90.0, 14.75, -15.0),
-		(-90.0, 14.75, -40.0),
-		(-110.0, 10.0, 0.0),
-		(-110.0, 10.0, 20.0)])
-
-save_bms(
-    texture_name = [ZEBRA_CROSSING_TX], 
-    tex_coords = compute_uv(bound_number = 234, tile_x = 5, tile_y = 5, angle_degrees = 90))
-
-
-#! ======================== ELEVATED SECTION ======================== #*
-
-# Elevated South South Intersection I | Intersection
-create_polygon(
-	bound_number = 952,
-	vertex_coordinates = [
-		(0.0, 26.75, 360.0),
-		(80.0, 26.75, 360.0),
-		(80.0, 26.75, 320.0),
-		(0.0, 26.75, 320.0)])
+        (-200.0, 0.0, -80.0),
+		(-160.0, 0.0, -80.0),
+        (-160.0, 0.0, -120.0),
+		(-200.0, 0.0, -120.0)])
 
 save_bms(
     texture_name = [INTERSECTION_TX], 
-    tex_coords = compute_uv(bound_number = 952, tile_x = 4, tile_y = 5, angle_degrees = 90))
-
-# Elevated South East Intersection I | Road
-create_polygon(
-	bound_number = 300,
-	vertex_coordinates = [
-		(50.0, 26.75, 320.0),
-		(80.0, 26.75, 320.0),
-        (80.0, 26.75, 200.0),
-		(50.0, 26.75, 200.0)])
-
-save_bms(
-    texture_name = [ROAD_2_LANE_TX], 
-    tex_coords = compute_uv(bound_number = 300, tile_x = 15, tile_y = 4, angle_degrees = 90))
-
-# Elevated South East Road I | Road
-create_polygon(
-	bound_number = 953,
-	vertex_coordinates = [
-		(50.0, 26.75, 200.0),
-		(80.0, 26.75, 200.0),
-		(50.0, 26.75, 50.0),
-		(20.0, 26.75, 50.0)])
-
-save_bms(
-    texture_name = [ROAD_2_LANE_TX], 
-    tex_coords = compute_uv(bound_number = 953, tile_x = 5, tile_y = 15, angle_degrees = 90))
-
-# Elevated South East Road I | Road
-create_polygon(
-	bound_number = 301,
-	vertex_coordinates = [
-		(50.0, 26.75, 200.0),
-		(80.0, 26.75, 200.0),
-		(50.0, 26.75, 50.0),
-		(20.0, 26.75, 50.0)])
-
-save_bms(
-    texture_name = [ROAD_2_LANE_TX], 
-    tex_coords = compute_uv(bound_number = 301, tile_x = 15, tile_y = 4, angle_degrees = 90))
-
-# Bump to Elevated Building Rooftop Section | Road
-create_polygon(
-	bound_number = 302,
-	vertex_coordinates = [
-		(20.0, 26.75, 50.0),
-		(50.0, 26.75, 50.0),
-		(50.0, 30.00, 40.0),
-		(20.0, 30.30, 40.0)])
-
-save_bms(
-    texture_name = [ROAD_2_LANE_TX], 
-    tex_coords = compute_uv(bound_number = 302, tile_x = 2, tile_y = 4, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 950, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 
-#! ======================== ORANGE BUILDING ROADS AND CONNECTION TO ELEVATED PART ======================== #*
-# Hill Connected to Bridge Prop (Jump) | Road
+#! ============================== ELEVATED AREA ============================== #*
+# Road connected to Bridge Prop
 create_polygon(
 	bound_number = 501,
 	vertex_coordinates = [
@@ -2416,7 +2203,7 @@ save_bms(
     texture_name = [ROAD_3_LANE_TX], 
     tex_coords = compute_uv(bound_number = 501, tile_x = 3, tile_y = 2, angle_degrees = 90))
 
-# Intersection Orange Building
+# Bricks Intersection
 create_polygon(
 	bound_number = 1100,
 	vertex_coordinates = [
@@ -2429,7 +2216,7 @@ save_bms(
     texture_name = [BRICKS_GREY_TX], 
     tex_coords = compute_uv(bound_number = 1100, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
-# Road To Rooftop (Red Bus Color) | Road
+# Red Bus Color
 create_polygon(
 	bound_number = 502,
 	vertex_coordinates = [
@@ -2442,7 +2229,6 @@ save_bms(
     texture_name = [BUS_RED_TOP], 
     tex_coords = compute_uv(bound_number = 502, tile_x = 4, tile_y = 3, angle_degrees = 0))
 
-# Road To Orange Building I | Road
 create_polygon(
 	bound_number = 503,
 	vertex_coordinates = [
@@ -2456,8 +2242,8 @@ save_bms(
     tex_coords = compute_uv(bound_number = 503, tile_x = 5, tile_y = 12, angle_degrees = 0))
 
 
-#! ======================== SPEEDBUMPS ======================== #*
-# Speed Bump Front | No Type
+#! ============================== SPEEDBUMPS ============================== #*
+# Speed Bump South
 create_polygon(
 	bound_number = 206,
 	vertex_coordinates = [ 
@@ -2471,7 +2257,7 @@ save_bms(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 206, tile_x = 15, tile_y = 1, angle_degrees = 90))
 
-# Speed Bump Front | No Type
+# Speed Bump North
 create_polygon(
 	bound_number = 207,
 	vertex_coordinates = [
@@ -2485,7 +2271,7 @@ save_bms(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 207, tile_x = 1, tile_y = 10, angle_degrees = 0))
 
-# Speed Bump Triangle Side I | No Type
+# Triangle Side I
 create_polygon(
 	bound_number = 208,
 	vertex_coordinates = [
@@ -2497,7 +2283,7 @@ save_bms(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
-# Speed Bump Triangle Side II | No Type
+# Triangle Side II
 create_polygon(
 	bound_number = 209,
 	vertex_coordinates = [
@@ -2510,7 +2296,7 @@ save_bms(
     tex_coords = compute_uv(bound_number = 209, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 
-#! ======================== HIGHWAY CURVED TUNNEL ======================== #* 
+#! ============================== CURVED FREEWAY ============================== #* 
 create_polygon(
 	bound_number = 2220,
 	vertex_coordinates = [
@@ -2620,7 +2406,20 @@ save_bms(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2229, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
-# Hill Downwards from Bridges | Road
+# Intersection
+create_polygon(
+	bound_number = 924,
+	vertex_coordinates = [
+        (-90.0, -15.00, -254.51),
+        (-79.0, -15.00, -254.51),
+        (-79.0, -15.00, -294.48),
+        (-90.0, -15.00, -294.48)])
+
+save_bms(
+	texture_name = [INTERSECTION_TX],
+	tex_coords = compute_uv(bound_number = 924, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
+
+# Hill
 create_polygon(
 	bound_number = 923,
 	vertex_coordinates = [
@@ -2633,19 +2432,6 @@ create_polygon(
 save_bms(
 	texture_name = [ZEBRA_CROSSING_TX],
 	tex_coords = compute_uv(bound_number = 923, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
-
-# Slim Intersection connected to Downwards Hill
-create_polygon(
-	bound_number = 924,
-	vertex_coordinates = [
-        (-90.0, -15.00, -254.51),
-        (-79.0, -15.00, -254.51),
-        (-79.0, -15.00, -294.48),
-        (-90.0, -15.00, -294.48)])
-
-save_bms(
-	texture_name = [INTERSECTION_TX],
-	tex_coords = compute_uv(bound_number = 924, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
 ################################################################################################################               
 ################################################################################################################ 
