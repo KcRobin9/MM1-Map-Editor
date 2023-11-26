@@ -4055,53 +4055,53 @@ class TextureSheet:
 #! ########### Code by 0x1F9F1 (Modified) ############ !#     
 
 class aiPath:
-    def load(self, file):
-        self.ID,\
-        self.NumVertexs,\
-        self.NumLanes,\
-        self.NumSidewalks,\
-        self.StopLightIndex,\
-        self.IntersectionType,\
-        self.Blocked,\
-        self.PedBlocked,\
-        self.Divided,\
-        self.IsFlat,\
-        self.HasBridge,\
-        self.Alley,\
-        self.RoadLength,\
-        self.SpeedLimit,\
-        self.StopLightName,\
-        self.OncomingPath,\
-        self.EdgeIndex,\
-        self.PathIndex = read_unpack(file, '<HHHHHHHHHHHHff32sIII')
-        self.SubSectionOffsets = read_unpack(file, '<{}f'.format(self.NumVertexs * (self.NumLanes + self.NumSidewalks)))
-        self.CenterOffsets = read_unpack(file, '<{}f'.format(self.NumVertexs))
-        self.IntersectionIds = read_unpack(file, '<2I')
-        self.LaneVertices = Vector3.readn(file, self.NumVertexs * (self.NumLanes + self.NumSidewalks))
+    def load(self, f):
+        self.ID = read_unpack(f, '<H')
+        self.NumVertexs = read_unpack(f, '<H')
+        self.NumLanes = read_unpack(f, '<H')
+        self.NumSidewalks = read_unpack(f, '<H')
+        self.StopLightIndex = read_unpack(f, '<H')
+        self.IntersectionType = read_unpack(f, '<H')
+        self.Blocked = read_unpack(f, '<H')
+        self.PedBlocked = read_unpack(f, '<H')
+        self.Divided = read_unpack(f, '<H')
+        self.IsFlat = read_unpack(f, '<H')
+        self.HasBridge = read_unpack(f, '<H')
+        self.Alley = read_unpack(f, '<H')
+        self.RoadLength = read_unpack(f, '<f')
+        self.SpeedLimit = read_unpack(f, '<f')
+        self.StopLightName = read_unpack(f, '<32s')
+        self.OncomingPath = read_unpack(f, '<I')
+        self.EdgeIndex = read_unpack(f, '<I')
+        self.PathIndex = read_unpack(f, '<I')
+        self.SubSectionOffsets = read_unpack(f, '<{}f'.format(self.NumVertexs * (self.NumLanes + self.NumSidewalks)))
+        self.CenterOffsets = read_unpack(f, '<{}f'.format(self.NumVertexs))
+        self.IntersectionIds = read_unpack(f, '<2I')
+        self.LaneVertices = Vector3.readn(f, self.NumVertexs * (self.NumLanes + self.NumSidewalks))
 
         # Center/Dividing line between the two sides of the road
-        self.CenterVertices = Vector3.readn(file, self.NumVertexs)
-        self.VertXDirs = Vector3.readn(file, self.NumVertexs)
-        self.Normals = Vector3.readn(file, self.NumVertexs)
-        self.VertZDirs = Vector3.readn(file, self.NumVertexs)
-        self.SubSectionDirs = Vector3.readn(file, self.NumVertexs)
+        self.CenterVertices = Vector3.readn(f, self.NumVertexs)
+        self.VertXDirs = Vector3.readn(f, self.NumVertexs)
+        self.Normals = Vector3.readn(f, self.NumVertexs)
+        self.VertZDirs = Vector3.readn(f, self.NumVertexs)
+        self.SubSectionDirs = Vector3.readn(f, self.NumVertexs)
 
         # Outer Edges, Inner Edges (Curb)
-        self.Boundaries = Vector3.readn(file, self.NumVertexs * 2)
+        self.Boundaries = Vector3.readn(f, self.NumVertexs * 2)
 
-        # Inner Edges on opposite side of road
-        self.LBoundaries = Vector3.readn(file, self.NumVertexs)
-        self.StopLightPos = Vector3.readn(file, 2)
-        self.LaneWidths = read_unpack(file, '<5f')
-        self.LaneLengths = read_unpack(file, '<10f')
+        # Inner Edges on the opposite side of the road
+        self.LBoundaries = Vector3.readn(f, self.NumVertexs)
+        self.StopLightPos = Vector3.readn(f, 2)
+        self.LaneWidths = read_unpack(f, '<5f')
+        self.LaneLengths = read_unpack(f, '<10f')
 
         self.StopLightName = self.StopLightName.rstrip(b'\0').decode('ascii')
 
-    def read(file):
+    def read(f):
         result = aiPath()
-        result.load(file)
+        result.load(f)
         return result
-    
+
 ###################################################################################################################
 ###################################################################################################################
 
@@ -5691,7 +5691,7 @@ SUIT_STORE = "dfsuitstore"
 PIZZA_PLACE = "hfpizza"   
 RAIL_WATER = "t_rail01"  
 
-orange_building_1 = {
+orange_building_one = {
 	'flags': FRONT_BRIGHT,
 	'offset': (-10.0, 0.0, -50.0),
 	'end': (10, 0.0, -50.0),
@@ -5699,7 +5699,7 @@ orange_building_1 = {
 	'name': ORANGE_W_WINDOWS,
 	'axis': 'x'}
 
-orange_building_2 = {
+orange_building_two = {
 	'flags': FRONT_BRIGHT,
 	'offset': (10.0, 0.0, -70.0),
 	'end': (-10, 0.0, -70.0),
@@ -5707,7 +5707,7 @@ orange_building_2 = {
 	'name': ORANGE_W_WINDOWS,
 	'axis': 'x'}
 
-orange_building_3 = {
+orange_building_three = {
 	'flags': FRONT_BRIGHT,
 	'offset': (-10.0, 0.0, -70.0),
 	'end': (-10.0, 0.0, -50.0),
@@ -5715,7 +5715,7 @@ orange_building_3 = {
 	'name': ORANGE_W_WINDOWS,
 	'axis': 'z'}
 
-orange_building_4 = {
+orange_building_four = {
 	'flags': FRONT_BRIGHT,
 	'offset': (10.0, 0.0, -50.0),
 	'end': (10.0, 0.0, -70.0),
@@ -5723,26 +5723,8 @@ orange_building_4 = {
     'axis': 'z',
     'separator': 10.0}
 
-white_hotel_highway = {
-    'flags': FRONT_BRIGHT,
-	'offset': (-160.0, 0.0, -80.0),
-	'end': (-160.0, 0.0, 20.0),
-	'separator': 25.0, 
-	'name': "rfbldg05",
-	'axis': 'z'}
-
-red_hotel_highway = {
-    'flags': FRONT_BRIGHT,
-	'offset': (-160.0, 0.0, 35.0),
-	'end': (-160.0, 0.0, 135.0),
-	'separator': 20.0, 
-	'name': "dfbldg06",
-	'axis': 'z'}
-
 # Pack all Facades for processing
-fcd_list = [
-    orange_building_1, orange_building_2, orange_building_3, orange_building_4, 
-    white_hotel_highway, red_hotel_highway]
+facade_list = [orange_building_one, orange_building_two, orange_building_three, orange_building_four]
 
 ###################################################################################################################   
 ###################################################################################################################
@@ -5832,7 +5814,7 @@ orange_hill = {
         (0.0, 0.0, -155.0),
         (0.0, 0.0, -100.0)]}
 
-# Street examples with multiple lanes and all optional settings
+# Street example with multiple lanes and all optional settings
 street_example = {
     "street_name": "example",
     "lanes": {
@@ -5841,16 +5823,11 @@ street_example = {
             (-30.0, 1.0, -30.0),
             (-30.0, 1.0, -50.0),
         ],
-        "lane_2": [
+        "lane_2": [  # Add more lanes if desired
             (-40.0, 1.0, -20.0),
             (-40.0, 1.0, -30.0),
             (-40.0, 1.0, -50.0),
         ],
-        "lane_3": [  # Add more lanes if desired
-            (-40.0, 1.0, -20.0),
-            (-50.0, 1.0, -30.0),
-            (-50.0, 1.0, -50.0),
-        ]
     },
     "intersection_types": [STOP_LIGHT, STOP_LIGHT],
     "stop_light_names": [STOP_LIGHT_DUAL, STOP_LIGHT_DUAL],
@@ -5873,13 +5850,6 @@ street_list = [cruise_start,
 ###################################################################################################################               
 
 # SET PROPS
-
-china_gate = {'offset': (0, 0.0, -20), 
-              'face': (1 * HUGE, 0.0, -20), 
-              'name': CHINATOWN_GATE,
-              'race_mode': CIRCUIT,
-              'race_num': 0}
-
 trailer_set = {'offset': (60, 0.0, 70), 
                'end': (60, 0.0, -50), 
                'name': TRAILER, 
@@ -5890,8 +5860,15 @@ bridge_orange_buildling = {
           'face': (35 * HUGE, 12.0, -70),
           'name': BRIDGE_SLIM}
 
+# Prop for CIRCUIT 0 
+china_gate = {'offset': (0, 0.0, -20), 
+              'face': (1 * HUGE, 0.0, -20), 
+              'name': CHINATOWN_GATE,
+              'race_mode': CIRCUIT,
+              'race_num': 0}
+
 # Put your non-randomized props here
-prop_list = [china_gate, trailer_set, bridge_orange_buildling] 
+prop_list = [trailer_set, bridge_orange_buildling, china_gate] 
 
 # # Put your randomized props here (you will add them to the list "random_parameters")
 random_trees = {
@@ -5921,6 +5898,9 @@ app_panoz_gtr = {
 
 props_to_append = [app_panoz_gtr]
 
+###################################################################################################################   
+################################################################################################################### 
+# PROP PROPERTIES (currently only possible for cars)
 
 # AudioIDs
 MALLDOOR_AUD = 1
@@ -5940,7 +5920,6 @@ NO_NAME_2_AUD = 24     # sounds a bit similar to "glass"
 NEWS_AUD = 25
 GLASS_AUD = 27
 
-# Set additional Prop Properties here (currently only possible for cars)
 # The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
 bangerdata_properties = {
     VW_BEETLE: {'ImpulseLimit2': HUGE, 'AudioId': GLASS_AUD},
@@ -5952,8 +5931,7 @@ bangerdata_properties = {
 # SET LIGHTING
 
 lighting_configs = [
-    {
-        # Actual lighting data for Evening and Cloudy
+    {   # Actual lighting data for Evening and Cloudy
         'time_of_day': EVENING,
         'weather': CLOUDY,
         'sun_heading': 3.14,
@@ -6053,7 +6031,7 @@ Bounds.create(map_filename, vertices, polys, debug_bounds)
 Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
 TextureSheet().write()
 StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
-FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", fcd_list, set_facades, debug_facades)
+FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
 prop_editor = BangerEditor(map_filename)
