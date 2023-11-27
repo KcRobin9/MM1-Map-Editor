@@ -73,8 +73,7 @@ set_minimap = True              # change to "True" if you want a MINIMAP (defaul
 minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
 
 # AI
-set_ai_map = True               # create the Map file          keep both set to "True" if you want functional AI
-set_streets = True              # create the Streets files     keep both set to "True" if you want functional AI
+set_ai = True                   # change to "True" if you want AI
 set_reverse_streets = False     # change to "True" if you want to automatically add a reverse AI path for each lane
 set_lars_race_maker = False     # change to "True" if you want to create "lars race maker" 
 
@@ -4405,28 +4404,24 @@ def debug_bai(debug_bai_data_file: Path, debug_bai_file: bool) -> None:
 ###################################################################################################################
 
 # BAI EDITOR CLASS
-class BaiEditor:
-    def __init__(self, map_filename: str, streets, set_ai_map: bool):
+class BaiMap:
+    def __init__(self, map_filename: str, street_names):
         self.map_filename = map_filename
-        self.streets = streets
-                
-        if set_ai_map:
-            self.write_map()
-
+        self.street_names = street_names
+        self.write_map()
+             
     def write_map(self):           
-        with open(BASE_DIR / "dev" / "CITY" / map_filename / f"{map_filename}.map", 'w') as f:
+        with open(BASE_DIR / "dev" / "CITY" / self.map_filename / f"{self.map_filename}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
-        streets_representation = '\n\t\t'.join(
-            [f'"{street}"' for street in self.streets]
-            )
-
+        map_streets = '\n\t\t'.join([f'"{street}"' for street in self.street_names])
+        
         map_data = f"""
 mmMapData :0 {{
-    NumStreets {len(self.streets)}
+    NumStreets {len(self.street_names)}
     Street [
-        {streets_representation}
+        {map_streets}
     ]
 }}
         """
@@ -4436,23 +4431,14 @@ mmMapData :0 {{
 ###################################################################################################################
        
 # STREET EDITOR CLASS
-class StreetEditor:
-    def __init__(self, map_filename: str, data, set_streets: bool, set_reverse_streets: bool):
+class aiPathEditor:
+    def __init__(self, map_filename: str, data, set_reverse_streets: bool):
         self.map_filename = map_filename
         self.street_name = data["street_name"]
         self.set_reverse_streets = set_reverse_streets
         self.process_lanes(data)
         self.set_properties(data)
-
-        if set_streets:
-            self.write()
                     
-    @classmethod
-    def create(cls, map_filename: str, dataset, set_ai_map: bool, set_streets: bool, set_reverse_streets: bool):
-        street_editors = [StreetEditor(map_filename, data, set_streets, set_reverse_streets) for data in dataset]
-        street_names = [editor.street_name for editor in street_editors]
-        return BaiEditor(map_filename, street_names, set_ai_map)
-
     def process_lanes(self, data):
         if "lanes" in data:
             self.original_lanes = data["lanes"]
@@ -4466,15 +4452,33 @@ class StreetEditor:
         if self.set_reverse_streets:
             for key, values in self.original_lanes.items():
                 self.lanes[key].extend(values[::-1])
-
+                        
     def set_properties(self, data):
-        self.intersection_types = data.get("intersection_types", [CONTINUE, CONTINUE])
-        self.stop_light_positions = data.get("stop_light_positions", [(0.0, 0.0, 0.0)] * 4)
-        self.stop_light_names = data.get("stop_light_names", [STOP_LIGHT_SINGLE, STOP_LIGHT_SINGLE])
-        self.traffic_blocked = data.get("traffic_blocked", [NO, NO])
-        self.ped_blocked = data.get("ped_blocked", [NO, NO])
-        self.road_divided = data.get("road_divided", NO)
-        self.alley = data.get("alley", NO)
+        default_values = {
+            "intersection_types": [CONTINUE, CONTINUE],
+            "stop_light_positions": [(0.0, 0.0, 0.0)] * 4,
+            "stop_light_names": [STOP_LIGHT_SINGLE, STOP_LIGHT_SINGLE],
+            "traffic_blocked": [NO, NO],
+            "ped_blocked": [NO, NO],
+            "road_divided": NO,
+            "alley": NO,
+        }
+
+        for key, default in default_values.items():
+            setattr(self, key, data.get(key, default))
+            
+    @classmethod
+    def create(cls, map_filename: str, dataset, set_ai: bool, set_reverse_streets: bool):
+        if not set_ai:
+            return None
+
+        street_names = []
+        for data in dataset:
+            editor = cls(map_filename, data, set_reverse_streets)
+            editor.write()
+            street_names.append(editor.street_name)
+
+        return BaiMap(map_filename, street_names)
 
     def write(self):    
         with open(BASE_DIR / "dev" / "CITY" / self.map_filename  / f"{self.street_name}.road", 'w') as f:
@@ -6030,7 +6034,7 @@ create_cells(map_filename, polys, truncate_cells)
 Bounds.create(map_filename, vertices, polys, debug_bounds)
 Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
 TextureSheet().write()
-StreetEditor.create(map_filename, street_list, set_ai_map, set_streets, set_reverse_streets)
+aiPathEditor.create(map_filename, street_list, set_ai, set_reverse_streets)
 FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
