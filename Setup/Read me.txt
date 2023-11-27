@@ -22,7 +22,7 @@ Go to the Extensions tab, and search for + install the following:
 "Better Comments" (by Aaron Bond) (not required, but recommended)
 
 6) Test Python and Install Required Libraries
-Double click on "Install_Me.bat" and let the script do its thing
+Double click on "CLICK_ME.bat" and let the script do its thing
 
 7) Connect Python and Blender
 Watch this tutorial from 3:48 onwards: https://www.youtube.com/watch?v=YUytEtaVrrc

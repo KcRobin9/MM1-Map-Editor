@@ -9,14 +9,14 @@ Midtown Madness 1 is a racing game made by Angel Studios, featuring the city of 
 
 This Map Editor is developed to provide an easy way for users to create their own unique cities for Midtown Madness 1. Not only can you design roads, hills, and walls, but you can also customize textures, facades, props, drawbridges, animations, physics, AI paths, races, and even the HUD.
 
-In addition, the Map Editor now seamlessly integrates with Blender. This allows you to both import and export models in the blink of an eye. To further enhance the user experience, a custom Blender UI has been implemented, from which all parameters of each polygon can be set and modified. This visual integration, combined with Blender's extensive features, significantly streamlines the design process, allowing you to quickly iterate over your ideas.
+In addition, the Map Editor now seamlessly integrates with Blender. This allows you to both import and export models in the blink of an eye. To further enhance the user experience, a custom Blender UI has been implemented. From here, all parameters of each polygon can be set and modified. This visual integration, combined with Blender's extensive features, significantly streamlines the design process, allowing you to quickly iterate over ideas.
 
 Upon completion of your design, the Map Editor will generate all the necessary city files, compile them into an .AR file, and automatically boot the game with your new city preloaded.
 
 ## Installation
 
-* Clone the repository
-* Follow the setup guide in the Installation Instructions folder
+* Click the 'Download' button or clone the repo: `git clone https://github.com/KcRobin9/MM1-Map-Editor.git`
+* Follow the README in the Setup folder
 
 ## Credits
 
@@ -27,7 +27,7 @@ Upon completion of your design, the Map Editor will generate all the necessary c
 
 ## Contact
 
-If you have any questions or suggestions, feel free to reach out to me via Discord.
+If you have any questions or suggestions, feel free to reach via Discord.
 
 ## Gallery
 
