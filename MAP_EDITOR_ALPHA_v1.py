@@ -75,7 +75,7 @@ minimap_outline_color = None    # change the outline of the minimap shapes to an
 # AI
 set_ai = True                   # change to "True" if you want AI
 set_reverse_streets = False     # change to "True" if you want to automatically add a reverse AI path for each lane
-set_lars_race_maker = False     # change to "True" if you want to create "lars race maker" 
+set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (35.0, 31.0, 10.0) 
@@ -4543,157 +4543,123 @@ def get_first_and_last_street_vertices(street_list):
                 processed = [vertex[0], vertex[1], vertex[2], ROT_AUTO, LANE_6, 0.0, 0.0, 0.0, 0.0]
                 processed_vertices.append(processed)  
 
-    # Remove duplicates by converting the lists to tuples for set uniqueness
+
     vertices_set = set(tuple(v) for v in processed_vertices)
-    
-    # Convert back to lists and then to the final list
     unique_processed_vertices = [list(v) for v in vertices_set]
+    
     return unique_processed_vertices
 
 
-#!########### Code by Lars (Modified) ############
+#! ################## Code by Lars (Modified) ################## !#
 
 def create_lars_race_maker(map_filename: str, street_list, set_lars_race_maker: bool):    
     if not set_lars_race_maker:
         return
-    
-    polygons = hudmap_vertices
-    min_x, max_x, min_z, max_z = create_ext(map_filename, polygons)
+
+    min_x, max_x, min_z, max_z = create_ext(map_filename, hudmap_vertices)
     
     canvas_width = int(max_x - min_x)
     canvas_height = int(max_z - min_z)
 
-    html_start = f"""
+    vertices_processed = get_first_and_last_street_vertices(street_list)
+    vertices_string = ",\n".join([str(coord) for coord in vertices_processed])
+
+    html_template = f"""
 <!DOCTYPE html>
 <html>
-
 <head>
     <style>
         body {{
             background-color: #2b2b2b;
         }}
-
         #myCanvas {{
             background-color: #2b2b2b;
         }}
-
         #out {{
             color: white;
         }}
     </style>
 </head>
+<body>
+    <img id = "scream" width = "{canvas_width}" height = "{canvas_height}" src = "{map_filename}_HUD_debug.jpg" alt = "The Scream" style = "display:none;">
+    <canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height}" style = "background-color: #2b2b2b;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <div id="out"></div>
 
-<img id = "scream" width = "{canvas_width}" height = {canvas_height} src = "{map_filename}_HUD_debug.jpg" alt = "The Scream" style = "display:none;">
+    <script>
+    var MIN_X = {min_x};
+    var MAX_X = {max_x};
+    var MIN_Z = {min_z};
+    var MAX_Z = {max_z};
+    var coords = [{vertices_string}];
 
-<canvas id = "myCanvas" width = "{canvas_width}" height = "{canvas_height} style = "background-color: #2b2b2b;">
-Your browser does not support the HTML5 canvas tag.
-
-</canvas>
-
-<div id = "out"></div>
-
-<script>
-
-var MIN_X = {min_x};
-var MAX_X = {max_x};
-var MIN_Z = {min_z};
-var MAX_Z = {max_z};
-
-var coords = [
-"""
-
-    html_end = """
-];
-
-function mapRange(value, in_min, in_max, out_min, out_max) {
-    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-"""
-
-    html_end += """
-window.onload = function() {
-    var canvas = document.getElementById("myCanvas");
-    var ctx = canvas.getContext("2d");
-    var img = document.getElementById("scream");
-    
-    // Draw the image onto the canvas
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    for (var i = 0; i < coords.length; i++) {
-        ctx.lineWidth = "10";
-        ctx.strokeStyle = "blue";
-        ctx.beginPath();
-"""
-
-    html_end += """
-        // Mapping the coordinates to fit within the canvas dimensions
-        let mappedX = mapRange(coords[i][0], MIN_X, MAX_X, 0, canvas.width);
-        let mappedZ = mapRange(coords[i][2], MIN_Z, MAX_Z, 0, canvas.height);
-
-        ctx.arc(mappedX, mappedZ, 5, 0, 2 * Math.PI);
-        ctx.fill();
-"""
-
-    html_end += """
-    }
-};
-"""
-
-    html_end += f"""
-let last = null;
-
-function getCursorPosition(canvas, event) {{
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
-    console.log("x: " + x + " y: " + y);
-    let closest = [-1, 10000000000];
-    for (var i = 0; i < coords.length; i++) {{
-        let mappedX = mapRange(coords[i][0], MIN_X, MAX_X, 0, canvas.width);
-        let mappedZ = mapRange(coords[i][2], MIN_Z, MAX_Z, 0, canvas.height);
-        
-        let dist = (x - mappedX)**2 + (y - mappedZ)**2;
-        if (closest[1] > dist) {{
-            closest = [i, dist];
-        }}
+    function mapRange(value, in_min, in_max, out_min, out_max) {{
+        return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }}
-    if (closest[1] < 500) {{
-        document.getElementById("out").innerHTML += coords[closest[0]].join(',');
-        document.getElementById("out").innerHTML += '<br/>';
-        if (last) {{
-            var canvas = document.getElementById("myCanvas");
-            var ctx = canvas.getContext("2d");
-            ctx.lineWidth = "5";
+
+    window.onload = function() {{
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext("2d");
+        var img = document.getElementById("scream");
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < coords.length; i++) {{
+            ctx.lineWidth = "10";
             ctx.strokeStyle = "blue";
             ctx.beginPath();
-            ctx.moveTo(last[0], last[1]);
-            ctx.lineTo(x, y);
-            ctx.stroke();
+            let mappedX = mapRange(coords[i][0], MIN_X, MAX_X, 0, canvas.width);
+            let mappedZ = mapRange(coords[i][2], MIN_Z, MAX_Z, 0, canvas.height);
+            ctx.arc(mappedX, mappedZ, 5, 0, 2 * Math.PI);
+            ctx.fill();
         }}
-        last = [x,y];
-    }}
-}}
-    """
+    }};
 
-    html_end += f"""
-const canvas = document.getElementById('myCanvas');
-canvas.addEventListener('mousedown', function(e) {{
-    getCursorPosition(canvas, e);
-}});
-</script>
+    let last = null;
+    function getCursorPosition(canvas, event) {{
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        console.log("x: " + x + " y: " + y);
+        let closest = [-1, 10000000000];
+        for (var i = 0; i < coords.length; i++) {{
+            let mappedX = mapRange(coords[i][0], MIN_X, MAX_X, 0, canvas.width);
+            let mappedZ = mapRange(coords[i][2], MIN_Z, MAX_Z, 0, canvas.height);
+
+            let dist = (x - mappedX)**2 + (y - mappedZ)**2;
+            if (closest[1] > dist) {{
+                closest = [i, dist];
+            }}
+        }}
+        if (closest[1] < 500) {{
+            document.getElementById("out").innerHTML += coords[closest[0]].join(',');
+            document.getElementById("out").innerHTML += '<br/>';
+            if (last) {{
+                var canvas = document.getElementById("myCanvas");
+                var ctx = canvas.getContext("2d");
+                ctx.lineWidth = "5";
+                ctx.strokeStyle = "blue";
+                ctx.beginPath();
+                ctx.moveTo(last[0], last[1]);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+            }}
+            last = [x,y];
+        }}
+    }}
+
+    const canvas = document.getElementById('myCanvas');
+    canvas.addEventListener('mousedown', function(e) {{
+        getCursorPosition(canvas, e);
+    }});
+    </script>
 </body>
 </html>
     """
 
-    vertices_processed = get_first_and_last_street_vertices(street_list)
-    coords_string = ",\n".join([str(coord) for coord in vertices_processed])
-    new_html_content = html_start + coords_string + html_end
-        
     with open("Lars_Race_Maker.html", "w") as f:
-        f.write(new_html_content)
+        f.write(html_template)
 
-    return new_html_content
-
-#!########### Code by Lars (Modified) ############   
+#! ################## Code by Lars (Modified) ################## !#
 
 ###################################################################################################################
 ###################################################################################################################  
