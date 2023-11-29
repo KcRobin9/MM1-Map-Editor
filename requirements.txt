@@ -1,4 +1,5 @@
 numpy
+psutil
 colorama
 matplotlib
 fake-bpy-module-latest
