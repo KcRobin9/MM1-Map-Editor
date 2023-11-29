@@ -144,11 +144,12 @@ debug_dlp_data_dir = EDITOR_RESOURCES / "DLP" / "DLP FILES"                 # Ch
 # Advanced
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
-no_ai = False                   # change to "True" if you want to disable the AI
-less_logs = False               # change to "True" if you want to hide most logs. Can prevent frame drops when the game prints ton of error/warnings per second
-more_logs = False               # change to "True" if you want to see additional logs and open a logging console
-empty_portals = False           # change to "True" if you want to create an empty portal file (useful for testing very large cities)
-truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file (useful for testing very large cities)
+no_ai = False                   # change to "True" if you want to disable the AI and AI paths
+less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops when the game starting printing tons of errors/warnings
+more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
+lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're 'truncating' the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which crashing the portals file. Nevertheless, we can still test this city with an empty portals file (compromises visiblity)
+truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, we will truncate charachters past 254 (may compromise visibility - lowering portals may mitigate this issue)
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
@@ -3342,7 +3343,9 @@ class Portals:
         write_pack(f, '<I', len(portals))
                 
     @classmethod
-    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], empty_portals: bool, debug_portals: bool):        
+    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], 
+                  lower_portals: bool, empty_portals: bool, debug_portals: bool):        
+        
         with open(SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
             if empty_portals:
                 pass
@@ -3363,9 +3366,13 @@ class Portals:
                     # TODO: Change height
                     height = MAX_Y - MIN_Y
                     write_pack(f, '<f', height)
-                        
-                    Vector3(v1.x, 0, v1.y).write(f)
-                    Vector3(v2.x, 0, v2.y).write(f)
+                    
+                    if lower_portals:
+                        Vector3(v1.x, -50, v1.y).write(f)
+                        Vector3(v2.x, -50, v2.y).write(f)
+                    else:
+                        Vector3(v1.x, 0, v1.y).write(f)
+                        Vector3(v2.x, 0, v2.y).write(f)
                     
                     if debug_portals:  
                         cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")
@@ -5998,7 +6005,7 @@ create_cops_and_robbers(map_filename, cnr_waypoints)
 
 create_cells(map_filename, polys, truncate_cells)
 Bounds.create(map_filename, vertices, polys, debug_bounds)
-Portals.write_all(map_filename, polys, vertices, empty_portals, debug_portals)
+Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
 TextureSheet().write()
 aiPathEditor.create(map_filename, street_list, set_ai, set_reverse_streets)
 FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
