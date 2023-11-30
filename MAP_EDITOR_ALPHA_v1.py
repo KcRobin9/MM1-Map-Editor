@@ -124,10 +124,10 @@ debug_bai_file = False
 debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"              # Change the input BAI file here
 
 debug_meshes_file = False
-debug_meshes_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"             # Change the input BMS file here
+debug_meshes_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"          # Change the input BMS file here
 
 debug_meshes_dir = False
-debug_meshes_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"                 # Change the input BMS directory here
+debug_meshes_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"              # Change the input BMS directory here
 
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
@@ -4058,28 +4058,29 @@ class TextureSheet:
 ###################################################################################################################
 ###################################################################################################################
 
-#! ########### Code by 0x1F9F1 (Modified) ############ !#     
+#! ################# Code by 0x1F9F1 (Modified) // start ################# !#     
 
-class aiPath:
+class aiPath:                  
     def load(self, f):
-        self.ID = read_unpack(f, '<H')
-        self.NumVertexs = read_unpack(f, '<H')
-        self.NumLanes = read_unpack(f, '<H')
-        self.NumSidewalks = read_unpack(f, '<H')
-        self.StopLightIndex = read_unpack(f, '<H')
-        self.IntersectionType = read_unpack(f, '<H')
-        self.Blocked = read_unpack(f, '<H')
-        self.PedBlocked = read_unpack(f, '<H')
-        self.Divided = read_unpack(f, '<H')
-        self.IsFlat = read_unpack(f, '<H')
-        self.HasBridge = read_unpack(f, '<H')
-        self.Alley = read_unpack(f, '<H')
-        self.RoadLength = read_unpack(f, '<f')
-        self.SpeedLimit = read_unpack(f, '<f')
-        self.StopLightName = read_unpack(f, '<32s')
-        self.OncomingPath = read_unpack(f, '<I')
-        self.EdgeIndex = read_unpack(f, '<I')
-        self.PathIndex = read_unpack(f, '<I')
+        self.ID, = read_unpack(f, '<H')
+        self.NumVertexs, = read_unpack(f, '<H')
+        self.NumLanes, = read_unpack(f, '<H')
+        self.NumSidewalks, = read_unpack(f, '<H')
+        self.StopLightIndex, = read_unpack(f, '<H')
+        self.IntersectionType, = read_unpack(f, '<H')
+        self.Blocked, = read_unpack(f, '<H')
+        self.PedBlocked, = read_unpack(f, '<H')
+        self.Divided, = read_unpack(f, '<H')
+        self.IsFlat, = read_unpack(f, '<H')
+        self.HasBridge, = read_unpack(f, '<H')
+        self.Alley, = read_unpack(f, '<H')
+        self.RoadLength, = read_unpack(f, '<f')
+        self.SpeedLimit, = read_unpack(f, '<f')
+        self.StopLightName, = read_unpack(f, '<32s')
+        self.OncomingPath, = read_unpack(f, '<I')
+        self.EdgeIndex, = read_unpack(f, '<I')
+        self.PathIndex, = read_unpack(f, '<I')
+        
         self.SubSectionOffsets = read_unpack(f, '<{}f'.format(self.NumVertexs * (self.NumLanes + self.NumSidewalks)))
         self.CenterOffsets = read_unpack(f, '<{}f'.format(self.NumVertexs))
         self.IntersectionIds = read_unpack(f, '<2I')
@@ -4200,18 +4201,26 @@ class MiniParser:
                 self.print('\n')
             self.indent -= 1
             self.print(']')
+            
         elif isinstance(value, str):
             self.print('"{}"'.format(value.replace('\\', '\\\\').replace('"', '\\"')))
+            
         elif isinstance(value, int):
             self.print(str(value))
+            
         elif isinstance(value, float):
-            self.print(repr(np.float32(value)))
+            self.print("{:.2f}".format(value))
+                    
+        elif isinstance(value, tuple):
+            self.print('({})'.format(', '.join("{:.2f}".format(v) if isinstance(v, float) else str(v) for v in value)))
+                                
         elif isinstance(value, Vector3):
             self.print('{:.2f}'.format(value.x))
             self.print(' ')
             self.print('{:.2f}'.format(value.y))
             self.print(' ')
             self.print('{:.2f}'.format(value.z))
+            
         else:
             raise Exception('Invalid Value Type {}'.format(type(value)))
 
@@ -4305,7 +4314,7 @@ def write_bai_text(streets):
         parser.begin_class('mmMapData')
 
         parser.field('NumStreets', len(streets))
-        parser.field('Street', [ v[0] for v in streets ])
+        parser.field('Street', [v[0] for v in streets])
 
         parser.end_class()
 
@@ -4384,7 +4393,9 @@ def write_bai_text(streets):
             parser.field('StopLightPos[1]', paths[1].StopLightPos[1])
             parser.field('StopLightPos[2]', paths[0].StopLightPos[0])
             parser.field('StopLightPos[3]', paths[0].StopLightPos[1])
-
+            
+            parser.field('StopLightIndex', paths[0].StopLightIndex)
+        
             parser.field('Blocked[0]', paths[0].Blocked)
             parser.field('Blocked[1]', paths[1].Blocked)
 
@@ -4392,11 +4403,31 @@ def write_bai_text(streets):
             parser.field('PedBlocked[1]', paths[1].PedBlocked)
 
             # Yes, these are "supposed" to be backwards
-            parser.field('StopLightName', [ paths[1].StopLightName, paths[0].StopLightName ])
+            parser.field('StopLightName', [paths[1].StopLightName, paths[0].StopLightName])
 
-            parser.field('Divided', paths[0].Divided)
+            parser.field('Divided', paths[0].Divided)       
             parser.field('Alley', paths[0].Alley)
-
+            parser.field('IsFlat', paths[0].IsFlat)
+            parser.field('HasBridge', paths[0].HasBridge)
+            parser.field('SpeedLimit', paths[0].SpeedLimit)
+            
+            parser.field('ID', paths[0].ID)
+            parser.field('OncomingPath', paths[0].OncomingPath)
+            parser.field('PathIndex', paths[0].PathIndex)
+            parser.field('EdgeIndex', paths[0].EdgeIndex)
+            parser.field('IntersectionIds', paths[0].IntersectionIds)
+                        
+            parser.field('VertXDirs', paths[0].VertXDirs)
+            parser.field('VertZDirs', paths[0].VertZDirs)
+            parser.field('SubSectionDirs', paths[0].SubSectionDirs)
+            
+            parser.field('CenterOffsets', paths[0].CenterOffsets)
+            parser.field('SubSectionOffsets', paths[0].SubSectionOffsets)
+                    
+            parser.field('RoadLength', paths[0].RoadLength)
+            parser.field('LaneWidths', paths[0].LaneWidths)
+            parser.field('LaneLengths', paths[0].LaneLengths)
+            
             parser.end_class()
             
 
@@ -4405,7 +4436,7 @@ def debug_bai(debug_bai_data_file: Path, debug_bai_file: bool) -> None:
         _, streets = read_bai(debug_bai_data_file)
         write_bai_text(streets)
         
-#! ########### Code by 0x1F9F1 (Modified) ############ !#     
+#! ################# Code by 0x1F9F1 (Modified) // end ################# !#         
 
 ###################################################################################################################
 ###################################################################################################################
