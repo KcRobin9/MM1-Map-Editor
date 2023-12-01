@@ -57,6 +57,7 @@ mmRoadSect :0 {
     StopLightPos[1] 0.00 0.00 0.00
     StopLightPos[2] 315.33 0.15 1037.34
     StopLightPos[3] 314.79 0.15 1038.18
+    StopLightIndex 0
     Blocked[0] 0
     Blocked[1] 0
     PedBlocked[0] 0
@@ -67,4 +68,41 @@ mmRoadSect :0 {
     ]
     Divided 0
     Alley 0
+    IsFlat 1
+    HasBridge 0
+    SpeedLimit 15.00
+    ID 0
+    OncomingPath 1
+    PathIndex 4
+    EdgeIndex 1
+    IntersectionIds (1, 0)
+    VertXDirs [
+        0.00 0.00 0.00
+        0.54 0.00 -0.84
+        0.54 0.00 -0.84
+        0.54 0.00 -0.84
+        0.54 0.00 -0.84
+        0.54 0.00 -0.84
+    ]
+    VertZDirs [
+        0.00 0.00 0.00
+        -0.84 0.00 -0.54
+        -0.84 0.00 -0.54
+        -0.84 0.00 -0.54
+        -0.84 0.00 -0.54
+        -0.84 0.00 -0.54
+    ]
+    SubSectionDirs [
+        0.00 0.00 0.00
+        0.00 0.00 0.00
+        0.84 -0.00 0.54
+        0.84 -0.00 0.54
+        0.90 0.00 0.44
+        0.00 0.00 0.00
+    ]
+    CenterOffsets (0.00, 5.72, 11.11, 159.52, 165.46, 182.55)
+    SubSectionOffsets (0.00, 6.74, 12.15, 161.69, 167.57, 183.79, 0.00, 10.54, 15.76, 167.55, 172.97, 189.05)
+    RoadLength 10.00
+    LaneWidths (2.50, 7.50, 0.00, 0.00, 0.00)
+    LaneLengths (-10.00, 5.00, 5.00, 10.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00)
 }

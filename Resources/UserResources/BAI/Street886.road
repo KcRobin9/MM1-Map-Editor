@@ -1,0 +1,84 @@
+mmRoadSect :0 {
+    NumVertexs 6
+    NumLanes[0] 1
+    NumLanes[1] 1
+    NumSidewalks[0] 0
+    NumSidewalks[1] 0
+    TotalVertexs 12
+    Vertexs [
+        634.07 -0.00 1098.34
+        526.63 1.60 1118.54
+        418.76 3.20 1162.62
+        319.89 4.80 1275.71
+        203.02 6.40 1352.79
+        95.25 8.00 1392.26
+        95.25 8.00 1392.26
+        203.02 6.40 1352.79
+        319.89 4.80 1275.71
+        418.76 3.20 1162.62
+        526.63 1.60 1118.54
+        634.07 -0.00 1098.34
+    ]
+    Normals [
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+    ]
+    IntersectionType[0] 3
+    IntersectionType[1] 3
+    StopLightPos[0] 0.00 0.00 0.00
+    StopLightPos[1] 0.00 0.00 0.00
+    StopLightPos[2] 0.00 0.00 0.00
+    StopLightPos[3] 0.00 0.00 0.00
+    StopLightIndex 0
+    Blocked[0] 1
+    Blocked[1] 1
+    PedBlocked[0] 1
+    PedBlocked[1] 1
+    StopLightName [
+        "tplttrafc"
+        "tplttrafc"
+    ]
+    Divided 0
+    Alley 0
+    IsFlat 0
+    HasBridge 0
+    SpeedLimit 15.00
+    ID 886
+    OncomingPath 887
+    PathIndex 5
+    EdgeIndex 7
+    IntersectionIds (8, 59)
+    VertXDirs [
+        0.00 0.00 0.00
+        0.38 -0.00 0.93
+        0.38 -0.00 0.93
+        0.75 -0.00 0.66
+        0.55 -0.00 0.83
+        0.55 -0.00 0.83
+    ]
+    VertZDirs [
+        0.00 0.00 0.00
+        0.93 -0.01 -0.38
+        0.93 -0.01 -0.38
+        0.66 -0.01 -0.75
+        0.83 -0.01 -0.55
+        0.83 -0.01 -0.55
+    ]
+    SubSectionDirs [
+        0.00 0.00 0.00
+        0.00 0.00 0.00
+        -0.80 0.01 0.61
+        -0.75 0.01 0.66
+        -0.89 0.01 0.46
+        0.00 0.00 0.00
+    ]
+    CenterOffsets (0.00, 109.33, 225.88, 376.10, 516.11, 630.89)
+    SubSectionOffsets (0.00, 109.33, 225.88, 376.10, 516.11, 630.89)
+    RoadLength 10.00
+    LaneWidths (0.00, 0.00, 0.00, 0.00, 0.00)
+    LaneLengths (0.00, 10.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00)
+}

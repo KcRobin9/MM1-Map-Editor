@@ -1,0 +1,72 @@
+mmRoadSect :0 {
+    NumVertexs 4
+    NumLanes[0] 1
+    NumLanes[1] 1
+    NumSidewalks[0] 0
+    NumSidewalks[1] 0
+    TotalVertexs 8
+    Vertexs [
+        -77.43 -0.00 527.81
+        -74.96 -0.00 489.76
+        -73.92 -0.00 448.76
+        -72.87 -0.00 409.77
+        -72.87 -0.00 409.77
+        -73.92 -0.00 448.76
+        -74.96 -0.00 489.76
+        -77.43 -0.00 527.81
+    ]
+    Normals [
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+        0.00 1.00 0.00
+    ]
+    IntersectionType[0] 3
+    IntersectionType[1] 3
+    StopLightPos[0] 0.00 0.00 0.00
+    StopLightPos[1] 0.00 0.00 0.00
+    StopLightPos[2] 0.00 0.00 0.00
+    StopLightPos[3] 0.00 0.00 0.00
+    StopLightIndex 0
+    Blocked[0] 1
+    Blocked[1] 1
+    PedBlocked[0] 1
+    PedBlocked[1] 1
+    StopLightName [
+        "tplttrafc"
+        "tplttrafc"
+    ]
+    Divided 0
+    Alley 0
+    IsFlat 1
+    HasBridge 0
+    SpeedLimit 15.00
+    ID 840
+    OncomingPath 841
+    PathIndex 10
+    EdgeIndex 4
+    IntersectionIds (134, 88)
+    VertXDirs [
+        0.00 0.00 0.00
+        -1.00 0.00 -0.03
+        -1.00 0.00 -0.03
+        -1.00 0.00 -0.03
+    ]
+    VertZDirs [
+        0.00 0.00 0.00
+        -0.03 -0.00 1.00
+        -0.03 -0.00 1.00
+        -0.03 -0.00 1.00
+    ]
+    SubSectionDirs [
+        0.00 0.00 0.00
+        0.00 0.00 0.00
+        0.03 0.00 -1.00
+        0.00 0.00 0.00
+    ]
+    CenterOffsets (0.00, 38.14, 79.15, 118.15)
+    SubSectionOffsets (0.00, 38.14, 79.15, 118.15)
+    RoadLength 10.00
+    LaneWidths (0.00, 0.00, 0.00, 0.00, 0.00)
+    LaneLengths (0.00, 10.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00)
+}
