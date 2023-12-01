@@ -41,7 +41,7 @@ from colorama import Fore, Style, init
 from typing import List, Dict, Set, Union, Tuple, Optional, BinaryIO
 
 
-#! SETUP 0 (Editor)                             
+#! SETUP 0 (Editor) | Do not change                             
 BASE_DIR = Path.cwd()
 SHOP = BASE_DIR / 'SHOP'
 SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
@@ -748,9 +748,9 @@ class Vector3:
         
     def __repr__(self, round_values = round_debug_values):
         if round_values:
-            return '{{{:.2f},{:.2f},{:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
+            return '{{{:.2f}, {:.2f}, {:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
         else:
-            return '{{{:f},{:f},{:f}}}'.format(self.x, self.y, self.z)
+            return '{{{:f}, {:f}, {:f}}}'.format(self.x, self.y, self.z)
         
         
 def calc_normal(a, b, c):
@@ -758,7 +758,7 @@ def calc_normal(a, b, c):
         return (c - b).Cross(a - b).Normalize()
     except:
         return Vector3(0, 1, 0)
-       
+    
 ################################################################################################################               
 ################################################################################################################  
        
@@ -796,7 +796,7 @@ class Polygon:
     def read(cls, f: BinaryIO) -> 'Polygon':
         cell_id, mtl_index, flags = read_unpack(f, '<H2B')
         vert_indices = read_unpack(f, '<4H') 
-        plane_edges = Vector3.readn(f, 4)
+        plane_edges = Vector3.readn(f, QUAD)
         plane_n = Vector3.read(f)
         plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
@@ -814,21 +814,20 @@ class Polygon:
             
         self.plane_n.write(f)
         write_pack(f, '<f', self.plane_d)
-   
-    def __repr__(self, bnd_instance):
-        vertices_coordinates = [bnd_instance.vertices[index] for index in self.vert_indices]
-        #plane_d_str = ', '.join(f'{d:.2f}' for d in self.plane_d)
-        return (
-            f"Polygon\n"
-            f"Bound Number: {self.cell_id}\n"
-            f"Material Index: {self.mtl_index}\n"
-            f"Flags: {self.flags}\n"
-            f"Vertices Indices: {self.vert_indices}\n"
-            f"Vertices Coordinates: {vertices_coordinates}\n"
-            f"Plane Edges: {self.plane_edges}\n"
-            f"Plane N: {self.plane_n}\n"
-            f"Plane D: [{self.plane_d}]\n")
     
+    def __repr__(self, bnd_instance):
+        vertices_coordinates = [bnd_instance.vertices[idx] for idx in self.vert_indices]
+        return f"""
+POLYGON
+    Bound Number: {self.cell_id}
+    Material Index: {self.mtl_index}
+    Flags: {self.flags}
+    Vertices Indices: {self.vert_indices}
+    Vertices Coordinates: {vertices_coordinates}
+    Plane Edges: {self.plane_edges}
+    Plane N: {self.plane_n}
+    Plane D: [{f'{self.plane_d:.2f}'}]"""
+
 ################################################################################################################               
 ################################################################################################################     
 
@@ -979,7 +978,7 @@ class Bounds:
             bnd.write(f)
             
             if debug_bounds:
-                bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt") , debug_bounds)          
+                bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt"))
                 
     def debug(self, output_file: str) -> None:
         with open(output_file, 'w') as out_f:
@@ -1009,49 +1008,51 @@ class Bounds:
                 output_file_path = output_dir / (file.stem + '.txt')  
                 Bounds.debug_file(file, output_file_path)
                 print(f"Processed {file.name} to {output_file_path.name}")
-                
+                    
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
-        return (
-            f"BOUNDS\n"
-            f"Magic: 2DNB\n"
-            f"Offset: {self.offset}\n"
-            f"X Dim: {self.x_dim}\n"
-            f"Y Dim: {self.y_dim}\n"
-            f"Z Dim: {self.z_dim}\n"
-            f"Center: {self.center}\n"
-            f"Radius: {self.radius:.2f}\n" 
-            f"Radius Sqr: {self.radius_sqr:.2f}\n"  
-            f"BB Min: {self.bb_min}\n"
-            f"BB Max: {self.bb_max}\n"
-            f"Num Verts: {self.num_verts}\n"
-            f"Num Polys: {self.num_polys}\n"
-            f"Num Hot Verts1: {self.num_hot_verts1}\n"
-            f"Num Hot Verts2: {self.num_hot_verts2}\n"
-            f"Num Edges: {self.num_edges}\n"
-            f"X Scale: {self.x_scale:.5f}\n"
-            f"Z Scale: {self.z_scale:.5f}\n"
-            f"Num Indices: {self.num_indices}\n"
-            f"Height Scale: {self.height_scale}\n"
-            f"Cache Size: {self.cache_size}\n\n"
-            f"Vertices:\n{self.vertices}\n\n"
-            f"======= Polys =======\n\n{polys_representation}\n"
-            f"======= Split =======\n\n"
-            f"Hot Verts: {self.hot_verts}\n"
-            f"Edge Verts1: {self.edge_verts1}\n"
-            f"Edge Verts2: {self.edge_verts2}\n"
-            f"Edge Plane N: {self.edge_plane_n}\n"  
-            f"Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n\n"      
-            f"======= Split =======\n\n"
-            f"Row Offsets: {self.row_offsets}\n\n"
-            f"======= Split =======\n\n"
-            f"Bucket Offsets: {self.bucket_offsets}\n\n"
-            f"======= Split =======\n\n"
-            f"Row Buckets: {self.row_buckets}\n\n"
-            f"======= Split =======\n\n"
-            f"Fixed Heights: {self.fixed_heights}\n"
-            )
-        
+        return f"""
+BOUND
+    Magic: 2DNB
+    Offset: {self.offset}
+    X Dim: {self.x_dim}
+    Y Dim: {self.y_dim}
+    Z Dim: {self.z_dim}
+    Center: {self.center}
+    Radius: {self.radius:.2f}
+    Radius Sqr: {self.radius_sqr:.2f}
+    BB Min: {self.bb_min}
+    BB Max: {self.bb_max}
+    Num Verts: {self.num_verts}
+    Num Polys: {self.num_polys}
+    Num Hot Verts1: {self.num_hot_verts1}
+    Num Hot Verts2: {self.num_hot_verts2}
+    Num Edges: {self.num_edges}
+    X Scale: {self.x_scale:.5f}
+    Z Scale: {self.z_scale:.5f}
+    Num Indices: {self.num_indices}
+    Height Scale: {self.height_scale}
+    Cache Size: {self.cache_size}\n
+    Vertices:
+    {self.vertices}\n
+    ======= Polys =======
+    {polys_representation}\n
+    ======= Split =======\n
+    Hot Verts: {self.hot_verts}
+    Edge Verts1: {self.edge_verts1}
+    Edge Verts2: {self.edge_verts2}
+    Edge Plane N: {self.edge_plane_n}
+    Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n
+    ======= Split =======\n
+    Row Offsets: {self.row_offsets}\n
+    ======= Split =======\n
+    Bucket Offsets: {self.bucket_offsets}\n
+    ======= Split =======\n
+    Row Buckets: {self.row_buckets}\n
+    ======= Split =======\n
+    Fixed Heights: {self.fixed_heights}\n
+    """
+    
 ################################################################################################################               
 ################################################################################################################  
 
@@ -1172,26 +1173,26 @@ class Meshes:
                                 
     def __repr__(self):
         rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
-        return f'''
-MESHES
-Magic: {self.magic}
-VertexCount: {self.vertex_count}
-AdjunctCount: {self.adjunct_count}
-SurfaceCount: {self.surface_count}
-IndicesCount: {self.indices_count}
-Radius: {self.radius:.2f}
-RadiusSq: {self.radius_sq:.2f}
-BoundingBoxRadius: {self.bounding_box_radius:.2f}
-TextureCount: {self.texture_count}
-Flags: {self.flags}
-TextureNames: {self.texture_names}
-Coordinates: {self.coordinates}
-TextureDarkness: {self.texture_darkness}
-TexCoords: {rounded_tex_coords}
-Enclosed Shape: {self.enclosed_shape}
-SurfaceSides: {self.surface_sides}
-IndicesSides: {self.indices_sides}
-        '''
+        return f"""
+MESH
+    Magic: {self.magic}
+    VertexCount: {self.vertex_count}
+    AdjunctCount: {self.adjunct_count}
+    SurfaceCount: {self.surface_count}
+    IndicesCount: {self.indices_count}
+    Radius: {self.radius:.2f}
+    RadiusSq: {self.radius_sq:.2f}
+    BoundingBoxRadius: {self.bounding_box_radius:.2f}
+    TextureCount: {self.texture_count}
+    Flags: {self.flags}
+    TextureNames: {self.texture_names}
+    Coordinates: {self.coordinates}
+    TextureDarkness: {self.texture_darkness}
+    TexCoords: {rounded_tex_coords}
+    Enclosed Shape: {self.enclosed_shape}
+    SurfaceSides: {self.surface_sides}
+    IndicesSides: {self.indices_sides}
+    """
              
 ################################################################################################################               
 ################################################################################################################   
@@ -1219,13 +1220,13 @@ class DLPVertex:
         write_pack(f, '>I', self.color)
            
     def __repr__(self):
-        return f'''
+        return f"""
 DLPVertex
-Id: {self.id}
-Normal: {self.normal}
-UV: {self.uv}
-Color: {self.color}
-        '''
+    Id: {self.id}
+    Normal: {self.normal}
+    UV: {self.uv}
+    Color: {self.color}
+    """
         
         
 class DLPPatch:
@@ -1263,18 +1264,18 @@ class DLPPatch:
         write_pack(f, f'>{len(self.name)}s', self.name.encode())
         
     def __repr__(self):
-        return f'''
+        return f"""
 DLPPatch
-S Res: {self.s_res}
-T Res: {self.t_res}
-Flags: {self.flags}
-R Opts: {self.r_opts}
-Mtl Idx: {self.mtl_idx}
-Tex Idx: {self.tex_idx}
-Phys Idx: {self.phys_idx}
-Vertices: {self.vertices}
-Name: {self.name}
-        '''
+    S Res: {self.s_res}
+    T Res: {self.t_res}
+    Flags: {self.flags}
+    R Opts: {self.r_opts}
+    Mtl Idx: {self.mtl_idx}
+    Tex Idx: {self.tex_idx}
+    Phys Idx: {self.phys_idx}
+    Vertices: {self.vertices}
+    Name: {self.name}
+    """
 
 
 class DLPGroup:
@@ -1303,14 +1304,14 @@ class DLPGroup:
         write_pack(f, f'>{self.num_patches}H', *self.patch_indices)
         
     def __repr__(self):
-        return f'''
+        return f"""
 DLPGroup
-Name: {self.name}
-Num Vertices: {self.num_vertices}
-Num Patches: {self.num_patches}
-Vertex Indices: {self.vertex_indices}
-Patch Indices: {self.patch_indices}
-        '''
+    Name: {self.name}
+    Num Vertices: {self.num_vertices}
+    Num Patches: {self.num_patches}
+    Vertex Indices: {self.vertex_indices}
+    Patch Indices: {self.patch_indices}
+    """
 
 
 class DLP:
@@ -1368,16 +1369,16 @@ class DLP:
                     DLP.debug_file(file, output_file, True)
                                                         
     def __repr__(self):
-        return f'''
+        return f"""
 DLP
-Magic: {self.magic}
-Num Groups: {self.num_groups}
-Num Patches: {self.num_patches}
-Num Vertices: {self.num_vertices}
-Groups: {self.groups}
-Patches: {self.patches}
-Vertices: {self.vertices}
-        '''
+    Magic: {self.magic}
+    Num Groups: {self.num_groups}
+    Num Patches: {self.num_patches}
+    Num Vertices: {self.num_vertices}
+    Groups: {self.groups}
+    Patches: {self.patches}
+    Vertices: {self.vertices}
+    """
         
 ################################################################################################################               
 ################################################################################################################     
@@ -1607,6 +1608,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
 
     num_verts = len(vertices)  
+        
     plane_edges = []
 
     abs_plane_x = abs(planeN[0])
@@ -1736,7 +1738,7 @@ def create_polygon(
     # Plane Edges    
     if plane_edges is None:
         plane_edges = compute_edges(vertex_coordinates) 
-    
+        
     # Plane Normals
     if wall_side is None:
         plane_n, plane_d = compute_plane_edgenormals(*vertex_coordinates[:3])
@@ -1767,6 +1769,7 @@ def create_polygon(
 
     if isinstance(plane_n, np.ndarray):
         plane_n = Vector3(*plane_n.tolist())
+        
     elif isinstance(plane_n, list):
         plane_n = Vector3(*plane_n)
             
@@ -3403,17 +3406,17 @@ class Portals:
                 print(f"Failed to process {input_file.name}: {e}")
                 
     def __repr__(self):
-            return f'''
-Portals
-Flags: {self.flags}
-EdgeCount: {self.edge_count}
-Gap2: {self.gap2}
-Cell 1: {self.cell_1}
-Cell 2: {self.cell_2}
-Height: {self.height}
-Min: {self._min}
-Max: {self._max}
-    ''' 
+            return f"""
+PORTAL
+    Flags: {self.flags}
+    EdgeCount: {self.edge_count}
+    Gap 2: {self.gap2}
+    Cell 1: {self.cell_1}
+    Cell 2: {self.cell_2}
+    Height: {self.height}
+    Min: {self._min}
+    Max: {self._max}
+    """ 
               
 ################################################################################################################               
 ################################################################################################################            
@@ -3497,14 +3500,14 @@ class Bangers:
                 print(f"Failed to process {input_file.name}: {e}")
                                     
     def __repr__(self):
-        return f'''
-BANGERS
-Room: {self.room}
-Flags: {self.flags}
-Start: {self.offset}
-Face: {self.face}
-Prop Name: {self.name}
-    '''
+        return f"""
+BANGER
+    Room: {self.room}
+    Flags: {self.flags}
+    Start: {self.offset}
+    Face: {self.face}
+    Name: {self.name}
+    """
     
 ################################################################################################################               
 ###############################################################################################################
@@ -3699,10 +3702,10 @@ class Facades:
 
     def __repr__(self):
         return f"""
-Facade Editor
+FACADE
     Room: {self.room}
     Flags: {self.flags}
-    Start: {self.offset}
+    Offset: {self.offset}
     Face: {self.face}
     Sides: {self.sides}
     Scale: {self.scale:.2f}
@@ -3713,9 +3716,7 @@ Facade Editor
 ################################################################################################################
         
 # FACADE EDITOR CLASS
-class FacadeEditor:
-    scales_file = EDITOR_RESOURCES / "FACADES" / "FCD scales.txt"
-    
+class FacadeEditor:    
     @classmethod
     def create(cls, output_file: str, user_set_facades, set_facades: bool, debug_facades: bool):
         if set_facades:
@@ -3733,7 +3734,7 @@ class FacadeEditor:
     @classmethod
     def process(cls, user_set_facades):
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(cls.scales_file)
+        scales = cls.read_scales(EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
 
         facades = []
         for params in user_set_facades:
@@ -3849,23 +3850,23 @@ class PhysicsEditor:
                 debug_f.write("\n")
 
     def __repr__(self, idx = None) -> str:
-        header = f"AgiPhysParameters (# {idx + 1})" if idx is not None else "AgiPhysParameters"
-        cleaned_name = self.name.rstrip('\x00' + 'Í')
+        header = f"PHYSICS (# {idx + 1})" if idx is not None else "PHYSICS"
+        name = self.name.rstrip('\x00' + 'Í')
         
         return f"""
 {header}
-    name        = '{cleaned_name}',
-    friction    = {self.friction:.2f},
-    elasticity  = {self.elasticity:.2f},
-    drag        = {self.drag:.2f},
-    bump_height = {self.bump_height:.2f},
-    bump_width  = {self.bump_width:.2f},
-    bump_depth  = {self.bump_depth:.2f},
-    sink_depth  = {self.sink_depth:.2f},
-    type        = {self.type},
-    sound       = {self.sound},
-    velocity    = {self.velocity},
-    ptx_color   = {self.ptx_color}
+    Name: '{name}',
+    Friction: {self.friction:.2f},
+    Elasticity: {self.elasticity:.2f},
+    Drag: {self.drag:.2f},
+    Bump height: {self.bump_height:.2f},
+    Bump width: {self.bump_width:.2f},
+    Bump depth: {self.bump_depth:.2f},
+    Sink Depth: {self.sink_depth:.2f},
+    Type: {self.type},
+    Sound: {self.sound},
+    Velocity: {self.velocity},
+    Ptx color: {self.ptx_color}
     """
 
 ################################################################################################################               
@@ -3998,25 +3999,25 @@ class LightingEditor:
                     debug_f.write("\n")
                 
     def __repr__(self):
-        return f'''
-LightingEditor
-Time of Day: {self.time_of_day}
-Weather: {self.weather}
-Sun Heading: {self.sun_heading:.2f}
-Sun Pitch: {self.sun_pitch:.2f}
-Sun Color: {self.sun_color}
-Fill1 Heading: {self.fill1_heading:.2f}
-Fill1 Pitch: {self.fill1_pitch:.2f}
-Fill1 Color: {self.fill1_color}
-Fill2 Heading: {self.fill2_heading:.2f}
-Fill2 Pitch: {self.fill2_pitch:.2f}
-Fill2 Color: {self.fill2_color}
-Ambient Color: {self.ambient_color}
-Fog End: {self.fog_end:.2f}
-Fog Color: {self.fog_color}
-Shadow Alpha: {self.shadow_alpha:.2f}
-Shadow Color: {self.shadow_color}
-'''
+        return f"""
+LIGHTING
+    Time of Day: {self.time_of_day}
+    Weather: {self.weather}
+    Sun Heading: {self.sun_heading:.2f}
+    Sun Pitch: {self.sun_pitch:.2f}
+    Sun Color: {self.sun_color}
+    Fill 1 Heading: {self.fill1_heading:.2f}
+    Fill 1 Pitch: {self.fill1_pitch:.2f}
+    Fill 1 Color: {self.fill1_color}
+    Fill 2 Heading: {self.fill2_heading:.2f}
+    Fill 2 Pitch: {self.fill2_pitch:.2f}
+    Fill 2 Color: {self.fill2_color}
+    Ambient Color: {self.ambient_color}
+    Fog End: {self.fog_end:.2f}
+    Fog Color: {self.fog_color}
+    Shadow Alpha: {self.shadow_alpha:.2f}
+    Shadow Color: {self.shadow_color}
+    """
 
 ###################################################################################################################
 ###################################################################################################################
@@ -4314,7 +4315,7 @@ def write_bai_text(streets):
         parser.begin_class('mmMapData')
 
         parser.field('NumStreets', len(streets))
-        parser.field('Street', [v[0] for v in streets])
+        parser.field('Street', ['Street' + str(paths[0].ID) for _, paths in streets])
 
         parser.end_class()
 
@@ -4353,9 +4354,11 @@ def write_bai_text(streets):
                     assert a.Dist2(b) < 0.00001
 
         # Write Road files
-        with open('{}.road'.format(USER_RESOURCES / "BAI" / street_name), 'w') as f:
+        road_filename = 'Street{}.road'.format(paths[0].ID)
+        
+        with open(USER_RESOURCES / "BAI" / road_filename, 'w') as f:
             parser = MiniParser(f)
-
+    
             parser.begin_class('mmRoadSect')
 
             parser.field('NumVertexs', paths[0].NumVertexs)
@@ -5666,7 +5669,6 @@ def set_blender_keybinding() -> None:
 #* Separator: (max_x - min_x) / separator(value) = number of facades
 #* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
-#* Name --> name of the facade in the game files
 
 #* All relevant Facade information can be found in: /UserResources/FACADES.
 #* Each facade is photographed and documented (see: "FACADE_DATA.txt")
