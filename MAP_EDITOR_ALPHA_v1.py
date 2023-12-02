@@ -110,7 +110,7 @@ debug_minimap = False           # change to "True" if you want a HUD Debug jpg f
 debug_minimap_id = False        # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
-# Input File Debugging // the output files are written to: "Resources / Debug / ..."
+# Input File Debugging. The output files are written to: "Resources / Debug / ..."
 debug_props_file = False
 debug_props_data_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 
@@ -538,8 +538,8 @@ anim_data = {
 
 
 #* SETUP VI (optional, Bridges)
-f"""
-    INFO
+"""
+INFO
     1) You can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
     2) You can set a bridge without any attributes like this:
         (-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [])
@@ -658,9 +658,11 @@ class Vector2:
     
     def __repr__(self, round_values = round_debug_values):
         if round_values:
-            return '{:.2f}, {:.2f}'.format(round(self.x, 2), round(self.y, 2))
+            return f'{round(self.x, 2):.2f}, {round(self.y, 2):.2f}'
         else:
-            return '{:f}, {:f}'.format(self.x, self.y)
+            return f'{self.x:f}, {self.y:f}'
+
+
 
 
 # VECTOR3 CLASS
@@ -746,11 +748,12 @@ class Vector3:
         self.y = y
         self.z = z
         
-    def __repr__(self, round_values = round_debug_values):
+    def __repr__(self, round_values=round_debug_values):
         if round_values:
-            return '{{{:.2f}, {:.2f}, {:.2f}}}'.format(round(self.x, 2), round(self.y, 2), round(self.z, 2))
+            return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
         else:
-            return '{{{:f}, {:f}, {:f}}}'.format(self.x, self.y, self.z)
+            return f'{{ {self.x:f}, {self.y:f}, {self.z:f} }}'
+
         
         
 def calc_normal(a, b, c):
@@ -817,6 +820,7 @@ class Polygon:
     
     def __repr__(self, bnd_instance):
         vertices_coordinates = [bnd_instance.vertices[idx] for idx in self.vert_indices]
+        # plane_d = ', '.join(f'{d:.2f}' for d in self.plane_d)
         return f"""
 POLYGON
     Bound Number: {self.cell_id}
@@ -826,8 +830,8 @@ POLYGON
     Vertices Coordinates: {vertices_coordinates}
     Plane Edges: {self.plane_edges}
     Plane N: {self.plane_n}
-    Plane D: [{f'{self.plane_d:.2f}'}]"""
-
+    Plane D: {self.plane_d}"""
+    
 ################################################################################################################               
 ################################################################################################################     
 
@@ -903,10 +907,10 @@ class Bounds:
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
         
         hot_verts = Vector3.readn(f, num_hot_verts2)
-        edge_verts1 = read_unpack(f, '<{}I'.format(num_edges))
-        edge_verts2 = read_unpack(f, '<{}I'.format(num_edges))
+        edge_verts1 = read_unpack(f, f'<{num_edges}I')
+        edge_verts2 = read_unpack(f, f'<{num_edges}I')
         edge_plane_n = Vector3.readn(f, num_edges)
-        edge_plane_d = read_unpack(f, '<{}f'.format(num_edges))
+        edge_plane_d = read_unpack(f, f'<{num_edges}f')
 
         row_offsets = None
         bucket_offsets = None
@@ -914,10 +918,10 @@ class Bounds:
         fixed_heights = None
 
         if x_dim and y_dim and z_dim:
-            row_offsets = read_unpack(f, '<{}I'.format(z_dim))
-            bucket_offsets = read_unpack(f, '<{}H'.format(x_dim * z_dim))
-            row_buckets = read_unpack(f, '<{}H'.format(num_indices))
-            fixed_heights = read_unpack(f, '<{}B'.format(x_dim * z_dim))
+            row_offsets = read_unpack(f, f'<{z_dim}I')
+            bucket_offsets = read_unpack(f, f'<{x_dim * z_dim}H')
+            row_buckets = read_unpack(f, f'<{num_indices}H')
+            fixed_heights = read_unpack(f, f'<{x_dim * z_dim}B')
 
         return cls(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
                    num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
@@ -1006,7 +1010,7 @@ class Bounds:
                 
             for file in input_dir.glob('*.BND'):
                 output_file_path = output_dir / (file.stem + '.txt')  
-                Bounds.debug_file(file, output_file_path)
+                Bounds.debug_file(file, output_file_path, True)
                 print(f"Processed {file.name} to {output_file_path.name}")
                     
     def __repr__(self) -> str:
@@ -1146,7 +1150,7 @@ class Meshes:
             write_pack(f, str(self.adjunct_count) + 'H', *self.enclosed_shape)
             write_pack(f, str(self.surface_count) + 'b', *self.surface_sides)
 
-            # A triangle still requires 4 indices ([0, 1, 2, 0])
+            # A triangle still requires 4 indices (the 4th index will be 0)
             for indices_side in self.indices_sides:
                 while len(indices_side) <= TRIANGLE:
                     indices_side.append(0)
@@ -1651,7 +1655,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
         
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
     
-    # Add a required empty edge for triangles to match the BND binary structure
+    # Add a required empty edge for triangles to match the binary structure
     if len(vertices) == TRIANGLE:
         edges.append(DEFAULT_VECTOR3)
     
@@ -2543,7 +2547,7 @@ race_type_to_extension = {
     }
 
 
-def ordinal(n):
+def ordinal(n) -> str:
     if 10 <= n % 100 <= 13:
         return f"{n}th"
     return {
@@ -2559,9 +2563,9 @@ def fill_mm_date_values(race_type: str, user_values):
     
     # Mappings to determine which positions in default_values are replaced by user values.
     replace_values = {        
-        BLITZ: [1, 2, 3, 4, 5, 6, 7, 8],  # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
-        CIRCUIT: [1, 2, 3, 4, 5, 6, 7],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
-        RACE: [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
+        BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
+        CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
+        RACE:       [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
     }
         
     modified_list = default_values.copy()
@@ -2574,7 +2578,7 @@ def fill_mm_date_values(race_type: str, user_values):
 
 
 def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num = None):
-    with open(opp_wp_file, "w") as f:
+    with open(SHOP / RACE / map_filename / opp_wp_file, "w") as f:
         if opponent_num is not None:  # Opponent waypoint header
             f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
             
@@ -2590,14 +2594,12 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
             for waypoint in waypoints:
                 waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
                 f.write(waypoint_line)
-
-    MOVE(opp_wp_file, SHOP / RACE / map_filename / opp_wp_file)
     
     
 def write_mm_data(mm_data_file, configs, race_type, prefix):
     header = ",".join(["Description"] + 2 * ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"])
     
-    with open(mm_data_file, 'w') as f:
+    with open(SHOP / RACE / map_filename / mm_data_file, 'w') as f:
         f.write(header + "\n")
                 
         for race_index, config in configs.items():
@@ -2613,13 +2615,11 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
             
             f.write(data_string + "\n")  # Write the data string to file
             
-    MOVE(mm_data_file, SHOP / RACE / map_filename / mm_data_file)
-
-
+            
 def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):
     aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
     
-    with open(aimap_file_name, "w") as f:
+    with open(SHOP / RACE / map_filename / aimap_file_name, "w") as f:
         
         aimap_content = f"""
 # Ambient Traffic Density 
@@ -2653,9 +2653,7 @@ def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config
         for idx, opp_car in enumerate(opponent_cars):
             f.write(f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}\n")
             
-    MOVE(aimap_file_name, SHOP / RACE / map_filename / aimap_file_name)
-
-    
+            
 def create_races(map_filename: str, race_data) -> None:
     for race_key, config in race_data.items():
         race_type, race_index_str = race_key.split('_')
@@ -3055,6 +3053,7 @@ mmBridgeMgr :076850a0 {{
                 
                 if final_config["Mode"] in [SINGLE, ALL_MODES]:
                     filenames.append(f"{base_name}.MMBRIDGEMGR")
+                    
                 if final_config["Mode"] in [MULTI, ALL_MODES]:
                     filenames.append(f"{base_name}M.MMBRIDGEMGR")
             else:
@@ -3386,7 +3385,7 @@ class Portals:
             with open(output_file, 'w') as out_f:
                 for portal in portals:
                     out_f.write(repr(portal))
-            print(f"Processed portal data to {output_file.name}")
+            # print(f"Processed portal data to {output_file.name}")
         except Exception as e:
             print(f"Failed to write to {output_file.name}: {e}")
                     
@@ -3620,10 +3619,9 @@ class BangerEditor:
                                                                             
     @staticmethod  
     def load_dimensions() -> dict:
-        dimensions_file = EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt"
         extracted_prop_dim = {}
         
-        with open(dimensions_file, "r") as f:
+        with open(EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt", "r") as f:
             for line in f:
                 prop_name, value_x, value_y, value_z = line.split()
                 extracted_prop_dim[prop_name] = Vector3(float(value_x), float(value_y), float(value_z))
@@ -3683,7 +3681,7 @@ class Facades:
                          
     @staticmethod
     def debug(facades):
-        with open(DEBUG_FOLDER / "FACADES" / f"{map_filename}" + ".txt", mode = 'w', encoding = 'utf-8') as f:
+        with open(DEBUG_FOLDER / "FACADES" / f"{map_filename}.txt", mode = 'w', encoding = 'utf-8') as f:
             for facade in facades:
                 f.write(str(facade))
                                
@@ -4081,9 +4079,8 @@ class aiPath:
         self.OncomingPath, = read_unpack(f, '<I')
         self.EdgeIndex, = read_unpack(f, '<I')
         self.PathIndex, = read_unpack(f, '<I')
-        
-        self.SubSectionOffsets = read_unpack(f, '<{}f'.format(self.NumVertexs * (self.NumLanes + self.NumSidewalks)))
-        self.CenterOffsets = read_unpack(f, '<{}f'.format(self.NumVertexs))
+        self.SubSectionOffsets = read_unpack(f, f'<{self.NumVertexs * (self.NumLanes + self.NumSidewalks)}f')
+        self.CenterOffsets = read_unpack(f, f'<{self.NumVertexs}f')
         self.IntersectionIds = read_unpack(f, '<2I')
         self.LaneVertices = Vector3.readn(f, self.NumVertexs * (self.NumLanes + self.NumSidewalks))
 
@@ -4119,14 +4116,15 @@ class aiIntersection:
         self.Position = Vector3.read(file)
 
         num_sinks, = read_unpack(file, '<H')
-        self.Sinks = read_unpack(file, '<{}I'.format(num_sinks))
+        self.Sinks = read_unpack(file, f'<{num_sinks}I')
 
         num_sources, = read_unpack(file, '<H')
-        self.Sources = read_unpack(file, '<{}I'.format(num_sources))
+        self.Sources = read_unpack(file, f'<{num_sources}I')
 
-        self.Paths = read_unpack(file, '<{}I'.format(num_sinks + num_sources))
-        self.Directions = read_unpack(file, '<{}f'.format(num_sinks + num_sources))
+        self.Paths = read_unpack(file, f'<{num_sinks + num_sources}I')
+        self.Directions = read_unpack(file, f'<{num_sinks + num_sources}f')
 
+    @staticmethod
     def read(file):
         result = aiIntersection()
         result.load(file)
@@ -4137,7 +4135,7 @@ class aiIntersection:
 
 def read_array_list(file):
     num_items, = read_unpack(file, '<I')
-    return read_unpack(file, '<{}I'.format(num_items))
+    return read_unpack(file, f'<{num_items}I')
 
 
 class aiMap:
@@ -4150,7 +4148,7 @@ class aiMap:
     def load(self, file):
         num_isects, num_paths = read_unpack(file, '<2H')
 
-        print('{} roads, {} isects'.format(num_paths, num_isects))
+        print(f'{num_paths} roads, {num_isects} isects')
 
         for _ in range(num_paths):
             self.Paths.append(aiPath.read(file))
@@ -4190,7 +4188,7 @@ class MiniParser:
             self.newline = True
 
     def begin_class(self, name):
-        self.print('{} :0 {{\n'.format(name))
+        self.print(f'{name} :0 {{\n')
         self.indent += 1
 
     def value(self, value):
@@ -4203,31 +4201,28 @@ class MiniParser:
             self.indent -= 1
             self.print(']')
             
-        elif isinstance(value, str):
-            self.print('"{}"'.format(value.replace('\\', '\\\\').replace('"', '\\"')))
+        elif isinstance(value, str):            
+            escaped_value = value.replace('\\', '\\\\').replace('"', '\\"')
+            self.print(f'"{escaped_value}"')
             
         elif isinstance(value, int):
             self.print(str(value))
             
         elif isinstance(value, float):
-            self.print("{:.2f}".format(value))
+            self.print(f"{value:.2f}")
                     
         elif isinstance(value, tuple):
-            self.print('({})'.format(', '.join("{:.2f}".format(v) if isinstance(v, float) else str(v) for v in value)))
+            formatted_values = ', '.join(f"{v:.2f}" if isinstance(v, float) else str(v) for v in value)
+            self.print(f'({formatted_values})')
                                 
         elif isinstance(value, Vector3):
-            self.print('{:.2f}'.format(value.x))
-            self.print(' ')
-            self.print('{:.2f}'.format(value.y))
-            self.print(' ')
-            self.print('{:.2f}'.format(value.z))
+            self.print(f'{value.x:.2f} {value.y:.2f} {value.z:.2f}')
             
         else:
-            raise Exception('Invalid Value Type {}'.format(type(value)))
+            raise Exception(f'Invalid Value Type {type(value)}')
 
     def field(self, name, value):
-        self.print(name)
-        self.print(' ')
+        self.print(f'{name} ')
         self.value(value)
         self.print('\n')
 
@@ -4296,10 +4291,10 @@ def read_bai(debug_bai_data_file: Path):
                     has_sink = True
                     break
         if not has_sink:
-            print('No eligible roads identified to turn onto from road: {}.'.format(path.ID))
+            print(f'No eligible roads identified to turn onto from road: {path.ID}.')
 
         if path.ID < path.OncomingPath:
-            streets.append(('Street{}'.format(len(streets)), (path, ai_map.Paths[path.OncomingPath])))
+            streets.append((f'Street{len(streets)}', (path, ai_map.Paths[path.OncomingPath])))
 
     assert len(streets) * 2 == len(ai_map.Paths)
     
@@ -4341,7 +4336,7 @@ def write_bai_text(streets):
                 angle = math.degrees(target.Angle(normal))
 
                 if angle > 0.01:
-                    print('Road {} has suspicious normal {}: Expected {}, Calculated {} ({:.2} degrees error)'.format(paths[0].ID, n, target, normal, angle))
+                    print(f'Road {paths[0].ID} has suspicious normal {n}: Expected {target}, Calculated {normal} ({angle:.2f} degrees error)')
 
             for road in range(2):
                 path = paths[road]
@@ -4354,9 +4349,8 @@ def write_bai_text(streets):
                     assert a.Dist2(b) < 0.00001
 
         # Write Road files
-        road_filename = 'Street{}.road'.format(paths[0].ID)
-        
-        with open(USER_RESOURCES / "BAI" / road_filename, 'w') as f:
+        with open(USER_RESOURCES / "BAI" / f'Street{paths[0].ID}.road', 'w') as f:
+
             parser = MiniParser(f)
     
             parser.begin_class('mmRoadSect')
@@ -5670,7 +5664,7 @@ def set_blender_keybinding() -> None:
 #* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
 
-#* All relevant Facade information can be found in: /UserResources/FACADES.
+#* All relevant Facade information can be found in: ... / UserResources / FACADES
 #* Each facade is photographed and documented (see: "FACADE_DATA.txt")
 
 # Flags (if applicable, consult the documentation for more info)
