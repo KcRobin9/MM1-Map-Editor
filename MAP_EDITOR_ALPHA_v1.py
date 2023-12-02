@@ -120,7 +120,7 @@ debug_facade_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"       # Ch
 debug_portals_file = False
 debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
-debug_bai_file = False
+debug_bai_file = True
 debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"              # Change the input BAI file here
 
 debug_meshes_file = False
@@ -4248,7 +4248,7 @@ def read_bai(debug_bai_data_file: Path):
 
     for i, path in enumerate(ai_map.Paths):
         # ID matches path index
-        assert i == path.ID
+        assert i == path.ID     
 
         # A path should not be its own oncoming.
         assert path.ID != path.OncomingPath
@@ -4301,9 +4301,8 @@ def read_bai(debug_bai_data_file: Path):
     return ai_map, streets
 
 
-def write_bai_text(streets):
-    # Write Map file
-    with open(USER_RESOURCES / "BAI" / "CHICAGO.map", 'w') as f:
+def write_bai_text(ai_map, streets):
+    with open(USER_RESOURCES / "BAI" / "CHICAGO.map", 'w') as f:  # Write Map file
         
         parser = MiniParser(f)
 
@@ -4348,8 +4347,8 @@ def write_bai_text(streets):
                     b = (path.Boundaries[i] + path.Boundaries[i + path.NumVertexs]) * 0.5
                     assert a.Dist2(b) < 0.00001
 
-        # Write Road files
-        with open(USER_RESOURCES / "BAI" / f'Street{paths[0].ID}.road', 'w') as f:
+
+        with open(USER_RESOURCES / "BAI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
 
             parser = MiniParser(f)
     
@@ -4427,11 +4426,32 @@ def write_bai_text(streets):
             
             parser.end_class()
             
+            
+    for intersection in ai_map.Intersections:        
+        with open(USER_RESOURCES / "BAI" / f'Intersection{intersection.ID}.int', 'w') as f:  # Write Intersection files
+            parser = MiniParser(f)
+    
+            parser.begin_class('mmIntersection')
+
+            parser.field('ID', intersection.ID)
+            parser.field('Position', intersection.Position)
+
+            parser.field('NumSinks', len(intersection.Sinks))
+            parser.field('Sinks', intersection.Sinks)
+
+            parser.field('NumSources', len(intersection.Sources))
+            parser.field('Sources', intersection.Sources)
+
+            parser.field('Paths', intersection.Paths)
+            parser.field('Directions', intersection.Directions)
+
+            parser.end_class()
+            
 
 def debug_bai(debug_bai_data_file: Path, debug_bai_file: bool) -> None:
     if debug_bai_file:
-        _, streets = read_bai(debug_bai_data_file)
-        write_bai_text(streets)
+        ai_map, streets = read_bai(debug_bai_data_file)
+        write_bai_text(ai_map, streets)
         
 #! ################# Code by 0x1F9F1 (Modified) // end ################# !#         
 
