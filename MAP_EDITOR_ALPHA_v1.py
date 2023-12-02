@@ -120,7 +120,7 @@ debug_facade_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"       # Ch
 debug_portals_file = False
 debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
-debug_bai_file = True
+debug_bai_file = False
 debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"              # Change the input BAI file here
 
 debug_meshes_file = False
