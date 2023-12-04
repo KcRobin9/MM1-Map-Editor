@@ -1,0 +1,10 @@
+mmIntersection :0 {
+    ID 223
+    Position 159.41 0.00 -814.08
+    NumSinks 3
+    Sinks (675, 693, 717)
+    NumSources 3
+    Sources (674, 692, 716)
+    Paths (675, 674, 717, 716, 693, 692)
+    Directions (0.74, 0.90, 1.55, 1.59, 2.24, 2.40)
+}
