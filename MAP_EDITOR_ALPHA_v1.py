@@ -949,11 +949,13 @@ class Bounds:
         edge_plane_d = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
-        return Bounds(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
-                len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, x_scale, z_scale, 
-                num_indices, height_scale, cache_size, vertices, polys,
-                hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
-                row_offsets, bucket_offsets, row_buckets, fixed_heights)
+        return Bounds(
+            magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
+            len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, x_scale, z_scale, 
+            num_indices, height_scale, cache_size, vertices, polys,
+            hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+            row_offsets, bucket_offsets, row_buckets, fixed_heights
+            )
             
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
@@ -1512,8 +1514,10 @@ def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
-    magic, flags = "3HSM", 3
-    radius, radiussq, bounding_box_radius = 0.0, 0.0, 0.0  
+    magic, flags = "3HSM", 3    
+    radius =  calculate_radius(vertices, calculate_center(vertices))
+    radiussq = radius ** 2
+    bounding_box_radius = 0.0 
     
     shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
 
@@ -1533,10 +1537,12 @@ def initialize_mesh(
     
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
-    return Meshes(magic, vertex_count, adjunct_count, surface_count, indices_count, 
-               radius, radiussq, bounding_box_radius, 
-               texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, 
-               enclosed_shape, texture_indices, indices_sides)
+    return Meshes(
+        magic, vertex_count, adjunct_count, surface_count, indices_count, 
+        radius, radiussq, bounding_box_radius, 
+        texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, 
+        enclosed_shape, texture_indices, indices_sides
+        )
 
 ################################################################################################################               
 ################################################################################################################  
