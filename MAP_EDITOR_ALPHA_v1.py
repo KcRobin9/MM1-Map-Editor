@@ -62,11 +62,11 @@ play_game = True                # change to "True" to start the game after the M
 delete_shop = True              # change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_anim = True                 # change to "True" if you want ANIMATIONS (plane and eltrain)
-set_props = True                # change to "True" if you want PROPS (bangers)
+set_props = True                # change to "True" if you want PROPS
 set_bridges = True              # change to "True" if you want BRIDGES
 set_facades = True              # change to "True" if you want FACADES
-set_physics = True              # change to "True" if you want PHYSICS
+set_physics = True              # change to "True" if you want PHYSICS (custom)
+set_animations = True           # change to "True" if you want ANIMATIONS (plane and eltrain)
 
 # Minimap
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
@@ -96,11 +96,11 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR
 
 # Blender
 load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
-texture_dir = EDITOR_RESOURCES / "TEXTURES"
+texture_folder = EDITOR_RESOURCES / "TEXTURES"
 
 # Editor Debugging
 debug_props = False             # change to "True" if you want a PROPS Debug text file
-debug_meshes = False            # change to "True" if you want BMS Debug text files 
+debug_meshes = False            # change to "True" if you want MESH Debug text files 
 debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
 debug_facades = False           # change to "True" if you want a FACADES Debug text file
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
@@ -108,6 +108,7 @@ debug_portals = False           # change to "True" if you want a PORTALS Debug t
 debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
 debug_minimap = False           # change to "True" if you want a HUD Debug jpg file (defaults to True when "set_lars_race_maker" is set to True)
 debug_minimap_id = False        # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
+
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # Input File Debugging. The output files are written to: "Resources / Debug / ..."
@@ -121,13 +122,13 @@ debug_portals_file = False
 debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
 debug_bai_file = False
-debug_bai_data_file = EDITOR_RESOURCES / "BAI" / "CHICAGO.BAI"              # Change the input BAI file here
+debug_bai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"              # Change the input AI file here
 
 debug_meshes_file = False
-debug_meshes_data_file = EDITOR_RESOURCES / "BMS" / "CULL01_H.BMS"          # Change the input BMS file here
+debug_meshes_data_file = EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"          # Change the input MESH file here
 
 debug_meshes_dir = False
-debug_meshes_data_dir = EDITOR_RESOURCES / "BMS" / "BMS FILES"              # Change the input BMS directory here
+debug_meshes_data_dir = EDITOR_RESOURCES / "MESHES" / "MESH FILES"              # Change the input MESH directory here
 
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
@@ -232,7 +233,7 @@ def load_last_run_time():
                 return pickle.load(f)
         except EOFError:
             return 3.0  # Default to 3.0 seconds if the file is empty or corrupted
-    return 3.0  # Default to 3.0 seconds if no previous data
+    return 3.0          # Default to 3.0 seconds if no previous data
 
 
 # Load the Last Run Time, Start the Progress Bar Thread, Start the Time
@@ -420,10 +421,10 @@ PLANE_LARGE = "vaboeing"  # No collision
 
 # Race Names
 blitz_race_names = ["Chaotic Tower"]
-circuit_race_names = ["Photo Finish"]   
+circuit_race_names = ["Circuit Race"]   
 checkpoint_race_names = ["Photo Finish"]
 
-# # Races
+# Races
 race_data = {
     'BLITZ_0': {
         'waypoints': [
@@ -552,7 +553,7 @@ INFO
 bridge_object = "vpmustang99"  # pass any prop / car 
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
-bridges = [
+bridge_list = [
     ((-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [
     ((-50.0, 0.15, -115.0), 270, 2, CROSSGATE),
     ((-50.0, 0.15, -85.0), -270, 2, CROSSGATE)
@@ -585,8 +586,8 @@ bridge_cnr = {
     "BridgeOnGoal": 0.33,
     "Mode": MULTI}
 
-# Pack all Custom Bridge Configs. for processing
-bridge_configs = [bridge_race_0, bridge_cnr]
+# Pack all Custom Bridge Configurations for processing
+bridge_config_list = [bridge_race_0, bridge_cnr]
 
 ################################################################################################################               
 ################################################################################################################     
@@ -663,8 +664,6 @@ class Vector2:
             return f'{self.x:f}, {self.y:f}'
 
 
-
-
 # VECTOR3 CLASS
 class Vector3:
     def __init__(self, x, y, z):
@@ -693,8 +692,8 @@ class Vector3:
             self._data[key] = value
             setattr(self, key, value)
         else:
-            raise ValueError("Invalid key: {}. Use 'x', 'y', or 'z'.".format(key))
-        
+            raise ValueError(f"Invalid key: {key}. Use 'x', 'y', or 'z'.")
+
     def __add__(self, other):
         return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
 
@@ -755,7 +754,6 @@ class Vector3:
             return f'{{ {self.x:f}, {self.y:f}, {self.z:f} }}'
 
         
-        
 def calc_normal(a, b, c):
     try:
         return (c - b).Cross(a - b).Normalize()
@@ -805,8 +803,7 @@ class Polygon:
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
     def write(self, f: BinaryIO) -> None:
-        # Each polygon requires four vertex indices
-        if len(self.vert_indices) <= TRIANGLE:  
+        if len(self.vert_indices) <= TRIANGLE:  # Each polygon requires four vertex indices
             self.vert_indices += (0,) * (4 - len(self.vert_indices))
         
         write_pack(f, '<H2B', self.cell_id, self.mtl_index, self.flags)
@@ -923,11 +920,13 @@ class Bounds:
             row_buckets = read_unpack(f, f'<{num_indices}H')
             fixed_heights = read_unpack(f, f'<{x_dim * z_dim}B')
 
-        return cls(magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
-                   num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
-                   x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
-                   hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
-                   row_offsets, bucket_offsets, row_buckets, fixed_heights)
+        return cls(
+            magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
+            num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
+            x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
+            hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+            row_offsets, bucket_offsets, row_buckets, fixed_heights
+            )
     
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
@@ -951,9 +950,9 @@ class Bounds:
 
         return Bounds(
             magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
-            len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, x_scale, z_scale, 
-            num_indices, height_scale, cache_size, vertices, polys,
-            hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+            len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, 
+            x_scale, z_scale, num_indices, height_scale, cache_size, 
+            vertices, polys, hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
             
@@ -1001,19 +1000,21 @@ class Bounds:
             
     @staticmethod
     def debug_directory(input_dir: Path, output_dir: Path, debug_bounds_dir: bool) -> None:
-        if debug_bounds_dir:
-            if not input_dir.exists():
-                print(f"The directory {input_dir} does not exist.")
-                return
-            
-            if not output_dir.exists():
-                print(f"The output directory {output_dir} does not exist. Creating it.")
-                output_dir.mkdir(parents = True, exist_ok = True)
-                
-            for file in input_dir.glob('*.BND'):
-                output_file_path = output_dir / (file.stem + '.txt')  
-                Bounds.debug_file(file, output_file_path, True)
-                print(f"Processed {file.name} to {output_file_path.name}")
+        if not debug_bounds_dir:
+            return
+
+        if not input_dir.exists():
+            print(f"The directory {input_dir} does not exist.")
+            return
+
+        if not output_dir.exists():
+            print(f"The output directory {output_dir} does not exist. Creating it.")
+            output_dir.mkdir(parents = True, exist_ok = True)
+
+        for file in input_dir.glob('*.BND'):
+            output_file_path = output_dir / (file.stem + '.txt')  
+            Bounds.debug_file(file, output_file_path, True)
+            print(f"Processed {file.name} to {output_file_path.name}")
                     
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
@@ -1062,7 +1063,7 @@ BOUND
 ################################################################################################################               
 ################################################################################################################  
 
-# BMS CLASS
+# MESH CLASS
 class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sq: float, bounding_box_radius: float,
@@ -1118,10 +1119,12 @@ class Meshes:
                 indices_side = list(read_unpack(f, indices_side_format))
                 indices_sides.append(indices_side)
 
-        return cls(magic, vertex_count, adjunct_count, surface_count, indices_count, 
-                   radius, radius_sq, bounding_box_radius, 
-                   texture_count, flags, texture_names, coordinates, 
-                   texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides)
+        return cls(
+            magic, vertex_count, adjunct_count, surface_count, indices_count, 
+            radius, radius_sq, bounding_box_radius, 
+            texture_count, flags, texture_names, coordinates, 
+            texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides
+            )
         
     def write(self, output_file: Path) -> None:
         with open(output_file, 'wb') as f:
@@ -1152,7 +1155,7 @@ class Meshes:
             write_pack(f, str(self.adjunct_count) + 'H', *self.enclosed_shape)
             write_pack(f, str(self.surface_count) + 'b', *self.surface_sides)
 
-            # A triangle still requires 4 indices (the 4th index will be 0)
+            # A triangle requires 4 indices (the 4th index will be 0)
             for indices_side in self.indices_sides:
                 while len(indices_side) <= TRIANGLE:
                     indices_side.append(0)
@@ -1160,7 +1163,7 @@ class Meshes:
                         
     def debug(self, output_file: str, debug_dir: Path, debug_meshes: bool) -> None:
         if debug_meshes:
-            Path(debug_dir).mkdir(parents = True, exist_ok = True)
+            debug_dir.mkdir(parents = True, exist_ok = True)
             with open(debug_dir / Path(output_file), 'w') as f:       
                 f.write(str(self))
                 
@@ -1371,8 +1374,7 @@ class DLP:
 
             for file in input_dir.glob('*.DLP'):  
                 if file.is_file():
-                    output_file = output_dir / (file.stem + '_.txt')
-                    DLP.debug_file(file, output_file, True)
+                    DLP.debug_file(file, output_dir / (file.stem + '_.txt'), True)
                                                         
     def __repr__(self):
         return f"""
@@ -1446,8 +1448,7 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
         rotated_y = x * math.sin(rad) + y * math.cos(rad)
         return rotated_x, rotated_y
 
-    center_x = 0.5
-    center_y = 0.5
+    center_x, center_y = 0.5, 0.5
 
     coords = [
         (0, 0),
@@ -1475,9 +1476,10 @@ def determine_mesh_dir_and_filename(bound_number: int, texture_name: List[str], 
         target_dir = SHOP / "BMS" / f"{map_filename}LM"
     else:
         target_dir = SHOP / "BMS" / f"{map_filename}CITY"
+        
     target_dir.mkdir(parents = True, exist_ok = True)
-
-    if any(name.startswith("T_WATER") for name in texture_name):
+        
+    if any(name.startswith(WATER_TX) for name in texture_name):
         mesh_filename = f"CULL{bound_number:02d}_A2.bms"
     else:
         mesh_filename = f"CULL{bound_number:02d}_H.bms"
@@ -1485,7 +1487,7 @@ def determine_mesh_dir_and_filename(bound_number: int, texture_name: List[str], 
     return target_dir, mesh_filename
 
            
-def save_bms(
+def save_mesh(
     texture_name: str, texture_indices: List[int] = [1], vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
     texture_darkness: List[int] = None, tex_coords: List[float] = None, 
     randomize_textures: bool = randomize_textures, random_texture_exclude: bool = False, random_textures: List[str] = random_textures, 
@@ -1507,7 +1509,7 @@ def save_bms(
     mesh.write(target_dir / mesh_filename)
     
     if debug_meshes:
-        mesh.debug(mesh_filename + ".txt", DEBUG_FOLDER / "BMS" / map_filename, debug_meshes)
+        mesh.debug(mesh_filename + ".txt", DEBUG_FOLDER / "MESHES" / map_filename, debug_meshes)
             
 
 def initialize_mesh(
@@ -1527,7 +1529,7 @@ def initialize_mesh(
     surface_count = len(texture_indices)   
     texture_count = len(texture_name)
     
-    # The file always requires four indices, with a Triangle that would be: (indices_sides: [[0, 1, 2, 0]])
+    # A triangle requires 4 indices (the 4th index will be 0)
     if len(coordinates) in [QUAD, TRIANGLE]:
         indices_count = surface_count * 4
 
@@ -1558,9 +1560,9 @@ def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     
     dot_product = np.dot(normal, reference_up)
     
-    if dot_product < 0:  # If clockwise, swap the order of the vertices
+    if dot_product < 0: # If clockwise, swap the order of the vertices
         return [v1, v3, v2]
-    else:  # If counterclockwise, no changes needed
+    else:               # If counterclockwise, no changes needed
         return [v1, v2, v3]
     
     
@@ -1668,7 +1670,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     return edges
 
 
-# Sort BND Vertices
+# Sort Vertices
 def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
     min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
@@ -1704,7 +1706,7 @@ def create_polygon(
     
     polygons_data.append(polygon_info)
     
-    # Ensure 3 or 4 vertices
+    # Ensure the polygon has 3 or 4 vertices
     if len(vertex_coordinates) != TRIANGLE and len(vertex_coordinates) != QUAD:
         error_message = f"""\n
         ***ERROR***
@@ -1797,8 +1799,8 @@ def create_polygon(
 
 #? ==================CREATING YOUR MAP================== #?
 
-def user_notes(x):
-    f""" 
+def user_notes():
+    """ 
     Find some Polygons and Textures examples below this text.
     You can already run this the script and create the Test Map yourself
     
@@ -1812,7 +1814,7 @@ def user_notes(x):
     "tex_coords = compute_uv(bound_number = 1, tile_x = 4, tile_y = 2, angle_degrees = 0)"
     "tex_coords = compute_uv(bound_number = 2, tile_x = 5, tile_y = 2, angle_degrees = 90)"
         
-    The variable "texture_darkness" (an optional variable) in the function "save_bms()" makes the texture edges darker / lighter. 
+    The variable "texture_darkness" (an optional variable) in the function "save_mesh()" makes the texture edges darker / lighter. 
     If there are four vertices, you can for example set: "texture_darkness = [40, 2, 50, 1]"
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
         
@@ -1871,7 +1873,7 @@ BARRICADE_TX = "T_BARRICADE"
 CHECKPOINT_TX = "CHECK04"
 BUS_RED_TOP = "VPBUSRED_TP_BK"
 
-#* Custom Textures
+# Custom Textures
 LAVA_TX = "T_WATER_LAVA"
 RED_BLACK_BARRICADE_TX = "T_RED_BLACK_BARRICADE"
              
@@ -1897,7 +1899,7 @@ create_polygon(
         (25.0, 0.0, 70.0),
         (-25.0, 0.0, 70.0)])
 
-save_bms(
+save_mesh(
     texture_name = [CHECKPOINT_TX],
     tex_coords = compute_uv(bound_number = 99, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
@@ -1910,7 +1912,7 @@ create_polygon(
         (50.0, 0.0, -70.0),
         (-50.0, 0.0, -70.0)])
 
-save_bms(
+save_mesh(
     texture_name = [ROAD_3_LANE_TX], texture_darkness = [40, 2, 50, 1],
     tex_coords = compute_uv(bound_number = 201, tile_x = 10, tile_y = 10, angle_degrees = 45))
 
@@ -1925,7 +1927,7 @@ create_polygon(
 		(-50.0, 0.0, -130.0)],
         hud_color = GRASS_HUD)
 
-save_bms(
+save_mesh(
     texture_name = [GRASS_BASEBALL_TX], 
     tex_coords = compute_uv(bound_number = 861, tile_x = 7, tile_y = 7, angle_degrees = 90))
 
@@ -1940,7 +1942,7 @@ create_polygon(
         (10.0, 0.0, -130.0)],
         hud_color = WATER_HUD)
 
-save_bms(
+save_mesh(
     texture_name = [GRASS_WINTER_TX], 
     tex_coords = compute_uv(bound_number = 202, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
@@ -1956,7 +1958,7 @@ create_polygon(
 		(-50.0, 0.0, -210.0)],
          hud_color = SNOW_HUD)
 
-save_bms(
+save_mesh(
     texture_name = [SNOW_TX], 
     tex_coords = compute_uv(bound_number = 1, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
@@ -1971,7 +1973,7 @@ create_polygon(
 		(50.0, 0.0, -140.0)],
         hud_color = DARK_RED)
 
-save_bms(
+save_mesh(
     texture_name = [RED_BLACK_BARRICADE_TX], 
     tex_coords = compute_uv(bound_number = 862, tile_x = 50, tile_y = 50, angle_degrees = 0))
 
@@ -1985,7 +1987,7 @@ create_polygon(
 		(50.0, 0.0, -70.0)],
         hud_color = WOOD_HUD)
 
-save_bms(
+save_mesh(
     texture_name = [WOOD_TX], 
     tex_coords = compute_uv(bound_number = 203, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
@@ -2001,7 +2003,7 @@ create_polygon(
 		(50.0, 0.0, -210.0)],
         hud_color = WATER_HUD)
 
-save_bms(
+save_mesh(
     texture_name = [WATER_WINTER_TX], 
     tex_coords = compute_uv(bound_number = 2, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
@@ -2015,7 +2017,7 @@ create_polygon(
 		(140.0, 0.0, 70.0),
 		(93.01, 0.0, 70.0)])
 
-save_bms(
+save_mesh(
     texture_name = [GRASS_BASEBALL_TX],
     tex_coords = compute_uv(bound_number = 863, tile_x = 10.0, tile_y = 10.0, angle_degrees = 90.0))
 
@@ -2029,7 +2031,7 @@ create_polygon(
         (-50.0, 0.0, 0.0)],
         hud_color = LIGHT_YELLOW)
 
-save_bms(
+save_mesh(
     texture_name = [BRICKS_MALL_TX],
     tex_coords = compute_uv(bound_number = 204, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
@@ -2043,7 +2045,7 @@ create_polygon(
         (-50.0, 0.0, 70.0)],
         hud_color = LIGHT_YELLOW)
 
-save_bms(
+save_mesh(
     texture_name = [BRICKS_MALL_TX],
     tex_coords = compute_uv(bound_number = 205, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
@@ -2058,7 +2060,7 @@ create_polygon(
 		(-50.0, 300.0, -1000.0)],
         hud_color = ORANGE)
 
-save_bms(
+save_mesh(
     texture_name = [LAVA_TX], 
     tex_coords = compute_uv(bound_number = 3, tile_x = 10, tile_y = 100, angle_degrees = 90))
 
@@ -2074,7 +2076,7 @@ create_polygon(
         (10.0, 30.0, -50.11),
         (-10.0, 30.0, -50.11)])
 
-save_bms(
+save_mesh(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 4, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
@@ -2084,11 +2086,11 @@ create_polygon(
     always_visible = False,
     vertex_coordinates = [
         (-10.0, 0.0, -70.00),
-        (-10.0, 30.0, -69.99),
-        (10.0, 30.0, -69.99),
+        (-10.0, 30.0, -70.0),
+        (10.0, 30.0, -70.0),
         (10.0, 0.0, -70.00)])
 
-save_bms(
+save_mesh(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 5, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
@@ -2102,7 +2104,7 @@ create_polygon(
         (-10.0, 0.0, -70.0),
         (-10.0, 0.0, -50.0)])
 
-save_bms(
+save_mesh(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 6, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
@@ -2116,7 +2118,7 @@ create_polygon(
         (9.9, 30.0, -50.0),
         (10.0, 0.0, -50.0)])
 
-save_bms(
+save_mesh(
     texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 7, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
@@ -2131,7 +2133,7 @@ create_polygon(
         (-10.0, 30.0, -50.0),
         (10.0, 30.0, -50.0)])
 
-save_bms(
+save_mesh(
     texture_name = [SNOW_TX],
     tex_coords = compute_uv(bound_number = 900, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
@@ -2145,7 +2147,7 @@ create_polygon(
 		(-50.0, 0.0, -80.0),
 		(-50.0, 0.0, -120.0),
 		(-82.6, 0.0, -120.0)])
-save_bms(
+save_mesh(
     texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 250, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -2158,7 +2160,7 @@ create_polygon(
 		(-79.0, 14.75, -120.0),
 		(-90.0, 14.75, -120.0)])
 
-save_bms(
+save_mesh(
     texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 925, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
@@ -2171,7 +2173,7 @@ create_polygon(
 		(-90.0, 0.0, -120.0),
 		(-119.01, 0.0, -120.0)])
 
-save_bms(
+save_mesh(
     texture_name = [GRASS_TX], 
     tex_coords = compute_uv(bound_number = 251, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -2184,7 +2186,7 @@ create_polygon(
         (-119.1, 0.0, -120.0),
 		(-160.0, 0.0, -120.0)])
 
-save_bms(
+save_mesh(
     texture_name = [ROAD_3_LANE_TX], 
     tex_coords = compute_uv(bound_number = 252, tile_x = 5, tile_y = 3, angle_degrees = 0))
 
@@ -2197,7 +2199,7 @@ create_polygon(
         (-160.0, 0.0, -120.0),
 		(-200.0, 0.0, -120.0)])
 
-save_bms(
+save_mesh(
     texture_name = [INTERSECTION_TX], 
     tex_coords = compute_uv(bound_number = 950, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
@@ -2212,7 +2214,7 @@ create_polygon(
         (50.0, 12.0, -69.9),
         (20.0, 12.0, -69.9)])
 
-save_bms(
+save_mesh(
     texture_name = [ROAD_3_LANE_TX], 
     tex_coords = compute_uv(bound_number = 501, tile_x = 3, tile_y = 2, angle_degrees = 90))
 
@@ -2225,7 +2227,7 @@ create_polygon(
         (50.0, 30.0, 0.0),
         (20.0, 30.0, 0.0)])
 
-save_bms(
+save_mesh(
     texture_name = [BRICKS_GREY_TX], 
     tex_coords = compute_uv(bound_number = 1100, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
@@ -2238,7 +2240,7 @@ create_polygon(
         (20.0, 30.0, 0.0),
         (-10.0, 30.0, 0.0)])
 
-save_bms(
+save_mesh(
     texture_name = [BUS_RED_TOP], 
     tex_coords = compute_uv(bound_number = 502, tile_x = 4, tile_y = 3, angle_degrees = 0))
 
@@ -2250,7 +2252,7 @@ create_polygon(
         (10.0, 30.0, -50.0),
         (-10.0, 30.0, -50.0)])
 
-save_bms(
+save_mesh(
     texture_name = [GLASS_TX], 
     tex_coords = compute_uv(bound_number = 503, tile_x = 5, tile_y = 12, angle_degrees = 0))
 
@@ -2266,7 +2268,7 @@ create_polygon(
      (-50.00,0.00,-130.00)],
     hud_color = LIGHT_RED)
 
-save_bms(
+save_mesh(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 206, tile_x = 15, tile_y = 1, angle_degrees = 90))
 
@@ -2280,7 +2282,7 @@ create_polygon(
 		(-50.0, 0.0, -140.0)],
          hud_color = LIGHT_RED)
 
-save_bms(
+save_mesh(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 207, tile_x = 1, tile_y = 10, angle_degrees = 0))
 
@@ -2292,7 +2294,7 @@ create_polygon(
 		(-50.01, 0.0, -130.0),
 		(-50.0, 3.0, -135.0)])
 
-save_bms(
+save_mesh(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
@@ -2304,7 +2306,7 @@ create_polygon(
 		(50.01, 0.0, -130.0),
 		(50.0, 3.0, -135.0)])
 
-save_bms(
+save_mesh(
     texture_name = [STOP_SIGN_TX], 
     tex_coords = compute_uv(bound_number = 209, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
@@ -2317,7 +2319,7 @@ create_polygon(
 		(-200.0, -0.00, -120.0),
 		(-160.0, -3.0, -160.0)])
 
-save_bms(texture_name = [FREEWAY_TX],
+save_mesh(texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2220, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2327,7 +2329,7 @@ create_polygon(
         (-160.0, -3.0, -160.0),
 		(-200.0, -3.0, -160.0)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2221, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
@@ -2338,7 +2340,7 @@ create_polygon(
 		(-156.59, -6.00, -204.88),
 		(-200.0, -3.0, -160.0)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2222, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
@@ -2349,7 +2351,7 @@ create_polygon(
 		(-200.0, -3.0, -160.0),
 		(-191.82, -6.00, -223.82)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2223, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
@@ -2360,7 +2362,7 @@ create_polygon(
 		(-140.06, -9.00, -229.75),
 		(-191.82, -6.00, -223.82)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2224, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
@@ -2371,7 +2373,7 @@ create_polygon(
 		(-191.82, -6.00, -223.82),
 		(-165.59, -9.00, -260.54)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2225, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
@@ -2382,7 +2384,7 @@ create_polygon(
 		(-117.58, -12.00, -247.47),
 		(-165.59, -9.00, -260.54)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2226, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
@@ -2393,7 +2395,7 @@ create_polygon(
 		(-165.59, -9.00, -260.54),
 		(-127.21, -12.00, -286.30)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2227, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
@@ -2404,7 +2406,7 @@ create_polygon(
 		(-90.0, -15.00, -254.51),
 		(-127.21, -12.00, -286.30)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2228, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
@@ -2415,7 +2417,7 @@ create_polygon(
 		(-127.21, -12.00, -286.30),
 		(-90.0, -15.00, -294.48)])
 
-save_bms(
+save_mesh(
 	texture_name = [FREEWAY_TX],
 	tex_coords = compute_uv(bound_number = 2229, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
@@ -2428,7 +2430,7 @@ create_polygon(
         (-79.0, -15.00, -294.48),
         (-90.0, -15.00, -294.48)])
 
-save_bms(
+save_mesh(
 	texture_name = [INTERSECTION_TX],
 	tex_coords = compute_uv(bound_number = 924, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
@@ -2442,7 +2444,7 @@ create_polygon(
 		(-79.0, 14.75, -120.0)],
 	hud_color = LIGHT_YELLOW)
 
-save_bms(
+save_mesh(
 	texture_name = [ZEBRA_CROSSING_TX],
 	tex_coords = compute_uv(bound_number = 923, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
@@ -2534,7 +2536,6 @@ def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
     
 ################################################################################################################               
 ################################################################################################################ 
-
 #! ================== THIS SECTION IS RELATED TO RACE FILES ================== !#
 
 # List for CHECKPOINT prefixes
@@ -2588,7 +2589,7 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
         if opponent_num is not None:  # Opponent waypoint header
             f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
             
-            # Writing waypoints for Opponents and adding the filler values
+            # Opponent waypoints
             for waypoint in waypoints:
                 waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {ROT_AUTO}, 0, 0,\n"
                 f.write(waypoint_line)
@@ -2596,7 +2597,7 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
             # Player waypoint header
             f.write(f"# This is your {ordinal(race_index)} {race_desc} race Waypoint file\n")
             
-            # Writing waypoints for players and adding the filler values
+            # Player waypoints
             for waypoint in waypoints:
                 waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
                 f.write(waypoint_line)
@@ -2622,10 +2623,8 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
             f.write(data_string + "\n")  # Write the data string to file
             
             
-def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):
-    aimap_file_name = f"{race_type}{race_index}.AIMAP_P"
-    
-    with open(SHOP / RACE / map_filename / aimap_file_name, "w") as f:
+def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):    
+    with open(SHOP / RACE / map_filename / f"{race_type}{race_index}.AIMAP_P", "w") as f:
         
         aimap_content = f"""
 # Ambient Traffic Density 
@@ -2773,15 +2772,13 @@ def write_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_fi
     return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
 
-def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) -> None:
-    landmark_folder = SHOP / "BMS" / f"{map_filename}LM"
-    city_folder = SHOP / "BMS" / f"{map_filename}CITY"
+def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) -> None:    
+    mesh_files, mesh_a2_files = get_cell_ids(
+        SHOP / "BMS" / f"{map_filename}LM",  # Landmark folder
+        SHOP / "BMS" / f"{map_filename}CITY" # City folder
+        )
 
-    mesh_files, mesh_a2_files = get_cell_ids(landmark_folder, city_folder)
-
-    cells_file = SHOP_CITY / f"{map_filename}.CELLS"
-
-    with open(cells_file, "w") as f:
+    with open(SHOP_CITY / f"{map_filename}.CELLS", "w") as f:
         f.write(f"{len(mesh_files)}\n")
         f.write(str(max(mesh_files) + 1000) + "\n")
 
@@ -2840,9 +2837,7 @@ def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float
     min_x, max_x = min(x_coords), max(x_coords)
     min_z, max_z = min(z_coords), max(z_coords)
 
-    ext_file = SHOP_CITY / f"{map_filename}.EXT"
-
-    with open(ext_file, 'w') as f:
+    with open(SHOP_CITY / f"{map_filename}.EXT", 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
     return min_x, max_x, min_z, max_z
@@ -2893,11 +2888,9 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         ax.set_aspect('equal', 'box')
         ax.axis('off')
                     
-        # Save JPG 640 and 320 Pictures  
-        output_folder = SHOP / 'BMP16'
-                  
-        plt.savefig(output_folder / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-        plt.savefig(output_folder / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
+        # Save JPG 640 and 320 Pictures                    
+        plt.savefig(SHOP / 'BMP16' / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+        plt.savefig(SHOP / 'BMP16' / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
             
         if debug_minimap or set_lars_race_maker:
             fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
@@ -2920,21 +2913,16 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
 
 # Create Animations                              
 def create_animations(map_filename: str, anim_data: Dict[str, List[Tuple]], set_anim: bool) -> None: 
-    if set_anim:
-        anim_folder = SHOP_CITY / map_filename
-        anim_file = "ANIM.CSV"
-        
-        # List the Plane and Eltrain in the ANIM.CSV file
-        with open(anim_folder / anim_file, 'w', newline = '') as main_f:
-            for obj in anim_data:
-                csv.writer(main_f).writerow([f"anim_{obj}"])
-                
-                unique_anims = anim_folder / f"ANIM_{obj.upper()}.CSV"
-                
-                # Write their coordinates to the individual anim files
-                with open(unique_anims, 'w', newline = '') as anim_f:                    
-                    for coordinates in anim_data[obj]:
-                        csv.writer(anim_f).writerow(coordinates)
+    if not set_anim:
+        return
+    
+    with open(SHOP_CITY / map_filename / "ANIM.CSV", 'w', newline = '') as main_f:
+        for obj in anim_data:
+            csv.writer(main_f).writerow([f"anim_{obj}"])
+
+            with open(SHOP_CITY / map_filename / f"ANIM_{obj.upper()}.CSV", 'w', newline = '') as anim_f:                    
+                for coordinates in anim_data[obj]:
+                    csv.writer(anim_f).writerow(coordinates)
                         
                         
 def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
@@ -3081,10 +3069,9 @@ mmBridgeMgr :076850a0 {{
                 
 ################################################################################################################               
 ################################################################################################################
-
 #! ================== THIS SECTION IS RELATED TO PORTALS ================== !#
 
-#! ########### Code by 0x1F9F1 (Modified) ############ !#      
+#! ################# Code by 0x1F9F1 (Modified) // start ################# !#   
                  
 MIN_Y = -20
 MAX_Y = 50
@@ -3311,7 +3298,7 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
                     
     return cells, portals
 
-#! ########### Code by 0x1F9F1 (Modified) ############ !#   
+#! ################# Code by 0x1F9F1 (Modified) // end ################# !# 
 
 ################################################################################################################               
 ################################################################################################################
@@ -4308,7 +4295,7 @@ def read_bai(debug_bai_data_file: Path):
 
 
 def write_bai_text(ai_map, streets):
-    with open(USER_RESOURCES / "BAI" / "CHICAGO.map", 'w') as f:  # Write Map file
+    with open(USER_RESOURCES / "AI" / "CHICAGO.map", 'w') as f:  # Write Map file
         
         parser = MiniParser(f)
 
@@ -4354,7 +4341,7 @@ def write_bai_text(ai_map, streets):
                     assert a.Dist2(b) < 0.00001
 
 
-        with open(USER_RESOURCES / "BAI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
+        with open(USER_RESOURCES / "AI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
 
             parser = MiniParser(f)
     
@@ -4434,7 +4421,7 @@ def write_bai_text(ai_map, streets):
             
             
     for intersection in ai_map.Intersections:        
-        with open(USER_RESOURCES / "BAI" / f'Intersection{intersection.ID}.int', 'w') as f:  # Write Intersection files
+        with open(USER_RESOURCES / "AI" / f'Intersection{intersection.ID}.int', 'w') as f:  # Write Intersection files
             parser = MiniParser(f)
     
             parser.begin_class('mmIntersection')
@@ -4464,7 +4451,7 @@ def debug_bai(debug_bai_data_file: Path, debug_bai_file: bool) -> None:
 ###################################################################################################################
 ###################################################################################################################
 
-# BAI EDITOR CLASS
+# BAI MAP CLASS
 class BaiMap:
     def __init__(self, map_filename: str, street_names):
         self.map_filename = map_filename
@@ -4491,7 +4478,7 @@ mmMapData :0 {{
 ###################################################################################################################
 ###################################################################################################################
        
-# STREET EDITOR CLASS
+# AI PATH EDITOR CLASS
 class aiPathEditor:
     def __init__(self, map_filename: str, data, set_reverse_streets: bool):
         self.map_filename = map_filename
@@ -4611,7 +4598,7 @@ def get_first_and_last_street_vertices(street_list):
     return unique_processed_vertices
 
 
-#! ################## Code by Lars (Modified) ################## !#
+#! ################# Code by Lars (Modified) // start ################# !# 
 
 def create_lars_race_maker(map_filename: str, street_list, set_lars_race_maker: bool):    
     if not set_lars_race_maker:
@@ -4720,7 +4707,7 @@ def create_lars_race_maker(map_filename: str, street_list, set_lars_race_maker: 
     with open("Lars_Race_Maker.html", "w") as f:
         f.write(html_template)
 
-#! ################## Code by Lars (Modified) ################## !#
+#! ################# Code by Lars (Modified) // end ################# !# 
 
 ###################################################################################################################
 ###################################################################################################################  
@@ -4755,11 +4742,9 @@ def post_editor_cleanup(delete_shop: bool) -> None:
 def create_commandline(
     map_filename: str, mm1_folder: Path, no_ui: bool, no_ui_type: str, 
     no_ai: bool, quiet_logs: bool, more_logs: bool) -> None:
-    
-    map_filename = map_filename.lower()
-    
-    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {map_filename}"
-    
+
+    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {map_filename.lower()}"
+
     if quiet_logs and more_logs:    
         log_error_message = f"""\n
         ***ERROR***
@@ -4873,7 +4858,7 @@ def adjust_3D_view_settings() -> None:
 def load_textures(texture_folder: Path, load_tex_materials: bool) -> None:
     for file_name in os.listdir(texture_folder):
         if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(texture_dir, file_name)
+            texture_path = os.path.join(texture_folder, file_name)
 
             if texture_path not in bpy.data.images:
                 texture_image = bpy.data.images.load(texture_path)
@@ -5065,7 +5050,7 @@ def apply_texture_to_object(obj, texture_path):
     unwrap_uv_to_aspect_ratio(obj, texture_image)
     
         
-def create_mesh_from_polygon_data(polygon_data, texture_dir = None):
+def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     name = f"P{polygon_data['bound_number']}"
     coords = polygon_data["vertex_coordinates"]
 
@@ -5115,8 +5100,8 @@ def create_mesh_from_polygon_data(polygon_data, texture_dir = None):
     obj.tile_x = tile_x
     obj.tile_y = tile_y
     
-    if texture_dir:
-        apply_texture_to_object(obj, texture_dir)    
+    if texture_folder:
+        apply_texture_to_object(obj, texture_folder)    
         rotate_angle = obj.rotate
 
         tile_uvs(obj, tile_x, tile_y)
@@ -5134,9 +5119,9 @@ def create_blender_meshes() -> None:
         enable_vertex_snapping()
         adjust_3D_view_settings()
         
-        load_textures(texture_dir, load_tex_materials)
+        load_textures(texture_folder, load_tex_materials)
                     
-        textures = [os.path.join(texture_dir, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+        textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in stored_texture_names]
             
         created_objects = []
         for poly, tex in zip(polygons_data, textures):
@@ -5193,7 +5178,6 @@ bpy.types.Object.cell_type = bpy.props.EnumProperty(
     description = "Select the type of cell")
 
 CELL_EXPORT = {
-    # We do not want to export the Default Cell Type
     str(TUNNEL): "TUNNEL",
     str(INDOORS): "INDOORS",
     str(WATER_DRIFT): "WATER_DRIFT",
@@ -5232,7 +5216,6 @@ bpy.types.Object.material_index = bpy.props.EnumProperty(
     description = "Select the type of material")
 
 MATERIAL_EXPORT = {
-    # We do not want to export the Default Material Type
     str(GRASS_MTL): "GRASS_MTL",
     str(WATER_MTL): "WATER_MTL",
     str(STICKY_MTL): "STICKY_MTL",
@@ -5480,7 +5463,7 @@ create_polygon(
     vertex_coordinates = [
         {vertex_export}])
 
-save_bms(
+save_mesh(
     texture_name = [{texture_constant}],
     tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x}, tile_y = {tile_y}, angle_degrees = {rotate}))"""
 
@@ -5654,33 +5637,36 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
 ################################################################################################################### 
       
 def set_blender_keybinding() -> None:
-    if is_blender_running():
-        wm = bpy.context.window_manager
-        kc = wm.keyconfigs.addon
-        if kc:
-            km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
-            
-            # Shift + E to export all polygons
-            kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
-            kmi_export_all.properties.select_all = True
-            
-            # Ctrl + E to export selected polygon(s)
-            kmi_export_selected = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', ctrl = True)
-            kmi_export_selected.properties.select_all = False
-            
-            # Shift + P to assign custom properties
-            kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
-                        
-            # Shift + X to process an extruded mesh without triangulation
-            kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', shift = True)
-            kmi_custom_extrude_no_triangulate.properties.triangulate = False
+    if not is_blender_running():
+        return
+    
+    wm = bpy.context.window_manager
+    kc = wm.keyconfigs.addon
 
-            # Ctrl + Shift + X to process an extruded mesh with triangulation
-            kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', ctrl = True, shift = True)
-            kmi_custom_extrude_triangulate.properties.triangulate = True
-            
-            # Ctrl + Shift + Q to rename children objects
-            kmi_rename_children = km.keymap_items.new("object.auto_rename_children", 'Q', 'PRESS', ctrl = True, shift = True)
+    if kc:
+        km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
+
+        # Shift + E to export all polygons
+        kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
+        kmi_export_all.properties.select_all = True
+
+        # Ctrl + E to export selected polygon(s)
+        kmi_export_selected = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', ctrl = True)
+        kmi_export_selected.properties.select_all = False
+
+        # Shift + P to assign custom properties
+        kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
+
+        # Shift + X to process an extruded mesh without triangulation
+        kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', shift = True)
+        kmi_custom_extrude_no_triangulate.properties.triangulate = False    
+        
+        # Ctrl + Shift + X to process an extruded mesh with triangulation
+        kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', ctrl = True, shift = True)
+        kmi_custom_extrude_triangulate.properties.triangulate = True
+
+        # Ctrl + Shift + Q to rename children objects
+        kmi_rename_children = km.keymap_items.new("object.auto_rename_children", 'Q', 'PRESS', ctrl = True, shift = True)
 
 ###################################################################################################################   
 ################################################################################################################### 
@@ -6078,9 +6064,9 @@ edit_and_copy_mmbangerdata(bangerdata_properties)
 copy_core_tune_files()
 copy_custom_textures()
 create_ext(map_filename, hudmap_vertices)
-create_animations(map_filename, anim_data, set_anim)   
-create_bridges(map_filename, bridges, set_bridges) 
-custom_bridge_config(bridge_configs, set_bridges, SHOP / 'TUNE')
+create_animations(map_filename, anim_data, set_animations)   
+create_bridges(map_filename, bridge_list, set_bridges) 
+custom_bridge_config(bridge_config_list, set_bridges, SHOP / 'TUNE')
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
 create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
 
@@ -6093,8 +6079,8 @@ debug_bai(debug_bai_data_file, debug_bai_file)
 Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
 Facades.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
 Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "BMS" / "DEBUGGED_INPUT_BMS_FILE.txt", debug_meshes_file)
-Meshes.debug_directory(debug_meshes_data_dir, DEBUG_FOLDER / "BMS" / "BMS TEXT FILES", debug_meshes_dir) 
+Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "MESHES" / "DEBUGGED_INPUT_MESH_FILE.txt", debug_meshes_file)
+Meshes.debug_directory(debug_meshes_data_dir, DEBUG_FOLDER / "MESHES" / "MESH TEXT FILES", debug_meshes_dir) 
 Bounds.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
 Bounds.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
 DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
