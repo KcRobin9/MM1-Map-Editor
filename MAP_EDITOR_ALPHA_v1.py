@@ -3317,14 +3317,16 @@ class Portals:
         
     @classmethod
     def readn(cls, f) -> int:
-        return read_unpack(f, '<I')[0]
+        magic, = read_unpack(f, '<I')
+        count, = read_unpack(f, '<I')
+        return count
         
     @classmethod
     def read(cls, f) -> 'Portals':
-        flags, edge_count = read_unpack(f, '<2H')
-        gap2 = read_unpack(f, '<h')
-        cell_1, cell_2 = read_unpack(f, '<2h')  
-        height = read_unpack(f, '<f')   
+        flags, edge_count, = read_unpack(f, '<2b')
+        gap2, = read_unpack(f, '<h')
+        cell_1, cell_2, = read_unpack(f, '<2h')  
+        height, = read_unpack(f, '<f')   
         _min = Vector3.read(f)
         _max = Vector3.read(f)
         return cls(flags, edge_count, gap2, cell_1, cell_2, height, _min, _max)
@@ -3338,64 +3340,68 @@ class Portals:
         write_pack(f, '<I', len(portals))
                 
     @classmethod
-    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], 
-                  lower_portals: bool, empty_portals: bool, debug_portals: bool):        
-        
+    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], lower_portals: bool, empty_portals: bool, debug_portals: bool):        
         with open(SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
             if empty_portals:
                 pass
             else:
-                _, portals = prepare_portals(polys, vertices)
+                _, portal_tuples = prepare_portals(polys, vertices)
+                portals = []
                 
-                write_pack(f, '<I', 0)
-                cls.write_n(f, portals)
-                            
-                for cell_1, cell_2, v1, v2 in portals:
+                write_pack(f, '<I', 0) 
+                cls.write_n(f, portal_tuples)
+
+                for cell_1, cell_2, v1, v2 in portal_tuples:
                     flags = 0x2
                     edge_count = 2
                     gap2 = 101
+                    height = MAX_Y - MIN_Y
+                    _min = Vector3(v1.x, -50 if lower_portals else 0, v1.y)
+                    _max = Vector3(v2.x, -50 if lower_portals else 0, v2.y)
+
+                    portal = Portals(flags, edge_count, gap2, cell_1, cell_2, height, _min, _max)
+                    portals.append(portal)
+                    
+                    # Write the portal data to file
                     write_pack(f, '<2B', flags, edge_count)
                     write_pack(f, '<H', gap2)
-                    write_pack(f, '<2H', cell_2, cell_1)  
-                    
-                    # TODO: Change height
-                    height = MAX_Y - MIN_Y
+                    write_pack(f, '<2H', cell_2, cell_1)
                     write_pack(f, '<f', height)
-                    
-                    if lower_portals:
-                        Vector3(v1.x, -50, v1.y).write(f)
-                        Vector3(v2.x, -50, v2.y).write(f)
-                    else:
-                        Vector3(v1.x, 0, v1.y).write(f)
-                        Vector3(v2.x, 0, v2.y).write(f)
-                    
-                    if debug_portals:  
-                        cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")
-            
-    @classmethod  # TODO: Fix me
+                    _min.write(f)
+                    _max.write(f)
+
+                if debug_portals:  
+                    cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")
+
+    @classmethod 
     def debug(cls, portals, output_file: Path): 
         try:
             with open(output_file, 'w') as out_f:
                 for portal in portals:
                     out_f.write(repr(portal))
-            # print(f"Processed portal data to {output_file.name}")
+            print(f"Processed portal data to {output_file.name}")
         except Exception as e:
             print(f"Failed to write to {output_file.name}: {e}")
                     
-    @classmethod  # TODO: Fix me
+    @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool):
         if debug_portals_file:
             try:
                 with open(input_file, 'rb') as in_f:
-                    portals = cls.read_all(in_f)       
-                    
-                with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                    portals = cls.read_all(in_f)
+
+                if not portals:
+                    print(f"No portals found in {input_file.name}")
+                    return
+
+                with open(output_file, 'w', encoding='utf-8') as out_f:
                     for portal in portals:
                         out_f.write(repr(portal))
-                        
+
                 print(f"Processed {input_file.name} to {output_file.name}")
             except Exception as e:
-                print(f"Failed to process {input_file.name}: {e}")
+                print(f"Error processing {input_file.name}: {e}")
+
                 
     def __repr__(self):
             return f"""
@@ -3405,7 +3411,7 @@ PORTAL
     Gap 2: {self.gap2}
     Cell 1: {self.cell_1}
     Cell 2: {self.cell_2}
-    Height: {self.height}
+    Height: {self.height:.2f}
     Min: {self._min}
     Max: {self._max}
     """ 
