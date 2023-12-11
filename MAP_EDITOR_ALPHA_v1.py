@@ -217,27 +217,27 @@ def continuous_progress_bar(duration, map_name, buffer, top_divider, bottom_divi
         update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider)
         if progress >= 100:
             break
-        time.sleep(0.025)  # Update every 0.025 seconds
+        time.sleep(0.025)  
 
 
-def save_run_time(run_time):
-    os.chdir(Path.cwd().parent)
-    with open("last_editor_run_time.pkl", "wb") as f:
+def save_editor_run_time(run_time: float, run_time_file: Path):
+    with open(run_time_file, "wb") as f:
         pickle.dump(run_time, f)
 
 
-def load_last_run_time():
-    if os.path.exists("last_editor_run_time.pkl"):
+def load_last_editor_run_time(run_time_file: Path):
+    if run_time_file.exists():
         try:
-            with open("last_editor_run_time.pkl", "rb") as f:
+            with open(run_time_file, "rb") as f:
                 return pickle.load(f)
         except EOFError:
-            return 3.0  # Default to 3.0 seconds if the file is empty or corrupted
-    return 3.0          # Default to 3.0 seconds if no previous data
+            return 2.0  # Default to 2.0 seconds if the file is empty or corrupted
+    return 2.0          # Default to 2.0 seconds if no previous data
 
+################################################################################################################
 
 # Load the Last Run Time, Start the Progress Bar Thread, Start the Time
-last_run_time = load_last_run_time()
+last_run_time = load_last_editor_run_time(BASE_DIR / "last_run_time.pkl")
 
 progress_thread = threading.Thread(
     target = continuous_progress_bar, 
@@ -6096,7 +6096,7 @@ create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
 editor_time = time.time() - start_time
-save_run_time(editor_time)
+save_editor_run_time(editor_time, BASE_DIR / "last_run_time.pkl")
 progress_thread.join()
 
 print("\n" + create_divider(colors_two))
