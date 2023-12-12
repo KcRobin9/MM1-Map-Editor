@@ -31,12 +31,11 @@ vpcop -70.0 6.0 594.0 5.0 0 4
 # Geo File, WavePoint File
 # vpfer vpbug vpcaddie vpmtruck
 [Opponent]
-0
-vppanozgt opp1r60.c24 10.0
-vppanozgt opp8r60.c28 5.0
-vppanozgt opp8r60.c28 5.0
-vppanozgt opp8r60.c28 5.0
-vppanozgt opp8r60.c28 5.0
-vppanozgt opp8r60.c28 5.0
-vppanozgt opp8r60.c28 5.0
-vppanozgt opp8r60.c28 5.0
+6
+vpmustang99 opp1r60.c24 
+vpmustang99 opp2r60.c24	
+vpcaddie	opp3r60.c24 
+vpcaddie opp4r60.c24	
+vpmustang99 opp7r60.c28 
+vpcaddie opp8r60.c28 
+

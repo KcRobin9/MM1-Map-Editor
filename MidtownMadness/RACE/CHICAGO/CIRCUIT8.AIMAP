@@ -21,9 +21,8 @@
 # vppanoz vpbug vppanozgt vpcaddie vpford vpmustang99 vpbullet vpbus vpsemi vpcop
 [Opponent]
 4
-vppanoz	opp3c9.c27 0.75
-vppanoz	opp4c9.c27 0.75
-vppanoz	opp5c9.c27 0.75
-vppanoz	opp6c9.c27 0.75
-
+vppanoz	opp3c9.c27
+vppanoz	opp4c9.c27
+vppanoz	opp5c9.c27
+vppanoz	opp6c9.c27
 
