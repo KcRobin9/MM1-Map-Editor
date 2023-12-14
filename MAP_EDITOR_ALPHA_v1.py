@@ -36,6 +36,7 @@ import threading
 import subprocess
 import numpy as np   
 from pathlib import Path
+from mathutils import Vector
 import matplotlib.pyplot as plt                
 from colorama import Fore, Style, init
 from typing import List, Dict, Set, Union, Tuple, Optional, BinaryIO
@@ -94,9 +95,16 @@ append_output_props_f = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
-# Blender
+# Blender Textures
 load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
 texture_folder = EDITOR_RESOURCES / "TEXTURES"
+
+# Blender Waypoint Editor 
+waypoint_file = "RACE0WAYPOINTS.CSV"  # Input Waypoint File || Assumes file is in the current working directory
+
+# Waypoint from Editor 'race_data' dictionary
+race_type_input = "RACE"  # Types: "BLITZ" or "RACE", "CIRCUIT" 
+race_number_input = "0"
 
 # Editor Debugging
 debug_props = False             # change to "True" if you want a PROPS Debug text file
@@ -300,12 +308,13 @@ LANE_4 = 15
 LANE_6 = 19
 LANE_ALLEY = 3
 
-# Waypoint Rotation
+# Waypoint Attributes
 ROT_S = 179.99
 ROT_W = -90
 ROT_E = 90
 ROT_N = 0.01
 ROT_AUTO = 0
+SCALE_AUTO, SCALE_DEFAULT = 0, 15
 
 # Race Types
 ROAM = "ROAM"
@@ -453,7 +462,8 @@ race_data = {
     'RACE_0': {
         'waypoints': [
             [0.0, 245, -850, ROT_S, LANE_4], 
-            [0.0, 110, -500, ROT_S, 30.0],    
+            [0.0, 110, -500, ROT_S, 0.0],  
+            [0.0, 110, -497, ROT_S, 15.0],   
             [25.0, 45.0, -325, ROT_S, 25.0],   
             [35.0, 12.0, -95.0, ROT_S, LANE_4], 
             [35.0, 30.0, 0.0, ROT_S, LANE_4], 
@@ -4902,7 +4912,7 @@ def rotate_meshes(objects) -> None:
     for obj in objects:
         obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
-    bpy.ops.transform.rotate(value=math.radians(-90), orient_axis = 'X')
+    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis = 'X')
     
 ###################################################################################################################
 ###################################################################################################################
@@ -5018,7 +5028,7 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
     
 ###################################################################################################################
 ###################################################################################################################
-#! ======================= CREATE BLENDER POLYGONS ======================= !#
+#! ======================= BLENDER MAP POLYGONS ======================= !#
 
 
 def apply_texture_to_object(obj, texture_path):
@@ -5059,9 +5069,11 @@ def apply_texture_to_object(obj, texture_path):
 def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     name = f"P{polygon_data['bound_number']}"
     coords = polygon_data["vertex_coordinates"]
+    
+    swapped_coords = [(x, -z, y) for x, y, z in coords]
 
     edges = []
-    faces = [range(len(coords))]
+    faces = [range(len(swapped_coords))]
 
     mesh = bpy.data.meshes.new(name)
     obj = bpy.data.objects.new(name, mesh)
@@ -5071,7 +5083,7 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
         
     set_hud_checkbox(polygon_data["hud_color"], obj)
     
-    for coord in coords:
+    for coord in swapped_coords:
         vertex_item = obj.vertex_coords.add()
         vertex_item.x, vertex_item.y, vertex_item.z = coord
     
@@ -5129,12 +5141,11 @@ def create_blender_meshes() -> None:
                     
         textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in stored_texture_names]
             
-        created_objects = []
-        for poly, tex in zip(polygons_data, textures):
-            obj = create_mesh_from_polygon_data(poly, tex)
-            created_objects.append(obj)
-
-        rotate_meshes(created_objects)
+        created_meshes = []
+        for poly, texture in zip(polygons_data, textures):
+            created_meshes.append(create_mesh_from_polygon_data(poly, texture))
+            
+        rotate_meshes(created_meshes)
             
 ###################################################################################################################
 ###################################################################################################################
@@ -5533,7 +5544,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
 ###################################################################################################################   
 ###################################################################################################################    
-#! ======================= MISC BLENDER ======================= !#
+#! ======================= BLENDER MISC ======================= !#
 
 
 # CLASS ASSIGN CUSTOM PROPERTIES
@@ -5641,6 +5652,220 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
             
 ###################################################################################################################   
 ################################################################################################################### 
+#! ======================= BLENDER WAYPOINT EDITOR ======================= !#
+
+
+def create_waypoint_material(name: str, color: Tuple[float, float, float, float]) -> bpy.types.Material:
+    material = bpy.data.materials.new(name)
+    material.diffuse_color = color
+    return material
+
+
+def create_waypoint_pole(height: float, diameter: float, location: Tuple[float, float, float]) -> bpy.types.Object:
+    bpy.ops.mesh.primitive_cylinder_add(radius = diameter / 2, depth = height, location = location)
+    pole = bpy.context.object
+    
+    pole_material = create_waypoint_material("PoleMaterial", (1, 1, 1, 1)) 
+    pole.data.materials.append(pole_material)
+    
+    return pole
+
+
+def create_waypoint_flag(width: float, height: float, cursor_z: float, flag_height_offset: float, location: Tuple[float, float, float]) -> bpy.types.Object:
+    bpy.ops.mesh.primitive_plane_add(size = 1, location = location)
+    flag = bpy.context.object
+    flag.scale.x = width 
+    flag.scale.y = height 
+    flag.rotation_euler.x = math.pi / 2  # Rotate 90 degrees around x-axis
+    flag.location.z = cursor_z + flag_height_offset + height / 2  
+    
+    flag_material = create_waypoint_material("FlagMaterial", (0, 0, 0.5, 1)) 
+    flag.data.materials.append(flag_material)
+    
+    return flag
+
+
+def create_waypoint(x = None, y = None, z = None, rotation_deg = ROT_N, scale = SCALE_DEFAULT, name = None):
+    if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
+        cursor_location = bpy.context.scene.cursor.location.copy()
+    else:
+        cursor_location = Vector((x, y, z))  # If x, y, and z are provided, create a new location vector
+
+    pole_height = 3.0           
+    pole_diameter = 0.2         
+    flag_width = scale         
+    flag_height = 0.8           
+    flag_height_offset = 2.2    
+
+    pole_one_location = (cursor_location.x - flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
+    pole_two_location = (cursor_location.x + flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
+
+    pole_one = create_waypoint_pole(pole_height, pole_diameter, pole_one_location)
+    pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location)
+
+    flag_location = cursor_location
+    flag = create_waypoint_flag(flag_width, flag_height, cursor_location.z, flag_height_offset, flag_location)
+
+    bpy.ops.object.select_all(action = 'DESELECT')
+    pole_one.select_set(True)
+    pole_two.select_set(True)
+    flag.select_set(True)
+    bpy.context.view_layer.objects.active = flag
+    bpy.ops.object.join()
+
+    waypoint = bpy.context.object    
+    waypoint.rotation_euler.z = math.radians(rotation_deg)
+    
+    if name:
+        waypoint.name = name
+    else:
+        waypoint.name = "WP_Default"
+
+    # Calculate and set the midpoint as the origin
+    midpoint = ((pole_one_location[0] + pole_two_location[0]) / 2, 
+                (pole_one_location[1] + pole_two_location[1]) / 2, 
+                cursor_location.z)
+    
+    bpy.context.scene.cursor.location = midpoint
+    bpy.ops.object.origin_set(type = 'ORIGIN_CURSOR')
+
+    # Reset the cursor location if x, y, z were not provided
+    if x is None or y is None or z is None:
+        bpy.context.scene.cursor.location = cursor_location
+
+    return waypoint
+
+
+##############################################################################################################################################?
+
+
+def calculate_waypoint_rotation(x1: float, z1: float, x2: float, z2: float) -> float:
+    dx = x2 - x1
+    dz = z2 - z1
+    rotation_rad = math.atan2(dx, dz) 
+    return math.degrees(rotation_rad)
+
+
+def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:
+    if race_type == RACE:
+        race_type_initial = 'R'
+    elif race_type == CIRCUIT:
+        race_type_initial = 'C'
+    else:
+        race_type_initial = 'B'
+    return f"WP_{race_type_initial}{race_number}_{wp_idx}"
+
+
+def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_number_input: int):
+    race_key = f"{race_type_input}_{race_number_input}"  
+    
+    if race_key in race_data:
+        waypoints = race_data[race_key]['waypoints']
+        for index, waypoint_data in enumerate(waypoints):
+            x, y, z, rotation, scale = waypoint_data
+            
+            waypoint_name = get_waypoint_name(race_type_input, race_number_input, index)
+            create_waypoint(x, -z, y, rotation, scale, waypoint_name)
+    else:
+        print("Race data not found for the specified race type and number.")
+        
+
+def load_waypoints_from_csv(waypoint_file: Path):
+    file_info = waypoint_file.replace('.CSV', '').replace('WAYPOINTS', '')
+
+    race_type = ''.join(filter(str.isalpha, file_info))
+    race_number = ''.join(filter(str.isdigit, file_info))
+    
+    waypoints_data = []
+
+    with open(waypoint_file, 'r') as f:
+        reader = csv.reader(f)
+        next(reader) 
+
+        for row in reader:
+            if len(row) < 5:
+                continue  
+            waypoints_data.append([float(value) for value in row[:5]])
+
+    for wp_idx, waypoint in enumerate(waypoints_data):
+        x, y, z, rotation_deg, scale = waypoint
+        
+        if rotation_deg == ROT_AUTO and wp_idx < len(waypoints_data) - 1:
+            next_waypoint = waypoints_data[wp_idx + 1]
+            rotation_deg = calculate_waypoint_rotation(x, -z, next_waypoint[0], -next_waypoint[2])
+
+        if scale == SCALE_AUTO:
+            scale = SCALE_DEFAULT
+
+        waypoint_name = get_waypoint_name(race_type, race_number, wp_idx)
+        waypoint = create_waypoint(x, -z, y, -rotation_deg, scale, waypoint_name)
+
+
+def export_selected_waypoints() -> None:
+    filtered_waypoints = [wp for wp in bpy.context.selected_objects if wp.name.startswith("WP_")]
+    waypoint_export_data = []
+
+    with open("waypoints_data.txt", "w") as f:
+        f.write("# x, y, z, rotation, scale \n")
+        
+        print("")
+        for waypoint in filtered_waypoints:
+            location = waypoint.matrix_world.to_translation()
+            rotation_euler = waypoint.rotation_euler
+            rotation_degrees = math.degrees(rotation_euler.z) % 360
+            if rotation_degrees > 180:
+                rotation_degrees -= 360
+                
+            location.y = -location.y  # Flip the sign
+
+            wp_line = f"{location.x:.2f}, {location.z:.2f}, {location.y:.2f}, {rotation_degrees:.2f}, {waypoint.scale.x:.2f}"
+            waypoint_export_data.append(wp_line)
+            
+            f.write(wp_line + "\n")
+            print(wp_line) 
+            
+            
+##############################################################################################################################################?
+
+
+class CREATE_SINGLE_WAYPOINT_OT_operator(bpy.types.Operator):
+    bl_idname = "create.single_waypoint"
+    bl_label = "Create Single Waypoint"
+
+    def execute(self, context):
+        create_waypoint(name = "WP_")  
+        return {'FINISHED'}
+
+
+class LOAD_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
+    bl_idname = "load.waypoints_from_csv"
+    bl_label = "Load Waypoints from CSV"
+
+    def execute(self, context):
+        load_waypoints_from_csv(waypoint_file)
+        return {'FINISHED'}
+
+
+class LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator(bpy.types.Operator):
+    bl_idname = "load.race_waypoints_from_race_data"
+    bl_label = "Load Race Waypoints from Race Data"
+
+    def execute(self, context):
+        load_waypoints_from_race_data(race_data, race_type_input, race_number_input)
+        return {'FINISHED'}
+
+
+class EXPORT_SELECTED_WAYPOINTS_OT_operator(bpy.types.Operator):
+    bl_idname = "export.selected_waypoints"
+    bl_label = "Export selected Waypoints"
+
+    def execute(self, context):
+        export_selected_waypoints()
+        return {'FINISHED'}
+    
+    
+###################################################################################################################
+################################################################################################################### 
       
 def set_blender_keybinding() -> None:
     if not is_blender_running():
@@ -5652,16 +5877,16 @@ def set_blender_keybinding() -> None:
     if kc:
         km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
 
-        # Shift + E to export all polygons
-        kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
-        kmi_export_all.properties.select_all = True
-
         # Ctrl + E to export selected polygon(s)
         kmi_export_selected = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', ctrl = True)
         kmi_export_selected.properties.select_all = False
 
+        # Shift + E to export all polygons
+        kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
+        kmi_export_all.properties.select_all = True
+
         # Shift + P to assign custom properties
-        kmi_assign_properties = km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
+        km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
 
         # Shift + X to process an extruded mesh without triangulation
         kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', shift = True)
@@ -5672,7 +5897,19 @@ def set_blender_keybinding() -> None:
         kmi_custom_extrude_triangulate.properties.triangulate = True
 
         # Ctrl + Shift + Q to rename children objects
-        kmi_rename_children = km.keymap_items.new("object.auto_rename_children", 'Q', 'PRESS', ctrl = True, shift = True)
+        km.keymap_items.new("object.auto_rename_children", 'Q', 'PRESS', ctrl = True, shift = True)
+        
+        # Shift + Y to create a single waypoint
+        km.keymap_items.new("create.single_waypoint", 'Y', 'PRESS', shift = True)  
+                
+        # Shift + C to load waypoints from CSV
+        km.keymap_items.new("load.waypoints_from_csv", 'C', 'PRESS', shift = True) 
+
+        # Shift + R to load waypoints from 'race_data' dictionary
+        km.keymap_items.new("load.race_waypoints_from_race_data", 'R', 'PRESS', shift = True)  
+        
+        # Shift + W to export selected waypoint(s)
+        km.keymap_items.new("export.selected_waypoints", 'W', 'PRESS', shift = True)
 
 ###################################################################################################################   
 ################################################################################################################### 
@@ -6118,6 +6355,12 @@ bpy.utils.register_class(OBJECT_OT_ExportPolygons)
 bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
 bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
 bpy.utils.register_class(OBJECT_OT_RenameChildren)
+
+bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
+bpy.utils.register_class(LOAD_WAYPOINTS_FROM_CSV_OT_operator)
+bpy.utils.register_class(LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator)
+bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_OT_operator)
+
 set_blender_keybinding()
 
 post_editor_cleanup(delete_shop)
