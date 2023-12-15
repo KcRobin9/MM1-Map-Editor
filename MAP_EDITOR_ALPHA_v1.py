@@ -100,11 +100,10 @@ load_tex_materials = False      # change to "True" if you want to load all textu
 texture_folder = EDITOR_RESOURCES / "TEXTURES"
 
 # Blender Waypoint Editor 
-waypoint_file = "RACE0WAYPOINTS.CSV"  # Input Waypoint File || Assumes file is in the current working directory
+waypoint_file = EDITOR_RESOURCES / "RACE" / "BLITZ4WAYPOINTS.CSV"  # input waypoint CSV file
 
-# Waypoint from Editor 'race_data' dictionary
-race_type_input = "RACE"  # Types: "BLITZ" or "RACE", "CIRCUIT" 
-race_number_input = "0"
+race_type_input = "RACE"        # waypoints from 'race_data' dictionary, types: "BLITZ" or "RACE", "CIRCUIT" 
+race_number_input = "0"     
 
 # Editor Debugging
 debug_props = False             # change to "True" if you want a PROPS Debug text file
@@ -5771,7 +5770,7 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
         
 
 def load_waypoints_from_csv(waypoint_file: Path):
-    file_info = waypoint_file.replace('.CSV', '').replace('WAYPOINTS', '')
+    file_info = str(waypoint_file).replace('.CSV', '').replace('WAYPOINTS', '')
 
     race_type = ''.join(filter(str.isalpha, file_info))
     race_number = ''.join(filter(str.isdigit, file_info))
