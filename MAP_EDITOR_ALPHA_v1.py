@@ -79,8 +79,6 @@ set_reverse_streets = False     # change to "True" if you want to automatically 
 set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
-cruise_start_pos = (35.0, 31.0, 10.0) 
-cruise_start_pos = (60.0, 27.0, 330.0)
 cruise_start_pos = (0.0, 0.0, 0.0)
 cruise_start_pos = (-83.0, 18.0, -114.0)
 cruise_start_pos = (40.0, 30.0, -40.0)
@@ -105,6 +103,21 @@ waypoint_file = EDITOR_RESOURCES / "RACE" / "BLITZ4WAYPOINTS.CSV"  # input waypo
 race_type_input = "RACE"        # waypoints from 'race_data' dictionary, types: "BLITZ" or "RACE", "CIRCUIT" 
 race_number_input = "0"     
 
+# Advanced
+no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
+no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
+no_ai = False                   # change to "True" if you want to disable the AI and AI paths
+less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops when the game starting printing tons of errors/warnings
+more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
+lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're 'truncating' the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which crashing the portals file. Nevertheless, we can still test this city with an empty portals file (compromises visiblity)
+truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, we will truncate charachters past 254 (may compromise visibility - lowering portals may mitigate this issue)
+fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
+
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
+
+################################################################################################################
+
 # Editor Debugging
 debug_props = False             # change to "True" if you want a PROPS Debug text file
 debug_meshes = False            # change to "True" if you want MESH Debug text files 
@@ -118,7 +131,7 @@ debug_minimap_id = False        # change to "True" if you want to see the Bound 
 
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
-# Input File Debugging. The output files are written to: "Resources / Debug / ..."
+# Input File Debugging, the output files are written to: "Resources / Debug / ..."
 debug_props_file = False
 debug_props_data_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 
@@ -129,13 +142,13 @@ debug_portals_file = False
 debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
 debug_bai_file = False
-debug_bai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"              # Change the input AI file here
+debug_bai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"               # Change the input AI file here
 
 debug_meshes_file = False
-debug_meshes_data_file = EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"          # Change the input MESH file here
+debug_meshes_data_file = EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input MESH file here
 
 debug_meshes_dir = False
-debug_meshes_data_dir = EDITOR_RESOURCES / "MESHES" / "MESH FILES"              # Change the input MESH directory here
+debug_meshes_data_dir = EDITOR_RESOURCES / "MESHES" / "MESH FILES"          # Change the input MESH directory here
 
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
@@ -148,19 +161,6 @@ debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"        # Ch
 
 debug_dlp_dir = False    
 debug_dlp_data_dir = EDITOR_RESOURCES / "DLP" / "DLP FILES"                 # Change the input DLP directory here
-
-# Advanced
-no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
-no_ai = False                   # change to "True" if you want to disable the AI and AI paths
-less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops when the game starting printing tons of errors/warnings
-more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
-lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're 'truncating' the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which crashing the portals file. Nevertheless, we can still test this city with an empty portals file (compromises visiblity)
-truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, we will truncate charachters past 254 (may compromise visibility - lowering portals may mitigate this issue)
-fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
-
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################               
 ################################################################################################################
@@ -2573,7 +2573,7 @@ def ordinal(n) -> str:
 }.get(n % 10, f"{n}th")
 
 
-def fill_mm_date_values(race_type: str, user_values):
+def fill_mm_data_values(race_type: str, user_values):
     # Default values that are common to all modes.
     default_values = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  # Debug: [44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44]
     
@@ -2613,7 +2613,9 @@ def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num 
     
     
 def write_mm_data(mm_data_file, configs, race_type, prefix):
-    header = ",".join(["Description"] + 2 * ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"])
+    header = ",".join(["Description"] + 2 * [
+        "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
+        ])
     
     with open(SHOP / RACE / map_filename / mm_data_file, 'w') as f:
         f.write(header + "\n")
@@ -2624,8 +2626,8 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
             else:
                 race_desc = prefix + str(race_index)
             
-            ama_filled_values = fill_mm_date_values(race_type, config['mm_data']['ama'])
-            pro_filled_values = fill_mm_date_values(race_type, config['mm_data']['pro'])
+            ama_filled_values = fill_mm_data_values(race_type, config['mm_data']['ama'])
+            pro_filled_values = fill_mm_data_values(race_type, config['mm_data']['pro'])
                         
             data_string = race_desc + "," + ",".join(map(str, ama_filled_values)) + "," + ",".join(map(str, pro_filled_values))
             
