@@ -107,11 +107,14 @@ race_number_input = "0"
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 no_ai = False                   # change to "True" if you want to disable the AI and AI paths
+
 less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops when the game starting printing tons of errors/warnings
 more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
+
 lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're 'truncating' the cells file, and have cells below y = 0. This however may lead to issues with the AI
 empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which crashing the portals file. Nevertheless, we can still test this city with an empty portals file (compromises visiblity)
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, we will truncate charachters past 254 (may compromise visibility - lowering portals may mitigate this issue)
+
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
@@ -147,20 +150,20 @@ debug_bai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"               # Ch
 debug_meshes_file = False
 debug_meshes_data_file = EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input MESH file here
 
-debug_meshes_dir = False
-debug_meshes_data_dir = EDITOR_RESOURCES / "MESHES" / "MESH FILES"          # Change the input MESH directory here
+debug_meshes_folder = False
+debug_meshes_data_folder = EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input MESH folder here
 
 debug_bounds_file = False
 debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
 
-debug_bounds_dir = False
-debug_bounds_data_dir = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"           # Change the input Bound directory here
+debug_bounds_folder = False
+debug_bounds_data_folder = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
 
 debug_dlp_file = False
 debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"        # Change the input DLP file here
 
-debug_dlp_dir = False    
-debug_dlp_data_dir = EDITOR_RESOURCES / "DLP" / "DLP FILES"                 # Change the input DLP directory here
+debug_dlp_folder = False    
+debug_dlp_data_folder = EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
 
 ################################################################################################################               
 ################################################################################################################
@@ -896,8 +899,8 @@ class Bounds:
         self.fixed_heights = fixed_heights
                   
     @classmethod
-    def read(cls, f: BinaryIO) -> 'Bounds':        
-        magic = read_unpack(f, '<4s')[0]
+    def read(cls, f: BinaryIO) -> 'Bounds':  
+        magic = read_binary_name(f, 4)      
         offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
         center = Vector3.read(f)
@@ -1000,30 +1003,32 @@ class Bounds:
                 
     @staticmethod
     def debug_file(input_file: Path, output_file: Path, debug_bounds_file: bool) -> None:
-        if debug_bounds_file:
-            with open(input_file, 'rb') as in_f:
-                bnd = Bounds.read(in_f)
-                
-            with open(output_file, 'w') as out_f:
-                out_f.write(repr(bnd))
+        if not debug_bounds_file:
+            return
+        
+        with open(input_file, 'rb') as in_f:
+            bnd = Bounds.read(in_f)
+
+        with open(output_file, 'w') as out_f:
+            out_f.write(repr(bnd))
             
     @staticmethod
-    def debug_directory(input_dir: Path, output_dir: Path, debug_bounds_dir: bool) -> None:
-        if not debug_bounds_dir:
+    def debug_folder(input_folder: Path, output_folder: Path, debug_bounds_folder: bool) -> None:
+        if not debug_bounds_folder:
             return
 
-        if not input_dir.exists():
-            print(f"The directory {input_dir} does not exist.")
+        if not input_folder.exists():
+            print(f"The folder {input_folder} does not exist.")
             return
 
-        if not output_dir.exists():
-            print(f"The output directory {output_dir} does not exist. Creating it.")
-            output_dir.mkdir(parents = True, exist_ok = True)
+        if not output_folder.exists():
+            print(f"The output folder {output_folder} does not exist. Creating it.")
+            output_folder.mkdir(parents = True, exist_ok = True)
 
-        for file in input_dir.glob('*.BND'):
-            output_file_path = output_dir / (file.stem + '.txt')  
-            Bounds.debug_file(file, output_file_path, True)
-            print(f"Processed {file.name} to {output_file_path.name}")
+        for file in input_folder.glob('*.BND'):
+            output_files = output_folder / (file.stem + '.txt')  
+            Bounds.debug_file(file, output_files, True)
+            print(f"Processed {file.name} to {output_files.name}")
                     
     def __repr__(self) -> str:
         polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
@@ -1101,13 +1106,14 @@ class Meshes:
     @classmethod
     def read(cls, file_name: str) -> 'Meshes':
         with open(file_name, 'rb') as f:
-            magic = read_unpack(f, '<16s')[0].decode('utf-8').rstrip('\x00')             
+            magic = read_binary_name(f, 16)     
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sq, bounding_box_radius = read_unpack(f, '<3f')
             texture_count, flags = read_unpack(f, '<2b')
             f.read(6)
                                         
-            texture_names = [read_unpack(f, '<32s')[0].decode('utf-8').rstrip('\x00') for _ in range(texture_count)]
+            texture_names = [read_binary_name(f, 32) for _ in range(texture_count)]
+
             f.read(16 * texture_count)
                     
             if vertex_count < MESH_THRESHOLD:
@@ -1137,15 +1143,15 @@ class Meshes:
         
     def write(self, output_file: Path) -> None:
         with open(output_file, 'wb') as f:
-            write_pack(f, '<16s', self.magic.encode('utf-8').ljust(16, b'\x00'))
+            write_pack(f, '<16s', self.magic.encode('ascii').ljust(16, b'\0'))
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '<3f', self.radius, self.radius_sq, self.bounding_box_radius)
             write_pack(f, '<2B', self.texture_count, self.flags)
-            f.write(b'\x00' * 6) 
+            f.write(b'\0' * 6)
 
             for tex_name in self.texture_names:
-                write_pack(f, '<32s', tex_name.encode('utf-8').ljust(32, b'\x00'))
-                f.write(b'\x00' * 16)
+                write_pack(f, '<32s', tex_name.encode('ascii').ljust(32, b'\0'))
+                f.write(b'\0' * 16)
                             
             for coordinate in self.coordinates:
                 coordinate.write(f)
@@ -1170,24 +1176,30 @@ class Meshes:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
                         
-    def debug(self, output_file: str, debug_dir: Path, debug_meshes: bool) -> None:
-        if debug_meshes:
-            debug_dir.mkdir(parents = True, exist_ok = True)
-            with open(debug_dir / Path(output_file), 'w') as f:       
-                f.write(str(self))
+    def debug(self, output_file: str, debug_folder: Path, debug_meshes: bool) -> None:
+        if not debug_meshes:
+            return
+        
+        debug_folder.mkdir(parents = True, exist_ok = True)
+        with open(debug_folder / Path(output_file), 'w') as f:       
+            f.write(str(self))
                 
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_meshes_file: bool) -> None:
-        if debug_meshes_file:
-            with open(output_file, 'w') as out_f:
-                out_f.write(str(cls.read(input_file)))
+        if not debug_meshes_file:
+            return
+        
+        with open(output_file, 'w') as out_f:
+            out_f.write(str(cls.read(input_file)))
                 
     @classmethod
-    def debug_directory(cls, input_dir: Path, output_dir: Path, debug_meshes_dir: bool) -> None:
-        if debug_meshes_dir:
-            for file in input_dir.iterdir():
-                if file.suffix == '.BMS':  
-                    cls.debug_file(file, output_dir / (file.stem + ".txt"), True)
+    def debug_folder(cls, input_folder: Path, output_folder: Path, debug_meshes_folder: bool) -> None:
+        if not debug_meshes_folder:
+            return
+        
+        for file in input_folder.iterdir():
+            if file.suffix == '.BMS':  
+                cls.debug_file(file, output_folder / (file.stem + ".txt"), True)
                                 
     def __repr__(self):
         rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
@@ -1226,15 +1238,15 @@ class DLPVertex:
     @classmethod
     def read(cls, f) -> 'DLPVertex':
         id = read_unpack(f, '>H')
-        normal = Vector3.read(f, byte_order = '>')
-        uv = Vector2.read(f, byte_order = '>')
+        normal = Vector3.read(f, '>')
+        uv = Vector2.read(f, '>')
         color = read_unpack(f, '>I')       
         return cls(id, normal, uv, color)
     
     def write(self, f):
         write_pack(f, '>H', self.id)
-        self.normal.write(f, byte_order = '>')    
-        self.uv.write(f, byte_order = '>')       
+        self.normal.write(f, '>')    
+        self.uv.write(f, '>')       
         write_pack(f, '>I', self.color)
            
     def __repr__(self):
@@ -1267,7 +1279,7 @@ class DLPPatch:
         mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
         vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
         name_length = read_unpack(f, '>I')[0]
-        name = read_unpack(f, f'>{name_length}s')[0].decode()       
+        name = read_unpack(f, f'>{name_length}s')[0].decode()     
         return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
     
     def write(self, f):
@@ -1345,11 +1357,11 @@ class DLP:
         
     @classmethod
     def read(cls, f) -> 'DLP':
-        magic = read_unpack(f, '>4s')[0].decode()              
+        magic = read_binary_name(f, 4)          
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
         patches = [DLPPatch.read(f) for _ in range(num_patches)]
-        vertices = Vector3.readn(f, num_vertices, byte_order = '>')
+        vertices = Vector3.readn(f, num_vertices, '>')
         return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
 
     def write(self, output_file: str, set_dlp: bool):
@@ -1365,25 +1377,28 @@ class DLP:
                     patch.write(f)    
                     
                 for vertex in self.vertices: 
-                    vertex.write(f, byte_order = '>') 
+                    vertex.write(f, '>') 
                           
     @staticmethod          
     def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
-        if debug_dlp_file:
-            with open(input_file, 'rb') as f:
-                dlp_data = DLP.read(f)
-                
-            with open(output_file, 'w') as f:
-                f.write(repr(dlp_data))
+        if not debug_dlp_file:
+            return
+        
+        with open(input_file, 'rb') as in_f:
+            dlp_data = DLP.read(in_f)
+
+        with open(output_file, 'w') as out_f:
+            out_f.write(repr(dlp_data))
                          
     @staticmethod
-    def debug_directory(input_dir: Path, output_dir: Path, debug_dlp_dir: bool):
-        if debug_dlp_dir:
-            output_dir.mkdir(parents = True, exist_ok = True)
-
-            for file in input_dir.glob('*.DLP'):  
-                if file.is_file():
-                    DLP.debug_file(file, output_dir / (file.stem + '_.txt'), True)
+    def debug_folder(input_folder: Path, output_folder: Path, debug_dlp_folder: bool):
+        if not debug_dlp_folder:
+            return
+        
+        output_folder.mkdir(parents = True, exist_ok = True)        
+        for file in input_folder.glob('*.DLP'):  
+            if file.is_file():
+                DLP.debug_file(file, output_folder / (file.stem + '_.txt'), True)
                                                         
     def __repr__(self):
         return f"""
@@ -1400,7 +1415,7 @@ DLP
 ################################################################################################################               
 ################################################################################################################     
         
-# Calculate BND center, min, max, radius, radius squared    
+# Calculate center, min, max, radius, radius squared    
 def calculate_max(vertices: List[Vector3]):
     max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
     for vertex in vertices:
@@ -1480,20 +1495,20 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
     return adjust_and_rotate_coords(coords, angle_degrees)
         
 
-def determine_mesh_dir_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
+def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
     if bound_number < 200:
-        target_dir = SHOP / "BMS" / f"{map_filename}LM"
+        target_folder = SHOP / "BMS" / f"{map_filename}LM"
     else:
-        target_dir = SHOP / "BMS" / f"{map_filename}CITY"
+        target_folder = SHOP / "BMS" / f"{map_filename}CITY"
         
-    target_dir.mkdir(parents = True, exist_ok = True)
+    target_folder.mkdir(parents = True, exist_ok = True)
         
     if any(name.startswith(WATER_TX) for name in texture_name):
         mesh_filename = f"CULL{bound_number:02d}_A2.bms"
     else:
         mesh_filename = f"CULL{bound_number:02d}_H.bms"
 
-    return target_dir, mesh_filename
+    return target_folder, mesh_filename
 
            
 def save_mesh(
@@ -1505,7 +1520,7 @@ def save_mesh(
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
 
-    target_dir, mesh_filename = determine_mesh_dir_and_filename(bound_number, texture_name, map_filename)
+    target_folder, mesh_filename = determine_mesh_folder_and_filename(bound_number, texture_name, map_filename)
     
     # Randomize Textures
     if randomize_textures and not random_texture_exclude:
@@ -1515,7 +1530,7 @@ def save_mesh(
     single_poly = [POLYGON_FILLER, poly]
     
     mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
-    mesh.write(target_dir / mesh_filename)
+    mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
         mesh.debug(mesh_filename + ".txt", DEBUG_FOLDER / "MESHES" / map_filename, debug_meshes)
@@ -2719,8 +2734,8 @@ def create_races(map_filename: str, race_data) -> None:
 
                 
 def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
-        header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
         filler = ",0,0,0,0,0,\n"
+        header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
         
         with open(SHOP / RACE / map_filename / "COPSWAYPOINTS.CSV", "w") as f:
             f.write(header)
@@ -3015,7 +3030,10 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
         f.writelines(bridge_data)
 
 
-def custom_bridge_config(configs, set_bridges, output_folder):    
+def custom_bridge_config(configs, set_bridges: bool, output_folder: Path):    
+    if not set_bridges:
+        return
+    
     config_template = """
 mmBridgeMgr :076850a0 {{
     BridgeDelta {BridgeDelta}
@@ -3045,38 +3063,36 @@ mmBridgeMgr :076850a0 {{
         "Mode": SINGLE
         }
     
-    if set_bridges:
-        for config in configs:
-            final_config = {**default_config, **config}
-            config_str = config_template.format(**final_config)
-            
-            race_type = final_config["RaceType"]
-            filenames = []
+    for config in configs:
+        final_config = {**default_config, **config}
+        config_str = config_template.format(**final_config)
 
-            if race_type in [ROAM, COPS_N_ROBBERS]:
-                base_name = ROAM if race_type == ROAM else COPS_N_ROBBERS
-                
-                if final_config["Mode"] in [SINGLE, ALL_MODES]:
-                    filenames.append(f"{base_name}.MMBRIDGEMGR")
-                    
-                if final_config["Mode"] in [MULTI, ALL_MODES]:
-                    filenames.append(f"{base_name}M.MMBRIDGEMGR")
-            else:
-                if race_type not in [RACE, CIRCUIT, BLITZ]:                
-                    type_error_message = f"""\n
-                    ***ERROR***
-                    Invalid RaceType. 
-                    Must be one of {ROAM}, {BLITZ}, {RACE}, {CIRCUIT}, or {COPS_N_ROBBERS}.
-                    """
-                    raise ValueError(type_error_message)
-                
-                if final_config["Mode"] in [SINGLE, ALL_MODES]:
-                    filenames.append(f"{race_type}{final_config['RaceNum']}.MMBRIDGEMGR")
-                if final_config["Mode"] in [MULTI, ALL_MODES]:
-                    filenames.append(f"{race_type}{final_config['RaceNum']}M.MMBRIDGEMGR")
-            
-            for filename in filenames:
-                (output_folder / filename).write_text(config_str)
+        race_type = final_config["RaceType"]
+        filenames = []  
+        if race_type in [ROAM, COPS_N_ROBBERS]:
+            base_name = ROAM if race_type == ROAM else COPS_N_ROBBERS
+
+            if final_config["Mode"] in [SINGLE, ALL_MODES]:
+                filenames.append(f"{base_name}.MMBRIDGEMGR")
+
+            if final_config["Mode"] in [MULTI, ALL_MODES]:
+                filenames.append(f"{base_name}M.MMBRIDGEMGR")
+        else:
+            if race_type not in [RACE, CIRCUIT, BLITZ]:                
+                type_error_message = f"""\n
+                ***ERROR***
+                Invalid RaceType. 
+                Must be one of {ROAM}, {BLITZ}, {RACE}, {CIRCUIT}, or {COPS_N_ROBBERS}.
+                """
+                raise ValueError(type_error_message)
+
+            if final_config["Mode"] in [SINGLE, ALL_MODES]:
+                filenames.append(f"{race_type}{final_config['RaceNum']}.MMBRIDGEMGR")
+            if final_config["Mode"] in [MULTI, ALL_MODES]:
+                filenames.append(f"{race_type}{final_config['RaceNum']}M.MMBRIDGEMGR")
+
+        for filename in filenames:
+            (output_folder / filename).write_text(config_str)
                 
 ################################################################################################################               
 ################################################################################################################
@@ -3378,8 +3394,8 @@ class Portals:
                     write_pack(f, '<H', gap2)
                     write_pack(f, '<2H', cell_2, cell_1)
                     write_pack(f, '<f', height)
-                    _min.write(f)
-                    _max.write(f)
+                    _min.write(f, '<')
+                    _max.write(f, '<')
 
                 if debug_portals:  
                     cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")
@@ -3390,30 +3406,32 @@ class Portals:
             with open(output_file, 'w') as out_f:
                 for portal in portals:
                     out_f.write(repr(portal))
+                    
             print(f"Processed portal data to {output_file.name}")
         except Exception as e:
             print(f"Failed to write to {output_file.name}: {e}")
                     
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool):
-        if debug_portals_file:
-            try:
-                with open(input_file, 'rb') as in_f:
-                    portals = cls.read_all(in_f)
+        if not debug_portals_file:
+            return
+        
+        try:
+            with open(input_file, 'rb') as in_f:
+                portals = cls.read_all(in_f)   
+                 
+            if not portals:
+                print(f"No portals found in {input_file.name}")
+                return  
+            
+            with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                for portal in portals:
+                    out_f.write(repr(portal))   
+                    
+            print(f"Processed {input_file.name} to {output_file.name}")
+        except Exception as e:
+            print(f"Error processing {input_file.name}: {e}")
 
-                if not portals:
-                    print(f"No portals found in {input_file.name}")
-                    return
-
-                with open(output_file, 'w', encoding='utf-8') as out_f:
-                    for portal in portals:
-                        out_f.write(repr(portal))
-
-                print(f"Processed {input_file.name} to {output_file.name}")
-            except Exception as e:
-                print(f"Error processing {input_file.name}: {e}")
-
-                
     def __repr__(self):
             return f"""
 PORTAL
@@ -3430,14 +3448,16 @@ PORTAL
 ################################################################################################################               
 ################################################################################################################            
 
-def read_binary_name(f) -> str:
+def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
     name_data = bytearray()
     while True:
         char = f.read(1)
-        if char == b'\x00':
+        if char == b'\0':
             break
         name_data.extend(char)
-    return name_data.decode('utf-8')
+        if length is not None and len(name_data) == length:
+            break
+    return name_data.decode(encoding)
                       
                       
 # BANGERS CLASS                            
@@ -3456,8 +3476,8 @@ class Bangers:
     @classmethod
     def read(cls, f) -> 'Bangers':
         room, flags = read_unpack(f, '<2H')
-        offset = Vector3.read(f)
-        face = Vector3.read(f)  
+        offset = Vector3.read(f, '<')
+        face = Vector3.read(f, '<')  
         name = read_binary_name(f)
         return cls(room, flags, offset, face, name)
     
@@ -3658,9 +3678,9 @@ class Facades:
     @classmethod
     def read(cls, f) -> 'Facades':
         room, flags = read_unpack(f, '<2H')
-        offset = Vector3.read(f)
-        face = Vector3.read(f)
-        sides = Vector3.read(f)
+        offset = Vector3.read(f, '<')
+        face = Vector3.read(f, '<')
+        sides = Vector3.read(f, '<')
         scale = read_unpack(f, '<f')[0]
         name = read_binary_name(f)
         return cls(room, flags, offset, face, sides, scale, name)
@@ -3697,16 +3717,19 @@ class Facades:
                                
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_facade_file: bool) -> None:
-        if debug_facade_file:
-            try:
-                with open(input_file, 'rb') as in_f:
-                    facades = cls.read_all(in_f)
+        if not debug_facade_file:
+            return
 
-                with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                    for facade in facades:
-                        out_f.write(repr(facade))
-            except Exception as e:
-                print(f"Failed to process {input_file.name}: {e}")
+        try:
+            with open(input_file, 'rb') as in_f:
+                facades = cls.read_all(in_f)  
+                      
+            with open(output_file, 'w', encoding = 'utf-8') as out_f:
+                for facade in facades:
+                    out_f.write(repr(facade))
+                    
+        except Exception as e:
+            print(f"Failed to process {input_file.name}: {e}")
 
     def __repr__(self):
         return f"""
@@ -3727,12 +3750,14 @@ FACADE
 class FacadeEditor:    
     @classmethod
     def create(cls, output_file: str, user_set_facades, set_facades: bool, debug_facades: bool):
-        if set_facades:
-            facades = cls.process(user_set_facades)
-            Facades.write_all(output_file, facades)
-            
-            if debug_facades:
-                Facades.debug(facades)
+        if not set_facades:
+            return
+        
+        facades = cls.process(user_set_facades)
+        Facades.write_all(output_file, facades)
+
+        if debug_facades:
+            Facades.debug(facades)
 
     @staticmethod
     def read_scales(scales_file: Path):
@@ -3806,12 +3831,12 @@ class PhysicsEditor:
 
     @staticmethod
     def read(f) -> 'PhysicsEditor':
-        name = f.read(32).decode("latin-1").rstrip('\x00')
+        name = read_binary_name(f, 32, 'latin-1')
         friction, elasticity, drag = read_unpack(f, '>3f')
         bump_height, bump_width, bump_depth, sink_depth = read_unpack(f, '>4f')
         type, sound = read_unpack(f, '>2I')
-        velocity = Vector2.read(f)
-        ptx_color = Vector3.read(f)
+        velocity = Vector2.read(f, '>')
+        ptx_color = Vector3.read(f, '>')
         return PhysicsEditor(name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color)
     
     @classmethod
@@ -3819,12 +3844,12 @@ class PhysicsEditor:
         return [cls.read(f) for _ in range(cls.readn(f))]
 
     def write(self, f) -> None:        
-        write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\x00'))
+        write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\0'))
         write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
         write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
         write_pack(f, '>2I', self.type, self.sound)
-        self.velocity.write(f, byte_order = '>')
-        self.ptx_color.write(f, byte_order = '>')
+        self.velocity.write(f, '>')
+        self.ptx_color.write(f, '>')
 
     @staticmethod
     def write_all(output_file: Path, physics_params: List['PhysicsEditor']) -> None:
@@ -3835,20 +3860,21 @@ class PhysicsEditor:
                 
     @classmethod    
     def edit(cls, input_file: Path, output_file: Path, user_set_properties: dict, set_physics: bool, debug_physics: bool) -> None:
-        if set_physics:
-            with open(input_file, 'rb') as f:
-                original_data = cls.read_all(f)
-
-            for phys_index, properties in user_set_properties.items():
-                physics_obj = original_data[phys_index - 1]
-                
-                for attr , value in properties.items():
-                    setattr(physics_obj, attr, value)
-                        
-            cls.write_all(output_file, original_data)
+        if not set_physics:
+            return
+        
+        with open(input_file, 'rb') as f:
+            original_data = cls.read_all(f)    
+        for phys_index, properties in user_set_properties.items():
+            physics_obj = original_data[phys_index - 1]
             
-            if debug_physics:
-                cls.debug(DEBUG_FOLDER / "PHYSICS" / "PHYSICS_DB.txt", original_data)
+            for attr , value in properties.items():
+                setattr(physics_obj, attr, value)
+                    
+        cls.write_all(output_file, original_data)
+        
+        if debug_physics:
+            cls.debug(DEBUG_FOLDER / "PHYSICS" / "PHYSICS_DB.txt", original_data)
                         
     @classmethod
     def debug(cls, debug_filename: Path, physics_params: List['PhysicsEditor']) -> None: 
@@ -4085,7 +4111,7 @@ class aiPath:
         self.Alley, = read_unpack(f, '<H')
         self.RoadLength, = read_unpack(f, '<f')
         self.SpeedLimit, = read_unpack(f, '<f')
-        self.StopLightName, = read_unpack(f, '<32s')
+        self.StopLightName = read_binary_name(f, 32)
         self.OncomingPath, = read_unpack(f, '<I')
         self.EdgeIndex, = read_unpack(f, '<I')
         self.PathIndex, = read_unpack(f, '<I')
@@ -4110,8 +4136,6 @@ class aiPath:
         self.LaneWidths = read_unpack(f, '<5f')
         self.LaneLengths = read_unpack(f, '<10f')
 
-        self.StopLightName = self.StopLightName.rstrip(b'\0').decode('ascii')
-
     def read(f):
         result = aiPath()
         result.load(f)
@@ -4123,7 +4147,7 @@ class aiPath:
 class aiIntersection:
     def load(self, file):
         self.ID, = read_unpack(file, '<H')
-        self.Position = Vector3.read(file)
+        self.Position = Vector3.read(file, '<')
 
         num_sinks, = read_unpack(file, '<H')
         self.Sinks = read_unpack(file, f'<{num_sinks}I')
@@ -4741,19 +4765,21 @@ def create_ar(map_filename: str) -> None:
 
 
 def post_editor_cleanup(delete_shop: bool) -> None:
-    if delete_shop:
-        os.chdir(BASE_DIR)
-        time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
-        
-        try:  
-            shutil.rmtree(BASE_DIR / 'build')
-        except Exception as e:
-            print(f"Failed to delete the BUILD directory. Reason: {e}")
-        
-        try:
-            shutil.rmtree(SHOP)
-        except Exception as e:
-            print(f"Failed to delete the SHOP directory. Reason: {e}")
+    if not delete_shop:
+        return
+    
+    os.chdir(BASE_DIR)
+    time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
+
+    try:  
+        shutil.rmtree(BASE_DIR / 'build')
+    except Exception as e:
+        print(f"Failed to delete the BUILD directory. Reason: {e}")
+
+    try:
+        shutil.rmtree(SHOP)
+    except Exception as e:
+        print(f"Failed to delete the SHOP directory. Reason: {e}")
 
    
 def create_commandline(
@@ -5431,7 +5457,7 @@ def extract_polygon_data(obj):
     return extracted_polygon_data
 
 
-def extract_texture_from_polygon(obj):
+def extract_texture_from_polygon(obj) -> str:
     if obj.material_slots:
         mat = obj.material_slots[0].material
         if mat and mat.use_nodes:
@@ -6130,7 +6156,7 @@ china_gate = {'offset': (0, 0.0, -20),
 # Put your non-randomized props here
 prop_list = [trailer_set, bridge_orange_buildling, china_gate] 
 
-# # Put your randomized props here (you will add them to the list "random_parameters")
+# Put your randomized props here (you will add them to the list "random_parameters")
 random_trees = {
         'offset_y': 0.0,
         'name': [TREE_SLIM] * 20}
@@ -6324,11 +6350,11 @@ Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INP
 Facades.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
 Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
 Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "MESHES" / "DEBUGGED_INPUT_MESH_FILE.txt", debug_meshes_file)
-Meshes.debug_directory(debug_meshes_data_dir, DEBUG_FOLDER / "MESHES" / "MESH TEXT FILES", debug_meshes_dir) 
+Meshes.debug_folder(debug_meshes_data_folder, DEBUG_FOLDER / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
 Bounds.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
-Bounds.debug_directory(debug_bounds_data_dir, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_dir)
+Bounds.debug_folder(debug_bounds_data_folder, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
 DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
-DLP.debug_directory(debug_dlp_data_dir, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_dir)
+DLP.debug_folder(debug_dlp_data_folder, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
 create_ar(map_filename)
 create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, less_logs, more_logs)
