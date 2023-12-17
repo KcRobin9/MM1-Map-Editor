@@ -1237,10 +1237,10 @@ class DLPVertex:
         
     @classmethod
     def read(cls, f) -> 'DLPVertex':
-        id = read_unpack(f, '>H')
+        id, = read_unpack(f, '>H')
         normal = Vector3.read(f, '>')
         uv = Vector2.read(f, '>')
-        color = read_unpack(f, '>I')       
+        color, = read_unpack(f, '>I')       
         return cls(id, normal, uv, color)
     
     def write(self, f):
@@ -1251,14 +1251,13 @@ class DLPVertex:
            
     def __repr__(self):
         return f"""
-DLPVertex
-    Id: {self.id}
-    Normal: {self.normal}
-    UV: {self.uv}
-    Color: {self.color}
-    """
-        
-        
+            Id: {self.id}
+            Normal: {self.normal}
+            UV: {self.uv}
+            Color: {self.color}
+        """
+    
+            
 class DLPPatch:
     def __init__(self, s_res: int, t_res: int, flags: int, r_opts: int, mtl_idx: int, tex_idx: int, phys_idx: int, 
                  vertices: List[DLPVertex], name: str):
@@ -1295,16 +1294,16 @@ class DLPPatch:
         
     def __repr__(self):
         return f"""
-DLPPatch
-    S Res: {self.s_res}
-    T Res: {self.t_res}
-    Flags: {self.flags}
-    R Opts: {self.r_opts}
-    Mtl Idx: {self.mtl_idx}
-    Tex Idx: {self.tex_idx}
-    Phys Idx: {self.phys_idx}
-    Vertices: {self.vertices}
-    Name: {self.name}
+    Patch:
+        S Res: {self.s_res}
+        T Res: {self.t_res}
+        Flags: {self.flags}
+        R Opts: {self.r_opts}
+        Mtl Idx: {self.mtl_idx}
+        Tex Idx: {self.tex_idx}
+        Phys Idx: {self.phys_idx}
+        Name: {self.name}
+        Vertex: {self.vertices}
     """
 
 
@@ -1320,7 +1319,7 @@ class DLPGroup:
     @classmethod
     def read(cls, f) -> 'DLPGroup':
         name_length = read_unpack(f, '>B')[0]
-        name = read_unpack(f, f'>{name_length}s')[0].decode()
+        name = read_unpack(f, f'>{name_length}s')[0].rstrip(b'\0').decode()
         num_vertices, num_patches = read_unpack(f, '>2I')        
         vertex_indices = [read_unpack(f, '>H')[0] for _ in range(num_vertices)]
         patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
@@ -1335,12 +1334,12 @@ class DLPGroup:
         
     def __repr__(self):
         return f"""
-DLPGroup
-    Name: {self.name}
-    Num Vertices: {self.num_vertices}
-    Num Patches: {self.num_patches}
-    Vertex Indices: {self.vertex_indices}
-    Patch Indices: {self.patch_indices}
+    Group:
+        Name: {self.name}
+        Num Vertices: {self.num_vertices}
+        Num Patches: {self.num_patches}
+        Vertex Indices: {self.vertex_indices}
+        Patch Indices: {self.patch_indices}
     """
 
 
@@ -1365,19 +1364,21 @@ class DLP:
         return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
 
     def write(self, output_file: str, set_dlp: bool):
-        if set_dlp:
-            with open(output_file, 'wb') as f:
-                write_pack(f, '>4s', self.magic.encode())
-                write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)
+        if not set_dlp:
+            return
+        
+        with open(output_file, 'wb') as f:
+            write_pack(f, '>4s', self.magic.encode())
+            write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)      
+            
+            for group in self.groups:
+                group.write(f)
+                      
+            for patch in self.patches:
+                patch.write(f)    
 
-                for group in self.groups:
-                    group.write(f) 
-
-                for patch in self.patches:
-                    patch.write(f)    
-                    
-                for vertex in self.vertices: 
-                    vertex.write(f, '>') 
+            for vertex in self.vertices: 
+                vertex.write(f, '>') 
                           
     @staticmethod          
     def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
@@ -1406,12 +1407,13 @@ DLP
     Magic: {self.magic}
     Num Groups: {self.num_groups}
     Num Patches: {self.num_patches}
-    Num Vertices: {self.num_vertices}
-    Groups: {self.groups}
-    Patches: {self.patches}
-    Vertices: {self.vertices}
+    Num Vertices: {self.num_vertices}\n
+    {self.groups}\n
+    {self.patches}\n
+    Vertices: 
+        {self.vertices}
     """
-        
+            
 ################################################################################################################               
 ################################################################################################################     
         
@@ -6262,8 +6264,6 @@ custom_physics = {
 
 # SET DLP
 
-dlp_magic = "DLP7"
-
 s_res = 4
 t_res = 1
 r_opts = 636
@@ -6342,7 +6342,7 @@ create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
 
 # Misc
 BangerEditor(map_filename).append_to_file(append_input_props_f, props_to_append, append_output_props_f, append_props)
-DLP(dlp_magic, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
+DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
 
 # File Debugging
 debug_bai(debug_bai_data_file, debug_bai_file)
