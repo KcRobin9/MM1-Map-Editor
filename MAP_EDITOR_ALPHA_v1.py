@@ -160,7 +160,7 @@ debug_bounds_folder = False
 debug_bounds_data_folder = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
 
 debug_dlp_file = False
-debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPPANOZGT_BND.DLP"        # Change the input DLP file here
+debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"        # Change the input DLP file here
 
 debug_dlp_folder = False    
 debug_dlp_data_folder = EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
@@ -3334,10 +3334,10 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
 
 # PORTAL CLASS 
 class Portals:
-    def __init__(self, flags: int, edge_count: int, gap2: int, cell_1: int, cell_2: int, height: float, _min: Vector3, _max: Vector3):
+    def __init__(self, flags: int, edge_count: int, gap_2: int, cell_1: int, cell_2: int, height: float, _min: Vector3, _max: Vector3):
         self.flags = flags
         self.edge_count = edge_count
-        self.gap2 = gap2
+        self.gap_2 = gap_2
         self.cell_1 = cell_1
         self.cell_2 = cell_2
         self.height = height
@@ -3352,13 +3352,13 @@ class Portals:
         
     @classmethod
     def read(cls, f) -> 'Portals':
-        flags, edge_count, = read_unpack(f, '<2b')
-        gap2, = read_unpack(f, '<h')
-        cell_1, cell_2, = read_unpack(f, '<2h')  
+        flags, edge_count, = read_unpack(f, '<2B')
+        gap_2, = read_unpack(f, '<H')
+        cell_1, cell_2, = read_unpack(f, '<2H')  
         height, = read_unpack(f, '<f')   
         _min = Vector3.read(f)
         _max = Vector3.read(f)
-        return cls(flags, edge_count, gap2, cell_1, cell_2, height, _min, _max)
+        return cls(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max)
     
     @classmethod
     def read_all(cls, f) -> 'List[Portals]':
@@ -3383,17 +3383,17 @@ class Portals:
                 for cell_1, cell_2, v1, v2 in portal_tuples:
                     flags = 0x2
                     edge_count = 2
-                    gap2 = 101
+                    gap_2 = 101
                     height = MAX_Y - MIN_Y
                     _min = Vector3(v1.x, -50 if lower_portals else 0, v1.y)
                     _max = Vector3(v2.x, -50 if lower_portals else 0, v2.y)
 
-                    portal = Portals(flags, edge_count, gap2, cell_1, cell_2, height, _min, _max)
+                    portal = Portals(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max)
                     portals.append(portal)
                     
                     # Write the portal data to file
                     write_pack(f, '<2B', flags, edge_count)
-                    write_pack(f, '<H', gap2)
+                    write_pack(f, '<H', gap_2)
                     write_pack(f, '<2H', cell_2, cell_1)
                     write_pack(f, '<f', height)
                     _min.write(f, '<')
@@ -3439,7 +3439,7 @@ class Portals:
 PORTAL
     Flags: {self.flags}
     EdgeCount: {self.edge_count}
-    Gap 2: {self.gap2}
+    Gap 2: {self.gap_2}
     Cell 1: {self.cell_1}
     Cell 2: {self.cell_2}
     Height: {self.height:.2f}

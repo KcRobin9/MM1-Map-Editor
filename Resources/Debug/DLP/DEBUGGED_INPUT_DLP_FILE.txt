@@ -1,0 +1,1327 @@
+
+DLP
+    Magic: DLP7
+    Num Groups: 5
+    Num Patches: 48
+    Num Vertices: 40
+
+    [
+    Group:
+        Name: CULLBODY
+        Num Vertices: 0
+        Num Patches: 44
+        Vertex Indices: []
+        Patch Indices: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43]
+    , 
+    Group:
+        Name: CULLWHEEL0
+        Num Vertices: 0
+        Num Patches: 1
+        Vertex Indices: []
+        Patch Indices: [44]
+    , 
+    Group:
+        Name: CULLWHEEL1
+        Num Vertices: 0
+        Num Patches: 1
+        Vertex Indices: []
+        Patch Indices: [45]
+    , 
+    Group:
+        Name: CULLWHEEL2
+        Num Vertices: 0
+        Num Patches: 1
+        Vertex Indices: []
+        Patch Indices: [47]
+    , 
+    Group:
+        Name: CULLWHEEL3
+        Num Vertices: 0
+        Num Patches: 1
+        Vertex Indices: []
+        Patch Indices: [46]
+    ]
+
+    [
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 489
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 13
+            Normal: { -0.03, 1.00, -0.02 }
+            UV: 0.44, 0.98
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { -0.03, 1.00, -0.02 }
+            UV: 0.60, 1.02
+            Color: 4294967295
+        , 
+            Id: 3
+            Normal: { -0.03, 1.00, -0.02 }
+            UV: 0.44, 0.99
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 10
+            Normal: { -0.02, 1.00, -0.02 }
+            UV: 0.60, 1.00
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { -0.02, 1.00, -0.02 }
+            UV: 0.60, 1.02
+            Color: 4294967295
+        , 
+            Id: 13
+            Normal: { -0.02, 1.00, -0.02 }
+            UV: 0.44, 0.98
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 10
+            Normal: { nan, nan, nan }
+            UV: 0.60, 1.00
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { nan, nan, nan }
+            UV: 0.70, 0.96
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { nan, nan, nan }
+            UV: 0.60, 1.02
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 9
+            Normal: { -0.07, 1.00, -0.02 }
+            UV: 0.92, 0.75
+            Color: 4294967295
+        , 
+            Id: 15
+            Normal: { -0.07, 1.00, -0.02 }
+            UV: 0.70, 0.80
+            Color: 4294967295
+        , 
+            Id: 14
+            Normal: { -0.07, 1.00, -0.02 }
+            UV: 0.70, 0.76
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 12
+            Normal: { -0.08, 0.96, -0.25 }
+            UV: 0.93, 0.66
+            Color: 4294967295
+        , 
+            Id: 4
+            Normal: { -0.08, 0.96, -0.25 }
+            UV: 0.00, 0.69
+            Color: 4294967295
+        , 
+            Id: 11
+            Normal: { -0.08, 0.96, -0.25 }
+            UV: 1.00, 0.53
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 11
+            Normal: { -0.03, 0.96, -0.29 }
+            UV: 1.00, 0.53
+            Color: 4294967295
+        , 
+            Id: 4
+            Normal: { -0.03, 0.96, -0.29 }
+            UV: 0.00, 0.69
+            Color: 4294967295
+        , 
+            Id: 5
+            Normal: { -0.03, 0.96, -0.29 }
+            UV: 0.00, 0.53
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 1
+            Normal: { -0.02, 1.00, 0.03 }
+            UV: 0.97, 0.77
+            Color: 4294967295
+        , 
+            Id: 15
+            Normal: { -0.02, 1.00, 0.03 }
+            UV: 0.70, 0.80
+            Color: 4294967295
+        , 
+            Id: 9
+            Normal: { -0.02, 1.00, 0.03 }
+            UV: 0.92, 0.75
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 9
+            Normal: { 0.95, -0.13, 0.27 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 14
+            Normal: { 0.95, -0.13, 0.27 }
+            UV: 0.78, 0.73
+            Color: 4294967295
+        , 
+            Id: 10
+            Normal: { 0.95, -0.13, 0.27 }
+            UV: 0.63, 0.98
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 2
+            Normal: { 0.03, 1.00, -0.02 }
+            UV: 0.60, 1.02
+            Color: 4294967295
+        , 
+            Id: 22
+            Normal: { 0.03, 1.00, -0.02 }
+            UV: 0.44, 0.98
+            Color: 4294967295
+        , 
+            Id: 3
+            Normal: { 0.03, 1.00, -0.02 }
+            UV: 0.44, 0.99
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 2
+            Normal: { 0.02, 1.00, -0.02 }
+            UV: 0.60, 1.02
+            Color: 4294967295
+        , 
+            Id: 19
+            Normal: { 0.02, 1.00, -0.02 }
+            UV: 0.60, 1.00
+            Color: 4294967295
+        , 
+            Id: 22
+            Normal: { 0.02, 1.00, -0.02 }
+            UV: 0.44, 0.98
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 2
+            Normal: { nan, nan, nan }
+            UV: 0.70, 0.96
+            Color: 4294967295
+        , 
+            Id: 19
+            Normal: { nan, nan, nan }
+            UV: 0.60, 1.00
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { nan, nan, nan }
+            UV: 0.60, 1.02
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 15
+            Normal: { 0.07, 1.00, -0.02 }
+            UV: 0.70, 0.80
+            Color: 4294967295
+        , 
+            Id: 18
+            Normal: { 0.07, 1.00, -0.02 }
+            UV: 0.92, 0.75
+            Color: 4294967295
+        , 
+            Id: 23
+            Normal: { 0.07, 1.00, -0.02 }
+            UV: 0.70, 0.76
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 4
+            Normal: { 0.08, 0.96, -0.25 }
+            UV: 0.00, 0.69
+            Color: 4294967295
+        , 
+            Id: 21
+            Normal: { 0.08, 0.96, -0.25 }
+            UV: 0.93, 0.66
+            Color: 4294967295
+        , 
+            Id: 20
+            Normal: { 0.08, 0.96, -0.25 }
+            UV: 1.00, 0.53
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 4
+            Normal: { 0.03, 0.96, -0.29 }
+            UV: 0.00, 0.69
+            Color: 4294967295
+        , 
+            Id: 20
+            Normal: { 0.03, 0.96, -0.29 }
+            UV: 1.00, 0.53
+            Color: 4294967295
+        , 
+            Id: 5
+            Normal: { 0.03, 0.96, -0.29 }
+            UV: 0.00, 0.53
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 15
+            Normal: { 0.02, 1.00, 0.03 }
+            UV: 0.70, 0.80
+            Color: 4294967295
+        , 
+            Id: 1
+            Normal: { 0.02, 1.00, 0.03 }
+            UV: 0.97, 0.77
+            Color: 4294967295
+        , 
+            Id: 18
+            Normal: { 0.02, 1.00, 0.03 }
+            UV: 0.92, 0.75
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 636
+        Mtl Idx: 1
+        Tex Idx: 0
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 23
+            Normal: { -0.95, -0.13, 0.27 }
+            UV: 0.78, 0.73
+            Color: 4294967295
+        , 
+            Id: 18
+            Normal: { -0.95, -0.13, 0.27 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 19
+            Normal: { -0.95, -0.13, 0.27 }
+            UV: 0.63, 0.98
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 489
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 11
+            Normal: { -0.70, 0.71, -0.08 }
+            UV: 0.02, 0.38
+            Color: 4294967295
+        , 
+            Id: 9
+            Normal: { -0.70, 0.71, -0.08 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 12
+            Normal: { -0.70, 0.71, -0.08 }
+            UV: 0.30, 0.67
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 12
+            Normal: { -0.94, 0.33, -0.01 }
+            UV: 0.30, 0.67
+            Color: 4294967295
+        , 
+            Id: 10
+            Normal: { -0.94, 0.33, -0.01 }
+            UV: 0.63, 0.98
+            Color: 4294967295
+        , 
+            Id: 13
+            Normal: { -0.94, 0.33, -0.01 }
+            UV: 0.47, 0.96
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 12
+            Normal: { -0.75, 0.66, -0.08 }
+            UV: 0.30, 0.67
+            Color: 4294967295
+        , 
+            Id: 9
+            Normal: { -0.75, 0.66, -0.08 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 10
+            Normal: { -0.75, 0.66, -0.08 }
+            UV: 0.63, 0.98
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 7
+            Normal: { -0.99, -0.12, 0.00 }
+            UV: 0.97, 0.14
+            Color: 4294967295
+        , 
+            Id: 9
+            Normal: { -0.99, -0.12, 0.00 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 11
+            Normal: { -0.99, -0.12, 0.00 }
+            UV: 0.02, 0.38
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 8
+            Normal: { -0.99, -0.11, 0.00 }
+            UV: 0.02, 0.08
+            Color: 4294967295
+        , 
+            Id: 7
+            Normal: { -0.99, -0.11, 0.00 }
+            UV: 0.97, 0.14
+            Color: 4294967295
+        , 
+            Id: 11
+            Normal: { -0.99, -0.11, 0.00 }
+            UV: 0.02, 0.38
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 18
+            Normal: { 0.70, 0.71, -0.08 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 20
+            Normal: { 0.70, 0.71, -0.08 }
+            UV: 0.02, 0.38
+            Color: 4294967295
+        , 
+            Id: 21
+            Normal: { 0.70, 0.71, -0.08 }
+            UV: 0.30, 0.67
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 19
+            Normal: { 0.94, 0.33, -0.01 }
+            UV: 0.63, 0.98
+            Color: 4294967295
+        , 
+            Id: 21
+            Normal: { 0.94, 0.33, -0.01 }
+            UV: 0.30, 0.67
+            Color: 4294967295
+        , 
+            Id: 22
+            Normal: { 0.94, 0.33, -0.01 }
+            UV: 0.47, 0.96
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 18
+            Normal: { 0.75, 0.66, -0.08 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 21
+            Normal: { 0.75, 0.66, -0.08 }
+            UV: 0.30, 0.67
+            Color: 4294967295
+        , 
+            Id: 19
+            Normal: { 0.75, 0.66, -0.08 }
+            UV: 0.63, 0.98
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 18
+            Normal: { 0.99, -0.12, 0.00 }
+            UV: 0.92, 0.72
+            Color: 4294967295
+        , 
+            Id: 16
+            Normal: { 0.99, -0.12, 0.00 }
+            UV: 0.97, 0.14
+            Color: 4294967295
+        , 
+            Id: 20
+            Normal: { 0.99, -0.12, 0.00 }
+            UV: 0.02, 0.38
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 1
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 16
+            Normal: { 0.99, -0.11, 0.00 }
+            UV: 0.97, 0.14
+            Color: 4294967295
+        , 
+            Id: 17
+            Normal: { 0.99, -0.11, 0.00 }
+            UV: 0.02, 0.08
+            Color: 4294967295
+        , 
+            Id: 20
+            Normal: { 0.99, -0.11, 0.00 }
+            UV: 0.02, 0.38
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 4
+        T Res: 1
+        Flags: 393
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 2
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 0
+            Normal: { 0.01, -1.00, 0.01 }
+            UV: 1.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 7
+            Normal: { 0.01, -1.00, 0.01 }
+            UV: 0.99, 1.00
+            Color: 4294967295
+        , 
+            Id: 8
+            Normal: { 0.01, -1.00, 0.01 }
+            UV: 0.02, 1.01
+            Color: 4294967295
+        , 
+            Id: 6
+            Normal: { 0.01, -1.00, 0.01 }
+            UV: 0.00, 0.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 4
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 2
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 17
+            Normal: { -0.01, -1.00, 0.01 }
+            UV: 0.02, 1.01
+            Color: 4294967295
+        , 
+            Id: 16
+            Normal: { -0.01, -1.00, 0.01 }
+            UV: 0.99, 1.00
+            Color: 4294967295
+        , 
+            Id: 0
+            Normal: { -0.01, -1.00, 0.01 }
+            UV: 1.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 6
+            Normal: { -0.01, -1.00, 0.01 }
+            UV: 0.00, 0.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 393
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 12
+            Normal: { -0.12, 0.89, -0.44 }
+            UV: 0.77, 0.69
+            Color: 4294967295
+        , 
+            Id: 13
+            Normal: { -0.12, 0.89, -0.44 }
+            UV: 0.66, 0.98
+            Color: 4294967295
+        , 
+            Id: 4
+            Normal: { -0.12, 0.89, -0.44 }
+            UV: 0.00, 0.71
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 4
+            Normal: { -0.02, 0.93, -0.37 }
+            UV: 0.00, 0.71
+            Color: 4294967295
+        , 
+            Id: 13
+            Normal: { -0.02, 0.93, -0.37 }
+            UV: 0.66, 0.98
+            Color: 4294967295
+        , 
+            Id: 3
+            Normal: { -0.02, 0.93, -0.37 }
+            UV: 0.00, 1.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 11
+            Normal: { -0.09, -0.16, -0.98 }
+            UV: 1.00, 0.34
+            Color: 4294967295
+        , 
+            Id: 5
+            Normal: { -0.09, -0.16, -0.98 }
+            UV: 0.00, 0.35
+            Color: 4294967295
+        , 
+            Id: 8
+            Normal: { -0.09, -0.16, -0.98 }
+            UV: 0.96, 0.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 8
+            Normal: { -0.09, -0.15, -0.98 }
+            UV: 0.96, 0.00
+            Color: 4294967295
+        , 
+            Id: 5
+            Normal: { -0.09, -0.15, -0.98 }
+            UV: 0.00, 0.35
+            Color: 4294967295
+        , 
+            Id: 6
+            Normal: { -0.09, -0.15, -0.98 }
+            UV: 0.00, 0.01
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 22
+            Normal: { 0.12, 0.89, -0.44 }
+            UV: 0.66, 0.98
+            Color: 4294967295
+        , 
+            Id: 21
+            Normal: { 0.12, 0.89, -0.44 }
+            UV: 0.77, 0.69
+            Color: 4294967295
+        , 
+            Id: 4
+            Normal: { 0.12, 0.89, -0.44 }
+            UV: 0.00, 0.71
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 22
+            Normal: { 0.02, 0.93, -0.37 }
+            UV: 0.66, 0.98
+            Color: 4294967295
+        , 
+            Id: 4
+            Normal: { 0.02, 0.93, -0.37 }
+            UV: 0.00, 0.71
+            Color: 4294967295
+        , 
+            Id: 3
+            Normal: { 0.02, 0.93, -0.37 }
+            UV: 0.00, 1.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 5
+            Normal: { 0.09, -0.16, -0.98 }
+            UV: 0.00, 0.35
+            Color: 4294967295
+        , 
+            Id: 20
+            Normal: { 0.09, -0.16, -0.98 }
+            UV: 1.00, 0.34
+            Color: 4294967295
+        , 
+            Id: 17
+            Normal: { 0.09, -0.16, -0.98 }
+            UV: 0.96, 0.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 3
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 5
+            Normal: { 0.09, -0.15, -0.98 }
+            UV: 0.00, 0.35
+            Color: 4294967295
+        , 
+            Id: 17
+            Normal: { 0.09, -0.15, -0.98 }
+            UV: 0.96, 0.00
+            Color: 4294967295
+        , 
+            Id: 6
+            Normal: { 0.09, -0.15, -0.98 }
+            UV: 0.00, 0.01
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 393
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 9
+            Normal: { -0.06, 0.18, 0.98 }
+            UV: 0.19, 0.69
+            Color: 4294967295
+        , 
+            Id: 0
+            Normal: { -0.06, 0.18, 0.98 }
+            UV: 0.99, 0.01
+            Color: 4294967295
+        , 
+            Id: 1
+            Normal: { -0.06, 0.18, 0.98 }
+            UV: 0.99, 0.68
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 7
+            Normal: { -0.06, 0.18, 0.98 }
+            UV: 0.23, 0.01
+            Color: 4294967295
+        , 
+            Id: 0
+            Normal: { -0.06, 0.18, 0.98 }
+            UV: 0.99, 0.01
+            Color: 4294967295
+        , 
+            Id: 9
+            Normal: { -0.06, 0.18, 0.98 }
+            UV: 0.19, 0.69
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 2
+            Normal: { -0.07, 0.22, 0.97 }
+            UV: 1.00, 0.95
+            Color: 4294967295
+        , 
+            Id: 10
+            Normal: { -0.07, 0.22, 0.97 }
+            UV: 0.47, 0.96
+            Color: 4294967295
+        , 
+            Id: 14
+            Normal: { -0.07, 0.22, 0.97 }
+            UV: 0.41, 0.74
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 14
+            Normal: { -0.00, 0.04, 1.00 }
+            UV: 0.41, 0.74
+            Color: 4294967295
+        , 
+            Id: 15
+            Normal: { -0.00, 0.04, 1.00 }
+            UV: 0.99, 0.75
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { -0.00, 0.04, 1.00 }
+            UV: 1.00, 0.95
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 0
+            Normal: { 0.06, 0.18, 0.98 }
+            UV: 0.99, 0.01
+            Color: 4294967295
+        , 
+            Id: 18
+            Normal: { 0.06, 0.18, 0.98 }
+            UV: 0.19, 0.69
+            Color: 4294967295
+        , 
+            Id: 1
+            Normal: { 0.06, 0.18, 0.98 }
+            UV: 0.99, 0.68
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 0
+            Normal: { 0.06, 0.18, 0.98 }
+            UV: 0.99, 0.01
+            Color: 4294967295
+        , 
+            Id: 16
+            Normal: { 0.06, 0.18, 0.98 }
+            UV: 0.23, 0.01
+            Color: 4294967295
+        , 
+            Id: 18
+            Normal: { 0.06, 0.18, 0.98 }
+            UV: 0.19, 0.69
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 19
+            Normal: { 0.07, 0.22, 0.97 }
+            UV: 0.47, 0.96
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { 0.07, 0.22, 0.97 }
+            UV: 1.00, 0.95
+            Color: 4294967295
+        , 
+            Id: 23
+            Normal: { 0.07, 0.22, 0.97 }
+            UV: 0.41, 0.74
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 3
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 4
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 15
+            Normal: { 0.00, 0.04, 1.00 }
+            UV: 0.99, 0.75
+            Color: 4294967295
+        , 
+            Id: 23
+            Normal: { 0.00, 0.04, 1.00 }
+            UV: 0.41, 0.74
+            Color: 4294967295
+        , 
+            Id: 2
+            Normal: { 0.00, 0.04, 1.00 }
+            UV: 1.00, 0.95
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 4
+        T Res: 1
+        Flags: 393
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 5
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 25
+            Normal: { -1.00, 0.00, 0.00 }
+            UV: 0.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 26
+            Normal: { -1.00, 0.00, 0.00 }
+            UV: 0.00, 1.00
+            Color: 4294967295
+        , 
+            Id: 27
+            Normal: { -1.00, 0.00, 0.00 }
+            UV: 1.00, 1.00
+            Color: 4294967295
+        , 
+            Id: 24
+            Normal: { -1.00, -0.00, 0.00 }
+            UV: 1.00, 0.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 4
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 5
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 29
+            Normal: { 1.00, 0.00, -0.00 }
+            UV: 0.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 28
+            Normal: { 1.00, 0.00, 0.00 }
+            UV: 1.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 31
+            Normal: { 1.00, -0.00, 0.00 }
+            UV: 1.00, 1.00
+            Color: 4294967295
+        , 
+            Id: 30
+            Normal: { 1.00, 0.00, 0.00 }
+            UV: 0.00, 1.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 4
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 5
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 33
+            Normal: { -1.00, 0.00, 0.00 }
+            UV: 0.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 34
+            Normal: { -1.00, 0.00, 0.00 }
+            UV: 0.00, 1.00
+            Color: 4294967295
+        , 
+            Id: 35
+            Normal: { -1.00, 0.00, 0.00 }
+            UV: 1.00, 1.00
+            Color: 4294967295
+        , 
+            Id: 32
+            Normal: { -1.00, -0.00, 0.00 }
+            UV: 1.00, 0.00
+            Color: 4294967295
+        ]
+    , 
+    Patch:
+        S Res: 4
+        T Res: 1
+        Flags: 265
+        R Opts: 764
+        Mtl Idx: 0
+        Tex Idx: 5
+        Phys Idx: 0
+        Name: 
+        Vertex: [
+            Id: 37
+            Normal: { 1.00, 0.00, -0.00 }
+            UV: 0.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 36
+            Normal: { 1.00, 0.00, 0.00 }
+            UV: 1.00, 0.00
+            Color: 4294967295
+        , 
+            Id: 39
+            Normal: { 1.00, -0.00, 0.00 }
+            UV: 1.00, 1.00
+            Color: 4294967295
+        , 
+            Id: 38
+            Normal: { 1.00, 0.00, 0.00 }
+            UV: 0.00, 1.00
+            Color: 4294967295
+        ]
+    ]
+
+    Vertices: 
+        [{ -0.00, 0.20, 2.10 }, { -0.00, 0.90, 1.98 }, { -0.00, 1.14, 0.88 }, { -0.00, 1.12, -0.20 }, { -0.00, 0.83, -0.90 }, { -0.00, 0.48, -2.08 }, { -0.00, 0.15, -2.03 }, { -0.84, 0.19, 2.05 }, { -0.85, 0.14, -1.95 }, { -0.93, 0.88, 1.92 }, { -0.59, 1.12, 0.83 }, { -0.89, 0.47, -2.00 }, { -0.68, 0.81, -0.76 }, { -0.59, 1.10, -0.21 }, { -0.64, 0.88, 0.89 }, { 0.00, 0.92, 0.89 }, { 0.84, 0.19, 2.05 }, { 0.85, 0.14, -1.95 }, { 0.93, 0.88, 1.92 }, { 0.59, 1.12, 0.83 }, { 0.89, 0.47, -2.00 }, { 0.68, 0.81, -0.76 }, { 0.59, 1.10, -0.21 }, { 0.64, 0.88, 0.89 }, { -0.90, 0.61, -0.72 }, { -0.90, 0.61, -1.35 }, { -0.90, -0.01, -1.35 }, { -0.90, -0.01, -0.72 }, { 0.90, 0.61, -0.72 }, { 0.90, 0.61, -1.35 }, { 0.90, -0.01, -1.35 }, { 0.90, -0.01, -0.72 }, { -0.93, 0.65, 1.72 }, { -0.93, 0.65, 1.06 }, { -0.93, -0.02, 1.06 }, { -0.93, -0.02, 1.72 }, { 0.92, 0.65, 1.72 }, { 0.92, 0.65, 1.06 }, { 0.92, -0.02, 1.06 }, { 0.92, -0.02, 1.72 }]
+    
