@@ -83,6 +83,8 @@ cruise_start_pos = (0.0, 0.0, 0.0)
 cruise_start_pos = (-83.0, 18.0, -114.0)
 cruise_start_pos = (40.0, 30.0, -40.0)
 
+################################################################################################################
+
 # Misc
 set_dlp = False                 # change to "True" if you want to create a DLP file (scroll to the end of the script)
 
@@ -985,8 +987,8 @@ class Bounds:
             vertex.write(f)   
         
         for poly in self.polys:           
-            poly.write(f)    
-            
+            poly.write(f)
+                    
     @staticmethod
     def create(map_filename: str, vertices: List[Vector3], polys: List[Polygon], debug_bounds: bool) -> None:
         bnd = Bounds.initialize(vertices, polys)
@@ -997,14 +999,26 @@ class Bounds:
             if debug_bounds:
                 bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt"))
                 
-    def debug(self, output_file: str) -> None:
+    def debug(self, output_file: Path) -> None:
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+        
         with open(output_file, 'w') as out_f:
             out_f.write(str(self))
-                
+            
     @staticmethod
     def debug_file(input_file: Path, output_file: Path, debug_bounds_file: bool) -> None:
         if not debug_bounds_file:
             return
+        
+        if not input_file.exists():
+            print(f"The file {input_file} does not exist.")
+            return
+        
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
         
         with open(input_file, 'rb') as in_f:
             bnd = Bounds.read(in_f)
@@ -1106,7 +1120,8 @@ class Meshes:
     @classmethod
     def read(cls, file_name: str) -> 'Meshes':
         with open(file_name, 'rb') as f:
-            magic = read_binary_name(f, 16)     
+            # magic = read_binary_name(f, 16)     
+            magic = read_unpack(f, '<16s')[0].decode('utf-8').rstrip('\x00')   
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sq, bounding_box_radius = read_unpack(f, '<3f')
             texture_count, flags = read_unpack(f, '<2b')
@@ -1175,20 +1190,27 @@ class Meshes:
                 while len(indices_side) <= TRIANGLE:
                     indices_side.append(0)
                 write_pack(f, str(len(indices_side)) + 'H', *indices_side)
-                        
-    def debug(self, output_file: str, debug_folder: Path, debug_meshes: bool) -> None:
+                               
+    def debug(self, output_file: Path, debug_folder: Path, debug_meshes: bool) -> None:
         if not debug_meshes:
             return
-        
-        debug_folder.mkdir(parents = True, exist_ok = True)
-        with open(debug_folder / Path(output_file), 'w') as f:       
+            
+        if not debug_folder.exists():
+            print(f"The output folder {debug_folder} does not exist. Creating it.")
+            debug_folder.mkdir(parents = True, exist_ok = True)
+
+        with open(debug_folder / output_file, 'w') as f:
             f.write(str(self))
-                
+            
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_meshes_file: bool) -> None:
         if not debug_meshes_file:
             return
-        
+            
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
         with open(output_file, 'w') as out_f:
             out_f.write(str(cls.read(input_file)))
                 
@@ -1196,10 +1218,14 @@ class Meshes:
     def debug_folder(cls, input_folder: Path, output_folder: Path, debug_meshes_folder: bool) -> None:
         if not debug_meshes_folder:
             return
-        
-        for file in input_folder.iterdir():
-            if file.suffix == '.BMS':  
-                cls.debug_file(file, output_folder / (file.stem + ".txt"), True)
+            
+        if not output_folder.exists():
+            print(f"The output folder {output_folder} does not exist. Creating it.")
+            output_folder.mkdir(parents = True, exist_ok = True)
+
+        for file in input_folder.glob('*.BMS'):
+            output_file = output_folder / (file.stem + ".txt")
+            cls.debug_file(file, output_file, True)
                                 
     def __repr__(self):
         rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
@@ -1379,27 +1405,39 @@ class DLP:
 
             for vertex in self.vertices: 
                 vertex.write(f, '>') 
-                          
+                                    
     @staticmethod          
     def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
         if not debug_dlp_file:
             return
+
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
         
         with open(input_file, 'rb') as in_f:
             dlp_data = DLP.read(in_f)
 
         with open(output_file, 'w') as out_f:
             out_f.write(repr(dlp_data))
-                         
+            
+        print(f"Processed {input_file.name} to {output_file.name}")
+             
     @staticmethod
     def debug_folder(input_folder: Path, output_folder: Path, debug_dlp_folder: bool):
         if not debug_dlp_folder:
             return
         
-        output_folder.mkdir(parents = True, exist_ok = True)        
+        if not output_folder.exists():
+            print(f"The output folder {output_folder} does not exist. Creating it.")
+            output_folder.mkdir(parents = True, exist_ok = True)
+
         for file in input_folder.glob('*.DLP'):  
             if file.is_file():
-                DLP.debug_file(file, output_folder / (file.stem + '_.txt'), True)
+                output_file = output_folder / (file.stem + '_.txt')
+                DLP.debug_file(file, output_file, True)     
+                 
+                print(f"Processed {file.name} to {output_file.name}")    
                                                         
     def __repr__(self):
         return f"""
@@ -1535,9 +1573,9 @@ def save_mesh(
     mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
-        mesh.debug(mesh_filename + ".txt", DEBUG_FOLDER / "MESHES" / map_filename, debug_meshes)
-            
+        mesh.debug(Path(mesh_filename).with_suffix('.txt'), DEBUG_FOLDER / "MESHES" / map_filename, debug_meshes)
 
+            
 def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
@@ -3398,42 +3436,47 @@ class Portals:
                     write_pack(f, '<f', height)
                     _min.write(f, '<')
                     _max.write(f, '<')
-
+                    
                 if debug_portals:  
-                    cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")
+                    cls.debug(portals, DEBUG_FOLDER / "PORTALS" / (map_filename + "_PTL.txt"))            
+    @classmethod
+    def debug(cls, portals, output_file: Path):
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
 
-    @classmethod 
-    def debug(cls, portals, output_file: Path): 
-        try:
-            with open(output_file, 'w') as out_f:
-                for portal in portals:
-                    out_f.write(repr(portal))
-                    
-            print(f"Processed portal data to {output_file.name}")
-        except Exception as e:
-            print(f"Failed to write to {output_file.name}: {e}")
-                    
+        with open(output_file, 'w') as out_f:
+            for portal in portals:
+                out_f.write(repr(portal))
+                
+        print(f"Processed portal data to {output_file.name}")
+                            
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool):
         if not debug_portals_file:
             return
         
-        try:
-            with open(input_file, 'rb') as in_f:
-                portals = cls.read_all(in_f)   
-                 
-            if not portals:
-                print(f"No portals found in {input_file.name}")
-                return  
-            
-            with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                for portal in portals:
-                    out_f.write(repr(portal))   
-                    
-            print(f"Processed {input_file.name} to {output_file.name}")
-        except Exception as e:
-            print(f"Error processing {input_file.name}: {e}")
+        if not input_file.exists():
+            print(f"The file {input_file} does not exist.")
+            return
 
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
+        with open(input_file, 'rb') as in_f:
+            portals = cls.read_all(in_f)
+
+        if not portals:
+            print(f"No portals found in {input_file.name}")
+            return
+
+        with open(output_file, 'w') as out_f:
+            for portal in portals:
+                out_f.write(repr(portal))
+
+        print(f"Processed {input_file.name} to {output_file.name}")
+            
     def __repr__(self):
             return f"""
 PORTAL
@@ -3504,31 +3547,38 @@ class Bangers:
                     
             if debug_props:
                 cls.debug(bangers, DEBUG_FOLDER / "PROPS" / f"{output_file}.txt")
-                         
+                                    
     @classmethod
     def debug(cls, bangers, output_file: Path) -> None:
-        try:
-            with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                for banger in bangers:
-                    out_f.write(repr(banger))
-            print(f"Processed banger data to {output_file.name}")
-        except Exception as e:
-            print(f"Failed to write to {output_file.name}: {e}")
-    
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
+        with open(output_file, 'w') as out_f:
+            for banger in bangers:
+                out_f.write(repr(banger))
+        print(f"Processed banger data to {output_file.name}")
+                    
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_props_file: bool) -> None:
-        if debug_props_file:
-            try:
-                with open(input_file, 'rb') as in_f:
-                    bangers = cls.read_all(in_f)       
-                    
-                with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                    for banger in bangers:
-                        out_f.write(repr(banger))
-                        
-                print(f"Processed {input_file.name} to {output_file.name}")
-            except Exception as e:
-                print(f"Failed to process {input_file.name}: {e}")
+        if not debug_props_file:
+            return
+
+        if not input_file.exists():
+            print(f"The file {input_file} does not exist.")
+            return
+
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
+        with open(input_file, 'rb') as in_f:
+            bangers = cls.read_all(in_f)
+
+        with open(output_file, 'w') as out_f:
+            for banger in bangers:
+                out_f.write(repr(banger))
+        print(f"Processed {input_file.name} to {output_file.name}")
                                     
     def __repr__(self):
         return f"""
@@ -3710,29 +3760,39 @@ class Facades:
             cls.write_n(f, facades)
             for facade in facades:
                 facade.write(f)
-                         
+                                 
     @staticmethod
-    def debug(facades):
-        with open(DEBUG_FOLDER / "FACADES" / f"{map_filename}.txt", mode = 'w', encoding = 'utf-8') as f:
+    def debug(facades, output_file: Path):
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
+        with open(output_file, mode = 'w') as f:
             for facade in facades:
                 f.write(str(facade))
-                               
+        print(f"Processed facade data to {output_file.name}")
+                                           
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_facade_file: bool) -> None:
         if not debug_facade_file:
             return
 
-        try:
-            with open(input_file, 'rb') as in_f:
-                facades = cls.read_all(in_f)  
-                      
-            with open(output_file, 'w', encoding = 'utf-8') as out_f:
-                for facade in facades:
-                    out_f.write(repr(facade))
-                    
-        except Exception as e:
-            print(f"Failed to process {input_file.name}: {e}")
+        if not input_file.exists():
+            print(f"The file {input_file} does not exist.")
+            return
 
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
+        with open(input_file, 'rb') as in_f:
+            facades = cls.read_all(in_f)
+
+        with open(output_file, 'w') as out_f:
+            for facade in facades:
+                out_f.write(repr(facade))
+        print(f"Processed {input_file.name} to {output_file.name}")
+        
     def __repr__(self):
         return f"""
 FACADE
@@ -3759,7 +3819,7 @@ class FacadeEditor:
         Facades.write_all(output_file, facades)
 
         if debug_facades:
-            Facades.debug(facades)
+            Facades.debug(facades, DEBUG_FOLDER / "FACADES" / f"{map_filename}.txt")
 
     @staticmethod
     def read_scales(scales_file: Path):
@@ -3866,7 +3926,8 @@ class PhysicsEditor:
             return
         
         with open(input_file, 'rb') as f:
-            original_data = cls.read_all(f)    
+            original_data = cls.read_all(f)   
+             
         for phys_index, properties in user_set_properties.items():
             physics_obj = original_data[phys_index - 1]
             
@@ -4028,11 +4089,13 @@ class LightingEditor:
                 
     @classmethod
     def debug(cls, instances, debug_file: str, debug_lighting: bool) -> None:
-        if debug_lighting:
-            with open(debug_file, 'w') as debug_f:
-                for instance in instances:
-                    debug_f.write(instance.__repr__())
-                    debug_f.write("\n")
+        if not debug_lighting:
+            return
+
+        with open(debug_file, 'w') as debug_f:
+            for instance in instances:
+                debug_f.write(instance.__repr__())
+                debug_f.write("\n")
                 
     def __repr__(self):
         return f"""
@@ -4273,7 +4336,6 @@ def read_bai(debug_bai_data_file: Path):
     ai_map = aiMap()
 
     with open(debug_bai_data_file, 'rb') as f:
-
         ai_map.load(f)
 
         here = f.tell()
@@ -4385,7 +4447,6 @@ def write_bai_text(ai_map, streets):
 
 
         with open(USER_RESOURCES / "AI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
-
             parser = MiniParser(f)
     
             parser.begin_class('mmRoadSect')
