@@ -169,8 +169,9 @@ debug_dlp_data_folder = EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Ch
 
 ################################################################################################################               
 ################################################################################################################
+#! ======================= PROGRESS BAR, COLORS, RUN TIME ======================= !#
 
-# Progress Bar, Colors, & Run Time
+
 init(autoreset = True)
 
 colors_one = [
@@ -260,8 +261,9 @@ start_time = time.time()
 
 ################################################################################################################               
 ################################################################################################################
+#! ======================= CONSTANTS & INITIALIZATIONS ======================= !#
 
-##### CONSTANTS & INITIALIZATIONS #####
+
 TRIANGLE = 3
 QUAD = 4
 HIGH_MODEL = 8
@@ -605,175 +607,178 @@ bridge_config_list = [bridge_race_0, bridge_cnr]
 
 ################################################################################################################               
 ################################################################################################################     
- 
-# Simplify Struct usage
-def read_unpack(file, fmt):
+#! ======================= STRUCT AND VECTOR CLASSES ======================= !#
+
+
+def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
     return struct.unpack(fmt, file.read(struct.calcsize(fmt)))
 
-def write_pack(file, fmt, *args):
+def write_pack(file: BinaryIO, fmt: str, *args: object) -> None:
     file.write(struct.pack(fmt, *args))
 
 
-# VECTOR2 CLASS
 class Vector2:
-    def __init__(self, x, y):
+    def __init__(self, x: float, y: float) -> None:
         self.x = x
         self.y = y
             
-    def read(file, byte_order = '<'):
+    @staticmethod
+    def read(file: BinaryIO, byte_order: str = '<') -> 'Vector2':
         return Vector2(*read_unpack(file, f'{byte_order}2f'))
 
-    def readn(file, count, byte_order = '<'):
+    @staticmethod
+    def readn(file: BinaryIO, count: int, byte_order: str = '<') -> List['Vector2']:
         return [Vector2.read(file, byte_order) for _ in range(count)]
             
-    def write(self, file, byte_order = '<'):
+    def write(self, file: BinaryIO, byte_order: str = '<') -> None:
         write_pack(file, f'{byte_order}2f', self.x, self.y)
                 
-    def __add__(self, other):
+    def __add__(self, other: 'Vector2') -> 'Vector2':
         return Vector2(self.x + other.x, self.y + other.y)
 
-    def __sub__(self, other):
+    def __sub__(self, other: 'Vector2') -> 'Vector2':
         return Vector2(self.x - other.x, self.y - other.y)
 
-    def __mul__(self, other):
+    def __mul__(self, other: float) -> 'Vector2':
         return Vector2(self.x * other, self.y * other)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: float) -> 'Vector2':
         return Vector2(self.x / other, self.y / other)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Vector2') -> bool:
         return (self.x, self.y) == (other.x, other.y)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    def tuple(self):
+    def tuple(self) -> Tuple[float, float]:
         return (self.x, self.y)
 
-    def Cross(self, rhs = None):
+    def Cross(self, rhs: 'Vector2' = None) -> 'Vector2':
         if rhs is None:
             return Vector2(self.y, -self.x)
 
-        return (self.x*rhs.y) - (self.y*rhs.x)
+        return Vector2((self.x*rhs.y) - (self.y*rhs.x))
 
-    def Dot(self, rhs):
+    def Dot(self, rhs: 'Vector2') -> float:
         return (self.x * rhs.x) + (self.y * rhs.y)
 
-    def Mag2(self):
+    def Mag2(self) -> float:
         return (self.x * self.x) + (self.y * self.y)
 
-    def Dist2(self, other):
+    def Dist2(self, other: 'Vector2') -> float:
         return (other - self).Mag2()
 
-    def Dist(self, other):
+    def Dist(self, other: 'Vector2') -> float:
         return self.Dist2(other) ** 0.5
     
-    def Normalize(self):
+    def Normalize(self) -> 'Vector2':
         return self * (self.Mag2() ** -0.5)
     
-    def __repr__(self, round_values = round_debug_values):
+    def __repr__(self, round_values: bool = False) -> str:
         if round_values:
             return f'{round(self.x, 2):.2f}, {round(self.y, 2):.2f}'
         else:
             return f'{self.x:f}, {self.y:f}'
 
 
-# VECTOR3 CLASS
 class Vector3:
-    def __init__(self, x, y, z):
+    def __init__(self, x: float, y: float, z: float) -> None:
         self.x = x
         self.y = y
         self.z = z
         self._data = {"x": x, "y": y, "z": z}
         
-    def read(file, byte_order = '<'):
+    @staticmethod
+    def read(file: BinaryIO, byte_order: str = '<') -> 'Vector3':
         return Vector3(*read_unpack(file, f'{byte_order}3f'))
 
-    def readn(file, count, byte_order = '<'):
+    @staticmethod
+    def readn(file: BinaryIO, count: int, byte_order: str = '<') -> List['Vector3']:
         return [Vector3.read(file, byte_order) for _ in range(count)]
     
-    def write(self, file, byte_order = '<'):
+    def write(self, file: BinaryIO, byte_order: str = '<') -> None:
         write_pack(file, f'{byte_order}3f', self.x, self.y, self.z)
         
-    def copy(self):
+    def copy(self) -> 'Vector3':
         return Vector3(self.x, self.y, self.z)
     
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> float:
         return self._data[key]
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: float) -> None:
         if key in self._data:
             self._data[key] = value
             setattr(self, key, value)
         else:
             raise ValueError(f"Invalid key: {key}. Use 'x', 'y', or 'z'.")
 
-    def __add__(self, other):
+    def __add__(self, other: 'Vector3') -> 'Vector3':
         return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
 
-    def __sub__(self, other):
+    def __sub__(self, other: 'Vector3') -> 'Vector3':
         return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
 
-    def __mul__(self, other):
+    def __mul__(self, other: float) -> 'Vector3':
         return Vector3(self.x * other, self.y * other, self.z * other)
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: float) -> 'Vector3':
         return Vector3(self.x / other, self.y / other, self.z / other)
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Vector3') -> bool:
         return (self.x, self.y, self.z) == (other.x, other.y, other.z)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.x, self.y, self.z))
 
-    def tuple(self):
+    def tuple(self) -> Tuple[float, float, float]:
         return (self.x, self.y, self.z)
 
-    def Cross(self, rhs):
+    def Cross(self, rhs: 'Vector3') -> 'Vector3':
         return Vector3(self.y * rhs.z - self.z * rhs.y, self.z * rhs.x - self.x * rhs.z, self.x * rhs.y - self.y * rhs.x)
 
-    def Dot(self, rhs):
+    def Dot(self, rhs: 'Vector3') -> float:
         return (self.x * rhs.x) + (self.y * rhs.y) + (self.z * rhs.z)
     
-    def Mag(self):
+    def Mag(self) -> float:
         return self.Mag2() ** 0.5
     
-    def Mag2(self):
+    def Mag2(self) -> float:
         return (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
 
-    def Normalize(self):
+    def Normalize(self) -> 'Vector3':
         return self * (self.Mag2() ** -0.5)
 
-    def Dist2(self, other):
+    def Dist2(self, other: 'Vector3') -> float:
         return (other - self).Mag2()
 
-    def Dist(self, other):
+    def Dist(self, other: 'Vector3') -> float:
         return self.Dist2(other) ** 0.5
         
-    def Angle(self, rhs):
+    def Angle(self, rhs: 'Vector3') -> float:
         return math.acos(self.Dot(rhs) * ((self.Mag2() * rhs.Mag2()) ** -0.5))
     
-    def Negate(self):
+    def Negate(self) -> 'Vector3':
         return Vector3(-self.x, -self.y, -self.z)
 
-    def Set(self, x, y, z):
+    def Set(self, x: float, y: float, z: float) -> None:
         self.x = x
         self.y = y
         self.z = z
         
-    def __repr__(self, round_values=round_debug_values):
+    def __repr__(self, round_values: bool = False) -> str:
         if round_values:
             return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
         else:
             return f'{{ {self.x:f}, {self.y:f}, {self.z:f} }}'
 
-        
-def calc_normal(a, b, c):
+
+def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
     try:
         return (c - b).Cross(a - b).Normalize()
     except:
         return Vector3(0, 1, 0)
-    
+        
 ################################################################################################################               
 ################################################################################################################  
        
