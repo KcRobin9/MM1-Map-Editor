@@ -3372,7 +3372,7 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
 
 # PORTAL CLASS 
 class Portals:
-    def __init__(self, flags: int, edge_count: int, gap_2: int, cell_1: int, cell_2: int, height: float, _min: Vector3, _max: Vector3):
+    def __init__(self, flags: int, edge_count: int, gap_2: int, cell_1: int, cell_2: int, height: float, _min: Vector3, _max: Vector3, vertex_c: Vector3 = None):
         self.flags = flags
         self.edge_count = edge_count
         self.gap_2 = gap_2
@@ -3381,11 +3381,11 @@ class Portals:
         self.height = height
         self._min = _min 
         self._max = _max
+        self.vertex_c = vertex_c
         
     @classmethod
     def readn(cls, f) -> int:
-        magic, = read_unpack(f, '<I')
-        count, = read_unpack(f, '<I')
+        magic, count, = read_unpack(f, '<2I')
         return count
         
     @classmethod
@@ -3394,16 +3394,22 @@ class Portals:
         gap_2, = read_unpack(f, '<H')
         cell_1, cell_2, = read_unpack(f, '<2H')  
         height, = read_unpack(f, '<f')   
-        _min = Vector3.read(f)
-        _max = Vector3.read(f)
-        return cls(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max)
-    
+        _min = Vector3.read(f, '<')
+        _max = Vector3.read(f, '<')
+        
+        vertex_c = None
+        if edge_count == TRIANGLE:
+            vertex_c = Vector3.read(f, '<')
+
+        return cls(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max, vertex_c)
+        
     @classmethod
     def read_all(cls, f) -> 'List[Portals]':
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
     def write_n(cls, f, portals) -> None:
+        write_pack(f, '<I', 0) 
         write_pack(f, '<I', len(portals))
                 
     @classmethod
@@ -3411,11 +3417,11 @@ class Portals:
         with open(SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
             if empty_portals:
                 pass
+            
             else:
                 _, portal_tuples = prepare_portals(polys, vertices)
                 portals = []
                 
-                write_pack(f, '<I', 0) 
                 cls.write_n(f, portal_tuples)
 
                 for cell_1, cell_2, v1, v2 in portal_tuples:
@@ -3429,7 +3435,6 @@ class Portals:
                     portal = Portals(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max)
                     portals.append(portal)
                     
-                    # Write the portal data to file
                     write_pack(f, '<2B', flags, edge_count)
                     write_pack(f, '<H', gap_2)
                     write_pack(f, '<2H', cell_2, cell_1)
@@ -3438,7 +3443,7 @@ class Portals:
                     _max.write(f, '<')
                     
                 if debug_portals:  
-                    cls.debug(portals, DEBUG_FOLDER / "PORTALS" / (map_filename + "_PTL.txt"))            
+                    cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")            
     @classmethod
     def debug(cls, portals, output_file: Path):
         if not output_file.parent.exists():
@@ -3488,8 +3493,9 @@ PORTAL
     Height: {self.height:.2f}
     Min: {self._min}
     Max: {self._max}
-    """ 
-              
+    {'Vertex C ' + str(self.vertex_c) if self.vertex_c is not None else ''}
+    """
+    
 ################################################################################################################               
 ################################################################################################################            
 
