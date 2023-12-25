@@ -162,7 +162,7 @@ debug_bounds_folder = False
 debug_bounds_data_folder = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
 
 debug_dlp_file = False
-debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"        # Change the input DLP file here
+debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
 
 debug_dlp_folder = False    
 debug_dlp_data_folder = EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
@@ -816,8 +816,8 @@ class Polygon:
     def read(cls, f: BinaryIO) -> 'Polygon':
         cell_id, mtl_index, flags = read_unpack(f, '<H2B')
         vert_indices = read_unpack(f, '<4H') 
-        plane_edges = Vector3.readn(f, QUAD)
-        plane_n = Vector3.read(f)
+        plane_edges = Vector3.readn(f, QUAD, '<')
+        plane_n = Vector3.read(f, '<')
         plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
@@ -829,9 +829,9 @@ class Polygon:
         write_pack(f, '<4H', *self.vert_indices)
 
         for edge in self.plane_edges:
-            edge.write(f)
+            edge.write(f, '<')
             
-        self.plane_n.write(f)
+        self.plane_n.write(f, '<')
         write_pack(f, '<f', self.plane_d)
     
     def __repr__(self, bnd_instance):
@@ -908,24 +908,24 @@ class Bounds:
     @classmethod
     def read(cls, f: BinaryIO) -> 'Bounds':  
         magic = read_binary_name(f, 4)      
-        offset = Vector3.read(f)
+        offset = Vector3.read(f, '<')
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
-        center = Vector3.read(f)
+        center = Vector3.read(f, '<')
         radius, radius_sqr = read_unpack(f, '<2f')
-        bb_min = Vector3.read(f)
-        bb_max = Vector3.read(f)
+        bb_min = Vector3.read(f, '<')
+        bb_max = Vector3.read(f, '<')
         num_verts, num_polys = read_unpack(f, '<2l')
         num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<3l')
         x_scale, z_scale = read_unpack(f, '<2f')
         num_indices, height_scale, cache_size = read_unpack(f, '<3l')
         
-        vertices = Vector3.readn(f, num_verts)
+        vertices = Vector3.readn(f, num_verts, '<')
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
         
-        hot_verts = Vector3.readn(f, num_hot_verts2)
+        hot_verts = Vector3.readn(f, num_hot_verts2, '<')
         edge_verts1 = read_unpack(f, f'<{num_edges}I')
         edge_verts2 = read_unpack(f, f'<{num_edges}I')
-        edge_plane_n = Vector3.readn(f, num_edges)
+        edge_plane_n = Vector3.readn(f, num_edges, '<')
         edge_plane_d = read_unpack(f, f'<{num_edges}f')
 
         row_offsets = None
@@ -977,19 +977,19 @@ class Bounds:
             
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '<4s', self.magic)
-        self.offset.write(f)         
+        self.offset.write(f, '<')         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
-        self.center.write(f) 
+        self.center.write(f, '<') 
         write_pack(f, '<2f', self.radius, self.radius_sqr)
-        self.bb_min.write(f)
-        self.bb_max.write(f)
+        self.bb_min.write(f, '<')
+        self.bb_max.write(f, '<')
         write_pack(f, '<2l', self.num_verts, self.num_polys)
         write_pack(f, '<3l', self.num_hot_verts1, self.num_hot_verts2, self.num_edges)
         write_pack(f, '<2f', self.x_scale, self.z_scale)
         write_pack(f, '<3l', self.num_indices, self.height_scale, self.cache_size)
  
         for vertex in self.vertices:       
-            vertex.write(f)   
+            vertex.write(f, '<')   
         
         for poly in self.polys:           
             poly.write(f)
@@ -1125,11 +1125,10 @@ class Meshes:
     @classmethod
     def read(cls, file_name: str) -> 'Meshes':
         with open(file_name, 'rb') as f:
-            # magic = read_binary_name(f, 16)     
-            magic = read_unpack(f, '<16s')[0].decode('utf-8').rstrip('\x00')   
+            magic = read_binary_name(f, 16)     
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sq, bounding_box_radius = read_unpack(f, '<3f')
-            texture_count, flags = read_unpack(f, '<2b')
+            texture_count, flags = read_unpack(f, '<2B')
             f.read(6)
                                         
             texture_names = [read_binary_name(f, 32) for _ in range(texture_count)]
@@ -1137,23 +1136,18 @@ class Meshes:
             f.read(16 * texture_count)
                     
             if vertex_count < MESH_THRESHOLD:
-                coordinates = Vector3.readn(f, vertex_count)
+                coordinates = Vector3.readn(f, vertex_count, '<')
             else:
-                coordinates = Vector3.readn(f, vertex_count + 8)
+                coordinates = Vector3.readn(f, vertex_count + 8, '<')
+                        
+            texture_darkness = list(read_unpack(f, f"{adjunct_count}B"))
+            tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f"))
+            enclosed_shape = list(read_unpack(f, f"{adjunct_count}H"))
+            surface_sides = list(read_unpack(f, f"{surface_count}B"))
             
-            texture_darkness = list(read_unpack(f, str(adjunct_count) + 'b'))  # Note: do not add "<" to the format strings
-            tex_coords = list(read_unpack(f, str(adjunct_count * 2) + 'f'))
-            enclosed_shape = list(read_unpack(f, str(adjunct_count) + 'H'))
-            surface_sides = list(read_unpack(f, str(surface_count) + 'b'))
-
             indices_per_surface = indices_count // surface_count
-            indices_sides = []
-
-            for _ in range(surface_count):
-                indices_side_format = f"<{indices_per_surface}H"
-                indices_side = list(read_unpack(f, indices_side_format))
-                indices_sides.append(indices_side)
-
+            indices_sides = [list(read_unpack(f, f"<{indices_per_surface}H")) for _ in range(surface_count)]
+            
         return cls(
             magic, vertex_count, adjunct_count, surface_count, indices_count, 
             radius, radius_sq, bounding_box_radius, 
@@ -1174,27 +1168,27 @@ class Meshes:
                 f.write(b'\0' * 16)
                             
             for coordinate in self.coordinates:
-                coordinate.write(f)
+                coordinate.write(f, '<')
 
             if self.vertex_count >= MESH_THRESHOLD:
                 for _ in range(8):
-                    DEFAULT_VECTOR3.write(f)
-                                        
-            write_pack(f, str(self.adjunct_count) + 'b', *self.texture_darkness)
+                    DEFAULT_VECTOR3.write(f, '<')
+                                                                        
+            write_pack(f, f"{self.adjunct_count}B", *self.texture_darkness)
                         
             # Ensure Tex Coords is not larger than Adjunct Count * 2
             if len(self.tex_coords) > self.adjunct_count * 2:
                 self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
                 
-            write_pack(f, str(self.adjunct_count * 2) + 'f', *self.tex_coords)            
-            write_pack(f, str(self.adjunct_count) + 'H', *self.enclosed_shape)
-            write_pack(f, str(self.surface_count) + 'b', *self.surface_sides)
+            write_pack(f, f"{self.adjunct_count * 2}f", *self.tex_coords)
+            write_pack(f, f"{self.adjunct_count}H", *self.enclosed_shape)
+            write_pack(f, f"{self.surface_count}B", *self.surface_sides)
 
             # A triangle requires 4 indices (the 4th index will be 0)
             for indices_side in self.indices_sides:
                 while len(indices_side) <= TRIANGLE:
                     indices_side.append(0)
-                write_pack(f, str(len(indices_side)) + 'H', *indices_side)
+                write_pack(f, f"{len(indices_side)}H", *indices_side)
                                
     def debug(self, output_file: Path, debug_folder: Path, debug_meshes: bool) -> None:
         if not debug_meshes:
@@ -3425,6 +3419,7 @@ class Portals:
             
             else:
                 _, portal_tuples = prepare_portals(polys, vertices)
+                
                 portals = []
                 
                 cls.write_n(f, portal_tuples)
@@ -3506,13 +3501,18 @@ PORTAL
 
 def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
     name_data = bytearray()
-    while True:
-        char = f.read(1)
-        if char == b'\0':
-            break
-        name_data.extend(char)
-        if length is not None and len(name_data) == length:
-            break
+    if length is None:
+        while True:
+            char = f.read(1)
+            if char == b'\0' or not char:
+                break
+            name_data.extend(char)
+    else:
+        name_data = bytearray(f.read(length))
+        null_pos = name_data.find(b'\0')
+        if null_pos != -1:
+            name_data = name_data[:null_pos]
+    
     return name_data.decode(encoding)
                       
                       
@@ -3552,8 +3552,8 @@ class Bangers:
         
             for banger in bangers:
                 write_pack(f, '<2H', ROOM, COLLIDE_FLAG)  
-                banger.offset.write(f)
-                banger.face.write(f)
+                banger.offset.write(f, '<')
+                banger.face.write(f, '<')
                 f.write(banger.name.encode('utf-8'))
                     
             if debug_props:
@@ -3766,9 +3766,10 @@ class Facades:
         f.write(b'\x00')
 
     @classmethod
-    def write_all(cls, output_file, facades):
+    def write_all(cls, output_file: Path, facades) -> None:
         with open(output_file, mode = 'wb') as f:
             cls.write_n(f, facades)
+            
             for facade in facades:
                 facade.write(f)
                                  
@@ -3928,6 +3929,7 @@ class PhysicsEditor:
     def write_all(output_file: Path, physics_params: List['PhysicsEditor']) -> None:
         with open(output_file, 'wb') as f:
             write_pack(f, '>I', len(physics_params))
+            
             for param in physics_params:                
                 param.write(f)
                 
@@ -4197,18 +4199,18 @@ class aiPath:
         self.LaneVertices = Vector3.readn(f, self.NumVertexs * (self.NumLanes + self.NumSidewalks))
 
         # Center/Dividing line between the two sides of the road
-        self.CenterVertices = Vector3.readn(f, self.NumVertexs)
-        self.VertXDirs = Vector3.readn(f, self.NumVertexs)
-        self.Normals = Vector3.readn(f, self.NumVertexs)
-        self.VertZDirs = Vector3.readn(f, self.NumVertexs)
-        self.SubSectionDirs = Vector3.readn(f, self.NumVertexs)
+        self.CenterVertices = Vector3.readn(f, self.NumVertexs, '<')
+        self.VertXDirs = Vector3.readn(f, self.NumVertexs, '<')
+        self.Normals = Vector3.readn(f, self.NumVertexs, '<')
+        self.VertZDirs = Vector3.readn(f, self.NumVertexs, '<')
+        self.SubSectionDirs = Vector3.readn(f, self.NumVertexs, '<')
 
         # Outer Edges, Inner Edges (Curb)
-        self.Boundaries = Vector3.readn(f, self.NumVertexs * 2)
+        self.Boundaries = Vector3.readn(f, self.NumVertexs * 2, '<')
 
         # Inner Edges on the opposite side of the road
-        self.LBoundaries = Vector3.readn(f, self.NumVertexs)
-        self.StopLightPos = Vector3.readn(f, 2)
+        self.LBoundaries = Vector3.readn(f, self.NumVertexs, '<')
+        self.StopLightPos = Vector3.readn(f, 2, '<')
         self.LaneWidths = read_unpack(f, '<5f')
         self.LaneLengths = read_unpack(f, '<10f')
 
@@ -6092,19 +6094,18 @@ facade_list = [orange_building_one, orange_building_two, orange_building_three, 
 # SET AI PATHS
 
 f"""
-# The following variables are OPTIONAL: 
+The following variables are OPTIONAL: 
 
-# Intersection_types, defaults to: {CONTINUE}
+Intersection_types, defaults to: {CONTINUE}
 (possbile types: {STOP}, {STOP_LIGHT}, {YIELD}, {CONTINUE}
 
-# Stop_light_names, defaults to: {STOP_LIGHT_SINGLE}
+Stop_light_names, defaults to: {STOP_LIGHT_SINGLE}
 (possbile names: {STOP_SIGN}, {STOP_LIGHT_SINGLE}, {STOP_LIGHT_DUAL}
 
-# Stop_light_positions, defaults to: {(0, 0, 0)}
-# Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: {NO}
+Stop_light_positions, defaults to: {(0, 0, 0)}
+Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: {NO}
 (possbile values: {YES}, {NO}
 
-Note:
 # Stop lights will only show if the Intersection_type is {STOP_LIGHT}
 """
 
