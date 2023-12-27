@@ -1,0 +1,20 @@
+
+MESH
+    Magic: 3HSM
+    VertexCount: 3
+    AdjunctCount: 3
+    SurfaceCount: 1
+    IndicesCount: 4
+    Radius: 907.06
+    RadiusSq: 822764.75
+    BoundingBoxRadius: 14.12
+    TextureCount: 1
+    Flags: 3
+    TextureNames: ['DT_SKY04_BRICK']
+    Coordinates: [{ 363.897919, 0.150064, -810.876221 }, { 363.932068, 0.150063, -830.853882 }, { 343.960114, 0.150013, -830.854309 }]
+    TextureDarkness: [2, 2, 2]
+    TexCoords: 9.98, 0.00, 10.00, 9.99, 0.00, 9.99
+    Enclosed Shape: [0, 1, 2]
+    SurfaceSides: [1]
+    IndicesSides: [[0, 1, 2, 0]]
+    
