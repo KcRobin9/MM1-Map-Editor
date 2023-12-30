@@ -2910,70 +2910,70 @@ def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float
 
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
+    
+    if not set_minimap and is_blender_running():
+        return
+    
+    global hudmap_vertices
+    global hudmap_properties
 
-    if set_minimap and not is_blender_running():
-        global hudmap_vertices
-        global hudmap_properties
-                
-        min_x = min(point[0] for polygon in hudmap_vertices for point in polygon)
-        max_x = max(point[0] for polygon in hudmap_vertices for point in polygon)
-        min_z = min(point[2] for polygon in hudmap_vertices for point in polygon)
-        max_z = max(point[2] for polygon in hudmap_vertices for point in polygon)
-        
-        width = int(max_x - min_x)
-        height = int(max_z - min_z)
+    min_x = min(point[0] for polygon in hudmap_vertices for point in polygon)
+    max_x = max(point[0] for polygon in hudmap_vertices for point in polygon)
+    min_z = min(point[2] for polygon in hudmap_vertices for point in polygon)
+    max_z = max(point[2] for polygon in hudmap_vertices for point in polygon)
 
-        def draw_polygon(ax, polygon, minimap_outline_color: str, 
-                        label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
-            
-            xs, ys = zip(*[(point[0], point[2]) for point in polygon])
-            xs, ys = xs + (xs[0],), ys + (ys[0],)  # the commas after [0] should not be removed
-            
-            if minimap_outline_color:
-                ax.plot(xs, ys, color = minimap_outline_color, linewidth = line_width)
-            
-            if hud_fill:
-                ax.fill(xs, ys, hud_color)
-                
-            if add_label: 
-                center = calculate_center_tuples(polygon)
-                ax.text(center[0], center[2], label, color = 'white', 
-                        ha = 'center', va = 'center', fontsize = 4.0)
+    width = int(max_x - min_x)
+    height = int(max_z - min_z) 
+    def draw_polygon(ax, polygon, minimap_outline_color: str, 
+                    label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
 
-        # Regular Export (320 and 640 versions)
-        _, ax = plt.subplots()
-        ax.set_facecolor(background_color)
-        
+        xs, ys = zip(*[(point[0], point[2]) for point in polygon])
+        xs, ys = xs + (xs[0],), ys + (ys[0],)  # the commas after [0] should not be removed
+
+        if minimap_outline_color:
+            ax.plot(xs, ys, color = minimap_outline_color, linewidth = line_width)
+
+        if hud_fill:
+            ax.fill(xs, ys, hud_color)
+
+        if add_label: 
+            center = calculate_center_tuples(polygon)
+            ax.text(center[0], center[2], label, color = 'white', 
+                    ha = 'center', va = 'center', fontsize = 4.0)   
+            
+    # Regular Export (320 and 640 versions)
+    _, ax = plt.subplots()
+    ax.set_facecolor(background_color)
+
+    for i, polygon in enumerate(hudmap_vertices):
+        hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
+
+        draw_polygon(ax, polygon, minimap_outline_color, 
+                     add_label = False, hud_fill = hud_fill, hud_color = hud_color)
+
+    ax.set_aspect('equal', 'box')
+    ax.axis('off')
+
+    # Save JPG 640 and 320 Pictures                    
+    plt.savefig(SHOP / 'BMP16' / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
+    plt.savefig(SHOP / 'BMP16' / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
+
+    if debug_minimap or set_lars_race_maker:
+        fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
+        ax_debug.set_facecolor('black')
+
         for i, polygon in enumerate(hudmap_vertices):
             hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
-            
-            draw_polygon(ax, polygon, minimap_outline_color, 
-                         add_label = False, hud_fill = hud_fill, hud_color = hud_color)
-            
-        ax.set_aspect('equal', 'box')
-        ax.axis('off')
-                    
-        # Save JPG 640 and 320 Pictures                    
-        plt.savefig(SHOP / 'BMP16' / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-        plt.savefig(SHOP / 'BMP16' / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
-            
-        if debug_minimap or set_lars_race_maker:
-            fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
-            ax_debug.set_facecolor('black')
-            
-            for i, polygon in enumerate(hudmap_vertices):
-                hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
-                
-                draw_polygon(ax_debug, polygon, minimap_outline_color, 
-                            label = bound_label if debug_minimap_id else None, 
-                            add_label = True, hud_fill = hud_fill, hud_color = hud_color)
-                        
-            ax_debug.axis('off')
-            ax_debug.set_xlim([min_x, max_x])
-            ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
-            ax_debug.set_position([0, 0, 1, 1])
 
-            plt.savefig(BASE_DIR / f"{map_filename}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
+            draw_polygon(ax_debug, polygon, minimap_outline_color, 
+                        label = bound_label if debug_minimap_id else None, 
+                        add_label = True, hud_fill = hud_fill, hud_color = hud_color)
+
+        ax_debug.axis('off')
+        ax_debug.set_xlim([min_x, max_x])
+        ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
+        ax_debug.set_position([0, 0, 1, 1]) 
+        plt.savefig(BASE_DIR / f"{map_filename}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
 
 
 # Create Animations                              
@@ -3611,20 +3611,22 @@ class BangerEditor:
         self.props = [] 
         
     def process_all(self, user_set_props: list, set_props: bool):
-        if set_props: 
-            per_race_props = {}
+        if not set_props:
+            return
+        
+        per_race_props = {}
 
-            for prop in user_set_props:
-                race_mode = prop.get('race_mode', 'DEFAULT')
-                race_num = prop.get('race_num', '')
-                race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
-                per_race_props.setdefault(race_key, []).append(prop)
+        for prop in user_set_props:
+            race_mode = prop.get('race_mode', 'DEFAULT')
+            race_num = prop.get('race_num', '')
+            race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
+            per_race_props.setdefault(race_key, []).append(prop)
 
-            for race_key, race_props in per_race_props.items():                
-                self.props.clear()
-                self.add_multiple(race_props)
-                current_filename = self._filename_with_suffix(race_key)
-                Bangers.write_all(SHOP_CITY / current_filename, self.props, debug_props) 
+        for race_key, race_props in per_race_props.items():                
+            self.props.clear()
+            self.add_multiple(race_props)
+            current_filename = self._filename_with_suffix(race_key)
+            Bangers.write_all(SHOP_CITY / current_filename, self.props, debug_props) 
             
     def add_multiple(self, user_set_props):    
         for prop in user_set_props:
@@ -3659,14 +3661,16 @@ class BangerEditor:
                 self.props.append(Bangers(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
                 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
-        if append_props:
-            with open(input_props_f, 'rb') as f:
-                original_props = Bangers.read_all(f)
-                  
-            self.props = original_props
-            self.add_multiple(props_to_append)
+        if not append_props:
+            return
             
-            Bangers.write_all(appended_props_f, self.props, debug_props)
+        with open(input_props_f, 'rb') as f:
+            original_props = Bangers.read_all(f)
+              
+        self.props = original_props
+        self.add_multiple(props_to_append)
+        
+        Bangers.write_all(appended_props_f, self.props, debug_props)
                             
     def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
         assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
