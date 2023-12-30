@@ -436,7 +436,7 @@ PLANE_LARGE = "vaboeing"  # No collision
 
 # Race Names
 blitz_race_names = ["Chaotic Tower"]
-circuit_race_names = ["Circuit Race"]   
+circuit_race_names = ["Circuit Race"] 
 checkpoint_race_names = ["Photo Finish"]
 
 # Races
@@ -2535,7 +2535,11 @@ def create_folders(map_filename: str) -> None:
         os.makedirs(path, exist_ok = True)
         
         
-def create_map_info(map_name: str, map_filename: str) -> None:
+def create_map_info(map_name: str, map_filename: str, 
+                    blitz_race_names: List[str], 
+                    circuit_race_names: List[str], 
+                    checkpoint_race_names: List[str]) -> None:
+    
     with open(SHOP / "TUNE" / f"{map_filename}.CINFO", "w") as f:
         
         f.write(f"""
@@ -2549,17 +2553,16 @@ BlitzNames={'|'.join(blitz_race_names)}
 CircuitNames={'|'.join(circuit_race_names)}
 CheckpointNames={'|'.join(checkpoint_race_names)}
 """)
+
+    
+def copy_custom_textures(custom_textures_folder: Path, destination_folder: Path) -> None: 
+    for custom_tex in custom_textures_folder.iterdir():
+        shutil.copy(custom_tex, destination_folder / custom_tex.name)
         
-                    
-def copy_custom_textures() -> None: 
-    for custom_tex in (BASE_DIR / "Custom Textures").iterdir():
-        shutil.copy(custom_tex, SHOP / "TEX16O" / custom_tex.name)
-
-
-def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
-    input_folder = EDITOR_RESOURCES / 'TUNE'
-    output_folder = SHOP / 'TUNE'
-
+         
+def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[int, str]]], 
+                               input_folder: Path, output_folder: Path) -> None:
+    
     for file in input_folder.glob('*.MMBANGERDATA'):
         if file.stem not in bangerdata_properties:
             shutil.copy(file, output_folder)
@@ -2579,18 +2582,15 @@ def edit_and_copy_mmbangerdata(bangerdata_properties) -> None:
             tweaked_banger_files = output_folder / banger_files.name
             with open(tweaked_banger_files, 'w') as f:
                 f.writelines(lines)
-                
-                        
-def copy_core_tune_files() -> None:    
-    for file in (EDITOR_RESOURCES / 'TUNE').glob('*'):
+
+
+def copy_core_tune_files(tune_source_folder: Path, tune_destination_folder: Path) -> None:    
+    for file in tune_source_folder.glob('*'):
         if not file.name.endswith('.MMBANGERDATA'):
-            shutil.copy(file, SHOP / 'TUNE')
-                
-                
-def copy_dev_folder(mm1_folder: Path, map_filename: str) -> None:
-    input_folder = BASE_DIR / 'dev'
-    output_folder = mm1_folder / 'dev'
-    
+            shutil.copy(file, tune_destination_folder)
+            
+            
+def copy_dev_folder(input_folder: Path, output_folder: Path, map_filename: str) -> None:
     shutil.rmtree(output_folder, ignore_errors = True)  
     shutil.copytree(input_folder, output_folder)
     
@@ -6385,7 +6385,7 @@ dlp_patches = [
 
 # Call Editor Functions
 create_folders(map_filename)
-create_map_info(map_name, map_filename)
+create_map_info(map_name, map_filename, blitz_race_names, circuit_race_names, checkpoint_race_names)
 create_races(map_filename, race_data)
 create_cops_and_robbers(map_filename, cnr_waypoints)
 
@@ -6406,10 +6406,11 @@ lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "L
 LightingEditor.write_file(lighting_instances, lighting_configs, SHOP / "TUNE" / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, DEBUG_FOLDER / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
-copy_dev_folder(mm1_folder, map_filename)
-edit_and_copy_mmbangerdata(bangerdata_properties)
-copy_core_tune_files()
-copy_custom_textures()
+copy_dev_folder(BASE_DIR / 'dev', SHOP / 'dev', map_filename)
+edit_and_copy_mmbangerdata(bangerdata_properties, EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE') 
+copy_core_tune_files(EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE')
+copy_custom_textures(BASE_DIR / "Custom Textures", SHOP / "TEX16O")
+
 create_ext(map_filename, hudmap_vertices)
 create_animations(map_filename, anim_data, set_animations)   
 create_bridges(map_filename, bridge_list, set_bridges) 
