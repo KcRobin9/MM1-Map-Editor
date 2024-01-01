@@ -1,6 +1,7 @@
 *.pkl
 *.BNG
 /dev/
+/WIP/
 /SHOP/
 /Blender Export/
 
