@@ -1,0 +1,86 @@
+=====================================
+===== INSTALLATION INSTRUCTIONS =====
+=====================================
+
+
+Welcome to this Installation Guide
+Depending on your current situation, the setup for the Map Editor may take around 30 minutes to complete
+Please find all the (necessary) steps below
+
+
+DOWNLOAD PYTHON (REQUIRED)
+	https://www.python.org/downloads/
+
+
+DOWNLOAD VISUAL STUDIO CODE (STRONGLY RECOMMENDED)
+	https://code.visualstudio.com/download
+
+
+DOWNLOAD BLENDER (STRONGLY RECOMMENDED) (tested on 3.6 & 4.0)
+	https://www.blender.org/download/
+
+
+INSTALL PYTHON (tested on 3.10.7 & 3.12.1)
+	Use the default settings provided by the installer
+
+
+CONFIGURE VISUAL STUDIO CODE
+	Open the program
+	Go to the Extensions tab (on the far left, or hold 'Ctrl + Shift + X')
+	In the search bar, search and install the following extensions
+		"Pylance"
+		"Blender Development" 
+		"Better Comments" (by Aaron Bond) [optional, but recommended]
+
+
+TEST PYTHON & INSTALL REQUIRED LIBRARIES
+	Double click on "CLICK ME.bat"
+	This will run a simple Python test script and install all required Python libraries
+
+	If you get an error saying that 'mathutils' cannot be installed, make sure you have Microsoft Visual C++ 14.0 or greater installed
+	Get it with "Microsoft C++ Build Tools": https://visualstudio.microsoft.com/visual-cpp-build-tools/
+
+
+INSTALL BLENDER PYTHON LIBRARIES
+	Since Blender uses its own Python interpreter, we must manually install a few libraries from the previous step into Blender's Python Environment
+	
+		First, locate the 'python.exe' in your Blender installation
+		Here is where it may be located
+			(1) C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe		# Normal installation
+			(2) E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe				# Steam
+			
+			Now go back to the Map Editor folder, copy 'powershell.exe', and paste it in the Blender folder with the 'python.exe'
+			If your system is asking for permissions, click on 'Continue'
+			
+			Double click 'powershell.exe' in the Blender folder. 
+			In here, copy & paste the commands below (one at a time) to install the libraries and click on enter
+				python -m pip install psutil
+				python -m pip install matplotlib
+				
+				Once the libraries are installed succesfully, you can exit the powershell program
+				
+				
+CONNECT PYTHON & BLENDER
+	Open 'MAP_EDITOR_ALPHA_v1.py' with Visual Studio Code
+		In Visual Studio Code, click on the three-line menu icon at the top left corner
+		Then click on 'File' and then click on 'Add Folder to Workspace...' 
+			Now make sure that the folder you Add / Select is 'MM1-Map-Editor'
+			Once selected, click on 'Add' at the bottom right of your menu window
+			
+			Go back to Visual Studio Code with the Editor open, and press 'Ctrl + Shift + P'
+			A search bar will appear at the top, in here, type 'Blender'
+			Now various options should appear, click on the one that reads 'Blender: Start'
+			This will start an instance of Blender, to which the Python script is connected
+			
+				To run the script, and import the test city in, again press 'Ctrl + Shift + P' in Visual Studio Code
+				Again type 'Blender' and click on the option that reads 'Blender: Run Script', this will execute the script
+				
+				Wait a couple seconds, and click on the Blender exe you had opened before
+				Now you should see a test city in Blender, ready to be edited and build upon
+				
+				
+CLOSING NOTES
+	The previous steps should fully prepare you for installing all the software tools and libraries, as well as connecting everything
+	Additional information on how to best leverage the power of the Editor (e.g. with keybindings)  will be provided in a future update
+	
+~~~
