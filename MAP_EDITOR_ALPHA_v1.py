@@ -74,14 +74,16 @@ set_minimap = True              # change to "True" if you want a MINIMAP (defaul
 minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
 
 # AI
-set_ai = True                   # change to "True" if you want AI
-set_reverse_streets = False     # change to "True" if you want to automatically add a reverse AI path for each lane
+set_ai_streets = True           # change to "True" if you want AI
+set_reverse_ai_streets = False  # change to "True" if you want to automatically add a reverse AI path for each lane
 set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
 
 # You can add multiple Cruise Start positions here (as backup), only the last one will be used
 cruise_start_pos = (0.0, 0.0, 0.0)
 cruise_start_pos = (-83.0, 18.0, -114.0)
 cruise_start_pos = (40.0, 30.0, -40.0)
+
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################
 
@@ -95,9 +97,10 @@ append_output_props_f = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
-# Blender Textures
-load_tex_materials = False      # change to "True" if you want to load all texture materials (they will be available regardless) (takes a few extra seconds to load)
-texture_folder = EDITOR_RESOURCES / "TEXTURES"
+# Blender Textures     
+texture_folder = EDITOR_RESOURCES / "TEXTURES"         
+load_all_texures = False        # change to "True" if you want to load all texture materials (takes a few extra seconds to load)
+                                # change to "False" if you want to load only the textures that are used in your Map (faster loading)
 
 # Blender Waypoint Editor 
 waypoint_file = EDITOR_RESOURCES / "RACE" / "BLITZ4WAYPOINTS.CSV"  # input waypoint CSV file
@@ -118,8 +121,6 @@ empty_portals = False           # change to "True" if you want to create an empt
 truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, we will truncate charachters past 254 (may compromise visibility - lowering portals may mitigate this issue)
 
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
-
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
 ################################################################################################################
 
@@ -541,7 +542,7 @@ cnr_waypoints = [
 
 
 #* SETUP V (optional, Animations)
-anim_data = {
+animations_data = {
     'plane': [                  # you can only use "plane" and "eltrain", other objects will not work
         (450, 30.0, -450),      # you can not have multiple Planes or Eltrains
         (450, 30.0, 450),       # you can set any number of coordinates for your path(s)
@@ -949,7 +950,7 @@ class Bounds:
     
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
-        magic = b'2DNB\0'
+        magic = "2DNB"
         offset = DEFAULT_VECTOR3
         x_dim, y_dim, z_dim = 0, 0, 0
         center = calculate_center(vertices)
@@ -976,7 +977,7 @@ class Bounds:
             )
             
     def write(self, f: BinaryIO) -> None:
-        write_pack(f, '<4s', self.magic)
+        write_pack(f, '<4s', self.magic.encode('ascii').ljust(4, b'\0'))
         self.offset.write(f, '<')         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
         self.center.write(f, '<') 
@@ -1050,7 +1051,7 @@ class Bounds:
             print(f"Processed {file.name} to {output_files.name}")
                     
     def __repr__(self) -> str:
-        polys_representation = '\n'.join([poly.__repr__(self) for poly in self.polys])
+        polygon_polys = '\n'.join([poly.__repr__(self) for poly in self.polys])
         return f"""
 BOUND
     Magic: 2DNB
@@ -1076,7 +1077,7 @@ BOUND
     Vertices:
     {self.vertices}\n
     ======= Polys =======
-    {polys_representation}\n
+    {polygon_polys}\n
     ======= Split =======\n
     Hot Verts: {self.hot_verts}
     Edge Verts1: {self.edge_verts1}
@@ -2977,16 +2978,16 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
 
 
 # Create Animations                              
-def create_animations(map_filename: str, anim_data: Dict[str, List[Tuple]], set_anim: bool) -> None: 
-    if not set_anim:
+def create_animations(map_filename: str, animations_data: Dict[str, List[Tuple]], set_animations: bool) -> None: 
+    if not set_animations:
         return
     
     with open(SHOP_CITY / map_filename / "ANIM.CSV", 'w', newline = '') as main_f:
-        for obj in anim_data:
+        for obj in animations_data:
             csv.writer(main_f).writerow([f"anim_{obj}"])
 
             with open(SHOP_CITY / map_filename / f"ANIM_{obj.upper()}.CSV", 'w', newline = '') as anim_f:                    
-                for coordinates in anim_data[obj]:
+                for coordinates in animations_data[obj]:
                     csv.writer(anim_f).writerow(coordinates)
                         
                         
@@ -3693,9 +3694,9 @@ class BangerEditor:
 
                 if 'face' not in props_dict:
                     new_prop['face'] = (
-                        random.uniform(-1e6, 1e6),
-                        random.uniform(-1e6, 1e6), 
-                        random.uniform(-1e6, 1e6)
+                        random.uniform(-HUGE, HUGE),
+                        random.uniform(-HUGE, HUGE), 
+                        random.uniform(-HUGE, HUGE)
                     )
                 else:
                     new_prop['face'] = props_dict['face']
@@ -3954,6 +3955,7 @@ class PhysicsEditor:
         cls.write_all(output_file, original_data)
         
         if debug_physics:
+            os.makedirs(DEBUG_FOLDER / "PHYSICS", exist_ok = True)
             cls.debug(DEBUG_FOLDER / "PHYSICS" / "PHYSICS_DB.txt", original_data)
                         
     @classmethod
@@ -4177,7 +4179,7 @@ class TextureSheet:
 
 #! ################# Code by 0x1F9F1 (Modified) // start ################# !#     
 
-class aiPath:                  
+class aiStreet:                  
     def load(self, f):
         self.ID, = read_unpack(f, '<H')
         self.NumVertexs, = read_unpack(f, '<H')
@@ -4219,7 +4221,7 @@ class aiPath:
         self.LaneLengths = read_unpack(f, '<10f')
 
     def read(f):
-        result = aiPath()
+        result = aiStreet()
         result.load(f)
         return result
 
@@ -4267,7 +4269,7 @@ class aiMap:
         print(f'{num_paths} roads, {num_isects} isects')
 
         for _ in range(num_paths):
-            self.Paths.append(aiPath.read(file))
+            self.Paths.append(aiStreet.read(file))
 
         for _ in range(num_isects):
             self.Intersections.append(aiIntersection.read(file))
@@ -4349,10 +4351,10 @@ class MiniParser:
 ###################################################################################################################
 ###################################################################################################################
 
-def read_bai(debug_bai_data_file: Path):
+def read_bai(input_file: Path):
     ai_map = aiMap()
 
-    with open(debug_bai_data_file, 'rb') as f:
+    with open(input_file, 'rb') as f:
         ai_map.load(f)
 
         here = f.tell()
@@ -4405,6 +4407,7 @@ def read_bai(debug_bai_data_file: Path):
                 if isect_path.IntersectionIds[0] != isect_id and isect_path.OncomingPath != path.ID:
                     has_sink = True
                     break
+                
         if not has_sink:
             print(f'No eligible roads identified to turn onto from road: {path.ID}.')
 
@@ -4562,10 +4565,12 @@ def write_bai_text(ai_map, streets):
             parser.end_class()
             
 
-def debug_bai(debug_bai_data_file: Path, debug_bai_file: bool) -> None:
-    if debug_bai_file:
-        ai_map, streets = read_bai(debug_bai_data_file)
-        write_bai_text(ai_map, streets)
+def debug_bai(input_file: Path, debug_file: bool) -> None:
+    if not debug_file:
+        return
+        
+    ai_map, streets = read_bai(input_file)
+    write_bai_text(ai_map, streets)
         
 #! ################# Code by 0x1F9F1 (Modified) // end ################# !#         
 
@@ -4599,12 +4604,12 @@ mmMapData :0 {{
 ###################################################################################################################
 ###################################################################################################################
        
-# AI PATH EDITOR CLASS
-class aiPathEditor:
-    def __init__(self, map_filename: str, data, set_reverse_streets: bool):
+# AI STREET EDITOR CLASS
+class aiStreetEditor:
+    def __init__(self, map_filename: str, data, set_reverse_ai_streets: bool):
         self.map_filename = map_filename
         self.street_name = data["street_name"]
-        self.set_reverse_streets = set_reverse_streets
+        self.set_reverse_ai_streets = set_reverse_ai_streets
         self.process_lanes(data)
         self.set_properties(data)
                     
@@ -4618,7 +4623,7 @@ class aiPathEditor:
 
         # Add reverse lanes if set by the user
         self.lanes = self.original_lanes.copy()
-        if self.set_reverse_streets:
+        if self.set_reverse_ai_streets:
             for key, values in self.original_lanes.items():
                 self.lanes[key].extend(values[::-1])
                         
@@ -4637,13 +4642,14 @@ class aiPathEditor:
             setattr(self, key, data.get(key, default))
             
     @classmethod
-    def create(cls, map_filename: str, dataset, set_ai: bool, set_reverse_streets: bool):
-        if not set_ai:
+    def create(cls, map_filename: str, dataset, set_ai_streets: bool, set_reverse_ai_streets: bool):
+        if not set_ai_streets:
             return None
 
         street_names = []
+        
         for data in dataset:
-            editor = cls(map_filename, data, set_reverse_streets)
+            editor = cls(map_filename, data, set_reverse_ai_streets)
             editor.write()
             street_names.append(editor.street_name)
 
@@ -4656,7 +4662,7 @@ class aiPathEditor:
     def set_template(self):
         lane_one = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
         num_vertices_per_lane = len(self.original_lanes[lane_one])
-        num_total_vertices = num_vertices_per_lane * len(self.lanes) * (2 if self.set_reverse_streets else 1)
+        num_total_vertices = num_vertices_per_lane * len(self.lanes) * (2 if self.set_reverse_ai_streets else 1)
         
         vertices = '\n\t\t'.join('\n\t\t'.join(
             f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
@@ -4672,7 +4678,7 @@ class aiPathEditor:
 mmRoadSect :0 {{
     NumVertexs {num_vertices_per_lane}
     NumLanes[0] {len(self.lanes)}
-    NumLanes[1] {len(self.lanes) if self.set_reverse_streets else 0}
+    NumLanes[1] {len(self.lanes) if self.set_reverse_ai_streets else 0}
     NumSidewalks[0] 0
     NumSidewalks[1] 0
     TotalVertexs {num_total_vertices}
@@ -4838,10 +4844,8 @@ def create_ar(map_filename: str) -> None:
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
 
-    os.chdir(SHOP)
-    ar_command = f"run !!!!!{map_filename}"
-
-    subprocess.Popen(f"cmd.exe /c {ar_command}", creationflags = subprocess.CREATE_NO_WINDOW)
+    os.chdir(SHOP)    
+    subprocess.Popen(f"cmd.exe /c run !!!!!{map_filename}", creationflags = subprocess.CREATE_NO_WINDOW)
 
 
 def post_editor_cleanup(delete_shop: bool) -> None:
@@ -4864,18 +4868,18 @@ def post_editor_cleanup(delete_shop: bool) -> None:
    
 def create_commandline(
     map_filename: str, mm1_folder: Path, no_ui: bool, no_ui_type: str, 
-    no_ai: bool, quiet_logs: bool, more_logs: bool) -> None:
+    no_ai: bool, less_logs: bool, more_logs: bool) -> None:
 
     base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {map_filename.lower()}"
 
-    if quiet_logs and more_logs:    
+    if less_logs and more_logs:    
         log_error_message = f"""\n
         ***ERROR***
         You can't have both 'quiet' and 'more logs' enabled. Please choose one."
         """
         raise ValueError(log_error_message)
     
-    if quiet_logs:
+    if less_logs:
         base_cmd += " -quiet"
         
     if more_logs:
@@ -4918,10 +4922,11 @@ def is_game_running(process_name: str) -> bool:
     return False
         
         
-def start_game(mm1_folder: str, play_game: bool) -> None:
-    game_exe = "Open1560.exe"
-    if play_game and not is_game_running(game_exe) and not is_blender_running():
-        subprocess.run(mm1_folder / game_exe, cwd = mm1_folder)
+def start_game(mm1_folder: str, play_game: bool) -> None:    
+    if not play_game or is_game_running("Open1560.exe") or is_blender_running():
+        return
+    
+    subprocess.run(mm1_folder / "Open1560.exe", cwd = mm1_folder)
             
 ###################################################################################################################
 ################################################################################################################### 
@@ -4978,7 +4983,7 @@ def adjust_3D_view_settings() -> None:
                     shading.color_type = 'TEXTURE'
                     
                     
-def load_textures(texture_folder: Path, load_tex_materials: bool) -> None:
+def load_textures(texture_folder: Path, load_all_texures: bool) -> None:
     for file_name in os.listdir(texture_folder):
         if file_name.lower().endswith(".dds"):
             texture_path = os.path.join(texture_folder, file_name)
@@ -4988,7 +4993,7 @@ def load_textures(texture_folder: Path, load_tex_materials: bool) -> None:
             else:
                 texture_image = bpy.data.images[texture_path]
 
-            if load_tex_materials:
+            if load_all_texures:
                 material_name = os.path.splitext(os.path.basename(texture_path))[0]
                 if material_name not in bpy.data.materials:
                     create_material_from_texture(material_name, texture_image)
@@ -5244,7 +5249,7 @@ def create_blender_meshes() -> None:
         enable_vertex_snapping()
         adjust_3D_view_settings()
         
-        load_textures(texture_folder, load_tex_materials)
+        load_textures(texture_folder, load_all_texures)
                     
         textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in stored_texture_names]
             
@@ -5589,7 +5594,7 @@ create_polygon(
 
 save_mesh(
     texture_name = [{texture_constant}],
-    tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x}, tile_y = {tile_y}, angle_degrees = {rotate}))"""
+    tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {rotate:.2f}))"""
 
     return polygon_export
 
@@ -6393,7 +6398,7 @@ create_cells(map_filename, polys, truncate_cells)
 Bounds.create(map_filename, vertices, polys, debug_bounds)
 Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
 TextureSheet().write()
-aiPathEditor.create(map_filename, street_list, set_ai, set_reverse_streets)
+aiStreetEditor.create(map_filename, street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
@@ -6412,7 +6417,7 @@ copy_core_tune_files(EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE')
 copy_custom_textures(BASE_DIR / "Custom Textures", SHOP / "TEX16O")
 
 create_ext(map_filename, hudmap_vertices)
-create_animations(map_filename, anim_data, set_animations)   
+create_animations(map_filename, animations_data, set_animations)   
 create_bridges(map_filename, bridge_list, set_bridges) 
 custom_bridge_config(bridge_config_list, set_bridges, SHOP / 'TUNE')
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
@@ -6424,14 +6429,14 @@ DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dl
 
 # File Debugging
 debug_bai(debug_bai_data_file, debug_bai_file)
-Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / "DEBUGGED_INPUT_PROP_FILE.txt", debug_props_file)
-Facades.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / "DEBUGGED_INPUT_FACADE_FILE.txt", debug_facade_file)
-Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / "DEBUGGED_INPUT_PORTAL_FILE.txt", debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "MESHES" / "DEBUGGED_INPUT_MESH_FILE.txt", debug_meshes_file)
+Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
+Facades.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / debug_facade_data_file.with_suffix(".txt"), debug_facade_file)
+Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / debug_portals_data_file.with_suffix(".txt"), debug_portals_file)
+Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "MESHES" / debug_meshes_data_file.with_suffix(".txt"), debug_meshes_file)
 Meshes.debug_folder(debug_meshes_data_folder, DEBUG_FOLDER / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / "DEBUGGED_INPUT_BOUND_FILE.txt", debug_bounds_file)
+Bounds.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / debug_bounds_data_file.with_suffix(".txt"), debug_bounds_file)
 Bounds.debug_folder(debug_bounds_data_folder, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
-DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / "DEBUGGED_INPUT_DLP_FILE.txt", debug_dlp_file)
+DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
 DLP.debug_folder(debug_dlp_data_folder, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
 create_ar(map_filename)
