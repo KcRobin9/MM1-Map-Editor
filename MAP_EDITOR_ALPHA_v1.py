@@ -5606,19 +5606,19 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
     select_all: bpy.props.BoolProperty(default = True)
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         script_path = get_editor_script_path()
+        
         if script_path:
-            output_folder = script_path / 'Blender Export'
+            output_folder = script_path / 'Polygon Export'
         else:
             print("Warning: Falling back to directory: Desktop / Blender Export")
             
-            output_folder = Path.cwd() / 'Blender Export' # Use BASE_DIR (?)
+            output_folder = Path.home() / 'Desktop' / 'Polygon Export'
+           
+        output_folder.mkdir(exist_ok = True)
         
-        if not output_folder.exists():
-            os.mkdir(output_folder)
-        
-        base_file_name = "Map_Editor_Blender_Export.txt"
+        base_file_name = "Polygon_Export.txt"
         export_file = output_folder / base_file_name
         
         count = 1
@@ -5666,7 +5666,7 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     bl_description = "Assign Custom Properties to polygons that do not have them yet"
     bl_options = {"REGISTER", "UNDO"}
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         for obj in bpy.context.scene.objects:
             if obj.type == 'MESH':
                 
@@ -5716,7 +5716,7 @@ class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
     
     triangulate: bpy.props.BoolProperty(name = "Triangulate", default = False)
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         if context.object and context.object.type == 'MESH':
             bpy.ops.object.mode_set(mode = 'EDIT')
             bpy.ops.mesh.select_all(action = 'SELECT')
@@ -5740,7 +5740,7 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
     bl_idname = "object.auto_rename_children"
     bl_label = "Auto Rename Children Objects"
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         mothers_dict = {}
 
         for obj in context.scene.objects:
@@ -5767,6 +5767,28 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
 #! ======================= BLENDER WAYPOINT EDITOR ======================= !#
 
 
+def get_all_waypoints() -> List[bpy.types.Object]:
+    return [obj for obj in bpy.data.objects if obj.name.startswith("WP_")]
+
+
+def update_waypoint_colors() -> None:
+    waypoints = get_all_waypoints()
+
+    if not waypoints:
+        return
+
+    waypoints[0].data.materials[0].diffuse_color = (1, 1, 1, 1)     # First Waypoint, White
+    waypoints[-1].data.materials[0].diffuse_color = (0, 1, 0, 1)    # Last Waypoint, Green
+
+    for waypoint in waypoints[1:-1]:
+        waypoint.data.materials[0].diffuse_color = (0, 0, 1, 1)     # Intermediate Waypoints, Blue
+        
+         
+def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
+    if any(obj.name.startswith("WP_") for obj in bpy.data.objects):
+        update_waypoint_colors()
+
+
 def create_waypoint_material(name: str, color: Tuple[float, float, float, float]) -> bpy.types.Material:
     material = bpy.data.materials.new(name)
     material.diffuse_color = color
@@ -5783,21 +5805,24 @@ def create_waypoint_pole(height: float, diameter: float, location: Tuple[float, 
     return pole
 
 
-def create_waypoint_flag(width: float, height: float, cursor_z: float, flag_height_offset: float, location: Tuple[float, float, float]) -> bpy.types.Object:
+def create_waypoint_flag(width: float, height: float, cursor_z: float, 
+                         flag_height_offset: float, location: Tuple[float, float, float]) -> bpy.types.Object:
+    
     bpy.ops.mesh.primitive_plane_add(size = 1, location = location)
     flag = bpy.context.object
     flag.scale.x = width 
     flag.scale.y = height 
     flag.rotation_euler.x = math.pi / 2  # Rotate 90 degrees around x-axis
     flag.location.z = cursor_z + flag_height_offset + height / 2  
-    
     flag_material = create_waypoint_material("FlagMaterial", (0, 0, 0.5, 1)) 
     flag.data.materials.append(flag_material)
     
     return flag
 
-
-def create_waypoint(x = None, y = None, z = None, rotation_deg = ROT_N, scale = SCALE_DEFAULT, name = None):
+  
+def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
+                    rotation_deg: float = ROT_N, scale: float = SCALE_DEFAULT, name: Optional[str] = None) -> bpy.types.Object:
+    
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
         cursor_location = bpy.context.scene.cursor.location.copy()
     else:
@@ -5816,6 +5841,7 @@ def create_waypoint(x = None, y = None, z = None, rotation_deg = ROT_N, scale = 
     pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location)
 
     flag_location = cursor_location
+
     flag = create_waypoint_flag(flag_width, flag_height, cursor_location.z, flag_height_offset, flag_location)
 
     bpy.ops.object.select_all(action = 'DESELECT')
@@ -5844,6 +5870,8 @@ def create_waypoint(x = None, y = None, z = None, rotation_deg = ROT_N, scale = 
     # Reset the cursor location if x, y, z were not provided
     if x is None or y is None or z is None:
         bpy.context.scene.cursor.location = cursor_location
+        
+    update_waypoint_colors() 
 
     return waypoint
 
@@ -5868,7 +5896,7 @@ def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:
     return f"WP_{race_type_initial}{race_number}_{wp_idx}"
 
 
-def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_number_input: int):
+def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_number_input: int) -> None:
     race_key = f"{race_type_input}_{race_number_input}"  
     
     if race_key in race_data:
@@ -5878,11 +5906,13 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
             
             waypoint_name = get_waypoint_name(race_type_input, race_number_input, index)
             create_waypoint(x, -z, y, rotation, scale, waypoint_name)
+            
+        update_waypoint_colors()
     else:
         print("Race data not found for the specified race type and number.")
         
 
-def load_waypoints_from_csv(waypoint_file: Path):
+def load_waypoints_from_csv(waypoint_file: Path) -> None:
     file_info = str(waypoint_file).replace('.CSV', '').replace('WAYPOINTS', '')
 
     race_type = ''.join(filter(str.isalpha, file_info))
@@ -5911,30 +5941,55 @@ def load_waypoints_from_csv(waypoint_file: Path):
 
         waypoint_name = get_waypoint_name(race_type, race_number, wp_idx)
         waypoint = create_waypoint(x, -z, y, -rotation_deg, scale, waypoint_name)
+        
+    update_waypoint_colors()
+    
+    
+def export_selected_waypoints(export_all: bool = False, add_brackets: bool = False) -> None:
+    if export_all:
+        waypoints = get_all_waypoints()
+    else:
+        waypoints = [wp for wp in get_all_waypoints() if wp.select_get()]
+        
+    script_path = get_editor_script_path()
 
+    if script_path:
+        output_folder = script_path / 'Waypoint Export'
+    else:
+        print("Warning: Falling back to directory: Desktop / Waypoint Export")
+        output_folder = Path.home() / 'Desktop' / 'Waypoint Export'
 
-def export_selected_waypoints() -> None:
-    filtered_waypoints = [wp for wp in bpy.context.selected_objects if wp.name.startswith("WP_")]
-    waypoint_export_data = []
+    output_folder.mkdir(exist_ok = True)
 
-    with open("waypoints_data.txt", "w") as f:
+    base_file_name = "Waypoint_Export.txt"
+    export_file = output_folder / base_file_name
+    count = 1
+    
+    while export_file.exists():
+        export_file = output_folder / f"{count}_{base_file_name}"
+        count += 1
+
+    with export_file.open("w") as f:
+        print("")
         f.write("# x, y, z, rotation, scale \n")
         
-        print("")
-        for waypoint in filtered_waypoints:
+        for waypoint in waypoints:
             location = waypoint.matrix_world.to_translation()
             rotation_euler = waypoint.rotation_euler
             rotation_degrees = math.degrees(rotation_euler.z) % 360
+            
             if rotation_degrees > 180:
                 rotation_degrees -= 360
                 
             location.y = -location.y  # Flip the sign
-
+                        
             wp_line = f"{location.x:.2f}, {location.z:.2f}, {location.y:.2f}, {rotation_degrees:.2f}, {waypoint.scale.x:.2f}"
-            waypoint_export_data.append(wp_line)
             
+            if add_brackets:
+                wp_line = f"\t\t\t[{wp_line}],"
+
             f.write(wp_line + "\n")
-            print(wp_line) 
+            print(wp_line)
             
             
 ##############################################################################################################################################?
@@ -5944,7 +5999,7 @@ class CREATE_SINGLE_WAYPOINT_OT_operator(bpy.types.Operator):
     bl_idname = "create.single_waypoint"
     bl_label = "Create Single Waypoint"
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         create_waypoint(name = "WP_")  
         return {'FINISHED'}
 
@@ -5953,7 +6008,7 @@ class LOAD_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
     bl_idname = "load.waypoints_from_csv"
     bl_label = "Load Waypoints from CSV"
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         load_waypoints_from_csv(waypoint_file)
         return {'FINISHED'}
 
@@ -5962,7 +6017,7 @@ class LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator(bpy.types.Operator):
     bl_idname = "load.race_waypoints_from_race_data"
     bl_label = "Load Race Waypoints from Race Data"
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         load_waypoints_from_race_data(race_data, race_type_input, race_number_input)
         return {'FINISHED'}
 
@@ -5971,8 +6026,35 @@ class EXPORT_SELECTED_WAYPOINTS_OT_operator(bpy.types.Operator):
     bl_idname = "export.selected_waypoints"
     bl_label = "Export selected Waypoints"
 
-    def execute(self, context):
-        export_selected_waypoints()
+    def execute(self, context: bpy.types.Context) -> set:
+        export_selected_waypoints(export_all = False, add_brackets = False)
+        return {'FINISHED'}
+    
+    
+class EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
+    bl_idname = "export.selected_waypoints_with_brackets"
+    bl_label = "Export selected Waypoints with Brackets"
+
+    def execute(self, context: bpy.types.Context) -> set:
+        export_selected_waypoints(export_all = False, add_brackets = True)
+        return {'FINISHED'}
+    
+    
+class EXPORT_ALL_WAYPOINTS_OT_operator(bpy.types.Operator):
+    bl_idname = "export.all_waypoints"
+    bl_label = "Export All Waypoints"
+
+    def execute(self, context: bpy.types.Context) -> set:
+        export_selected_waypoints(export_all = True, add_brackets = False)
+        return {'FINISHED'}
+
+
+class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
+    bl_idname = "export.all_waypoints_with_brackets"
+    bl_label = "Export All Waypoints with Brackets"
+
+    def execute(self, context: bpy.types.Context) -> set:
+        export_selected_waypoints(export_all = True, add_brackets = True)
         return {'FINISHED'}
     
     
@@ -5997,7 +6079,7 @@ def set_blender_keybinding() -> None:
         kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
         kmi_export_all.properties.select_all = True
 
-        # Shift + P to assign custom properties
+        # Shift + P to assign custom properties to newly created polygon(s)
         km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
 
         # Shift + X to process an extruded mesh without triangulation
@@ -6022,6 +6104,15 @@ def set_blender_keybinding() -> None:
         
         # Shift + W to export selected waypoint(s)
         km.keymap_items.new("export.selected_waypoints", 'W', 'PRESS', shift = True)
+        
+        # Ctrl + W to export selected waypoint(s) with brackets
+        km.keymap_items.new("export.selected_waypoints_with_brackets", 'W', 'PRESS', ctrl = True)
+        
+        # Ctrl + Shift + W to export all waypoints
+        km.keymap_items.new("export.all_waypoints", 'W', 'PRESS', ctrl = True, shift = True)
+
+        # Ctrl + Alt + W to export all waypoins with brackets
+        km.keymap_items.new("export.all_waypoints_with_brackets", 'W', 'PRESS', ctrl = True, alt = True)
 
 ###################################################################################################################   
 ################################################################################################################### 
@@ -6470,6 +6561,11 @@ bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
 bpy.utils.register_class(LOAD_WAYPOINTS_FROM_CSV_OT_operator)
 bpy.utils.register_class(LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator)
 bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_OT_operator)
+bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator)
+bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_OT_operator)
+bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator)
+
+bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
 
 set_blender_keybinding()
 
