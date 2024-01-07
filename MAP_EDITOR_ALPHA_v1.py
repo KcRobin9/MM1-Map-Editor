@@ -852,9 +852,9 @@ POLYGON
 ################################################################################################################               
 ################################################################################################################     
 
-DEFAULT_VECTOR2 = Vector2(0.0, 0.0)  
-DEFAULT_VECTOR3 = Vector3(0.0, 0.0, 0.0) 
-POLYGON_FILLER = Polygon(0, 0, 0, [0, 0, 0, 0], [DEFAULT_VECTOR3 for _ in range(4)], DEFAULT_VECTOR3, [0.0], 0)
+VECTOR2_DEFAULT = Vector2(0.0, 0.0)  
+VECTOR3_DEFAULT = Vector3(0.0, 0.0, 0.0) 
+POLYGON_FILLER = Polygon(0, 0, 0, [0, 0, 0, 0], [VECTOR3_DEFAULT for _ in range(4)], VECTOR3_DEFAULT, [0.0], 0)
 polys = [POLYGON_FILLER]
         
 ################################################################################################################               
@@ -951,7 +951,7 @@ class Bounds:
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
         magic = "2DNB"
-        offset = DEFAULT_VECTOR3
+        offset = VECTOR3_DEFAULT
         x_dim, y_dim, z_dim = 0, 0, 0
         center = calculate_center(vertices)
         radius = calculate_radius(vertices, center)
@@ -962,9 +962,9 @@ class Bounds:
         x_scale, z_scale = 0.0, 0.0
         num_indices, height_scale, cache_size = 0, 0, 0
         
-        hot_verts = [DEFAULT_VECTOR3]  
+        hot_verts = [VECTOR3_DEFAULT]  
         edge_verts1, edge_verts2 = [0], [1] 
-        edge_plane_n = [DEFAULT_VECTOR3] 
+        edge_plane_n = [VECTOR3_DEFAULT] 
         edge_plane_d = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
@@ -1173,7 +1173,7 @@ class Meshes:
 
             if self.vertex_count >= MESH_THRESHOLD:
                 for _ in range(8):
-                    DEFAULT_VECTOR3.write(f, '<')
+                    VECTOR3_DEFAULT.write(f, '<')
                                                                         
             write_pack(f, f"{self.adjunct_count}B", *self.texture_darkness)
                         
@@ -1729,7 +1729,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     
     # Add a required empty edge for triangles to match the binary structure
     if len(vertices) == TRIANGLE:
-        edges.append(DEFAULT_VECTOR3)
+        edges.append(VECTOR3_DEFAULT)
     
     return edges
 
@@ -2788,22 +2788,21 @@ def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, 
 ################################################################################################################              
 
 def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
-    mesh_files = []
-    mesh_a2_files = set()
+    meshes_regular = []
+    meshes_water_drift = set()
+
+    files = [file for folder in [landmark_folder, city_folder] for file in folder.iterdir()]
     
-    for folder in [landmark_folder, city_folder]:
-        for file in folder.iterdir():
+    for file in files:
+        cell_id = int(re.findall(r'\d+', file.name)[0])
+
+        if file.name.endswith("_A2.bms"):
+            meshes_water_drift.add(cell_id)
+
+        if file.name.endswith(".bms"):
+            meshes_regular.append(cell_id)
             
-            if file.name.endswith("_A2.bms"):
-                cell_id = int(re.findall(r'\d+', file.name)[0])
-                mesh_files.append(cell_id)
-                mesh_a2_files.add(cell_id)
-                
-            elif file.name.endswith(".bms"):
-                cell_id = int(re.findall(r'\d+', file.name)[0])
-                mesh_files.append(cell_id)
-                
-    return mesh_files, mesh_a2_files
+    return meshes_regular, meshes_water_drift
 
 
 def get_cell_visiblity(polys: List[Polygon]) -> List[int]:
@@ -5019,13 +5018,6 @@ def create_material_from_texture(material_name, texture_image):
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])      
     
     
-def rotate_meshes(objects) -> None:
-    bpy.ops.object.select_all(action = 'DESELECT')
-    for obj in objects:
-        obj.select_set(True)
-    bpy.context.view_layer.objects.active = obj
-    bpy.ops.transform.rotate(value = math.radians(-90), orient_axis = 'X')
-    
 ###################################################################################################################
 ###################################################################################################################
 #! ======================= BLENDER UV MAPPING ======================= !#
@@ -5036,14 +5028,11 @@ def unwrap_uv_to_aspect_ratio(obj, image):
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
     
-    # Enter edit mode and select all
     bpy.ops.object.mode_set(mode = 'EDIT')
     bpy.ops.mesh.select_all(action = 'SELECT')
     
-    # Perform UV unwrap
     bpy.ops.uv.unwrap(method = 'ANGLE_BASED', margin = 0.001)
     
-    # Enter UV edit mode
     bpy.ops.object.mode_set(mode = 'OBJECT')
     obj.data.uv_layers.active.active = True
 
@@ -5101,20 +5090,15 @@ def rotate_uvs(obj, angle_degrees):
         rotated_v = u * sin_angle + v * cos_angle
         uv_data.uv = (rotated_u + 0.5, rotated_v + 0.5)
 
-      
-def update_uv_tiling(self, context):
-    tile_x = self.tile_x
-    tile_y = self.tile_y
-    rotate_angle = self.rotate 
-
+     
+def update_uv_tiling(self, context: bpy.types.Context) -> None:
     bpy.ops.object.select_all(action = 'DESELECT')
     self.select_set(True)
     bpy.context.view_layer.objects.active = self
 
-    # Update the UV mapping of the object based on its custom properties
-    tile_uvs(self, tile_x, tile_y)
-    rotate_uvs(self, rotate_angle)
-    
+    tile_uvs(self, self.tile_x, self.tile_y)
+    rotate_uvs(self, self.rotate)
+
     
 # UV MAPPING OPERATOR
 class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
@@ -5123,18 +5107,15 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
     bl_description = "Updates UV mapping based on object's custom properties"
     bl_options = {"REGISTER", "UNDO"}
 
-    def execute(self, context):
+    def execute(self, context: bpy.types.Context) -> set:
         for obj in bpy.context.selected_objects:
             
             # Check if the object has the necessary custom properties
             if all(prop in obj.keys() for prop in ["tile_x", "tile_y", "angle_degrees"]):
-                tile_x = obj["tile_x"]
-                tile_y = obj["tile_y"]
-                rotate_angle = obj["angle_degrees"]
-
+                
                 # Update the UV mapping of the object based on its custom properties
-                tile_uvs(obj, tile_x, tile_y)
-                rotate_uvs(obj, rotate_angle)
+                tile_uvs(obj, obj["tile_x"], obj["tile_y"])
+                rotate_uvs(obj, obj["angle_degrees"])
 
         return {"FINISHED"}
     
@@ -5180,33 +5161,36 @@ def apply_texture_to_object(obj, texture_path):
         
 def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     name = f"P{polygon_data['bound_number']}"
-    coords = polygon_data["vertex_coordinates"]
-    
-    swapped_coords = [(x, -z, y) for x, y, z in coords]
+    bound_number = polygon_data['bound_number']
+    script_vertices = polygon_data["vertex_coordinates"]
 
+    # Convert Game's (x, y, z) to Blender's (x, z, -y)
+    transformed_vertices = [(x, -z, y) for x, y, z in script_vertices]
+    
     edges = []
-    faces = [range(len(swapped_coords))]
+    faces = [range(len(transformed_vertices))]
 
     mesh = bpy.data.meshes.new(name)
     obj = bpy.data.objects.new(name, mesh)
-
+    
     obj["cell_type"] = str(polygon_data["cell_type"])
     obj["material_index"] = str(polygon_data["material_index"])
-        
+    
     set_hud_checkbox(polygon_data["hud_color"], obj)
     
-    for coord in swapped_coords:
+    for vertex in transformed_vertices:
         vertex_item = obj.vertex_coords.add()
-        vertex_item.x, vertex_item.y, vertex_item.z = coord
+        vertex_item.x, vertex_item.y, vertex_item.z = vertex
     
     bpy.context.collection.objects.link(obj)
-    mesh.from_pydata(coords, edges, faces)
+    mesh.from_pydata(transformed_vertices, edges, faces)
     mesh.update()
     
     custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
-    for prop in custom_properties:
-        if prop in polygon_data:
-            obj[prop] = polygon_data[prop]
+    
+    for custom_prop in custom_properties:
+        if custom_prop in polygon_data:
+            obj[custom_prop] = polygon_data[custom_prop]
     
     if not obj.data.uv_layers:
         obj.data.uv_layers.new()
@@ -5219,23 +5203,19 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
     bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
     
-    bound_number = polygon_data['bound_number']
-    tile_x, tile_y = 1, 1  
-
     if bound_number in texcoords_data.get('entries', {}):
-        tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
-        tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
+        obj.tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
+        obj.tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
         obj.rotate = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
+    else:
+        obj.tile_x = 2
+        obj.tile_y = 2
+        obj.rotate = 0.1
         
-    obj.tile_x = tile_x
-    obj.tile_y = tile_y
-    
     if texture_folder:
         apply_texture_to_object(obj, texture_folder)    
-        rotate_angle = obj.rotate
-
-        tile_uvs(obj, tile_x, tile_y)
-        rotate_uvs(obj, rotate_angle)  
+        tile_uvs(obj, obj.tile_x, obj.tile_y)
+        rotate_uvs(obj, obj.rotate)  
         
         obj.data.update()
             
@@ -5254,11 +5234,10 @@ def create_blender_meshes() -> None:
         textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in stored_texture_names]
             
         created_meshes = []
+        
         for poly, texture in zip(polygons_data, textures):
             created_meshes.append(create_mesh_from_polygon_data(poly, texture))
-            
-        rotate_meshes(created_meshes)
-            
+                    
 ###################################################################################################################
 ###################################################################################################################
 
@@ -5506,14 +5485,14 @@ class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
 ################################################################################################################### 
 #! ======================= BLENDER EXPORTING ======================= !#
 
-def format_decimal(value):
+def format_decimal(value: Union[int, float]) -> str:
     if value == int(value): 
         return f"{value:.1f}"
     else: 
         return f"{value:.2f}"
     
     
-def get_editor_script_path():
+def get_editor_script_path() -> Optional[Path]:
     try:
         return Path(__file__).parent
     except NameError:
@@ -5542,7 +5521,7 @@ def extract_polygon_data(obj):
     return extracted_polygon_data
 
 
-def extract_texture_from_polygon(obj) -> str:
+def extract_polygon_texture(obj) -> str:
     if obj.material_slots:
         mat = obj.material_slots[0].material
         if mat and mat.use_nodes:
@@ -5550,21 +5529,27 @@ def extract_texture_from_polygon(obj) -> str:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
     return "CHECK04"  # Default value
+
+
+def transform_game_coordinate(coordinate: Vector3) -> Tuple[float, float, float]:
+    x, y, z = coordinate.x, coordinate.z, -coordinate.y
+    return x, y, z
     
 
-def export_blender_polygon_data(obj) -> str:
-    data = extract_polygon_data(obj)
-    texture_name = extract_texture_from_polygon(obj)
+def export_formatted_polygons(obj) -> str:
+    poly_data = extract_polygon_data(obj)
+    texture_name = extract_polygon_texture(obj)
     texture_constant = TEXTURE_EXPORT.get(texture_name, f'"{texture_name}"')
-    vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in vert.co) + ')' for vert in data['vertex_coordinates']])
+    
+    vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in transform_game_coordinate(vert.co)) + ')' for vert in poly_data['vertex_coordinates']])
 
     optional_variables = []
     
-    cell_type = CELL_EXPORT.get(str(data['cell_type']), None)
+    cell_type = CELL_EXPORT.get(str(poly_data['cell_type']), None)
     if cell_type:
         optional_variables.append(f"cell_type = {cell_type}")
     
-    material_index = MATERIAL_EXPORT.get(str(data['material_index']), None)
+    material_index = MATERIAL_EXPORT.get(str(poly_data['material_index']), None)
     if material_index:
         optional_variables.append(f"material_index = {material_index}")
 
@@ -5572,9 +5557,9 @@ def export_blender_polygon_data(obj) -> str:
     if hud_color:
         optional_variables.append(f"hud_color = {hud_color}")
 
-    if data['sort_vertices']:
+    if poly_data['sort_vertices']:
         optional_variables.append("sort_vertices = True")
-    if not data['always_visible']:
+    if not poly_data['always_visible']:
         optional_variables.append("always_visible = False")
         
     # Combining optional variables
@@ -5584,17 +5569,17 @@ def export_blender_polygon_data(obj) -> str:
 
     tile_x = obj.get("tile_x", 1)
     tile_y = obj.get("tile_y", 1)
-    rotate = data.get('rotate', 999.0)  
+    rotation = poly_data.get('rotate', 999.0)  
 
     polygon_export = f"""
 create_polygon(
-    bound_number = {data['bound_number']},{optional_variables_str}
+    bound_number = {poly_data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
         {vertex_export}])
 
 save_mesh(
     texture_name = [{texture_constant}],
-    tex_coords = compute_uv(bound_number = {data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {rotate:.2f}))"""
+    tex_coords = compute_uv(bound_number = {poly_data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {rotation:.2f}))"""
 
     return polygon_export
 
@@ -5613,7 +5598,6 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             output_folder = script_path / 'Polygon Export'
         else:
             print("Warning: Falling back to directory: Desktop / Blender Export")
-            
             output_folder = Path.home() / 'Desktop' / 'Polygon Export'
            
         output_folder.mkdir(exist_ok = True)
@@ -5636,12 +5620,12 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             context.view_layer.objects.active = mesh_objects[0]
 
             # Apply location transformation (to get Global coordinates)
-            bpy.ops.object.transform_apply(location = True, rotation = False, scale = True)
+            bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
     
         try:
             with open(export_file, 'w') as file:
                 for obj in mesh_objects:
-                    export_script = export_blender_polygon_data(obj) 
+                    export_script = export_formatted_polygons(obj) 
                     file.write(export_script + '\n\n')
                     
             subprocess.Popen(["notepad.exe", export_file])
@@ -5727,6 +5711,7 @@ class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
             bpy.ops.mesh.edge_split()
             bpy.ops.mesh.separate(type = 'LOOSE')
             bpy.ops.object.mode_set(mode = 'OBJECT')
+            self.report({'INFO'}, "Processed Post Extrude")
             return {'FINISHED'}
         else:
             self.report({'WARNING'}, "No mesh object selected")
@@ -5759,7 +5744,8 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
             for index, (suffix, child_obj) in enumerate(children):
                 new_name = f"{mother_name}{index+1}"
                 child_obj.name = new_name
-
+                
+        self.report({'INFO'}, "Renamed Polygons")
         return {'FINISHED'}
             
 ###################################################################################################################   
@@ -6001,6 +5987,7 @@ class CREATE_SINGLE_WAYPOINT_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         create_waypoint(name = "WP_")  
+        self.report({'INFO'}, "Created Waypoint")
         return {'FINISHED'}
 
 
@@ -6010,6 +5997,7 @@ class LOAD_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         load_waypoints_from_csv(waypoint_file)
+        self.report({'INFO'}, "Loaded Waypoints from CSV")
         return {'FINISHED'}
 
 
@@ -6019,6 +6007,7 @@ class LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         load_waypoints_from_race_data(race_data, race_type_input, race_number_input)
+        self.report({'INFO'}, "Loaded Waypoints from Race Data")
         return {'FINISHED'}
 
 
@@ -6028,6 +6017,7 @@ class EXPORT_SELECTED_WAYPOINTS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = False, add_brackets = False)
+        self.report({'INFO'}, "Exported Selected Waypoints")
         return {'FINISHED'}
     
     
@@ -6037,6 +6027,7 @@ class EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = False, add_brackets = True)
+        self.report({'INFO'}, "Exported Selected Waypoints with Brackets")
         return {'FINISHED'}
     
     
@@ -6046,6 +6037,7 @@ class EXPORT_ALL_WAYPOINTS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = True, add_brackets = False)
+        self.report({'INFO'}, "Exported All Waypoints")
         return {'FINISHED'}
 
 
@@ -6055,6 +6047,7 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = True, add_brackets = True)
+        self.report({'INFO'}, "Exported All Waypoints with Brackets")
         return {'FINISHED'}
     
     
@@ -6451,10 +6444,10 @@ dlp_group_name = "BOUND\x00"
 
 # DLP Vertices
 dlp_normals = [
-    DLPVertex(0, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color),
-    DLPVertex(1, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color),
-    DLPVertex(2, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color),
-    DLPVertex(3, DEFAULT_VECTOR3, DEFAULT_VECTOR2, color)
+    DLPVertex(0, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color),
+    DLPVertex(1, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color),
+    DLPVertex(2, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color),
+    DLPVertex(3, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color)
     ]
 
 # Geometry Vertices
