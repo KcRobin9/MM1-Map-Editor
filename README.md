@@ -18,16 +18,17 @@ Upon completion of your design, the Map Editor will generate all the necessary c
 * Click the 'Download' button or clone the repo: `git clone https://github.com/KcRobin9/MM1-Map-Editor.git`
 * Follow the README in the Setup folder
 
+## Contributions
+
+Contributions are welcomed. All questions, feature requests, issues, and pull requests will be reviewed.
+
 ## Credits
 
-* 0x1F9F1 	- Instrumental help, including Open1560 features and coding Q&A
-* Dading 	- Alpha tester, creator of Moronville
-* Vwp914	- Alpha tester, Blender tutor
-* DDucky 	- Code help with Prop Editor 
-
-## Contact
-
-If you have any questions or suggestions, feel free to reach via Discord.
+* 0x1F9F1 - Instrumental help, including Open1560 features and coding Q&A
+* Dading - Alpha tester, creator of Moronville
+* Vwp914 - Alpha tester, Blender tutor
+* Lars - For his Race Making Tool
+* DDucky - Code help with Prop Editor 
 
 ## Gallery
 
