@@ -36,6 +36,7 @@ import threading
 import subprocess
 import numpy as np   
 from pathlib import Path
+from itertools import cycle
 from mathutils import Vector
 import matplotlib.pyplot as plt                
 from colorama import Fore, Style, init
@@ -5752,6 +5753,13 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
 ################################################################################################################### 
 #! ======================= BLENDER WAYPOINT EDITOR ======================= !#
 
+GREEN_COLOR = (0, 1, 0, 1)
+BLUE_COLOR = (0, 0, 1, 1)
+PURPLE_COLOR = (0.5, 0, 0.5, 1)
+YELLOW_COLOR = (1, 1, 0, 1)
+GOLD_COLOR = (1, 0.843, 0, 1)
+WHITE_COLOR = (1, 1, 1, 1) 
+
 
 def get_all_waypoints() -> List[bpy.types.Object]:
     return [obj for obj in bpy.data.objects if obj.name.startswith("WP_")]
@@ -5763,14 +5771,17 @@ def update_waypoint_colors() -> None:
     if not waypoints:
         return
 
-    waypoints[0].data.materials[0].diffuse_color = (1, 1, 1, 1)     # First Waypoint, White
-    waypoints[-1].data.materials[0].diffuse_color = (0, 1, 0, 1)    # Last Waypoint, Green
+    waypoints[0].data.materials[0].diffuse_color = WHITE_COLOR      # First Waypoint
+    waypoints[-1].data.materials[0].diffuse_color = GREEN_COLOR     # Last Waypoint
 
     for waypoint in waypoints[1:-1]:
-        waypoint.data.materials[0].diffuse_color = (0, 0, 1, 1)     # Intermediate Waypoints, Blue
+        waypoint.data.materials[0].diffuse_color = BLUE_COLOR       # Intermediate Waypoints
         
          
 def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
+    if not is_blender_running():
+        return
+    
     if any(obj.name.startswith("WP_") for obj in bpy.data.objects):
         update_waypoint_colors()
 
@@ -5781,54 +5792,66 @@ def create_waypoint_material(name: str, color: Tuple[float, float, float, float]
     return material
 
 
-def create_waypoint_pole(height: float, diameter: float, location: Tuple[float, float, float]) -> bpy.types.Object:
+def create_waypoint_pole(height: float, diameter: float, location: Tuple[float, float, float],
+                         color: Tuple[float, float, float, float]) -> bpy.types.Object:
+    
     bpy.ops.mesh.primitive_cylinder_add(radius = diameter / 2, depth = height, location = location)
     pole = bpy.context.object
-    
-    pole_material = create_waypoint_material("PoleMaterial", (1, 1, 1, 1)) 
+    pole_material = create_waypoint_material("PoleMaterial", color) 
     pole.data.materials.append(pole_material)
-    
     return pole
 
 
-def create_waypoint_flag(width: float, height: float, cursor_z: float, 
-                         flag_height_offset: float, location: Tuple[float, float, float]) -> bpy.types.Object:
+def create_waypoint_flag(width: float, height: float, cursor_z: float, flag_height_offset: float, 
+                         location: Tuple[float, float, float], 
+                         color: Tuple[float, float, float, float]) -> bpy.types.Object:
     
     bpy.ops.mesh.primitive_plane_add(size = 1, location = location)
     flag = bpy.context.object
     flag.scale.x = width 
     flag.scale.y = height 
     flag.rotation_euler.x = math.pi / 2  # Rotate 90 degrees around x-axis
-    flag.location.z = cursor_z + flag_height_offset + height / 2  
-    flag_material = create_waypoint_material("FlagMaterial", (0, 0, 0.5, 1)) 
+    flag.location.z = cursor_z + flag_height_offset + height / 2 
+    
+    flag_material = create_waypoint_material("FlagMaterial", color)
     flag.data.materials.append(flag_material)
     
     return flag
 
+
+def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) -> bpy.types.Object:
+    bpy.ops.mesh.primitive_cube_add(size = 1, location = location)
+    gold = bpy.context.object
+    gold.scale *= scale  
+    
+    gold_material = create_waypoint_material("GoldMaterial", GOLD_COLOR)  
+    gold.data.materials.append(gold_material)
+    gold.name = "Gold_Default"
+    
+    return gold
+
   
 def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
-                    rotation_deg: float = ROT_N, scale: float = SCALE_DEFAULT, name: Optional[str] = None) -> bpy.types.Object:
+                    rotation_deg: float = ROT_N, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
+                    flag_color: Tuple[float, float, float, float] = BLUE_COLOR) -> bpy.types.Object:                
     
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
         cursor_location = bpy.context.scene.cursor.location.copy()
     else:
         cursor_location = Vector((x, y, z))  # If x, y, and z are provided, create a new location vector
 
-    pole_height = 3.0           
-    pole_diameter = 0.2         
-    flag_width = scale         
-    flag_height = 0.8           
-    flag_height_offset = 2.2    
-
+    pole_height, pole_diameter = 3.0, 0.2 
+    flag_width = scale            
+  
     pole_one_location = (cursor_location.x - flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
     pole_two_location = (cursor_location.x + flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
+    
+    pole_one = create_waypoint_pole(pole_height, pole_diameter, pole_one_location, WHITE_COLOR) 
+    pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location, WHITE_COLOR) 
 
-    pole_one = create_waypoint_pole(pole_height, pole_diameter, pole_one_location)
-    pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location)
+    flag_height, flag_height_offset, flag_location =  0.8, 2.2, cursor_location
 
-    flag_location = cursor_location
-
-    flag = create_waypoint_flag(flag_width, flag_height, cursor_location.z, flag_height_offset, flag_location)
+    flag = create_waypoint_flag(flag_width, flag_height, cursor_location.z, flag_height_offset, flag_location, flag_color)
 
     bpy.ops.object.select_all(action = 'DESELECT')
     pole_one.select_set(True)
@@ -5863,6 +5886,14 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
 
 
 ##############################################################################################################################################?
+
+
+def is_float(value: str) -> bool:
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
 
 def calculate_waypoint_rotation(x1: float, z1: float, x2: float, z2: float) -> float:
@@ -5929,6 +5960,42 @@ def load_waypoints_from_csv(waypoint_file: Path) -> None:
         waypoint = create_waypoint(x, -z, y, -rotation_deg, scale, waypoint_name)
         
     update_waypoint_colors()
+    
+    
+def load_cops_and_robbers_waypoints(input_file: Path) -> None:
+    
+    print(Path(__file__).parent)
+    print(Path.cwd())
+    
+    waypoint_types = cycle(['Bank Hideout', 'Gold Position', 'Robber Hideout'])
+    set_count = 1
+
+    with open(input_file, 'r') as f:
+        reader = csv.reader(f)
+        next(reader)  
+
+        for row in reader:
+            if len(row) < 3 or not all(is_float(val) for val in row[:3]):
+                raise ValueError("\nCSV file can't be parsed. Each row must have at least 3 floats or integer values.\n")
+                        
+            x, y, z = map(float, row[:3])
+            # Convert Game's (x, y, z) to Blender's (x, -z, y)
+            x, y, z = x, -z, y 
+                        
+            waypoint_type = next(waypoint_types)
+
+            if waypoint_type == 'Bank Hideout':
+                create_waypoint(x, y, z, name = f"CR_Bank{set_count}", flag_color = PURPLE_COLOR)
+                
+            elif waypoint_type == 'Gold Position':
+                create_gold_bar((x, y, z), scale = 3.0) 
+                bpy.context.object.name = f"CR_Gold{set_count}"
+                
+            elif waypoint_type == 'Robber Hideout':
+                create_waypoint(x, y, z, name = f"CR_Robber{set_count}", flag_color = GREEN_COLOR)  
+                
+            if waypoint_type == 'Robber Hideout':
+                set_count += 1  # Increase the set count after completing each set of three
     
     
 def export_selected_waypoints(export_all: bool = False, add_brackets: bool = False) -> None:
@@ -6009,6 +6076,17 @@ class LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator(bpy.types.Operator):
         load_waypoints_from_race_data(race_data, race_type_input, race_number_input)
         self.report({'INFO'}, "Loaded Waypoints from Race Data")
         return {'FINISHED'}
+    
+    
+class LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
+    bl_idname = "load.cnr_from_csv"
+    bl_label = "Load CnR Waypoints from CSV"
+
+    def execute(self, context: bpy.types.Context) -> set:
+        Path(__file__).parent
+        load_cops_and_robbers_waypoints("COPSWAYPOINTS.CSV")
+        self.report({'INFO'}, "Loaded Cops & Robber Waypoints from CSV")
+        return {'FINISHED'}
 
 
 class EXPORT_SELECTED_WAYPOINTS_OT_operator(bpy.types.Operator):
@@ -6049,8 +6127,7 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         export_selected_waypoints(export_all = True, add_brackets = True)
         self.report({'INFO'}, "Exported All Waypoints with Brackets")
         return {'FINISHED'}
-    
-    
+        
 ###################################################################################################################
 ################################################################################################################### 
       
@@ -6106,7 +6183,10 @@ def set_blender_keybinding() -> None:
 
         # Ctrl + Alt + W to export all waypoins with brackets
         km.keymap_items.new("export.all_waypoints_with_brackets", 'W', 'PRESS', ctrl = True, alt = True)
-
+        
+        # Alt + C to load CnR waypoints from CSV
+        km.keymap_items.new("load.cnr_from_csv", 'O', 'PRESS', alt = True)
+        
 ###################################################################################################################   
 ################################################################################################################### 
 
@@ -6437,17 +6517,16 @@ dlp_flags = 1289  # 1513
 mtl_idx = 0
 tex_idx = 0
 phys_idx = 0
-color = 4294967295
 
 dlp_patch_name = ""
 dlp_group_name = "BOUND\x00" 
 
 # DLP Vertices
 dlp_normals = [
-    DLPVertex(0, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color),
-    DLPVertex(1, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color),
-    DLPVertex(2, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color),
-    DLPVertex(3, VECTOR3_DEFAULT, VECTOR2_DEFAULT, color)
+    DLPVertex(0, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR),
+    DLPVertex(1, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR),
+    DLPVertex(2, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR),
+    DLPVertex(3, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR)
     ]
 
 # Geometry Vertices
@@ -6553,6 +6632,8 @@ bpy.utils.register_class(OBJECT_OT_RenameChildren)
 bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
 bpy.utils.register_class(LOAD_WAYPOINTS_FROM_CSV_OT_operator)
 bpy.utils.register_class(LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator)
+bpy.utils.register_class(LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator)
+
 bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_OT_operator)
 bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator)
 bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_OT_operator)
