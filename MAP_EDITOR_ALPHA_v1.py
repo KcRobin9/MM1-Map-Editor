@@ -104,7 +104,7 @@ load_all_texures = False        # change to "True" if you want to load all textu
                                 # change to "False" if you want to load only the textures that are used in your Map (faster loading)
 
 # Blender Waypoint Editor 
-waypoint_file = EDITOR_RESOURCES / "RACE" / "BLITZ4WAYPOINTS.CSV"  # input waypoint CSV file
+waypoint_file = EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint CSV file
 
 race_type_input = "RACE"        # waypoints from 'race_data' dictionary, types: "BLITZ" or "RACE", "CIRCUIT" 
 race_number_input = "0"     
@@ -470,8 +470,8 @@ race_data = {
     'RACE_0': {
         'waypoints': [
             [0.0, 245, -850, ROT_S, LANE_4], 
-            [0.0, 110, -500, ROT_S, 0.0],  
-            [0.0, 110, -497, ROT_S, 15.0],   
+            [0.0, 110, -500, ROT_S, LANE_4],  
+            [0.0, 110, -497, ROT_S, LANE_4],   
             [25.0, 45.0, -325, ROT_S, 25.0],   
             [35.0, 12.0, -95.0, ROT_S, LANE_4], 
             [35.0, 30.0, 0.0, ROT_S, LANE_4], 
@@ -702,6 +702,13 @@ class Vector3:
     def write(self, file: BinaryIO, byte_order: str = '<') -> None:
         write_pack(file, f'{byte_order}3f', self.x, self.y, self.z)
         
+    @classmethod
+    def from_tuple(cls, vertex_tuple: Tuple[float, float, float]) -> 'Vector3':
+        return cls(*vertex_tuple)
+
+    def to_tuple(self) -> Tuple[float, float, float]:
+        return (self.x, self.y, self.z)
+        
     def copy(self) -> 'Vector3':
         return Vector3(self.x, self.y, self.z)
     
@@ -732,10 +739,7 @@ class Vector3:
 
     def __hash__(self) -> int:
         return hash((self.x, self.y, self.z))
-
-    def tuple(self) -> Tuple[float, float, float]:
-        return (self.x, self.y, self.z)
-
+    
     def Cross(self, rhs: 'Vector3') -> 'Vector3':
         return Vector3(self.y * rhs.z - self.z * rhs.y, self.z * rhs.x - self.x * rhs.z, self.x * rhs.y - self.y * rhs.x)
 
@@ -767,8 +771,8 @@ class Vector3:
         self.x = x
         self.y = y
         self.z = z
-        
-    def __repr__(self, round_values: bool = False) -> str:
+                
+    def __repr__(self, round_values: bool = True) -> str:
         if round_values:
             return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
         else:
@@ -3372,7 +3376,9 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
 
 # PORTAL CLASS 
 class Portals:
-    def __init__(self, flags: int, edge_count: int, gap_2: int, cell_1: int, cell_2: int, height: float, _min: Vector3, _max: Vector3, vertex_c: Vector3 = None):
+    def __init__(self, flags: int, edge_count: int, gap_2: int, cell_1: int, cell_2: int, height: float, 
+                 _min: Vector3, _max: Vector3, vertex_c: Vector3 = None):
+        
         self.flags = flags
         self.edge_count = edge_count
         self.gap_2 = gap_2
@@ -4843,9 +4849,8 @@ def create_ar(map_filename: str) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, SHOP / file.name)
-
-    os.chdir(SHOP)    
-    subprocess.Popen(f"cmd.exe /c run !!!!!{map_filename}", creationflags = subprocess.CREATE_NO_WINDOW)
+            
+    subprocess.Popen(f"cmd.exe /c run !!!!!{map_filename}", cwd = SHOP, creationflags = subprocess.CREATE_NO_WINDOW)
 
 
 def post_editor_cleanup(delete_shop: bool) -> None:
@@ -5159,14 +5164,28 @@ def apply_texture_to_object(obj, texture_path):
 
     unwrap_uv_to_aspect_ratio(obj, texture_image)
     
+    
+def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
+    if blender_to_game and game_to_blender:
+        raise ValueError("Both transformation modes cannot be 'True' at the same time.")
+ 
+    elif blender_to_game:
+        x, y, z = vertex.x, vertex.z, -vertex.y
         
+    elif game_to_blender:
+        x, y, z = vertex.x, -vertex.z, vertex.y
+        
+    else:
+        raise ValueError("One of the transformation modes must be 'True'.")
+    return x, y, z
+    
+       
 def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     name = f"P{polygon_data['bound_number']}"
     bound_number = polygon_data['bound_number']
     script_vertices = polygon_data["vertex_coordinates"]
 
-    # Convert Game's (x, y, z) to Blender's (x, z, -y)
-    transformed_vertices = [(x, -z, y) for x, y, z in script_vertices]
+    transformed_vertices = [transform_coordinate_system(Vector3.from_tuple(vertex), game_to_blender = True) for vertex in script_vertices]
     
     edges = []
     faces = [range(len(transformed_vertices))]
@@ -5532,17 +5551,17 @@ def extract_polygon_texture(obj) -> str:
     return "CHECK04"  # Default value
 
 
-def transform_game_coordinate(coordinate: Vector3) -> Tuple[float, float, float]:
-    x, y, z = coordinate.x, coordinate.z, -coordinate.y
-    return x, y, z
-    
-
 def export_formatted_polygons(obj) -> str:
     poly_data = extract_polygon_data(obj)
     texture_name = extract_polygon_texture(obj)
     texture_constant = TEXTURE_EXPORT.get(texture_name, f'"{texture_name}"')
-    
-    vertex_export = ',\n\t\t'.join(['(' + ', '.join(format_decimal(comp) for comp in transform_game_coordinate(vert.co)) + ')' for vert in poly_data['vertex_coordinates']])
+
+    formatted_vertices = [] 
+    for vertex in poly_data['vertex_coordinates']:
+        transformed_vertex = transform_coordinate_system(vertex.co, blender_to_game = True)
+        formatted_vertex = f"({', '.join(format_decimal(comp) for comp in transformed_vertex)})"
+        formatted_vertices.append(formatted_vertex)
+    vertex_export = ',\n\t\t'.join(formatted_vertices)
 
     optional_variables = []
     
@@ -5918,11 +5937,14 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
     
     if race_key in race_data:
         waypoints = race_data[race_key]['waypoints']
+        
         for index, waypoint_data in enumerate(waypoints):
             x, y, z, rotation, scale = waypoint_data
             
+            x, y, z = transform_coordinate_system(Vector((x, y, z)), game_to_blender = True)
             waypoint_name = get_waypoint_name(race_type_input, race_number_input, index)
-            create_waypoint(x, -z, y, rotation, scale, waypoint_name)
+                
+            create_waypoint(x, y, z, rotation, scale, waypoint_name)
             
         update_waypoint_colors()
     else:
@@ -5949,23 +5971,25 @@ def load_waypoints_from_csv(waypoint_file: Path) -> None:
     for wp_idx, waypoint in enumerate(waypoints_data):
         x, y, z, rotation_deg, scale = waypoint
         
+        x, y, z = transform_coordinate_system(Vector((x, y, z)), game_to_blender = True)
+        waypoint_name = get_waypoint_name(race_type, race_number, wp_idx)
+        
         if rotation_deg == ROT_AUTO and wp_idx < len(waypoints_data) - 1:
             next_waypoint = waypoints_data[wp_idx + 1]
-            rotation_deg = calculate_waypoint_rotation(x, -z, next_waypoint[0], -next_waypoint[2])
+            rotation_deg = calculate_waypoint_rotation(x, z, next_waypoint[0], next_waypoint[2]) 
 
         if scale == SCALE_AUTO:
             scale = SCALE_DEFAULT
 
-        waypoint_name = get_waypoint_name(race_type, race_number, wp_idx)
-        waypoint = create_waypoint(x, -z, y, -rotation_deg, scale, waypoint_name)
+        waypoint = create_waypoint(x, y, z, -rotation_deg, scale, waypoint_name)
         
     update_waypoint_colors()
     
     
 def load_cops_and_robbers_waypoints(input_file: Path) -> None:
     
-    print(Path(__file__).parent)
-    print(Path.cwd())
+    # print(Path(__file__).parent)
+    # print(Path.cwd())
     
     waypoint_types = cycle(['Bank Hideout', 'Gold Position', 'Robber Hideout'])
     set_count = 1
@@ -5977,11 +6001,9 @@ def load_cops_and_robbers_waypoints(input_file: Path) -> None:
         for row in reader:
             if len(row) < 3 or not all(is_float(val) for val in row[:3]):
                 raise ValueError("\nCSV file can't be parsed. Each row must have at least 3 floats or integer values.\n")
-                        
-            x, y, z = map(float, row[:3])
-            # Convert Game's (x, y, z) to Blender's (x, -z, y)
-            x, y, z = x, -z, y 
-                        
+            
+            x, y, z = transform_coordinate_system(Vector(map(float, row[:3])), game_to_blender = True)
+                                              
             waypoint_type = next(waypoint_types)
 
             if waypoint_type == 'Bank Hideout':
@@ -6027,16 +6049,16 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
         f.write("# x, y, z, rotation, scale \n")
         
         for waypoint in waypoints:
-            location = waypoint.matrix_world.to_translation()
+            vertex = waypoint.matrix_world.to_translation()
+            vertex.x, vertex.y, vertex.z = transform_coordinate_system(vertex, blender_to_game = True)
+            
             rotation_euler = waypoint.rotation_euler
             rotation_degrees = math.degrees(rotation_euler.z) % 360
             
             if rotation_degrees > 180:
                 rotation_degrees -= 360
                 
-            location.y = -location.y  # Flip the sign
-                        
-            wp_line = f"{location.x:.2f}, {location.z:.2f}, {location.y:.2f}, {rotation_degrees:.2f}, {waypoint.scale.x:.2f}"
+            wp_line = f"{vertex.x:.2f}, {vertex.y:.2f}, {vertex.z:.2f}, {rotation_degrees:.2f}, {waypoint.scale.x:.2f}"
             
             if add_brackets:
                 wp_line = f"\t\t\t[{wp_line}],"
