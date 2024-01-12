@@ -80,10 +80,10 @@ set_reverse_ai_streets = False  # change to "True" if you want to automatically 
 set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
 visualize_ai_paths = False      # change to "True" if you want to visualize the AI paths in the Blender viewport
 
-# You can add multiple Cruise Start positions here (as backup), only the last one will be used
-cruise_start_pos = (0.0, 0.0, 0.0)
-cruise_start_pos = (-83.0, 18.0, -114.0)
-cruise_start_pos = (40.0, 30.0, -40.0)
+# Start Position
+# To manually set start position below, make sure no polygon has the option 'base = True'
+# cruise_start_position = (-83.0, 18.0, -114.0)
+# cruise_start_position = (40.0, 30.0, -40.0)
 
 disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
 
@@ -1758,7 +1758,9 @@ def create_polygon(
     material_index: int = 0, cell_type: int = 0, flags: int = None, 
     plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
     hud_color: str = '#414441', minimap_outline_color: str = minimap_outline_color, 
-    always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads):
+    always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False) -> None:
+
+    global cruise_start_position
 
     # Vertex indices
     base_vertex_index = len(vertices)
@@ -1785,6 +1787,7 @@ def create_polygon(
         """
         raise ValueError(error_message)
 
+    # Bound numbers outside these ranges will crash the game
     if bound_number <= 0 or bound_number == 200 or bound_number >= 32767:
         error_message = """
         ***ERROR***
@@ -1801,13 +1804,18 @@ def create_polygon(
         
     elif len(vertex_coordinates) == QUAD and fix_faulty_quads:
         vertex_coordinates = ensure_quad_ccw_order(vertex_coordinates)
-           
+        
     # Flags
     if flags is None:
         if len(vertex_coordinates) == QUAD:
             flags = 6
         elif len(vertex_coordinates) == TRIANGLE:
             flags = 3
+     
+    # # Base polygon           
+    if base:
+        x, y, z = calculate_center_tuples(vertex_coordinates)
+        cruise_start_position = (x, y + 15, z)
 
     # Sorting        
     if sort_vertices: 
@@ -2278,6 +2286,7 @@ save_mesh(
 # Road connected to Bridge Prop
 create_polygon(
 	bound_number = 501,
+    base = True,
 	vertex_coordinates = [
 		(20.0, 30.0, 0.0),
         (50.0, 30.0, 0.0),
@@ -2785,6 +2794,7 @@ def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, 
         
         with open(SHOP / RACE / map_filename / "COPSWAYPOINTS.CSV", "w") as f:
             f.write(header)
+            
             for i in range(0, len(cnr_waypoints), 3):
                 f.write(", ".join(map(str, cnr_waypoints[i])) + filler) 
                 f.write(", ".join(map(str, cnr_waypoints[i+1])) + filler)
@@ -2930,6 +2940,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
 
     width = int(max_x - min_x)
     height = int(max_z - min_z) 
+    
     def draw_polygon(ax, polygon, minimap_outline_color: str, 
                     label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
 
@@ -6310,8 +6321,8 @@ Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: {NO}
 cruise_start = {
     "street_name": "cruise_start",
     "vertices": [
-        (0, 0, 0),          # keep this
-        cruise_start_pos]}  # starting position in Cruise mode
+        (0, 0, 0),              # keep this
+        cruise_start_position]}     
 
 main_west = {
      "street_name": "main_west",
@@ -6695,7 +6706,7 @@ lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "L
 LightingEditor.write_file(lighting_instances, lighting_configs, SHOP / "TUNE" / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, DEBUG_FOLDER / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
-copy_dev_folder(BASE_DIR / 'dev', SHOP / 'dev', map_filename)
+copy_dev_folder(BASE_DIR / 'dev', mm1_folder / 'dev', map_filename)
 edit_and_copy_mmbangerdata(bangerdata_properties, EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE') 
 copy_core_tune_files(EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE')
 copy_custom_textures(BASE_DIR / "Custom Textures", SHOP / "TEX16O")
