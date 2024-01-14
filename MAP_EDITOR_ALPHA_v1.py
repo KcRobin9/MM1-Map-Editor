@@ -54,7 +54,7 @@ MOVE = shutil.move
   
 
 #! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
-map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Menu
+map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
 map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file
 mm1_folder = BASE_DIR / 'MidtownMadness'        # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
 
@@ -72,55 +72,58 @@ set_animations = True           # change to "True" if you want ANIMATIONS (plane
 
 # Minimap
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. 'Red'), if you don't want any color, set to None
+minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
 
 # AI
-set_ai_streets = True           # change to "True" if you want AI
-set_reverse_ai_streets = False  # change to "True" if you want to automatically add a reverse AI path for each lane
+set_ai_streets = True           # change to "True" if you want AI streets
+set_reverse_ai_streets = False  # change to "True" if you want to add reverse AI streets
 set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
-visualize_ai_paths = False      # change to "True" if you want to visualize the AI paths in the Blender viewport
+visualize_ai_paths = False      # change to "True" if you want to visualize the AI streets in the Blender 
 
 # Start Position
-# To manually set start position below, make sure no polygon has the option 'base = True'
+# To manually set car start position in cruise, adjust the lines below and make sure no polygon has the option 'base = True'
 # cruise_start_position = (-83.0, 18.0, -114.0)
 # cruise_start_position = (40.0, 30.0, -40.0)
 
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will properly display Errors and Warnings again)
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
 ################################################################################################################
 
 # Misc
-set_dlp = False                 # change to "True" if you want to create a DLP file (scroll to the end of the script)
+set_dlp = False                 # change to "True" if you want to create a DLP file 
 
 append_props = False            # change to "True" if you want to append props
-append_input_props_f = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
-append_output_props_f = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
+append_input_props_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
+append_output_props_file = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
-random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R4", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
+random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
-# Blender Textures     
+################################################################################################################
+
+# Blender Input Textures     
 texture_folder = EDITOR_RESOURCES / "TEXTURES"         
-load_all_texures = False        # change to "True" if you want to load all texture materials (takes a few extra seconds to load)
-                                # change to "False" if you want to load only the textures that are used in your Map (faster loading)
+load_all_texures = False        # change to "True" if you want to load all textures (materials) (slower loading time)
+                                # change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
 # Blender Waypoint Editor 
-waypoint_file = EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint CSV file
+waypoint_file = EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint file
 
-race_type_input = "RACE"        # waypoints from 'race_data' dictionary, types: "BLITZ" or "RACE", "CIRCUIT" 
-race_number_input = "0"     
+waypoint_number_input, waypoint_type_input = "0", "RACE"  # waypoints from the Editor's "race_data" dictionary
+    
+################################################################################################################
 
 # Advanced
 no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
 no_ai = False                   # change to "True" if you want to disable the AI and AI paths
 
-less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops when the game starting printing tons of errors/warnings
+less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
 more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
 
-lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're 'truncating' the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which crashing the portals file. Nevertheless, we can still test this city with an empty portals file (compromises visiblity)
-truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, we will truncate charachters past 254 (may compromise visibility - lowering portals may mitigate this issue)
+lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
+truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
 
 fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
@@ -134,8 +137,8 @@ debug_facades = False           # change to "True" if you want a FACADES Debug t
 debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
 debug_portals = False           # change to "True" if you want a PORTALS Debug text file
 debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
-debug_minimap = False           # change to "True" if you want a HUD Debug jpg file (defaults to True when "set_lars_race_maker" is set to True)
-debug_minimap_id = False        # change to "True" if you want to see the Bound ID in the HUD Debug jpg file
+debug_minimap = False           # change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
+debug_minimap_id = False        # change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
 round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
@@ -143,14 +146,14 @@ round_debug_values = True       # change to "True" if you want to round (some) d
 debug_props_file = False
 debug_props_data_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 
-debug_facade_file = False
-debug_facade_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"       # Change the input Facade file here
+debug_facades_file = False
+debug_facades_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
 
 debug_portals_file = False
 debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
-debug_bai_file = False
-debug_bai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"               # Change the input AI file here
+debug_ai_file = False
+debug_ai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
 
 debug_meshes_file = False
 debug_meshes_data_file = EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input MESH file here
@@ -172,7 +175,70 @@ debug_dlp_data_folder = EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Ch
 
 ################################################################################################################               
 ################################################################################################################
-#! ======================= PROGRESS BAR, COLORS, RUN TIME ======================= !#
+#! ======================= PROGRESS BAR, RUN TIME ======================= !#
+
+
+def create_bar_divider(colors: List[str]) -> str:
+    divider = "=" * 60  
+    color_divider = ''.join(colors[i % len(colors)] + char for i, char in enumerate(divider))
+    return "\n" + color_divider + "\n"
+
+
+def clear_command_prompt_screen() -> None:
+    print("\033[H\033[J", end = '')
+
+
+def update_progress_bar(progress: float, map_name: str, buffer: str, top_divider: str, bottom_divider: str, disable_progress_bar: bool) -> None:
+    if progress < 33:
+        color = Style.BRIGHT + Fore.RED
+    elif progress < 66:
+        color = Style.BRIGHT + Fore.YELLOW
+    else:
+        color = Style.BRIGHT + Fore.GREEN
+    
+    prog_int = int(progress)
+    prog_line = color + f"   Creating.. {map_name} [{'#' * (prog_int // 5)}{'.' * (20 - prog_int // 5)}] {prog_int}%" + Style.RESET_ALL
+
+    buffer = top_divider + "\n" + prog_line + "\n" + bottom_divider + "\n"
+    
+    if not disable_progress_bar:
+        clear_command_prompt_screen()
+        
+    print(buffer, end = '')
+
+
+def continuous_progress_bar(duration: float, map_name: str, buffer: str, top_divider: str, bottom_divider: str, disable_progress_bar: bool) -> None:
+    start_time = time.time()
+    
+    while True:
+        elapsed_time = time.time() - start_time
+        progress = (elapsed_time / duration) * 100
+        progress = min(100, max(0, progress))  
+        
+        update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider, disable_progress_bar)
+        
+        if progress >= 100:
+            break
+        
+        time.sleep(0.025)  
+
+
+def save_editor_run_time(run_time: float, run_time_file: Path) -> None:
+    with open(run_time_file, "wb") as f:
+        pickle.dump(run_time, f)
+
+
+def load_last_editor_run_time(run_time_file: Path):
+    if run_time_file.exists():
+        try:
+            with open(run_time_file, "rb") as f:
+                return pickle.load(f)
+        except EOFError:
+            return 2.0  # Default to 2.0 seconds if the file is empty or corrupted
+    return 2.0          # Default to 2.0 seconds if no run time file exists
+
+################################################################################################################
+#! ======================= COLORS, SETUP PROGRESS BAR ======================= !#
 
 
 init(autoreset = True)
@@ -192,67 +258,10 @@ colors_two = [
     Fore.BLUE, Fore.LIGHTBLUE_EX
 ]
 
-def create_divider(colors):
-    divider = "=" * 60  
-    color_divider = ''.join(colors[i % len(colors)] + char for i, char in enumerate(divider))
-    return "\n" + color_divider + "\n"
-
-# Set the progress bar colors
-top_divider = create_divider(colors_one)
-bottom_divider = create_divider(colors_one)
+top_divider = create_bar_divider(colors_one)
+bottom_divider = create_bar_divider(colors_one)
 buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
 
-
-def clear_screen(disable_progress_bar: bool):
-    if not disable_progress_bar:
-        print("\033[H\033[J", end = '')
-
-
-def update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider):
-    if progress < 33:
-        color = Style.BRIGHT + Fore.RED
-    elif progress < 66:
-        color = Style.BRIGHT + Fore.YELLOW
-    else:
-        color = Style.BRIGHT + Fore.GREEN
-    
-    prog_int = int(progress)
-    prog_line = color + f"   Creating.. {map_name} [{'#' * (prog_int // 5)}{'.' * (20 - prog_int // 5)}] {prog_int}%" + Style.RESET_ALL
-
-    buffer = top_divider + "\n" + prog_line + "\n" + bottom_divider + "\n"
-    clear_screen(disable_progress_bar)
-    print(buffer, end = '')
-
-
-def continuous_progress_bar(duration, map_name, buffer, top_divider, bottom_divider, disable_progress_bar):
-    start_time = time.time()
-    while True:
-        elapsed_time = time.time() - start_time
-        progress = (elapsed_time / duration) * 100
-        progress = min(100, max(0, progress))  
-        update_progress_bar(progress, map_name, buffer, top_divider, bottom_divider)
-        if progress >= 100:
-            break
-        time.sleep(0.025)  
-
-
-def save_editor_run_time(run_time: float, run_time_file: Path):
-    with open(run_time_file, "wb") as f:
-        pickle.dump(run_time, f)
-
-
-def load_last_editor_run_time(run_time_file: Path):
-    if run_time_file.exists():
-        try:
-            with open(run_time_file, "rb") as f:
-                return pickle.load(f)
-        except EOFError:
-            return 2.0  # Default to 2.0 seconds if the file is empty or corrupted
-    return 2.0          # Default to 2.0 seconds if no previous data
-
-################################################################################################################
-
-# Load the Last Run Time, Start the Progress Bar Thread, Start the Time
 last_run_time = load_last_editor_run_time(BASE_DIR / "last_run_time.pkl")
 
 progress_thread = threading.Thread(
@@ -260,6 +269,7 @@ progress_thread = threading.Thread(
     args = (last_run_time, map_name, buffer, top_divider, bottom_divider, disable_progress_bar))
 
 progress_thread.start()
+
 start_time = time.time()
 
 ################################################################################################################               
@@ -267,23 +277,27 @@ start_time = time.time()
 #! ======================= CONSTANTS & INITIALIZATIONS ======================= !#
 
 
+# Constants
 TRIANGLE = 3
 QUAD = 4
-HIGH_MODEL = 8
-DRIFT_MODEL = 32
-MESH_THRESHOLD = 16
-CELL_THRESHOLD = 254
-ROOM = 0x1
-COLLIDE_FLAG = 0x800
 
+CELL_LOD_HIGH = 8  # LOD = Level of Detail
+CELL_LOD_DRIFT = 32
+
+MESH_VERTEX_COUNT_THRESHOLD = 16
+CELL_CHARACTER_THRESHOLD = 254
+
+ROOM_DEFAULT = 0x1
+PROP_COLLIDE_FLAG = 0x800
 
 # Variables
-vertices = []
+vertices = [] 
+polygons_data = []
+texture_names = []
+texcoords_data = {}
+
 hudmap_vertices = []
 hudmap_properties = {}
-polygons_data = []
-stored_texture_names = []
-texcoords_data = {}
 
 # Time & Weather
 MORNING, NOON, EVENING, NIGHT = 0, 1, 2, 3  
@@ -312,18 +326,17 @@ NO_COPS, MAX_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
 NO_PEDS, MID_PEDS, MAX_PEDS = 0.0, 0.5, 1.0
 NO_AMBIENT, MID_AMBIENT, MAX_AMBIENT = 0.0, 0.5, 1.0
 
-# Waypoint Width
-LANE_4 = 15
-LANE_6 = 19
-LANE_ALLEY = 3
-
 # Waypoint Attributes
-ROT_S = 179.99
-ROT_W = -90
-ROT_E = 90
-ROT_N = 0.01
+ROT_SOUTH = 179.99
+ROT_WEST = -90
+ROT_EAST = 90
+ROT_NORTH = 0.01
 ROT_AUTO = 0
-SCALE_AUTO, SCALE_DEFAULT = 0, 15
+
+WIDTH_AUTO = SCALE_AUTO = 0
+LANE_ALLEY = 3
+LANE_4 = SCALE_DEFAULT = 15
+LANE_6 = 19
 
 # Race Types
 ROAM = "ROAM"
@@ -333,23 +346,26 @@ RACE = "RACE"
 CIRCUIT = "CIRCUIT"
 COPS_N_ROBBERS = "COPSANDROBBERS"
 
-# Modes
+# Game Modes
 SINGLE = "SINGLE"
 MULTI = "MULTI"
 ALL_MODES = "All Modes"
 
-# AI Intersection types
+# AI Intersection Types
 STOP = 0 
 STOP_LIGHT = 1 
-YIELD = 2  # Unused, but works
+YIELD = 2  # Unused (works)
 CONTINUE = 3
 
-# AI Road properties, e.g. set True/False for the variable "traffic_blocked"
-NO = 0
-YES = 1
+# AI Road properties (e.g. "YES" for the field "traffic_blocked")
+NO, YES = 0, 1
 
 # Misc
 HUGE = 100000000000
+
+################################################################################################################               
+################################################################################################################
+#! ======================= CARS & PROPS ======================= !#
 
 
 # Player Cars (also usable as Opponent cars, Cop cars, and Props)
@@ -363,7 +379,6 @@ MUSTANG99 = "vpmustang99"
 ROADSTER = "vppanoz"
 PANOZ_GTR1 = "vppanozgt"
 SEMI = "vpsemi"
-
 
 # Ambient Cars (also usable as Opponent cars, Cop cars, and Props)
 TINY_CAR = "vacompact"
@@ -383,7 +398,6 @@ BLACK_LIMO = "valimoangel"
 
 TRAFFIC_BUS = "vabus"
 PLANE_SMALL = "vaboeing_small"
-
 
 # Props
 BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
@@ -431,6 +445,8 @@ PLANE_LARGE = "vaboeing"  # No collision
  
 ################################################################################################################   
 ################################################################################################################
+#! ======================= RACE EDITOR ======================= !#
+
 
 #* SETUP III (optional, Race Editor)
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
@@ -446,10 +462,10 @@ checkpoint_race_names = ["Photo Finish"]
 race_data = {
     'BLITZ_0': {
         'waypoints': [
-            [0.0, 0.0, 55.0, ROT_N, 12.0], 
-            [0.0, 0.0, 15.0, ROT_N, 12.0], 
-            [0.0, 0.0, -40.0, ROT_N, 12.0], 
-            [0.0, 0.0, -130.0, ROT_N, 12.0], 
+            [0.0, 0.0, 55.0, ROT_NORTH, 12.0], 
+            [0.0, 0.0, 15.0, ROT_NORTH, 12.0], 
+            [0.0, 0.0, -40.0, ROT_NORTH, 12.0], 
+            [0.0, 0.0, -130.0, ROT_NORTH, 12.0], 
         ],
         'mm_data': {
             'ama': [NOON, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
@@ -459,8 +475,8 @@ race_data = {
             'density': 0.25,
             'num_of_police': 2,
             'police_data': [
-                f'{CRUISER} 10.0 0.0 65.0 {ROT_N} {STATIONARY} {PUSH}',
-                f'{CRUISER} -10.0 0.0 65.0 {ROT_N} {IN_TRAFFIC} {MIX}',
+                f'{CRUISER} 10.0 0.0 65.0 {ROT_NORTH} {STATIONARY} {PUSH}',
+                f'{CRUISER} -10.0 0.0 65.0 {ROT_NORTH} {IN_TRAFFIC} {MIX}',
             ],
             'num_of_opponents': 1,
         },
@@ -470,13 +486,13 @@ race_data = {
     },
     'RACE_0': {
         'waypoints': [
-            [0.0, 245, -850, ROT_S, LANE_4], 
-            [0.0, 110, -500, ROT_S, LANE_4],  
-            [0.0, 110, -497, ROT_S, LANE_4],   
-            [25.0, 45.0, -325, ROT_S, 25.0],   
-            [35.0, 12.0, -95.0, ROT_S, LANE_4], 
-            [35.0, 30.0, 0.0, ROT_S, LANE_4], 
-            [35.0, 30.0, 40.0, ROT_S, LANE_4], 
+            [0.0, 245, -850, ROT_SOUTH, LANE_4], 
+            [0.0, 110, -500, ROT_SOUTH, LANE_4],  
+            [0.0, 110, -497, ROT_SOUTH, LANE_4],   
+            [25.0, 45.0, -325, ROT_SOUTH, 25.0],   
+            [35.0, 12.0, -95.0, ROT_SOUTH, LANE_4], 
+            [35.0, 30.0, 0.0, ROT_SOUTH, LANE_4], 
+            [35.0, 30.0, 40.0, ROT_SOUTH, LANE_4], 
         ],
         'mm_data': {
             'ama': [NOON, CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
@@ -486,7 +502,7 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{CRUISER} 15.0 0.0 75.0 {ROT_N} {STATIONARY} {ROADBLOCK}',
+                f'{CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
             ],
             'num_of_opponents': 1,
         },
@@ -496,12 +512,12 @@ race_data = {
     },
     'CIRCUIT_0': {
         'waypoints': [
-            [0.0, 245, -850, ROT_S, LANE_4], 
-            [0.0, 110, -500, ROT_S, 30.0],    
-            [25.0, 45.0, -325, ROT_S, 25.0],   
-            [35.0, 12.0, -95.0, ROT_S, LANE_4], 
-            [35.0, 30.0, 0.0, ROT_S, LANE_4], 
-            [35.0, 30.0, 40.0, ROT_S, LANE_4], 
+            [0.0, 245, -850, ROT_SOUTH, LANE_4], 
+            [0.0, 110, -500, ROT_SOUTH, 30.0],    
+            [25.0, 45.0, -325, ROT_SOUTH, 25.0],   
+            [35.0, 12.0, -95.0, ROT_SOUTH, LANE_4], 
+            [35.0, 30.0, 0.0, ROT_SOUTH, LANE_4], 
+            [35.0, 30.0, 40.0, ROT_SOUTH, LANE_4], 
         ],
         'mm_data': {
             'ama': [NIGHT, RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
@@ -511,7 +527,7 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{CRUISER} 15.0 0.0 75.0 {ROT_N} {STATIONARY} {ROADBLOCK}',
+                f'{CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
             ],
             'num_of_opponents': 2,
         },
@@ -541,6 +557,10 @@ cnr_waypoints = [
     (-90.0, 1.0, -90.0),
     (90.0, 1.0, 90.0),
     (-90.0, 1.0, -90.0)]
+
+################################################################################################################   
+################################################################################################################
+#! ======================= ANIMATIONS & BRIDGES ======================= !#
 
 
 #* SETUP V (optional, Animations)
@@ -788,8 +808,9 @@ def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
         
 ################################################################################################################               
 ################################################################################################################  
-       
-# POLYGON CLASS
+#! ======================= POLYGON CLASS ======================= !#
+
+
 class Polygon:
     def __init__(self, cell_id: int, mtl_index: int, flags: int, vert_indices: List[int],
                  plane_edges: List[Vector3], plane_n: Vector3, plane_d: float, 
@@ -841,7 +862,7 @@ class Polygon:
         self.plane_n.write(f, '<')
         write_pack(f, '<f', self.plane_d)
     
-    def __repr__(self, bnd_instance):
+    def __repr__(self, bnd_instance) -> str:
         vertices_coordinates = [bnd_instance.vertices[idx] for idx in self.vert_indices]
         # plane_d = ', '.join(f'{d:.2f}' for d in self.plane_d)
         return f"""
@@ -865,8 +886,9 @@ polys = [POLYGON_FILLER]
         
 ################################################################################################################               
 ################################################################################################################          
-        
-# BOUNDS CLASS
+#! ======================= BOUNDS CLASS ======================= !#
+
+
 class Bounds:
     def __init__(self, magic: str, offset: Vector3, x_dim: int, y_dim: int, z_dim: int, 
                  center: Vector3, radius: float, radius_sqr: float, bb_min: Vector3, bb_max: Vector3, 
@@ -975,10 +997,14 @@ class Bounds:
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
         return Bounds(
-            magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
-            len(vertices), len(polys) - 1, num_hot_verts1, num_hot_verts2, num_edges, 
+            magic, offset, x_dim, y_dim, z_dim, 
+            center, radius, radius_sqr, bb_min, bb_max, 
+            len(vertices), len(polys) - 1, 
+            num_hot_verts1, num_hot_verts2, num_edges, 
             x_scale, z_scale, num_indices, height_scale, cache_size, 
-            vertices, polys, hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+            vertices, polys, 
+            hot_verts, edge_verts1, edge_verts2, 
+            edge_plane_n, edge_plane_d,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
             
@@ -1004,12 +1030,12 @@ class Bounds:
     @staticmethod
     def create(map_filename: str, vertices: List[Vector3], polys: List[Polygon], debug_bounds: bool) -> None:
         bnd = Bounds.initialize(vertices, polys)
-    
+                
         with open(SHOP / "BND" / f"{map_filename}_HITID.BND", "wb") as f:
             bnd.write(f)
             
-            if debug_bounds:
-                bnd.debug(DEBUG_FOLDER / "BOUNDS" / Path(map_filename + ".txt"))
+            if not debug_bounds:
+                bnd.debug(DEBUG_FOLDER / "BOUNDS" / f"{map_filename}.txt")
                 
     def debug(self, output_file: Path) -> None:
         if not output_file.parent.exists():
@@ -1025,8 +1051,7 @@ class Bounds:
             return
         
         if not input_file.exists():
-            print(f"The file {input_file} does not exist.")
-            return
+            raise FileNotFoundError(f"The file {input_file} does not exist.")
         
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
@@ -1044,23 +1069,27 @@ class Bounds:
             return
 
         if not input_folder.exists():
-            print(f"The folder {input_folder} does not exist.")
-            return
+            raise FileNotFoundError(f"The folder {input_folder} does not exist.")
+
+        bnd_files = list(input_folder.glob('*.BND'))
+        
+        if not bnd_files:
+            raise FileNotFoundError(f"No .BND files found in {input_folder}.")
 
         if not output_folder.exists():
             print(f"The output folder {output_folder} does not exist. Creating it.")
             output_folder.mkdir(parents = True, exist_ok = True)
 
-        for file in input_folder.glob('*.BND'):
-            output_files = output_folder / (file.stem + '.txt')  
-            Bounds.debug_file(file, output_files, True)
-            print(f"Processed {file.name} to {output_files.name}")
+        for file in bnd_files:
+            output_file = output_folder / file.with_suffix('.txt').name
+            Bounds.debug_file(file, output_file, debug_bounds_folder)
+            print(f"Processed {file.name} to {output_file.name}")
                     
     def __repr__(self) -> str:
         polygon_polys = '\n'.join([poly.__repr__(self) for poly in self.polys])
         return f"""
 BOUND
-    Magic: 2DNB
+    Magic: {self.magic}
     Offset: {self.offset}
     X Dim: {self.x_dim}
     Y Dim: {self.y_dim}
@@ -1089,7 +1118,7 @@ BOUND
     Edge Verts1: {self.edge_verts1}
     Edge Verts2: {self.edge_verts2}
     Edge Plane N: {self.edge_plane_n}
-    Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n
+    Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n  
     ======= Split =======\n
     Row Offsets: {self.row_offsets}\n
     ======= Split =======\n
@@ -1102,8 +1131,9 @@ BOUND
     
 ################################################################################################################               
 ################################################################################################################  
+#! ======================= MESHES CLASS ======================= !#
 
-# MESH CLASS
+
 class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sq: float, bounding_box_radius: float,
@@ -1130,8 +1160,8 @@ class Meshes:
         self.indices_sides = indices_sides
         
     @classmethod
-    def read(cls, file_name: str) -> 'Meshes':
-        with open(file_name, 'rb') as f:
+    def read(cls, input_file: Path) -> 'Meshes':
+        with open(input_file, 'rb') as f:
             magic = read_binary_name(f, 16)     
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sq, bounding_box_radius = read_unpack(f, '<3f')
@@ -1142,7 +1172,7 @@ class Meshes:
 
             f.read(16 * texture_count)
                     
-            if vertex_count < MESH_THRESHOLD:
+            if vertex_count < MESH_VERTEX_COUNT_THRESHOLD:
                 coordinates = Vector3.readn(f, vertex_count, '<')
             else:
                 coordinates = Vector3.readn(f, vertex_count + 8, '<')
@@ -1170,20 +1200,20 @@ class Meshes:
             write_pack(f, '<2B', self.texture_count, self.flags)
             f.write(b'\0' * 6)
 
-            for tex_name in self.texture_names:
-                write_pack(f, '<32s', tex_name.encode('ascii').ljust(32, b'\0'))
+            for texture_name in self.texture_names:
+                write_pack(f, '<32s', texture_name.encode('ascii').ljust(32, b'\0'))
                 f.write(b'\0' * 16)
                             
             for coordinate in self.coordinates:
                 coordinate.write(f, '<')
 
-            if self.vertex_count >= MESH_THRESHOLD:
+            if self.vertex_count >= MESH_VERTEX_COUNT_THRESHOLD:
                 for _ in range(8):
                     VECTOR3_DEFAULT.write(f, '<')
                                                                         
             write_pack(f, f"{self.adjunct_count}B", *self.texture_darkness)
                         
-            # Ensure Tex Coords is not larger than Adjunct Count * 2
+            # Ensure Tex Coords is not larger than (Adjunct Count * 2)
             if len(self.tex_coords) > self.adjunct_count * 2:
                 self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
                 
@@ -1191,7 +1221,7 @@ class Meshes:
             write_pack(f, f"{self.adjunct_count}H", *self.enclosed_shape)
             write_pack(f, f"{self.surface_count}B", *self.surface_sides)
 
-            # A triangle requires 4 indices (the 4th index will be 0)
+            # A Triangle must always have 4 indices (the 4th index will be 0)
             for indices_side in self.indices_sides:
                 while len(indices_side) <= TRIANGLE:
                     indices_side.append(0)
@@ -1212,6 +1242,9 @@ class Meshes:
     def debug_file(cls, input_file: Path, output_file: Path, debug_meshes_file: bool) -> None:
         if not debug_meshes_file:
             return
+        
+        if not input_file.exists():
+            raise FileNotFoundError(f"The file {input_file} does not exist.")
             
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
@@ -1224,17 +1257,24 @@ class Meshes:
     def debug_folder(cls, input_folder: Path, output_folder: Path, debug_meshes_folder: bool) -> None:
         if not debug_meshes_folder:
             return
+        
+        if not input_folder.exists():
+            raise FileNotFoundError(f"The folder {input_folder} does not exist.")
+
+        mesh_files = list(input_folder.glob('*.BMS'))
+        
+        if not mesh_files:
+            raise FileNotFoundError(f"No .BMS files found in {input_folder}.")
             
         if not output_folder.exists():
             print(f"The output folder {output_folder} does not exist. Creating it.")
             output_folder.mkdir(parents = True, exist_ok = True)
 
-        for file in input_folder.glob('*.BMS'):
-            output_file = output_folder / (file.stem + ".txt")
-            cls.debug_file(file, output_file, True)
+        for file in mesh_files:
+            output_file = output_folder / file.with_suffix('.txt').name
+            cls.debug_file(file, output_file, debug_meshes_folder)
                                 
-    def __repr__(self):
-        rounded_tex_coords = ', '.join(f'{coord:.2f}' for coord in self.tex_coords)
+    def __repr__(self) -> str:
         return f"""
 MESH
     Magic: {self.magic}
@@ -1250,7 +1290,7 @@ MESH
     TextureNames: {self.texture_names}
     Coordinates: {self.coordinates}
     TextureDarkness: {self.texture_darkness}
-    TexCoords: {rounded_tex_coords}
+    TexCoords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}
     Enclosed Shape: {self.enclosed_shape}
     SurfaceSides: {self.surface_sides}
     IndicesSides: {self.indices_sides}
@@ -1258,10 +1298,11 @@ MESH
              
 ################################################################################################################               
 ################################################################################################################   
+#! ======================= DLP CLASSES ======================= !#
 
-# DLP CLASSES
+
 class DLPVertex: 
-    def __init__(self, id: int, normal: Vector3, uv: Vector2, color: int):
+    def __init__(self, id: int, normal: Vector3, uv: Vector2, color: int) -> None:
         self.id = id
         self.normal = normal
         self.uv = uv
@@ -1275,13 +1316,13 @@ class DLPVertex:
         color, = read_unpack(f, '>I')       
         return cls(id, normal, uv, color)
     
-    def write(self, f):
+    def write(self, f) -> None:
         write_pack(f, '>H', self.id)
         self.normal.write(f, '>')    
         self.uv.write(f, '>')       
         write_pack(f, '>I', self.color)
            
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"""
             Id: {self.id}
             Normal: {self.normal}
@@ -1291,8 +1332,10 @@ class DLPVertex:
     
             
 class DLPPatch:
-    def __init__(self, s_res: int, t_res: int, flags: int, r_opts: int, mtl_idx: int, tex_idx: int, phys_idx: int, 
-                 vertices: List[DLPVertex], name: str):
+    def __init__(self, s_res: int, t_res: int, flags: int, r_opts: int, 
+                 mtl_idx: int, tex_idx: int, phys_idx: int, 
+                 vertices: List[DLPVertex], name: str) -> None:
+        
         self.s_res = s_res
         self.t_res = t_res
         self.flags = flags
@@ -1313,7 +1356,7 @@ class DLPPatch:
         name = read_unpack(f, f'>{name_length}s')[0].decode()     
         return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
     
-    def write(self, f):
+    def write(self, f) -> None:
         write_pack(f, '>2H', self.s_res, self.t_res) 
         write_pack(f, '>2H', self.flags, self.r_opts)
         write_pack(f, '>3H', self.mtl_idx, self.tex_idx, self.phys_idx)
@@ -1324,7 +1367,7 @@ class DLPPatch:
         write_pack(f, '>I', len(self.name))
         write_pack(f, f'>{len(self.name)}s', self.name.encode())
         
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"""
     Patch:
         S Res: {self.s_res}
@@ -1341,7 +1384,8 @@ class DLPPatch:
 
 class DLPGroup:
     def __init__(self, name: str, num_vertices: int, num_patches: int, 
-                 vertex_indices: tuple[int, ...], patch_indices: tuple[int, ...]):
+                 vertex_indices: tuple[int, ...], patch_indices: tuple[int, ...]) -> None:
+        
         self.name = name
         self.num_vertices = num_vertices
         self.num_patches = num_patches
@@ -1357,14 +1401,14 @@ class DLPGroup:
         patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
         return cls(name, num_vertices, num_patches, vertex_indices, patch_indices)
 
-    def write(self, f):
+    def write(self, f) -> None:
         write_pack(f, '>B', len(self.name))
         write_pack(f, f'>{len(self.name)}s', self.name.encode())
         write_pack(f, '>2I', self.num_vertices, self.num_patches)
         write_pack(f, f'>{self.num_vertices}H', *self.vertex_indices)
         write_pack(f, f'>{self.num_patches}H', *self.patch_indices)
         
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"""
     Group:
         Name: {self.name}
@@ -1377,7 +1421,8 @@ class DLPGroup:
 
 class DLP:
     def __init__(self, magic: str, num_groups: int, num_patches: int, num_vertices: int, 
-                 groups: List[DLPGroup], patches: List[DLPPatch], vertices: List[Vector3]):
+                 groups: List[DLPGroup], patches: List[DLPPatch], vertices: List[Vector3]) -> None:
+        
         self.magic = magic
         self.num_groups = num_groups
         self.num_patches = num_patches
@@ -1395,7 +1440,7 @@ class DLP:
         vertices = Vector3.readn(f, num_vertices, '>')
         return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
 
-    def write(self, output_file: str, set_dlp: bool):
+    def write(self, output_file: str, set_dlp: bool) -> None:
         if not set_dlp:
             return
         
@@ -1416,6 +1461,9 @@ class DLP:
     def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
         if not debug_dlp_file:
             return
+        
+        if not input_file.exists():
+            raise FileNotFoundError(f"The file {input_file} does not exist.")
 
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
@@ -1430,22 +1478,29 @@ class DLP:
         print(f"Processed {input_file.name} to {output_file.name}")
              
     @staticmethod
-    def debug_folder(input_folder: Path, output_folder: Path, debug_dlp_folder: bool):
+    def debug_folder(input_folder: Path, output_folder: Path, debug_dlp_folder: bool) -> None:
         if not debug_dlp_folder:
             return
+        
+        if not input_folder.exists():
+            raise FileNotFoundError(f"The folder {input_folder} does not exist.")
+
+        dlp_files = list(input_folder.glob('*.DLP'))
+        
+        if not dlp_files:
+            raise FileNotFoundError(f"No .DLP files found in {input_folder}.")
         
         if not output_folder.exists():
             print(f"The output folder {output_folder} does not exist. Creating it.")
             output_folder.mkdir(parents = True, exist_ok = True)
 
-        for file in input_folder.glob('*.DLP'):  
-            if file.is_file():
-                output_file = output_folder / (file.stem + '_.txt')
-                DLP.debug_file(file, output_file, True)     
-                 
-                print(f"Processed {file.name} to {output_file.name}")    
+        for file in dlp_files:
+            output_file = output_folder / file.with_suffix('.txt').name
+            DLP.debug_file(file, output_file, debug_dlp_folder)     
+
+            print(f"Processed {file.name} to {output_file.name}")    
                                                         
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"""
 DLP
     Magic: {self.magic}
@@ -1561,7 +1616,7 @@ def save_mesh(
     texture_name: str, texture_indices: List[int] = [1], vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
     texture_darkness: List[int] = None, tex_coords: List[float] = None, 
     randomize_textures: bool = randomize_textures, random_texture_exclude: bool = False, random_textures: List[str] = random_textures, 
-    debug_meshes: bool = debug_meshes):
+    debug_meshes: bool = debug_meshes) -> None:
         
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
@@ -1572,7 +1627,7 @@ def save_mesh(
     if randomize_textures and not random_texture_exclude:
         texture_name = [random.choice(random_textures)]
         
-    stored_texture_names.append(texture_name[0])
+    texture_names.append(texture_name[0])
     single_poly = [POLYGON_FILLER, poly]
     
     mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
@@ -2636,6 +2691,7 @@ race_type_to_extension = {
 def ordinal(n) -> str:
     if 10 <= n % 100 <= 13:
         return f"{n}th"
+    
     return {
         1: f"{n}st",
         2: f"{n}nd",
@@ -2840,7 +2896,7 @@ def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, ce
     always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
     row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
 
-    while len(row) >= CELL_THRESHOLD:
+    while len(row) >= CELL_CHARACTER_THRESHOLD:
         always_visible_cell_ids.pop()
         always_visible_count = len(always_visible_cell_ids)
         always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
@@ -2849,7 +2905,7 @@ def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, ce
         
  
 def write_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
-    model = DRIFT_MODEL if cell_id in mesh_a2_files else HIGH_MODEL
+    model = CELL_LOD_DRIFT if cell_id in mesh_a2_files else CELL_LOD_HIGH
     return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
 
@@ -2879,14 +2935,14 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
                 row_length = len(row)
 
             # Update max warning / error count
-            if 200 <= row_length < CELL_THRESHOLD:
+            if 200 <= row_length < CELL_CHARACTER_THRESHOLD:
                 max_warning_count = max(max_warning_count, row_length)
-            elif row_length >= CELL_THRESHOLD:
+            elif row_length >= CELL_CHARACTER_THRESHOLD:
                 max_error_count = max(max_error_count, row_length)
 
             f.write(row)
 
-        if 200 <= max_warning_count < CELL_THRESHOLD:
+        if 200 <= max_warning_count < CELL_CHARACTER_THRESHOLD:
             warning_message = f"""
             ***WARNING***
             Close to row character limit 254 in .CELLS file. 
@@ -2897,7 +2953,7 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
             """
             print(warning_message)
         
-        elif max_error_count >= CELL_THRESHOLD:
+        elif max_error_count >= CELL_CHARACTER_THRESHOLD:
             error_message = f"""
             ***ERROR***
             Character limit of 254 exceeded in .CELLS file.
@@ -3570,7 +3626,7 @@ class Bangers:
             cls.write_n(f, bangers)
         
             for banger in bangers:
-                write_pack(f, '<2H', ROOM, COLLIDE_FLAG)  
+                write_pack(f, '<2H', ROOM_DEFAULT, PROP_COLLIDE_FLAG)  
                 banger.offset.write(f, '<')
                 banger.face.write(f, '<')
                 f.write(banger.name.encode('utf-8'))
@@ -3674,10 +3730,10 @@ class BangerEditor:
                 
                 for i in range(0, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
-                    self.props.append(Bangers(ROOM, COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
+                    self.props.append(Bangers(ROOM_DEFAULT, PROP_COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
 
             else:
-                self.props.append(Bangers(ROOM, COLLIDE_FLAG, offset, face, name + "\x00"))
+                self.props.append(Bangers(ROOM_DEFAULT, PROP_COLLIDE_FLAG, offset, face, name + "\x00"))
                 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if not append_props:
@@ -3780,7 +3836,7 @@ class Facades:
         return write_pack(f, '<I', len(facades))
         
     def write(self, f):  
-        write_pack(f, '<2H', ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
+        write_pack(f, '<2H', ROOM_DEFAULT, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
         write_pack(f, '<3f', *self.offset)  
         write_pack(f, '<3f', *self.face)
         write_pack(f, '<3f', *self.sides)
@@ -3880,7 +3936,7 @@ class FacadeEditor:
                 current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
                 sides = params.get('sides', (0.0, 0.0, 0.0))
                 scale = scales.get(params['name'], params.get('scale', 1.0))
-                facades.append(Facades(ROOM, params['flags'], current_start, current_end, sides, scale, params['name']))
+                facades.append(Facades(ROOM_DEFAULT, params['flags'], current_start, current_end, sides, scale, params['name']))
 
         return facades
     
@@ -5263,7 +5319,7 @@ def create_blender_meshes() -> None:
         
         load_textures(texture_folder, load_all_texures)
                     
-        textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in stored_texture_names]
+        textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in texture_names]
             
         created_meshes = []
         
@@ -5864,7 +5920,7 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
 
   
 def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
-                    rotation_deg: float = ROT_N, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
+                    rotation_deg: float = ROT_NORTH, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
                     flag_color: Tuple[float, float, float, float] = BLUE_COLOR) -> bpy.types.Object:                
     
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
@@ -6108,7 +6164,7 @@ class LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator(bpy.types.Operator):
     bl_label = "Load Race Waypoints from Race Data"
 
     def execute(self, context: bpy.types.Context) -> set:
-        load_waypoints_from_race_data(race_data, race_type_input, race_number_input)
+        load_waypoints_from_race_data(race_data, waypoint_type_input, waypoint_number_input)
         self.report({'INFO'}, "Loaded Waypoints from Race Data")
         return {'FINISHED'}
     
@@ -6719,13 +6775,13 @@ create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_col
 create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
 
 # Misc
-BangerEditor(map_filename).append_to_file(append_input_props_f, props_to_append, append_output_props_f, append_props)
+BangerEditor(map_filename).append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
 
 # File Debugging
-debug_bai(debug_bai_data_file, debug_bai_file)
+debug_bai(debug_ai_data_file, debug_ai_file)
 Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
-Facades.debug_file(debug_facade_data_file, DEBUG_FOLDER / "FACADES" / debug_facade_data_file.with_suffix(".txt"), debug_facade_file)
+Facades.debug_file(debug_facades_data_file, DEBUG_FOLDER / "FACADES" / debug_facades_data_file.with_suffix(".txt"), debug_facades_file)
 Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / debug_portals_data_file.with_suffix(".txt"), debug_portals_file)
 Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "MESHES" / debug_meshes_data_file.with_suffix(".txt"), debug_meshes_file)
 Meshes.debug_folder(debug_meshes_data_folder, DEBUG_FOLDER / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
@@ -6741,9 +6797,9 @@ editor_time = time.time() - start_time
 save_editor_run_time(editor_time, BASE_DIR / "last_run_time.pkl")
 progress_thread.join()
 
-print("\n" + create_divider(colors_two))
+print("\n" + create_bar_divider(colors_two))
 print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{map_name}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
-print(create_divider(colors_two))
+print(create_bar_divider(colors_two))
 
 start_game(mm1_folder, play_game)
 
