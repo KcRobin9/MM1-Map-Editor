@@ -478,11 +478,19 @@ race_data = {
                 f'{CRUISER} 10.0 0.0 65.0 {ROT_NORTH} {STATIONARY} {PUSH}',
                 f'{CRUISER} -10.0 0.0 65.0 {ROT_NORTH} {IN_TRAFFIC} {MIX}',
             ],
+            'num_of_exceptions': None,
+            'exceptions': [
+                [4, 0.0, 45],
+                [5, 0.0, 45],
+            ],
             'num_of_opponents': 1,
         },
             'opponent_cars': {
-                VW_BEETLE: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
-        }
+                VW_BEETLE: [
+                    [5.0, 0.0, 35.0], 
+                    [5.0, 0.0, -130.0]
+                ], 
+        },
     },
     'RACE_0': {
         'waypoints': [
@@ -1515,8 +1523,9 @@ DLP
             
 ################################################################################################################               
 ################################################################################################################     
+#! ======================= POLYGON HELPER FUNCTIONS ======================= !#
         
-# Calculate center, min, max, radius, radius squared    
+         
 def calculate_max(vertices: List[Vector3]):
     max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
     for vertex in vertices:
@@ -1564,6 +1573,8 @@ def calculate_radius(vertices: List[Vector3], center: Vector3):
 
 ################################################################################################################ 
 ################################################################################################################               
+#! ======================= MESH FUNCTIONS ======================= !#
+
 
 def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degrees: float = 0.0) -> List[float]:
 
@@ -1613,9 +1624,10 @@ def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str
 
            
 def save_mesh(
-    texture_name: str, texture_indices: List[int] = [1], vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
+    texture_name: str, texture_indices: List[int] = [1], 
+    vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
     texture_darkness: List[int] = None, tex_coords: List[float] = None, 
-    randomize_textures: bool = randomize_textures, random_texture_exclude: bool = False, random_textures: List[str] = random_textures, 
+    randomize_textures: bool = randomize_textures, random_textures: List[str] = random_textures, 
     debug_meshes: bool = debug_meshes) -> None:
         
     poly = polys[-1]  # Get the last polygon added
@@ -1624,13 +1636,14 @@ def save_mesh(
     target_folder, mesh_filename = determine_mesh_folder_and_filename(bound_number, texture_name, map_filename)
     
     # Randomize Textures
-    if randomize_textures and not random_texture_exclude:
+    if randomize_textures:
         texture_name = [random.choice(random_textures)]
         
     texture_names.append(texture_name[0])
     single_poly = [POLYGON_FILLER, poly]
     
     mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
+    
     mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
@@ -1649,19 +1662,19 @@ def initialize_mesh(
     shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
 
     coordinates = [coord for shape in shapes for coord in shape]
+    
     vertex_count = len(coordinates)
     adjunct_count = len(coordinates)
     surface_count = len(texture_indices)   
     texture_count = len(texture_name)
     
-    # A triangle requires 4 indices (the 4th index will be 0)
+    # A Triangle must have 4 indices (the 4th index will be 0)
     if len(coordinates) in [QUAD, TRIANGLE]:
         indices_count = surface_count * 4
 
     enclosed_shape = list(range(adjunct_count))
-    texture_darkness = texture_darkness or [2] * adjunct_count  # 2 is default texture "brightness"
-    tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]
-    
+    texture_darkness = texture_darkness or [2] * adjunct_count  # 2 is the default value
+    tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]  
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
     return Meshes(
@@ -1673,6 +1686,8 @@ def initialize_mesh(
 
 ################################################################################################################               
 ################################################################################################################  
+#! ======================= ADVANCED VECTOR CALCULATIONS ======================= !#
+
 
 def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     v1, v2, v3 = vertex_coordinates
@@ -1691,7 +1706,7 @@ def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
         return [v1, v2, v3]
     
     
-def compute_normal(p1, p2, p3):
+def compute_normal(p1, p2, p3) -> Vector3:
     v1 = np.array(p2) - np.array(p1)
     v2 = np.array(p3) - np.array(p1)
     return np.cross(v1, v2)
@@ -1788,7 +1803,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
         
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
     
-    # Add a required empty edge for triangles to match the binary structure
+    # All shapes must always have 4 vectors
     if len(vertices) == TRIANGLE:
         edges.append(VECTOR3_DEFAULT)
     
@@ -1806,6 +1821,10 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     min_z_for_min_x = min([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
 
     return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
+
+################################################################################################################               
+################################################################################################################ 
+#! ======================= CREATE POLYGON ======================= !#
 
 
 def create_polygon(
@@ -1842,7 +1861,7 @@ def create_polygon(
         """
         raise ValueError(error_message)
 
-    # Bound numbers outside these ranges will crash the game
+    # Ensure a valid bound number (bound numbers outside these ranges will crash the game)
     if bound_number <= 0 or bound_number == 200 or bound_number >= 32767:
         error_message = """
         ***ERROR***
@@ -1852,7 +1871,6 @@ def create_polygon(
         """
         raise ValueError(error_message)
 
-    
     # Ensure Counterclockwise Winding
     if len(vertex_coordinates) == TRIANGLE:
         vertex_coordinates = ensure_ccw_order(vertex_coordinates)
@@ -1867,19 +1885,15 @@ def create_polygon(
         elif len(vertex_coordinates) == TRIANGLE:
             flags = 3
      
-    # # Base polygon           
-    if base:
-        x, y, z = calculate_center_tuples(vertex_coordinates)
-        cruise_start_position = (x, y + 15, z)
-
     # Sorting        
     if sort_vertices: 
         vertex_coordinates = sort_coordinates(vertex_coordinates)
         
-    new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
-    vertices.extend(new_vertices)
-    vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
-        
+    # # Base polygon           
+    if base:
+        x, y, z = calculate_center_tuples(vertex_coordinates)
+        cruise_start_position = (x, y + 15, z)
+          
     # Plane Edges    
     if plane_edges is None:
         plane_edges = compute_edges(vertex_coordinates) 
@@ -1917,49 +1931,54 @@ def create_polygon(
         
     elif isinstance(plane_n, list):
         plane_n = Vector3(*plane_n)
-            
+        
     # Finalize Polygon
+    new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
+    vertices.extend(new_vertices)
+    
+    vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
+            
     poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d, cell_type, always_visible)
     polys.append(poly)
         
-    # Create JPG (for the HUD)
+    # Save HUD data
     hud_fill = hud_color is not None
     hudmap_vertices.append(vertex_coordinates)
     hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, hud_color, minimap_outline_color, str(bound_number))
     
 ################################################################################################################               
 ################################################################################################################  
+#! ======================= CREATING YOUR MAP ======================= !#
 
-#? ==================CREATING YOUR MAP================== #?
 
 def user_notes():
     """ 
-    Find some Polygons and Textures examples below this text.
-    You can already run this the script and create the Test Map yourself
+    Find some Polygons and Textures examples below this text
+    You can already run the script and create the Test Map yourself
     
-    If you're setting a (flat) Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are OK)
+    If you're setting a Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are OK)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the constants under 'Material types'.    
-    Note that you can also set custom Material / Physics Properties (search for: 'new_physics_properties' in the script)
+    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the constants under 'Material types'    
+    N.B.: you can also set custom Material / Physics Properties (search for: "custom_physics" in the script)
     
     Texture (UV) mapping examples:
-    "tex_coords = compute_uv(bound_number = 1, tile_x = 4, tile_y = 2, angle_degrees = 0)"
-    "tex_coords = compute_uv(bound_number = 2, tile_x = 5, tile_y = 2, angle_degrees = 90)"
+    "tex_coords = compute_uv(bound_number = 1, tile_x = 5, tile_y = 2, angle_degrees = 0)"
+    "tex_coords = compute_uv(bound_number = 2, tile_x = 4, tile_y = 8, angle_degrees = 90)"
         
     The variable "texture_darkness" (an optional variable) in the function "save_mesh()" makes the texture edges darker / lighter. 
-    If there are four vertices, you can for example set: "texture_darkness = [40, 2, 50, 1]"
-    Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game.
+    If you're setting a Quad, you can for example do: "texture_darkness = [40, 2, 50, 1]"
+    Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game
         
-    To properly set up the AI, adhere to the following for 'bound_number = x':
-    Open Areas: 1-199
-    Roads: 201-859
-    Intersections: 860+
+    To properly set up the AI paths, adhere to the following for "bound_number = x":
+    Open Areas: 1 - 199
+    Roads: 201 - 859
+    Intersections: 860 +
     """
 
-#! Extra notes:
-#! The 'bound_number' can not be equal to 0, 200, be negative, or be greater than 32767
-#! There must exist a polygon with 'bound_number = 1'
+#! EXTRA notes:
+#! The "bound_number" can not be equal to 0, 200, be negative, or be greater than 32767
+#! In addition, there must always exist one polygon with "bound_number = 1"
     
 #! If you wish to modify or add a Material, Cell, Texture or HUD constant and you are importing / exporting to Blender,
 #! then you must also modify the respective IMPORTS and EXPORTS. For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
@@ -2584,8 +2603,9 @@ save_mesh(
 
 ################################################################################################################               
 ################################################################################################################ 
+#! ======================= SETUP PREPARATION ======================= !#
 
-# Create SHOP and FOLDER structure   
+
 def create_folders(map_filename: str) -> None:
     FOLDER_STRUCTURE = [
         BASE_DIR / "build", 
@@ -2630,6 +2650,20 @@ def copy_custom_textures(custom_textures_folder: Path, destination_folder: Path)
     for custom_tex in custom_textures_folder.iterdir():
         shutil.copy(custom_tex, destination_folder / custom_tex.name)
         
+        
+def copy_core_tune_files(tune_source_folder: Path, tune_destination_folder: Path) -> None:    
+    for file in tune_source_folder.glob('*'):
+        if not file.name.endswith('.MMBANGERDATA'):
+            shutil.copy(file, tune_destination_folder)
+            
+            
+def copy_dev_folder(input_folder: Path, output_folder: Path, map_filename: str) -> None:
+    shutil.rmtree(output_folder, ignore_errors = True)  
+    shutil.copytree(input_folder, output_folder)
+    
+    dev_ai_files = input_folder / 'CITY' / map_filename
+    shutil.rmtree(dev_ai_files, ignore_errors = True)
+        
          
 def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[int, str]]], 
                                input_folder: Path, output_folder: Path) -> None:
@@ -2653,26 +2687,12 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
             tweaked_banger_files = output_folder / banger_files.name
             with open(tweaked_banger_files, 'w') as f:
                 f.writelines(lines)
-
-
-def copy_core_tune_files(tune_source_folder: Path, tune_destination_folder: Path) -> None:    
-    for file in tune_source_folder.glob('*'):
-        if not file.name.endswith('.MMBANGERDATA'):
-            shutil.copy(file, tune_destination_folder)
-            
-            
-def copy_dev_folder(input_folder: Path, output_folder: Path, map_filename: str) -> None:
-    shutil.rmtree(output_folder, ignore_errors = True)  
-    shutil.copytree(input_folder, output_folder)
-    
-    dev_ai_files = input_folder / 'CITY' / map_filename
-    shutil.rmtree(dev_ai_files, ignore_errors = True)
-    
+                    
 ################################################################################################################               
 ################################################################################################################ 
-#! ================== THIS SECTION IS RELATED TO RACE FILES ================== !#
+#! ======================= RACE FUNCTIONS ======================= !#
 
-# List for CHECKPOINT prefixes
+
 checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
 race_type_to_prefix = {
@@ -2687,6 +2707,11 @@ race_type_to_extension = {
     RACE: '.R_',
     }
 
+REPLACE_VALUES = {        
+    BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
+    CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
+    RACE:       [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
+}
 
 def ordinal(n) -> str:
     if 10 <= n % 100 <= 13:
@@ -2699,51 +2724,28 @@ def ordinal(n) -> str:
 }.get(n % 10, f"{n}th")
 
 
-def fill_mm_data_values(race_type: str, user_values):
-    # Default values that are common to all modes.
-    default_values = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]  # Debug: [44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44]
+def fill_mm_data_values(race_type: str, custom_mm_data: List[Union[int, float]]) -> List[Union[int, float]]:
+    default_values = [1] * 11
+    replace_indices = REPLACE_VALUES.get(race_type, [])
     
-    # Mappings to determine which positions in default_values are replaced by user values.
-    replace_values = {        
-        BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
-        CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
-        RACE:       [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
-    }
+    for idx, custom_value in zip(replace_indices, custom_mm_data):
+        default_values[idx] = custom_value
         
-    modified_list = default_values.copy()
-    
-    for idx, value in zip(replace_values[race_type], user_values):
-        modified_list[idx] = value
-
-    # Return only the needed portion of the filled list (i.e. removing the repeated "Difficulty")
-    return modified_list[:10]  
+    return default_values[:10]
 
 
-def write_waypoints(opp_wp_file, waypoints, race_desc, race_index, opponent_num = None):
-    with open(SHOP / RACE / map_filename / opp_wp_file, "w") as f:
-        if opponent_num is not None:  # Opponent waypoint header
-            f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
-            
-            # Opponent waypoints
-            for waypoint in waypoints:
-                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {ROT_AUTO}, 0, 0,\n"
-                f.write(waypoint_line)
-        else:
-            # Player waypoint header
-            f.write(f"# This is your {ordinal(race_index)} {race_desc} race Waypoint file\n")
-            
-            # Player waypoints
-            for waypoint in waypoints:
-                waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
-                f.write(waypoint_line)
-    
-    
-def write_mm_data(mm_data_file, configs, race_type, prefix):
+def generate_mm_data_string(race_desc: str, ama_filled_values: List[Union[int, float]], pro_filled_values: List[Union[int, float]]) -> str:
+    ama_data = ",".join(map(str, ama_filled_values))
+    pro_data = ",".join(map(str, pro_filled_values))
+    return f"{race_desc},{ama_data},{pro_data}\n"
+
+
+def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:
     header = ",".join(["Description"] + 2 * [
         "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
         ])
     
-    with open(SHOP / RACE / map_filename / mm_data_file, 'w') as f:
+    with open(SHOP / RACE / map_filename / output_file, 'w') as f:
         f.write(header + "\n")
                 
         for race_index, config in configs.items():
@@ -2751,22 +2753,66 @@ def write_mm_data(mm_data_file, configs, race_type, prefix):
                 race_desc = prefix  
             else:
                 race_desc = prefix + str(race_index)
-            
+                            
             ama_filled_values = fill_mm_data_values(race_type, config['mm_data']['ama'])
             pro_filled_values = fill_mm_data_values(race_type, config['mm_data']['pro'])
                         
-            data_string = race_desc + "," + ",".join(map(str, ama_filled_values)) + "," + ",".join(map(str, pro_filled_values))
+            data_string = generate_mm_data_string(race_desc, ama_filled_values, pro_filled_values)
+            f.write(data_string)
+
+
+def write_waypoints(output_file, waypoints, race_desc: str, race_index: int, opponent_num: int = None):
+    with open(SHOP / RACE / map_filename / output_file, "w") as f:
+        if opponent_num is not None:
             
-            f.write(data_string + "\n")  # Write the data string to file
+            # Opponent Waypoint Header
+            f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
             
+            # Opponent Waypoints
+            for waypoint in waypoints:
+                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {ROT_AUTO}, 0, 0,\n"
+                f.write(waypoint_line)
+                
+        else:
+            # Player Waypoint Header
+            f.write(f"# This is your {ordinal(race_index)} {race_desc} race Waypoint file\n")
             
-def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config, opponent_cars, num_of_opponents: int):    
-    with open(SHOP / RACE / map_filename / f"{race_type}{race_index}.AIMAP_P", "w") as f:
+            # Player Waypoints
+            for waypoint in waypoints:
+                waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
+                f.write(waypoint_line)
+                
+                  
+def write_section(f, title: str, data: str) -> None:
+    f.write(f"\n{title}\n{data}\n")
+
+
+def format_police_data(police_data: List[str], num_of_police: int) -> str:
+    return "\n".join([str(num_of_police)] + police_data)
+
+
+def format_opponent_data(opponent_cars: Dict, race_type: str, race_index: int) -> str:
+    return "\n".join([f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}" for idx, opp_car in enumerate(opponent_cars)])
+
+
+def format_exceptions(exceptions: Optional[List[List[Union[int, float]]]] = None, exceptions_count: Optional[int] = None) -> str:
+    if exceptions is None:
+        exceptions = []
         
-        aimap_content = f"""
+    if exceptions_count is None:
+        exceptions_count = len(exceptions)
+        
+    formatted_exceptions = "\n".join(" ".join(map(str, exception)) for exception in exceptions)
+    
+    return f"{exceptions_count}\n{formatted_exceptions}"
+
+
+def write_aimap(map_filename: str, race_type: str, race_index: int, config, opponent_cars, num_of_opponents: int) -> None:
+    with open(SHOP / RACE / map_filename / f"{race_type}{race_index}.AIMAP_P", "w") as f:
+        main_template = f"""
 # Ambient Traffic Density 
 [Density] 
-{aimap_config['density']}
+{config['density']}
 
 # Default Road Speed Limit 
 [Speed Limit] 
@@ -2774,74 +2820,91 @@ def write_aimap(map_filename: str, race_type: str, race_index: int, aimap_config
 
 # Ambient Traffic Exceptions
 # Rd Id, Density, Speed Limit 
-[Exceptions] 
-0 
-
-# Police Init 
-# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route 
-[Police] 
-{aimap_config['num_of_police']}
 """
-        f.write(aimap_content)
-        for police in aimap_config['police_data']:
-            f.write(f"{police}\n")
+        f.write(main_template)
+        
+        exceptions_data_formatted = format_exceptions(config.get('exceptions'), config.get('num_of_exceptions'))
+        write_section(f, "[Exceptions]", exceptions_data_formatted)
 
-        opp_content = f"""
-# Opponent Init, Geo File, WavePoint File 
-[Opponent] 
-{num_of_opponents}
-"""
-        f.write(opp_content)
-        for idx, opp_car in enumerate(opponent_cars):
-            f.write(f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}\n")
+        police_data_formatted = format_police_data(config['police_data'], config['num_of_police'])
+        write_section(f, "[Police]", police_data_formatted)
+
+        opponent_data_formatted = format_opponent_data(opponent_cars, race_type, race_index)
+        write_section(f, "[Opponent]", f"{num_of_opponents}\n{opponent_data_formatted}")
             
             
-def create_races(map_filename: str, race_data) -> None:
+def create_races(map_filename: str, race_data: dict) -> None:
     for race_key, config in race_data.items():
         race_type, race_index_str = race_key.split('_')
         race_index = int(race_index_str)
 
-        # For Checkpoint races
+        # CHECKPOINTS
         if race_type == RACE:  
             if len(config) > len(checkpoint_prefixes):
-                race_num_error = """
+                race_count_error = """
                 ***ERROR***
                 Number of Checkpoint races cannot be more than 12
                 """
-                raise ValueError(race_num_error)
+                raise ValueError(race_count_error)
 
             prefix = checkpoint_prefixes[race_index]
 
-            # Player Waypoints with Checkpoint prefix
-            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config['waypoints'], race_type, race_index)
+            # Player Waypoints
+            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", 
+                            config['waypoints'], 
+                            race_type, 
+                            race_index)
             
-            # Opponent-specific Waypoints
+            # Opponent Waypoints
             for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
+    
                 write_waypoints(
                     f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
-                    opp_waypoints, race_type, race_index, opponent_num = opp_idx)
+                    opp_waypoints, 
+                    race_type, 
+                    race_index, 
+                    opponent_num = opp_idx)
             
-            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
-            write_aimap(map_filename, race_type, race_index, 
-                        config['aimap'], config['opponent_cars'], 
-                        num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
+            write_mm_data(f"MM{race_type}DATA.CSV", 
+                          {race_index: config}, 
+                          race_type, prefix)
+            
+            num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars']))            
 
-        else:  # For other race types (Circuit & Blitz)
-            prefix = race_type_to_prefix[race_type] + str(race_index)
+            write_aimap(map_filename, race_type, race_index, 
+                        config['aimap'], 
+                        config['opponent_cars'], 
+                        num_of_opponents)
+            
+        # BLITZES & CIRCUITS
+        else: 
+            prefix = race_type_to_prefix[race_type] 
 
             # Player Waypoints
-            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config['waypoints'], race_type, race_index)
+            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", 
+                            config['waypoints'], 
+                            race_type, race_index)
             
             # Opponent-specific Waypoints
             for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
                 write_waypoints(
                     f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
-                    opp_waypoints, race_type, race_index, opponent_num=opp_idx)
+                    opp_waypoints, 
+                    race_type, 
+                    race_index, 
+                    opponent_num = opp_idx)
             
-            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, prefix)
+            write_mm_data(f"MM{race_type}DATA.CSV", 
+                          {race_index: config}, 
+                          race_type, 
+                          prefix)
+            
+            num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])) 
+            
             write_aimap(map_filename, race_type, race_index, 
-                        config['aimap'], config['opponent_cars'],
-                        num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])))
+                        config['aimap'], 
+                        config['opponent_cars'],
+                        num_of_opponents)
 
                 
 def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
