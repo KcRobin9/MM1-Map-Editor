@@ -1534,6 +1534,7 @@ def calculate_max(vertices: List[Vector3]):
         max_.z = max(max_.z, vertex.z)
     return max_
 
+
 def calculate_min(vertices: List[Vector3]):
     min_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
     for vertex in vertices:
@@ -1541,6 +1542,7 @@ def calculate_min(vertices: List[Vector3]):
         min_.y = min(min_.y, vertex.y)
         min_.z = min(min_.z, vertex.z)
     return min_
+
 
 def calculate_center(vertices: List[Vector3]):
     center = Vector3(0.0, 0.0, 0.0)  # Do not change
@@ -1553,6 +1555,7 @@ def calculate_center(vertices: List[Vector3]):
     center.z /= len(vertices)
     return center
 
+
 def calculate_center_tuples(vertices: List[Tuple[float, float, float]]):
     center = [0, 0, 0]
     for vertex in vertices:
@@ -1564,12 +1567,19 @@ def calculate_center_tuples(vertices: List[Tuple[float, float, float]]):
     center[2] /= len(vertices)
     return center
 
+
 def calculate_radius(vertices: List[Vector3], center: Vector3):
     radius_sqr = 0
     for vertex in vertices:
         diff = Vector3(vertex.x - center.x, vertex.y - center.y, vertex.z - center.z)
         radius_sqr = max(radius_sqr, diff.x ** 2 + diff.y ** 2 + diff.z ** 2)
     return radius_sqr ** 0.5
+
+
+def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, float, float]:
+    min_values = [min(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
+    max_values = [max(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
+    return min_values + max_values
 
 ################################################################################################################ 
 ################################################################################################################               
@@ -2690,7 +2700,7 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
                     
 ################################################################################################################               
 ################################################################################################################ 
-#! ======================= RACE FUNCTIONS ======================= !#
+#! ======================= RACES ======================= !#
 
 
 checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
@@ -2921,6 +2931,8 @@ def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, 
   
 ################################################################################################################               
 ################################################################################################################              
+#! ======================= CELLS ======================= !#
+
 
 def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
     meshes_regular = []
@@ -2942,8 +2954,10 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
 
 def get_cell_visiblity(polys: List[Polygon]) -> List[int]:
     always_visible_cell_ids = [poly.cell_id for poly in polys if poly.always_visible]
+    
     if 1 not in always_visible_cell_ids:
         always_visible_cell_ids.insert(0, 1)
+        
     return always_visible_cell_ids
 
 
@@ -2954,23 +2968,24 @@ def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:
     return DEFAULT
 
 
-def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, cell_type: int, mesh_a2_files: Set[int]) -> Tuple[str, int]:
-    always_visible_count = len(always_visible_cell_ids)
-    always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
-    row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
-
-    while len(row) >= CELL_CHARACTER_THRESHOLD:
-        always_visible_cell_ids.pop()
-        always_visible_count = len(always_visible_cell_ids)
-        always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
-        row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
-    return row, len(row) 
-        
- 
-def write_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
+def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
     model = CELL_LOD_DRIFT if cell_id in mesh_a2_files else CELL_LOD_HIGH
     return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
+
+def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, cell_type: int, mesh_a2_files: Set[int]) -> Tuple[str, int]:
+    always_visible_count = len(always_visible_cell_ids)
+    always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
+    cell_row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+
+    while len(cell_row) >= CELL_CHARACTER_THRESHOLD:
+        always_visible_cell_ids.pop()
+        always_visible_count = len(always_visible_cell_ids)
+        always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
+        cell_row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+        
+    return cell_row, len(cell_row) 
+        
 
 def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) -> None:    
     mesh_files, mesh_a2_files = get_cell_ids(
@@ -2990,7 +3005,7 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
         for cell_id in sorted(mesh_files):
             cell_type = get_cell_type(cell_id, polys)
             always_visible_data = ",0" if not always_visible_cell_count else f",{always_visible_cell_count},{','.join(map(str, always_visible_cell_ids))}"            
-            row = write_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+            row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
             
             if truncate_cells:
                 row, row_length = truncate_always_visible(always_visible_cell_ids.copy(), cell_id, cell_type, mesh_a2_files)
@@ -3010,8 +3025,8 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
             ***WARNING***
             Close to row character limit 254 in .CELLS file. 
             Maximum character count encountered is {max_warning_count}.
-            To reduce the character count, consider setting 'always_visible' to False for some polygons.
-            If the 'cell_id' is 99 (2 characters), then it consumes 3 characters in the CELLS file.
+            To reduce the character count, consider setting "always_visible" to False for some polygons.
+            If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters in the CELLS file.
             *************\n
             """
             print(warning_message)
@@ -3021,41 +3036,32 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
             ***ERROR***
             Character limit of 254 exceeded in .CELLS file.
             Maximum character count encountered is {max_error_count}.
-            To solve the problem, set 'always_visible' to False for some polygons.
-            If the 'cell_id' is 99 (2 characters), then it consumes 3 characters in the CELLS file.
+            To solve the problem, set always_visible' to False for some polygons.
+            If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters in the CELLS file.
             """
             raise ValueError(error_message)
         
 ################################################################################################################               
 ################################################################################################################
+#! ======================= EXT & HUDMAP ======================= !#
 
-# Create EXT file                      
-def create_ext(map_filename: str, polygons: List[Vector3]) -> Tuple[float, float, float, float]:
-    x_coords = [vertex[0] for poly in polygons for vertex in poly]
-    z_coords = [vertex[2] for poly in polygons for vertex in poly]
-    
-    min_x, max_x = min(x_coords), max(x_coords)
-    min_z, max_z = min(z_coords), max(z_coords)
+def create_ext(map_filename: str, polygons: List[Vector3]) -> None:
+    min_x, min_z, max_x, max_z = calculate_extrema(polygons)
 
     with open(SHOP_CITY / f"{map_filename}.EXT", 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
-    return min_x, max_x, min_z, max_z
-
-
+        
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
     
-    if not set_minimap and is_blender_running():
+    if not set_minimap:
         return
     
     global hudmap_vertices
     global hudmap_properties
 
-    min_x = min(point[0] for polygon in hudmap_vertices for point in polygon)
-    max_x = max(point[0] for polygon in hudmap_vertices for point in polygon)
-    min_z = min(point[2] for polygon in hudmap_vertices for point in polygon)
-    max_z = max(point[2] for polygon in hudmap_vertices for point in polygon)
+    min_x, min_z, max_x, max_z = calculate_extrema(hudmap_vertices)
 
     width = int(max_x - min_x)
     height = int(max_z - min_z) 
@@ -3064,10 +3070,10 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
                     label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
 
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
-        xs, ys = xs + (xs[0],), ys + (ys[0],)  # the commas after [0] should not be removed
+        xs, ys = xs + (xs[0],), ys + (ys[0],)  # The commas after [0] should not be removed
 
         if minimap_outline_color:
-            ax.plot(xs, ys, color = minimap_outline_color, linewidth = line_width)
+            ax.plot(xs, ys, minimap_outline_color, line_width)
 
         if hud_fill:
             ax.fill(xs, ys, hud_color)
@@ -3111,8 +3117,11 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         ax_debug.set_position([0, 0, 1, 1]) 
         plt.savefig(BASE_DIR / f"{map_filename}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
 
+################################################################################################################               
+################################################################################################################
+#! ======================= ANIMATIONS & BRIDGES ======================= !#
 
-# Create Animations                              
+                             
 def create_animations(map_filename: str, animations_data: Dict[str, List[Tuple]], set_animations: bool) -> None: 
     if not set_animations:
         return
@@ -4864,11 +4873,11 @@ def get_first_and_last_street_vertices(street_list):
 
 #! ################# Code by Lars (Modified) // start ################# !# 
 
-def create_lars_race_maker(map_filename: str, street_list, set_lars_race_maker: bool):    
+def create_lars_race_maker(map_filename: str, street_list, hudmap_vertices, set_lars_race_maker: bool):    
     if not set_lars_race_maker:
         return
 
-    min_x, max_x, min_z, max_z = create_ext(map_filename, hudmap_vertices)
+    min_x, max_x, min_z, max_z = calculate_extrema(hudmap_vertices)
     
     canvas_width = int(max_x - min_x)
     canvas_height = int(max_z - min_z)
@@ -6835,7 +6844,7 @@ create_animations(map_filename, animations_data, set_animations)
 create_bridges(map_filename, bridge_list, set_bridges) 
 custom_bridge_config(bridge_config_list, set_bridges, SHOP / 'TUNE')
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
-create_lars_race_maker(map_filename, street_list, set_lars_race_maker)
+create_lars_race_maker(map_filename, street_list, hudmap_vertices, set_lars_race_maker)
 
 # Misc
 BangerEditor(map_filename).append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
