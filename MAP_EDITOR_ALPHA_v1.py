@@ -1523,7 +1523,7 @@ DLP
             
 ################################################################################################################               
 ################################################################################################################     
-#! ======================= POLYGON HELPER FUNCTIONS ======================= !#
+#! ======================= COMMON HELPER FUNCTIONS ======================= !#
         
          
 def calculate_max(vertices: List[Vector3]):
@@ -1580,6 +1580,23 @@ def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, f
     min_values = [min(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
     max_values = [max(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
     return min_values + max_values
+
+
+def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
+    name_data = bytearray()
+    if length is None:
+        while True:
+            char = f.read(1)
+            if char == b'\0' or not char:
+                break
+            name_data.extend(char)
+    else:
+        name_data = bytearray(f.read(length))
+        null_pos = name_data.find(b'\0')
+        if null_pos != -1:
+            name_data = name_data[:null_pos]
+    
+    return name_data.decode(encoding)
 
 ################################################################################################################ 
 ################################################################################################################               
@@ -3127,12 +3144,12 @@ def create_animations(map_filename: str, animations_data: Dict[str, List[Tuple]]
         return
     
     with open(SHOP_CITY / map_filename / "ANIM.CSV", 'w', newline = '') as main_f:
-        for obj in animations_data:
-            csv.writer(main_f).writerow([f"anim_{obj}"])
+        for anim in animations_data:
+            csv.writer(main_f).writerow([f"anim_{anim}"])
 
-            with open(SHOP_CITY / map_filename / f"ANIM_{obj.upper()}.CSV", 'w', newline = '') as anim_f:                    
-                for coordinates in animations_data[obj]:
-                    csv.writer(anim_f).writerow(coordinates)
+            with open(SHOP_CITY / map_filename / f"ANIM_{anim.upper()}.CSV", 'w', newline = '') as anim_f:                    
+                for coord in animations_data[anim]:
+                    csv.writer(anim_f).writerow(coord)
                         
                         
 def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
@@ -3152,13 +3169,14 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
 
     bridge_file = SHOP_CITY / f"{map_filename}.GIZMO"
 
-    # Remove any existing bridge files since we append to the file
+    # Remove any existing Bridge files since we append to the file
     if bridge_file.exists():
         os.remove(bridge_file)
 
     def calculate_facing(offset: Tuple[float, float, float], orientation: Union[str, float]) -> List[float]:
         if isinstance(orientation, (float, int)):
             angle_radians = math.radians(orientation)
+            
             return [
                 offset[0] + 10 * math.cos(angle_radians),
                 offset[1],
@@ -3177,14 +3195,17 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
         """
         raise ValueError(orientation_error)
         
-    def generate_attribute_lines(bridge_attributes):
+    def generate_attribute_lines(bridge_attributes) -> str:
         lines = ""
+        
+        # For example, Crossgates
         for attr in bridge_attributes:
             attr_offset, attr_orientation, attr_id, attr_type = attr
             attr_facing = calculate_facing(attr_offset, attr_orientation)
             
             line = f"\t{attr_type},{attr_id},{','.join(map(str, attr_offset))},{','.join(map(str, attr_facing))}\n"
             lines += line
+            
         return lines
 
     bridge_data = []  
@@ -3200,7 +3221,7 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
         filler = f"\t{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"     
         fillers = filler * num_fillers
 
-        data = (
+        template = (
             f"DrawBridge{id}\n"
             f"\t{drawbridge_values}\n"
             f"{attributes}"
@@ -3208,30 +3229,15 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
             f"DrawBridge{id}\n"  
             )
 
-        bridge_data.append(data)
+        bridge_data.append(template)
 
     with open(bridge_file, "a") as f:
         f.writelines(bridge_data)
 
 
-def custom_bridge_config(configs, set_bridges: bool, output_folder: Path):    
+def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_bridges: bool, output_folder: Path) -> None:
     if not set_bridges:
         return
-    
-    config_template = """
-mmBridgeMgr :076850a0 {{
-    BridgeDelta {BridgeDelta}
-    BridgeOffGoal {BridgeOffGoal}
-    BridgeOnGoal {BridgeOnGoal}
-    GateDelta {GateDelta}
-    GateOffGoal {GateOffGoal}
-    GateOnGoal {GateOnGoal}
-    BridgeOnDelay {BridgeOnDelay}
-    GateOffDelay {GateOffDelay}
-    BridgeOffDelay {BridgeOffDelay}
-    GateOnDelay {GateOnDelay}
-    }}
-    """
 
     default_config = {
         "BridgeDelta": 0.20,
@@ -3245,44 +3251,81 @@ mmBridgeMgr :076850a0 {{
         "BridgeOffDelay": 0.0,
         "GateOnDelay": 5.0,
         "Mode": SINGLE
-        }
-    
+    }
+
     for config in configs:
-        final_config = {**default_config, **config}
-        config_str = config_template.format(**final_config)
+        final_config = merge_bridge_configs (default_config, config)
+        config_str = generate_bridge_config_string(final_config)
+        filenames = determine_bridge_filenames(final_config)
+        write_bridge_config_to_files(filenames, config_str, output_folder)
 
-        race_type = final_config["RaceType"]
-        filenames = []  
-        if race_type in [ROAM, COPS_N_ROBBERS]:
-            base_name = ROAM if race_type == ROAM else COPS_N_ROBBERS
 
-            if final_config["Mode"] in [SINGLE, ALL_MODES]:
-                filenames.append(f"{base_name}.MMBRIDGEMGR")
+def merge_bridge_configs(default_config: Dict[str, Union[float, int, str]], custom_config: Dict[str, Union[float, int, str]]) -> Dict[str, Union[float, int, str]]:
+    return {**default_config, **custom_config}
 
-            if final_config["Mode"] in [MULTI, ALL_MODES]:
-                filenames.append(f"{base_name}M.MMBRIDGEMGR")
-        else:
-            if race_type not in [RACE, CIRCUIT, BLITZ]:                
-                type_error_message = f"""\n
-                ***ERROR***
-                Invalid RaceType. 
-                Must be one of {ROAM}, {BLITZ}, {RACE}, {CIRCUIT}, or {COPS_N_ROBBERS}.
-                """
-                raise ValueError(type_error_message)
 
-            if final_config["Mode"] in [SINGLE, ALL_MODES]:
-                filenames.append(f"{race_type}{final_config['RaceNum']}.MMBRIDGEMGR")
-            if final_config["Mode"] in [MULTI, ALL_MODES]:
-                filenames.append(f"{race_type}{final_config['RaceNum']}M.MMBRIDGEMGR")
+def generate_bridge_config_string(config: Dict[str, Union[float, int, str]]) -> str:
+    config_template = """
+    mmBridgeMgr :076850a0 {{
+        BridgeDelta {BridgeDelta}
+        BridgeOffGoal {BridgeOffGoal}
+        BridgeOnGoal {BridgeOnGoal}
+        GateDelta {GateDelta}
+        GateOffGoal {GateOffGoal}
+        GateOnGoal {GateOnGoal}
+        BridgeOnDelay {BridgeOnDelay}
+        GateOffDelay {GateOffDelay}
+        BridgeOffDelay {BridgeOffDelay}
+        GateOnDelay {GateOnDelay}
+    }}
+    """
+    return config_template.format(**config)
 
-        for filename in filenames:
-            (output_folder / filename).write_text(config_str)
-                
+
+def determine_bridge_filenames(config: Dict[str, Union[float, int, str]]) -> List[str]:
+    filenames = []
+    race_type = config["RaceType"]
+
+    if race_type in [ROAM, COPS_N_ROBBERS]:
+        base_name = race_type
+        filenames += get_bridge_mode_filenames(base_name, config["Mode"])
+    elif race_type in [RACE, CIRCUIT, BLITZ]:
+        filenames += get_bridge_race_type_filenames(race_type, config["RaceNum"], config["Mode"])
+    else:
+        raise ValueError(f"Invalid RaceType. Must be one of {ROAM}, {BLITZ}, {RACE}, {CIRCUIT}, or {COPS_N_ROBBERS}.")
+
+    return filenames
+
+
+def get_bridge_mode_filenames(base_name: str, mode: str) -> List[str]:
+    filenames = []
+    if mode in [SINGLE, ALL_MODES]:
+        filenames.append(f"{base_name}.MMBRIDGEMGR")
+    if mode in [MULTI, ALL_MODES]:
+        filenames.append(f"{base_name}M.MMBRIDGEMGR")
+    return filenames
+
+
+def get_bridge_race_type_filenames(race_type: str, race_num: str, mode: str) -> List[str]:
+    filenames = []
+    if mode in [SINGLE, ALL_MODES]:
+        filenames.append(f"{race_type}{race_num}.MMBRIDGEMGR")
+    if mode in [MULTI, ALL_MODES]:
+        filenames.append(f"{race_type}{race_num}M.MMBRIDGEMGR")
+    return filenames
+
+
+def write_bridge_config_to_files(filenames: List[str], config_str: str, output_folder: Path) -> None:
+    for filename in filenames:
+        file_path = output_folder / filename
+        file_path.write_text(config_str)
+
 ################################################################################################################               
 ################################################################################################################
-#! ================== THIS SECTION IS RELATED TO PORTALS ================== !#
+#! ======================= PORTALS I ======================= !#
 
-#! ################# Code by 0x1F9F1 (Modified) // start ################# !#   
+#! ############ Code by 0x1F9F1 (Modified) // start ############ !#   
+
                  
 MIN_Y = -20
 MAX_Y = 50
@@ -3298,8 +3341,7 @@ STRICT_EDGES = False
 if MERGE_COLINEAR:
     assert not STRICT_EDGES
     
-    
-# EDGE CLASS    
+        
 class Edge:
     def __init__(self, v1, v2):
         A = Vector2(v1.y - v2.y, v2.x - v1.x)
@@ -3344,10 +3386,9 @@ class Edge:
              (self.line.y * pos) - (self.line.x * self.line.z),
             -(self.line.x * pos) - (self.line.y * self.line.z))
         
-################################################################################################################               
-################################################################################################################
+################################################################################################################?               
 
-# CELL CLASS
+
 class Cell:
     def __init__(self, id):
         self.id = id
@@ -3430,10 +3471,9 @@ class Cell:
     def check_radius(self, other, fudge):
         return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
     
-################################################################################################################               
-################################################################################################################
+################################################################################################################?  
 
-# Prepare PTL
+
 def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
     cells = {}
 
@@ -3509,15 +3549,16 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
                     
     return cells, portals
 
-#! ################# Code by 0x1F9F1 (Modified) // end ################# !# 
+#! ############ Code by 0x1F9F1 (Modified) // end ############ !# 
 
 ################################################################################################################               
 ################################################################################################################
+#! ======================= PORTALS II ======================= !#
 
-# PORTAL CLASS 
+
 class Portals:
     def __init__(self, flags: int, edge_count: int, gap_2: int, cell_1: int, cell_2: int, height: float, 
-                 _min: Vector3, _max: Vector3, vertex_c: Vector3 = None):
+                 _min: Vector3, _max: Vector3, vertex_c: Vector3 = None) -> None:
         
         self.flags = flags
         self.edge_count = edge_count
@@ -3531,7 +3572,8 @@ class Portals:
         
     @classmethod
     def readn(cls, f) -> int:
-        magic, count, = read_unpack(f, '<2I')
+        magic = read_binary_name(f, 4)
+        count, = read_unpack(f, '<I')
         return count
         
     @classmethod
@@ -3559,7 +3601,9 @@ class Portals:
         write_pack(f, '<I', len(portals))
                 
     @classmethod
-    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], lower_portals: bool, empty_portals: bool, debug_portals: bool):        
+    def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], 
+                  lower_portals: bool, empty_portals: bool, debug_portals: bool) -> None:    
+            
         with open(SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
             if empty_portals:
                 pass
@@ -3592,7 +3636,7 @@ class Portals:
                 if debug_portals:  
                     cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")            
     @classmethod
-    def debug(cls, portals, output_file: Path):
+    def debug(cls, portals, output_file: Path) -> None:
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
@@ -3604,7 +3648,7 @@ class Portals:
         print(f"Processed portal data to {output_file.name}")
                             
     @classmethod
-    def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool):
+    def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool) -> None:
         if not debug_portals_file:
             return
         
@@ -3645,27 +3689,11 @@ PORTAL
     
 ################################################################################################################               
 ################################################################################################################            
+#! ======================= BANGERS I ======================= !#
 
-def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
-    name_data = bytearray()
-    if length is None:
-        while True:
-            char = f.read(1)
-            if char == b'\0' or not char:
-                break
-            name_data.extend(char)
-    else:
-        name_data = bytearray(f.read(length))
-        null_pos = name_data.find(b'\0')
-        if null_pos != -1:
-            name_data = name_data[:null_pos]
-    
-    return name_data.decode(encoding)
-                      
-                      
-# BANGERS CLASS                            
+                                                  
 class Bangers:
-    def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, name: str):
+    def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, name: str) -> None:
         self.room = room
         self.flags = flags
         self.offset = offset
@@ -3689,12 +3717,13 @@ class Bangers:
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
-    def write_n(cls, f, bangers):
+    def write_n(cls, f, bangers: List['Bangers']) -> None:
         write_pack(f, '<I', len(bangers))
     
     @classmethod
-    def write_all(cls, output_file: Path, bangers, debug_props: bool):
+    def write_all(cls, output_file: Path, bangers: List['Bangers'], debug_props: bool) -> None:
         with open(output_file, mode = "wb") as f:
+            
             cls.write_n(f, bangers)
         
             for banger in bangers:
@@ -3704,10 +3733,10 @@ class Bangers:
                 f.write(banger.name.encode('utf-8'))
                     
             if debug_props:
-                cls.debug(bangers, DEBUG_FOLDER / "PROPS" / f"{output_file}.txt")
+                cls.debug(DEBUG_FOLDER / "PROPS" / f"{output_file}.txt", bangers)
                                     
     @classmethod
-    def debug(cls, bangers, output_file: Path) -> None:
+    def debug(cls, output_file: Path, bangers: List['Bangers']) -> None:
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
@@ -3750,10 +3779,11 @@ BANGER
     
 ################################################################################################################               
 ###############################################################################################################
+#! ======================= BANGERS II ======================= !#
 
-# BANGER EDITOR CLASS
+
 class BangerEditor:
-    def __init__(self, map_filename: str):  
+    def __init__(self, map_filename: str) -> None:  
         self.map_filename = Path(map_filename)                      
         self.props = [] 
         
@@ -3873,8 +3903,9 @@ class BangerEditor:
 
 ################################################################################################################               
 ################################################################################################################
+#! ======================= FACADES I ======================= !#
 
-# FACADES CLASS
+
 class Facades:
     def __init__(self, room: int, flags: int, offset: Vector3, face: Vector3, sides: Vector3, scale: float, name: str) -> None:
         self.room = room
@@ -3886,28 +3917,28 @@ class Facades:
         self.name = name
         
     @classmethod
-    def readn(cls, f) -> int:
+    def readn(cls, f: BinaryIO) -> int:
         return read_unpack(f, '<I')[0]
 
     @classmethod
-    def read(cls, f) -> 'Facades':
+    def read(cls, f: BinaryIO) -> 'Facades':
         room, flags = read_unpack(f, '<2H')
         offset = Vector3.read(f, '<')
         face = Vector3.read(f, '<')
         sides = Vector3.read(f, '<')
-        scale = read_unpack(f, '<f')[0]
+        scale, = read_unpack(f, '<f')
         name = read_binary_name(f)
         return cls(room, flags, offset, face, sides, scale, name)
     
     @classmethod
-    def read_all(cls, f) -> 'List[Facades]':
+    def read_all(cls, f: BinaryIO) -> List['Facades']:
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
-    def write_n(self, f, facades):
+    def write_n(cls, f: BinaryIO, facades: List['Facades']) -> None:
         return write_pack(f, '<I', len(facades))
         
-    def write(self, f):  
+    def write(self, f: BinaryIO) -> None: 
         write_pack(f, '<2H', ROOM_DEFAULT, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
         write_pack(f, '<3f', *self.offset)  
         write_pack(f, '<3f', *self.face)
@@ -3917,15 +3948,16 @@ class Facades:
         f.write(b'\x00')
 
     @classmethod
-    def write_all(cls, output_file: Path, facades) -> None:
+    def write_all(cls, output_file: Path, facades: List['Facades']) -> None:
         with open(output_file, mode = 'wb') as f:
+            
             cls.write_n(f, facades)
             
             for facade in facades:
                 facade.write(f)
                                  
     @staticmethod
-    def debug(facades, output_file: Path):
+    def debug(facades: List['Facades'], output_file: Path) -> None:
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
@@ -3970,8 +4002,9 @@ FACADE
     
 ################################################################################################################               
 ################################################################################################################
-        
-# FACADE EDITOR CLASS
+#! ======================= FACADES II ======================= !#
+
+
 class FacadeEditor:    
     @classmethod
     def create(cls, output_file: str, user_set_facades, set_facades: bool, debug_facades: bool):
@@ -3985,8 +4018,8 @@ class FacadeEditor:
             Facades.debug(facades, DEBUG_FOLDER / "FACADES" / f"{map_filename}.txt")
 
     @staticmethod
-    def read_scales(scales_file: Path):
-        with open(scales_file, 'r') as f:
+    def read_scales(input_file: Path):
+        with open(input_file, 'r') as f:
             return {name: float(scale) for name, scale in (line.strip().split(": ") for line in f)}
 
     @classmethod
@@ -4030,12 +4063,13 @@ class FacadeEditor:
     
 ################################################################################################################               
 ################################################################################################################
+#! ======================= PHYSICS ======================= !#
 
-# PHYSICS EDITOR CLASS
+
 class PhysicsEditor:
     def __init__(self, name: str, friction: float, elasticity: float, drag: float, 
                  bump_height: float, bump_width: float, bump_depth: float, sink_depth: float, 
-                 type: int, sound: int, velocity: Vector2, ptx_color: Vector3):
+                 type: int, sound: int, velocity: Vector2, ptx_color: Vector3) -> None:
         
         self.name = name
         self.friction = friction
@@ -4051,11 +4085,11 @@ class PhysicsEditor:
         self.ptx_color = ptx_color 
         
     @classmethod
-    def readn(cls, f) -> int:
+    def readn(cls, f: BinaryIO) -> int:
         return read_unpack(f, '>I')[0]
 
     @staticmethod
-    def read(f) -> 'PhysicsEditor':
+    def read(f: BinaryIO) -> 'PhysicsEditor':
         name = read_binary_name(f, 32, 'latin-1')
         friction, elasticity, drag = read_unpack(f, '>3f')
         bump_height, bump_width, bump_depth, sink_depth = read_unpack(f, '>4f')
@@ -4065,10 +4099,10 @@ class PhysicsEditor:
         return PhysicsEditor(name, friction, elasticity, drag, bump_height, bump_width, bump_depth, sink_depth, type, sound, velocity, ptx_color)
     
     @classmethod
-    def read_all(cls, f) -> List['PhysicsEditor']:
+    def read_all(cls, f: BinaryIO) -> List['PhysicsEditor']:
         return [cls.read(f) for _ in range(cls.readn(f))]
 
-    def write(self, f) -> None:        
+    def write(self, f: BinaryIO) -> None:        
         write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\0'))
         write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
         write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
@@ -4077,11 +4111,11 @@ class PhysicsEditor:
         self.ptx_color.write(f, '>')
 
     @staticmethod
-    def write_all(output_file: Path, physics_params: List['PhysicsEditor']) -> None:
+    def write_all(output_file: Path, custom_params: List['PhysicsEditor']) -> None:
         with open(output_file, 'wb') as f:
-            write_pack(f, '>I', len(physics_params))
+            write_pack(f, '>I', len(custom_params))
             
-            for param in physics_params:                
+            for param in custom_params:                
                 param.write(f)
                 
     @classmethod    
@@ -4133,8 +4167,9 @@ class PhysicsEditor:
 
 ################################################################################################################               
 ################################################################################################################
+#! ======================= LIGHTING ======================= !#
 
-# LIGHTING EDITOR CLASS
+
 class LightingEditor:
     def __init__(self, time_of_day: int, weather: int, 
                  sun_heading: float, sun_pitch: float, sun_color: Tuple[float, float, float], 
@@ -4142,7 +4177,7 @@ class LightingEditor:
                  fill2_heading: float, fill2_pitch: float, fill2_color: Tuple[float, float, float], 
                  ambient_color: Tuple[float, float, float],  
                  fog_end: float, fog_color: Tuple[float, float, float], 
-                 shadow_alpha: float, shadow_color: Tuple[float, float, float]):
+                 shadow_alpha: float, shadow_color: Tuple[float, float, float]) -> None:
         
         self.time_of_day = time_of_day
         self.weather = weather
@@ -4513,7 +4548,7 @@ def read_bai(input_file: Path):
         # ID matches path index
         assert i == path.ID     
 
-        # A path should not be its own oncoming.
+        # A path should not be its own oncoming
         assert path.ID != path.OncomingPath
 
         # A path should be properly linked with its oncoming
@@ -5382,21 +5417,23 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     return obj
 
 
-def create_blender_meshes() -> None:
-    if is_blender_running():
-        delete_existing_meshes()
-        enable_developer_extras()
-        enable_vertex_snapping()
-        adjust_3D_view_settings()
+def create_blender_meshes(texture_folder: Path, load_all_texures: bool) -> None:
+    if not is_blender_running():
+        return
         
-        load_textures(texture_folder, load_all_texures)
-                    
-        textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in texture_names]
-            
-        created_meshes = []
-        
-        for poly, texture in zip(polygons_data, textures):
-            created_meshes.append(create_mesh_from_polygon_data(poly, texture))
+    delete_existing_meshes()
+    enable_developer_extras()
+    enable_vertex_snapping()
+    adjust_3D_view_settings()
+
+    load_textures(texture_folder, load_all_texures)
+
+    textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in texture_names]
+
+    created_meshes = []
+
+    for poly, texture in zip(polygons_data, textures):
+        created_meshes.append(create_mesh_from_polygon_data(poly, texture))
                     
 ###################################################################################################################
 ###################################################################################################################
@@ -6842,7 +6879,7 @@ copy_custom_textures(BASE_DIR / "Custom Textures", SHOP / "TEX16O")
 create_ext(map_filename, hudmap_vertices)
 create_animations(map_filename, animations_data, set_animations)   
 create_bridges(map_filename, bridge_list, set_bridges) 
-custom_bridge_config(bridge_config_list, set_bridges, SHOP / 'TUNE')
+create_bridge_config(bridge_config_list, set_bridges, SHOP / 'TUNE')
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
 create_lars_race_maker(map_filename, street_list, hudmap_vertices, set_lars_race_maker)
 
@@ -6881,7 +6918,7 @@ bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
 bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
 bpy.utils.register_class(OBJECT_PT_VertexCoordinates)
 
-create_blender_meshes()
+create_blender_meshes(texture_folder, load_all_texures)
 
 bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
 bpy.utils.register_class(OBJECT_OT_ExportPolygons)
