@@ -638,7 +638,7 @@ bridge_config_list = [bridge_race_0, bridge_cnr]
 
 ################################################################################################################               
 ################################################################################################################     
-#! ======================= STRUCT AND VECTOR CLASSES ======================= !#
+#! ======================= STRUCT & VECTOR CLASSES ======================= !#
 
 
 def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
@@ -1317,14 +1317,14 @@ class DLPVertex:
         self.color = color
         
     @classmethod
-    def read(cls, f) -> 'DLPVertex':
+    def read(cls, f: BinaryIO) -> 'DLPVertex':
         id, = read_unpack(f, '>H')
         normal = Vector3.read(f, '>')
         uv = Vector2.read(f, '>')
         color, = read_unpack(f, '>I')       
         return cls(id, normal, uv, color)
     
-    def write(self, f) -> None:
+    def write(self, f: BinaryIO) -> None:
         write_pack(f, '>H', self.id)
         self.normal.write(f, '>')    
         self.uv.write(f, '>')       
@@ -1355,16 +1355,16 @@ class DLPPatch:
         self.name = name
         
     @classmethod
-    def read(cls, f) -> 'DLPPatch':
+    def read(cls, f: BinaryIO) -> 'DLPPatch':
         s_res, t_res = read_unpack(f, '>2H')
         flags, r_opts = read_unpack(f, '>2H')
         mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
         vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
-        name_length = read_unpack(f, '>I')[0]
+        name_length, = read_unpack(f, '>I')
         name = read_unpack(f, f'>{name_length}s')[0].decode()     
         return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
     
-    def write(self, f) -> None:
+    def write(self, f: BinaryIO) -> None:
         write_pack(f, '>2H', self.s_res, self.t_res) 
         write_pack(f, '>2H', self.flags, self.r_opts)
         write_pack(f, '>3H', self.mtl_idx, self.tex_idx, self.phys_idx)
@@ -1401,15 +1401,15 @@ class DLPGroup:
         self.patch_indices = patch_indices
         
     @classmethod
-    def read(cls, f) -> 'DLPGroup':
-        name_length = read_unpack(f, '>B')[0]
+    def read(cls, f: BinaryIO) -> 'DLPGroup':
+        name_length, = read_unpack(f, '>B')
         name = read_unpack(f, f'>{name_length}s')[0].rstrip(b'\0').decode()
         num_vertices, num_patches = read_unpack(f, '>2I')        
         vertex_indices = [read_unpack(f, '>H')[0] for _ in range(num_vertices)]
         patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
         return cls(name, num_vertices, num_patches, vertex_indices, patch_indices)
 
-    def write(self, f) -> None:
+    def write(self, f: BinaryIO) -> None:
         write_pack(f, '>B', len(self.name))
         write_pack(f, f'>{len(self.name)}s', self.name.encode())
         write_pack(f, '>2I', self.num_vertices, self.num_patches)
@@ -1440,7 +1440,7 @@ class DLP:
         self.vertices = vertices 
         
     @classmethod
-    def read(cls, f) -> 'DLP':
+    def read(cls, f: BinaryIO) -> 'DLP':
         magic = read_binary_name(f, 4)          
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
@@ -1598,9 +1598,24 @@ def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
     
     return name_data.decode(encoding)
 
+
+def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
+    if blender_to_game and game_to_blender:
+        raise ValueError("Both transformation modes cannot be 'True' at the same time.")
+ 
+    elif blender_to_game:
+        x, y, z = vertex.x, vertex.z, -vertex.y
+        
+    elif game_to_blender:
+        x, y, z = vertex.x, -vertex.z, vertex.y
+        
+    else:
+        raise ValueError("One of the transformation modes must be 'True'.")
+    return x, y, z
+
 ################################################################################################################ 
 ################################################################################################################               
-#! ======================= MESH FUNCTIONS ======================= !#
+#! ======================= CREATE MESH ======================= !#
 
 
 def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degrees: float = 0.0) -> List[float]:
@@ -3322,7 +3337,7 @@ def write_bridge_config_to_files(filenames: List[str], config_str: str, output_f
 
 ################################################################################################################               
 ################################################################################################################
-#! ======================= PORTALS I ======================= !#
+#! ======================= PORTAL GENERATION ======================= !#
 
 #! ############ Code by 0x1F9F1 (Modified) // start ############ !#   
 
@@ -3387,7 +3402,6 @@ class Edge:
             -(self.line.x * pos) - (self.line.y * self.line.z))
         
 ################################################################################################################?               
-
 
 class Cell:
     def __init__(self, id):
@@ -3472,7 +3486,6 @@ class Cell:
         return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
     
 ################################################################################################################?  
-
 
 def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
     cells = {}
@@ -3571,13 +3584,13 @@ class Portals:
         self.vertex_c = vertex_c
         
     @classmethod
-    def readn(cls, f) -> int:
+    def readn(cls, f: BinaryIO) -> int:
         magic = read_binary_name(f, 4)
         count, = read_unpack(f, '<I')
         return count
         
     @classmethod
-    def read(cls, f) -> 'Portals':
+    def read(cls, f: BinaryIO) -> 'Portals':
         flags, edge_count, = read_unpack(f, '<2B')
         gap_2, = read_unpack(f, '<H')
         cell_1, cell_2, = read_unpack(f, '<2H')  
@@ -3592,11 +3605,11 @@ class Portals:
         return cls(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max, vertex_c)
         
     @classmethod
-    def read_all(cls, f) -> 'List[Portals]':
+    def read_all(cls, f: BinaryIO) -> 'List[Portals]':
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
-    def write_n(cls, f, portals) -> None:
+    def write_n(cls, f: BinaryIO, portals: 'List[Portals]') -> None:
         write_pack(f, '<I', 0) 
         write_pack(f, '<I', len(portals))
                 
@@ -3636,7 +3649,7 @@ class Portals:
                 if debug_portals:  
                     cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")            
     @classmethod
-    def debug(cls, portals, output_file: Path) -> None:
+    def debug(cls, portals: 'List[Portals]', output_file: Path) -> None:
         if not output_file.parent.exists():
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
@@ -3689,7 +3702,7 @@ PORTAL
     
 ################################################################################################################               
 ################################################################################################################            
-#! ======================= BANGERS I ======================= !#
+#! ======================= BANGERS CLASS ======================= !#
 
                                                   
 class Bangers:
@@ -3701,11 +3714,11 @@ class Bangers:
         self.name = name
                 
     @classmethod
-    def readn(cls, f) -> int:
+    def readn(cls, f: BinaryIO) -> int:
         return read_unpack(f, '<I')[0]
             
     @classmethod
-    def read(cls, f) -> 'Bangers':
+    def read(cls, f: BinaryIO) -> 'Bangers':
         room, flags = read_unpack(f, '<2H')
         offset = Vector3.read(f, '<')
         face = Vector3.read(f, '<')  
@@ -3713,11 +3726,11 @@ class Bangers:
         return cls(room, flags, offset, face, name)
     
     @classmethod
-    def read_all(cls, f) -> 'List[Bangers]':
+    def read_all(cls, f: BinaryIO) -> 'List[Bangers]':
         return [cls.read(f) for _ in range(cls.readn(f))]
     
     @classmethod
-    def write_n(cls, f, bangers: List['Bangers']) -> None:
+    def write_n(cls, f: BinaryIO, bangers: List['Bangers']) -> None:
         write_pack(f, '<I', len(bangers))
     
     @classmethod
@@ -3779,7 +3792,7 @@ BANGER
     
 ################################################################################################################               
 ###############################################################################################################
-#! ======================= BANGERS II ======================= !#
+#! ======================= BANGERS EDITOR ======================= !#
 
 
 class BangerEditor:
@@ -3903,7 +3916,7 @@ class BangerEditor:
 
 ################################################################################################################               
 ################################################################################################################
-#! ======================= FACADES I ======================= !#
+#! ======================= FACADES CLASS ======================= !#
 
 
 class Facades:
@@ -4002,7 +4015,7 @@ FACADE
     
 ################################################################################################################               
 ################################################################################################################
-#! ======================= FACADES II ======================= !#
+#! ======================= FACADE EDITOR ======================= !#
 
 
 class FacadeEditor:    
@@ -4173,8 +4186,8 @@ class PhysicsEditor:
 class LightingEditor:
     def __init__(self, time_of_day: int, weather: int, 
                  sun_heading: float, sun_pitch: float, sun_color: Tuple[float, float, float], 
-                 fill1_heading: float, fill1_pitch: float, fill1_color: Tuple[float, float, float], 
-                 fill2_heading: float, fill2_pitch: float, fill2_color: Tuple[float, float, float], 
+                 fill_1_heading: float, fill_1_pitch: float, fill_1_color: Tuple[float, float, float], 
+                 fill_2_heading: float, fill_2_pitch: float, fill_2_color: Tuple[float, float, float], 
                  ambient_color: Tuple[float, float, float],  
                  fog_end: float, fog_color: Tuple[float, float, float], 
                  shadow_alpha: float, shadow_color: Tuple[float, float, float]) -> None:
@@ -4184,12 +4197,12 @@ class LightingEditor:
         self.sun_heading = sun_heading
         self.sun_pitch = sun_pitch
         self.sun_color = sun_color
-        self.fill1_heading = fill1_heading
-        self.fill1_pitch = fill1_pitch
-        self.fill1_color = fill1_color
-        self.fill2_heading = fill2_heading
-        self.fill2_pitch = fill2_pitch
-        self.fill2_color = fill2_color
+        self.fill_1_heading = fill_1_heading
+        self.fill_1_pitch = fill_1_pitch
+        self.fill_1_color = fill_1_color
+        self.fill_2_heading = fill_2_heading
+        self.fill_2_pitch = fill_2_pitch
+        self.fill_2_color = fill_2_color
         self.ambient_color = ambient_color
         self.fog_end = fog_end
         self.fog_color = fog_color
@@ -4204,12 +4217,12 @@ class LightingEditor:
             sun_heading = float(row[2]),
             sun_pitch = float(row[3]),
             sun_color = (float(row[4]), float(row[5]), float(row[6])),
-            fill1_heading = float(row[7]),
-            fill1_pitch = float(row[8]),
-            fill1_color = (float(row[9]), float(row[10]), float(row[11])),
-            fill2_heading = float(row[12]),
-            fill2_pitch = float(row[13]),
-            fill2_color = (float(row[14]), float(row[15]), float(row[16])),
+            fill_1_heading = float(row[7]),
+            fill_1_pitch = float(row[8]),
+            fill_1_color = (float(row[9]), float(row[10]), float(row[11])),
+            fill_2_heading = float(row[12]),
+            fill_2_pitch = float(row[13]),
+            fill_2_color = (float(row[14]), float(row[15]), float(row[16])),
             ambient_color = (float(row[17]), float(row[18]), float(row[19])),
             fog_end = float(row[20]),
             fog_color = (float(row[21]), float(row[22]), float(row[23])),
@@ -4257,12 +4270,12 @@ class LightingEditor:
             format_value(self.sun_heading),
             format_value(self.sun_pitch),
             *map(format_value, self.sun_color),
-            format_value(self.fill1_heading),
-            format_value(self.fill1_pitch),
-            *map(format_value, self.fill1_color),
-            format_value(self.fill2_heading),
-            format_value(self.fill2_pitch),
-            *map(format_value, self.fill2_color),
+            format_value(self.fill_1_heading),
+            format_value(self.fill_1_pitch),
+            *map(format_value, self.fill_1_color),
+            format_value(self.fill_2_heading),
+            format_value(self.fill_2_pitch),
+            *map(format_value, self.fill_2_color),
             *map(format_value, self.ambient_color),
             format_value(self.fog_end),
             *map(format_value, self.fog_color),
@@ -4281,7 +4294,8 @@ class LightingEditor:
                     ' Fill-2 Heading', ' Fill-2 Pitch', ' Fill-2 Red', ' Fill-2 Green', ' Fill-2 Blue',
                     ' Ambient Red', ' Ambient Green', ' Ambient Blue', 
                     ' Fog End', ' Fog Red', ' Fog Green', ' Fog Blue', 
-                    ' Shadow Alpha', ' Shadow Red', ' Shadow Green', ' Shadow Blue']
+                    ' Shadow Alpha', ' Shadow Red', ' Shadow Green', ' Shadow Blue'
+                    ]
 
             writer.writerow(header)
             for instance in instances:
@@ -4305,12 +4319,12 @@ LIGHTING
     Sun Heading: {self.sun_heading:.2f}
     Sun Pitch: {self.sun_pitch:.2f}
     Sun Color: {self.sun_color}
-    Fill 1 Heading: {self.fill1_heading:.2f}
-    Fill 1 Pitch: {self.fill1_pitch:.2f}
-    Fill 1 Color: {self.fill1_color}
-    Fill 2 Heading: {self.fill2_heading:.2f}
-    Fill 2 Pitch: {self.fill2_pitch:.2f}
-    Fill 2 Color: {self.fill2_color}
+    Fill 1 Heading: {self.fill_1_heading:.2f}
+    Fill 1 Pitch: {self.fill_1_pitch:.2f}
+    Fill 1 Color: {self.fill_1_color}
+    Fill 2 Heading: {self.fill_2_heading:.2f}
+    Fill 2 Pitch: {self.fill_2_pitch:.2f}
+    Fill 2 Color: {self.fill_2_color}
     Ambient Color: {self.ambient_color}
     Fog End: {self.fog_end:.2f}
     Fog Color: {self.fog_color}
@@ -4320,6 +4334,8 @@ LIGHTING
 
 ###################################################################################################################
 ###################################################################################################################
+#! ======================= TEXTURESHEET ======================= !#
+
 
 # TODO: Expand capabilities if needed or useful
 class TextureSheet:
@@ -4357,11 +4373,13 @@ class TextureSheet:
 
 ###################################################################################################################
 ###################################################################################################################
+#! ======================= AI ======================= !#
 
-#! ################# Code by 0x1F9F1 (Modified) // start ################# !#     
+
+#! ############ Code by 0x1F9F1 (Modified) // start ############ !#   
 
 class aiStreet:                  
-    def load(self, f):
+    def load(self, f: BinaryIO) -> None:
         self.ID, = read_unpack(f, '<H')
         self.NumVertexs, = read_unpack(f, '<H')
         self.NumLanes, = read_unpack(f, '<H')
@@ -4401,40 +4419,38 @@ class aiStreet:
         self.LaneWidths = read_unpack(f, '<5f')
         self.LaneLengths = read_unpack(f, '<10f')
 
-    def read(f):
+    def read(f: BinaryIO) -> 'aiStreet':
         result = aiStreet()
         result.load(f)
         return result
 
-###################################################################################################################
-###################################################################################################################
+###################################################################################################################?
 
 class aiIntersection:
-    def load(self, file):
-        self.ID, = read_unpack(file, '<H')
-        self.Position = Vector3.read(file, '<')
+    def load(self, f: BinaryIO) -> None:
+        self.ID, = read_unpack(f, '<H')
+        self.Position = Vector3.read(f, '<')
 
-        num_sinks, = read_unpack(file, '<H')
-        self.Sinks = read_unpack(file, f'<{num_sinks}I')
+        num_sinks, = read_unpack(f, '<H')
+        self.Sinks = read_unpack(f, f'<{num_sinks}I')
 
-        num_sources, = read_unpack(file, '<H')
-        self.Sources = read_unpack(file, f'<{num_sources}I')
+        num_sources, = read_unpack(f, '<H')
+        self.Sources = read_unpack(f, f'<{num_sources}I')
 
-        self.Paths = read_unpack(file, f'<{num_sinks + num_sources}I')
-        self.Directions = read_unpack(file, f'<{num_sinks + num_sources}f')
+        self.Paths = read_unpack(f, f'<{num_sinks + num_sources}I')
+        self.Directions = read_unpack(f, f'<{num_sinks + num_sources}f')
 
     @staticmethod
-    def read(file):
+    def read(f: BinaryIO) -> 'aiIntersection':
         result = aiIntersection()
-        result.load(file)
+        result.load(f)
         return result
 
-###################################################################################################################
-###################################################################################################################
+###################################################################################################################?
 
-def read_array_list(file):
-    num_items, = read_unpack(file, '<I')
-    return read_unpack(file, f'<{num_items}I')
+def read_array_list(f) -> List[int]:
+    num_items, = read_unpack(f, '<I')
+    return read_unpack(f, f'<{num_items}I')
 
 
 class aiMap:
@@ -4444,32 +4460,31 @@ class aiMap:
         self.AmbientRoads = []
         self.PedRoads = []
 
-    def load(self, file):
-        num_isects, num_paths = read_unpack(file, '<2H')
+    def load(self, f: BinaryIO) -> None:
+        num_isects, num_paths = read_unpack(f, '<2H')
 
         print(f'{num_paths} roads, {num_isects} isects')
 
         for _ in range(num_paths):
-            self.Paths.append(aiStreet.read(file))
+            self.Paths.append(aiStreet.read(f))
 
         for _ in range(num_isects):
-            self.Intersections.append(aiIntersection.read(file))
+            self.Intersections.append(aiIntersection.read(f))
 
-        num_cells, = read_unpack(file, '<I')
-
-        for _ in range(num_cells):
-            self.AmbientRoads.append(read_array_list(file))
+        num_cells, = read_unpack(f, '<I')
 
         for _ in range(num_cells):
-            self.PedRoads.append(read_array_list(file))
+            self.AmbientRoads.append(read_array_list(f))
 
-    def read(file):
+        for _ in range(num_cells):
+            self.PedRoads.append(read_array_list(f))
+
+    def read(f: BinaryIO) -> 'aiMap':
         result = aiMap()
-        result.load(file)
+        result.load(f)
         return result
     
-###################################################################################################################
-###################################################################################################################
+###################################################################################################################?
 
 class MiniParser:
     def __init__(self, file):
@@ -4529,8 +4544,7 @@ class MiniParser:
         self.indent -= 1
         self.print('}\n')
 
-###################################################################################################################
-###################################################################################################################
+###################################################################################################################?
 
 def read_bai(input_file: Path):
     ai_map = aiMap()
@@ -4753,12 +4767,13 @@ def debug_bai(input_file: Path, debug_file: bool) -> None:
     ai_map, streets = read_bai(input_file)
     write_bai_text(ai_map, streets)
         
-#! ################# Code by 0x1F9F1 (Modified) // end ################# !#         
+#! ############ Code by 0x1F9F1 (Modified) // end ############ !#         
 
 ###################################################################################################################
 ###################################################################################################################
+#! ======================= BAI MAP ======================= !#
 
-# BAI MAP CLASS
+
 class BaiMap:
     def __init__(self, map_filename: str, street_names):
         self.map_filename = map_filename
@@ -4784,8 +4799,9 @@ mmMapData :0 {{
        
 ###################################################################################################################
 ###################################################################################################################
-       
-# AI STREET EDITOR CLASS
+#! ======================= AI STREET EDITOR ======================= !#
+
+
 class aiStreetEditor:
     def __init__(self, map_filename: str, data, set_reverse_ai_streets: bool):
         self.map_filename = map_filename
@@ -4888,7 +4904,9 @@ mmRoadSect :0 {{
     
 ################################################################################################################               
 ################################################################################################################    
-        
+#! ======================= LARS RACE MAKER ======================= !#
+
+
 def get_first_and_last_street_vertices(street_list):
     processed_vertices = []
     
@@ -4906,7 +4924,7 @@ def get_first_and_last_street_vertices(street_list):
     return unique_processed_vertices
 
 
-#! ################# Code by Lars (Modified) // start ################# !# 
+#! ############ Code by Lars (Modified) // start ############ !# 
 
 def create_lars_race_maker(map_filename: str, street_list, hudmap_vertices, set_lars_race_maker: bool):    
     if not set_lars_race_maker:
@@ -5019,6 +5037,8 @@ def create_lars_race_maker(map_filename: str, street_list, hudmap_vertices, set_
 
 ###################################################################################################################
 ###################################################################################################################  
+#! ======================= FINALIZING FUNCTIONS ======================= !#
+
 
 def create_ar(map_filename: str) -> None:
     for file in Path("angel").iterdir():
@@ -5120,6 +5140,13 @@ def is_blender_running() -> bool:
         return True 
     except (AttributeError, ImportError):
         return False
+    
+    
+def initialize_depsgraph_update_handler() -> None:
+    if not is_blender_running():
+        return
+    
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
 
 
 def delete_existing_meshes() -> None:
@@ -5294,7 +5321,6 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
             # Check if the object has the necessary custom properties
             if all(prop in obj.keys() for prop in ["tile_x", "tile_y", "angle_degrees"]):
                 
-                # Update the UV mapping of the object based on its custom properties
                 tile_uvs(obj, obj["tile_x"], obj["tile_y"])
                 rotate_uvs(obj, obj["angle_degrees"])
 
@@ -5302,7 +5328,7 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
     
 ###################################################################################################################
 ###################################################################################################################
-#! ======================= BLENDER MAP POLYGONS ======================= !#
+#! ======================= BLENDER POLYGON CREATION ======================= !#
 
 
 def apply_texture_to_object(obj, texture_path):
@@ -5338,21 +5364,6 @@ def apply_texture_to_object(obj, texture_path):
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
 
     unwrap_uv_to_aspect_ratio(obj, texture_image)
-    
-    
-def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
-    if blender_to_game and game_to_blender:
-        raise ValueError("Both transformation modes cannot be 'True' at the same time.")
- 
-    elif blender_to_game:
-        x, y, z = vertex.x, vertex.z, -vertex.y
-        
-    elif game_to_blender:
-        x, y, z = vertex.x, -vertex.z, vertex.y
-        
-    else:
-        raise ValueError("One of the transformation modes must be 'True'.")
-    return x, y, z
     
        
 def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
@@ -5469,7 +5480,7 @@ TEXTURE_EXPORT = {
 ###################################################################################################################
 #! ======================= BLENDER PANELS ======================= !#
 
-# CELL PANEL
+
 CELL_IMPORT = [
     (str(DEFAULT), "Default", "", "", DEFAULT),
     (str(TUNNEL), "Tunnel", "", "", TUNNEL),
@@ -5503,11 +5514,8 @@ class OBJECT_PT_CellTypePanel(bpy.types.Panel):
         else:
             layout.label(text = "No active object")
             
-            
 ###################################################################################################################?
 
-
-# MATERIAL PANEL
 MATERIAL_IMPORT = [
     (str(DEFAULT_MTL), "Road", "", "", DEFAULT_MTL),
     (str(GRASS_MTL), "Grass", "", "", GRASS_MTL),
@@ -5541,11 +5549,8 @@ class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
         else:
             layout.label(text = "No active object")
 
-
 ###################################################################################################################?
 
-
-# HUD PANEL
 HUD_IMPORT = [
     (ROAD_HUD, "Road", "", "", 1),
     (GRASS_HUD, "Grass", "", "", 2),
@@ -5606,11 +5611,8 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
         else:
             layout.label(text = "No active object")
 
-            
 ###################################################################################################################?
 
-        
-# MISC PANEL
 bpy.types.Object.always_visible = bpy.props.BoolProperty(
     name = "Always Visible",
     description = "If true, the polygon is always visible",
@@ -5637,11 +5639,8 @@ class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
         else:
             layout.label(text = "No active object")
             
-            
 ###################################################################################################################?
             
-            
-# VERTEX COORDINATES PANEL
 def update_vertex_coordinates(self, context):
     obj = self.id_data
     if obj and hasattr(obj.data, "vertices"):
@@ -5680,7 +5679,8 @@ class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
             
 ###################################################################################################################
 ################################################################################################################### 
-#! ======================= BLENDER EXPORTING ======================= !#
+#! ======================= BLENDER POLYGON EXPORT ======================= !#
+
 
 def format_decimal(value: Union[int, float]) -> str:
     if value == int(value): 
@@ -5781,7 +5781,6 @@ save_mesh(
     return polygon_export
 
 
-# EXPORT POLYGONS OPERATOR
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     bl_idname = "object.export_polygons"
     bl_label = "Export Blender Polygons"
@@ -5837,10 +5836,9 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
 ###################################################################################################################   
 ###################################################################################################################    
-#! ======================= BLENDER MISC ======================= !#
+#! ======================= BLENDER MISC OPERATORS ======================= !#
 
 
-# CLASS ASSIGN CUSTOM PROPERTIES
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     bl_idname = "object.assign_custom_properties"
     bl_label = "Assign Custom Properties to Polygons"
@@ -5889,7 +5887,6 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     
 ###################################################################################################################?
 
-
 class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
     bl_idname = "object.process_post_extrude"
     bl_label = "Process Post Extrude"
@@ -5916,7 +5913,6 @@ class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
     
     
 ###################################################################################################################? 
-
 
 class OBJECT_OT_RenameChildren(bpy.types.Operator):
     bl_idname = "object.auto_rename_children"
@@ -5947,7 +5943,8 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
             
 ###################################################################################################################   
 ################################################################################################################### 
-#! ======================= BLENDER WAYPOINT EDITOR ======================= !#
+#! ======================= BLENDER WAYPOINT OBJECTS / FUNCTIONS ======================= !#
+
 
 RED_COLOR = (1, 0, 0, 1)
 GREEN_COLOR = (0, 1, 0, 1)
@@ -6245,7 +6242,9 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
             print(wp_line)
             
             
-##############################################################################################################################################?
+###################################################################################################################
+################################################################################################################### 
+#! ======================= BLENDER WAYPOINT OPERATORS ======================= !#
 
 
 class CREATE_SINGLE_WAYPOINT_OT_operator(bpy.types.Operator):
@@ -6330,6 +6329,8 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         
 ###################################################################################################################
 ################################################################################################################### 
+#! ======================= BLENDER KEYBINDINGS ======================= !#
+      
       
 def set_blender_keybinding() -> None:
     if not is_blender_running():
@@ -6389,8 +6390,9 @@ def set_blender_keybinding() -> None:
         
 ###################################################################################################################   
 ################################################################################################################### 
+#! ======================= SET FACADES ======================= !#
 
-#* FACADE NOTES
+
 #* Separator: (max_x - min_x) / separator(value) = number of facades
 #* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
@@ -6463,23 +6465,23 @@ facade_list = [orange_building_one, orange_building_two, orange_building_three, 
 
 ###################################################################################################################   
 ###################################################################################################################
+#! ======================= SET AI STREETS ======================= !#
 
-# SET AI PATHS
 
 f"""
 The following variables are OPTIONAL: 
 
-Intersection_types, defaults to: {CONTINUE}
-(possbile types: {STOP}, {STOP_LIGHT}, {YIELD}, {CONTINUE}
+Intersection Type, defaults to: {CONTINUE}
+(possbile types: {STOP}, {STOP_LIGHT}, {YIELD}, {CONTINUE})
 
-Stop_light_names, defaults to: {STOP_LIGHT_SINGLE}
-(possbile names: {STOP_SIGN}, {STOP_LIGHT_SINGLE}, {STOP_LIGHT_DUAL}
+Stop Light Name, defaults to: {STOP_LIGHT_SINGLE}
+(possbile names: {STOP_SIGN}, {STOP_LIGHT_SINGLE}, {STOP_LIGHT_DUAL})
 
-Stop_light_positions, defaults to: {(0, 0, 0)}
-Traffic_blocked, Ped_blocked, Road_divided, and Alley, all default to: {NO}
-(possbile values: {YES}, {NO}
+Stop Light Positions, defaults to: {(0, 0, 0)}
+Traffic Blocked, Ped Blocked, Road Divided, and Alley, all default to: {NO}
+(possbile values: {YES}, {NO})
 
-# Stop lights will only show if the Intersection_type is {STOP_LIGHT}
+# Stop Lights will only show if the Intersection Type is {STOP_LIGHT}
 """
 
 #! Do not delete this Street
@@ -6582,8 +6584,9 @@ street_list = [cruise_start,
 
 ###################################################################################################################   
 ###################################################################################################################               
+#! ======================= SET PROPS ======================= !#
 
-# SET PROPS
+
 trailer_set = {'offset': (60, 0.0, 70), 
                'end': (60, 0.0, -50), 
                'name': TRAILER, 
@@ -6634,8 +6637,10 @@ props_to_append = [app_panoz_gtr]
 
 ###################################################################################################################   
 ################################################################################################################### 
-# PROP PROPERTIES (currently only possible for cars)
+#! ======================= SET PROP PROPERTIES ======================= !#
 
+
+# Currently only possible for cars
 # AudioIDs
 MALLDOOR_AUD = 1
 POLE_AUD = 3           
@@ -6661,22 +6666,22 @@ bangerdata_properties = {
 
 ###################################################################################################################   
 ###################################################################################################################   
+#! ======================= SET LIGHTING ======================= !#
 
-# SET LIGHTING
 
 lighting_configs = [
-    {   # Actual lighting data for Evening and Cloudy
+    {   # Actual lighting config for Evening and Cloudy
         'time_of_day': EVENING,
         'weather': CLOUDY,
         'sun_heading': 3.14,
         'sun_pitch': 0.65,
         'sun_color': (1.0, 0.6, 0.3),
-        'fill1_heading': -2.5,
-        'fill1_pitch': 0.45,
-        'fill1_color': (0.8, 0.9, 1.0),
-        'fill2_heading': 0.0,
-        'fill2_pitch': 0.45,
-        'fill2_color': (0.75, 0.8, 1.0),
+        'fill_1_heading': -2.5,
+        'fill_1_pitch': 0.45,
+        'fill_1_color': (0.8, 0.9, 1.0),
+        'fill_2_heading': 0.0,
+        'fill_2_pitch': 0.45,
+        'fill_2_color': (0.75, 0.8, 1.0),
         'ambient_color': (0.1, 0.1, 0.2),
         'fog_end': 600.0,
         'fog_color': (230.0, 100.0, 35.0),
@@ -6684,31 +6689,32 @@ lighting_configs = [
         'shadow_color': (15.0, 20.0, 30.0)
     },
     {
+        # Custom lighting config for Night and Clear
         'time_of_day': NIGHT,
         'weather': CLEAR,
         'sun_pitch': 10.0,
         'sun_color': (40.0, 0.0, 40.0),
-        'fill1_pitch': 10.0,
-        'fill1_color': (40.0, 0.0, 40.0),
-        'fill2_pitch': 10.0,
-        'fill2_color': (40.0, 0.0, 40.0),
+        'fill_1_pitch': 10.0,
+        'fill_1_color': (40.0, 0.0, 40.0),
+        'fill_2_pitch': 10.0,
+        'fill_2_color': (40.0, 0.0, 40.0),
     },
 ]
 
 ###################################################################################################################   
 ################################################################################################################### 
+#! ======================= SET PHYSICS ======================= !#
 
-# SET PHYSICS
-# available indices: 94, 95, 96, 97, 98,
 
+# Available indices: 94, 95, 96, 97, 98,
 custom_physics = {
     97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # sticky
     98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # slippery
 
 ###################################################################################################################   
 ################################################################################################################### 
+#! ======================= SET DLP ======================= !#
 
-# SET DLP
 
 s_res = 4
 t_res = 1
@@ -6750,6 +6756,8 @@ dlp_patches = [
 
 ###################################################################################################################   
 ################################################################################################################### 
+#! ======================= BLENDER AI PATHS ======================= !#
+
 
 def extract_and_format_road_data(input_folder: Path, output_file: Path) -> None: 
     for file in input_folder.iterdir():
@@ -6846,9 +6854,9 @@ def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize
     apply_path_color_scheme()
             
 ###################################################################################################################   
-################################################################################################################### 
+#! ======================= CALL FUNCTIONS ======================= !#
 
-# Call Editor Functions
+
 create_folders(map_filename)
 create_map_info(map_name, map_filename, blitz_race_names, circuit_race_names, checkpoint_race_names)
 create_races(map_filename, race_data)
@@ -6912,6 +6920,8 @@ print(create_bar_divider(colors_two))
 
 start_game(mm1_folder, play_game)
 
+initialize_depsgraph_update_handler()
+
 bpy.utils.register_class(OBJECT_PT_CellTypePanel)
 bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
 bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
@@ -6935,8 +6945,6 @@ bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_OT_operator)
 bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator)
 bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_OT_operator)
 bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator)
-
-bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
 
 process_and_visualize_paths(SHOP / "dev" / "CITY" / map_filename, "AI_PATHS.txt", visualize_ai_paths)
 
