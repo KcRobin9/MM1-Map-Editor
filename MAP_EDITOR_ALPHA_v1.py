@@ -991,7 +991,7 @@ class Bounds:
         x_dim, y_dim, z_dim = 0, 0, 0
         center = calculate_center(vertices)
         radius = calculate_radius(vertices, center)
-        radius_sqr = radius ** 2
+        radius_sqr = calculate_radius_squared(vertices, center)
         bb_min = calculate_min(vertices)
         bb_max = calculate_max(vertices)
         num_hot_verts1, num_hot_verts2, num_edges = 0, 0, 0
@@ -1568,18 +1568,37 @@ def calculate_center_tuples(vertices: List[Tuple[float, float, float]]):
     return center
 
 
-def calculate_radius(vertices: List[Vector3], center: Vector3):
+def calculate_radius(vertices: List[Vector3], center: Vector3) -> float:
+    return calculate_radius_squared(vertices, center) ** 0.5
+
+
+def calculate_radius_squared(vertices: List[Vector3], center: Vector3) -> float:
     radius_sqr = 0
     for vertex in vertices:
         diff = Vector3(vertex.x - center.x, vertex.y - center.y, vertex.z - center.z)
         radius_sqr = max(radius_sqr, diff.x ** 2 + diff.y ** 2 + diff.z ** 2)
-    return radius_sqr ** 0.5
+    return radius_sqr
 
 
 def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, float, float]:
     min_values = [min(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
     max_values = [max(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
     return min_values + max_values
+
+
+def calculate_bounding_box_radius(vertices: List[Vector3]) -> float:
+    max_ = calculate_max(vertices)
+    min_ = calculate_min(vertices)
+
+    length_x = max_.x - min_.x
+    length_y = max_.y - min_.y
+    length_z = max_.z - min_.z
+
+    diagonal_length = math.sqrt(length_x ** 2 + length_y ** 2 + length_z ** 2)
+
+    bounding_box_radius = diagonal_length / 2
+
+    return bounding_box_radius
 
 
 def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
@@ -1691,19 +1710,20 @@ def save_mesh(
     if debug_meshes:
         mesh.debug(Path(mesh_filename).with_suffix('.txt'), DEBUG_FOLDER / "MESHES" / map_filename, debug_meshes)
 
-            
+
 def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
     magic, flags = "3HSM", 3    
-    radius =  calculate_radius(vertices, calculate_center(vertices))
-    radiussq = radius ** 2
-    bounding_box_radius = 0.0 
-    
+        
     shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
 
     coordinates = [coord for shape in shapes for coord in shape]
+        
+    radius = calculate_radius(coordinates, VECTOR3_DEFAULT)  # Use Local Offset for the Center (this is not the case for the Bound files)
+    radiussq = calculate_radius_squared(coordinates, VECTOR3_DEFAULT)
+    bounding_box_radius = calculate_bounding_box_radius(coordinates)    
     
     vertex_count = len(coordinates)
     adjunct_count = len(coordinates)
