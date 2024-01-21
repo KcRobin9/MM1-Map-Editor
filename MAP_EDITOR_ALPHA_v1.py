@@ -900,10 +900,10 @@ polys = [POLYGON_FILLER]
 class Bounds:
     def __init__(self, magic: str, offset: Vector3, x_dim: int, y_dim: int, z_dim: int, 
                  center: Vector3, radius: float, radius_sqr: float, bb_min: Vector3, bb_max: Vector3, 
-                 num_verts: int, num_polys: int, num_hot_verts1: int, num_hot_verts2: int, num_edges: int, 
+                 num_verts: int, num_polys: int, num_hot_verts_1: int, num_hot_verts_2: int, num_edges: int, 
                  x_scale: float, z_scale: float, num_indices: int, height_scale: float, cache_size: int, 
                  vertices: List[Vector3], polys: List[Polygon],
-                 hot_verts: List[Vector3], edge_verts1: List[int], edge_verts2: List[int], 
+                 hot_verts: List[Vector3], edge_verts_1: List[int], edge_verts_2: List[int], 
                  edge_plane_n: List[Vector3], edge_plane_d: List[float],
                  row_offsets: Optional[List[int]], bucket_offsets: Optional[List[int]], 
                  row_buckets: Optional[List[int]], fixed_heights: Optional[List[int]]) -> None:
@@ -920,8 +920,8 @@ class Bounds:
         self.bb_max = bb_max        
         self.num_verts = num_verts
         self.num_polys = num_polys
-        self.num_hot_verts1 = num_hot_verts1
-        self.num_hot_verts2 = num_hot_verts2
+        self.num_hot_verts_1 = num_hot_verts_1
+        self.num_hot_verts_2 = num_hot_verts_2
         self.num_edges = num_edges
         self.x_scale = x_scale
         self.z_scale = z_scale
@@ -933,8 +933,8 @@ class Bounds:
         self.polys = polys   
         
         self.hot_verts = hot_verts
-        self.edge_verts1 = edge_verts1
-        self.edge_verts2 = edge_verts2
+        self.edge_verts_1 = edge_verts_1
+        self.edge_verts_2 = edge_verts_2
         self.edge_plane_n = edge_plane_n
         self.edge_plane_d = edge_plane_d
         self.row_offsets = row_offsets
@@ -952,16 +952,19 @@ class Bounds:
         bb_min = Vector3.read(f, '<')
         bb_max = Vector3.read(f, '<')
         num_verts, num_polys = read_unpack(f, '<2l')
-        num_hot_verts1, num_hot_verts2, num_edges = read_unpack(f, '<3l')
+        num_hot_verts_1, num_hot_verts_2, = read_unpack(f, '<2l')
+        num_edges = read_unpack(f, '<l')
         x_scale, z_scale = read_unpack(f, '<2f')
-        num_indices, height_scale, cache_size = read_unpack(f, '<3l')
+        num_indices, = read_unpack(f, '<l')
+        height_scale, = read_unpack(f, '<f')
+        cache_size, = read_unpack(f, '<l')
         
         vertices = Vector3.readn(f, num_verts, '<')
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
-        
-        hot_verts = Vector3.readn(f, num_hot_verts2, '<')
-        edge_verts1 = read_unpack(f, f'<{num_edges}I')
-        edge_verts2 = read_unpack(f, f'<{num_edges}I')
+
+        hot_verts = Vector3.readn(f, num_hot_verts_2, '<')
+        edge_verts_1 = read_unpack(f, f'<{num_edges}I')
+        edge_verts_2 = read_unpack(f, f'<{num_edges}I')
         edge_plane_n = Vector3.readn(f, num_edges, '<')
         edge_plane_d = read_unpack(f, f'<{num_edges}f')
 
@@ -978,9 +981,9 @@ class Bounds:
 
         return cls(
             magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
-            num_verts, num_polys, num_hot_verts1, num_hot_verts2, num_edges, 
+            num_verts, num_polys, num_hot_verts_1, num_hot_verts_2, num_edges, 
             x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
-            hot_verts, edge_verts1, edge_verts2, edge_plane_n, edge_plane_d,
+            hot_verts, edge_verts_1, edge_verts_2, edge_plane_n, edge_plane_d,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
     
@@ -994,24 +997,27 @@ class Bounds:
         radius_sqr = calculate_radius_squared(vertices, center)
         bb_min = calculate_min(vertices)
         bb_max = calculate_max(vertices)
-        num_hot_verts1, num_hot_verts2, num_edges = 0, 0, 0
+        num_hot_verts_1, num_hot_verts_2 = 0, 0
+        num_edges = 0
         x_scale, z_scale = 0.0, 0.0
-        num_indices, height_scale, cache_size = 0, 0, 0
+        num_indices = 0
+        height_scale = 0.0
+        cache_size = 0
         
         hot_verts = [VECTOR3_DEFAULT]  
-        edge_verts1, edge_verts2 = [0], [1] 
+        edge_verts_1, edge_verts_2 = [0], [1] 
         edge_plane_n = [VECTOR3_DEFAULT] 
         edge_plane_d = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
-        return Bounds(
+        return cls(
             magic, offset, x_dim, y_dim, z_dim, 
             center, radius, radius_sqr, bb_min, bb_max, 
             len(vertices), len(polys) - 1, 
-            num_hot_verts1, num_hot_verts2, num_edges, 
+            num_hot_verts_1, num_hot_verts_2, num_edges, 
             x_scale, z_scale, num_indices, height_scale, cache_size, 
             vertices, polys, 
-            hot_verts, edge_verts1, edge_verts2, 
+            hot_verts, edge_verts_1, edge_verts_2, 
             edge_plane_n, edge_plane_d,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
@@ -1025,9 +1031,12 @@ class Bounds:
         self.bb_min.write(f, '<')
         self.bb_max.write(f, '<')
         write_pack(f, '<2l', self.num_verts, self.num_polys)
-        write_pack(f, '<3l', self.num_hot_verts1, self.num_hot_verts2, self.num_edges)
-        write_pack(f, '<2f', self.x_scale, self.z_scale)
-        write_pack(f, '<3l', self.num_indices, self.height_scale, self.cache_size)
+        write_pack(f, '<2l', self.num_hot_verts_1, self.num_hot_verts_2)
+        write_pack(f, '<l', self.num_edges)
+        write_pack(f, '<2f', self.x_scale, self.z_scale) 
+        write_pack(f, '<l', self.num_indices)
+        write_pack(f, '<f', self.height_scale)
+        write_pack(f, '<l', self.cache_size)
  
         for vertex in self.vertices:       
             vertex.write(f, '<')   
@@ -1036,14 +1045,14 @@ class Bounds:
             poly.write(f)
                     
     @staticmethod
-    def create(map_filename: str, vertices: List[Vector3], polys: List[Polygon], debug_bounds: bool) -> None:
+    def create(output_file: Path, vertices: List[Vector3], polys: List[Polygon], debug_file: Path, debug_bounds: bool) -> None:
         bnd = Bounds.initialize(vertices, polys)
                 
-        with open(SHOP / "BND" / f"{map_filename}_HITID.BND", "wb") as f:
+        with open (output_file, "wb") as f:
             bnd.write(f)
             
-            if not debug_bounds:
-                bnd.debug(DEBUG_FOLDER / "BOUNDS" / f"{map_filename}.txt")
+            if debug_bounds:
+                bnd.debug(debug_file)
                 
     def debug(self, output_file: Path) -> None:
         if not output_file.parent.exists():
@@ -1109,13 +1118,13 @@ BOUND
     BB Max: {self.bb_max}
     Num Verts: {self.num_verts}
     Num Polys: {self.num_polys}
-    Num Hot Verts1: {self.num_hot_verts1}
-    Num Hot Verts2: {self.num_hot_verts2}
+    Num Hot Verts 1: {self.num_hot_verts_1}
+    Num Hot Verts 2: {self.num_hot_verts_2}
     Num Edges: {self.num_edges}
     X Scale: {self.x_scale:.5f}
     Z Scale: {self.z_scale:.5f}
     Num Indices: {self.num_indices}
-    Height Scale: {self.height_scale}
+    Height Scale: {self.height_scale:.5f}
     Cache Size: {self.cache_size}\n
     Vertices:
     {self.vertices}\n
@@ -1123,8 +1132,8 @@ BOUND
     {polygon_polys}\n
     ======= Split =======\n
     Hot Verts: {self.hot_verts}
-    Edge Verts1: {self.edge_verts1}
-    Edge Verts2: {self.edge_verts2}
+    Edge Verts 1: {self.edge_verts_1}
+    Edge Verts 2: {self.edge_verts_2}
     Edge Plane N: {self.edge_plane_n}
     Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n  
     ======= Split =======\n
@@ -1144,7 +1153,7 @@ BOUND
 
 class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
-                 radius: float, radius_sq: float, bounding_box_radius: float,
+                 radius: float, radius_sqr: float, bounding_box_radius: float,
                  texture_count: int, flags: int, texture_names: List[str], coordinates: List[Vector3],
                  texture_darkness: List[int], tex_coords: List[float], enclosed_shape: List[int],
                  surface_sides: List[int], indices_sides: List[List[int]]) -> None:
@@ -1155,7 +1164,7 @@ class Meshes:
         self.surface_count = surface_count
         self.indices_count = indices_count
         self.radius = radius
-        self.radius_sq = radius_sq
+        self.radius_sqr = radius_sqr
         self.bounding_box_radius = bounding_box_radius
         self.texture_count = texture_count
         self.flags = flags
@@ -1172,7 +1181,7 @@ class Meshes:
         with open(input_file, 'rb') as f:
             magic = read_binary_name(f, 16)     
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
-            radius, radius_sq, bounding_box_radius = read_unpack(f, '<3f')
+            radius, radius_sqr, bounding_box_radius = read_unpack(f, '<3f')
             texture_count, flags = read_unpack(f, '<2B')
             f.read(6)
                                         
@@ -1195,7 +1204,7 @@ class Meshes:
             
         return cls(
             magic, vertex_count, adjunct_count, surface_count, indices_count, 
-            radius, radius_sq, bounding_box_radius, 
+            radius, radius_sqr, bounding_box_radius, 
             texture_count, flags, texture_names, coordinates, 
             texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides
             )
@@ -1204,7 +1213,7 @@ class Meshes:
         with open(output_file, 'wb') as f:
             write_pack(f, '<16s', self.magic.encode('ascii').ljust(16, b'\0'))
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
-            write_pack(f, '<3f', self.radius, self.radius_sq, self.bounding_box_radius)
+            write_pack(f, '<3f', self.radius, self.radius_sqr, self.bounding_box_radius)
             write_pack(f, '<2B', self.texture_count, self.flags)
             f.write(b'\0' * 6)
 
@@ -1291,7 +1300,7 @@ MESH
     SurfaceCount: {self.surface_count}
     IndicesCount: {self.indices_count}
     Radius: {self.radius:.2f}
-    RadiusSq: {self.radius_sq:.2f}
+    Radius Sqr: {self.radius_sqr:.2f}
     BoundingBoxRadius: {self.bounding_box_radius:.2f}
     TextureCount: {self.texture_count}
     Flags: {self.flags}
@@ -6883,7 +6892,7 @@ create_races(map_filename, race_data)
 create_cops_and_robbers(map_filename, cnr_waypoints)
 
 create_cells(map_filename, polys, truncate_cells)
-Bounds.create(map_filename, vertices, polys, debug_bounds)
+Bounds.create(SHOP / "BND" / f"{map_filename}_HITID.BND", vertices, polys, DEBUG_FOLDER / "BOUNDS" / f"{map_filename}.txt", debug_bounds)
 Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
 TextureSheet().write()
 aiStreetEditor.create(map_filename, street_list, set_ai_streets, set_reverse_ai_streets)
