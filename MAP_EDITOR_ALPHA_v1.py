@@ -35,6 +35,7 @@ import textwrap
 import threading
 import subprocess
 import numpy as np   
+from enum import Enum
 from pathlib import Path
 from itertools import cycle
 from mathutils import Vector
@@ -299,9 +300,20 @@ texcoords_data = {}
 hudmap_vertices = []
 hudmap_properties = {}
 
-# Time & Weather
-MORNING, NOON, EVENING, NIGHT = 0, 1, 2, 3  
-CLEAR, CLOUDY, RAIN, SNOW = 0, 1, 2, 3     
+
+class TimeOfDay(Enum):
+    MORNING = 0
+    NOON = 1
+    EVENING = 2
+    NIGHT = 3
+
+
+class Weather(Enum):
+    CLEAR = 0
+    CLOUDY = 1
+    RAIN = 2
+    SNOW = 3   
+
 
 # Opponent Count
 MAX_OPP_8 = 8 
@@ -468,8 +480,8 @@ race_data = {
             [0.0, 0.0, -130.0, ROT_NORTH, 12.0], 
         ],
         'mm_data': {
-            'ama': [NOON, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
-            'pro': [EVENING, CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999], 
+            'ama': [TimeOfDay.NOON, Weather.CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
+            'pro': [TimeOfDay.EVENING, Weather.CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999], 
         },
         'aimap': {
             'density': 0.25,
@@ -503,8 +515,8 @@ race_data = {
             [35.0, 30.0, 40.0, ROT_SOUTH, LANE_4], 
         ],
         'mm_data': {
-            'ama': [NOON, CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
-            'pro': [NOON, CLOUDY, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
+            'ama': [TimeOfDay.NOON, Weather.CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
+            'pro': [TimeOfDay.NOON, Weather.CLOUDY, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
         },
         'aimap': {
             'density': 0.2,
@@ -528,8 +540,8 @@ race_data = {
             [35.0, 30.0, 40.0, ROT_SOUTH, LANE_4], 
         ],
         'mm_data': {
-            'ama': [NIGHT, RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
-            'pro': [NIGHT, SNOW, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_3],
+            'ama': [TimeOfDay.NIGHT, Weather.RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
+            'pro': [TimeOfDay.NIGHT, Weather.SNOW, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_3],
         },
         'aimap': {
             'density': 0.2,
@@ -6700,8 +6712,8 @@ bangerdata_properties = {
 
 lighting_configs = [
     {   # Actual lighting config for Evening and Cloudy
-        'time_of_day': EVENING,
-        'weather': CLOUDY,
+        'time_of_day': TimeOfDay.EVENING,
+        'weather': Weather.CLOUDY,
         'sun_heading': 3.14,
         'sun_pitch': 0.65,
         'sun_color': (1.0, 0.6, 0.3),
@@ -6719,8 +6731,8 @@ lighting_configs = [
     },
     {
         # Custom lighting config for Night and Clear
-        'time_of_day': NIGHT,
-        'weather': CLEAR,
+        'time_of_day': TimeOfDay.NIGHT,
+        'weather': Weather.CLEAR,
         'sun_pitch': 10.0,
         'sun_color': (40.0, 0.0, 40.0),
         'fill_1_pitch': 10.0,
