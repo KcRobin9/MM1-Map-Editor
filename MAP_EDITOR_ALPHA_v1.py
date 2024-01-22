@@ -282,9 +282,6 @@ start_time = time.time()
 TRIANGLE = 3
 QUAD = 4
 
-CELL_LOD_HIGH = 8  # LOD = Level of Detail
-CELL_LOD_DRIFT = 32
-
 MESH_VERTEX_COUNT_THRESHOLD = 16
 CELL_CHARACTER_THRESHOLD = 254
 
@@ -301,18 +298,42 @@ hudmap_vertices = []
 hudmap_properties = {}
 
 
-class TimeOfDay(Enum):
+class TimeOfDay:
     MORNING = 0
     NOON = 1
     EVENING = 2
     NIGHT = 3
 
 
-class Weather(Enum):
+class Weather:
     CLEAR = 0
     CLOUDY = 1
     RAIN = 2
-    SNOW = 3   
+    SNOW = 3
+    
+    
+class LevelOfDetail:
+    HIGH = 8
+    DRIFT = 32
+    
+    
+class AudioProp:
+    MALLDOOR = 1
+    POLE = 3
+    SIGN = 4
+    MAILBOX = 5
+    METER = 6
+    TRASHCAN = 7
+    BENCH = 8
+    TREE = 11
+    TRASH_BOXES = 12    # also used for "bridge crossgate"
+    NO_NAME_1 = 13      # difficult to describe
+    BARREL = 15         # also used for "dumpster"
+    PHONEBOOTH = 20
+    CONE = 22
+    NO_NAME_2 = 24      # sounds a bit similar to "glass"
+    NEWSBOX = 25
+    GLASS = 27
 
 
 # Opponent Count
@@ -381,35 +402,35 @@ HUGE = 100000000000
 
 
 # Player Cars (also usable as Opponent cars, Cop cars, and Props)
-VW_BEETLE = "vpbug"
-CITY_BUS = "vpbus"
-CADILLAC = "vpcaddie"
-CRUISER = "vpcop"
-FORD_F350 = "vpford"
-FASTBACK = "vpbullet"
-MUSTANG99 = "vpmustang99"
-ROADSTER = "vppanoz"
-PANOZ_GTR1 = "vppanozgt"
-SEMI = "vpsemi"
+class PlayerCar:
+    VW_BEETLE = "vpbug"
+    CITY_BUS = "vpbus"
+    CADILLAC = "vpcaddie"
+    CRUISER = "vpcop"
+    FORD_F350 = "vpford"
+    FASTBACK = "vpbullet"
+    MUSTANG99 = "vpmustang99"
+    ROADSTER = "vppanoz"
+    PANOZ_GTR_1 = "vppanozgt"
+    SEMI = "vpsemi"
 
-# Ambient Cars (also usable as Opponent cars, Cop cars, and Props)
-TINY_CAR = "vacompact"
-SEDAN_SMALL = "vasedans"
-SEDAN_LARGE = "vasedanl"
 
-SMALL_VAN = "vavan"
-PICKUP = "vapickup"
-DELIVERY_VAN = "vadelivery"
-LARGE_TRUCK = "vadiesels"
+# Traffic Cars (also usable as Opponent cars, Cop cars, and Props)
+class TrafficCar:
+    TINY_CAR = "vacompact"
+    SEDAN_SMALL = "vasedans"
+    SEDAN_LARGE = "vasedanl"
+    YELLOW_TAXI = "vataxi"
+    GREEN_TAXI = "vataxicheck"
+    WHITE_LIMO = "valimo"
+    BLACK_LIMO = "valimoangel"
+    PICKUP = "vapickup"
+    SMALL_VAN = "vavan"
+    DELIVERY_VAN = "vadelivery"
+    LARGE_TRUCK = "vadiesels"
+    TRAFFIC_BUS = "vabus"
+    PLANE_SMALL = "vaboeing_small"
 
-YELLOW_TAXI = "vataxi"
-GREEN_TAXI = "vataxicheck"
-
-WHITE_LIMO = "valimo"
-BLACK_LIMO = "valimoangel"
-
-TRAFFIC_BUS = "vabus"
-PLANE_SMALL = "vaboeing_small"
 
 # Props
 BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
@@ -487,8 +508,8 @@ race_data = {
             'density': 0.25,
             'num_of_police': 2,
             'police_data': [
-                f'{CRUISER} 10.0 0.0 65.0 {ROT_NORTH} {STATIONARY} {PUSH}',
-                f'{CRUISER} -10.0 0.0 65.0 {ROT_NORTH} {IN_TRAFFIC} {MIX}',
+                f'{PlayerCar.CRUISER} 10.0 0.0 65.0 {ROT_NORTH} {STATIONARY} {PUSH}',
+                f'{PlayerCar.CRUISER} -10.0 0.0 65.0 {ROT_NORTH} {IN_TRAFFIC} {MIX}',
             ],
             'num_of_exceptions': None,
             'exceptions': [
@@ -498,7 +519,7 @@ race_data = {
             'num_of_opponents': 1,
         },
             'opponent_cars': {
-                VW_BEETLE: [
+                PlayerCar.VW_BEETLE: [
                     [5.0, 0.0, 35.0], 
                     [5.0, 0.0, -130.0]
                 ], 
@@ -522,12 +543,12 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
+                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
             ],
             'num_of_opponents': 1,
         },
             'opponent_cars': {
-                PANOZ_GTR1: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
+                PlayerCar.PANOZ_GTR_1: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
         }
     },
     'CIRCUIT_0': {
@@ -547,17 +568,17 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
+                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
             ],
             'num_of_opponents': 2,
         },
         'opponent_cars': {
-            WHITE_LIMO: [
+            TrafficCar.WHITE_LIMO: [
                 [-10.0, 245, -850], 
                 [0.0, 0.0, -100],
                 [-10.0, 0.0, -75.0]
             ],
-            BLACK_LIMO: [
+            TrafficCar.BLACK_LIMO: [
                 [10.0, 245, -850],
                 [0.0, 0.0, -100],
                 [10.0, 0.0, -75.0]
@@ -608,8 +629,6 @@ INFO
     NORTH, NORTH_EAST, EAST, SOUTH_EAST SOUTH, SOUTH WEST, WEST, NORTH_WEST
     Or you can manually set the orientation in degrees (0.0 - 360.0).
 """
-
-bridge_object = "vpmustang99"  # pass any prop / car 
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
 bridge_list = [
@@ -3042,7 +3061,7 @@ def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:
 
 
 def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
-    model = CELL_LOD_DRIFT if cell_id in mesh_a2_files else CELL_LOD_HIGH
+    model = LevelOfDetail.DRIFT if cell_id in mesh_a2_files else LevelOfDetail.HIGH
     return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
 
@@ -6660,7 +6679,8 @@ random_sailboats = {
 random_cars = {
         'offset_y': 0.0,
         'separator': 10.0,
-        'name': [VW_BEETLE, CITY_BUS, CADILLAC, CRUISER, FORD_F350, FASTBACK, MUSTANG99, ROADSTER, PANOZ_GTR1, SEMI]}
+        'name': [PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350, PlayerCar.FASTBACK, PlayerCar.MUSTANG99, 
+                 PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI]}
 
 # Configure your random props here
 random_props = [
@@ -6672,7 +6692,7 @@ random_props = [
 app_panoz_gtr = {
     'offset': (5, 2, 5),
     'end': (999, 2, 999),
-    'name': PANOZ_GTR1}
+    'name': PlayerCar.PANOZ_GTR_1}
 
 props_to_append = [app_panoz_gtr]
 
@@ -6681,29 +6701,10 @@ props_to_append = [app_panoz_gtr]
 #! ======================= SET PROP PROPERTIES ======================= !#
 
 
-# Currently only possible for cars
-# AudioIDs
-MALLDOOR_AUD = 1
-POLE_AUD = 3           
-SIGN_AUD = 4          
-MAIL_AUD = 5              
-METER_AUD = 6
-TRASH_AUD = 7          
-BENCH_AUD = 8         
-TREE_AUD = 11         
-BOXES_AUD = 12         # also used for "bridge crossgate"
-NO_NAME_AUD = 13       # difficult to describe
-BARREL_AUD = 15        # also used for "dumpster"
-PHONEBOOTH_AUD = 20
-CONE_AUD = 22 
-NO_NAME_2_AUD = 24     # sounds a bit similar to "glass"
-NEWS_AUD = 25
-GLASS_AUD = 27
-
 # The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
 bangerdata_properties = {
-    VW_BEETLE: {'ImpulseLimit2': HUGE, 'AudioId': GLASS_AUD},
-    CITY_BUS:  {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': POLE_AUD, 'Size': '18 6 5', 'CG': '0 0 0'}}
+    PlayerCar.VW_BEETLE: {'ImpulseLimit2': HUGE, 'AudioId': AudioProp.GLASS},
+    PlayerCar.CITY_BUS:  {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': AudioProp.POLE, 'Size': '18 6 5', 'CG': '0 0 0'}}
 
 ###################################################################################################################   
 ###################################################################################################################   
