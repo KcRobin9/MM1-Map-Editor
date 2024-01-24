@@ -51,6 +51,7 @@ SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
 USER_RESOURCES = BASE_DIR / "Resources" / "UserResources"
 EDITOR_RESOURCES = BASE_DIR / "Resources" / "EditorResources"
 DEBUG_FOLDER = BASE_DIR / "Resources" / "Debug"
+RACE = "RACE"
 MOVE = shutil.move
   
 
@@ -312,11 +313,54 @@ class Weather:
     SNOW = 3
     
     
+class RaceMode:
+    ROAM = "ROAM"
+    CRUISE = "CRUISE"
+    BLITZ = "BLITZ"
+    CHECKPOINT = "RACE"
+    CIRCUIT = "CIRCUIT"
+    COPS_AND_ROBBERS = "COPSANDROBBERS"
+    
+    
+class NetworkMode:
+    SINGLE = "SINGLE"
+    MULTI = "MULTI"
+    SINGLE_AND_MULTI = "All Modes"
+    
+
 class LevelOfDetail:
     HIGH = 8
     DRIFT = 32
     
     
+class IntersectionType:
+    STOP = 0
+    STOP_LIGHT = 1
+    YIELD = 2
+    CONTINUE = 3
+    
+    
+class Rotation:
+    AUTO = 0
+    NORTH = 0.01
+    NORTH_EAST = 45
+    EAST = 90
+    SOUTH_EAST = 135
+    SOUTH = 179.99
+    SOUTH_WEST = -135
+    WEST = -90
+    NORTH_WEST = -45
+    AUTO = 0
+    
+    
+class CopBehavior:
+    FOLLOW = 0 
+    ROADBLOCK = 3
+    SPINOUT = 4
+    PUSH = 8
+    MIX = 15
+    
+        
 class AudioProp:
     MALLDOOR = 1
     POLE = 3
@@ -334,18 +378,11 @@ class AudioProp:
     NO_NAME_2 = 24      # sounds a bit similar to "glass"
     NEWSBOX = 25
     GLASS = 27
-
-
+    
+    
 # Opponent Count
 MAX_OPP_8 = 8 
 MAX_OPP_128 = 128 
-
-# Cop Behavior
-FOLLOW = 0 
-ROADBLOCK = 3
-SPINOUT = 4
-PUSH = 8
-MIX = 15   
 
 # Cop Start Lane
 STATIONARY = 0 
@@ -359,49 +396,24 @@ NO_COPS, MAX_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
 NO_PEDS, MID_PEDS, MAX_PEDS = 0.0, 0.5, 1.0
 NO_AMBIENT, MID_AMBIENT, MAX_AMBIENT = 0.0, 0.5, 1.0
 
-# Waypoint Attributes
-ROT_SOUTH = 179.99
-ROT_WEST = -90
-ROT_EAST = 90
-ROT_NORTH = 0.01
-ROT_AUTO = 0
-
+# Checkpoint Width
 WIDTH_AUTO = SCALE_AUTO = 0
 LANE_ALLEY = 3
 LANE_4 = SCALE_DEFAULT = 15
 LANE_6 = 19
 
-# Race Types
-ROAM = "ROAM"
-CRUISE = "CRUISE"
-BLITZ = "BLITZ"
-RACE = "RACE"
-CIRCUIT = "CIRCUIT"
-COPS_N_ROBBERS = "COPSANDROBBERS"
-
-# Game Modes
-SINGLE = "SINGLE"
-MULTI = "MULTI"
-ALL_MODES = "All Modes"
-
-# AI Intersection Types
-STOP = 0 
-STOP_LIGHT = 1 
-YIELD = 2  # Unused (works)
-CONTINUE = 3
-
-# AI Road properties (e.g. "YES" for the field "traffic_blocked")
-NO, YES = 0, 1
-
 # Misc
+NO, YES = 0, 1      # AI Street Properties (e.g. "YES" for the field "traffic_blocked")
 HUGE = 100000000000
 
 ################################################################################################################               
 ################################################################################################################
 #! ======================= CARS & PROPS ======================= !#
 
+# NOTE:
+# Player Cars and Traffic Cars can be used as Opponent cars, Cop cars, and Props
 
-# Player Cars (also usable as Opponent cars, Cop cars, and Props)
+
 class PlayerCar:
     VW_BEETLE = "vpbug"
     CITY_BUS = "vpbus"
@@ -415,7 +427,6 @@ class PlayerCar:
     SEMI = "vpsemi"
 
 
-# Traffic Cars (also usable as Opponent cars, Cop cars, and Props)
 class TrafficCar:
     TINY_CAR = "vacompact"
     SEDAN_SMALL = "vasedans"
@@ -432,49 +443,49 @@ class TrafficCar:
     PLANE_SMALL = "vaboeing_small"
 
 
-# Props
-BRIDGE_SLIM = "tpdrawbridge04"      #* dimension: x: 30.0 y: 5.9 z: 32.5
-BRIDGE_WIDE = "tpdrawbridge06"      #* dimension: x: 40.0 y: 5.9 z: 32.5
-CROSSGATE = "tpcrossgate06"
-BRIDGE_BUILDING = "tpbridgebuild"
+class Prop:
+    BRIDGE_SLIM = "tpdrawbridge04"      # dimension: x: 30.0 y: 5.9 z: 32.5
+    BRIDGE_WIDE = "tpdrawbridge06"      # dimension: x: 40.0 y: 5.9 z: 32.5
+    CROSSGATE = "tpcrossgate06"
+    BRIDGE_BUILDING = "tpbridgebuild"
 
-TRAILER = "tp_trailer"
-BARRICADE = "tp_barricade"
-TREE_SLIM = "tp_tree10m"
-TREE_WIDE = "tp_tree15m"
-SAILBOAT = "tpsailboat"
-CHINATOWN_GATE = "cpgate"
+    TRAILER = "tp_trailer"
+    BARRICADE = "tp_barricade"
+    TREE_SLIM = "tp_tree10m"
+    TREE_WIDE = "tp_tree15m"
+    SAILBOAT = "tpsailboat"
+    CHINATOWN_GATE = "cpgate"
 
-BIN = "tptcanc"
-CONE = "tpcone"
-BENCH = "tpbench"
-DUMPSTER = "tpdmpstr"
-CRASH_CAN = "tpcrshcan"
-TRASH_BOXES = "tptrashalley02"
+    BIN = "tptcanc"
+    CONE = "tpcone"
+    BENCH = "tpbench"
+    DUMPSTER = "tpdmpstr"
+    CRASH_CAN = "tpcrshcan"
+    TRASH_BOXES = "tptrashalley02"
 
-PLANT = "tpplanter_mall"
-MAILBOX = "tpmail"
-BUS_STOP = "tpsbus"
-PHONE_BOOTH = "optbooth"
+    PLANT = "tpplanter_mall"
+    MAILBOX = "tpmail"
+    BUS_STOP = "tpsbus"
+    PHONE_BOOTH = "optbooth"
 
-SIDEWALK_LIGHT = "opstlite"
-HIGHWAY_LIGHT = "tpltst"
+    SIDEWALK_LIGHT = "opstlite"
+    HIGHWAY_LIGHT = "tpltst"
 
-GLASS = "dp01wina"
-WALL = "dp24walla"
+    GLASS = "dp01wina"
+    WALL = "dp24walla"
 
-STOP_SIGN = "tpsstop"
-WRONG_WAY = "tpwrongway"
-DO_NOT_ENTER = "tpswrng"
-STOP_LIGHT_SINGLE = "tplttrafc"
-STOP_LIGHT_DUAL = "tplttrafcdual"
+    STOP_SIGN = "tpsstop"
+    WRONG_WAY = "tpwrongway"
+    DO_NOT_ENTER = "tpswrng"
+    STOP_LIGHT_SINGLE = "tplttrafc"
+    STOP_LIGHT_DUAL = "tplttrafcdual"
 
-CRANE = "dp60crane"
-ELTRAIN = "r_l_train"
-ELTRAIN_SUPPORT_SLIM = "dp_left"
-ELTRAIN_SUPPORT_WIDE = "dp_left6"
+    CRANE = "dp60crane"
+    ELTRAIN = "r_l_train"
+    ELTRAIN_SUPPORT_SLIM = "dp_left"
+    ELTRAIN_SUPPORT_WIDE = "dp_left6"
 
-PLANE_LARGE = "vaboeing"  # No collision
+    PLANE_LARGE = "vaboeing"  # Note: No collision
  
 ################################################################################################################   
 ################################################################################################################
@@ -495,10 +506,10 @@ checkpoint_race_names = ["Photo Finish"]
 race_data = {
     'BLITZ_0': {
         'waypoints': [
-            [0.0, 0.0, 55.0, ROT_NORTH, 12.0], 
-            [0.0, 0.0, 15.0, ROT_NORTH, 12.0], 
-            [0.0, 0.0, -40.0, ROT_NORTH, 12.0], 
-            [0.0, 0.0, -130.0, ROT_NORTH, 12.0], 
+            [0.0, 0.0, 55.0, Rotation.NORTH, 12.0], 
+            [0.0, 0.0, 15.0, Rotation.NORTH, 12.0], 
+            [0.0, 0.0, -40.0, Rotation.NORTH, 12.0], 
+            [0.0, 0.0, -130.0, Rotation.NORTH, 12.0], 
         ],
         'mm_data': {
             'ama': [TimeOfDay.NOON, Weather.CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
@@ -508,8 +519,8 @@ race_data = {
             'density': 0.25,
             'num_of_police': 2,
             'police_data': [
-                f'{PlayerCar.CRUISER} 10.0 0.0 65.0 {ROT_NORTH} {STATIONARY} {PUSH}',
-                f'{PlayerCar.CRUISER} -10.0 0.0 65.0 {ROT_NORTH} {IN_TRAFFIC} {MIX}',
+                f'{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {STATIONARY} {CopBehavior.PUSH}',
+                f'{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {IN_TRAFFIC} {CopBehavior.MIX}',
             ],
             'num_of_exceptions': None,
             'exceptions': [
@@ -527,13 +538,13 @@ race_data = {
     },
     'RACE_0': {
         'waypoints': [
-            [0.0, 245, -850, ROT_SOUTH, LANE_4], 
-            [0.0, 110, -500, ROT_SOUTH, LANE_4],  
-            [0.0, 110, -497, ROT_SOUTH, LANE_4],   
-            [25.0, 45.0, -325, ROT_SOUTH, 25.0],   
-            [35.0, 12.0, -95.0, ROT_SOUTH, LANE_4], 
-            [35.0, 30.0, 0.0, ROT_SOUTH, LANE_4], 
-            [35.0, 30.0, 40.0, ROT_SOUTH, LANE_4], 
+            [0.0, 245, -850, Rotation.SOUTH, LANE_4], 
+            [0.0, 110, -500, Rotation.SOUTH, LANE_4],  
+            [0.0, 110, -497, Rotation.SOUTH, LANE_4],   
+            [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
+            [35.0, 12.0, -95.0, Rotation.SOUTH, LANE_4], 
+            [35.0, 30.0, 0.0, Rotation.SOUTH, LANE_4], 
+            [35.0, 30.0, 40.0, Rotation.SOUTH, LANE_4], 
         ],
         'mm_data': {
             'ama': [TimeOfDay.NOON, Weather.CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
@@ -543,7 +554,7 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
+                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {STATIONARY} {CopBehavior.ROADBLOCK}',
             ],
             'num_of_opponents': 1,
         },
@@ -553,12 +564,12 @@ race_data = {
     },
     'CIRCUIT_0': {
         'waypoints': [
-            [0.0, 245, -850, ROT_SOUTH, LANE_4], 
-            [0.0, 110, -500, ROT_SOUTH, 30.0],    
-            [25.0, 45.0, -325, ROT_SOUTH, 25.0],   
-            [35.0, 12.0, -95.0, ROT_SOUTH, LANE_4], 
-            [35.0, 30.0, 0.0, ROT_SOUTH, LANE_4], 
-            [35.0, 30.0, 40.0, ROT_SOUTH, LANE_4], 
+            [0.0, 245, -850, Rotation.SOUTH, LANE_4], 
+            [0.0, 110, -500, Rotation.SOUTH, 30.0],    
+            [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
+            [35.0, 12.0, -95.0, Rotation.SOUTH, LANE_4], 
+            [35.0, 30.0, 0.0, Rotation.SOUTH, LANE_4], 
+            [35.0, 30.0, 40.0, Rotation.SOUTH, LANE_4], 
         ],
         'mm_data': {
             'ama': [TimeOfDay.NIGHT, Weather.RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
@@ -568,7 +579,7 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {ROT_NORTH} {STATIONARY} {ROADBLOCK}',
+                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {STATIONARY} {CopBehavior.ROADBLOCK}',
             ],
             'num_of_opponents': 2,
         },
@@ -632,19 +643,19 @@ INFO
 
 #! Structure: (x,y,z, orientation, bridge number, bridge object)
 bridge_list = [
-    ((-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [
-    ((-50.0, 0.15, -115.0), 270, 2, CROSSGATE),
-    ((-50.0, 0.15, -85.0), -270, 2, CROSSGATE)
+    ((-50.0, 0.01, -100.0), Rotation.WEST, 2, Prop.BRIDGE_WIDE, [
+    ((-50.0, 0.15, -115.0), Rotation.WEST, 2, Prop.CROSSGATE),
+    ((-50.0, 0.15, -85.0), Rotation.EAST, 2, Prop.CROSSGATE)
     ]),  
-    ((-119.0, 0.01, -100.0), "EAST", 3, BRIDGE_WIDE, [
-    ((-119.0, 0.15, -115.0), 270, 3, CROSSGATE),
-    ((-119.0, 0.15, -85.0), -270, 3, CROSSGATE)
+    ((-119.0, 0.01, -100.0), Rotation.EAST, 3, Prop.BRIDGE_WIDE, [
+    ((-119.0, 0.15, -115.0), Rotation.WEST, 3, Prop.CROSSGATE),
+    ((-119.0, 0.15, -85.0), Rotation.EAST, 3, Prop.CROSSGATE)
     ])] 
 
 
 #* SETUP VII (optional, Custom Bridge Configs)
 bridge_race_0 = {
-    "RaceType": RACE, 
+    "RaceType": RaceMode.CHECKPOINT, 
     "RaceNum": "0", 
     "BridgeOffGoal": 0.50, 
     "BridgeOnGoal": 0.50,
@@ -655,14 +666,14 @@ bridge_race_0 = {
     "GateOffDelay": 5.26 ,
     "BridgeOffDelay": 0.0,
     "GateOnDelay": 5.0,
-    "Mode": SINGLE}
+    "Mode": NetworkMode.SINGLE}
 
 bridge_cnr = {
-    "RaceType": COPS_N_ROBBERS,
+    "RaceType": RaceMode.COPS_AND_ROBBERS,
     "BridgeDelta": 0.20,
     "BridgeOffGoal": 0.33,
     "BridgeOnGoal": 0.33,
-    "Mode": MULTI}
+    "Mode": NetworkMode.MULTI}
 
 # Pack all Custom Bridge Configurations for processing
 bridge_config_list = [bridge_race_0, bridge_cnr]
@@ -2798,21 +2809,21 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
 checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
 race_type_to_prefix = {
-    BLITZ: 'ABL',
-    CIRCUIT: 'CIR',
-    RACE: checkpoint_prefixes
+    RaceMode.BLITZ: 'ABL',
+    RaceMode.CIRCUIT: 'CIR',
+    RaceMode.CHECKPOINT: checkpoint_prefixes
     }
 
 race_type_to_extension = {
-    BLITZ: '.B_',
-    CIRCUIT: '.C_',
-    RACE: '.R_',
+    RaceMode.BLITZ: '.B_',
+    RaceMode.CIRCUIT: '.C_',
+    RaceMode.CHECKPOINT: '.R_',
     }
 
 REPLACE_VALUES = {        
-    BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
-    CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
-    RACE:       [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
+    RaceMode.BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
+    RaceMode.CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
+    RaceMode.CHECKPOINT: [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
 }
 
 def ordinal(n) -> str:
@@ -2851,7 +2862,7 @@ def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, pr
         f.write(header + "\n")
                 
         for race_index, config in configs.items():
-            if race_type == RACE:
+            if race_type == RaceMode.CHECKPOINT:
                 race_desc = prefix  
             else:
                 race_desc = prefix + str(race_index)
@@ -2872,7 +2883,7 @@ def write_waypoints(output_file, waypoints, race_desc: str, race_index: int, opp
             
             # Opponent Waypoints
             for waypoint in waypoints:
-                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {ROT_AUTO}, 0, 0,\n"
+                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {Rotation.AUTO}, 0, 0,\n"
                 f.write(waypoint_line)
                 
         else:
@@ -2940,8 +2951,7 @@ def create_races(map_filename: str, race_data: dict) -> None:
         race_type, race_index_str = race_key.split('_')
         race_index = int(race_index_str)
 
-        # CHECKPOINTS
-        if race_type == RACE:  
+        if race_type == RaceMode.CHECKPOINT:  
             if len(config) > len(checkpoint_prefixes):
                 race_count_error = """
                 ***ERROR***
@@ -3293,7 +3303,7 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
         attributes = generate_attribute_lines(bridge_attributes)
 
         num_fillers = 5 - len(bridge_attributes)
-        filler = f"\t{CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"     
+        filler = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"     
         fillers = filler * num_fillers
 
         template = (
@@ -3325,7 +3335,7 @@ def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_b
         "GateOffDelay": 5.26,
         "BridgeOffDelay": 0.0,
         "GateOnDelay": 5.0,
-        "Mode": SINGLE
+        "Mode": NetworkMode.SINGLE
     }
 
     for config in configs:
@@ -3361,31 +3371,31 @@ def determine_bridge_filenames(config: Dict[str, Union[float, int, str]]) -> Lis
     filenames = []
     race_type = config["RaceType"]
 
-    if race_type in [ROAM, COPS_N_ROBBERS]:
+    if race_type in [RaceMode.ROAM, RaceMode.COPS_AND_ROBBERS]:
         base_name = race_type
         filenames += get_bridge_mode_filenames(base_name, config["Mode"])
-    elif race_type in [RACE, CIRCUIT, BLITZ]:
+    elif race_type in [RaceMode.CHECKPOINT, RaceMode.CIRCUIT, RaceMode.BLITZ]:
         filenames += get_bridge_race_type_filenames(race_type, config["RaceNum"], config["Mode"])
     else:
-        raise ValueError(f"Invalid RaceType. Must be one of {ROAM}, {BLITZ}, {RACE}, {CIRCUIT}, or {COPS_N_ROBBERS}.")
+        raise ValueError(f"Invalid RaceType. Must be one of {RaceMode.ROAM}, {RaceMode.BLITZ}, {RaceMode.CHECKPOINT}, {RaceMode.CIRCUIT}, or {RaceMode.COPS_AND_ROBBERS}.")
 
     return filenames
 
 
 def get_bridge_mode_filenames(base_name: str, mode: str) -> List[str]:
     filenames = []
-    if mode in [SINGLE, ALL_MODES]:
+    if mode in [NetworkMode.SINGLE, NetworkMode.SINGLE_AND_MULTI]:
         filenames.append(f"{base_name}.MMBRIDGEMGR")
-    if mode in [MULTI, ALL_MODES]:
+    if mode in [NetworkMode.MULTI, NetworkMode.SINGLE_AND_MULTI]:
         filenames.append(f"{base_name}M.MMBRIDGEMGR")
     return filenames
 
 
 def get_bridge_race_type_filenames(race_type: str, race_num: str, mode: str) -> List[str]:
     filenames = []
-    if mode in [SINGLE, ALL_MODES]:
+    if mode in [NetworkMode.SINGLE, NetworkMode.SINGLE_AND_MULTI]:
         filenames.append(f"{race_type}{race_num}.MMBRIDGEMGR")
-    if mode in [MULTI, ALL_MODES]:
+    if mode in [NetworkMode.MULTI, NetworkMode.SINGLE_AND_MULTI]:
         filenames.append(f"{race_type}{race_num}M.MMBRIDGEMGR")
     return filenames
 
@@ -3960,7 +3970,7 @@ class BangerEditor:
             return self.map_filename.with_suffix(".BNG")
             
         race_mode, race_num = race_key.split('_')
-        short_race_mode = {CIRCUIT: 'C', RACE: 'R', BLITZ: 'B'}.get(race_mode, race_mode)
+        short_race_mode = {RaceMode.CIRCUIT: 'C', RaceMode.CHECKPOINT: 'R', RaceMode.BLITZ: 'B'}.get(race_mode, race_mode)
         race_num = race_num or '0'        
         return self.map_filename.parent / f"{self.map_filename.stem}_{short_race_mode}{race_num}.BNG"
                                                                             
@@ -4631,13 +4641,18 @@ def read_bai(input_file: Path):
         # No more than 1 sidewalk per road-side
         assert path.NumSidewalks in [0, 1]
 
-        assert path.IntersectionType in [STOP, STOP_LIGHT, YIELD, CONTINUE]  
+        assert path.IntersectionType in [
+            IntersectionType.STOP, 
+            IntersectionType.STOP_LIGHT, 
+            IntersectionType.YIELD, 
+            IntersectionType.CONTINUE
+            ]  
         
         # TODO: adjust or remove this (i.e. get the actual object name)
-        if path.IntersectionType == STOP:
-            assert path.StopLightName == STOP_SIGN  
+        if path.IntersectionType == IntersectionType.STOP:
+            assert path.StopLightName == Prop.STOP_SIGN  
         else:
-            assert path.StopLightName in [STOP_LIGHT_SINGLE, STOP_LIGHT_DUAL]   
+            assert path.StopLightName in [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_DUAL]   
 
         sink_isect = path.LaneVertices[0]
         source_isect = path.LaneVertices[path.NumVertexs - 1]
@@ -4886,9 +4901,9 @@ class aiStreetEditor:
                         
     def set_properties(self, data):
         default_values = {
-            "intersection_types": [CONTINUE, CONTINUE],
+            "intersection_types": [IntersectionType.CONTINUE, IntersectionType.CONTINUE],
             "stop_light_positions": [(0.0, 0.0, 0.0)] * 4,
-            "stop_light_names": [STOP_LIGHT_SINGLE, STOP_LIGHT_SINGLE],
+            "stop_light_names": [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_SINGLE],
             "traffic_blocked": [NO, NO],
             "ped_blocked": [NO, NO],
             "road_divided": NO,
@@ -4974,7 +4989,7 @@ def get_first_and_last_street_vertices(street_list):
         vertices = street["vertices"]
         if vertices: 
             for vertex in (vertices[0], vertices[-1]):
-                processed = [vertex[0], vertex[1], vertex[2], ROT_AUTO, LANE_6, 0.0, 0.0, 0.0, 0.0]
+                processed = [vertex[0], vertex[1], vertex[2], Rotation.AUTO, LANE_6, 0.0, 0.0, 0.0, 0.0]
                 processed_vertices.append(processed)  
 
 
@@ -5156,7 +5171,7 @@ def create_commandline(
             if race_type not in ["circuit", "race", "blitz"]:
                 type_error_message = f"""\n
                 ***ERROR***
-                Invalid Race Type provided. Available types are {BLITZ}, {RACE}, and {CIRCUIT}.
+                Invalid Race Type provided. Available types are {RaceMode.BLITZ}, {RaceMode.CHECKPOINT}, and {RaceMode.CIRCUIT}.
                 """
                 raise ValueError(type_error_message)
                                             
@@ -6086,7 +6101,7 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
 
   
 def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
-                    rotation_deg: float = ROT_NORTH, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
+                    rotation_deg: float = Rotation.NORTH, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
                     flag_color: Tuple[float, float, float, float] = BLUE_COLOR) -> bpy.types.Object:                
     
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
@@ -6158,9 +6173,9 @@ def calculate_waypoint_rotation(x1: float, z1: float, x2: float, z2: float) -> f
 
 
 def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:
-    if race_type == RACE:
+    if race_type == RaceMode.CHECKPOINT:
         race_type_initial = 'R'
-    elif race_type == CIRCUIT:
+    elif race_type == RaceMode.CIRCUIT:
         race_type_initial = 'C'
     else:
         race_type_initial = 'B'
@@ -6209,7 +6224,7 @@ def load_waypoints_from_csv(waypoint_file: Path) -> None:
         x, y, z = transform_coordinate_system(Vector((x, y, z)), game_to_blender = True)
         waypoint_name = get_waypoint_name(race_type, race_number, wp_idx)
         
-        if rotation_deg == ROT_AUTO and wp_idx < len(waypoints_data) - 1:
+        if rotation_deg == Rotation.AUTO and wp_idx < len(waypoints_data) - 1:
             next_waypoint = waypoints_data[wp_idx + 1]
             rotation_deg = calculate_waypoint_rotation(x, z, next_waypoint[0], next_waypoint[2]) 
 
@@ -6531,17 +6546,18 @@ facade_list = [orange_building_one, orange_building_two, orange_building_three, 
 f"""
 The following variables are OPTIONAL: 
 
-Intersection Type, defaults to: {CONTINUE}
-(possbile types: {STOP}, {STOP_LIGHT}, {YIELD}, {CONTINUE})
+Intersection Type, defaults to: {IntersectionType.CONTINUE}
+(possbile types: 
+{IntersectionType.STOP}, {IntersectionType.STOP_LIGHT}, {IntersectionType.YIELD}, {IntersectionType.CONTINUE})
 
-Stop Light Name, defaults to: {STOP_LIGHT_SINGLE}
-(possbile names: {STOP_SIGN}, {STOP_LIGHT_SINGLE}, {STOP_LIGHT_DUAL})
+Stop Light Name, defaults to: {Prop.STOP_LIGHT_SINGLE}
+(possbile names: {Prop.STOP_SIGN}, {Prop.STOP_LIGHT_SINGLE}, {Prop.STOP_LIGHT_DUAL})
 
 Stop Light Positions, defaults to: {(0, 0, 0)}
 Traffic Blocked, Ped Blocked, Road Divided, and Alley, all default to: {NO}
 (possbile values: {YES}, {NO})
 
-# Stop Lights will only show if the Intersection Type is {STOP_LIGHT}
+# Stop Lights will only show if the Intersection Type is {IntersectionType.STOP_LIGHT}
 """
 
 #! Do not delete this Street
@@ -6625,8 +6641,8 @@ street_example = {
             (-40.0, 1.0, -50.0),
         ],
     },
-    "intersection_types": [STOP_LIGHT, STOP_LIGHT],
-    "stop_light_names": [STOP_LIGHT_DUAL, STOP_LIGHT_DUAL],
+    "intersection_types": [IntersectionType.STOP_LIGHT, IntersectionType.STOP_LIGHT],
+    "stop_light_names": [Prop.STOP_LIGHT_DUAL, Prop.STOP_LIGHT_DUAL],
     "stop_light_positions": [
          (10.0, 0.0, -20.0),        # offset 1
          (10.01, 0.0, -20.0),       # direction 1
@@ -6649,19 +6665,19 @@ street_list = [cruise_start,
 
 trailer_set = {'offset': (60, 0.0, 70), 
                'end': (60, 0.0, -50), 
-               'name': TRAILER, 
+               'name': Prop.TRAILER, 
                'separator': 'x'} # Use the {}-axis dimension of the object as the spacing between each prop
 
 bridge_orange_buildling = {          
           'offset': (35, 12.0, -70),
           'face': (35 * HUGE, 12.0, -70),
-          'name': BRIDGE_SLIM}
+          'name': Prop.BRIDGE_SLIM}
 
 # Prop for CIRCUIT 0 
 china_gate = {'offset': (0, 0.0, -20), 
               'face': (1 * HUGE, 0.0, -20), 
-              'name': CHINATOWN_GATE,
-              'race_mode': CIRCUIT,
+              'name': Prop.CHINATOWN_GATE,
+              'race_mode': RaceMode.CIRCUIT,
               'race_num': 0}
 
 # Put your non-randomized props here
@@ -6670,17 +6686,17 @@ prop_list = [trailer_set, bridge_orange_buildling, china_gate]
 # Put your randomized props here (you will add them to the list "random_parameters")
 random_trees = {
         'offset_y': 0.0,
-        'name': [TREE_SLIM] * 20}
+        'name': [Prop.TREE_SLIM] * 20}
 
 random_sailboats = {
         'offset_y': 0.0,
-        'name': [SAILBOAT] * 19}
+        'name': [Prop.SAILBOAT] * 19}
 
 random_cars = {
         'offset_y': 0.0,
         'separator': 10.0,
-        'name': [PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350, PlayerCar.FASTBACK, PlayerCar.MUSTANG99, 
-                 PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI]}
+        'name': [PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350, 
+                 PlayerCar.FASTBACK, PlayerCar.MUSTANG99, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI]}
 
 # Configure your random props here
 random_props = [
