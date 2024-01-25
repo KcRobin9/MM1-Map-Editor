@@ -44,21 +44,21 @@ from colorama import Fore, Style, init
 from typing import List, Dict, Set, Union, Tuple, Optional, BinaryIO
 
 
-#! SETUP 0 (Editor) | Do not change                             
-BASE_DIR = Path.cwd()
-SHOP = BASE_DIR / 'SHOP'
-SHOP_CITY = BASE_DIR / 'SHOP' / 'CITY'
-USER_RESOURCES = BASE_DIR / "Resources" / "UserResources"
-EDITOR_RESOURCES = BASE_DIR / "Resources" / "EditorResources"
-DEBUG_FOLDER = BASE_DIR / "Resources" / "Debug"
-RACE = "RACE"
-MOVE = shutil.move
-  
+#! SETUP 0 (Folder Paths)  
+class Folder:
+    BASE = Path(__file__).parent.resolve()
+    SHOP = BASE / "SHOP"
+    SHOP_CITY = SHOP / "CITY"
+    SHOP_RACE = SHOP / "RACE"
+    MIDTOWNMADNESS = BASE / "MidtownMadness"
+    USER_RESOURCES = BASE / "Resources" / "UserResources"
+    EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
+    DEBUG_RESOURCES = BASE / "Resources" / "Debug"
+
 
 #! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
 map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
 map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file
-mm1_folder = BASE_DIR / 'MidtownMadness'        # The Editor will use the MM game that comes with the repo download (the name can not have any spaces)
 
 
 #* SETUP II (Map Creation)      
@@ -95,8 +95,8 @@ disable_progress_bar = False    # change to "True" if you want to disable the pr
 set_dlp = False                 # change to "True" if you want to create a DLP file 
 
 append_props = False            # change to "True" if you want to append props
-append_input_props_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
-append_output_props_file = USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
+append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
+append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
 randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
@@ -104,12 +104,12 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK
 ################################################################################################################
 
 # Blender Input Textures     
-texture_folder = EDITOR_RESOURCES / "TEXTURES"         
+texture_folder = Folder.EDITOR_RESOURCES / "TEXTURES"         
 load_all_texures = False        # change to "True" if you want to load all textures (materials) (slower loading time)
                                 # change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
 # Blender Waypoint Editor 
-waypoint_file = EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint file
+waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint file
 
 waypoint_number_input, waypoint_type_input = "0", "RACE"  # waypoints from the Editor's "race_data" dictionary
     
@@ -146,34 +146,34 @@ round_debug_values = True       # change to "True" if you want to round (some) d
 
 # Input File Debugging, the output files are written to: "Resources / Debug / ..."
 debug_props_file = False
-debug_props_data_file = EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
+debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 
 debug_facades_file = False
-debug_facades_data_file = EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
+debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
 
 debug_portals_file = False
-debug_portals_data_file = EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
+debug_portals_data_file = Folder.EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
 
 debug_ai_file = False
-debug_ai_data_file = EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
+debug_ai_data_file = Folder.EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
 
 debug_meshes_file = False
-debug_meshes_data_file = EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input MESH file here
+debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input MESH file here
 
 debug_meshes_folder = False
-debug_meshes_data_folder = EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input MESH folder here
+debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input MESH folder here
 
 debug_bounds_file = False
-debug_bounds_data_file = EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
+debug_bounds_data_file = Folder.EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
 
 debug_bounds_folder = False
-debug_bounds_data_folder = EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
+debug_bounds_data_folder = Folder.EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
 
 debug_dlp_file = False
-debug_dlp_data_file = EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
+debug_dlp_data_file = Folder.EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
 
 debug_dlp_folder = False    
-debug_dlp_data_folder = EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
+debug_dlp_data_folder = Folder.EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
 
 ################################################################################################################               
 ################################################################################################################
@@ -206,7 +206,7 @@ def update_progress_bar(progress: float, map_name: str, buffer: str, top_divider
     if not disable_progress_bar:
         clear_command_prompt_screen()
         
-    print(buffer, end = '')
+    print(buffer, end = "")
 
 
 def continuous_progress_bar(duration: float, map_name: str, buffer: str, top_divider: str, bottom_divider: str, disable_progress_bar: bool) -> None:
@@ -264,7 +264,7 @@ top_divider = create_bar_divider(colors_one)
 bottom_divider = create_bar_divider(colors_one)
 buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
 
-last_run_time = load_last_editor_run_time(BASE_DIR / "last_run_time.pkl")
+last_run_time = load_last_editor_run_time(Folder.BASE / "last_run_time.pkl")
 
 progress_thread = threading.Thread(
     target = continuous_progress_bar, 
@@ -288,6 +288,8 @@ CELL_CHARACTER_THRESHOLD = 254
 
 ROOM_DEFAULT = 0x1
 PROP_COLLIDE_FLAG = 0x800
+
+MOVE = shutil.move
 
 # Variables
 vertices = [] 
@@ -359,8 +361,8 @@ class CopBehavior:
     SPINOUT = 4
     PUSH = 8
     MIX = 15
-    
-        
+   
+            
 class AudioProp:
     MALLDOOR = 1
     POLE = 3
@@ -378,6 +380,16 @@ class AudioProp:
     NO_NAME_2 = 24      # sounds a bit similar to "glass"
     NEWSBOX = 25
     GLASS = 27
+    
+    
+class Color:
+    RED = (1, 0, 0, 1)
+    GREEN = (0, 1, 0, 1)
+    BLUE = (0, 0, 1, 1)
+    PURPLE = (0.5, 0, 0.5, 1)
+    YELLOW = (1, 1, 0, 1)
+    GOLD = (1, 0.843, 0, 1)
+    WHITE = (1, 1, 1, 1)
     
     
 # Opponent Count
@@ -1721,9 +1733,9 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
 
 def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
     if bound_number < 200:
-        target_folder = SHOP / "BMS" / f"{map_filename}LM"
+        target_folder = Folder.SHOP / "BMS" / f"{map_filename}LM"
     else:
-        target_folder = SHOP / "BMS" / f"{map_filename}CITY"
+        target_folder = Folder.SHOP / "BMS" / f"{map_filename}CITY"
         
     target_folder.mkdir(parents = True, exist_ok = True)
         
@@ -1759,7 +1771,7 @@ def save_mesh(
     mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
-        mesh.debug(Path(mesh_filename).with_suffix('.txt'), DEBUG_FOLDER / "MESHES" / map_filename, debug_meshes)
+        mesh.debug(Path(mesh_filename).with_suffix('.txt'), Folder.DEBUG_RESOURCES / "MESHES" / map_filename, debug_meshes)
 
 
 def initialize_mesh(
@@ -2718,21 +2730,21 @@ save_mesh(
 ################################################################################################################ 
 #! ======================= SETUP PREPARATION ======================= !#
 
-
+# tiger
 def create_folders(map_filename: str) -> None:
     FOLDER_STRUCTURE = [
-        BASE_DIR / "build", 
-        SHOP / "BMP16", 
-        SHOP / "TEX16O", 
-        SHOP / "TUNE", 
-        SHOP / "MTL",
-        SHOP / "CITY" / map_filename,
-        SHOP / "RACE" / map_filename,
-        SHOP / "BMS" / f"{map_filename}CITY",
-        SHOP / "BMS" / f"{map_filename}LM",
-        SHOP / "BND" / f"{map_filename}CITY",
-        SHOP / "BND" / f"{map_filename}LM",
-        BASE_DIR / "dev" / "CITY" / map_filename,
+        Folder.BASE / "build", 
+        Folder.SHOP / "BMP16", 
+        Folder.SHOP / "TEX16O", 
+        Folder.SHOP / "TUNE", 
+        Folder.SHOP / "MTL",
+        Folder.SHOP / "CITY" / map_filename,
+        Folder.SHOP / "RACE" / map_filename,
+        Folder.SHOP / "BMS" / f"{map_filename}CITY",
+        Folder.SHOP / "BMS" / f"{map_filename}LM",
+        Folder.SHOP / "BND" / f"{map_filename}CITY",
+        Folder.SHOP / "BND" / f"{map_filename}LM",
+        Folder.BASE / "dev" / "CITY" / map_filename,
         ]
     
     for path in FOLDER_STRUCTURE:
@@ -2744,7 +2756,7 @@ def create_map_info(map_name: str, map_filename: str,
                     circuit_race_names: List[str], 
                     checkpoint_race_names: List[str]) -> None:
     
-    with open(SHOP / "TUNE" / f"{map_filename}.CINFO", "w") as f:
+    with open(Folder.SHOP / "TUNE" / f"{map_filename}.CINFO", "w") as f:
         
         f.write(f"""
 LocalizedName={map_name}
@@ -2858,7 +2870,7 @@ def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, pr
         "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
         ])
     
-    with open(SHOP / RACE / map_filename / output_file, 'w') as f:
+    with open(Folder.SHOP_RACE / map_filename / output_file, 'w') as f:
         f.write(header + "\n")
                 
         for race_index, config in configs.items():
@@ -2875,7 +2887,7 @@ def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, pr
 
 
 def write_waypoints(output_file, waypoints, race_desc: str, race_index: int, opponent_num: int = None):
-    with open(SHOP / RACE / map_filename / output_file, "w") as f:
+    with open(Folder.SHOP_RACE / map_filename / output_file, "w") as f:
         if opponent_num is not None:
             
             # Opponent Waypoint Header
@@ -2921,7 +2933,7 @@ def format_exceptions(exceptions: Optional[List[List[Union[int, float]]]] = None
 
 
 def write_aimap(map_filename: str, race_type: str, race_index: int, config, opponent_cars, num_of_opponents: int) -> None:
-    with open(SHOP / RACE / map_filename / f"{race_type}{race_index}.AIMAP_P", "w") as f:
+    with open(Folder.SHOP_RACE / map_filename / f"{race_type}{race_index}.AIMAP_P", "w") as f:
         main_template = f"""
 # Ambient Traffic Density 
 [Density] 
@@ -3023,7 +3035,7 @@ def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, 
         filler = ",0,0,0,0,0,\n"
         header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
         
-        with open(SHOP / RACE / map_filename / "COPSWAYPOINTS.CSV", "w") as f:
+        with open(Folder.SHOP_RACE / map_filename / "COPSWAYPOINTS.CSV", "w") as f:
             f.write(header)
             
             for i in range(0, len(cnr_waypoints), 3):
@@ -3091,11 +3103,11 @@ def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, ce
 
 def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) -> None:    
     mesh_files, mesh_a2_files = get_cell_ids(
-        SHOP / "BMS" / f"{map_filename}LM",  # Landmark folder
-        SHOP / "BMS" / f"{map_filename}CITY" # City folder
+        Folder.SHOP / "BMS" / f"{map_filename}LM",  # Landmark folder
+        Folder.SHOP / "BMS" / f"{map_filename}CITY" # City folder
         )
 
-    with open(SHOP_CITY / f"{map_filename}.CELLS", "w") as f:
+    with open(Folder.SHOP_CITY / f"{map_filename}.CELLS", "w") as f:
         f.write(f"{len(mesh_files)}\n")
         f.write(str(max(mesh_files) + 1000) + "\n")
 
@@ -3150,7 +3162,7 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
 def create_ext(map_filename: str, polygons: List[Vector3]) -> None:
     min_x, min_z, max_x, max_z = calculate_extrema(polygons)
 
-    with open(SHOP_CITY / f"{map_filename}.EXT", 'w') as f:
+    with open(Folder.SHOP_CITY / f"{map_filename}.EXT", 'w') as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
         
         
@@ -3199,8 +3211,8 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
     ax.axis('off')
 
     # Save JPG 640 and 320 Pictures                    
-    plt.savefig(SHOP / 'BMP16' / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color)
-    plt.savefig(SHOP / 'BMP16' / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = 'tight', pad_inches = 0.02, facecolor = background_color) 
+    plt.savefig(Folder.SHOP / "BMP16" / f"{map_filename}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
+    plt.savefig(Folder.SHOP / "BMP16" / f"{map_filename}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
 
     if debug_minimap or set_lars_race_maker:
         fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
@@ -3217,7 +3229,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         ax_debug.set_xlim([min_x, max_x])
         ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
         ax_debug.set_position([0, 0, 1, 1]) 
-        plt.savefig(BASE_DIR / f"{map_filename}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
+        plt.savefig(Folder.BASE / f"{map_filename}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = 'purple')
 
 ################################################################################################################               
 ################################################################################################################
@@ -3228,11 +3240,11 @@ def create_animations(map_filename: str, animations_data: Dict[str, List[Tuple]]
     if not set_animations:
         return
     
-    with open(SHOP_CITY / map_filename / "ANIM.CSV", 'w', newline = '') as main_f:
+    with open(Folder.SHOP_CITY / map_filename / "ANIM.CSV", 'w', newline = '') as main_f:
         for anim in animations_data:
             csv.writer(main_f).writerow([f"anim_{anim}"])
 
-            with open(SHOP_CITY / map_filename / f"ANIM_{anim.upper()}.CSV", 'w', newline = '') as anim_f:                    
+            with open(Folder.SHOP_CITY / map_filename / f"ANIM_{anim.upper()}.CSV", 'w', newline = '') as anim_f:                    
                 for coord in animations_data[anim]:
                     csv.writer(anim_f).writerow(coord)
                         
@@ -3252,7 +3264,7 @@ def create_bridges(map_filename: str, all_bridges, set_bridges: bool):
         "SOUTH_WEST": (-10, 0, -10)
     }
 
-    bridge_file = SHOP_CITY / f"{map_filename}.GIZMO"
+    bridge_file = Folder.SHOP_CITY / f"{map_filename}.GIZMO"
 
     # Remove any existing Bridge files since we append to the file
     if bridge_file.exists():
@@ -3687,7 +3699,7 @@ class Portals:
     def write_all(cls, map_filename: str, polys: List[Polygon], vertices: List[Vector3], 
                   lower_portals: bool, empty_portals: bool, debug_portals: bool) -> None:    
             
-        with open(SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
+        with open(Folder.SHOP_CITY / f"{map_filename}.PTL", 'wb') as f:
             if empty_portals:
                 pass
             
@@ -3717,7 +3729,7 @@ class Portals:
                     _max.write(f, '<')
                     
                 if debug_portals:  
-                    cls.debug(portals, DEBUG_FOLDER / "PORTALS" / f"{map_filename}_PTL.txt")            
+                    cls.debug(portals, Folder.DEBUG_RESOURCES / "PORTALS" / f"{map_filename}_PTL.txt")            
     @classmethod
     def debug(cls, portals: 'List[Portals]', output_file: Path) -> None:
         if not output_file.parent.exists():
@@ -3816,7 +3828,7 @@ class Bangers:
                 f.write(banger.name.encode('utf-8'))
                     
             if debug_props:
-                cls.debug(DEBUG_FOLDER / "PROPS" / f"{output_file}.txt", bangers)
+                cls.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}.txt", bangers)
                                     
     @classmethod
     def debug(cls, output_file: Path, bangers: List['Bangers']) -> None:
@@ -3886,7 +3898,7 @@ class BangerEditor:
             self.props.clear()
             self.add_multiple(race_props)
             current_filename = self._filename_with_suffix(race_key)
-            Bangers.write_all(SHOP_CITY / current_filename, self.props, debug_props) 
+            Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props) 
             
     def add_multiple(self, user_set_props):    
         for prop in user_set_props:
@@ -3978,7 +3990,7 @@ class BangerEditor:
     def load_dimensions() -> dict:
         extracted_prop_dim = {}
         
-        with open(EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt", "r") as f:
+        with open(Folder.EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt", "r") as f:
             for line in f:
                 prop_name, value_x, value_y, value_z = line.split()
                 extracted_prop_dim[prop_name] = Vector3(float(value_x), float(value_y), float(value_z))
@@ -4098,7 +4110,7 @@ class FacadeEditor:
         Facades.write_all(output_file, facades)
 
         if debug_facades:
-            Facades.debug(facades, DEBUG_FOLDER / "FACADES" / f"{map_filename}.txt")
+            Facades.debug(facades, Folder.DEBUG_RESOURCES / "FACADES" / f"{map_filename}.txt")
 
     @staticmethod
     def read_scales(input_file: Path):
@@ -4108,7 +4120,7 @@ class FacadeEditor:
     @classmethod
     def process(cls, user_set_facades):
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
+        scales = cls.read_scales(Folder.EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
 
         facades = []
         for params in user_set_facades:
@@ -4218,8 +4230,8 @@ class PhysicsEditor:
         cls.write_all(output_file, original_data)
         
         if debug_physics:
-            os.makedirs(DEBUG_FOLDER / "PHYSICS", exist_ok = True)
-            cls.debug(DEBUG_FOLDER / "PHYSICS" / "PHYSICS_DB.txt", original_data)
+            os.makedirs(Folder.DEBUG_RESOURCES / "PHYSICS", exist_ok = True)
+            cls.debug(Folder.DEBUG_RESOURCES / "PHYSICS" / "PHYSICS_DB.txt", original_data)
                         
     @classmethod
     def debug(cls, debug_filename: Path, physics_params: List['PhysicsEditor']) -> None: 
@@ -4425,16 +4437,16 @@ class TextureSheet:
 
     @classmethod
     def read_filenames(cls):
-        return [f.stem for f in (BASE_DIR / "Custom Textures").glob("*.DDS")]
+        return [f.stem for f in (Folder.BASE / "Custom Textures").glob("*.DDS")]
 
     @classmethod
     def write(cls):      
-        with open(EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", 'r' ) as in_f:
+        with open(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", 'r' ) as in_f:
             sheet_lines = in_f.readlines()
             
         sheet_names = set(line.split(',')[0].strip() for line in sheet_lines)
         
-        with open(SHOP / "MTL" / "GLOBAL.TSH", 'w') as out_f:  
+        with open(Folder.SHOP / "MTL" / "GLOBAL.TSH", 'w') as out_f:  
             out_f.writelines(sheet_lines)
             
             for custom_tex in cls.read_filenames():
@@ -4690,7 +4702,7 @@ def read_bai(input_file: Path):
 
 
 def write_bai_text(ai_map, streets):
-    with open(USER_RESOURCES / "AI" / "CHICAGO.map", 'w') as f:  # Write Map file
+    with open(Folder.USER_RESOURCES / "AI" / "CHICAGO.map", 'w') as f:  # Write Map file
         
         parser = MiniParser(f)
 
@@ -4736,7 +4748,7 @@ def write_bai_text(ai_map, streets):
                     assert a.Dist2(b) < 0.00001
 
 
-        with open(USER_RESOURCES / "AI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
+        with open(Folder.USER_RESOURCES / "AI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
             parser = MiniParser(f)
     
             parser.begin_class('mmRoadSect')
@@ -4815,7 +4827,7 @@ def write_bai_text(ai_map, streets):
             
             
     for intersection in ai_map.Intersections:        
-        with open(USER_RESOURCES / "AI" / f'Intersection{intersection.ID}.int', 'w') as f:  # Write Intersection files
+        with open(Folder.USER_RESOURCES / "AI" / f'Intersection{intersection.ID}.int', 'w') as f:  # Write Intersection files
             parser = MiniParser(f)
     
             parser.begin_class('mmIntersection')
@@ -4856,7 +4868,7 @@ class BaiMap:
         self.write_map()
              
     def write_map(self):           
-        with open(BASE_DIR / "dev" / "CITY" / self.map_filename / f"{self.map_filename}.map", 'w') as f:
+        with open(Folder.BASE / "dev" / "CITY" / self.map_filename / f"{self.map_filename}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
@@ -4928,7 +4940,7 @@ class aiStreetEditor:
         return BaiMap(map_filename, street_names)
 
     def write(self):    
-        with open(BASE_DIR / "dev" / "CITY" / self.map_filename  / f"{self.street_name}.road", 'w') as f:
+        with open(Folder.BASE / "dev" / "CITY" / self.map_filename  / f"{self.street_name}.road", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):
@@ -5118,25 +5130,25 @@ def create_lars_race_maker(map_filename: str, street_list, hudmap_vertices, set_
 def create_ar(map_filename: str) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
-            shutil.copy(file, SHOP / file.name)
+            shutil.copy(file, Folder.SHOP / file.name)
             
-    subprocess.Popen(f"cmd.exe /c run !!!!!{map_filename}", cwd = SHOP, creationflags = subprocess.CREATE_NO_WINDOW)
+    subprocess.Popen(f"cmd.exe /c run !!!!!{map_filename}", cwd = Folder.SHOP, creationflags = subprocess.CREATE_NO_WINDOW)
 
 
 def post_editor_cleanup(delete_shop: bool) -> None:
     if not delete_shop:
         return
     
-    os.chdir(BASE_DIR)
+    os.chdir(Folder.BASE)
     time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
 
     try:  
-        shutil.rmtree(BASE_DIR / 'build')
+        shutil.rmtree(Folder.BASE / "build")
     except Exception as e:
         print(f"Failed to delete the BUILD directory. Reason: {e}")
 
     try:
-        shutil.rmtree(SHOP)
+        shutil.rmtree(Folder.SHOP)
     except Exception as e:
         print(f"Failed to delete the SHOP directory. Reason: {e}")
 
@@ -6021,15 +6033,6 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
 #! ======================= BLENDER WAYPOINT OBJECTS / FUNCTIONS ======================= !#
 
 
-RED_COLOR = (1, 0, 0, 1)
-GREEN_COLOR = (0, 1, 0, 1)
-BLUE_COLOR = (0, 0, 1, 1)
-PURPLE_COLOR = (0.5, 0, 0.5, 1)
-YELLOW_COLOR = (1, 1, 0, 1)
-GOLD_COLOR = (1, 0.843, 0, 1)
-WHITE_COLOR = (1, 1, 1, 1) 
-
-
 def get_all_waypoints() -> List[bpy.types.Object]:
     return [obj for obj in bpy.data.objects if obj.name.startswith("WP_")]
 
@@ -6040,11 +6043,11 @@ def update_waypoint_colors() -> None:
     if not waypoints:
         return
 
-    waypoints[0].data.materials[0].diffuse_color = WHITE_COLOR      # First Waypoint
-    waypoints[-1].data.materials[0].diffuse_color = GREEN_COLOR     # Last Waypoint
+    waypoints[0].data.materials[0].diffuse_color = Color.WHITE      # First Waypoint
+    waypoints[-1].data.materials[0].diffuse_color = Color.GREEN     # Last Waypoint
 
     for waypoint in waypoints[1:-1]:
-        waypoint.data.materials[0].diffuse_color = BLUE_COLOR       # Intermediate Waypoints
+        waypoint.data.materials[0].diffuse_color = Color.BLUE       # Intermediate Waypoints
         
          
 def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
@@ -6093,7 +6096,7 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
     gold = bpy.context.object
     gold.scale *= scale  
     
-    gold_material = create_waypoint_material("GoldMaterial", GOLD_COLOR)  
+    gold_material = create_waypoint_material("GoldMaterial", Color.YELLOW)  
     gold.data.materials.append(gold_material)
     gold.name = "Gold_Default"
     
@@ -6102,7 +6105,7 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
   
 def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
                     rotation_deg: float = Rotation.NORTH, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
-                    flag_color: Tuple[float, float, float, float] = BLUE_COLOR) -> bpy.types.Object:                
+                    flag_color: Tuple[float, float, float, float] = Color.BLUE) -> bpy.types.Object:                
     
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
         cursor_location = bpy.context.scene.cursor.location.copy()
@@ -6115,8 +6118,8 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
     pole_one_location = (cursor_location.x - flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
     pole_two_location = (cursor_location.x + flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
     
-    pole_one = create_waypoint_pole(pole_height, pole_diameter, pole_one_location, WHITE_COLOR) 
-    pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location, WHITE_COLOR) 
+    pole_one = create_waypoint_pole(pole_height, pole_diameter, pole_one_location, Color.WHITE) 
+    pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location, Color.WHITE) 
 
     flag_height, flag_height_offset, flag_location =  0.8, 2.2, cursor_location
 
@@ -6257,14 +6260,14 @@ def load_cops_and_robbers_waypoints(input_file: Path) -> None:
             waypoint_type = next(waypoint_types)
 
             if waypoint_type == 'Bank Hideout':
-                create_waypoint(x, y, z, name = f"CR_Bank{set_count}", flag_color = PURPLE_COLOR)
+                create_waypoint(x, y, z, name = f"CR_Bank{set_count}", flag_color = Color.PURPLE)
                 
             elif waypoint_type == 'Gold Position':
                 create_gold_bar((x, y, z), scale = 3.0) 
                 bpy.context.object.name = f"CR_Gold{set_count}"
                 
             elif waypoint_type == 'Robber Hideout':
-                create_waypoint(x, y, z, name = f"CR_Robber{set_count}", flag_color = GREEN_COLOR)  
+                create_waypoint(x, y, z, name = f"CR_Robber{set_count}", flag_color = Color.GREEN)  
                 
             if waypoint_type == 'Robber Hideout':
                 set_count += 1  # Increase the set count after completing each set of three
@@ -6787,10 +6790,10 @@ dlp_group_name = "BOUND\x00"
 
 # DLP Vertices
 dlp_normals = [
-    DLPVertex(0, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR),
-    DLPVertex(1, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR),
-    DLPVertex(2, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR),
-    DLPVertex(3, VECTOR3_DEFAULT, VECTOR2_DEFAULT, WHITE_COLOR)
+    DLPVertex(0, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE),
+    DLPVertex(1, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE),
+    DLPVertex(2, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE),
+    DLPVertex(3, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE)
     ]
 
 # Geometry Vertices
@@ -6886,13 +6889,13 @@ def apply_path_color_scheme() -> None:
         num_splines = len(path.data.splines)
         
         for idx, spline in enumerate(path.data.splines):
-            mat = bpy.data.materials.new(name=f"Material_{path.name}_{idx}")
+            mat = bpy.data.materials.new(name = f"Material_{path.name}_{idx}")
             
             # Assign a Red Color to the first and last spline, Blue and Green to the rest
             if idx == 0 or idx == num_splines - 1:
-                mat.diffuse_color = RED_COLOR
+                mat.diffuse_color = Color.RED
             else:
-                mat.diffuse_color = [BLUE_COLOR, GREEN_COLOR][(idx - 1) % 2]
+                mat.diffuse_color = [Color.BLUE, Color.GREEN][(idx - 1) % 2]
 
             path.data.materials.append(mat)
             spline.material_index = idx
@@ -6921,32 +6924,32 @@ create_races(map_filename, race_data)
 create_cops_and_robbers(map_filename, cnr_waypoints)
 
 create_cells(map_filename, polys, truncate_cells)
-Bounds.create(SHOP / "BND" / f"{map_filename}_HITID.BND", vertices, polys, DEBUG_FOLDER / "BOUNDS" / f"{map_filename}.txt", debug_bounds)
+Bounds.create(Folder.SHOP / "BND" / f"{map_filename}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{map_filename}.txt", debug_bounds)
 Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
 TextureSheet().write()
 aiStreetEditor.create(map_filename, street_list, set_ai_streets, set_reverse_ai_streets)
-FacadeEditor.create(SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
-PhysicsEditor.edit(EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
+FacadeEditor.create(Folder.SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
+PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", Folder.SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
 prop_editor = BangerEditor(map_filename)
 for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
 prop_editor.process_all(prop_list, set_props)
 
-lighting_instances = LightingEditor.read_file(EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
-LightingEditor.write_file(lighting_instances, lighting_configs, SHOP / "TUNE" / "LIGHTING.CSV")
-LightingEditor.debug(lighting_instances, DEBUG_FOLDER / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
+lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
+LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP / "TUNE" / "LIGHTING.CSV")
+LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
-copy_dev_folder(BASE_DIR / 'dev', mm1_folder / 'dev', map_filename)
-edit_and_copy_mmbangerdata(bangerdata_properties, EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE') 
-copy_core_tune_files(EDITOR_RESOURCES / 'TUNE', SHOP / 'TUNE')
-copy_custom_textures(BASE_DIR / "Custom Textures", SHOP / "TEX16O")
+copy_dev_folder(Folder.BASE / "dev", Folder.MIDTOWNMADNESS / "dev", map_filename)
+edit_and_copy_mmbangerdata(bangerdata_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP / "TUNE") 
+copy_core_tune_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP / "TUNE")
+copy_custom_textures(Folder.BASE / "Custom Textures", Folder.SHOP / "TEX16O")
 
 create_ext(map_filename, hudmap_vertices)
 create_animations(map_filename, animations_data, set_animations)   
 create_bridges(map_filename, bridge_list, set_bridges) 
-create_bridge_config(bridge_config_list, set_bridges, SHOP / 'TUNE')
-create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = 'black')
+create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP / "TUNE")
+create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
 create_lars_race_maker(map_filename, street_list, hudmap_vertices, set_lars_race_maker)
 
 # Misc
@@ -6955,28 +6958,28 @@ DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dl
 
 # File Debugging
 debug_bai(debug_ai_data_file, debug_ai_file)
-Bangers.debug_file(debug_props_data_file, DEBUG_FOLDER / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
-Facades.debug_file(debug_facades_data_file, DEBUG_FOLDER / "FACADES" / debug_facades_data_file.with_suffix(".txt"), debug_facades_file)
-Portals.debug_file(debug_portals_data_file, DEBUG_FOLDER / "PORTALS" / debug_portals_data_file.with_suffix(".txt"), debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, DEBUG_FOLDER / "MESHES" / debug_meshes_data_file.with_suffix(".txt"), debug_meshes_file)
-Meshes.debug_folder(debug_meshes_data_folder, DEBUG_FOLDER / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_file(debug_bounds_data_file, DEBUG_FOLDER / "BOUNDS" / debug_bounds_data_file.with_suffix(".txt"), debug_bounds_file)
-Bounds.debug_folder(debug_bounds_data_folder, DEBUG_FOLDER / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
-DLP.debug_file(debug_dlp_data_file, DEBUG_FOLDER / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
-DLP.debug_folder(debug_dlp_data_folder, DEBUG_FOLDER / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
+Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
+Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(".txt"), debug_facades_file)
+Portals.debug_file(debug_portals_data_file, Folder.DEBUG_RESOURCES / "PORTALS" / debug_portals_data_file.with_suffix(".txt"), debug_portals_file)
+Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG_RESOURCES / "MESHES" / debug_meshes_data_file.with_suffix(".txt"), debug_meshes_file)
+Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG_RESOURCES / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
+Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG_RESOURCES / "BOUNDS" / debug_bounds_data_file.with_suffix(".txt"), debug_bounds_file)
+Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
+DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
+DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
 create_ar(map_filename)
-create_commandline(map_filename, mm1_folder, no_ui, no_ui_type, no_ai, less_logs, more_logs)
+create_commandline(map_filename, Folder.MIDTOWNMADNESS, no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
 editor_time = time.time() - start_time
-save_editor_run_time(editor_time, BASE_DIR / "last_run_time.pkl")
+save_editor_run_time(editor_time, Folder.BASE / "last_run_time.pkl")
 progress_thread.join()
 
 print("\n" + create_bar_divider(colors_two))
 print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{map_name}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(create_bar_divider(colors_two))
 
-start_game(mm1_folder, play_game)
+start_game(Folder.MIDTOWNMADNESS, play_game)
 
 initialize_depsgraph_update_handler()
 
@@ -7004,7 +7007,7 @@ bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator)
 bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_OT_operator)
 bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator)
 
-process_and_visualize_paths(SHOP / "dev" / "CITY" / map_filename, "AI_PATHS.txt", visualize_ai_paths)
+process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / map_filename, "AI_PATHS.txt", visualize_ai_paths)
 
 set_blender_keybinding()
 
