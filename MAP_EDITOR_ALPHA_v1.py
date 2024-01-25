@@ -6407,6 +6407,45 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         
 ###################################################################################################################
 ################################################################################################################### 
+#! ======================= BLENDER INIT ======================= !#
+        
+def initialize_blender_panels() -> None:
+    if not is_blender_running():
+        return
+    
+    bpy.utils.register_class(OBJECT_PT_CellTypePanel)
+    bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
+    bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
+    bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
+    bpy.utils.register_class(OBJECT_PT_VertexCoordinates)
+        
+        
+def initialize_blender_operators() -> None:
+    if not is_blender_running():
+        return
+    
+    bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
+    bpy.utils.register_class(OBJECT_OT_ExportPolygons)
+    bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
+    bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
+    bpy.utils.register_class(OBJECT_OT_RenameChildren)
+    
+
+def initialize_blender_waypoint_editor() -> None:
+    if not is_blender_running():
+        return
+    
+    bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
+    bpy.utils.register_class(LOAD_WAYPOINTS_FROM_CSV_OT_operator)
+    bpy.utils.register_class(LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator)
+    bpy.utils.register_class(LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator)
+    bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_OT_operator)
+    bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator)
+    bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_OT_operator)
+    bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator)
+    
+###################################################################################################################
+################################################################################################################### 
 #! ======================= BLENDER KEYBINDINGS ======================= !#
       
       
@@ -6920,6 +6959,7 @@ def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize
 
 create_folders(map_filename)
 create_map_info(map_name, map_filename, blitz_race_names, circuit_race_names, checkpoint_race_names)
+
 create_races(map_filename, race_data)
 create_cops_and_robbers(map_filename, cnr_waypoints)
 
@@ -6981,36 +7021,21 @@ print(create_bar_divider(colors_two))
 
 start_game(Folder.MIDTOWNMADNESS, play_game)
 
+# Blender
 initialize_depsgraph_update_handler()
 
-bpy.utils.register_class(OBJECT_PT_CellTypePanel)
-bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
-bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
-bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
-bpy.utils.register_class(OBJECT_PT_VertexCoordinates)
+initialize_blender_panels()
 
 create_blender_meshes(texture_folder, load_all_texures)
 
-bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
-bpy.utils.register_class(OBJECT_OT_ExportPolygons)
-bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
-bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
-bpy.utils.register_class(OBJECT_OT_RenameChildren)
-
-bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
-bpy.utils.register_class(LOAD_WAYPOINTS_FROM_CSV_OT_operator)
-bpy.utils.register_class(LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator)
-bpy.utils.register_class(LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator)
-
-bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_OT_operator)
-bpy.utils.register_class(EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator)
-bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_OT_operator)
-bpy.utils.register_class(EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator)
+initialize_blender_operators()
+initialize_blender_waypoint_editor()
 
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / map_filename, "AI_PATHS.txt", visualize_ai_paths)
 
 set_blender_keybinding()
 
+# Cleanup
 post_editor_cleanup(delete_shop)
 
 ###################################################################################################################   
