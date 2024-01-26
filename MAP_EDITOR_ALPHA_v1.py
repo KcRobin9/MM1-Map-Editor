@@ -62,39 +62,39 @@ map_filename = "First_City"                     # One word (no spaces)  --- name
 
 
 #* SETUP II (Map Creation)      
-play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = True              # change to "True" to delete the raw city files after the .AR file has been created
+play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
+delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_props = True                # change to "True" if you want PROPS
-set_bridges = True              # change to "True" if you want BRIDGES
-set_facades = True              # change to "True" if you want FACADES
-set_physics = True              # change to "True" if you want PHYSICS (custom)
-set_animations = True           # change to "True" if you want ANIMATIONS (plane and eltrain)
+set_props = True                # Change to "True" if you want PROPS
+set_bridges = True              # Change to "True" if you want BRIDGES
+set_facades = True              # Change to "True" if you want FACADES
+set_physics = True              # Change to "True" if you want PHYSICS (custom)
+set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
 
 # Minimap
-set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
+set_minimap = True              # Change to "True" if you want a MINIMAP (defaults to False when Blender is running)
+minimap_outline_color = None    # Change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
 
 # AI
-set_ai_streets = True           # change to "True" if you want AI streets
-set_reverse_ai_streets = False  # change to "True" if you want to add reverse AI streets
-set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
-visualize_ai_paths = False      # change to "True" if you want to visualize the AI streets in the Blender 
+set_ai_streets = True           # Change to "True" if you want AI streets
+set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI streets
+set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
+visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
 
 # Start Position
 # To manually set car start position in cruise, adjust the lines below and make sure no polygon has the option 'base = True'
 # cruise_start_position = (-83.0, 18.0, -114.0)
 # cruise_start_position = (40.0, 30.0, -40.0)
 
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
+disable_progress_bar = False    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
 ################################################################################################################
 
 # Misc
-set_dlp = False                 # change to "True" if you want to create a DLP file 
+set_dlp = False                 # Change to "True" if you want to create a DLP file 
 
-append_props = False            # change to "True" if you want to append props
+append_props = False            # Change to "True" if you want to append props
 append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
 append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
@@ -105,8 +105,8 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK
 
 # Blender Input Textures     
 texture_folder = Folder.EDITOR_RESOURCES / "TEXTURES"         
-load_all_texures = False        # change to "True" if you want to load all textures (materials) (slower loading time)
-                                # change to "False" if you want to load only the textures that are used in your Map (faster loading time)
+load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
+                                # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
 # Blender Waypoint Editor 
 waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint file
@@ -116,33 +116,33 @@ waypoint_number_input, waypoint_type_input = "0", "RACE"  # waypoints from the E
 ################################################################################################################
 
 # Advanced
-no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
-no_ai = False                   # change to "True" if you want to disable the AI and AI paths
+no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
+no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
+no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
 
-less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
-more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
+less_logs = False               # Change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
+more_logs = False               # Change to "True" if you want additional logs and open a logging console when running the game
 
-lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
-truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
+lower_portals = False           # Change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # Change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
+truncate_cells = False			# Change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
 
-fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
+fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 ################################################################################################################
 
 # Editor Debugging
-debug_props = False             # change to "True" if you want a PROPS Debug text file
-debug_meshes = False            # change to "True" if you want MESH Debug text files 
-debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
-debug_facades = False           # change to "True" if you want a FACADES Debug text file
-debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
-debug_portals = False           # change to "True" if you want a PORTALS Debug text file
-debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
-debug_minimap = False           # change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
-debug_minimap_id = False        # change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
+debug_props = False             # Change to "True" if you want a PROPS Debug text file
+debug_meshes = False            # Change to "True" if you want MESH Debug text files 
+debug_bounds = False            # Change to "True" if you want a BOUNDS Debug text file
+debug_facades = False           # Change to "True" if you want a FACADES Debug text file
+debug_physics = False           # Change to "True" if you want a PHYSICS Debug text file
+debug_portals = False           # Change to "True" if you want a PORTALS Debug text file
+debug_lighting = False          # Change to "True" if you want a LIGHTING Debug text file
+debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
+debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
-round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
+round_debug_values = True       # Change to "True" if you want to round (some) debug values to 2 decimals
 
 # Input File Debugging, the output files are written to: "Resources / Debug / ..."
 debug_props_file = False
@@ -372,12 +372,12 @@ class AudioProp:
     TRASHCAN = 7
     BENCH = 8
     TREE = 11
-    TRASH_BOXES = 12    # also used for "bridge crossgate"
-    NO_NAME_1 = 13      # difficult to describe
-    BARREL = 15         # also used for "dumpster"
+    TRASH_BOXES = 12    # Also used for "bridge crossgate"
+    NO_NAME_1 = 13      # Difficult to describe
+    BARREL = 15         # Also used for "dumpster"
     PHONEBOOTH = 20
     CONE = 22
-    NO_NAME_2 = 24      # sounds a bit similar to "glass"
+    NO_NAME_2 = 24      # Sounds a bit similar to "glass"
     NEWSBOX = 25
     GLASS = 27
     
@@ -1202,13 +1202,11 @@ BOUND
     
 ################################################################################################################               
 ################################################################################################################  
-#! ======================= MESHES CLASS ======================= !#
-
-
 class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sqr: float, bounding_box_radius: float,
-                 texture_count: int, flags: int, texture_names: List[str], coordinates: List[Vector3],
+                 texture_count: int, flags: int, cache_size: int,
+                 texture_names: List[str], coordinates: List[Vector3],
                  texture_darkness: List[int], tex_coords: List[float], enclosed_shape: List[int],
                  surface_sides: List[int], indices_sides: List[List[int]]) -> None:
 
@@ -1222,6 +1220,7 @@ class Meshes:
         self.bounding_box_radius = bounding_box_radius
         self.texture_count = texture_count
         self.flags = flags
+        self.cache_size = cache_size
         self.texture_names = texture_names
         self.coordinates = coordinates
         self.texture_darkness = texture_darkness
@@ -1233,21 +1232,21 @@ class Meshes:
     @classmethod
     def read(cls, input_file: Path) -> 'Meshes':
         with open(input_file, 'rb') as f:
-            magic = read_binary_name(f, 16)     
+            magic = read_binary_name(f, 16)
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sqr, bounding_box_radius = read_unpack(f, '<3f')
             texture_count, flags = read_unpack(f, '<2B')
-            f.read(6)
-                                        
-            texture_names = [read_binary_name(f, 32) for _ in range(texture_count)]
-
-            f.read(16 * texture_count)
-                    
+            
+            f.read(2)  # Padding
+            cache_size, = read_unpack(f, '<I')
+                                      
+            texture_names = [read_binary_name(f, 32, "ascii", 16) for _ in range(texture_count)]
+            
             if vertex_count < MESH_VERTEX_COUNT_THRESHOLD:
                 coordinates = Vector3.readn(f, vertex_count, '<')
             else:
                 coordinates = Vector3.readn(f, vertex_count + 8, '<')
-                        
+                                        
             texture_darkness = list(read_unpack(f, f"{adjunct_count}B"))
             tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f"))
             enclosed_shape = list(read_unpack(f, f"{adjunct_count}H"))
@@ -1259,7 +1258,7 @@ class Meshes:
         return cls(
             magic, vertex_count, adjunct_count, surface_count, indices_count, 
             radius, radius_sqr, bounding_box_radius, 
-            texture_count, flags, texture_names, coordinates, 
+            texture_count, flags, cache_size, texture_names, coordinates, 
             texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides
             )
         
@@ -1269,7 +1268,8 @@ class Meshes:
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '<3f', self.radius, self.radius_sqr, self.bounding_box_radius)
             write_pack(f, '<2B', self.texture_count, self.flags)
-            f.write(b'\0' * 6)
+            f.write(b'\0' * 2)  # Padding
+            f.write(b'\0' * 4)  # Cache Size
 
             for texture_name in self.texture_names:
                 write_pack(f, '<32s', texture_name.encode('ascii').ljust(32, b'\0'))
@@ -1358,13 +1358,14 @@ MESH
     BoundingBoxRadius: {self.bounding_box_radius:.2f}
     TextureCount: {self.texture_count}
     Flags: {self.flags}
-    TextureNames: {self.texture_names}
-    Coordinates: {self.coordinates}
-    TextureDarkness: {self.texture_darkness}
-    TexCoords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}
-    Enclosed Shape: {self.enclosed_shape}
-    SurfaceSides: {self.surface_sides}
-    IndicesSides: {self.indices_sides}
+    Cache Size: {self.cache_size}\n
+    TextureNames: {self.texture_names}\n
+    Coordinates: {self.coordinates}\n
+    TextureDarkness: {self.texture_darkness}\n
+    TexCoords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
+    Enclosed Shape: {self.enclosed_shape}\n
+    SurfaceSides: {self.surface_sides}\n
+    IndicesSides: {self.indices_sides}\n
     """
              
 ################################################################################################################               
@@ -1664,7 +1665,7 @@ def calculate_bounding_box_radius(vertices: List[Vector3]) -> float:
     return bounding_box_radius
 
 
-def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
+def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: int = 0) -> str:
     name_data = bytearray()
     if length is None:
         while True:
@@ -1677,6 +1678,9 @@ def read_binary_name(f, length: int = None, encoding: str = 'ascii') -> str:
         null_pos = name_data.find(b'\0')
         if null_pos != -1:
             name_data = name_data[:null_pos]
+        
+        if padding > 0:
+            f.read(padding)
     
     return name_data.decode(encoding)
 
@@ -1778,7 +1782,7 @@ def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
-    magic, flags = "3HSM", 3    
+    magic, flags, cache_size = "3HSM", 3, 0    
         
     shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
 
@@ -1805,7 +1809,8 @@ def initialize_mesh(
     return Meshes(
         magic, vertex_count, adjunct_count, surface_count, indices_count, 
         radius, radiussq, bounding_box_radius, 
-        texture_count, flags, texture_name, coordinates, texture_darkness, tex_coords, 
+        texture_count, flags, cache_size,
+        texture_name, coordinates, texture_darkness, tex_coords, 
         enclosed_shape, texture_indices, indices_sides
         )
 
