@@ -62,39 +62,39 @@ map_filename = "First_City"                     # One word (no spaces)  --- name
 
 
 #* SETUP II (Map Creation)      
-play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
+play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
+delete_shop = True              # change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_props = True                # Change to "True" if you want PROPS
-set_bridges = True              # Change to "True" if you want BRIDGES
-set_facades = True              # Change to "True" if you want FACADES
-set_physics = True              # Change to "True" if you want PHYSICS (custom)
-set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
+set_props = True                # change to "True" if you want PROPS
+set_bridges = True              # change to "True" if you want BRIDGES
+set_facades = True              # change to "True" if you want FACADES
+set_physics = True              # change to "True" if you want PHYSICS (custom)
+set_animations = True           # change to "True" if you want ANIMATIONS (plane and eltrain)
 
 # Minimap
-set_minimap = True              # Change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-minimap_outline_color = None    # Change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
+set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
+minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
 
 # AI
-set_ai_streets = True           # Change to "True" if you want AI streets
-set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI streets
-set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
-visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
+set_ai_streets = True           # change to "True" if you want AI streets
+set_reverse_ai_streets = False  # change to "True" if you want to add reverse AI streets
+set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
+visualize_ai_paths = False      # change to "True" if you want to visualize the AI streets in the Blender 
 
 # Start Position
 # To manually set car start position in cruise, adjust the lines below and make sure no polygon has the option 'base = True'
 # cruise_start_position = (-83.0, 18.0, -114.0)
 # cruise_start_position = (40.0, 30.0, -40.0)
 
-disable_progress_bar = False    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
+disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
 ################################################################################################################
 
 # Misc
-set_dlp = False                 # Change to "True" if you want to create a DLP file 
+set_dlp = False                 # change to "True" if you want to create a DLP file 
 
-append_props = False            # Change to "True" if you want to append props
+append_props = False            # change to "True" if you want to append props
 append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
 append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
@@ -105,8 +105,8 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK
 
 # Blender Input Textures     
 texture_folder = Folder.EDITOR_RESOURCES / "TEXTURES"         
-load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
-                                # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
+load_all_texures = False        # change to "True" if you want to load all textures (materials) (slower loading time)
+                                # change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
 # Blender Waypoint Editor 
 waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint file
@@ -116,33 +116,33 @@ waypoint_number_input, waypoint_type_input = "0", "RACE"  # waypoints from the E
 ################################################################################################################
 
 # Advanced
-no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
-no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
+no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
+no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
+no_ai = False                   # change to "True" if you want to disable the AI and AI paths
 
-less_logs = False               # Change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
-more_logs = False               # Change to "True" if you want additional logs and open a logging console when running the game
+less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
+more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
 
-lower_portals = False           # Change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # Change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
-truncate_cells = False			# Change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
+lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
+truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
 
-fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
+fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 ################################################################################################################
 
 # Editor Debugging
-debug_props = False             # Change to "True" if you want a PROPS Debug text file
-debug_meshes = False            # Change to "True" if you want MESH Debug text files 
-debug_bounds = False            # Change to "True" if you want a BOUNDS Debug text file
-debug_facades = False           # Change to "True" if you want a FACADES Debug text file
-debug_physics = False           # Change to "True" if you want a PHYSICS Debug text file
-debug_portals = False           # Change to "True" if you want a PORTALS Debug text file
-debug_lighting = False          # Change to "True" if you want a LIGHTING Debug text file
-debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
-debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
+debug_props = False             # change to "True" if you want a PROPS Debug text file
+debug_meshes = False            # change to "True" if you want MESH Debug text files 
+debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
+debug_facades = False           # change to "True" if you want a FACADES Debug text file
+debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
+debug_portals = False           # change to "True" if you want a PORTALS Debug text file
+debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
+debug_minimap = False           # change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
+debug_minimap_id = False        # change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
-round_debug_values = True       # Change to "True" if you want to round (some) debug values to 2 decimals
+round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
 
 # Input File Debugging, the output files are written to: "Resources / Debug / ..."
 debug_props_file = False
@@ -331,8 +331,14 @@ class NetworkMode:
     
 
 class LevelOfDetail:
-    HIGH = 8
-    DRIFT = 32
+    UNKNOWN_1 = 1       # A
+    LOW = 2             # L
+    MEDIUM = 4          # M
+    HIGH = 8            # H
+    DRIFT = 32          # A2
+    UNKNOWN_2 = 64      # L2
+    UNKNOWN_3 = 128     # M2
+    UNKNOWN_4 = 256     # H2
     
     
 class IntersectionType:
@@ -372,12 +378,12 @@ class AudioProp:
     TRASHCAN = 7
     BENCH = 8
     TREE = 11
-    TRASH_BOXES = 12    # Also used for "bridge crossgate"
-    NO_NAME_1 = 13      # Difficult to describe
-    BARREL = 15         # Also used for "dumpster"
+    TRASH_BOXES = 12    # also used for "bridge crossgate"
+    NO_NAME_1 = 13      # difficult to describe
+    BARREL = 15         # also used for "dumpster"
     PHONEBOOTH = 20
     CONE = 22
-    NO_NAME_2 = 24      # Sounds a bit similar to "glass"
+    NO_NAME_2 = 24      # sounds a bit similar to "glass"
     NEWSBOX = 25
     GLASS = 27
     
@@ -391,7 +397,18 @@ class Color:
     GOLD = (1, 0.843, 0, 1)
     WHITE = (1, 1, 1, 1)
     
+    WOOD = "#7b5931"
+    SNOW = "#cdcecd"
+    WATER = "#5d8096"
+    ROAD = "#414441"
+    GRASS = "#396d18"
+
+    ORANGE = "#ffa500"
+    RED_DARK = "#af0000"
+    RED_LIGHT = "#ff7f7f"
+    YELLOW_LIGHT = "#ffffe0"
     
+        
 # Opponent Count
 MAX_OPP_8 = 8 
 MAX_OPP_128 = 128 
@@ -1090,7 +1107,7 @@ class Bounds:
         write_pack(f, '<2f', self.x_scale, self.z_scale) 
         write_pack(f, '<l', self.num_indices)
         write_pack(f, '<f', self.height_scale)
-        write_pack(f, '<l', self.cache_size)
+        write_pack(f, '<I', self.cache_size)
  
         for vertex in self.vertices:       
             vertex.write(f, '<')   
@@ -1202,6 +1219,9 @@ BOUND
     
 ################################################################################################################               
 ################################################################################################################  
+#! ======================= MESHES CLASS ======================= !#
+
+
 class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sqr: float, bounding_box_radius: float,
@@ -1240,7 +1260,7 @@ class Meshes:
             f.read(2)  # Padding
             cache_size, = read_unpack(f, '<I')
                                       
-            texture_names = [read_binary_name(f, 32, "ascii", 16) for _ in range(texture_count)]
+            texture_names = [read_binary_name(f, 32, 'ascii', 16) for _ in range(texture_count)]
             
             if vertex_count < MESH_VERTEX_COUNT_THRESHOLD:
                 coordinates = Vector3.readn(f, vertex_count, '<')
@@ -1665,6 +1685,18 @@ def calculate_bounding_box_radius(vertices: List[Vector3]) -> float:
     return bounding_box_radius
 
 
+def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
+    max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
+    min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
+    
+    max_z_for_max_x = max([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
+    min_z_for_max_x = min([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
+    max_z_for_min_x = max([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
+    min_z_for_min_x = min([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
+
+    return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
+
+
 def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: int = 0) -> str:
     name_data = bytearray()
     if length is None:
@@ -1743,7 +1775,7 @@ def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str
         
     target_folder.mkdir(parents = True, exist_ok = True)
         
-    if any(name.startswith(WATER_TX) for name in texture_name):
+    if any(name.startswith(Texture.WATER) for name in texture_name):
         mesh_filename = f"CULL{bound_number:02d}_A2.bms"
     else:
         mesh_filename = f"CULL{bound_number:02d}_H.bms"
@@ -1939,19 +1971,6 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     
     return edges
 
-
-# Sort Vertices
-def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
-    max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
-    min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
-    
-    max_z_for_max_x = max([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
-    min_z_for_max_x = min([coord for coord in vertex_coordinates if coord[0] == max_x_coord[0]], key = lambda coord: coord[2])
-    max_z_for_min_x = max([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
-    min_z_for_min_x = min([coord for coord in vertex_coordinates if coord[0] == min_x_coord[0]], key = lambda coord: coord[2])
-
-    return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
-
 ################################################################################################################               
 ################################################################################################################ 
 #! ======================= CREATE POLYGON ======================= !#
@@ -2113,62 +2132,54 @@ def user_notes():
 #! If you wish to modify or add a Material, Cell, Texture or HUD constant and you are importing / exporting to Blender,
 #! then you must also modify the respective IMPORTS and EXPORTS. For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
 
-# Cell / Room types 
-DEFAULT = 0   
-TUNNEL = 1
-INDOORS = 2
-WATER_DRIFT = 4         
-NO_SKIDS = 200 
-                  
-# Material types
-DEFAULT_MTL = 0 
-GRASS_MTL = 87
-WATER_MTL = 91
-STICKY_MTL = 97
-NO_FRICTION_MTL = 98 
 
-# Textures
-SNOW_TX = "SNOW"
-WOOD_TX = "T_WOOD"
-WATER_TX = "T_WATER"
-WATER_WINTER_TX = "T_WATER_WIN"
-GRASS_TX = "T_GRASS"
-GRASS_WINTER_TX = "T_GRASS_WIN"
-GRASS_BASEBALL_TX = "24_GRASS"
+class Room:
+    DEFAULT = 0
+    TUNNEL = 1
+    INDOORS = 2
+    DRIFT = 4       # A texture only drifts if the texture name starts with "T_WATER"
+    NO_SKIDS = 200
 
-SIDEWALK_TX = "SDWLK2"
-ZEBRA_CROSSING_TX = "RWALK"
-INTERSECTION_TX = "RINTER"
 
-FREEWAY_TX = "FREEWAY2"
-ROAD_1_LANE_TX = "R2"
-ROAD_2_LANE_TX = "R4"
-ROAD_3_LANE_TX = "R6"
+class Material:
+    DEFAULT = 0
+    GRASS = 87
+    WATER = 91
+    STICKY = 97
+    NO_FRICTION = 98
 
-BRICKS_MALL_TX = "OT_MALL_BRICK"
-BRICKS_SAND_TX = "OT_SHOP03_BRICK"
-BRICKS_GREY_TX = "CT_FOOD_BRICK"
 
-GLASS_TX = "R_WIN_01"
-STOP_SIGN_TX = "T_STOP"
-BARRICADE_TX = "T_BARRICADE"
-CHECKPOINT_TX = "CHECK04"
-BUS_RED_TOP = "VPBUSRED_TP_BK"
+class Texture:
+    SNOW = "SNOW"
+    WOOD = "T_WOOD"
+    WATER = "T_WATER"
+    WATER_WINTER = "T_WATER_WIN"
+    GRASS = "T_GRASS"
+    GRASS_WINTER = "T_GRASS_WIN"
+    GRASS_BASEBALL = "24_GRASS"
 
-# Custom Textures
-LAVA_TX = "T_WATER_LAVA"
-RED_BLACK_BARRICADE_TX = "T_RED_BLACK_BARRICADE"
-             
-# HUD map colors
-WOOD_HUD = '#7b5931'
-SNOW_HUD = '#cdcecd'
-WATER_HUD = '#5d8096'
-ROAD_HUD = '#414441'
-GRASS_HUD = '#396d18'
-DARK_RED = '#af0000'
-ORANGE = "#ffa500"
-LIGHT_RED = "#ff7f7f"
-LIGHT_YELLOW = '#ffffe0'
+    SIDEWALK = "SDWLK2"
+    ZEBRA_CROSSING = "RWALK"
+    INTERSECTION = "RINTER"
+
+    FREEWAY = "FREEWAY2"
+    ROAD_1_LANE = "R2"
+    ROAD_2_LANE = "R4"
+    ROAD_3_LANE = "R6"
+
+    BRICKS_MALL = "OT_MALL_BRICK"
+    BRICKS_SAND = "OT_SHOP03_BRICK"
+    BRICKS_GREY = "CT_FOOD_BRICK"
+
+    GLASS = "R_WIN_01"
+    STOP_SIGN = "T_STOP"
+    BARRICADE = "T_BARRICADE"
+    CHECKPOINT = "CHECK04"
+    BUS_RED_TOP = "VPBUSRED_TP_BK"
+    
+    # Custom Textures
+    LAVA = "T_WATER_LAVA"
+    BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
 
 
 #! ==============================  MAIN AREA ============================== #*
@@ -2182,7 +2193,7 @@ create_polygon(
         (-25.0, 0.0, 70.0)])
 
 save_mesh(
-    texture_name = [CHECKPOINT_TX],
+    texture_name = [Texture.CHECKPOINT],
     tex_coords = compute_uv(bound_number = 99, tile_x = 5, tile_y = 1, angle_degrees = 0))
 
 # Road with Buildings
@@ -2195,68 +2206,68 @@ create_polygon(
         (-50.0, 0.0, -70.0)])
 
 save_mesh(
-    texture_name = [ROAD_3_LANE_TX], texture_darkness = [40, 2, 50, 1],
+    texture_name = [Texture.ROAD_3_LANE], texture_darkness = [40, 2, 50, 1],
     tex_coords = compute_uv(bound_number = 201, tile_x = 10, tile_y = 10, angle_degrees = 45))
 
 # Grass Area 
 create_polygon(
 	bound_number = 861,
-	material_index = GRASS_MTL,
+	material_index = Material.GRASS,
 	vertex_coordinates = [
         (-50.0, 0.0, -70.0),
 		(10.0, 0.0, -70.0),
         (10.0, 0.0, -130.0),
 		(-50.0, 0.0, -130.0)],
-        hud_color = GRASS_HUD)
+        hud_color = Color.GRASS)
 
 save_mesh(
-    texture_name = [GRASS_BASEBALL_TX], 
+    texture_name = [Texture.GRASS_BASEBALL], 
     tex_coords = compute_uv(bound_number = 861, tile_x = 7, tile_y = 7, angle_degrees = 90))
 
 # Brown Grass Area
 create_polygon(
 	bound_number = 202,
-	material_index = GRASS_MTL,
+	material_index = Material.GRASS,
 	vertex_coordinates = [
 		(10.0, 0.0, -70.0),
         (50.0, 0.0, -70.0),
 		(50.0, 0.0, -130.0),
         (10.0, 0.0, -130.0)],
-        hud_color = WATER_HUD)
+        hud_color = Color.GRASS)
 
 save_mesh(
-    texture_name = [GRASS_WINTER_TX], 
+    texture_name = [Texture.GRASS_WINTER], 
     tex_coords = compute_uv(bound_number = 202, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Snow Area
 create_polygon(
 	bound_number = 1,
-    cell_type = NO_SKIDS,
-    material_index = NO_FRICTION_MTL,
+    cell_type = Room.NO_SKIDS,
+    material_index = Material.NO_FRICTION,
 	vertex_coordinates = [
 		(-50.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0),
 		(50.0, 0.0, -210.0),
 		(-50.0, 0.0, -210.0)],
-         hud_color = SNOW_HUD)
+         hud_color = Color.SNOW)
 
 save_mesh(
-    texture_name = [SNOW_TX], 
+    texture_name = [Texture.SNOW], 
     tex_coords = compute_uv(bound_number = 1, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Barricade (Car) Area
 create_polygon(
 	bound_number = 862,
-    cell_type = TUNNEL,
+    cell_type = Room.TUNNEL,
 	vertex_coordinates = [
 		(50.0, 0.0, -70.0),
 		(140.0, 0.0, -70.0),
 		(140.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0)],
-        hud_color = DARK_RED)
+        hud_color = Color.RED_DARK)
 
 save_mesh(
-    texture_name = [RED_BLACK_BARRICADE_TX], 
+    texture_name = [Texture.BARRICADE_RED_BLACK], 
     tex_coords = compute_uv(bound_number = 862, tile_x = 50, tile_y = 50, angle_degrees = 0))
 
 # Wood (Tree) Area
@@ -2267,32 +2278,32 @@ create_polygon(
 		(140.0, 0.0, 70.0),
 		(140.0, 0.0, -70.0),
 		(50.0, 0.0, -70.0)],
-        hud_color = WOOD_HUD)
+        hud_color = Color.WOOD)
 
 save_mesh(
-    texture_name = [WOOD_TX], 
+    texture_name = [Texture.WOOD], 
     tex_coords = compute_uv(bound_number = 203, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Water (Sailboat) Area
 create_polygon(
 	bound_number = 2,
-    cell_type = WATER_DRIFT,
-	material_index = WATER_MTL,
+    cell_type = Room.DRIFT,
+	material_index = Material.WATER,
 	vertex_coordinates = [
 		(50.0, 0.0, -140.0),
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0)],
-        hud_color = WATER_HUD)
+        hud_color = Color.WATER)
 
 save_mesh(
-    texture_name = [WATER_WINTER_TX], 
+    texture_name = [Texture.WATER_WINTER], 
     tex_coords = compute_uv(bound_number = 2, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Diagonal Grass Road 
 create_polygon(
     bound_number = 863,
-	hud_color = GRASS_HUD,
+	hud_color = Material.GRASS,
     vertex_coordinates = [
         (-50.0, 0.0, 110.0),
 		(-50.0, 0.0, 140.0),
@@ -2300,50 +2311,50 @@ create_polygon(
 		(93.01, 0.0, 70.0)])
 
 save_mesh(
-    texture_name = [GRASS_BASEBALL_TX],
+    texture_name = [Texture.GRASS_BASEBALL],
     tex_coords = compute_uv(bound_number = 863, tile_x = 10.0, tile_y = 10.0, angle_degrees = 90.0))
 
 # Triangle Brick I 
 create_polygon(
     bound_number = 204,
-    cell_type = NO_SKIDS,
+    cell_type = Room.NO_SKIDS,
     vertex_coordinates = [
         (-130.0, 15.0, 70.0),
         (-50.0, 0.0, 70.0),
         (-50.0, 0.0, 0.0)],
-        hud_color = LIGHT_YELLOW)
+        hud_color = Color.YELLOW_LIGHT)
 
 save_mesh(
-    texture_name = [BRICKS_MALL_TX],
+    texture_name = [Texture.BRICKS_MALL],
     tex_coords = compute_uv(bound_number = 204, tile_x = 10, tile_y = 10, angle_degrees = 90))
 
 # Triangle Brick II
 create_polygon(
     bound_number = 205,
-    cell_type = NO_SKIDS,
+    cell_type = Room.NO_SKIDS,
     vertex_coordinates = [
         (-50.0, 0.0, 140.0),
         (-130.0, 15.0, 70.0),
         (-50.0, 0.0, 70.0)],
-        hud_color = LIGHT_YELLOW)
+        hud_color = Color.YELLOW_LIGHT)
 
 save_mesh(
-    texture_name = [BRICKS_MALL_TX],
+    texture_name = [Texture.BRICKS_MALL],
     tex_coords = compute_uv(bound_number = 205, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Huge Orange Hill 
 create_polygon(
 	bound_number = 3,
-    cell_type = WATER_DRIFT,
+    cell_type = Room.DRIFT,
 	vertex_coordinates = [
 		(-50.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
 		(-50.0, 300.0, -1000.0)],
-        hud_color = ORANGE)
+        hud_color = Color.ORANGE)
 
 save_mesh(
-    texture_name = [LAVA_TX], 
+    texture_name = [Texture.LAVA], 
     tex_coords = compute_uv(bound_number = 3, tile_x = 10, tile_y = 100, angle_degrees = 90))
 
 
@@ -2359,7 +2370,7 @@ create_polygon(
         (-10.0, 30.0, -50.11)])
 
 save_mesh(
-    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 4, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # North Wall
@@ -2373,7 +2384,7 @@ create_polygon(
         (10.0, 0.0, -70.00)])
 
 save_mesh(
-    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 5, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # West Wall
@@ -2387,7 +2398,7 @@ create_polygon(
         (-10.0, 0.0, -50.0)])
 
 save_mesh(
-    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 6, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # East Wall
@@ -2401,14 +2412,14 @@ create_polygon(
         (10.0, 0.0, -50.0)])
 
 save_mesh(
-    texture_name = [SNOW_TX],  # Not applicable since we are overlaying a Facade on the sides of the building
+    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
     tex_coords = compute_uv(bound_number = 7, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # Rooftop
 create_polygon(
     bound_number = 900,
-    cell_type = NO_SKIDS,
-    material_index = NO_FRICTION_MTL,
+    cell_type = Room.NO_SKIDS,
+    material_index = Material.NO_FRICTION,
     vertex_coordinates = [
         (10.0, 30.0, -70.0),
         (-10.0, 30.0, -70.0),
@@ -2416,7 +2427,7 @@ create_polygon(
         (10.0, 30.0, -50.0)])
 
 save_mesh(
-    texture_name = [SNOW_TX],
+    texture_name = [Texture.SNOW],
     tex_coords = compute_uv(bound_number = 900, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 
@@ -2430,7 +2441,7 @@ create_polygon(
 		(-50.0, 0.0, -120.0),
 		(-82.6, 0.0, -120.0)])
 save_mesh(
-    texture_name = [INTERSECTION_TX], 
+    texture_name = [Texture.INTERSECTION], 
     tex_coords = compute_uv(bound_number = 250, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Road split
@@ -2443,7 +2454,7 @@ create_polygon(
 		(-90.0, 14.75, -120.0)])
 
 save_mesh(
-    texture_name = [INTERSECTION_TX], 
+    texture_name = [Texture.INTERSECTION], 
     tex_coords = compute_uv(bound_number = 925, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 # Bridge II West
@@ -2456,7 +2467,7 @@ create_polygon(
 		(-119.01, 0.0, -120.0)])
 
 save_mesh(
-    texture_name = [GRASS_TX], 
+    texture_name = [Texture.GRASS], 
     tex_coords = compute_uv(bound_number = 251, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Road West of Bridge
@@ -2469,7 +2480,7 @@ create_polygon(
 		(-160.0, 0.0, -120.0)])
 
 save_mesh(
-    texture_name = [ROAD_3_LANE_TX], 
+    texture_name = [Texture.ROAD_3_LANE], 
     tex_coords = compute_uv(bound_number = 252, tile_x = 5, tile_y = 3, angle_degrees = 0))
 
 # Intersection West of Bridge
@@ -2482,7 +2493,7 @@ create_polygon(
 		(-200.0, 0.0, -120.0)])
 
 save_mesh(
-    texture_name = [INTERSECTION_TX], 
+    texture_name = [Texture.INTERSECTION], 
     tex_coords = compute_uv(bound_number = 950, tile_x = 5, tile_y = 5, angle_degrees = 90))
 
 
@@ -2498,7 +2509,7 @@ create_polygon(
         (20.0, 12.0, -69.9)])
 
 save_mesh(
-    texture_name = [ROAD_3_LANE_TX], 
+    texture_name = [Texture.ROAD_3_LANE], 
     tex_coords = compute_uv(bound_number = 501, tile_x = 3, tile_y = 2, angle_degrees = 90))
 
 # Bricks Intersection
@@ -2511,7 +2522,7 @@ create_polygon(
         (20.0, 30.0, 0.0)])
 
 save_mesh(
-    texture_name = [BRICKS_GREY_TX], 
+    texture_name = [Texture.BRICKS_GREY], 
     tex_coords = compute_uv(bound_number = 1100, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Red Bus Color
@@ -2524,7 +2535,7 @@ create_polygon(
         (-10.0, 30.0, 0.0)])
 
 save_mesh(
-    texture_name = [BUS_RED_TOP], 
+    texture_name = [Texture.BUS_RED_TOP], 
     tex_coords = compute_uv(bound_number = 502, tile_x = 4, tile_y = 3, angle_degrees = 0))
 
 create_polygon(
@@ -2536,7 +2547,7 @@ create_polygon(
         (-10.0, 30.0, -50.0)])
 
 save_mesh(
-    texture_name = [GLASS_TX], 
+    texture_name = [Texture.GLASS], 
     tex_coords = compute_uv(bound_number = 503, tile_x = 5, tile_y = 12, angle_degrees = 0))
 
 
@@ -2549,10 +2560,10 @@ create_polygon(
      (50.00,3.00,-135.00), 
      (-50.00,3.00,-135.00), 
      (-50.00,0.00,-130.00)],
-    hud_color = LIGHT_RED)
+    hud_color = Color.RED_LIGHT)
 
 save_mesh(
-    texture_name = [STOP_SIGN_TX], 
+    texture_name = [Texture.STOP_SIGN], 
     tex_coords = compute_uv(bound_number = 206, tile_x = 15, tile_y = 1, angle_degrees = 90))
 
 # Speed Bump North
@@ -2563,10 +2574,10 @@ create_polygon(
 		(50.0, 3.0, -135.0),
 		(50.0, 0.0, -140.0),
 		(-50.0, 0.0, -140.0)],
-         hud_color = LIGHT_RED)
+         hud_color = Color.RED_LIGHT)
 
 save_mesh(
-    texture_name = [STOP_SIGN_TX], 
+    texture_name = [Texture.STOP_SIGN], 
     tex_coords = compute_uv(bound_number = 207, tile_x = 1, tile_y = 10, angle_degrees = 0))
 
 # Triangle Side I
@@ -2578,7 +2589,7 @@ create_polygon(
 		(-50.0, 3.0, -135.0)])
 
 save_mesh(
-    texture_name = [STOP_SIGN_TX], 
+    texture_name = [Texture.STOP_SIGN], 
     tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 # Triangle Side II
@@ -2590,7 +2601,7 @@ create_polygon(
 		(50.0, 3.0, -135.0)])
 
 save_mesh(
-    texture_name = [STOP_SIGN_TX], 
+    texture_name = [Texture.STOP_SIGN], 
     tex_coords = compute_uv(bound_number = 209, tile_x = 30, tile_y = 30, angle_degrees = 90))
 
 
@@ -2602,7 +2613,7 @@ create_polygon(
 		(-200.0, -0.00, -120.0),
 		(-160.0, -3.0, -160.0)])
 
-save_mesh(texture_name = [FREEWAY_TX],
+save_mesh(texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2220, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2613,7 +2624,7 @@ create_polygon(
 		(-200.0, -3.0, -160.0)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2221, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2624,7 +2635,7 @@ create_polygon(
 		(-200.0, -3.0, -160.0)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2222, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2635,7 +2646,7 @@ create_polygon(
 		(-191.82, -6.00, -223.82)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2223, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
@@ -2646,7 +2657,7 @@ create_polygon(
 		(-191.82, -6.00, -223.82)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2224, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2657,7 +2668,7 @@ create_polygon(
 		(-165.59, -9.00, -260.54)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2225, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
@@ -2668,7 +2679,7 @@ create_polygon(
 		(-165.59, -9.00, -260.54)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2226, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2679,7 +2690,7 @@ create_polygon(
 		(-127.21, -12.00, -286.30)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2227, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 create_polygon(
@@ -2690,7 +2701,7 @@ create_polygon(
 		(-127.21, -12.00, -286.30)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2228, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
@@ -2701,7 +2712,7 @@ create_polygon(
 		(-90.0, -15.00, -294.48)])
 
 save_mesh(
-	texture_name = [FREEWAY_TX],
+	texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2229, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
 
 # Intersection
@@ -2714,7 +2725,7 @@ create_polygon(
         (-90.0, -15.00, -294.48)])
 
 save_mesh(
-	texture_name = [INTERSECTION_TX],
+	texture_name = [Texture.INTERSECTION],
 	tex_coords = compute_uv(bound_number = 924, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
 # Hill
@@ -2725,10 +2736,10 @@ create_polygon(
 		(-90.0, -15.00, -254.51),
         (-90.0, 14.75, -120.0),
 		(-79.0, 14.75, -120.0)],
-	hud_color = LIGHT_YELLOW)
+	hud_color = Color.YELLOW_LIGHT)
 
 save_mesh(
-	texture_name = [ZEBRA_CROSSING_TX],
+	texture_name = [Texture.ZEBRA_CROSSING],
 	tex_coords = compute_uv(bound_number = 923, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
 
 ################################################################################################################               
@@ -3084,7 +3095,7 @@ def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:
     for poly in polys:
         if poly.cell_id == cell_id:
             return poly.cell_type
-    return DEFAULT
+    return Room.DEFAULT
 
 
 def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
@@ -5542,30 +5553,28 @@ def create_blender_meshes(texture_folder: Path, load_all_texures: bool) -> None:
 ###################################################################################################################
 
 TEXTURE_EXPORT = {
-    "SNOW": "SNOW_TX",
-    "T_WOOD": "WOOD_TX",
-    "T_WATER": "WATER_TX",
-    "T_WATER_WIN": "WATER_WINTER_TX",
-    "T_GRASS": "GRASS_TX",
-    "T_GRASS_WIN": "GRASS_WINTER_TX",
-    "24_GRASS": "GRASS_BASEBALL_TX",
-    "SDWLK2": "SIDEWALK_TX",
-    "RWALK": "ZEBRA_CROSSING_TX",
-    "RINTER": "INTERSECTION_TX",
-    "FREEWAY2": "FREEWAY_TX",
-    "R2": "ROAD_1_LANE_TX",
-    "R4": "ROAD_2_LANE_TX",
-    "R6": "ROAD_3_LANE_TX",
-    "OT_MALL_BRICK": "BRICKS_MALL_TX",
-    "OT_SHOP03_BRICK": "BRICKS_SAND_TX",
-    "CT_FOOD_BRICK": "BRICKS_GREY_TX",
-    "R_WIN_01": "GLASS_TX",
-    "T_STOP": "STOP_SIGN_TX",
-    "T_BARRICADE": "BARRICADE_TX",
-    "CHECK04": "CHECKPOINT_TX",
-    "VPBUSRED_TP_BK": "BUS_RED_TOP",
-    "T_WATER_LAVA": "LAVA_TX",
-    "T_RED_BLACK_BARRICADE": "RED_BLACK_BARRICADE_TX"
+    "SNOW": Texture.SNOW,
+    "T_WOOD": Texture.WOOD,
+    "T_WATER": Texture.WATER,
+    "T_WATER_WIN": Texture.WATER_WINTER,
+    "T_GRASS": Texture.GRASS,
+    "T_GRASS_WIN": Texture.GRASS_WINTER,
+    "24_GRASS": Texture.GRASS_BASEBALL,
+    "SDWLK2": Texture.SIDEWALK,
+    "RWALK": Texture.ZEBRA_CROSSING,
+    "RINTER": Texture.INTERSECTION,
+    "FREEWAY2": Texture.FREEWAY,
+    "R2": Texture.ROAD_1_LANE,
+    "R4": Texture.ROAD_2_LANE,
+    "R6": Texture.ROAD_3_LANE,
+    "OT_MALL_BRICK": Texture.BRICKS_MALL,
+    "OT_SHOP03_BRICK": Texture.BRICKS_SAND,
+    "CT_FOOD_BRICK": Texture.BRICKS_GREY,
+    "R_WIN_01": Texture.GLASS,
+    "T_STOP": Texture.STOP_SIGN,
+    "T_BARRICADE": Texture.BARRICADE,
+    "CHECK04": Texture.CHECKPOINT,
+    "VPBUSRED_TP_BK": Texture.BUS_RED_TOP,
 }
 
 ###################################################################################################################
@@ -5574,22 +5583,25 @@ TEXTURE_EXPORT = {
 
 
 CELL_IMPORT = [
-    (str(DEFAULT), "Default", "", "", DEFAULT),
-    (str(TUNNEL), "Tunnel", "", "", TUNNEL),
-    (str(INDOORS), "Indoors", "", "", INDOORS),
-    (str(WATER_DRIFT), "Water Drift", "", "", WATER_DRIFT),
-    (str(NO_SKIDS), "No Skids", "", "", NO_SKIDS)]
+    (str(Room.DEFAULT), "Default", "", "", Room.DEFAULT),
+    (str(Room.TUNNEL), "Tunnel", "", "", Room.TUNNEL),
+    (str(Room.INDOORS), "Indoors", "", "", Room.INDOORS),
+    (str(Room.DRIFT), "Drift", "", "", Room.DRIFT),
+    (str(Room.NO_SKIDS), "No Skids", "", "", Room.NO_SKIDS)
+    ]
 
 bpy.types.Object.cell_type = bpy.props.EnumProperty(
     items = CELL_IMPORT,
     name = "Cell Type",
-    description = "Select the type of cell")
+    description = "Select the type of cell"
+    )
 
 CELL_EXPORT = {
-    str(TUNNEL): "TUNNEL",
-    str(INDOORS): "INDOORS",
-    str(WATER_DRIFT): "WATER_DRIFT",
-    str(NO_SKIDS): "NO_SKIDS"}
+    str(Room.TUNNEL): "Room.TUNNEL",
+    str(Room.INDOORS): "Room.INDOORS",
+    str(Room.DRIFT): "Room.DRIFT",
+    str(Room.NO_SKIDS): "Room.NO_SKIDS"
+}
 
 class OBJECT_PT_CellTypePanel(bpy.types.Panel):
     bl_label = "Cell Type"
@@ -5601,6 +5613,7 @@ class OBJECT_PT_CellTypePanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.active_object
+        
         if obj:
             layout.prop(obj, "cell_type", text = "Cell Type")
         else:
@@ -5609,22 +5622,25 @@ class OBJECT_PT_CellTypePanel(bpy.types.Panel):
 ###################################################################################################################?
 
 MATERIAL_IMPORT = [
-    (str(DEFAULT_MTL), "Road", "", "", DEFAULT_MTL),
-    (str(GRASS_MTL), "Grass", "", "", GRASS_MTL),
-    (str(WATER_MTL), "Water", "", "", WATER_MTL),
-    (str(STICKY_MTL), "Sticky", "", "", STICKY_MTL),
-    (str(NO_FRICTION_MTL), "No Friction", "", "", NO_FRICTION_MTL)]
+    (str(Material.DEFAULT), "Road", "", "", Material.DEFAULT),
+    (str(Material.GRASS), "Grass", "", "", Material.GRASS),
+    (str(Material.WATER), "Water", "", "", Material.WATER),
+    (str(Material.STICKY), "Sticky", "", "", Material.STICKY),
+    (str(Material.NO_FRICTION), "No Friction", "", "", Material.NO_FRICTION)
+    ]
 
 bpy.types.Object.material_index = bpy.props.EnumProperty(
     items = MATERIAL_IMPORT,
     name = "Material Type",
-    description = "Select the type of material")
+    description = "Select the type of material"
+    )
 
 MATERIAL_EXPORT = {
-    str(GRASS_MTL): "GRASS_MTL",
-    str(WATER_MTL): "WATER_MTL",
-    str(STICKY_MTL): "STICKY_MTL",
-    str(NO_FRICTION_MTL): "NO_FRICTION_MTL"}
+    str(Material.GRASS): "Material.GRASS",
+    str(Material.WATER): "Material.WATER",
+    str(Material.STICKY): "Material.STICKY",
+    str(Material.NO_FRICTION): "Material.NO_FRICTION"
+    }
 
 class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
     bl_label = "Material Type"
@@ -5633,9 +5649,10 @@ class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_context = "object"
 
-    def draw(self, context):
+    def draw(self, context) -> None:
         layout = self.layout
         obj = context.active_object
+        
         if obj:
             layout.prop(obj, "material_index", text = "Material")
         else:
@@ -5644,15 +5661,15 @@ class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
 ###################################################################################################################?
 
 HUD_IMPORT = [
-    (ROAD_HUD, "Road", "", "", 1),
-    (GRASS_HUD, "Grass", "", "", 2),
-    (WATER_HUD, "Water", "", "", 3),
-    (SNOW_HUD, "Snow", "", "", 4),
-    (WOOD_HUD, "Wood", "", "", 5),
-    (ORANGE, "Orange", "", "", 6),
-    (LIGHT_RED, "Light Red", "", "", 7),
-    (DARK_RED, "Dark Red", "", "", 8),
-    (LIGHT_YELLOW, "Light Yellow", "", "", 9)
+    (Color.ROAD, "Road", "", "", 1),
+    (Color.GRASS, "Grass", "", "", 2),
+    (Color.WATER, "Water", "", "", 3),
+    (Color.SNOW, "Snow", "", "", 4),
+    (Color.WOOD, "Wood", "", "", 5),
+    (Color.ORANGE, "Orange", "", "", 6),
+    (Color.RED_LIGHT, "Light Red", "", "", 7),
+    (Color.RED_DARK, "Dark Red", "", "", 8),
+    (Color.YELLOW_LIGHT, "Light Yellow", "", "", 9)
     ]
 
 def set_hud_checkbox(color, obj):
@@ -5668,15 +5685,15 @@ bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
     default = (False, False, False, False, False, False, False, False, False))
 
 HUD_EXPORT = {
-    # '#414441': "ROAD_HUD",
-    '#7b5931': "WOOD_HUD",
-    '#cdcecd': "SNOW_HUD",
-    '#5d8096': "WATER_HUD",
-    '#396d18': "GRASS_HUD",
-    '#af0000': "DARK_RED",
-    '#ffa500': "ORANGE",
-    '#ff7f7f': "LIGHT_RED",
-    '#ffffe0': "LIGHT_YELLOW"
+    # '#414441': "Color.ROAD",
+    '#7b5931': "Color.WOOD",
+    '#cdcecd': "Color.SNOW",
+    '#5d8096': "Color.WATER",
+    '#396d18': "Color.GRASS",
+    '#af0000': "Color.RED_DARK",
+    '#ffa500': "Color.ORANGE",
+    '#ff7f7f': "Color.RED_LIGHT",
+    '#ffffe0': "Color.YELLOW_LIGHT"
     }
 
 class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
@@ -5690,6 +5707,7 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.active_object
+        
         if obj:
             row = layout.row(align = True)
             col = row.column(align = True)
@@ -5725,6 +5743,7 @@ class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         obj = context.active_object
+        
         if obj:
             layout.prop(obj, "always_visible", text = "Always Visible")
             layout.prop(obj, "sort_vertices", text = "Sort Vertices")
@@ -5817,13 +5836,15 @@ def extract_polygon_texture(obj) -> str:
             for node in mat.node_tree.nodes:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
-    return "CHECK04"  # Default value
+    return Texture.CHECKPOINT  # Default value
 
 
 def export_formatted_polygons(obj) -> str:
     poly_data = extract_polygon_data(obj)
-    texture_name = extract_polygon_texture(obj)
-    texture_constant = TEXTURE_EXPORT.get(texture_name, f'"{texture_name}"')
+    texture_name = extract_polygon_texture(obj).upper() 
+    
+    texture_constant = TEXTURE_EXPORT.get(texture_name, texture_name)
+    formatted_texture = next((f'Texture.{name}' for name, value in vars(Texture).items() if value == texture_constant), f'"{texture_name}"')
 
     formatted_vertices = [] 
     for vertex in poly_data['vertex_coordinates']:
@@ -5867,7 +5888,7 @@ create_polygon(
         {vertex_export}])
 
 save_mesh(
-    texture_name = [{texture_constant}],
+    texture_name = [{formatted_texture}],
     tex_coords = compute_uv(bound_number = {poly_data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {rotation:.2f}))"""
 
     return polygon_export
@@ -5943,11 +5964,11 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
                 
                 # Cell & Material & HUD Color
                 if "cell_type" not in obj:
-                    obj["cell_type"] = 0
+                    obj["cell_type"] = Room.DEFAULT
                 if "material_index" not in obj:
-                    obj["material_index"] = 0
+                    obj["material_index"] = Material.DEFAULT
                 if "hud_color" not in obj:
-                    obj["hud_color"] = ROAD_HUD
+                    obj["hud_color"] = Color.ROAD
                     
                 # Misc
                 if "sort_vertices" not in obj:
