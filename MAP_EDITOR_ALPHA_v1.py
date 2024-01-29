@@ -4435,7 +4435,25 @@ LIGHTING
 #! ======================= TEXTURESHEET ======================= !#
 
 
-# TODO: Expand capabilities if needed or useful
+class AgiTexParameters:
+    SNOWABLE = "w"
+    ALPHA_GLOW = "g"
+    LIGHTMAP = "l"
+    SHADOW = "s"
+    TRANSPARENT = "t"
+    CHROMAKEY = "k"
+    NOT_LIT = "n"
+    DULL_OR_DAMAGED = "d"
+    CLAMP_U_OR_BOTH = "u"
+    CLAMP_V_OR_BOTH = "v"
+    CLAMP_BOTH = "c"
+    CLAMP_U_OR_NEITHER = "U"
+    CLAMP_V_OR_NEITHER = "V"
+    ROAD_FLOOR_CEILING = "e"
+    ALWAYS_MODULATE = "m"
+    ALWAYS_PERSP_CORRECT = "p"
+
+
 class TextureSheet:
     def __init__(self, name: str = "", neighborhood: int = 0, h: int = 0, m: int = 0, l: int = 1, flags: str = "", alternate: str = "", 
                  sibling: str = "", xres: int = 64, yres: int = 64, hexcolor: str = "000000"):
@@ -6536,12 +6554,15 @@ def set_blender_keybinding() -> None:
 #! ======================= SET FACADES ======================= !#
 
 
+#* NOTES:
 #* Separator: (max_x - min_x) / separator(value) = number of facades
 #* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
 #* Scale --> enlarges or shrinks non-fixed facades
 
-#* All relevant Facade information can be found in: ... / UserResources / FACADES
-#* Each facade is photographed and documented (see: "FACADE_DATA.txt")
+#* All information about Facades (including pictures) can be found in: 
+# ... / UserResources / FACADES / ...       & 
+# ... / UserResources / FACADES / FACADE pictures
+
 
 # Flags (if applicable, consult the documentation for more info)
 FRONT = 1  # Sometimes 1 is also used for the full model
@@ -6564,44 +6585,57 @@ FRONT_LEFT_ROOF_BACK = 1129
 FRONT_RIGHT_ROOF_BACK = 1201
 ALL_SIDES = 1273
 
-# Facade names (feel free to add more)
-ORANGE_W_WINDOWS = "ofbldg02"  
-WALL_FREEWAY = "freewaywall02"
-SUIT_STORE = "dfsuitstore"
-PIZZA_PLACE = "hfpizza"   
-RAIL_WATER = "t_rail01"  
 
+class Facade:
+    BUILDING_ORANGE_WITH_WINDOWS = "ofbldg02"
+    
+    WALL_FREEWAY = "freewaywall02"
+    RAIL_WATER = "t_rail01"
+    
+    SHOP_SUIT = "dfsuitstore"
+    SHOP_PIZZA = "hfpizza"
+    SHOP_SODA = "ofsodashop"
+    SHOP_LIQUOR = "cfliquor"
+    
+    HOME_ONE = "OFHOME01"
+    HOME_TWO = "OFHOME02"
+    HOME_THREE = "OFHOME03"
+        
+    RAIL_WATER = "t_rail01"
+    
+    
 orange_building_one = {
-	'flags': FRONT_BRIGHT,
-	'offset': (-10.0, 0.0, -50.0),
-	'end': (10, 0.0, -50.0),
-	'separator': 10.0,
-	'name': ORANGE_W_WINDOWS,
-	'axis': 'x'}
+	"flags": FRONT_BRIGHT,
+	"offset": (-10.0, 0.0, -50.0),
+	"end": (10, 0.0, -50.0),
+	"separator": 10.0,
+	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
+	"axis": "x"}
 
 orange_building_two = {
-	'flags': FRONT_BRIGHT,
-	'offset': (10.0, 0.0, -70.0),
-	'end': (-10, 0.0, -70.0),
-	'separator': 10.0,
-	'name': ORANGE_W_WINDOWS,
-	'axis': 'x'}
+	"flags": FRONT_BRIGHT,
+	"offset": (10.0, 0.0, -70.0),
+	"end": (-10, 0.0, -70.0),
+	"separator": 10.0,
+	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
+	"axis": "x"}
 
 orange_building_three = {
-	'flags': FRONT_BRIGHT,
-	'offset': (-10.0, 0.0, -70.0),
-	'end': (-10.0, 0.0, -50.0),
-	'separator': 10.0,
-	'name': ORANGE_W_WINDOWS,
-	'axis': 'z'}
+	"flags": FRONT_BRIGHT,
+	"offset": (-10.0, 0.0, -70.0),
+	"end": (-10.0, 0.0, -50.0),
+	"separator": 10.0,
+	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
+	"axis": "z"}
 
 orange_building_four = {
-	'flags': FRONT_BRIGHT,
-	'offset': (10.0, 0.0, -50.0),
-	'end': (10.0, 0.0, -70.0),
-	'name': ORANGE_W_WINDOWS,
-    'axis': 'z',
-    'separator': 10.0}
+	"flags": FRONT_BRIGHT,
+	"offset": (10.0, 0.0, -50.0),
+	"end": (10.0, 0.0, -70.0),
+	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
+    "axis": "z",
+    "separator": 10.0}
+
 
 # Pack all Facades for processing
 facade_list = [orange_building_one, orange_building_two, orange_building_three, orange_building_four]
@@ -6834,8 +6868,8 @@ lighting_configs = [
 
 # Available indices: 94, 95, 96, 97, 98,
 custom_physics = {
-    97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # sticky
-    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # slippery
+    97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # Sticky
+    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # Slippery
 
 ###################################################################################################################   
 ################################################################################################################### 
