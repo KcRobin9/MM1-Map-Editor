@@ -71,6 +71,7 @@ set_bridges = True              # change to "True" if you want BRIDGES
 set_facades = True              # change to "True" if you want FACADES
 set_physics = True              # change to "True" if you want PHYSICS (custom)
 set_animations = True           # change to "True" if you want ANIMATIONS (plane and eltrain)
+set_texture_sheet = True        # change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures)
 
 # Minimap
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
@@ -4436,57 +4437,67 @@ LIGHTING
 
 
 class AgiTexParameters:
+    TRANSPARENT = "t"
     SNOWABLE = "w"
+    DULL_OR_DAMAGED = "d"    
     ALPHA_GLOW = "g"
+    NOT_LIT = "n"
+    ROAD_FLOOR_CEILING = "e"
+    CHROMAKEY = "k"
     LIGHTMAP = "l"
     SHADOW = "s"
-    TRANSPARENT = "t"
-    CHROMAKEY = "k"
-    NOT_LIT = "n"
-    DULL_OR_DAMAGED = "d"
+    
+    ALWAYS_MODULATE = "m"
+    ALWAYS_PERSP_CORRECT = "p"
+    
     CLAMP_U_OR_BOTH = "u"
     CLAMP_V_OR_BOTH = "v"
     CLAMP_BOTH = "c"
     CLAMP_U_OR_NEITHER = "U"
     CLAMP_V_OR_NEITHER = "V"
-    ROAD_FLOOR_CEILING = "e"
-    ALWAYS_MODULATE = "m"
-    ALWAYS_PERSP_CORRECT = "p"
 
 
 class TextureSheet:
-    def __init__(self, name: str = "", neighborhood: int = 0, h: int = 0, m: int = 0, l: int = 1, flags: str = "", alternate: str = "", 
-                 sibling: str = "", xres: int = 64, yres: int = 64, hexcolor: str = "000000"):
+    def __init__(self, name: str = "", neighborhood: int = 0, 
+                 lod_high: int = 0, lod_medium: int = 0, lod_low: int = 1, 
+                 flags: str = "", alternate: str = "", sibling: str = "", 
+                 x_res: int = 64, y_res: int = 64, hex_color: str = "000000") -> None:
+        
         self.name = name
         self.neighborhood = neighborhood
-        self.h = h
-        self.m = m
-        self.l = l
+        self.lod_high = lod_high
+        self.lod_medium = lod_medium
+        self.lod_low = lod_low
         self.flags = flags
         self.alternate = alternate
         self.sibling = sibling
-        self.xres = xres
-        self.yres = yres
-        self.hexcolor = hexcolor
+        self.x_res = x_res
+        self.y_res = y_res
+        self.hex_color = hex_color
+
+    @staticmethod
+    def read_custom_texture_filenames(input_textures: Path) -> List[str]:
+         return [f.stem for f in input_textures.glob("*.DDS")]
 
     @classmethod
-    def read_filenames(cls):
-        return [f.stem for f in (Folder.BASE / "Custom Textures").glob("*.DDS")]
-
-    @classmethod
-    def write(cls):      
-        with open(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", 'r' ) as in_f:
-            sheet_lines = in_f.readlines()
-            
-        sheet_names = set(line.split(',')[0].strip() for line in sheet_lines)
+    def write(cls, input_file: Path, input_textures: Path, output_file: Path, set_texture_sheet: bool) -> None:
+        if not set_texture_sheet:
+            return
+              
+        with open(input_file, 'r') as in_f:
+            texturesheet_lines = in_f.readlines()
+                    
+        existing_texture_names = set(line.split(',')[0].strip() for line in texturesheet_lines)
         
-        with open(Folder.SHOP / "MTL" / "GLOBAL.TSH", 'w') as out_f:  
-            out_f.writelines(sheet_lines)
-            
-            for custom_tex in cls.read_filenames():
-                if custom_tex not in sheet_names:
+        custom_texture_names = TextureSheet.read_custom_texture_filenames(input_textures)
+        
+        with open(output_file, 'w') as out_f: 
+            out_f.writelines(existing_texture_names)
+                    
+            for custom_tex in custom_texture_names:
+                if custom_tex not in existing_texture_names:
                     out_f.write(f"{custom_tex},0,0,0,1,,{custom_tex},,64,64,000000\n")
-
+                    
 ###################################################################################################################
 ###################################################################################################################
 #! ======================= AI ======================= !#
@@ -6283,11 +6294,7 @@ def load_waypoints_from_csv(waypoint_file: Path) -> None:
     update_waypoint_colors()
     
     
-def load_cops_and_robbers_waypoints(input_file: Path) -> None:
-    
-    # print(Path(__file__).parent)
-    # print(Path.cwd())
-    
+def load_cops_and_robbers_waypoints(input_file: Path) -> None:    
     waypoint_types = cycle(['Bank Hideout', 'Gold Position', 'Robber Hideout'])
     set_count = 1
 
@@ -6452,6 +6459,7 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
 ###################################################################################################################
 ################################################################################################################### 
 #! ======================= BLENDER INIT ======================= !#
+        
         
 def initialize_blender_panels() -> None:
     if not is_blender_running():
@@ -7026,7 +7034,7 @@ create_cops_and_robbers(map_filename, cnr_waypoints)
 create_cells(map_filename, polys, truncate_cells)
 Bounds.create(Folder.SHOP / "BND" / f"{map_filename}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{map_filename}.txt", debug_bounds)
 Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
-TextureSheet().write()
+TextureSheet.write(Folder.BASE / "Custom Textures", Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", set_texture_sheet)
 aiStreetEditor.create(map_filename, street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", Folder.SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
