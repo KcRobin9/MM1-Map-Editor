@@ -71,7 +71,7 @@ set_bridges = True              # change to "True" if you want BRIDGES
 set_facades = True              # change to "True" if you want FACADES
 set_physics = True              # change to "True" if you want PHYSICS (custom)
 set_animations = True           # change to "True" if you want ANIMATIONS (plane and eltrain)
-set_texture_sheet = True        # change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures)
+set_texture_sheet = True        # change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures and modified existing Textures)
 
 # Minimap
 set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
@@ -4332,7 +4332,7 @@ class LightingEditor:
     @classmethod
     def read_file(cls, filename: Path):
         instances = []
-        with open(filename, newline = '') as f:
+        with open(filename, newline = "") as f:
             reader = csv.reader(f)
             next(reader)  
             for data in reader:
@@ -4474,29 +4474,88 @@ class TextureSheet:
         self.x_res = x_res
         self.y_res = y_res
         self.hex_color = hex_color
+        
+    @staticmethod
+    def read_sheet(input_file: Path) -> Dict[str, List[str]]:
+        with open(input_file, "r") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            return {row[0]: row for row in reader}
 
     @staticmethod
-    def read_custom_texture_filenames(input_textures: Path) -> List[str]:
+    def get_custom_texture_filenames(input_textures: Path) -> List[str]:
          return [f.stem for f in input_textures.glob("*.DDS")]
+     
+    @staticmethod
+    def parse_flags(flags: List[str]) -> str:
+        flag_str = "".join(flags)
+        print(f"Parsing flags {flags} to {flag_str}")  
+        return flag_str
 
     @classmethod
-    def write(cls, input_file: Path, input_textures: Path, output_file: Path, set_texture_sheet: bool) -> None:
+    def append_custom_textures(cls, input_file: Path, input_textures: Path, output_file: Path, set_texture_sheet: bool) -> None:
         if not set_texture_sheet:
             return
               
-        with open(input_file, 'r') as in_f:
+        with open(input_file, "r") as in_f:
             texturesheet_lines = in_f.readlines()
                     
         existing_texture_names = set(line.split(',')[0].strip() for line in texturesheet_lines)
-        
-        custom_texture_names = TextureSheet.read_custom_texture_filenames(input_textures)
+        custom_texture_names = TextureSheet.get_custom_texture_filenames(input_textures)
         
         with open(output_file, 'w') as out_f: 
-            out_f.writelines(existing_texture_names)
+            out_f.writelines(texturesheet_lines)  # Write the existing texturesheet lines first
                     
             for custom_tex in custom_texture_names:
                 if custom_tex not in existing_texture_names:
-                    out_f.write(f"{custom_tex},0,0,0,1,,{custom_tex},,64,64,000000\n")
+                    out_f.write(f"{custom_tex},0,0,0,1,,{custom_tex},,64,64,000000\n")  # TODO: Add support for custom flags
+                    
+    @staticmethod
+    def write(textures: Dict[str, List[str]], output_file: Path):
+        with open(output_file, "w", newline = "") as f:
+            writer = csv.writer(f)
+            writer.writerow(["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"])
+            
+            for row in textures.values():
+                writer.writerow(row)
+
+    @classmethod
+    def write_tweaked(cls, input_file: Path, output_file: Path, texture_changes: List[dict]):
+        textures = cls.read_sheet(input_file)
+
+        attribute_mapping = {
+            "neighborhood": 1,
+            "lod_high": 2,
+            "lod_medium": 3,
+            "lod_low": 4,
+            "flags": 5,
+            "alternate": 6,
+            "sibling": 7,
+            "x_res": 8,
+            "y_res": 9,
+            "hex_color": 10
+        }
+
+        for changes in texture_changes:
+            target = changes.get("name")
+            
+            if not target or target not in textures:
+                print(f"Texture '{target}' not found or not specified.")
+                continue
+
+            texture = textures[target]
+            
+            for key, value in changes.items():
+                if key == "name":
+                    continue 
+                
+                if key == "flags":
+                    value = cls.parse_flags(value)  
+                    
+                if key in attribute_mapping:
+                    texture[attribute_mapping[key]] = str(value)
+
+        cls.write(textures, output_file)
                     
 ###################################################################################################################
 ###################################################################################################################
@@ -6881,6 +6940,26 @@ custom_physics = {
 
 ###################################################################################################################   
 ################################################################################################################### 
+#! ======================= TEXTURE MODIFICATIONS ======================= !#
+
+
+texture_modifications = [
+    {
+        "name": Texture.ROAD_3_LANE,
+        "flags": [AgiTexParameters.TRANSPARENT, AgiTexParameters.ALPHA_GLOW]
+    },
+    {
+        "name": Texture.ROAD_2_LANE,
+        "flags": [AgiTexParameters.TRANSPARENT, AgiTexParameters.ALPHA_GLOW]
+    },
+    {
+        "name": Texture.ROAD_1_LANE,
+        "flags": [AgiTexParameters.TRANSPARENT, AgiTexParameters.ALPHA_GLOW]
+    }
+]
+
+###################################################################################################################   
+################################################################################################################### 
 #! ======================= SET DLP ======================= !#
 
 
@@ -7034,11 +7113,13 @@ create_cops_and_robbers(map_filename, cnr_waypoints)
 create_cells(map_filename, polys, truncate_cells)
 Bounds.create(Folder.SHOP / "BND" / f"{map_filename}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{map_filename}.txt", debug_bounds)
 Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
-TextureSheet.write(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.BASE / "Custom Textures", Folder.SHOP / "MTL" / "GLOBAL.TSH", set_texture_sheet)
 aiStreetEditor.create(map_filename, street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{map_filename}.FCD", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", Folder.SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
+TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.BASE / "Custom Textures", Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
+TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications)
+                    
 prop_editor = BangerEditor(map_filename)
 for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
