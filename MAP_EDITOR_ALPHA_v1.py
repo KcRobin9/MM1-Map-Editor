@@ -281,9 +281,6 @@ start_time = time.time()
 
 
 # Constants
-TRIANGLE = 3
-QUAD = 4
-
 MESH_VERTEX_COUNT_THRESHOLD = 16
 CELL_CHARACTER_THRESHOLD = 254
 
@@ -300,6 +297,12 @@ texcoords_data = {}
 
 hudmap_vertices = []
 hudmap_properties = {}
+
+
+class Shape:
+    LINE = 2
+    TRIANGLE = 3
+    QUAD = 4
 
 
 class TimeOfDay:
@@ -331,23 +334,98 @@ class NetworkMode:
     SINGLE_AND_MULTI = "All Modes"
     
 
+class Portal:
+    ACTIVE = 0x1
+    RESET_CLIP = 0x2          # Reset Clip MinX, MaxX, MinY, MaxY | Open Area?
+    RESET_X = 0x4             # Reset MinX or MaxX depending on direction | Half-Open Area?
+    MUST_BE_INFRONT = 0x8     # Must be infront (or behind?) portal plane
+    
+    
+class agiMeshSet:
+    TEXCOORDS = 0x1
+    NORMALS = 0x2
+    COLORS = 0x4
+    OFFSET = 0x8
+    PLANES = 0x10
+    
+    TEXCOORDS_AND_NORMALS = TEXCOORDS | NORMALS
+    TEXCOORDS_AND_COLORS = TEXCOORDS | COLORS
+    NORMALS_AND_COLORS = NORMALS | COLORS
+    OFFSET_AND_PLANES = OFFSET | PLANES
+    TEXCOORDS_AND_OFFSET = TEXCOORDS | OFFSET
+    NORMALS_AND_PLANES = NORMALS | PLANES
+    
+    FENDERS = TEXCOORDS | NORMALS | OFFSET | PLANES  # Used for Roadster Fenders
+    
+    ALL_FEATURES = TEXCOORDS | NORMALS | COLORS | OFFSET | PLANES
+        
+        
 class LevelOfDetail:
-    UNKNOWN_1 = 1       # A
-    LOW = 2             # L
-    MEDIUM = 4          # M
-    HIGH = 8            # H
-    DRIFT = 32          # A2
-    UNKNOWN_2 = 64      # L2
-    UNKNOWN_3 = 128     # M2
-    UNKNOWN_4 = 256     # H2
+    UNKNOWN_1 = 0x1    # A
+    LOW = 0x2          # L
+    MEDIUM = 0x4       # M
+    HIGH = 0x8         # H
+    DRIFT = 0x20       # A2
+    UNKNOWN_2 = 0x40   # L2
+    UNKNOWN_3 = 0x80   # M2
+    UNKNOWN_4 = 0x100  # H2
     
     
+class PlaneEdgesWinding:
+    TRIANGLE = 0x0
+    QUAD = 0x4
+    FLIP_WINDING = 0x8
+
+    TRIANGLE_X_AXIS = 0x0  # PlaneEdges are projected along X axis
+    TRIANGLE_Y_AXIS = 0x1  # PlaneEdges are projected along Y axis
+    TRIANGLE_Z_AXIS = 0x2  # PlaneEdges are projected along Z axis
+
+    QUAD_X_AXIS = 0x4        # Is Quad and PlaneEdges are projected along X axis
+    QUAD_Y_AXIS = 0x4 | 0x1  # Is Quad and PlaneEdges are projected along Y axis
+    QUAD_Z_AXIS = 0x4 | 0x2  # Is Quad and PlaneEdges are projected along Z axis
+
+    FLIP_WINDING_X_AXIS = 0x8      # Flip Winding and PlaneEdges are projected along X axis
+    FLIP_WINDING_Y_AXIS = 0x8 | 0x1  # Flip Winding and PlaneEdges are projected along Y axis
+    FLIP_WINDING_Z_AXIS = 0x8 | 0x2  # Flip Winding and PlaneEdges are projected along Z axis
+
+    FLIP_WINDING_QUAD_X_AXIS = 0x8 | 0x4        # Is Quad, Flip Winding, and PlaneEdges are projected along X axis
+    FLIP_WINDING_QUAD_Y_AXIS = 0x8 | 0x4 | 0x1  # Is Quad, Flip Winding, and PlaneEdges are projected along Y axis
+    FLIP_WINDING_QUAD_Z_AXIS = 0x8 | 0x4 | 0x2  # Is Quad, Flip Winding, and PlaneEdges are projected along Z axis
+
+
 class IntersectionType:
     STOP = 0
     STOP_LIGHT = 1
     YIELD = 2
     CONTINUE = 3
     
+        
+class CopBehavior:
+    FOLLOW = 0x1      # Follow, only following the player
+    ROADBLOCK = 0x2   # Attempt to create roadblocks
+    SPINOUT = 0x4     # Try to spin the player out
+    PUSH = 0x8        # Pushing behavior, ramming from the back
+
+    MIX = FOLLOW | ROADBLOCK | SPINOUT | PUSH     # Mix of all behaviors
+
+    FOLLOW_AND_SPINOUT = FOLLOW | SPINOUT         # Follow and try to spin out
+    FOLLOW_AND_PUSH = FOLLOW | PUSH               # Follow and push
+    ROADBLOCK_AND_SPINOUT = ROADBLOCK | SPINOUT   # Attempt roadblocks and spin out
+    ROADBLOCK_AND_PUSH = ROADBLOCK | PUSH         # Attempt roadblocks and push
+    SPINOUT_AND_PUSH = SPINOUT | PUSH             # Spin out and push
+    
+    AGGRESSIVE = ROADBLOCK | SPINOUT | PUSH       # All behaviors except follow
+    DEFENSIVE = FOLLOW | ROADBLOCK                # More passive, keeping distance
+    CUNNING = FOLLOW | SPINOUT                    # Following and occasionally spinning out
+    PERSISTENT = FOLLOW | PUSH                    # Persistently following and pushing
+    UNPREDICTABLE = ROADBLOCK | FOLLOW | SPINOUT  # Unpredictable mix of behaviors
+    
+    
+class CopStartLane:
+    STATIONARY = 0 
+    PED = 1  # Broken, do not use (this feature was never finished by the developers)
+    IN_TRAFFIC = 2    
+
     
 class Rotation:
     AUTO = 0
@@ -360,14 +438,6 @@ class Rotation:
     WEST = -90
     NORTH_WEST = -45
     AUTO = 0
-    
-    
-class CopBehavior:
-    FOLLOW = 0 
-    ROADBLOCK = 3
-    SPINOUT = 4
-    PUSH = 8
-    MIX = 15
    
             
 class AudioProp:
@@ -379,12 +449,12 @@ class AudioProp:
     TRASHCAN = 7
     BENCH = 8
     TREE = 11
-    TRASH_BOXES = 12    # also used for "bridge crossgate"
-    NO_NAME_1 = 13      # difficult to describe
-    BARREL = 15         # also used for "dumpster"
+    TRASH_BOXES = 12    # Also used for "bridge crossgate"
+    NO_NAME_1 = 13      # Difficult to describe
+    BARREL = 15         # Also used for "dumpster"
     PHONEBOOTH = 20
     CONE = 22
-    NO_NAME_2 = 24      # sounds a bit similar to "glass"
+    NO_NAME_2 = 24      # Sounds a bit similar to "glass"
     NEWSBOX = 25
     GLASS = 27
     
@@ -413,10 +483,6 @@ class Color:
 # Opponent Count
 MAX_OPP_8 = 8 
 MAX_OPP_128 = 128 
-
-# Cop Start Lane
-STATIONARY = 0 
-IN_TRAFFIC = 2
 
 # Circuit Laps
 LAPS_2, LAPS_3, LAPS_5, LAPS_10 = 2, 3, 5, 10
@@ -549,8 +615,8 @@ race_data = {
             'density': 0.25,
             'num_of_police': 2,
             'police_data': [
-                f'{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {STATIONARY} {CopBehavior.PUSH}',
-                f'{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {IN_TRAFFIC} {CopBehavior.MIX}',
+                f'{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}',
+                f'{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}',
             ],
             'num_of_exceptions': None,
             'exceptions': [
@@ -584,7 +650,7 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {STATIONARY} {CopBehavior.ROADBLOCK}',
+                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}',
             ],
             'num_of_opponents': 1,
         },
@@ -609,7 +675,7 @@ race_data = {
             'density': 0.2,
             'num_of_police': 0,
             'police_data': [
-                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {STATIONARY} {CopBehavior.ROADBLOCK}',
+                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}',
             ],
             'num_of_opponents': 2,
         },
@@ -914,23 +980,23 @@ class Polygon:
         
     @property
     def is_quad(self) -> bool:
-        return bool(self.flags & QUAD)
+        return bool(self.flags & Shape.QUAD)
 
     @property
     def num_verts(self) -> int:
-        return QUAD if self.is_quad else TRIANGLE
+        return Shape.QUAD if self.is_quad else Shape.TRIANGLE
           
     @classmethod
     def read(cls, f: BinaryIO) -> 'Polygon':
         cell_id, mtl_index, flags = read_unpack(f, '<H2B')
         vert_indices = read_unpack(f, '<4H') 
-        plane_edges = Vector3.readn(f, QUAD, '<')
+        plane_edges = Vector3.readn(f, Shape.QUAD, '<')
         plane_n = Vector3.read(f, '<')
         plane_d = read_unpack(f, '<f')
         return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
             
     def write(self, f: BinaryIO) -> None:
-        if len(self.vert_indices) <= TRIANGLE:  # Each polygon requires four vertex indices
+        if len(self.vert_indices) <= Shape.TRIANGLE:  # Each polygon requires four vertex indices
             self.vert_indices += (0,) * (4 - len(self.vert_indices))
         
         write_pack(f, '<H2B', self.cell_id, self.mtl_index, self.flags)
@@ -1315,7 +1381,7 @@ class Meshes:
 
             # A Triangle must always have 4 indices (the 4th index will be 0)
             for indices_side in self.indices_sides:
-                while len(indices_side) <= TRIANGLE:
+                while len(indices_side) <= Shape.TRIANGLE:
                     indices_side.append(0)
                 write_pack(f, f"{len(indices_side)}H", *indices_side)
                                
@@ -1815,7 +1881,9 @@ def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
-    magic, flags, cache_size = "3HSM", 3, 0    
+    magic = "3HSM"    
+    flags = agiMeshSet.TEXCOORDS_AND_NORMALS
+    cache_size = 0
         
     shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
 
@@ -1831,7 +1899,7 @@ def initialize_mesh(
     texture_count = len(texture_name)
     
     # A Triangle must have 4 indices (the 4th index will be 0)
-    if len(coordinates) in [QUAD, TRIANGLE]:
+    if len(coordinates) in [Shape.QUAD, Shape.TRIANGLE]:
         indices_count = surface_count * 4
 
     enclosed_shape = list(range(adjunct_count))
@@ -1967,7 +2035,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
     
     # All shapes must always have 4 vectors
-    if len(vertices) == TRIANGLE:
+    if len(vertices) == Shape.TRIANGLE:
         edges.append(VECTOR3_DEFAULT)
     
     return edges
@@ -1981,7 +2049,7 @@ def create_polygon(
     bound_number: int, vertex_coordinates: List[Vector3], 
     material_index: int = 0, cell_type: int = 0, flags: int = None, 
     plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
-    hud_color: str = '#414441', minimap_outline_color: str = minimap_outline_color, 
+    hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False) -> None:
 
     global cruise_start_position
@@ -2003,7 +2071,7 @@ def create_polygon(
     polygons_data.append(polygon_info)
     
     # Ensure the polygon has 3 or 4 vertices
-    if len(vertex_coordinates) != TRIANGLE and len(vertex_coordinates) != QUAD:
+    if len(vertex_coordinates) != Shape.TRIANGLE and len(vertex_coordinates) != Shape.QUAD:
         error_message = f"""\n
         ***ERROR***
         Unsupported number of vertices.
@@ -2022,18 +2090,19 @@ def create_polygon(
         raise ValueError(error_message)
 
     # Ensure Counterclockwise Winding
-    if len(vertex_coordinates) == TRIANGLE:
+    if len(vertex_coordinates) == Shape.TRIANGLE:
         vertex_coordinates = ensure_ccw_order(vertex_coordinates)
         
-    elif len(vertex_coordinates) == QUAD and fix_faulty_quads:
+    elif len(vertex_coordinates) == Shape.QUAD and fix_faulty_quads:
         vertex_coordinates = ensure_quad_ccw_order(vertex_coordinates)
         
     # Flags
     if flags is None:
-        if len(vertex_coordinates) == QUAD:
-            flags = 6
-        elif len(vertex_coordinates) == TRIANGLE:
-            flags = 3
+        if len(vertex_coordinates) == Shape.QUAD:
+            flags = PlaneEdgesWinding.QUAD_Z_AXIS
+            
+        elif len(vertex_coordinates) == Shape.TRIANGLE:
+            flags = PlaneEdgesWinding.TRIANGLE_Z_AXIS
      
     # Sorting        
     if sort_vertices: 
@@ -2135,20 +2204,25 @@ def user_notes():
 
 
 class Room:
-    DEFAULT = 0
-    TUNNEL = 1
-    INDOORS = 2
-    DRIFT = 4       # A texture only drifts if the texture name starts with "T_WATER"
-    NO_SKIDS = 200
-
-
+    DEFAULT = 0x0
+    TUNNEL = 0x1
+    INDOORS = 0x2
+    DRIFT = 0x4
+    UNKNOWN_8 = 0x8
+    UNKNOWN_10 = 0x10
+    FORCE_Z_BUFFER = 0x20
+    NO_SKIDS = 0x40
+    FOG = 0x80
+    UNKNOWN_100 = 0x100
+    
+    
 class Material:
     DEFAULT = 0
     GRASS = 87
     WATER = 91
     STICKY = 97
     NO_FRICTION = 98
-
+    
 
 class Texture:
     SNOW = "SNOW"
@@ -3698,7 +3772,7 @@ class Portals:
         _max = Vector3.read(f, '<')
         
         vertex_c = None
-        if edge_count == TRIANGLE:
+        if edge_count == Shape.TRIANGLE:
             vertex_c = Vector3.read(f, '<')
 
         return cls(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max, vertex_c)
@@ -3728,8 +3802,8 @@ class Portals:
                 cls.write_n(f, portal_tuples)
 
                 for cell_1, cell_2, v1, v2 in portal_tuples:
-                    flags = 0x2
-                    edge_count = 2
+                    flags = Portal.ACTIVE
+                    edge_count = Shape.LINE
                     gap_2 = 101
                     height = MAX_Y - MIN_Y
                     _min = Vector3(v1.x, -50 if lower_portals else 0, v1.y)
@@ -5307,8 +5381,8 @@ def create_commandline(
         
         
 def is_game_running(process_name: str) -> bool:
-    for proc in psutil.process_iter(['name']):
-        if process_name.lower() in proc.info['name'].lower():
+    for proc in psutil.process_iter(["name"]):
+        if process_name.lower() in proc.info["name"].lower():
             return True
     return False
         
@@ -6623,13 +6697,12 @@ def set_blender_keybinding() -> None:
 
 #* NOTES:
 #* Separator: (max_x - min_x) / separator(value) = number of facades
-#* Sides --> omitted by default, but can be set (relates to lighting, but behavior is not clear)
-#* Scale --> enlarges or shrinks non-fixed facades
+#* Sides: omitted by default, but can be set (relates to lighting, but behavior is not clear)
+#* Scale: enlarges or shrinks non-fixed facades
 
 #* All information about Facades (including pictures) can be found in: 
-# ... / UserResources / FACADES / ...       & 
+# ... / UserResources / FACADES / ...        
 # ... / UserResources / FACADES / FACADE pictures
-
 
 # Flags (if applicable, consult the documentation for more info)
 FRONT = 1  # Sometimes 1 is also used for the full model
