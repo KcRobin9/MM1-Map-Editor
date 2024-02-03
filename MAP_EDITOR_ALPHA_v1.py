@@ -5407,15 +5407,8 @@ def is_blender_running() -> bool:
         return False
     
     
-def initialize_depsgraph_update_handler() -> None:
-    if not is_blender_running():
-        return
-    
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
-
-
 def delete_existing_meshes() -> None:
-    bpy.ops.object.select_all(action = 'SELECT')
+    bpy.ops.object.select_all(action = "SELECT")
     bpy.ops.object.delete()
 
 
@@ -5433,28 +5426,47 @@ def enable_developer_extras() -> None:
         
 def enable_vertex_snapping() -> None:
     bpy.context.tool_settings.use_snap = True
-    bpy.context.tool_settings.snap_elements = {'VERTEX'}
-    bpy.context.tool_settings.snap_target = 'CLOSEST'  
+    bpy.context.tool_settings.snap_elements = {"VERTEX"}
+    bpy.context.tool_settings.snap_target = "CLOSEST"  
         
            
 def adjust_3D_view_settings() -> None:
     for area in bpy.context.screen.areas:
-        if area.type == 'VIEW_3D':
+        if area.type == "VIEW_3D":
             for space in area.spaces:
-                if space.type == 'VIEW_3D':
+                if space.type == "VIEW_3D":
                     
                     # Clip distance
                     space.clip_end = 5000.0
                     
                     # Set the shading mode to Solid
                     shading = space.shading
-                    shading.type = 'SOLID'
+                    shading.type = "SOLID"
                     
                     # Uniform Lighting
-                    shading.light = 'FLAT'
-                    shading.color_type = 'TEXTURE'
+                    shading.light = "FLAT"
+                    shading.color_type = "TEXTURE"
                     
                     
+def initialize_depsgraph_update_handler() -> None:    
+    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
+
+
+def setup_blender() -> None:
+    if not is_blender_running():
+        return
+    
+    delete_existing_meshes()
+    enable_developer_extras()
+    enable_vertex_snapping()
+    adjust_3D_view_settings()
+    initialize_depsgraph_update_handler()
+    
+###################################################################################################################
+###################################################################################################################
+#! ======================= BLENDER CREATE MODEL ======================= !#                   
+                    
+                                        
 def load_textures(texture_folder: Path, load_all_texures: bool) -> None:
     for file_name in os.listdir(texture_folder):
         if file_name.lower().endswith(".dds"):
@@ -5488,7 +5500,118 @@ def create_material_from_texture(material_name, texture_image):
     link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
 
     output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
-    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])      
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])     
+    
+    
+def apply_texture_to_object(obj, texture_path):
+    # Extract the filename (without extension) from the texture_path
+    material_name = os.path.splitext(os.path.basename(texture_path))[0]
+    
+    # Check if the material with this name already exists
+    if material_name in bpy.data.materials:
+        mat = bpy.data.materials[material_name]
+    else:
+        mat = bpy.data.materials.new(name = material_name)
+
+    obj.data.materials.append(mat)
+    obj.active_material = mat
+
+    mat.use_nodes = True
+    nodes = mat.node_tree.nodes
+
+    for node in nodes:
+        nodes.remove(node)
+
+    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
+    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+
+    texture_image = bpy.data.images.load(texture_path)
+    texture_node.image = texture_image
+
+    links = mat.node_tree.links
+    link = links.new
+    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+
+    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+
+    unwrap_uv_to_aspect_ratio(obj, texture_image)
+    
+       
+def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
+    name = f"P{polygon_data['bound_number']}"
+    bound_number = polygon_data['bound_number']
+    script_vertices = polygon_data["vertex_coordinates"]
+
+    transformed_vertices = [transform_coordinate_system(Vector3.from_tuple(vertex), game_to_blender = True) for vertex in script_vertices]
+    
+    edges = []
+    faces = [range(len(transformed_vertices))]
+
+    mesh = bpy.data.meshes.new(name)
+    obj = bpy.data.objects.new(name, mesh)
+    
+    obj["cell_type"] = str(polygon_data["cell_type"])
+    obj["material_index"] = str(polygon_data["material_index"])
+    
+    set_hud_checkbox(polygon_data["hud_color"], obj)
+    
+    for vertex in transformed_vertices:
+        vertex_item = obj.vertex_coords.add()
+        vertex_item.x, vertex_item.y, vertex_item.z = vertex
+    
+    bpy.context.collection.objects.link(obj)
+    mesh.from_pydata(transformed_vertices, edges, faces)
+    mesh.update()
+    
+    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
+    
+    for custom_prop in custom_properties:
+        if custom_prop in polygon_data:
+            obj[custom_prop] = polygon_data[custom_prop]
+    
+    if not obj.data.uv_layers:
+        obj.data.uv_layers.new()
+
+    # Retrieve the original UVs after creating the object and before tiling
+    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
+    obj["original_uvs"] = original_uvs
+    
+    bpy.types.Object.tile_x = bpy.props.FloatProperty(name = "Tile X", default = 2.0, update = update_uv_tiling)
+    bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
+    bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
+    
+    if bound_number in texcoords_data.get('entries', {}):
+        obj.tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
+        obj.tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
+        obj.rotate = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
+    else:
+        obj.tile_x = 2
+        obj.tile_y = 2
+        obj.rotate = 0.1
+        
+    if texture_folder:
+        apply_texture_to_object(obj, texture_folder)    
+        tile_uvs(obj, obj.tile_x, obj.tile_y)
+        rotate_uvs(obj, obj.rotate)  
+        
+        obj.data.update()
+            
+    return obj
+
+
+def create_blender_meshes(texture_folder: Path, load_all_texures: bool) -> None:
+    if not is_blender_running():
+        return
+    
+    load_textures(texture_folder, load_all_texures)
+
+    textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in texture_names]
+
+    created_meshes = []
+
+    for poly, texture in zip(polygons_data, textures):
+        created_meshes.append(create_mesh_from_polygon_data(poly, texture)) 
     
     
 ###################################################################################################################
@@ -5590,127 +5713,7 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
                 rotate_uvs(obj, obj["angle_degrees"])
 
         return {"FINISHED"}
-    
-###################################################################################################################
-###################################################################################################################
-#! ======================= BLENDER POLYGON CREATION ======================= !#
-
-
-def apply_texture_to_object(obj, texture_path):
-    # Extract the filename (without extension) from the texture_path
-    material_name = os.path.splitext(os.path.basename(texture_path))[0]
-    
-    # Check if the material with this name already exists
-    if material_name in bpy.data.materials:
-        mat = bpy.data.materials[material_name]
-    else:
-        mat = bpy.data.materials.new(name = material_name)
-
-    obj.data.materials.append(mat)
-    obj.active_material = mat
-
-    mat.use_nodes = True
-    nodes = mat.node_tree.nodes
-
-    for node in nodes:
-        nodes.remove(node)
-
-    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
-    texture_node = nodes.new(type = 'ShaderNodeTexImage')
-
-    texture_image = bpy.data.images.load(texture_path)
-    texture_node.image = texture_image
-
-    links = mat.node_tree.links
-    link = links.new
-    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
-
-    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
-    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
-
-    unwrap_uv_to_aspect_ratio(obj, texture_image)
-    
-       
-def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
-    name = f"P{polygon_data['bound_number']}"
-    bound_number = polygon_data['bound_number']
-    script_vertices = polygon_data["vertex_coordinates"]
-
-    transformed_vertices = [transform_coordinate_system(Vector3.from_tuple(vertex), game_to_blender = True) for vertex in script_vertices]
-    
-    edges = []
-    faces = [range(len(transformed_vertices))]
-
-    mesh = bpy.data.meshes.new(name)
-    obj = bpy.data.objects.new(name, mesh)
-    
-    obj["cell_type"] = str(polygon_data["cell_type"])
-    obj["material_index"] = str(polygon_data["material_index"])
-    
-    set_hud_checkbox(polygon_data["hud_color"], obj)
-    
-    for vertex in transformed_vertices:
-        vertex_item = obj.vertex_coords.add()
-        vertex_item.x, vertex_item.y, vertex_item.z = vertex
-    
-    bpy.context.collection.objects.link(obj)
-    mesh.from_pydata(transformed_vertices, edges, faces)
-    mesh.update()
-    
-    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
-    
-    for custom_prop in custom_properties:
-        if custom_prop in polygon_data:
-            obj[custom_prop] = polygon_data[custom_prop]
-    
-    if not obj.data.uv_layers:
-        obj.data.uv_layers.new()
-
-    # Retrieve the original UVs after creating the object and before tiling
-    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
-    obj["original_uvs"] = original_uvs
-    
-    bpy.types.Object.tile_x = bpy.props.FloatProperty(name = "Tile X", default = 2.0, update = update_uv_tiling)
-    bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
-    bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
-    
-    if bound_number in texcoords_data.get('entries', {}):
-        obj.tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
-        obj.tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
-        obj.rotate = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
-    else:
-        obj.tile_x = 2
-        obj.tile_y = 2
-        obj.rotate = 0.1
-        
-    if texture_folder:
-        apply_texture_to_object(obj, texture_folder)    
-        tile_uvs(obj, obj.tile_x, obj.tile_y)
-        rotate_uvs(obj, obj.rotate)  
-        
-        obj.data.update()
-            
-    return obj
-
-
-def create_blender_meshes(texture_folder: Path, load_all_texures: bool) -> None:
-    if not is_blender_running():
-        return
-        
-    delete_existing_meshes()
-    enable_developer_extras()
-    enable_vertex_snapping()
-    adjust_3D_view_settings()
-
-    load_textures(texture_folder, load_all_texures)
-
-    textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in texture_names]
-
-    created_meshes = []
-
-    for poly, texture in zip(polygons_data, textures):
-        created_meshes.append(create_mesh_from_polygon_data(poly, texture))
-                    
+                        
 ###################################################################################################################
 ###################################################################################################################
 
@@ -7177,6 +7180,7 @@ def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize
 #! ======================= CALL FUNCTIONS ======================= !#
 
 
+# Core
 create_folders(map_filename)
 create_map_info(map_name, map_filename, blitz_race_names, circuit_race_names, checkpoint_race_names)
 
@@ -7214,9 +7218,11 @@ create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP / "TUNE")
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
 create_lars_race_maker(map_filename, street_list, hudmap_vertices, set_lars_race_maker)
 
+
 # Misc
 BangerEditor(map_filename).append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
+
 
 # File Debugging
 debug_bai(debug_ai_data_file, debug_ai_file)
@@ -7230,6 +7236,8 @@ Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" 
 DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
 DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
+
+# Finalizing Part
 create_ar(map_filename)
 create_commandline(map_filename, Folder.MIDTOWNMADNESS, no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
@@ -7243,19 +7251,20 @@ print(create_bar_divider(colors_two))
 
 start_game(Folder.MIDTOWNMADNESS, play_game)
 
+
 # Blender
-initialize_depsgraph_update_handler()
+setup_blender()
 
 initialize_blender_panels()
-
-create_blender_meshes(texture_folder, load_all_texures)
-
 initialize_blender_operators()
 initialize_blender_waypoint_editor()
 
+set_blender_keybinding()
+
+create_blender_meshes(texture_folder, load_all_texures)
+
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / map_filename, "AI_PATHS.txt", visualize_ai_paths)
 
-set_blender_keybinding()
 
 # Cleanup
 post_editor_cleanup(delete_shop)
