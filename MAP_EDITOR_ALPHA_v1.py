@@ -801,6 +801,10 @@ class Vector2:
             
     def write(self, file: BinaryIO, byte_order: str = '<') -> None:
         write_pack(file, f'{byte_order}2f', self.x, self.y)
+        
+    @staticmethod
+    def binary_size() -> int:
+        return struct.calcsize('2f')
                 
     def __add__(self, other: 'Vector2') -> 'Vector2':
         return Vector2(self.x + other.x, self.y + other.y)
@@ -868,6 +872,10 @@ class Vector3:
     
     def write(self, file: BinaryIO, byte_order: str = '<') -> None:
         write_pack(file, f'{byte_order}3f', self.x, self.y, self.z)
+        
+    @staticmethod
+    def binary_size() -> int:
+        return struct.calcsize('3f')
         
     @classmethod
     def from_tuple(cls, vertex_tuple: Tuple[float, float, float]) -> 'Vector3':
@@ -944,6 +952,12 @@ class Vector3:
             return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
         else:
             return f'{{ {self.x:f}, {self.y:f}, {self.z:f} }}'
+        
+        
+class Vector4:
+    @staticmethod
+    def binary_size() -> int:
+        return struct.calcsize('4f')  
 
 
 def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
@@ -1348,16 +1362,19 @@ class Meshes:
             texture_count, flags, cache_size, texture_names, coordinates, 
             texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides
             )
-        
-    def write(self, output_file: Path) -> None:
+                    
+    def write(self, output_file: Path) -> None: 
+        self.calculate_cache_size()
+               
         with open(output_file, 'wb') as f:
             write_pack(f, '<16s', self.magic.encode('ascii').ljust(16, b'\0'))
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '<3f', self.radius, self.radius_sqr, self.bounding_box_radius)
             write_pack(f, '<2B', self.texture_count, self.flags)
+            
             f.write(b'\0' * 2)  # Padding
-            f.write(b'\0' * 4)  # Cache Size
-
+            write_pack(f, '<I', self.cache_size)
+            
             for texture_name in self.texture_names:
                 write_pack(f, '<32s', texture_name.encode('ascii').ljust(32, b'\0'))
                 f.write(b'\0' * 16)
@@ -1384,7 +1401,36 @@ class Meshes:
                 while len(indices_side) <= Shape.TRIANGLE:
                     indices_side.append(0)
                 write_pack(f, f"{len(indices_side)}H", *indices_side)
-                               
+
+    @staticmethod       
+    def align_size(value: int) -> int:
+        return (value + 7) & ~7
+    
+    def calculate_cache_size(self) -> None:
+        self.cache_size = 0
+        
+        self.cache_size += self.align_size(self.vertex_count * Vector3.binary_size())
+
+        if self.vertex_count >= MESH_VERTEX_COUNT_THRESHOLD:
+            self.cache_size += self.align_size(8 * Vector3.binary_size())
+
+        if self.flags & agiMeshSet.NORMALS:
+            self.cache_size += self.align_size(self.adjunct_count * 3 * struct.calcsize('B'))
+
+        if self.flags & agiMeshSet.TEXCOORDS:
+            self.cache_size += self.align_size(self.adjunct_count * Vector2.binary_size())
+
+        if self.flags & agiMeshSet.COLORS:
+            self.cache_size += self.align_size(self.adjunct_count * struct.calcsize('I'))
+
+        self.cache_size += self.align_size(self.adjunct_count * struct.calcsize('H'))
+
+        if self.flags & agiMeshSet.PLANES:
+            self.cache_size += self.align_size(self.surface_count * Vector4.binary_size())
+
+        self.cache_size += self.align_size(self.indices_count * struct.calcsize('H'))
+        self.cache_size += self.align_size(self.surface_count * struct.calcsize('B'))
+                                       
     def debug(self, output_file: Path, debug_folder: Path, debug_meshes: bool) -> None:
         if not debug_meshes:
             return
