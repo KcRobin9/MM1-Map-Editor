@@ -780,10 +780,15 @@ bridge_config_list = [bridge_race_0, bridge_cnr]
 
 
 def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
-    return struct.unpack(fmt, file.read(struct.calcsize(fmt)))
+    return struct.unpack(fmt, file.read(calc_size(fmt)))
+
 
 def write_pack(file: BinaryIO, fmt: str, *args: object) -> None:
     file.write(struct.pack(fmt, *args))
+
+
+def calc_size(fmt: str) -> int:
+    return struct.calcsize(fmt)
 
 
 class Vector2:
@@ -804,7 +809,7 @@ class Vector2:
         
     @staticmethod
     def binary_size() -> int:
-        return struct.calcsize('2f')
+        return calc_size('2f')
                 
     def __add__(self, other: 'Vector2') -> 'Vector2':
         return Vector2(self.x + other.x, self.y + other.y)
@@ -875,7 +880,7 @@ class Vector3:
         
     @staticmethod
     def binary_size() -> int:
-        return struct.calcsize('3f')
+        return calc_size('3f')
         
     @classmethod
     def from_tuple(cls, vertex_tuple: Tuple[float, float, float]) -> 'Vector3':
@@ -957,7 +962,7 @@ class Vector3:
 class Vector4:
     @staticmethod
     def binary_size() -> int:
-        return struct.calcsize('4f')  
+        return calc_size('4f')  
 
 
 def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
@@ -1415,21 +1420,21 @@ class Meshes:
             self.cache_size += self.align_size(8 * Vector3.binary_size())
 
         if self.flags & agiMeshSet.NORMALS:
-            self.cache_size += self.align_size(self.adjunct_count * 3 * struct.calcsize('B'))
+            self.cache_size += self.align_size(self.adjunct_count * 3 * calc_size('B'))
 
         if self.flags & agiMeshSet.TEXCOORDS:
             self.cache_size += self.align_size(self.adjunct_count * Vector2.binary_size())
 
         if self.flags & agiMeshSet.COLORS:
-            self.cache_size += self.align_size(self.adjunct_count * struct.calcsize('I'))
+            self.cache_size += self.align_size(self.adjunct_count * calc_size('I'))
 
-        self.cache_size += self.align_size(self.adjunct_count * struct.calcsize('H'))
+        self.cache_size += self.align_size(self.adjunct_count * calc_size('H'))
 
         if self.flags & agiMeshSet.PLANES:
             self.cache_size += self.align_size(self.surface_count * Vector4.binary_size())
 
-        self.cache_size += self.align_size(self.indices_count * struct.calcsize('H'))
-        self.cache_size += self.align_size(self.surface_count * struct.calcsize('B'))
+        self.cache_size += self.align_size(self.indices_count * calc_size('H'))
+        self.cache_size += self.align_size(self.surface_count * calc_size('B'))
                                        
     def debug(self, output_file: Path, debug_folder: Path, debug_meshes: bool) -> None:
         if not debug_meshes:
