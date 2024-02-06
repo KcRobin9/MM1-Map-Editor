@@ -280,15 +280,6 @@ start_time = time.time()
 #! ======================= CONSTANTS & INITIALIZATIONS ======================= !#
 
 
-# Constants
-MESH_VERTEX_COUNT_THRESHOLD = 16
-CELL_CHARACTER_THRESHOLD = 254
-
-ROOM_DEFAULT = 0x1
-PROP_COLLIDE_FLAG = 0x800
-
-MOVE = shutil.move
-
 # Variables
 vertices = [] 
 polygons_data = []
@@ -297,6 +288,9 @@ texcoords_data = {}
 
 hudmap_vertices = []
 hudmap_properties = {}
+
+PROP_COLLIDE_FLAG = 0x800
+MOVE = shutil.move
 
 
 class Shape:
@@ -332,6 +326,12 @@ class NetworkMode:
     SINGLE = "SINGLE"
     MULTI = "MULTI"
     SINGLE_AND_MULTI = "All Modes"
+
+
+class Threshold:
+    MESH_VERTEX_COUNT = 16
+    CELL_CHARACTER_WARNING = 200
+    CELL_CHARACTER_LIMIT = 254
     
 
 class Portal:
@@ -426,7 +426,7 @@ class CopStartLane:
     PED = 1  # Broken, do not use (this feature was never finished by the developers)
     IN_TRAFFIC = 2    
 
-    
+
 class Rotation:
     AUTO = 0
     NORTH = 0.01
@@ -439,26 +439,7 @@ class Rotation:
     NORTH_WEST = -45
     AUTO = 0
    
-            
-class AudioProp:
-    MALLDOOR = 1
-    POLE = 3
-    SIGN = 4
-    MAILBOX = 5
-    METER = 6
-    TRASHCAN = 7
-    BENCH = 8
-    TREE = 11
-    TRASH_BOXES = 12    # Also used for "bridge crossgate"
-    NO_NAME_1 = 13      # Difficult to describe
-    BARREL = 15         # Also used for "dumpster"
-    PHONEBOOTH = 20
-    CONE = 22
-    NO_NAME_2 = 24      # Sounds a bit similar to "glass"
-    NEWSBOX = 25
-    GLASS = 27
-    
-    
+   
 class Color:
     RED = (1, 0, 0, 1)
     GREEN = (0, 1, 0, 1)
@@ -506,7 +487,7 @@ HUGE = 100000000000
 ################################################################################################################
 #! ======================= CARS & PROPS ======================= !#
 
-# NOTE:
+# Note:
 # Player Cars and Traffic Cars can be used as Opponent cars, Cop cars, and Props
 
 
@@ -537,6 +518,11 @@ class TrafficCar:
     LARGE_TRUCK = "vadiesels"
     TRAFFIC_BUS = "vabus"
     PLANE_SMALL = "vaboeing_small"
+
+
+class Anim:
+    PLANE = "plane"
+    ELTRAIN = "eltrain"
 
 
 class Prop:
@@ -582,6 +568,25 @@ class Prop:
     ELTRAIN_SUPPORT_WIDE = "dp_left6"
 
     PLANE_LARGE = "vaboeing"  # Note: No collision
+    
+    
+class AudioProp:
+    MALLDOOR = 1
+    POLE = 3
+    SIGN = 4
+    MAILBOX = 5
+    METER = 6
+    TRASHCAN = 7
+    BENCH = 8
+    TREE = 11
+    TRASH_BOXES = 12    # Also used for "bridge crossgate"
+    NO_NAME_1 = 13      # Difficult to describe
+    BARREL = 15         # Also used for "dumpster"
+    PHONEBOOTH = 20
+    CONE = 22
+    NO_NAME_2 = 24      # Sounds a bit similar to "glass"
+    NEWSBOX = 25
+    GLASS = 27
  
 ################################################################################################################   
 ################################################################################################################
@@ -713,12 +718,12 @@ cnr_waypoints = [
 
 #* SETUP V (optional, Animations)
 animations_data = {
-    'plane': [                  # you can only use "plane" and "eltrain", other objects will not work
+    Anim.PLANE: [                  # you can only use "plane" and "eltrain", other objects will not work
         (450, 30.0, -450),      # you can not have multiple Planes or Eltrains
         (450, 30.0, 450),       # you can set any number of coordinates for your path(s)
         (-450, 30.0, -450),     
         (-450, 30.0, 450)], 
-    'eltrain': [
+    Anim.ELTRAIN: [
         (180, 25.0, -180),
         (180, 25.0, 180), 
         (-180, 25.0, -180),
@@ -964,15 +969,8 @@ class Vector4:
     def binary_size() -> int:
         return calc_size('4f')  
 
-
-def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
-    try:
-        return (c - b).Cross(a - b).Normalize()
-    except:
-        return Vector3(0, 1, 0)
-        
 ################################################################################################################               
-################################################################################################################  
+################################################################################################################ 
 #! ======================= POLYGON CLASS ======================= !#
 
 
@@ -1007,7 +1005,8 @@ class Polygon:
           
     @classmethod
     def read(cls, f: BinaryIO) -> 'Polygon':
-        cell_id, mtl_index, flags = read_unpack(f, '<H2B')
+        cell_id, mtl_index, = read_unpack(f, '<HB')
+        flags = read_unpack(f, '<B')
         vert_indices = read_unpack(f, '<4H') 
         plane_edges = Vector3.readn(f, Shape.QUAD, '<')
         plane_n = Vector3.read(f, '<')
@@ -1018,7 +1017,8 @@ class Polygon:
         if len(self.vert_indices) <= Shape.TRIANGLE:  # Each polygon requires four vertex indices
             self.vert_indices += (0,) * (4 - len(self.vert_indices))
         
-        write_pack(f, '<H2B', self.cell_id, self.mtl_index, self.flags)
+        write_pack(f, '<HB', self.cell_id, self.mtl_index)
+        write_pack(f, '<B', self.flags)
         write_pack(f, '<4H', *self.vert_indices)
 
         for edge in self.plane_edges:
@@ -1044,10 +1044,15 @@ POLYGON
 ################################################################################################################               
 ################################################################################################################     
 
-VECTOR2_DEFAULT = Vector2(0.0, 0.0)  
-VECTOR3_DEFAULT = Vector3(0.0, 0.0, 0.0) 
-POLYGON_FILLER = Polygon(0, 0, 0, [0, 0, 0, 0], [VECTOR3_DEFAULT for _ in range(4)], VECTOR3_DEFAULT, [0.0], 0)
-polys = [POLYGON_FILLER]
+
+class Default:
+    ROOM = 1
+    VECTOR_2 = Vector2(0, 0)
+    VECTOR_3 = Vector3(0, 0, 0)
+
+
+Default.POLYGON = Polygon(0, 0, 0, [0, 0, 0, 0], [Default.VECTOR_3 for _ in range(4)], Default.VECTOR_3, [0.0], 0)
+polys = [Default.POLYGON]
         
 ################################################################################################################               
 ################################################################################################################          
@@ -1147,7 +1152,7 @@ class Bounds:
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
         magic = "2DNB"
-        offset = VECTOR3_DEFAULT
+        offset = Default.VECTOR_3
         x_dim, y_dim, z_dim = 0, 0, 0
         center = calculate_center(vertices)
         radius = calculate_radius(vertices, center)
@@ -1161,9 +1166,9 @@ class Bounds:
         height_scale = 0.0
         cache_size = 0
         
-        hot_verts = [VECTOR3_DEFAULT]  
+        hot_verts = [Default.VECTOR_3]  
         edge_verts_1, edge_verts_2 = [0], [1] 
-        edge_plane_n = [VECTOR3_DEFAULT] 
+        edge_plane_n = [Default.VECTOR_3] 
         edge_plane_d = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
@@ -1348,7 +1353,7 @@ class Meshes:
                                       
             texture_names = [read_binary_name(f, 32, 'ascii', 16) for _ in range(texture_count)]
             
-            if vertex_count < MESH_VERTEX_COUNT_THRESHOLD:
+            if vertex_count < Threshold.MESH_VERTEX_COUNT:
                 coordinates = Vector3.readn(f, vertex_count, '<')
             else:
                 coordinates = Vector3.readn(f, vertex_count + 8, '<')
@@ -1387,9 +1392,9 @@ class Meshes:
             for coordinate in self.coordinates:
                 coordinate.write(f, '<')
 
-            if self.vertex_count >= MESH_VERTEX_COUNT_THRESHOLD:
+            if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
                 for _ in range(8):
-                    VECTOR3_DEFAULT.write(f, '<')
+                    Default.VECTOR_3.write(f, '<')
                                                                         
             write_pack(f, f"{self.adjunct_count}B", *self.texture_darkness)
                         
@@ -1416,7 +1421,7 @@ class Meshes:
         
         self.cache_size += self.align_size(self.vertex_count * Vector3.binary_size())
 
-        if self.vertex_count >= MESH_VERTEX_COUNT_THRESHOLD:
+        if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
             self.cache_size += self.align_size(8 * Vector3.binary_size())
 
         if self.flags & agiMeshSet.NORMALS:
@@ -1803,6 +1808,13 @@ def calculate_bounding_box_radius(vertices: List[Vector3]) -> float:
     return bounding_box_radius
 
 
+def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
+    try:
+        return (c - b).Cross(a - b).Normalize()
+    except:
+        return Vector3(0, 1, 0)
+
+
 def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     max_x_coord = max(vertex_coordinates, key = lambda coord: coord[0])
     min_x_coord = min(vertex_coordinates, key = lambda coord: coord[0])
@@ -1918,7 +1930,7 @@ def save_mesh(
         texture_name = [random.choice(random_textures)]
         
     texture_names.append(texture_name[0])
-    single_poly = [POLYGON_FILLER, poly]
+    single_poly = [Default.POLYGON, poly]
     
     mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
     
@@ -1940,8 +1952,8 @@ def initialize_mesh(
 
     coordinates = [coord for shape in shapes for coord in shape]
         
-    radius = calculate_radius(coordinates, VECTOR3_DEFAULT)  # Use Local Offset for the Center (this is not the case for the Bound files)
-    radiussq = calculate_radius_squared(coordinates, VECTOR3_DEFAULT)
+    radius = calculate_radius(coordinates, Default.VECTOR_3)  # Use Local Offset for the Center (this is not the case for the Bound files)
+    radiussq = calculate_radius_squared(coordinates, Default.VECTOR_3)
     bounding_box_radius = calculate_bounding_box_radius(coordinates)    
     
     vertex_count = len(coordinates)
@@ -2087,7 +2099,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     
     # All shapes must always have 4 vectors
     if len(vertices) == Shape.TRIANGLE:
-        edges.append(VECTOR3_DEFAULT)
+        edges.append(Default.VECTOR_3)
     
     return edges
 
@@ -2872,7 +2884,7 @@ save_mesh(
 ################################################################################################################ 
 #! ======================= SETUP PREPARATION ======================= !#
 
-# tiger
+
 def create_folders(map_filename: str) -> None:
     FOLDER_STRUCTURE = [
         Folder.BASE / "build", 
@@ -3234,7 +3246,7 @@ def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, ce
     always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
     cell_row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
 
-    while len(cell_row) >= CELL_CHARACTER_THRESHOLD:
+    while len(cell_row) >= Threshold.CELL_CHARACTER_LIMIT:
         always_visible_cell_ids.pop()
         always_visible_count = len(always_visible_cell_ids)
         always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
@@ -3268,15 +3280,15 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
             else:
                 row_length = len(row)
 
-            # Update max warning / error count
-            if 200 <= row_length < CELL_CHARACTER_THRESHOLD:
+            if Threshold.CELL_CHARACTER_WARNING <= row_length < Threshold.CELL_CHARACTER_LIMIT:
                 max_warning_count = max(max_warning_count, row_length)
-            elif row_length >= CELL_CHARACTER_THRESHOLD:
+                
+            elif row_length >= Threshold.CELL_CHARACTER_LIMIT:
                 max_error_count = max(max_error_count, row_length)
 
             f.write(row)
 
-        if 200 <= max_warning_count < CELL_CHARACTER_THRESHOLD:
+        if Threshold.CELL_CHARACTER_WARNING <= max_warning_count < Threshold.CELL_CHARACTER_LIMIT:
             warning_message = f"""
             ***WARNING***
             Close to row character limit 254 in .CELLS file. 
@@ -3287,7 +3299,7 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
             """
             print(warning_message)
         
-        elif max_error_count >= CELL_CHARACTER_THRESHOLD:
+        elif max_error_count >= Threshold.CELL_CHARACTER_LIMIT:
             error_message = f"""
             ***ERROR***
             Character limit of 254 exceeded in .CELLS file.
@@ -3964,7 +3976,7 @@ class Bangers:
             cls.write_n(f, bangers)
         
             for banger in bangers:
-                write_pack(f, '<2H', ROOM_DEFAULT, PROP_COLLIDE_FLAG)  
+                write_pack(f, '<2H', Default.ROOM, PROP_COLLIDE_FLAG)  
                 banger.offset.write(f, '<')
                 banger.face.write(f, '<')
                 f.write(banger.name.encode('utf-8'))
@@ -4069,10 +4081,10 @@ class BangerEditor:
                 
                 for i in range(0, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
-                    self.props.append(Bangers(ROOM_DEFAULT, PROP_COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
+                    self.props.append(Bangers(Default.ROOM, PROP_COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
 
             else:
-                self.props.append(Bangers(ROOM_DEFAULT, PROP_COLLIDE_FLAG, offset, face, name + "\x00"))
+                self.props.append(Bangers(Default.ROOM, PROP_COLLIDE_FLAG, offset, face, name + "\x00"))
                 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if not append_props:
@@ -4176,7 +4188,7 @@ class Facades:
         return write_pack(f, '<I', len(facades))
         
     def write(self, f: BinaryIO) -> None: 
-        write_pack(f, '<2H', ROOM_DEFAULT, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
+        write_pack(f, '<2H', Default.ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
         write_pack(f, '<3f', *self.offset)  
         write_pack(f, '<3f', *self.face)
         write_pack(f, '<3f', *self.sides)
@@ -4278,7 +4290,7 @@ class FacadeEditor:
                 current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
                 sides = params.get('sides', (0.0, 0.0, 0.0))
                 scale = scales.get(params['name'], params.get('scale', 1.0))
-                facades.append(Facades(ROOM_DEFAULT, params['flags'], current_start, current_end, sides, scale, params['name']))
+                facades.append(Facades(Default.ROOM, params['flags'], current_start, current_end, sides, scale, params['name']))
 
         return facades
     
@@ -7103,10 +7115,10 @@ dlp_group_name = "BOUND\x00"
 
 # DLP Vertices
 dlp_normals = [
-    DLPVertex(0, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE),
-    DLPVertex(1, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE),
-    DLPVertex(2, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE),
-    DLPVertex(3, VECTOR3_DEFAULT, VECTOR2_DEFAULT, Color.WHITE)
+    DLPVertex(0, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
+    DLPVertex(1, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
+    DLPVertex(2, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
+    DLPVertex(3, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE)
     ]
 
 # Geometry Vertices
