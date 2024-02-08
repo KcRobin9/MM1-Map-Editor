@@ -265,7 +265,7 @@ top_divider = create_bar_divider(colors_one)
 bottom_divider = create_bar_divider(colors_one)
 buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
 
-last_run_time = load_last_editor_run_time(Folder.BASE / "last_run_time.pkl")
+last_run_time = load_last_editor_run_time(Folder.EDITOR_RESOURCES / "last_run_time.pkl")
 
 progress_thread = threading.Thread(
     target = continuous_progress_bar, 
@@ -2899,6 +2899,7 @@ def create_folders(map_filename: str) -> None:
         Folder.SHOP / "BND" / f"{map_filename}CITY",
         Folder.SHOP / "BND" / f"{map_filename}LM",
         Folder.BASE / "dev" / "CITY" / map_filename,
+        Folder.EDITOR_RESOURCES
         ]
     
     for path in FOLDER_STRUCTURE:
@@ -7305,7 +7306,7 @@ create_ar(map_filename)
 create_commandline(map_filename, Folder.MIDTOWNMADNESS, no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
 editor_time = time.time() - start_time
-save_editor_run_time(editor_time, Folder.BASE / "last_run_time.pkl")
+save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / "last_run_time.pkl")
 progress_thread.join()
 
 print("\n" + create_bar_divider(colors_two))
