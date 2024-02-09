@@ -420,11 +420,44 @@ class CopBehavior:
     PERSISTENT = FOLLOW | PUSH                    # Persistently following and pushing
     UNPREDICTABLE = ROADBLOCK | FOLLOW | SPINOUT  # Unpredictable mix of behaviors
     
+
+class CopDensity:
+    _0 = 0.0
+    _100 = 1.0  # The game only supports 0.0 and 1.0
+    
     
 class CopStartLane:
     STATIONARY = 0 
-    PED = 1  # Broken, do not use (this feature was never finished by the developers)
+    PED = 1  # Broken, do not use (this feature was never finished by the game's developers)
     IN_TRAFFIC = 2    
+    
+    
+class PedDensity:
+    _0 = 0.0
+    _10 = 0.1
+    _20 = 0.2
+    _30 = 0.3
+    _40 = 0.4
+    _50 = 0.5
+    _60 = 0.6
+    _70 = 0.7
+    _80 = 0.8
+    _90 = 0.9
+    _100 = 1.0
+    
+    
+class AmbientDensity:
+    _0 = 0.0
+    _10 = 0.1
+    _20 = 0.2
+    _30 = 0.3
+    _40 = 0.4
+    _50 = 0.5
+    _60 = 0.6
+    _70 = 0.7
+    _80 = 0.8
+    _90 = 0.9
+    _100 = 1.0
 
 
 class Rotation:
@@ -438,6 +471,43 @@ class Rotation:
     WEST = -90
     NORTH_WEST = -45
     AUTO = 0
+    
+    
+class Width:
+    AUTO = 0
+    DEFAULT = 15
+    ALLEY = 3
+    SMALL = 11
+    MEDIUM = 15
+    LARGE = 19
+    
+    
+class MaxOpponents:
+    _0 = 0
+    _1 = 1
+    _2 = 2
+    _3 = 3
+    _4 = 4
+    _5 = 5
+    _6 = 6
+    _7 = 7
+    _8 = 8
+    _128 = 128  # The game can (likely) support more than 128 opponents, however the game's "MAX_MOVERS" is capped at 128 
+                # (see: Open1560 / code / midtown / mmphysics / phys.cpp)  
+    
+    
+class Laps:
+    _0 = 0
+    _1 = 1
+    _2 = 2
+    _3 = 3
+    _4 = 4
+    _5 = 5
+    _6 = 6
+    _7 = 7
+    _8 = 8
+    _9 = 9
+    _10 = 10  # The game can load races with 1000+ laps, however the game's menu caps the number to 10
    
    
 class Color:
@@ -459,25 +529,7 @@ class Color:
     RED_DARK = "#af0000"
     RED_LIGHT = "#ff7f7f"
     YELLOW_LIGHT = "#ffffe0"
-    
-        
-# Opponent Count
-MAX_OPP_8 = 8 
-MAX_OPP_128 = 128 
 
-# Circuit Laps
-LAPS_2, LAPS_3, LAPS_5, LAPS_10 = 2, 3, 5, 10
-
-# Race Data
-NO_COPS, MAX_COPS = 0.0, 1.0  # The game only supports 0.0 and 1.0 for Cops
-NO_PEDS, MID_PEDS, MAX_PEDS = 0.0, 0.5, 1.0
-NO_AMBIENT, MID_AMBIENT, MAX_AMBIENT = 0.0, 0.5, 1.0
-
-# Checkpoint Width
-WIDTH_AUTO = SCALE_AUTO = 0
-LANE_ALLEY = 3
-LANE_4 = SCALE_DEFAULT = 15
-LANE_6 = 19
 
 # Misc
 NO, YES = 0, 1      # AI Street Properties (e.g. "YES" for the field "traffic_blocked")
@@ -605,86 +657,86 @@ checkpoint_race_names = ["Photo Finish"]
 
 # Races
 race_data = {
-    'BLITZ_0': {
-        'waypoints': [
+    "BLITZ_0": {
+        "waypoints": [
             [0.0, 0.0, 55.0, Rotation.NORTH, 12.0], 
             [0.0, 0.0, 15.0, Rotation.NORTH, 12.0], 
             [0.0, 0.0, -40.0, Rotation.NORTH, 12.0], 
             [0.0, 0.0, -130.0, Rotation.NORTH, 12.0], 
         ],
-        'mm_data': {
-            'ama': [TimeOfDay.NOON, Weather.CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999],        
-            'pro': [TimeOfDay.EVENING, Weather.CLOUDY, MAX_OPP_8, MAX_COPS, MAX_AMBIENT, MAX_PEDS, 3, 999], 
+        "mm_data": {
+            "ama": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._100, AmbientDensity._100, PedDensity._100, Laps._3, 999],        
+            "pro": [TimeOfDay.EVENING, Weather.CLOUDY, MaxOpponents._8, CopDensity._100, AmbientDensity._100, PedDensity._100, Laps._3, 999], 
         },
-        'aimap': {
-            'density': 0.25,
-            'num_of_police': 2,
-            'police_data': [
-                f'{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}',
-                f'{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}',
+        "aimap": {
+            "density": 0.25,
+            "num_of_police": 2,
+            "police_data": [
+                f"{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
+                f"{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
             ],
-            'num_of_exceptions': None,
-            'exceptions': [
+            "num_of_exceptions": None,
+            "exceptions": [
                 [4, 0.0, 45],
                 [5, 0.0, 45],
             ],
-            'num_of_opponents': 1,
+            "num_of_opponents": 1,
         },
-            'opponent_cars': {
+            "opponent_cars": {
                 PlayerCar.VW_BEETLE: [
                     [5.0, 0.0, 35.0], 
                     [5.0, 0.0, -130.0]
                 ], 
         },
     },
-    'RACE_0': {
-        'waypoints': [
-            [0.0, 245, -850, Rotation.SOUTH, LANE_4], 
-            [0.0, 110, -500, Rotation.SOUTH, LANE_4],  
-            [0.0, 110, -497, Rotation.SOUTH, LANE_4],   
+    "RACE_0": {
+        "waypoints": [
+            [0.0, 245, -850, Rotation.SOUTH, Width.MEDIUM], 
+            [0.0, 110, -500, Rotation.SOUTH, Width.MEDIUM],  
+            [0.0, 110, -497, Rotation.SOUTH, Width.MEDIUM],   
             [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
-            [35.0, 12.0, -95.0, Rotation.SOUTH, LANE_4], 
-            [35.0, 30.0, 0.0, Rotation.SOUTH, LANE_4], 
-            [35.0, 30.0, 40.0, Rotation.SOUTH, LANE_4], 
+            [35.0, 12.0, -95.0, Rotation.SOUTH, Width.MEDIUM], 
+            [35.0, 30.0, 0.0, Rotation.SOUTH, Width.MEDIUM], 
+            [35.0, 30.0, 40.0, Rotation.SOUTH, Width.MEDIUM], 
         ],
-        'mm_data': {
-            'ama': [TimeOfDay.NOON, Weather.CLEAR, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
-            'pro': [TimeOfDay.NOON, Weather.CLOUDY, MAX_OPP_8, NO_COPS, NO_AMBIENT, NO_PEDS],
+        "mm_data": {
+            "ama": [TimeOfDay.NOON, Weather.CLEAR, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
+            "pro": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
         },
-        'aimap': {
-            'density': 0.2,
-            'num_of_police': 0,
-            'police_data': [
-                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}',
+        "aimap": {
+            "density": 0.2,
+            "num_of_police": 0,
+            "police_data": [
+                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
-            'num_of_opponents': 1,
+            "num_of_opponents": 1,
         },
-            'opponent_cars': {
+            "opponent_cars": {
                 PlayerCar.PANOZ_GTR_1: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
         }
     },
-    'CIRCUIT_0': {
-        'waypoints': [
-            [0.0, 245, -850, Rotation.SOUTH, LANE_4], 
+    "CIRCUIT_0": {
+        "waypoints": [
+            [0.0, 245, -850, Rotation.SOUTH, Width.MEDIUM], 
             [0.0, 110, -500, Rotation.SOUTH, 30.0],    
             [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
-            [35.0, 12.0, -95.0, Rotation.SOUTH, LANE_4], 
-            [35.0, 30.0, 0.0, Rotation.SOUTH, LANE_4], 
-            [35.0, 30.0, 40.0, Rotation.SOUTH, LANE_4], 
+            [35.0, 12.0, -95.0, Rotation.SOUTH, Width.MEDIUM], 
+            [35.0, 30.0, 0.0, Rotation.SOUTH, Width.MEDIUM], 
+            [35.0, 30.0, 40.0, Rotation.SOUTH, Width.MEDIUM], 
         ],
-        'mm_data': {
-            'ama': [TimeOfDay.NIGHT, Weather.RAIN, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_2],
-            'pro': [TimeOfDay.NIGHT, Weather.SNOW, MAX_OPP_8, NO_COPS, MID_AMBIENT, MID_PEDS, LAPS_3],
+        "mm_data": {
+            "ama": [TimeOfDay.NIGHT, Weather.RAIN, MaxOpponents._8, CopDensity._0, AmbientDensity._50, PedDensity._50, Laps._2],
+            "pro": [TimeOfDay.NIGHT, Weather.SNOW, MaxOpponents._8, CopDensity._0, AmbientDensity._50, PedDensity._50, Laps._3],
         },
-        'aimap': {
-            'density': 0.2,
-            'num_of_police': 0,
-            'police_data': [
-                f'{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}',
+        "aimap": {
+            "density": 0.2,
+            "num_of_police": 0,
+            "police_data": [
+                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
-            'num_of_opponents': 2,
+            "num_of_opponents": 2,
         },
-        'opponent_cars': {
+        "opponent_cars": {
             TrafficCar.WHITE_LIMO: [
                 [-10.0, 245, -850], 
                 [0.0, 0.0, -100],
@@ -3050,7 +3102,7 @@ def write_waypoints(output_file, waypoints, race_desc: str, race_index: int, opp
             
             # Opponent Waypoints
             for waypoint in waypoints:
-                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {LANE_4}, {Rotation.AUTO}, 0, 0,\n"
+                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {Width.MEDIUM}, {Rotation.AUTO}, 0, 0,\n"
                 f.write(waypoint_line)
                 
         else:
@@ -5243,7 +5295,7 @@ def get_first_and_last_street_vertices(street_list):
         vertices = street["vertices"]
         if vertices: 
             for vertex in (vertices[0], vertices[-1]):
-                processed = [vertex[0], vertex[1], vertex[2], Rotation.AUTO, LANE_6, 0.0, 0.0, 0.0, 0.0]
+                processed = [vertex[0], vertex[1], vertex[2], Rotation.AUTO, Width.LARGE, 0.0, 0.0, 0.0, 0.0]
                 processed_vertices.append(processed)  
 
 
@@ -6359,7 +6411,7 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
 
   
 def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
-                    rotation_deg: float = Rotation.NORTH, scale: float = SCALE_DEFAULT, name: Optional[str] = None, 
+                    rotation_deg: float = Rotation.NORTH, scale: float = Width.DEFAULT, name: Optional[str] = None, 
                     flag_color: Tuple[float, float, float, float] = Color.BLUE) -> bpy.types.Object:                
     
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
@@ -6486,8 +6538,8 @@ def load_waypoints_from_csv(waypoint_file: Path) -> None:
             next_waypoint = waypoints_data[wp_idx + 1]
             rotation_deg = calculate_waypoint_rotation(x, z, next_waypoint[0], next_waypoint[2]) 
 
-        if scale == SCALE_AUTO:
-            scale = SCALE_DEFAULT
+        if scale == Width.AUTO:
+            scale = Width.DEFAULT
 
         waypoint = create_waypoint(x, y, z, -rotation_deg, scale, waypoint_name)
         
