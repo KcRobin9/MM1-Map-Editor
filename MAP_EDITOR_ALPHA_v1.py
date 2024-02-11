@@ -62,90 +62,90 @@ map_filename = "First_City"                     # One word (no spaces)  --- name
 
 
 #* SETUP II (Map Creation)      
-play_game = True                # change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = True              # change to "True" to delete the raw city files after the .AR file has been created
+play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
+delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_props = True                # change to "True" if you want PROPS
-set_bridges = True              # change to "True" if you want BRIDGES
-set_facades = True              # change to "True" if you want FACADES
-set_physics = True              # change to "True" if you want PHYSICS (custom)
-set_animations = True           # change to "True" if you want ANIMATIONS (plane and eltrain)
-set_texture_sheet = True        # change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures and modified existing Textures)
+set_props = True                # Change to "True" if you want PROPS
+set_bridges = True              # Change to "True" if you want BRIDGES
+set_facades = True              # Change to "True" if you want FACADES
+set_physics = True              # Change to "True" if you want PHYSICS (custom)
+set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
+set_texture_sheet = True        # Change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures and modified existing Textures)
 
 # Minimap
-set_minimap = True              # change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-minimap_outline_color = None    # change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
+set_minimap = True              # Change to "True" if you want a MINIMAP (defaults to False when Blender is running)
+minimap_outline_color = None    # Change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
 
 # AI
-set_ai_streets = True           # change to "True" if you want AI streets
-set_reverse_ai_streets = False  # change to "True" if you want to add reverse AI streets
-set_lars_race_maker = False     # change to "True" if you want to create "Lars Race Maker" 
-visualize_ai_paths = False      # change to "True" if you want to visualize the AI streets in the Blender 
+set_ai_streets = True           # Change to "True" if you want AI streets
+set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI streets
+set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
+visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
 
 # Start Position
-# To manually set car start position in cruise, adjust the lines below and make sure no polygon has the option 'base = True'
-# cruise_start_position = (-83.0, 18.0, -114.0)
+# To manually set car start position in cruise, adjust the coordinates below and make sure no polygon has the option "base = True"
 # cruise_start_position = (40.0, 30.0, -40.0)
 
-disable_progress_bar = False    # change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
+disable_progress_bar = False    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
 ################################################################################################################
 
 # Misc
-set_dlp = False                 # change to "True" if you want to create a DLP file 
+set_dlp = False                 # Change to "True" if you want to create a DLP file 
 
-append_props = False            # change to "True" if you want to append props
+append_props = False            # Change to "True" if you want to append props
 append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
 append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
-randomize_textures = False      # change to "True" if you want to randomize all textures in your Map
+randomize_textures = False      # Change to "True" if you want to randomize all textures in your Map
 random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
 
 ################################################################################################################
 
-# Blender Input Textures     
-texture_folder = Folder.EDITOR_RESOURCES / "TEXTURES"         
-load_all_texures = False        # change to "True" if you want to load all textures (materials) (slower loading time)
-                                # change to "False" if you want to load only the textures that are used in your Map (faster loading time)
+# Blender          
+load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
+                                # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
-# Blender Waypoint Editor 
-waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  # input waypoint file
+# Input waypoint file
+waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  
 
-waypoint_number_input, waypoint_type_input = "0", "RACE"  # waypoints from the Editor's "race_data" dictionary
-    
+# Waypoints from the Editor ("race_data")
+waypoint_number_input = "0", 
+waypoint_type_input = "RACE"
+
 ################################################################################################################
 
 # Advanced
-no_ui = False                   # change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # other race types are currently not supported by the game in custom maps
-no_ai = False                   # change to "True" if you want to disable the AI and AI paths
+no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
+no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
+no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
 
-less_logs = False               # change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
-more_logs = False               # change to "True" if you want additional logs and open a logging console when running the game
+less_logs = False               # Change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
+more_logs = False               # Change to "True" if you want additional logs and open a logging console when running the game
 
-lower_portals = False           # change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
-truncate_cells = False			# change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
+lower_portals = False           # Change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # Change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
+truncate_cells = False			# Change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
 
-fix_faulty_quads = False        # change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
+fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 ################################################################################################################
 
 # Editor Debugging
-debug_props = False             # change to "True" if you want a PROPS Debug text file
-debug_meshes = False            # change to "True" if you want MESH Debug text files 
-debug_bounds = False            # change to "True" if you want a BOUNDS Debug text file
-debug_facades = False           # change to "True" if you want a FACADES Debug text file
-debug_physics = False           # change to "True" if you want a PHYSICS Debug text file
-debug_portals = False           # change to "True" if you want a PORTALS Debug text file
-debug_lighting = False          # change to "True" if you want a LIGHTING Debug text file
-debug_minimap = False           # change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
-debug_minimap_id = False        # change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
+debug_props = False             # Change to "True" if you want a PROPS Debug text file
+debug_meshes = False            # Change to "True" if you want MESH Debug text files 
+debug_bounds = False            # Change to "True" if you want a BOUNDS Debug text file
+debug_facades = False           # Change to "True" if you want a FACADES Debug text file
+debug_physics = False           # Change to "True" if you want a PHYSICS Debug text file
+debug_portals = False           # Change to "True" if you want a PORTALS Debug text file
+debug_lighting = False          # Change to "True" if you want a LIGHTING Debug text file
+debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
+debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
-round_debug_values = True       # change to "True" if you want to round (some) debug values to 2 decimals
+round_debug_values = True       # Change to "True" if you want to round (some) debug values to 2 decimals
 
-# Input File Debugging, the output files are written to: "Resources / Debug / ..."
+# Input File Debugging | The Output Files are written to: "Resources / Debug / ..."
 debug_props_file = False
 debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 
@@ -159,10 +159,10 @@ debug_ai_file = False
 debug_ai_data_file = Folder.EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
 
 debug_meshes_file = False
-debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input MESH file here
+debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input Mesh file here
 
 debug_meshes_folder = False
-debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input MESH folder here
+debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input Mesh folder here
 
 debug_bounds_file = False
 debug_bounds_data_file = Folder.EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
@@ -330,15 +330,17 @@ class NetworkMode:
 
 class Threshold:
     MESH_VERTEX_COUNT = 16
+    CELL_TYPE_SWITCH = 200
     CELL_CHARACTER_WARNING = 200
     CELL_CHARACTER_LIMIT = 254
+    VERTEX_INDEX_COUNT = 32768
     
 
 class Portal:
     ACTIVE = 0x1
-    RESET_CLIP = 0x2          # Reset Clip MinX, MaxX, MinY, MaxY | Open Area?
-    RESET_X = 0x4             # Reset MinX or MaxX depending on direction | Half-Open Area?
-    MUST_BE_INFRONT = 0x8     # Must be infront (or behind?) portal plane
+    OPEN_AREA = 0x2         # Reset Clip MinX, MaxX, MinY, MaxY 
+    HALF_OPEN_AREA = 0x4    # Reset MinX or MaxX depending on direction
+    PLANE = 0x8             # Must be infront (or behind?) portal plane
     
     
 class agiMeshSet:
@@ -384,7 +386,7 @@ class PlaneEdgesWinding:
     QUAD_Y_AXIS = 0x4 | 0x1  # Is Quad and PlaneEdges are projected along Y axis
     QUAD_Z_AXIS = 0x4 | 0x2  # Is Quad and PlaneEdges are projected along Z axis
 
-    FLIP_WINDING_X_AXIS = 0x8      # Flip Winding and PlaneEdges are projected along X axis
+    FLIP_WINDING_X_AXIS = 0x8        # Flip Winding and PlaneEdges are projected along X axis
     FLIP_WINDING_Y_AXIS = 0x8 | 0x1  # Flip Winding and PlaneEdges are projected along Y axis
     FLIP_WINDING_Z_AXIS = 0x8 | 0x2  # Flip Winding and PlaneEdges are projected along Z axis
 
@@ -532,7 +534,7 @@ class Color:
 
 
 # Misc
-NO, YES = 0, 1      # AI Street Properties (e.g. "YES" for the field "traffic_blocked")
+NO, YES = 0, 1      # For example, AI Street Properties ("traffic_blocked = YES")
 HUGE = 100000000000
 
 ################################################################################################################               
@@ -578,8 +580,8 @@ class Anim:
 
 
 class Prop:
-    BRIDGE_SLIM = "tpdrawbridge04"      # dimension: x: 30.0 y: 5.9 z: 32.5
-    BRIDGE_WIDE = "tpdrawbridge06"      # dimension: x: 40.0 y: 5.9 z: 32.5
+    BRIDGE_SLIM = "tpdrawbridge04"      # Dimension: x: 30.0 y: 5.9 z: 32.5
+    BRIDGE_WIDE = "tpdrawbridge06"      # Dimension: x: 40.0 y: 5.9 z: 32.5
     CROSSGATE = "tpcrossgate06"
     BRIDGE_BUILDING = "tpbridgebuild"
 
@@ -770,9 +772,9 @@ cnr_waypoints = [
 
 #* SETUP V (optional, Animations)
 animations_data = {
-    Anim.PLANE: [                  # you can only use "plane" and "eltrain", other objects will not work
-        (450, 30.0, -450),      # you can not have multiple Planes or Eltrains
-        (450, 30.0, 450),       # you can set any number of coordinates for your path(s)
+    Anim.PLANE: [               # You can only use "plane" and "eltrain", other objects will not work
+        (450, 30.0, -450),      # You can not have multiple Planes or Eltrains
+        (450, 30.0, 450),       # You can set any number of coordinates for your path(s)
         (-450, 30.0, -450),     
         (-450, 30.0, 450)], 
     Anim.ELTRAIN: [
@@ -1091,7 +1093,8 @@ POLYGON
     Vertices Coordinates: {vertices_coordinates}
     Plane Edges: {self.plane_edges}
     Plane N: {self.plane_n}
-    Plane D: {self.plane_d}"""
+    Plane D: {self.plane_d}
+    """
     
 ################################################################################################################               
 ################################################################################################################     
@@ -1288,10 +1291,10 @@ class Bounds:
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
         
-        with open(input_file, 'rb') as in_f:
+        with open(input_file, "rb") as in_f:
             bnd = Bounds.read(in_f)
 
-        with open(output_file, 'w') as out_f:
+        with open(output_file, "w") as out_f:
             out_f.write(repr(bnd))
             
     @staticmethod
@@ -1302,7 +1305,7 @@ class Bounds:
         if not input_folder.exists():
             raise FileNotFoundError(f"The folder {input_folder} does not exist.")
 
-        bnd_files = list(input_folder.glob('*.BND'))
+        bnd_files = list(input_folder.glob("*.BND"))
         
         if not bnd_files:
             raise FileNotFoundError(f"No .BND files found in {input_folder}.")
@@ -1394,7 +1397,7 @@ class Meshes:
         
     @classmethod
     def read(cls, input_file: Path) -> 'Meshes':
-        with open(input_file, 'rb') as f:
+        with open(input_file, "rb") as f:
             magic = read_binary_name(f, 16)
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sqr, bounding_box_radius = read_unpack(f, '<3f')
@@ -1428,7 +1431,7 @@ class Meshes:
     def write(self, output_file: Path) -> None: 
         self.calculate_cache_size()
                
-        with open(output_file, 'wb') as f:
+        with open(output_file, "wb") as f:
             write_pack(f, '<16s', self.magic.encode('ascii').ljust(16, b'\0'))
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '<3f', self.radius, self.radius_sqr, self.bounding_box_radius)
@@ -1516,7 +1519,7 @@ class Meshes:
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
 
-        with open(output_file, 'w') as out_f:
+        with open(output_file, "w") as out_f:
             out_f.write(str(cls.read(input_file)))
                 
     @classmethod
@@ -1527,7 +1530,7 @@ class Meshes:
         if not input_folder.exists():
             raise FileNotFoundError(f"The folder {input_folder} does not exist.")
 
-        mesh_files = list(input_folder.glob('*.BMS'))
+        mesh_files = list(input_folder.glob("*.BMS"))
         
         if not mesh_files:
             raise FileNotFoundError(f"No .BMS files found in {input_folder}.")
@@ -1595,7 +1598,7 @@ class DLPVertex:
             Normal: {self.normal}
             UV: {self.uv}
             Color: {self.color}
-        """
+            """
     
             
 class DLPPatch:
@@ -1646,7 +1649,7 @@ class DLPPatch:
         Phys Idx: {self.phys_idx}
         Name: {self.name}
         Vertex: {self.vertices}
-    """
+        """
 
 
 class DLPGroup:
@@ -1683,7 +1686,7 @@ class DLPGroup:
         Num Patches: {self.num_patches}
         Vertex Indices: {self.vertex_indices}
         Patch Indices: {self.patch_indices}
-    """
+        """
 
 
 class DLP:
@@ -1950,7 +1953,7 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
         
 
 def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
-    if bound_number < 200:
+    if bound_number < Threshold.CELL_TYPE_SWITCH:
         target_folder = Folder.SHOP / "BMS" / f"{map_filename}LM"
     else:
         target_folder = Folder.SHOP / "BMS" / f"{map_filename}CITY"
@@ -1989,7 +1992,7 @@ def save_mesh(
     mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
-        mesh.debug(Path(mesh_filename).with_suffix('.txt'), Folder.DEBUG_RESOURCES / "MESHES" / map_filename, debug_meshes)
+        mesh.debug(Path(mesh_filename).with_suffix(".txt"), Folder.DEBUG_RESOURCES / "MESHES" / map_filename, debug_meshes)
 
 
 def initialize_mesh(
@@ -2185,8 +2188,7 @@ def create_polygon(
     
     polygons_data.append(polygon_info)
     
-    # Ensure the polygon has 3 or 4 vertices
-    if len(vertex_coordinates) != Shape.TRIANGLE and len(vertex_coordinates) != Shape.QUAD:
+    if len(vertex_coordinates) not in (Shape.TRIANGLE, Shape.QUAD):
         error_message = f"""\n
         ***ERROR***
         Unsupported number of vertices.
@@ -2194,8 +2196,7 @@ def create_polygon(
         """
         raise ValueError(error_message)
 
-    # Ensure a valid bound number (bound numbers outside these ranges will crash the game)
-    if bound_number <= 0 or bound_number == 200 or bound_number >= 32767:
+    if bound_number <= 0 or bound_number == Threshold.CELL_TYPE_SWITCH or bound_number >= Threshold.VERTEX_INDEX_COUNT:
         error_message = """
         ***ERROR***
         Possible problems:
@@ -2223,7 +2224,7 @@ def create_polygon(
     if sort_vertices: 
         vertex_coordinates = sort_coordinates(vertex_coordinates)
         
-    # # Base polygon           
+    # Base polygon           
     if base:
         x, y, z = calculate_center_tuples(vertex_coordinates)
         cruise_start_position = (x, y + 15, z)
@@ -2372,7 +2373,10 @@ class Texture:
     BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
 
 
+# Bookmark 
 #! ==============================  MAIN AREA ============================== #*
+
+
 # Colored Checkpoints
 create_polygon(
     bound_number = 99,
@@ -7005,10 +7009,10 @@ street_example = {
     "intersection_types": [IntersectionType.STOP_LIGHT, IntersectionType.STOP_LIGHT],
     "stop_light_names": [Prop.STOP_LIGHT_DUAL, Prop.STOP_LIGHT_DUAL],
     "stop_light_positions": [
-         (10.0, 0.0, -20.0),        # offset 1
-         (10.01, 0.0, -20.0),       # direction 1
-         (-10.0, 0.0, -20.0),       # offset 2
-         (-10.0, 0.0, -20.1)],      # direction 2
+         (10.0, 0.0, -20.0),        # Offset 1
+         (10.01, 0.0, -20.0),       # Direction 1
+         (-10.0, 0.0, -20.0),       # Offset 2
+         (-10.0, 0.0, -20.1)],      # Direction 2
     "traffic_blocked": [NO, NO],
     "ped_blocked": [NO, NO],
     "road_divided": NO,
@@ -7377,7 +7381,7 @@ initialize_blender_waypoint_editor()
 
 set_blender_keybinding()
 
-create_blender_meshes(texture_folder, load_all_texures)
+create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / map_filename, "AI_PATHS.txt", visualize_ai_paths)
 
