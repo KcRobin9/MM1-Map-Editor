@@ -1029,23 +1029,24 @@ class Vector4:
 
 
 class Polygon:
-    def __init__(self, cell_id: int, mtl_index: int, flags: int, vert_indices: List[int],
-                 plane_edges: List[Vector3], plane_n: Vector3, plane_d: float, 
+    def __init__(self, cell_id: int, material_index: int, flags: int, vertex_index: List[int],
+                 plane_edges: List[Vector3], plane_normal: Vector3, plane_distance: float, 
                  cell_type: int = 0, always_visible: bool = False) -> None:
         
         self.cell_id = cell_id
-        self.mtl_index = mtl_index
+        self.material_index = material_index
         self.flags = flags
-        self.vert_indices = vert_indices
+        self.vertex_index = vertex_index
         self.plane_edges = plane_edges
-        self.plane_n = plane_n
+        self.plane_normal = plane_normal
         
-        if isinstance(plane_d, list) and len(plane_d) == 1:
-            plane_d = plane_d[0]
-        elif isinstance(plane_d, np.float64):
-            plane_d = float(plane_d)
+        if isinstance(plane_distance, list) and len(plane_distance) == 1:
+            plane_distance = plane_distance[0]
+        elif isinstance(plane_distance, np.float64):
+            plane_distance = float(plane_distance)
             
-        self.plane_d = plane_d
+        self.plane_distance = plane_distance
+        
         self.cell_type = cell_type
         self.always_visible = always_visible
         
@@ -1059,41 +1060,41 @@ class Polygon:
           
     @classmethod
     def read(cls, f: BinaryIO) -> 'Polygon':
-        cell_id, mtl_index, = read_unpack(f, '<HB')
+        cell_id, material_index, = read_unpack(f, '<HB')
         flags = read_unpack(f, '<B')
-        vert_indices = read_unpack(f, '<4H') 
+        vertex_index = read_unpack(f, '<4H') 
         plane_edges = Vector3.readn(f, Shape.QUAD, '<')
-        plane_n = Vector3.read(f, '<')
-        plane_d = read_unpack(f, '<f')
-        return cls(cell_id, mtl_index, flags, vert_indices, plane_edges, plane_n, plane_d)
+        plane_normal = Vector3.read(f, '<')
+        plane_distance = read_unpack(f, '<f')
+        return cls(cell_id, material_index, flags, vertex_index, plane_edges, plane_normal, plane_distance)
             
     def write(self, f: BinaryIO) -> None:
-        if len(self.vert_indices) <= Shape.TRIANGLE:  # Each polygon requires four vertex indices
-            self.vert_indices += (0,) * (4 - len(self.vert_indices))
+        if len(self.vertex_index) <= Shape.TRIANGLE:  # Each polygon requires four vertex indices
+            self.vertex_index += (0,) * (4 - len(self.vertex_index))
         
-        write_pack(f, '<HB', self.cell_id, self.mtl_index)
+        write_pack(f, '<HB', self.cell_id, self.material_index)
         write_pack(f, '<B', self.flags)
-        write_pack(f, '<4H', *self.vert_indices)
+        write_pack(f, '<4H', *self.vertex_index)
 
         for edge in self.plane_edges:
             edge.write(f, '<')
             
-        self.plane_n.write(f, '<')
-        write_pack(f, '<f', self.plane_d)
+        self.plane_normal.write(f, '<')
+        write_pack(f, '<f', self.plane_distance)
     
     def __repr__(self, bnd_instance) -> str:
-        vertices_coordinates = [bnd_instance.vertices[idx] for idx in self.vert_indices]
+        vertices_coordinates = [bnd_instance.vertices[idx] for idx in self.vertex_index]
         # plane_d = ', '.join(f'{d:.2f}' for d in self.plane_d)
         return f"""
 POLYGON
     Bound Number: {self.cell_id}
-    Material Index: {self.mtl_index}
+    Material Index: {self.material_index}
     Flags: {self.flags}
-    Vertices Indices: {self.vert_indices}
+    Vertices Indices: {self.vertex_index}
     Vertices Coordinates: {vertices_coordinates}
     Plane Edges: {self.plane_edges}
-    Plane N: {self.plane_n}
-    Plane D: {self.plane_d}
+    Plane N: {self.plane_normal}
+    Plane D: {self.plane_distance}
     """
     
 ################################################################################################################               
@@ -1121,7 +1122,7 @@ class Bounds:
                  x_scale: float, z_scale: float, num_indices: int, height_scale: float, cache_size: int, 
                  vertices: List[Vector3], polys: List[Polygon],
                  hot_verts: List[Vector3], edge_verts_1: List[int], edge_verts_2: List[int], 
-                 edge_plane_n: List[Vector3], edge_plane_d: List[float],
+                 edge_plane_normal: List[Vector3], edge_plane_distance: List[float],
                  row_offsets: Optional[List[int]], bucket_offsets: Optional[List[int]], 
                  row_buckets: Optional[List[int]], fixed_heights: Optional[List[int]]) -> None:
         
@@ -1152,8 +1153,8 @@ class Bounds:
         self.hot_verts = hot_verts
         self.edge_verts_1 = edge_verts_1
         self.edge_verts_2 = edge_verts_2
-        self.edge_plane_n = edge_plane_n
-        self.edge_plane_d = edge_plane_d
+        self.edge_plane_normal = edge_plane_normal
+        self.edge_plane_distance = edge_plane_distance
         self.row_offsets = row_offsets
         self.bucket_offsets = bucket_offsets
         self.row_buckets = row_buckets
@@ -1182,8 +1183,8 @@ class Bounds:
         hot_verts = Vector3.readn(f, num_hot_verts_2, '<')
         edge_verts_1 = read_unpack(f, f'<{num_edges}I')
         edge_verts_2 = read_unpack(f, f'<{num_edges}I')
-        edge_plane_n = Vector3.readn(f, num_edges, '<')
-        edge_plane_d = read_unpack(f, f'<{num_edges}f')
+        edge_plane_normal = Vector3.readn(f, num_edges, '<')
+        edge_plane_distance = read_unpack(f, f'<{num_edges}f')
 
         row_offsets = None
         bucket_offsets = None
@@ -1200,7 +1201,7 @@ class Bounds:
             magic, offset, x_dim, y_dim, z_dim, center, radius, radius_sqr, bb_min, bb_max, 
             num_verts, num_polys, num_hot_verts_1, num_hot_verts_2, num_edges, 
             x_scale, z_scale, num_indices, height_scale, cache_size, vertices, polys,
-            hot_verts, edge_verts_1, edge_verts_2, edge_plane_n, edge_plane_d,
+            hot_verts, edge_verts_1, edge_verts_2, edge_plane_normal, edge_plane_distance,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
     
@@ -1223,8 +1224,8 @@ class Bounds:
         
         hot_verts = [Default.VECTOR_3]  
         edge_verts_1, edge_verts_2 = [0], [1] 
-        edge_plane_n = [Default.VECTOR_3] 
-        edge_plane_d = [0.0]  
+        edge_plane_normal = [Default.VECTOR_3] 
+        edge_plane_distance = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
         return cls(
@@ -1235,7 +1236,7 @@ class Bounds:
             x_scale, z_scale, num_indices, height_scale, cache_size, 
             vertices, polys, 
             hot_verts, edge_verts_1, edge_verts_2, 
-            edge_plane_n, edge_plane_d,
+            edge_plane_normal, edge_plane_distance,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
             
@@ -1351,8 +1352,8 @@ BOUND
     Hot Verts: {self.hot_verts}
     Edge Verts 1: {self.edge_verts_1}
     Edge Verts 2: {self.edge_verts_2}
-    Edge Plane N: {self.edge_plane_n}
-    Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_d)}\n  
+    Edge Plane N: {self.edge_plane_normal}
+    Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_distance)}\n  
     ======= Split =======\n
     Row Offsets: {self.row_offsets}\n
     ======= Split =======\n
@@ -1372,7 +1373,7 @@ class Meshes:
     def __init__(self, magic: str, vertex_count: int, adjunct_count: int, surface_count: int, indices_count: int,
                  radius: float, radius_sqr: float, bounding_box_radius: float,
                  texture_count: int, flags: int, cache_size: int,
-                 texture_names: List[str], coordinates: List[Vector3],
+                 texture_names: List[str], vertices: List[Vector3],
                  texture_darkness: List[int], tex_coords: List[float], enclosed_shape: List[int],
                  surface_sides: List[int], indices_sides: List[List[int]]) -> None:
 
@@ -1388,7 +1389,7 @@ class Meshes:
         self.flags = flags
         self.cache_size = cache_size
         self.texture_names = texture_names
-        self.coordinates = coordinates
+        self.vertices = vertices
         self.texture_darkness = texture_darkness
         self.tex_coords = tex_coords  
         self.enclosed_shape = enclosed_shape  
@@ -1409,9 +1410,9 @@ class Meshes:
             texture_names = [read_binary_name(f, 32, 'ascii', 16) for _ in range(texture_count)]
             
             if vertex_count < Threshold.MESH_VERTEX_COUNT:
-                coordinates = Vector3.readn(f, vertex_count, '<')
+                vertices = Vector3.readn(f, vertex_count, '<')
             else:
-                coordinates = Vector3.readn(f, vertex_count + 8, '<')
+                vertices = Vector3.readn(f, vertex_count + 8, '<')
                                         
             texture_darkness = list(read_unpack(f, f"{adjunct_count}B"))
             tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f"))
@@ -1424,7 +1425,7 @@ class Meshes:
         return cls(
             magic, vertex_count, adjunct_count, surface_count, indices_count, 
             radius, radius_sqr, bounding_box_radius, 
-            texture_count, flags, cache_size, texture_names, coordinates, 
+            texture_count, flags, cache_size, texture_names, vertices, 
             texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides
             )
                     
@@ -1444,8 +1445,8 @@ class Meshes:
                 write_pack(f, '<32s', texture_name.encode('ascii').ljust(32, b'\0'))
                 f.write(b'\0' * 16)
                             
-            for coordinate in self.coordinates:
-                coordinate.write(f, '<')
+            for vertex in self.vertices:
+                vertex.write(f, '<')
 
             if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
                 for _ in range(8):
@@ -1558,7 +1559,7 @@ MESH
     Flags: {self.flags}
     Cache Size: {self.cache_size}\n
     TextureNames: {self.texture_names}\n
-    Coordinates: {self.coordinates}\n
+    Vertices: {self.vertices}\n
     TextureDarkness: {self.texture_darkness}\n
     TexCoords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
     Enclosed Shape: {self.enclosed_shape}\n
@@ -1603,16 +1604,16 @@ class DLPVertex:
             
 class DLPPatch:
     def __init__(self, s_res: int, t_res: int, flags: int, r_opts: int, 
-                 mtl_idx: int, tex_idx: int, phys_idx: int, 
+                 material_index: int, texture_index: int, physics_index: int, 
                  vertices: List[DLPVertex], name: str) -> None:
         
         self.s_res = s_res
         self.t_res = t_res
         self.flags = flags
         self.r_opts = r_opts
-        self.mtl_idx = mtl_idx
-        self.tex_idx = tex_idx
-        self.phys_idx = phys_idx
+        self.material_index = material_index
+        self.texture_index = texture_index
+        self.physics_index = physics_index
         self.vertices = vertices
         self.name = name
         
@@ -1620,16 +1621,16 @@ class DLPPatch:
     def read(cls, f: BinaryIO) -> 'DLPPatch':
         s_res, t_res = read_unpack(f, '>2H')
         flags, r_opts = read_unpack(f, '>2H')
-        mtl_idx, tex_idx, phys_idx = read_unpack(f, '>3H')        
+        material_index, texture_index, physics_index = read_unpack(f, '>3H')        
         vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
         name_length, = read_unpack(f, '>I')
         name = read_unpack(f, f'>{name_length}s')[0].decode()     
-        return cls(s_res, t_res, flags, r_opts, mtl_idx, tex_idx, phys_idx, vertices, name)
+        return cls(s_res, t_res, flags, r_opts, material_index, texture_index, phys_idx, vertices, name)
     
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '>2H', self.s_res, self.t_res) 
         write_pack(f, '>2H', self.flags, self.r_opts)
-        write_pack(f, '>3H', self.mtl_idx, self.tex_idx, self.phys_idx)
+        write_pack(f, '>3H', self.material_index, self.texture_index, self.physics_index)
         
         for vertex in self.vertices:
             vertex.write(f)
@@ -1644,9 +1645,9 @@ class DLPPatch:
         T Res: {self.t_res}
         Flags: {self.flags}
         R Opts: {self.r_opts}
-        Mtl Idx: {self.mtl_idx}
-        Tex Idx: {self.tex_idx}
-        Phys Idx: {self.phys_idx}
+        Material Index: {self.material_index}
+        Texture Index: {self.texture_index}
+        Physics Index: {self.physics_index}
         Name: {self.name}
         Vertex: {self.vertices}
         """
@@ -1945,9 +1946,9 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
             adjusted_coords.extend([(x + center_x) * tile_x, (y + center_y) * tile_y])
         return adjusted_coords
     
-    if 'entries' not in texcoords_data:
-        texcoords_data['entries'] = {}
-    texcoords_data['entries'][bound_number] = {'tile_x': tile_x, 'tile_y': tile_y, 'angle_degrees': angle_degrees}
+    if "entries" not in texcoords_data:
+        texcoords_data["entries"] = {}
+    texcoords_data["entries"][bound_number] = {"tile_x": tile_x, "tile_y": tile_y, "angle_degrees": angle_degrees}
 
     return adjust_and_rotate_coords(coords, angle_degrees)
         
@@ -2002,8 +2003,9 @@ def initialize_mesh(
     magic = "3HSM"    
     flags = agiMeshSet.TEXCOORDS_AND_NORMALS
     cache_size = 0
-        
-    shapes = [[vertices[i] for i in poly.vert_indices] for poly in polys[1:]]  # Skip the first filler polygon
+       
+    # tiger 
+    shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys[1:]]  # Skip the first filler polygon
 
     coordinates = [coord for shape in shapes for coord in shape]
         
@@ -2039,10 +2041,10 @@ def initialize_mesh(
 
 
 def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
-    v1, v2, v3 = vertex_coordinates
+    vertex_1, vertex_2, vertex_3 = vertex_coordinates
     
-    edge1 = np.subtract(v2, v1)
-    edge2 = np.subtract(v3, v1)
+    edge1 = np.subtract(vertex_2, vertex_1)
+    edge2 = np.subtract(vertex_3, vertex_1)
     
     normal = np.cross(edge1, edge2)
     reference_up = np.array([0, 1, 0])
@@ -2050,9 +2052,9 @@ def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     dot_product = np.dot(normal, reference_up)
     
     if dot_product < 0: # If clockwise, swap the order of the vertices
-        return [v1, v3, v2]
+        return [vertex_1, vertex_3, vertex_2]
     else:               # If counterclockwise, no changes needed
-        return [v1, v2, v3]
+        return [vertex_1, vertex_2, vertex_3]
     
     
 def compute_normal(p1, p2, p3) -> Vector3:
@@ -2090,37 +2092,37 @@ def ensure_quad_ccw_order(vertex_coordinates):
 
 
 def compute_plane_edgenormals(p1, p2, p3):  # Only 3 vertices are being used  
-    v1 = np.subtract(p2, p1)
-    v2 = np.subtract(p3, p1)
+    vertex_1 = np.subtract(p2, p1)
+    vertex_2 = np.subtract(p3, p1)
 
-    planeN = np.cross(v1, v2)
-    planeN = planeN / np.linalg.norm(planeN)
+    plane_normal = np.cross(vertex_1, vertex_2)
+    plane_normal = plane_normal / np.linalg.norm(plane_normal)
 
-    planeD = -np.dot(planeN, p1)
+    plane_distance = -np.dot(plane_normal, p1)
 
-    planeN = np.round(planeN, 3)
-    planeD = round(planeD, 3)
+    plane_normal = np.round(plane_normal, 3)
+    plane_distance = round(plane_distance, 3)
 
-    return planeN, planeD
+    return plane_normal, plane_distance
 
 
 def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
-    planeN, _ = compute_plane_edgenormals(*vertices[:3]) 
+    plane_normal, _ = compute_plane_edgenormals(*vertices[:3]) 
 
     num_verts = len(vertices)  
         
     plane_edges = []
 
-    abs_plane_x = abs(planeN[0])
-    abs_plane_y = abs(planeN[1])
-    abs_plane_z = abs(planeN[2])
+    abs_plane_x = abs(plane_normal[0])
+    abs_plane_y = abs(plane_normal[1])
+    abs_plane_z = abs(plane_normal[2])
 
     negate = 1.0
 
     if abs_plane_x < abs_plane_y or abs_plane_x < abs_plane_z:
         if abs_plane_y < abs_plane_x or abs_plane_y < abs_plane_z:
-            if planeN[2] < 0.0:
+            if plane_normal[2] < 0.0:
                 negate = -1.0
             for i in range(num_verts):
                 A = vertices[i]
@@ -2128,7 +2130,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
                 D = B - A
                 plane_edges.append(np.array([-D[1] * negate, D[0] * negate, -np.dot([-D[1], D[0]], [A[0], A[1]])]))
         else:
-            if planeN[1] > 0.0:
+            if plane_normal[1] > 0.0:
                 negate = -1.0
             for i in range(num_verts):
                 A = vertices[i]
@@ -2136,7 +2138,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
                 D = B - A
                 plane_edges.append(np.array([-D[2] * negate, D[0] * negate, -np.dot([-D[2], D[0]], [A[0], A[2]])]))
     else:
-        if planeN[0] < 0.0:
+        if plane_normal[0] < 0.0:
             negate = -1.0
         for i in range(num_verts):
             A = vertices[i]
@@ -2235,7 +2237,7 @@ def create_polygon(
         
     # Plane Normals
     if wall_side is None:
-        plane_n, plane_d = compute_plane_edgenormals(*vertex_coordinates[:3])
+        plane_normal, plane_distance = compute_plane_edgenormals(*vertex_coordinates[:3])
     else:
         # Wall with varying X and Y coordinates
         if (max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates) > 0.1 and
@@ -2247,7 +2249,7 @@ def create_polygon(
             elif wall_side == "inside":
                 corners = [0, 0, 1, -max(coord[2] for coord in vertex_coordinates)]
             
-            plane_n, plane_d = corners[:3], corners[3]
+            plane_normal, plane_distance = corners[:3], corners[3]
             
         # Wall with varying Z and Y coordinates                               
         elif (abs(max(coord[0] for coord in vertex_coordinates) - min(coord[0] for coord in vertex_coordinates)) <= 0.15 and
@@ -2259,13 +2261,13 @@ def create_polygon(
             elif wall_side == "inside":
                 corners = [1, 0, 0, -min(coord[0] for coord in vertex_coordinates)]
                 
-            plane_n, plane_d = corners[:3], corners[3]
+            plane_normal, plane_distance = corners[:3], corners[3]
 
-    if isinstance(plane_n, np.ndarray):
-        plane_n = Vector3(*plane_n.tolist())
+    if isinstance(plane_normal, np.ndarray):
+        plane_normal = Vector3(*plane_normal.tolist())
         
-    elif isinstance(plane_n, list):
-        plane_n = Vector3(*plane_n)
+    elif isinstance(plane_normal, list):
+        plane_normal = Vector3(*plane_normal)
         
     # Finalize Polygon
     new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
@@ -2273,7 +2275,7 @@ def create_polygon(
     
     vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
             
-    poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_n, plane_d, cell_type, always_visible)
+    poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_normal, plane_distance, cell_type, always_visible)
     polys.append(poly)
         
     # Save HUD data
@@ -2294,8 +2296,8 @@ def user_notes():
     If you're setting a Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are OK)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the constants under 'Material types'    
-    N.B.: you can also set custom Material / Physics Properties (search for: "custom_physics" in the script)
+    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the constants under "Material types"    
+    Note: you can also set custom Material / Physics Properties (search for: "custom_physics" in the script)
     
     Texture (UV) mapping examples:
     "tex_coords = compute_uv(bound_number = 1, tile_x = 5, tile_y = 2, angle_degrees = 0)"
@@ -2955,7 +2957,6 @@ def create_folders(map_filename: str) -> None:
         Folder.SHOP / "BND" / f"{map_filename}CITY",
         Folder.SHOP / "BND" / f"{map_filename}LM",
         Folder.BASE / "dev" / "CITY" / map_filename,
-        Folder.EDITOR_RESOURCES
         ]
     
     for path in FOLDER_STRUCTURE:
@@ -2988,8 +2989,8 @@ def copy_custom_textures(custom_textures_folder: Path, destination_folder: Path)
         
         
 def copy_core_tune_files(tune_source_folder: Path, tune_destination_folder: Path) -> None:    
-    for file in tune_source_folder.glob('*'):
-        if not file.name.endswith('.MMBANGERDATA'):
+    for file in tune_source_folder.glob("*"):
+        if not file.name.endswith(".MMBANGERDATA"):
             shutil.copy(file, tune_destination_folder)
             
             
@@ -2997,14 +2998,14 @@ def copy_dev_folder(input_folder: Path, output_folder: Path, map_filename: str) 
     shutil.rmtree(output_folder, ignore_errors = True)  
     shutil.copytree(input_folder, output_folder)
     
-    dev_ai_files = input_folder / 'CITY' / map_filename
+    dev_ai_files = input_folder / "CITY" / map_filename
     shutil.rmtree(dev_ai_files, ignore_errors = True)
         
          
 def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[int, str]]], 
                                input_folder: Path, output_folder: Path) -> None:
     
-    for file in input_folder.glob('*.MMBANGERDATA'):
+    for file in input_folder.glob("*.MMBANGERDATA"):
         if file.stem not in bangerdata_properties:
             shutil.copy(file, output_folder)
             
@@ -3012,7 +3013,7 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
         banger_files = input_folder / f"{prop_key}.MMBANGERDATA"
         
         if banger_files.exists():
-            with open(banger_files, 'r') as f: 
+            with open(banger_files, "r") as f: 
                 lines = f.readlines()
 
             for i, line in enumerate(lines):
@@ -3021,7 +3022,7 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
                         lines[i] = f'\t{key} {new_value}\n'
             
             tweaked_banger_files = output_folder / banger_files.name
-            with open(tweaked_banger_files, 'w') as f:
+            with open(tweaked_banger_files, "w") as f:
                 f.writelines(lines)
                     
 ################################################################################################################               
@@ -3032,15 +3033,15 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
 checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
 race_type_to_prefix = {
-    RaceMode.BLITZ: 'ABL',
-    RaceMode.CIRCUIT: 'CIR',
+    RaceMode.BLITZ: "ABL",
+    RaceMode.CIRCUIT: "CIR",
     RaceMode.CHECKPOINT: checkpoint_prefixes
     }
 
 race_type_to_extension = {
-    RaceMode.BLITZ: '.B_',
-    RaceMode.CIRCUIT: '.C_',
-    RaceMode.CHECKPOINT: '.R_',
+    RaceMode.BLITZ: ".B_",
+    RaceMode.CIRCUIT: ".C_",
+    RaceMode.CHECKPOINT: ".R_",
     }
 
 REPLACE_VALUES = {        
@@ -3064,8 +3065,8 @@ def fill_mm_data_values(race_type: str, custom_mm_data: List[Union[int, float]])
     default_values = [1] * 11
     replace_indices = REPLACE_VALUES.get(race_type, [])
     
-    for idx, custom_value in zip(replace_indices, custom_mm_data):
-        default_values[idx] = custom_value
+    for index, custom_value in zip(replace_indices, custom_mm_data):
+        default_values[index] = custom_value
         
     return default_values[:10]
 
@@ -3077,11 +3078,13 @@ def generate_mm_data_string(race_desc: str, ama_filled_values: List[Union[int, f
 
 
 def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:
-    header = ",".join(["Description"] + 2 * [
-        "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
-        ])
+    header = ",".join(
+        ["Description"] + 2 * [
+            "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
+            ]
+        )
     
-    with open(Folder.SHOP_RACE / map_filename / output_file, 'w') as f:
+    with open(Folder.SHOP_RACE / map_filename / output_file, "w") as f:
         f.write(header + "\n")
                 
         for race_index, config in configs.items():
@@ -3090,8 +3093,8 @@ def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, pr
             else:
                 race_desc = prefix + str(race_index)
                             
-            ama_filled_values = fill_mm_data_values(race_type, config['mm_data']['ama'])
-            pro_filled_values = fill_mm_data_values(race_type, config['mm_data']['pro'])
+            ama_filled_values = fill_mm_data_values(race_type, config["mm_data"]["ama"])
+            pro_filled_values = fill_mm_data_values(race_type, config["mm_data"]["pro"])
                         
             data_string = generate_mm_data_string(race_desc, ama_filled_values, pro_filled_values)
             f.write(data_string)
@@ -3159,10 +3162,10 @@ def write_aimap(map_filename: str, race_type: str, race_index: int, config, oppo
 """
         f.write(main_template)
         
-        exceptions_data_formatted = format_exceptions(config.get('exceptions'), config.get('num_of_exceptions'))
+        exceptions_data_formatted = format_exceptions(config.get("exceptions"), config.get("num_of_exceptions"))
         write_section(f, "[Exceptions]", exceptions_data_formatted)
 
-        police_data_formatted = format_police_data(config['police_data'], config['num_of_police'])
+        police_data_formatted = format_police_data(config["police_data"], config["num_of_police"])
         write_section(f, "[Police]", police_data_formatted)
 
         opponent_data_formatted = format_opponent_data(opponent_cars, race_type, race_index)
@@ -3186,12 +3189,12 @@ def create_races(map_filename: str, race_data: dict) -> None:
 
             # Player Waypoints
             write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", 
-                            config['waypoints'], 
+                            config["waypoints"], 
                             race_type, 
                             race_index)
             
             # Opponent Waypoints
-            for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
+            for opp_idx, (opp_car, opp_waypoints) in enumerate(config["opponent_cars"].items()):
     
                 write_waypoints(
                     f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
@@ -3451,11 +3454,11 @@ def create_animations(map_filename: str, animations_data: Dict[str, List[Tuple]]
     if not set_animations:
         return
     
-    with open(Folder.SHOP_CITY / map_filename / "ANIM.CSV", 'w', newline = '') as main_f:
+    with open(Folder.SHOP_CITY / map_filename / "ANIM.CSV", "w", newline = "") as main_f:
         for anim in animations_data:
             csv.writer(main_f).writerow([f"anim_{anim}"])
 
-            with open(Folder.SHOP_CITY / map_filename / f"ANIM_{anim.upper()}.CSV", 'w', newline = '') as anim_f:                    
+            with open(Folder.SHOP_CITY / map_filename / f"ANIM_{anim.upper()}.CSV", "w", newline = "") as anim_f:                    
                 for coord in animations_data[anim]:
                     csv.writer(anim_f).writerow(coord)
                         
@@ -3792,7 +3795,7 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
 
         for i in range(poly.num_verts):
             j = (i + 1) % poly.num_verts
-            cell.add_edge(vertices[poly.vert_indices[i]], vertices[poly.vert_indices[j]]) 
+            cell.add_edge(vertices[poly.vertex_index[i]], vertices[poly.vertex_index[j]]) 
 
     for cell in cells.values():
         cell.process()
@@ -3966,14 +3969,14 @@ class Portals:
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
 
-        with open(input_file, 'rb') as in_f:
+        with open(input_file, "rb") as in_f:
             portals = cls.read_all(in_f)
 
         if not portals:
             print(f"No portals found in {input_file.name}")
             return
 
-        with open(output_file, 'w') as out_f:
+        with open(output_file, "w") as out_f:
             for portal in portals:
                 out_f.write(repr(portal))
 
@@ -4147,7 +4150,7 @@ class BangerEditor:
         if not append_props:
             return
             
-        with open(input_props_f, 'rb') as f:
+        with open(input_props_f, "rb") as f:
             original_props = Bangers.read_all(f)
               
         self.props = original_props
@@ -4418,7 +4421,7 @@ class PhysicsEditor:
 
     @staticmethod
     def write_all(output_file: Path, custom_params: List['PhysicsEditor']) -> None:
-        with open(output_file, 'wb') as f:
+        with open(output_file, "wb") as f:
             write_pack(f, '>I', len(custom_params))
             
             for param in custom_params:                
@@ -4429,7 +4432,7 @@ class PhysicsEditor:
         if not set_physics:
             return
         
-        with open(input_file, 'rb') as f:
+        with open(input_file, "rb") as f:
             original_data = cls.read_all(f)   
              
         for phys_index, properties in user_set_properties.items():
@@ -4549,7 +4552,7 @@ class LightingEditor:
     def process_changes(instances, config_list):
         for config in config_list:
             for instance in instances:
-                if instance.time_of_day == config['time_of_day'] and instance.weather == config['weather']:
+                if instance.time_of_day == config["time_of_day"] and instance.weather == config["weather"]:
                     instance.apply_changes(config)
         return instances
                 
@@ -4579,16 +4582,17 @@ class LightingEditor:
     @classmethod
     def write_file(cls, instances, lighting_configs, filename: Path):
         cls.process_changes(instances, lighting_configs)
-        with open(filename, mode = 'w', newline = '') as f:
+        with open(filename, mode = "w", newline = "") as f:
             writer = csv.writer(f)
         
-            header = ['TimeOfDay', ' Weather', ' Sun Heading', ' Sun Pitch', ' Sun Red', ' Sun Green', ' Sun Blue',
-                    ' Fill-1 Heading', ' Fill-1 Pitch', ' Fill-1 Red', ' Fill-1 Green', ' Fill-1 Blue',
-                    ' Fill-2 Heading', ' Fill-2 Pitch', ' Fill-2 Red', ' Fill-2 Green', ' Fill-2 Blue',
-                    ' Ambient Red', ' Ambient Green', ' Ambient Blue', 
-                    ' Fog End', ' Fog Red', ' Fog Green', ' Fog Blue', 
-                    ' Shadow Alpha', ' Shadow Red', ' Shadow Green', ' Shadow Blue'
-                    ]
+            header = [
+                "TimeOfDay", " Weather", " Sun Heading", " Sun Pitch", " Sun Red", " Sun Green", " Sun Blue",
+                " Fill-1 Heading", " Fill-1 Pitch", " Fill-1 Red", " Fill-1 Green", " Fill-1 Blue",
+                " Fill-2 Heading", " Fill-2 Pitch", " Fill-2 Red", " Fill-2 Green", " Fill-2 Blue",
+                " Ambient Red", " Ambient Green", " Ambient Blue", 
+                " Fog End", " Fog Red", " Fog Green", " Fog Blue", 
+                " Shadow Alpha", " Shadow Red", " Shadow Green", " Shadow Blue"
+                ]
 
             writer.writerow(header)
             for instance in instances:
@@ -4599,7 +4603,7 @@ class LightingEditor:
         if not debug_lighting:
             return
 
-        with open(debug_file, 'w') as debug_f:
+        with open(debug_file, "w") as debug_f:
             for instance in instances:
                 debug_f.write(instance.__repr__())
                 debug_f.write("\n")
@@ -4697,7 +4701,7 @@ class TextureSheet:
         existing_texture_names = set(line.split(',')[0].strip() for line in texturesheet_lines)
         custom_texture_names = TextureSheet.get_custom_texture_filenames(input_textures)
         
-        with open(output_file, 'w') as out_f: 
+        with open(output_file, "w") as out_f: 
             out_f.writelines(texturesheet_lines)  # Write the existing texturesheet lines first
                     
             for custom_tex in custom_texture_names:
@@ -4929,7 +4933,7 @@ class MiniParser:
 def read_bai(input_file: Path):
     ai_map = aiMap()
 
-    with open(input_file, 'rb') as f:
+    with open(input_file, "rb") as f:
         ai_map.load(f)
 
         here = f.tell()
@@ -5611,15 +5615,15 @@ def create_material_from_texture(material_name, texture_image):
     for node in nodes:
         nodes.remove(node)
 
-    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
-    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+    diffuse_shader = nodes.new(type = "ShaderNodeBsdfPrincipled")
+    texture_node = nodes.new(type = "ShaderNodeTexImage")
     texture_node.image = texture_image
 
     links = mat.node_tree.links
     link = links.new
     link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
 
-    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    output_node = nodes.new(type = "ShaderNodeOutputMaterial")
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])     
     
     
@@ -5642,8 +5646,8 @@ def apply_texture_to_object(obj, texture_path):
     for node in nodes:
         nodes.remove(node)
 
-    diffuse_shader = nodes.new(type = 'ShaderNodeBsdfPrincipled')
-    texture_node = nodes.new(type = 'ShaderNodeTexImage')
+    diffuse_shader = nodes.new(type = "ShaderNodeBsdfPrincipled")
+    texture_node = nodes.new(type = "ShaderNodeTexImage")
 
     texture_image = bpy.data.images.load(texture_path)
     texture_node.image = texture_image
@@ -5652,7 +5656,7 @@ def apply_texture_to_object(obj, texture_path):
     link = links.new
     link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
 
-    output_node = nodes.new(type = 'ShaderNodeOutputMaterial')
+    output_node = nodes.new(type = "ShaderNodeOutputMaterial")
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
 
     unwrap_uv_to_aspect_ratio(obj, texture_image)
@@ -5660,7 +5664,7 @@ def apply_texture_to_object(obj, texture_path):
        
 def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     name = f"P{polygon_data['bound_number']}"
-    bound_number = polygon_data['bound_number']
+    bound_number = polygon_data["bound_number"]
     script_vertices = polygon_data["vertex_coordinates"]
 
     transformed_vertices = [transform_coordinate_system(Vector3.from_tuple(vertex), game_to_blender = True) for vertex in script_vertices]
@@ -5701,10 +5705,10 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
     bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
     
-    if bound_number in texcoords_data.get('entries', {}):
-        obj.tile_x = texcoords_data['entries'][bound_number].get('tile_x', 1)
-        obj.tile_y = texcoords_data['entries'][bound_number].get('tile_y', 1)
-        obj.rotate = texcoords_data['entries'][bound_number].get('angle_degrees', 5)
+    if bound_number in texcoords_data.get("entries", {}):
+        obj.tile_x = texcoords_data["entries"][bound_number].get("tile_x", 1)
+        obj.tile_y = texcoords_data["entries"][bound_number].get("tile_y", 1)
+        obj.rotate = texcoords_data["entries"][bound_number].get("angle_degrees", 5)
     else:
         obj.tile_x = 2
         obj.tile_y = 2
@@ -7028,40 +7032,41 @@ street_list = [cruise_start,
 #! ======================= SET PROPS ======================= !#
 
 
-trailer_set = {'offset': (60, 0.0, 70), 
-               'end': (60, 0.0, -50), 
-               'name': Prop.TRAILER, 
-               'separator': 'x'} # Use the {}-axis dimension of the object as the spacing between each prop
+trailer_set = {"offset": (60, 0.0, 70), 
+               "end": (60, 0.0, -50), 
+               "name": Prop.TRAILER, 
+               "separator": "x"} # Use the {}-axis dimension of the object as the spacing between each prop
 
 bridge_orange_buildling = {          
-          'offset': (35, 12.0, -70),
-          'face': (35 * HUGE, 12.0, -70),
-          'name': Prop.BRIDGE_SLIM}
+          "offset": (35, 12.0, -70),
+          "face": (35 * HUGE, 12.0, -70),
+          "name": Prop.BRIDGE_SLIM}
 
 # Prop for CIRCUIT 0 
-china_gate = {'offset': (0, 0.0, -20), 
-              'face': (1 * HUGE, 0.0, -20), 
-              'name': Prop.CHINATOWN_GATE,
-              'race_mode': RaceMode.CIRCUIT,
-              'race_num': 0}
+china_gate = {"offset": (0, 0.0, -20), 
+              "face": (1 * HUGE, 0.0, -20), 
+              "name": Prop.CHINATOWN_GATE,
+              "race_mode": RaceMode.CIRCUIT,
+              "race_num": 0}
 
 # Put your non-randomized props here
 prop_list = [trailer_set, bridge_orange_buildling, china_gate] 
 
 # Put your randomized props here (you will add them to the list "random_parameters")
 random_trees = {
-        'offset_y': 0.0,
-        'name': [Prop.TREE_SLIM] * 20}
+        "offset_y": 0.0,
+        "name": [Prop.TREE_SLIM] * 20}
 
 random_sailboats = {
-        'offset_y': 0.0,
-        'name': [Prop.SAILBOAT] * 19}
+        "offset_y": 0.0,
+        "name": [Prop.SAILBOAT] * 19}
 
 random_cars = {
-        'offset_y': 0.0,
-        'separator': 10.0,
-        'name': [PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350, 
+        "offset_y": 0.0,
+        "separator": 10.0,
+        "name": [PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350, 
                  PlayerCar.FASTBACK, PlayerCar.MUSTANG99, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI]}
+
 
 # Configure your random props here
 random_props = [
@@ -7084,8 +7089,8 @@ props_to_append = [app_panoz_gtr]
 
 # The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
 bangerdata_properties = {
-    PlayerCar.VW_BEETLE: {'ImpulseLimit2': HUGE, 'AudioId': AudioProp.GLASS},
-    PlayerCar.CITY_BUS:  {'ImpulseLimit2': 50, 'Mass': 50, 'AudioId': AudioProp.POLE, 'Size': '18 6 5', 'CG': '0 0 0'}}
+    PlayerCar.VW_BEETLE: {"ImpulseLimit2": HUGE, "AudioId": AudioProp.GLASS},
+    PlayerCar.CITY_BUS:  {"ImpulseLimit2": 50, "Mass": 50, "AudioId": AudioProp.POLE, "Size": "18 6 5", "CG": "0 0 0"}}
 
 ###################################################################################################################   
 ###################################################################################################################   
@@ -7094,36 +7099,35 @@ bangerdata_properties = {
 
 lighting_configs = [
     {   # Actual lighting config for Evening and Cloudy
-        'time_of_day': TimeOfDay.EVENING,
-        'weather': Weather.CLOUDY,
-        'sun_heading': 3.14,
-        'sun_pitch': 0.65,
-        'sun_color': (1.0, 0.6, 0.3),
-        'fill_1_heading': -2.5,
-        'fill_1_pitch': 0.45,
-        'fill_1_color': (0.8, 0.9, 1.0),
-        'fill_2_heading': 0.0,
-        'fill_2_pitch': 0.45,
-        'fill_2_color': (0.75, 0.8, 1.0),
-        'ambient_color': (0.1, 0.1, 0.2),
-        'fog_end': 600.0,
-        'fog_color': (230.0, 100.0, 35.0),
-        'shadow_alpha': 180.0,
-        'shadow_color': (15.0, 20.0, 30.0)
+        "time_of_day": TimeOfDay.EVENING,
+        "weather": Weather.CLOUDY,
+        "sun_heading": 3.14,
+        "sun_pitch": 0.65,
+        "sun_color": (1.0, 0.6, 0.3),
+        "fill_1_heading": -2.5,
+        "fill_1_pitch": 0.45,
+        "fill_1_color": (0.8, 0.9, 1.0),
+        "fill_2_heading": 0.0,
+        "fill_2_pitch": 0.45,
+        "fill_2_color": (0.75, 0.8, 1.0),
+        "ambient_color": (0.1, 0.1, 0.2),
+        "fog_end": 600.0,
+        "fog_color": (230.0, 100.0, 35.0),
+        "shadow_alpha": 180.0,
+        "shadow_color": (15.0, 20.0, 30.0)
     },
     {
         # Custom lighting config for Night and Clear
-        'time_of_day': TimeOfDay.NIGHT,
-        'weather': Weather.CLEAR,
-        'sun_pitch': 10.0,
-        'sun_color': (40.0, 0.0, 40.0),
-        'fill_1_pitch': 10.0,
-        'fill_1_color': (40.0, 0.0, 40.0),
-        'fill_2_pitch': 10.0,
-        'fill_2_color': (40.0, 0.0, 40.0),
+        "time_of_day": TimeOfDay.NIGHT,
+        "weather": Weather.CLEAR,
+        "sun_pitch": 10.0,
+        "sun_color": (40.0, 0.0, 40.0),
+        "fill_1_pitch": 10.0,
+        "fill_1_color": (40.0, 0.0, 40.0),
+        "fill_2_pitch": 10.0,
+        "fill_2_color": (40.0, 0.0, 40.0),
     },
 ]
-
 ###################################################################################################################   
 ################################################################################################################### 
 #! ======================= SET PHYSICS ======================= !#
@@ -7163,9 +7167,9 @@ s_res = 4
 t_res = 1
 r_opts = 636
 dlp_flags = 1289  # 1513
-mtl_idx = 0
-tex_idx = 0
-phys_idx = 0
+material_index = 0
+texture_index = 0
+physics_index = 0
 
 dlp_patch_name = ""
 dlp_group_name = "BOUND\x00" 
@@ -7191,9 +7195,9 @@ dlp_groups = [DLPGroup(dlp_group_name, 0, 2, [], [0, 1])]
 
 # DLP Patches                  
 dlp_patches = [
-    DLPPatch(s_res, t_res, dlp_flags, r_opts, mtl_idx, tex_idx, phys_idx, 
+    DLPPatch(s_res, t_res, dlp_flags, r_opts, material_index, texture_index, physics_index, 
              [dlp_normals[0], dlp_normals[1], dlp_normals[2], dlp_normals[3]], dlp_patch_name),
-    DLPPatch(s_res, t_res, dlp_flags, r_opts, mtl_idx, tex_idx, phys_idx, 
+    DLPPatch(s_res, t_res, dlp_flags, r_opts, material_index, texture_index, physics_index, 
              [dlp_normals[3], dlp_normals[2], dlp_normals[1], dlp_normals[0]], dlp_patch_name)
     ] 
 
