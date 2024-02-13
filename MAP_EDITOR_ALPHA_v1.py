@@ -54,7 +54,7 @@ class Folder:
     USER_RESOURCES = BASE / "Resources" / "UserResources"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug"
-
+    
 
 #! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
 map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
@@ -2165,6 +2165,56 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 #! ======================= CREATE POLYGON ======================= !#
 
 
+def check_bound_number(bound_number: int) -> None:
+    if bound_number <= 0 or bound_number == Threshold.CELL_TYPE_SWITCH or bound_number >= Threshold.VERTEX_INDEX_COUNT:
+        error_message = """
+        ***ERROR***
+        Possible problems:
+        - Bound Number must be between 1 and 199, and 201 and 32766.
+        - There must be at least one polygon with Bound Number 1.
+        """
+        raise ValueError(error_message)
+    
+    
+def check_shape_type(vertex_coordinates: List[Vector3]) -> None:
+    if vertex_coordinates is None:
+        error_message = """
+        ***ERROR***
+        Vertex Coordinates cannot be None.
+        A valid list of vertex coordinates must be provided for polygon creation.
+        """
+        raise ValueError(error_message)
+
+    if len(vertex_coordinates) not in (Shape.TRIANGLE, Shape.QUAD):
+        error_message = """
+        ***ERROR***
+        Unsupported number of vertices.
+        You must either set 3 or 4 vertex coordinates per polygon.
+        """
+        raise ValueError(error_message)
+
+
+def process_winding(vertex_coordinates: List[Vector3], fix_faulty_quads: bool) -> List[Vector3]:
+    if len(vertex_coordinates) == Shape.TRIANGLE:
+        return ensure_ccw_order(vertex_coordinates)
+    
+    elif len(vertex_coordinates) == Shape.QUAD and fix_faulty_quads:
+        return ensure_quad_ccw_order(vertex_coordinates)
+    
+    return vertex_coordinates  
+
+
+def process_flags(vertex_coordinates: List[Vector3], flags: int) -> int:
+    if flags is not None:
+        return flags  
+    
+    if len(vertex_coordinates) == Shape.QUAD:
+        return PlaneEdgesWinding.QUAD_Z_AXIS
+    
+    elif len(vertex_coordinates) == Shape.TRIANGLE:
+        return PlaneEdgesWinding.TRIANGLE_Z_AXIS
+    
+    
 def create_polygon(
     bound_number: int, vertex_coordinates: List[Vector3], 
     material_index: int = 0, cell_type: int = 0, flags: int = None, 
@@ -2177,7 +2227,7 @@ def create_polygon(
     # Vertex indices
     base_vertex_index = len(vertices)
     
-    # Store the polygon data for Blender (before any manipulation)
+    # Store the Polygon Data for Blender (before any manipulation)
     polygon_info = {
         "vertex_coordinates": vertex_coordinates,
         "bound_number": bound_number,
@@ -2190,37 +2240,13 @@ def create_polygon(
     
     polygons_data.append(polygon_info)
     
-    if len(vertex_coordinates) not in (Shape.TRIANGLE, Shape.QUAD):
-        error_message = f"""\n
-        ***ERROR***
-        Unsupported number of vertices.
-        You must either set 3 or 4 coordinates per polgyon.
-        """
-        raise ValueError(error_message)
+    # Safety checks
+    check_bound_number(bound_number)
+    check_shape_type(vertex_coordinates)
 
-    if bound_number <= 0 or bound_number == Threshold.CELL_TYPE_SWITCH or bound_number >= Threshold.VERTEX_INDEX_COUNT:
-        error_message = """
-        ***ERROR***
-        Possible problems:
-        - Bound Number must be between 1 and 199, and 201 and 32766.
-        - There must be at least one polygon with Bound Number 1.
-        """
-        raise ValueError(error_message)
-
-    # Ensure Counterclockwise Winding
-    if len(vertex_coordinates) == Shape.TRIANGLE:
-        vertex_coordinates = ensure_ccw_order(vertex_coordinates)
-        
-    elif len(vertex_coordinates) == Shape.QUAD and fix_faulty_quads:
-        vertex_coordinates = ensure_quad_ccw_order(vertex_coordinates)
-        
-    # Flags
-    if flags is None:
-        if len(vertex_coordinates) == Shape.QUAD:
-            flags = PlaneEdgesWinding.QUAD_Z_AXIS
-            
-        elif len(vertex_coordinates) == Shape.TRIANGLE:
-            flags = PlaneEdgesWinding.TRIANGLE_Z_AXIS
+    # Winding & Flags
+    vertex_coordinates = process_winding(vertex_coordinates, fix_faulty_quads)
+    flags = process_flags(vertex_coordinates, flags)
      
     # Sorting        
     if sort_vertices: 
@@ -5509,14 +5535,14 @@ def is_game_running(process_name: str) -> bool:
         if process_name.lower() in proc.info["name"].lower():
             return True
     return False
-        
-        
+      
+
 def start_game(mm1_folder: str, play_game: bool) -> None:    
     if not play_game or is_game_running("Open1560.exe") or is_blender_running():
         return
     
     subprocess.run(mm1_folder / "Open1560.exe", cwd = mm1_folder)
-            
+         
 ###################################################################################################################
 ################################################################################################################### 
 #! ======================= BLENDER SETUP ======================= !#
