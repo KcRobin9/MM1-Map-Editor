@@ -44,23 +44,26 @@ from colorama import Fore, Style, init
 from typing import List, Dict, Set, Union, Tuple, Optional, BinaryIO
 
 
-#! SETUP 0 (Folder Paths)  
+#! SETUP 0 (Map Name)                           Control + F    "map=="  to jump to The Map Creation section
+map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
+map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
+
+
+#! SETUP I (Folder Paths)  
 class Folder:
     BASE = Path(__file__).parent.resolve()
     SHOP = BASE / "SHOP"
     SHOP_CITY = SHOP / "CITY"
-    SHOP_RACE = SHOP / "RACE"
+    SHOP_RACE = SHOP / "RACE"    
+    SHOP_MESH_LANDMARK = SHOP / "BMS" / f"{map_filename}LM"
+    SHOP_MESH_CITY = SHOP / "BMS" / f"{map_filename}CITY"
+    
     MIDTOWNMADNESS = BASE / "MidtownMadness"
     USER_RESOURCES = BASE / "Resources" / "UserResources"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug"
     
-
-#! SETUP I (Map Name and Directory)             Control + F    "map=="  to jump to The Map Creation section
-map_name = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
-map_filename = "First_City"                     # One word (no spaces)  --- name of the .AR file
-
-
+    
 #* SETUP II (Map Creation)      
 play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
 delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
@@ -1953,11 +1956,11 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
     return adjust_and_rotate_coords(coords, angle_degrees)
         
 
-def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str], map_filename: str) -> Tuple[Path, str]:
+def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str]) -> Tuple[Path, str]:
     if bound_number < Threshold.CELL_TYPE_SWITCH:
-        target_folder = Folder.SHOP / "BMS" / f"{map_filename}LM"
+        target_folder = Folder.SHOP_MESH_LANDMARK
     else:
-        target_folder = Folder.SHOP / "BMS" / f"{map_filename}CITY"
+        target_folder = Folder.SHOP_MESH_CITY
         
     target_folder.mkdir(parents = True, exist_ok = True)
         
@@ -1979,7 +1982,7 @@ def save_mesh(
     poly = polys[-1]  # Get the last polygon added
     bound_number = poly.cell_id
 
-    target_folder, mesh_filename = determine_mesh_folder_and_filename(bound_number, texture_name, map_filename)
+    target_folder, mesh_filename = determine_mesh_folder_and_filename(bound_number, texture_name)
     
     # Randomize Textures
     if randomize_textures:
@@ -2311,7 +2314,7 @@ def create_polygon(
     
 ################################################################################################################               
 ################################################################################################################  
-#! ======================= CREATING YOUR MAP ======================= !#
+#! =======================CREATING YOUR MAP======================= !#
 
 
 def user_notes():
@@ -3288,6 +3291,40 @@ def create_cops_and_robbers(map_filename: str, cnr_waypoints: List[Tuple[float, 
 #! ======================= CELLS ======================= !#
 
 
+def update_max_counts(row_length: int, max_warning_count: int, max_error_count: int) -> Tuple[int, int]:
+    if Threshold.CELL_CHARACTER_WARNING <= row_length < Threshold.CELL_CHARACTER_LIMIT:
+        max_warning_count = max(max_warning_count, row_length)
+        
+    elif row_length >= Threshold.CELL_CHARACTER_LIMIT:
+        max_error_count = max(max_error_count, row_length)
+        
+    return max_warning_count, max_error_count
+
+
+def check_row_size(max_warning_count: int, max_error_count: int) -> None:
+    if Threshold.CELL_CHARACTER_WARNING <= max_warning_count < Threshold.CELL_CHARACTER_LIMIT:
+        warning_message = f"""
+        ***WARNING***
+        Close to row character limit 254 in .CELLS file. 
+        Maximum character count encountered is {max_warning_count}.
+        To reduce the character count, consider setting "always_visible" to False for a few polygons.
+        If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters (2 + 1) in the CELLS file.
+        *************\n
+        """
+        print(warning_message)
+        
+    elif max_error_count >= Threshold.CELL_CHARACTER_LIMIT:
+        error_message = f"""
+        ***ERROR***
+        Character limit of 254 exceeded in .CELLS file.
+        Maximum character count encountered is {max_error_count}.
+        To solve the problem, set "always_visible" to False for a few polygons.
+        If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters (2 + 1) in the CELLS file.
+        *************\n
+        """
+        raise ValueError(error_message)
+
+
 def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
     meshes_regular = []
     meshes_water_drift = set()
@@ -3340,14 +3377,11 @@ def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, ce
         
     return cell_row, len(cell_row) 
         
+        
+def create_cells(output_file: Path, polys: List[Polygon], truncate_cells: bool) -> None:
+    mesh_files, mesh_a2_files = get_cell_ids(Folder.SHOP_MESH_LANDMARK, Folder.SHOP_MESH_CITY)
 
-def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) -> None:    
-    mesh_files, mesh_a2_files = get_cell_ids(
-        Folder.SHOP / "BMS" / f"{map_filename}LM",  # Landmark folder
-        Folder.SHOP / "BMS" / f"{map_filename}CITY" # City folder
-        )
-
-    with open(Folder.SHOP_CITY / f"{map_filename}.CELLS", "w") as f:
+    with open(output_file, "w") as f:    
         f.write(f"{len(mesh_files)}\n")
         f.write(str(max(mesh_files) + 1000) + "\n")
 
@@ -3358,42 +3392,18 @@ def create_cells(map_filename: str, polys: List[Polygon], truncate_cells: bool) 
 
         for cell_id in sorted(mesh_files):
             cell_type = get_cell_type(cell_id, polys)
-            always_visible_data = ",0" if not always_visible_cell_count else f",{always_visible_cell_count},{','.join(map(str, always_visible_cell_ids))}"            
+            always_visible_data = ",0" if always_visible_cell_count == 0 else f",{always_visible_cell_count},{','.join(map(str, always_visible_cell_ids))}"
             row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+            row_length = len(row)
             
-            if truncate_cells:
+            if truncate_cells and row_length >= Threshold.CELL_CHARACTER_LIMIT:
                 row, row_length = truncate_always_visible(always_visible_cell_ids.copy(), cell_id, cell_type, mesh_a2_files)
-            else:
-                row_length = len(row)
-
-            if Threshold.CELL_CHARACTER_WARNING <= row_length < Threshold.CELL_CHARACTER_LIMIT:
-                max_warning_count = max(max_warning_count, row_length)
-                
-            elif row_length >= Threshold.CELL_CHARACTER_LIMIT:
-                max_error_count = max(max_error_count, row_length)
-
+                    
+            max_warning_count, max_error_count = update_max_counts(row_length, max_warning_count, max_error_count)
+            
             f.write(row)
 
-        if Threshold.CELL_CHARACTER_WARNING <= max_warning_count < Threshold.CELL_CHARACTER_LIMIT:
-            warning_message = f"""
-            ***WARNING***
-            Close to row character limit 254 in .CELLS file. 
-            Maximum character count encountered is {max_warning_count}.
-            To reduce the character count, consider setting "always_visible" to False for some polygons.
-            If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters in the CELLS file.
-            *************\n
-            """
-            print(warning_message)
-        
-        elif max_error_count >= Threshold.CELL_CHARACTER_LIMIT:
-            error_message = f"""
-            ***ERROR***
-            Character limit of 254 exceeded in .CELLS file.
-            Maximum character count encountered is {max_error_count}.
-            To solve the problem, set always_visible' to False for some polygons.
-            If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters in the CELLS file.
-            """
-            raise ValueError(error_message)
+        check_row_size(max_warning_count, max_error_count)
         
 ################################################################################################################               
 ################################################################################################################
@@ -7337,7 +7347,7 @@ create_map_info(map_name, map_filename, blitz_race_names, circuit_race_names, ch
 create_races(map_filename, race_data)
 create_cops_and_robbers(map_filename, cnr_waypoints)
 
-create_cells(map_filename, polys, truncate_cells)
+create_cells(Folder.SHOP_CITY / f"{map_filename}.CELLS", polys, truncate_cells)
 Bounds.create(Folder.SHOP / "BND" / f"{map_filename}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{map_filename}.txt", debug_bounds)
 Portals.write_all(map_filename, polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(map_filename, street_list, set_ai_streets, set_reverse_ai_streets)
