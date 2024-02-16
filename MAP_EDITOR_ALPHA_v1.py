@@ -1378,7 +1378,7 @@ class Meshes:
                  radius: float, radius_sqr: float, bounding_box_radius: float,
                  texture_count: int, flags: int, cache_size: int,
                  texture_names: List[str], vertices: List[Vector3],
-                 texture_darkness: List[int], tex_coords: List[float], enclosed_shape: List[int],
+                 normals: List[int], tex_coords: List[float], enclosed_shape: List[int],
                  surface_sides: List[int], indices_sides: List[List[int]]) -> None:
 
         self.magic = magic
@@ -1394,7 +1394,7 @@ class Meshes:
         self.cache_size = cache_size
         self.texture_names = texture_names
         self.vertices = vertices
-        self.texture_darkness = texture_darkness
+        self.normals = normals
         self.tex_coords = tex_coords  
         self.enclosed_shape = enclosed_shape  
         self.surface_sides = surface_sides
@@ -1418,7 +1418,7 @@ class Meshes:
             else:
                 vertices = Vector3.readn(f, vertex_count + 8, '<')
                                         
-            texture_darkness = list(read_unpack(f, f"{adjunct_count}B"))
+            normals = list(read_unpack(f, f"{adjunct_count}B"))
             tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f"))
             enclosed_shape = list(read_unpack(f, f"{adjunct_count}H"))
             surface_sides = list(read_unpack(f, f"{surface_count}B"))
@@ -1430,7 +1430,7 @@ class Meshes:
             magic, vertex_count, adjunct_count, surface_count, indices_count, 
             radius, radius_sqr, bounding_box_radius, 
             texture_count, flags, cache_size, texture_names, vertices, 
-            texture_darkness, tex_coords, enclosed_shape, surface_sides, indices_sides
+            normals, tex_coords, enclosed_shape, surface_sides, indices_sides
             )
                     
     def write(self, output_file: Path) -> None: 
@@ -1456,7 +1456,7 @@ class Meshes:
                 for _ in range(8):
                     Default.VECTOR_3.write(f, '<')
                                                                         
-            write_pack(f, f"{self.adjunct_count}B", *self.texture_darkness)
+            write_pack(f, f"{self.adjunct_count}B", *self.normals)
                         
             # Ensure Tex Coords is not larger than (Adjunct Count * 2)
             if len(self.tex_coords) > self.adjunct_count * 2:
@@ -1564,7 +1564,7 @@ MESH
     Cache Size: {self.cache_size}\n
     TextureNames: {self.texture_names}\n
     Vertices: {self.vertices}\n
-    TextureDarkness: {self.texture_darkness}\n
+    Normals: {self.normals}\n
     TexCoords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
     Enclosed Shape: {self.enclosed_shape}\n
     SurfaceSides: {self.surface_sides}\n
@@ -1976,7 +1976,7 @@ def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str
 def save_mesh(
     texture_name: str, texture_indices: List[int] = [1], 
     vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
-    texture_darkness: List[int] = None, tex_coords: List[float] = None, 
+    normals: List[int] = None, tex_coords: List[float] = None, 
     randomize_textures: bool = randomize_textures, random_textures: List[str] = random_textures, 
     debug_meshes: bool = debug_meshes) -> None:
         
@@ -1992,7 +1992,7 @@ def save_mesh(
     texture_names.append(texture_name[0])
     single_poly = [Default.POLYGON, poly]
     
-    mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, texture_darkness, tex_coords)
+    mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, normals, tex_coords)
     
     mesh.write(target_folder / mesh_filename)
     
@@ -2002,7 +2002,7 @@ def save_mesh(
 
 def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
-    texture_name: List[str], texture_darkness: List[int] = None, tex_coords: List[float] = None) -> Meshes:
+    texture_name: List[str], normals: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
     magic = "3HSM"    
     flags = agiMeshSet.TEXCOORDS_AND_NORMALS
@@ -2027,7 +2027,7 @@ def initialize_mesh(
         indices_count = surface_count * 4
 
     enclosed_shape = list(range(adjunct_count))
-    texture_darkness = texture_darkness or [2] * adjunct_count  # 2 is the default value
+    normals = normals or [2] * adjunct_count  # 2 is the default value
     tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]  
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
@@ -2035,7 +2035,7 @@ def initialize_mesh(
         magic, vertex_count, adjunct_count, surface_count, indices_count, 
         radius, radiussq, bounding_box_radius, 
         texture_count, flags, cache_size,
-        texture_name, coordinates, texture_darkness, tex_coords, 
+        texture_name, coordinates, normals, tex_coords, 
         enclosed_shape, texture_indices, indices_sides
         )
 
@@ -2333,8 +2333,8 @@ def user_notes():
     "tex_coords = compute_uv(bound_number = 1, tile_x = 5, tile_y = 2, angle_degrees = 0)"
     "tex_coords = compute_uv(bound_number = 2, tile_x = 4, tile_y = 8, angle_degrees = 90)"
         
-    The variable "texture_darkness" (an optional variable) in the function "save_mesh()" makes the texture edges darker / lighter. 
-    If you're setting a Quad, you can for example do: "texture_darkness = [40, 2, 50, 1]"
+    The variable "normals" (an optional variable) in the function "save_mesh()" makes the texture edges darker / lighter. 
+    If you're setting a Quad, you can for example do: "normals = [40, 2, 50, 1]"
     Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game
         
     To properly set up the AI paths, adhere to the following for "bound_number = x":
@@ -2432,7 +2432,7 @@ create_polygon(
         (-50.0, 0.0, -70.0)])
 
 save_mesh(
-    texture_name = [Texture.ROAD_3_LANE], texture_darkness = [40, 2, 50, 1],
+    texture_name = [Texture.ROAD_3_LANE], normals = [40, 2, 50, 1],
     tex_coords = compute_uv(bound_number = 201, tile_x = 10, tile_y = 10, angle_degrees = 45))
 
 # Grass Area 
