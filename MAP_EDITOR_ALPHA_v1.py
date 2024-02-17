@@ -1245,7 +1245,7 @@ class Bounds:
             )
             
     def write(self, f: BinaryIO) -> None:
-        write_pack(f, '<4s', self.magic.encode('ascii').ljust(4, b'\0'))
+        write_binary_name(f, self.magic)        
         self.offset.write(f, '<')         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
         self.center.write(f, '<') 
@@ -1437,7 +1437,7 @@ class Meshes:
         self.calculate_cache_size()
                
         with open(output_file, "wb") as f:
-            write_pack(f, '<16s', self.magic.encode('ascii').ljust(16, b'\0'))
+            write_binary_name(f, self.magic, 16) 
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '<3f', self.radius, self.radius_sqr, self.bounding_box_radius)
             write_pack(f, '<2B', self.texture_count, self.flags)
@@ -1446,8 +1446,7 @@ class Meshes:
             write_pack(f, '<I', self.cache_size)
             
             for texture_name in self.texture_names:
-                write_pack(f, '<32s', texture_name.encode('ascii').ljust(32, b'\0'))
-                f.write(b'\0' * 16)
+                write_binary_name(f, texture_name, length = 32, padding = 16) 
                             
             for vertex in self.vertices:
                 vertex.write(f, '<')
@@ -1468,7 +1467,7 @@ class Meshes:
 
             # A Triangle must always have 4 indices (the 4th index will be 0)
             for indices_side in self.indices_sides:
-                while len(indices_side) <= Shape.TRIANGLE:
+                while len(indices_side) == Shape.TRIANGLE:
                     indices_side.append(0)
                 write_pack(f, f"{len(indices_side)}H", *indices_side)
 
@@ -1678,7 +1677,7 @@ class DLPGroup:
 
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '>B', len(self.name))
-        write_pack(f, f'>{len(self.name)}s', self.name.encode())
+        write_binary_name(f, self.name)        
         write_pack(f, '>2I', self.num_vertices, self.num_patches)
         write_pack(f, f'>{self.num_vertices}H', *self.vertex_indices)
         write_pack(f, f'>{self.num_patches}H', *self.patch_indices)
@@ -1720,7 +1719,7 @@ class DLP:
             return
         
         with open(output_file, 'wb') as f:
-            write_pack(f, '>4s', self.magic.encode())
+            write_binary_name(f, self.magic) 
             write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)      
             
             for group in self.groups:
@@ -1791,15 +1790,6 @@ DLP
 ################################################################################################################               
 ################################################################################################################     
 #! ======================= COMMON HELPER FUNCTIONS ======================= !#
-        
-         
-def calculate_max(vertices: List[Vector3]):
-    max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
-    for vertex in vertices:
-        max_.x = max(max_.x, vertex.x)
-        max_.y = max(max_.y, vertex.y)
-        max_.z = max(max_.z, vertex.z)
-    return max_
 
 
 def calculate_min(vertices: List[Vector3]):
@@ -1808,7 +1798,16 @@ def calculate_min(vertices: List[Vector3]):
         min_.x = min(min_.x, vertex.x)
         min_.y = min(min_.y, vertex.y)
         min_.z = min(min_.z, vertex.z)
-    return min_
+    return min_     
+
+         
+def calculate_max(vertices: List[Vector3]):
+    max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
+    for vertex in vertices:
+        max_.x = max(max_.x, vertex.x)
+        max_.y = max(max_.y, vertex.y)
+        max_.z = max(max_.z, vertex.z)
+    return max_
 
 
 def calculate_center(vertices: List[Vector3]):
@@ -1886,18 +1885,22 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
     return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
 
+################################################################################################################? 
 
 def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: int = 0) -> str:
     name_data = bytearray()
+    
     if length is None:
         while True:
             char = f.read(1)
-            if char == b'\0' or not char:
+            if char == b"\0" or not char:
                 break
             name_data.extend(char)
+            
     else:
         name_data = bytearray(f.read(length))
         null_pos = name_data.find(b'\0')
+        
         if null_pos != -1:
             name_data = name_data[:null_pos]
         
@@ -1905,6 +1908,21 @@ def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: in
             f.read(padding)
     
     return name_data.decode(encoding)
+
+
+def write_binary_name(f, name: str, length: int = None, encoding: str = "ascii", padding: int = 0, terminate: bool = False) -> None:
+    name_data = name.encode(encoding)
+    
+    if length is not None:
+        name_data = name_data[:length].ljust(length, b"\0")
+        
+    elif terminate:
+        name_data += b'\0'
+    
+    f.write(name_data)
+    
+    if padding > 0:
+        f.write(b"\0" * padding)
 
 
 def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
@@ -2008,7 +2026,6 @@ def initialize_mesh(
     flags = agiMeshSet.TEXCOORDS_AND_NORMALS
     cache_size = 0
        
-    # tiger 
     shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys[1:]]  # Skip the first filler polygon
 
     coordinates = [coord for shape in shapes for coord in shape]
@@ -4289,12 +4306,11 @@ class Facades:
         write_pack(f, '<3f', *self.face)
         write_pack(f, '<3f', *self.sides)
         write_pack(f, '<f', self.scale)
-        f.write(self.name.encode('utf-8'))
-        f.write(b'\x00')
-
+        write_binary_name(f, self.name, terminate = True) 
+        
     @classmethod
     def write_all(cls, output_file: Path, facades: List['Facades']) -> None:
-        with open(output_file, mode = 'wb') as f:
+        with open(output_file, mode = "wb") as f:
             
             cls.write_n(f, facades)
             
@@ -4325,10 +4341,10 @@ class Facades:
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
 
-        with open(input_file, 'rb') as in_f:
+        with open(input_file, "rb") as in_f:
             facades = cls.read_all(in_f)
 
-        with open(output_file, 'w') as out_f:
+        with open(output_file, "w") as out_f:
             for facade in facades:
                 out_f.write(repr(facade))
         print(f"Processed {input_file.name} to {output_file.name}")
@@ -4448,7 +4464,7 @@ class PhysicsEditor:
         return [cls.read(f) for _ in range(cls.readn(f))]
 
     def write(self, f: BinaryIO) -> None:        
-        write_pack(f, '>32s', self.name.encode("latin-1").ljust(32, b'\0'))
+        write_binary_name(f, self.name, length = 32, encoding = "latin-1", terminate = True)
         write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
         write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
         write_pack(f, '>2I', self.type, self.sound)
