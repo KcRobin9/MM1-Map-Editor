@@ -149,35 +149,33 @@ debug_minimap_id = False        # Change to "True" if you want to display the Bo
 
 round_debug_values = True       # Change to "True" if you want to round (some) debug values to 2 decimals
 
-# Input File Debugging | The Output Files are written to: "Resources / Debug / ..."
+# File Debugging | The Output Files are written to: "Resources / Debug / ..."
 debug_props_file = False
-debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
-
 debug_facades_file = False
-debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
-
 debug_portals_file = False
-debug_portals_data_file = Folder.EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
-
 debug_ai_file = False
-debug_ai_data_file = Folder.EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
 
 debug_meshes_file = False
-debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input Mesh file here
-
 debug_meshes_folder = False
-debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input Mesh folder here
 
 debug_bounds_file = False
-debug_bounds_data_file = Folder.EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
-
 debug_bounds_folder = False
-debug_bounds_data_folder = Folder.EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
 
 debug_dlp_file = False
-debug_dlp_data_file = Folder.EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
+debug_dlp_folder = False
 
-debug_dlp_folder = False    
+debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
+debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
+debug_portals_data_file = Folder.EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
+debug_ai_data_file = Folder.EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
+
+debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input Mesh file here
+debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input Mesh folder here
+
+debug_bounds_data_file = Folder.EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
+debug_bounds_data_folder = Folder.EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
+
+debug_dlp_data_file = Folder.EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
 debug_dlp_data_folder = Folder.EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
 
 ################################################################################################################               
@@ -251,40 +249,31 @@ def load_last_editor_run_time(run_time_file: Path):
 init(autoreset = True)
 
 colors_one = [
-    Fore.RED, Fore.LIGHTRED_EX, 
-    Fore.YELLOW, Fore.LIGHTYELLOW_EX, 
-    Fore.GREEN, Fore.LIGHTGREEN_EX, 
-    Fore.CYAN, Fore.LIGHTCYAN_EX, 
-    Fore.BLUE, Fore.LIGHTBLUE_EX, 
-    Fore.MAGENTA, Fore.LIGHTMAGENTA_EX
+    Fore.RED, Fore.LIGHTRED_EX, Fore.YELLOW, Fore.LIGHTYELLOW_EX, Fore.GREEN, Fore.LIGHTGREEN_EX, 
+    Fore.CYAN, Fore.LIGHTCYAN_EX, Fore.BLUE, Fore.LIGHTBLUE_EX, Fore.MAGENTA, Fore.LIGHTMAGENTA_EX
     ]
 
-colors_two = [    
-    Fore.LIGHTGREEN_EX, Fore.GREEN,
-    Fore.CYAN, Fore.LIGHTCYAN_EX,
-    Fore.BLUE, Fore.LIGHTBLUE_EX
-]
+colors_two = [Fore.LIGHTGREEN_EX, Fore.GREEN,Fore.CYAN, Fore.LIGHTCYAN_EX,Fore.BLUE, Fore.LIGHTBLUE_EX]
 
-top_divider = create_bar_divider(colors_one)
-bottom_divider = create_bar_divider(colors_one)
-buffer = top_divider + "\n" + " " * 60 + "\n" + bottom_divider
-
-last_run_time = load_last_editor_run_time(Folder.EDITOR_RESOURCES / "last_run_time.pkl")
 
 progress_thread = threading.Thread(
     target = continuous_progress_bar, 
-    args = (last_run_time, buffer, top_divider, bottom_divider, disable_progress_bar))
+    args = (
+        load_last_editor_run_time(Folder.EDITOR_RESOURCES / "last_run_time.pkl"), 
+        create_bar_divider(colors_one) + "\n" + " " * 60 + "\n" + create_bar_divider(colors_one), 
+        create_bar_divider(colors_one), 
+        create_bar_divider(colors_one), 
+        disable_progress_bar)
+    )
 
 progress_thread.start()
-
 start_time = time.time()
 
 ################################################################################################################               
 ################################################################################################################
-#! ======================= CONSTANTS & INITIALIZATIONS ======================= !#
+#! ======================= INITIALIZATIONS & CONSTANTS ======================= !#
 
 
-# Variables
 vertices = [] 
 polygons_data = []
 texture_names = []
@@ -292,6 +281,9 @@ texcoords_data = {}
 
 hudmap_vertices = []
 hudmap_properties = {}
+
+NO, YES = 0, 1      # For example, AI Street Properties ("traffic_blocked = YES")
+HUGE = 100000000000
 
 PROP_COLLIDE_FLAG = 0x800
 MOVE = shutil.move
@@ -337,7 +329,7 @@ class Threshold:
     CELL_TYPE_SWITCH = 200
     CELL_CHARACTER_WARNING = 200
     CELL_CHARACTER_LIMIT = 254
-    VERTEX_INDEX_COUNT = 32768
+    VERTEX_INDEX_COUNT = 32768      # Signed short
     
 
 class Portal:
@@ -536,19 +528,12 @@ class Color:
     RED_LIGHT = "#ff7f7f"
     YELLOW_LIGHT = "#ffffe0"
 
-
-# Misc
-NO, YES = 0, 1      # For example, AI Street Properties ("traffic_blocked = YES")
-HUGE = 100000000000
-
 ################################################################################################################               
 ################################################################################################################
 #! ======================= CARS & PROPS ======================= !#
 
-# Note:
+
 # Player Cars and Traffic Cars can be used as Opponent cars, Cop cars, and Props
-
-
 class PlayerCar:
     VW_BEETLE = "vpbug"
     CITY_BUS = "vpbus"
@@ -625,7 +610,7 @@ class Prop:
     ELTRAIN_SUPPORT_SLIM = "dp_left"
     ELTRAIN_SUPPORT_WIDE = "dp_left6"
 
-    PLANE_LARGE = "vaboeing"  # Note: No collision
+    PLANE_LARGE = "vaboeing"  # No collision
     
     
 class AudioProp:
@@ -776,9 +761,9 @@ cnr_waypoints = [
 
 #* SETUP V (optional, Animations)
 animations_data = {
-    Anim.PLANE: [               # You can only use "plane" and "eltrain", other objects will not work
-        (450, 30.0, -450),      # You can not have multiple Planes or Eltrains
-        (450, 30.0, 450),       # You can set any number of coordinates for your path(s)
+    Anim.PLANE: [               # You can not have multiple Planes or Eltrains
+        (450, 30.0, -450),      # You can set any number of coordinates for your path(s)
+        (450, 30.0, 450),       
         (-450, 30.0, -450),     
         (-450, 30.0, 450)], 
     Anim.ELTRAIN: [
@@ -1023,6 +1008,12 @@ class Vector3:
         
         
 class Vector4:
+    def __init__(self, x: float, y: float, z: float, w: float) -> None:
+        self.x = x
+        self.y = y
+        self.z = z
+        self.w = w
+        
     @staticmethod
     def binary_size() -> int:
         return calc_size('4f')  
@@ -1508,7 +1499,7 @@ class Meshes:
             print(f"The output folder {debug_folder} does not exist. Creating it.")
             debug_folder.mkdir(parents = True, exist_ok = True)
 
-        with open(debug_folder / output_file, 'w') as f:
+        with open(debug_folder / output_file, "w") as f:
             f.write(str(self))
             
     @classmethod
@@ -1627,8 +1618,8 @@ class DLPPatch:
         material_index, texture_index, physics_index = read_unpack(f, '>3H')        
         vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
         name_length, = read_unpack(f, '>I')
-        name = read_unpack(f, f'>{name_length}s')[0].decode()     
-        return cls(s_res, t_res, flags, r_opts, material_index, texture_index, phys_idx, vertices, name)
+        name = read_binary_name(f, name_length)
+        return cls(s_res, t_res, flags, r_opts, material_index, texture_index, physics_index, vertices, name)
     
     def write(self, f: BinaryIO) -> None:
         write_pack(f, '>2H', self.s_res, self.t_res) 
@@ -1638,8 +1629,8 @@ class DLPPatch:
         for vertex in self.vertices:
             vertex.write(f)
             
-        write_pack(f, '>I', len(self.name))
-        write_pack(f, f'>{len(self.name)}s', self.name.encode())
+        write_pack(f, '>I', len(self.name))        
+        write_binary_name(f, self.name)
         
     def __repr__(self) -> str:
         return f"""
@@ -1669,7 +1660,7 @@ class DLPGroup:
     @classmethod
     def read(cls, f: BinaryIO) -> 'DLPGroup':
         name_length, = read_unpack(f, '>B')
-        name = read_unpack(f, f'>{name_length}s')[0].rstrip(b'\0').decode()
+        name = read_binary_name(f, name_length)        
         num_vertices, num_patches = read_unpack(f, '>2I')        
         vertex_indices = [read_unpack(f, '>H')[0] for _ in range(num_vertices)]
         patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
@@ -1707,7 +1698,7 @@ class DLP:
         
     @classmethod
     def read(cls, f: BinaryIO) -> 'DLP':
-        magic = read_binary_name(f, 4)          
+        magic = read_binary_name(f, 4)  # DLP7          
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
         patches = [DLPPatch.read(f) for _ in range(num_patches)]
@@ -1718,7 +1709,7 @@ class DLP:
         if not set_dlp:
             return
         
-        with open(output_file, 'wb') as f:
+        with open(output_file, "wb") as f:
             write_binary_name(f, self.magic) 
             write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)      
             
@@ -1743,10 +1734,10 @@ class DLP:
             print(f"The output folder {output_file.parent} does not exist. Creating it.")
             output_file.parent.mkdir(parents = True, exist_ok = True)
         
-        with open(input_file, 'rb') as in_f:
+        with open(input_file, "rb") as in_f:
             dlp_data = DLP.read(in_f)
 
-        with open(output_file, 'w') as out_f:
+        with open(output_file, "w") as out_f:
             out_f.write(repr(dlp_data))
             
         print(f"Processed {input_file.name} to {output_file.name}")
@@ -1759,7 +1750,7 @@ class DLP:
         if not input_folder.exists():
             raise FileNotFoundError(f"The folder {input_folder} does not exist.")
 
-        dlp_files = list(input_folder.glob('*.DLP'))
+        dlp_files = list(input_folder.glob("*.DLP"))
         
         if not dlp_files:
             raise FileNotFoundError(f"No .DLP files found in {input_folder}.")
@@ -1769,7 +1760,7 @@ class DLP:
             output_folder.mkdir(parents = True, exist_ok = True)
 
         for file in dlp_files:
-            output_file = output_folder / file.with_suffix('.txt').name
+            output_file = output_folder / file.with_suffix(".txt").name
             DLP.debug_file(file, output_file, debug_dlp_folder)     
 
             print(f"Processed {file.name} to {output_file.name}")    
@@ -1937,6 +1928,7 @@ def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, 
         
     else:
         raise ValueError("One of the transformation modes must be 'True'.")
+    
     return x, y, z
 
 ################################################################################################################ 
@@ -1945,13 +1937,7 @@ def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, 
 
 
 def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degrees: float = 0.0) -> List[float]:
-
-    def rotate_point(x: float, y: float, angle: float) -> Tuple[float, float]:
-        rad = math.radians(angle)
-        rotated_x = x * math.cos(rad) - y * math.sin(rad)
-        rotated_y = x * math.sin(rad) + y * math.cos(rad)
-        return rotated_x, rotated_y
-
+    
     center_x, center_y = 0.5, 0.5
 
     coords = [
@@ -1961,6 +1947,12 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
         (0, 1)
     ]
 
+    def rotate_point(x: float, y: float, angle: float) -> Tuple[float, float]:
+        rad = math.radians(angle)
+        rotated_x = x * math.cos(rad) - y * math.sin(rad)
+        rotated_y = x * math.sin(rad) + y * math.cos(rad)
+        return rotated_x, rotated_y
+    
     def adjust_and_rotate_coords(coords: List[Tuple[float, float]], angle: float) -> List[float]:
         adjusted_coords = []
         for x, y in coords:
@@ -1975,8 +1967,8 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
     return adjust_and_rotate_coords(coords, angle_degrees)
         
 
-def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str]) -> Tuple[Path, str]:
-    if bound_number < Threshold.CELL_TYPE_SWITCH:
+def determine_mesh_folder_and_filename(cell_id: int, texture_name: List[str]) -> Tuple[Path, str]:
+    if cell_id < Threshold.CELL_TYPE_SWITCH:
         target_folder = Folder.SHOP_MESH_LANDMARK
     else:
         target_folder = Folder.SHOP_MESH_CITY
@@ -1984,9 +1976,9 @@ def determine_mesh_folder_and_filename(bound_number: int, texture_name: List[str
     target_folder.mkdir(parents = True, exist_ok = True)
         
     if any(name.startswith(Texture.WATER) for name in texture_name):
-        mesh_filename = f"CULL{bound_number:02d}_A2.bms"
+        mesh_filename = f"CULL{cell_id:02d}_A2.bms"
     else:
-        mesh_filename = f"CULL{bound_number:02d}_H.bms"
+        mesh_filename = f"CULL{cell_id:02d}_H.bms"
 
     return target_folder, mesh_filename
 
@@ -1999,11 +1991,8 @@ def save_mesh(
     debug_meshes: bool = debug_meshes) -> None:
         
     poly = polys[-1]  # Get the last polygon added
-    bound_number = poly.cell_id
-
-    target_folder, mesh_filename = determine_mesh_folder_and_filename(bound_number, texture_name)
+    target_folder, mesh_filename = determine_mesh_folder_and_filename(poly.cell_id, texture_name)
     
-    # Randomize Textures
     if randomize_textures:
         texture_name = [random.choice(random_textures)]
         
@@ -2422,7 +2411,6 @@ class Texture:
     BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
 
 
-# Bookmark 
 #! ==============================  MAIN AREA ============================== #*
 
 
