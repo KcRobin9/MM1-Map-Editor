@@ -325,6 +325,8 @@ class NetworkMode:
 
 
 class Threshold:
+    CHECKPOINT_RACE_COUNT = 12
+    BLITZ_AND_CIRCUIT_RACE_COUNT = 15
     MESH_VERTEX_COUNT = 16
     CELL_TYPE_SWITCH = 200
     CELL_CHARACTER_WARNING = 200
@@ -3061,15 +3063,15 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
 #! ======================= RACES ======================= !#
 
 
-checkpoint_prefixes = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
+CHECKPOINT_PREFIXES = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
-race_type_to_prefix = {
+RACE_TYPE_TO_PREFIX = {
     RaceMode.BLITZ: "ABL",
     RaceMode.CIRCUIT: "CIR",
-    RaceMode.CHECKPOINT: checkpoint_prefixes
+    RaceMode.CHECKPOINT: CHECKPOINT_PREFIXES
     }
 
-race_type_to_extension = {
+RACE_TYPE_TO_EXTENSION = {
     RaceMode.BLITZ: ".B_",
     RaceMode.CIRCUIT: ".C_",
     RaceMode.CHECKPOINT: ".R_",
@@ -3080,6 +3082,7 @@ REPLACE_VALUES = {
     RaceMode.CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
     RaceMode.CHECKPOINT: [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
 }
+
 
 def ordinal(n) -> str:
     if 10 <= n % 100 <= 13:
@@ -3092,6 +3095,22 @@ def ordinal(n) -> str:
 }.get(n % 10, f"{n}th")
 
 
+def write_mm_data_header():
+    header = ",".join(
+        ["Description"] + 2 * [
+            "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
+            ]
+        )
+    return header + "\n"
+
+
+def determine_race_desc(race_type: str, prefix: str, race_index: Optional[int] = None) -> str:
+    if race_type == RaceMode.CHECKPOINT:
+        return prefix
+    else:
+        return f"{prefix}{race_index}"
+    
+    
 def fill_mm_data_values(race_type: str, custom_mm_data: List[Union[int, float]]) -> List[Union[int, float]]:
     default_values = [1] * 11
     replace_indices = REPLACE_VALUES.get(race_type, [])
@@ -3108,49 +3127,39 @@ def generate_mm_data_string(race_desc: str, ama_filled_values: List[Union[int, f
     return f"{race_desc},{ama_data},{pro_data}\n"
 
 
-def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:
-    header = ",".join(
-        ["Description"] + 2 * [
-            "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
-            ]
-        )
-    
+def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:    
     with open(Folder.SHOP_RACE_MAP / output_file, "w") as f:
-        f.write(header + "\n")
-                
+        header = write_mm_data_header() 
+        f.write(header)
+        
         for race_index, config in configs.items():
-            if race_type == RaceMode.CHECKPOINT:
-                race_desc = prefix  
-            else:
-                race_desc = prefix + str(race_index)
-                            
+            race_desc = determine_race_desc(race_type, prefix, race_index)     
+                       
             ama_filled_values = fill_mm_data_values(race_type, config["mm_data"]["ama"])
             pro_filled_values = fill_mm_data_values(race_type, config["mm_data"]["pro"])
                         
-            data_string = generate_mm_data_string(race_desc, ama_filled_values, pro_filled_values)
-            f.write(data_string)
+            mm_data = generate_mm_data_string(race_desc, ama_filled_values, pro_filled_values)
+            f.write(mm_data)
 
 
 def write_waypoints(output_file, waypoints, race_desc: str, race_index: int, opponent_num: int = None):
     with open(Folder.SHOP_RACE_MAP / output_file, "w") as f:
         if opponent_num is not None:
-            
-            # Opponent Waypoint Header
-            f.write(f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
-            
-            # Opponent Waypoints
+                        
+            opponent_waypoint_header = (f"This is your Opponent file for opponent number {opponent_num}, in {race_desc} race {race_index}\n")
+            f.write(opponent_waypoint_header)
+
             for waypoint in waypoints:
-                waypoint_line = ', '.join(map(str, waypoint[:3])) + f", {Width.MEDIUM}, {Rotation.AUTO}, 0, 0,\n"
-                f.write(waypoint_line)
+                opponent_waypoints = ', '.join(map(str, waypoint[:3])) + f", {Width.MEDIUM}, {Rotation.AUTO}, 0, 0,\n"
+                f.write(opponent_waypoints)
                 
         else:
-            # Player Waypoint Header
-            f.write(f"# This is your {ordinal(race_index)} {race_desc} race Waypoint file\n")
+            player_waypoint_header = (f"# This is your {ordinal(race_index)} {race_desc} race Waypoint file\n")
+            f.write(player_waypoint_header)
             
-            # Player Waypoints
             for waypoint in waypoints:
-                waypoint_line = ', '.join(map(str, waypoint)) + ",0,0,\n"
-                f.write(waypoint_line)
+                player_waypoints = ', '.join(map(str, waypoint)) + ", 0, 0,\n"
+                f.write(player_waypoints)
                 
                   
 def write_section(f, title: str, data: str) -> None:
@@ -3162,7 +3171,7 @@ def format_police_data(police_data: List[str], num_of_police: int) -> str:
 
 
 def format_opponent_data(opponent_cars: Dict, race_type: str, race_index: int) -> str:
-    return "\n".join([f"{opp_car} OPP{idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}" for idx, opp_car in enumerate(opponent_cars)])
+    return "\n".join([f"{opp_car} OPP{idx}{race_type}{race_index}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}" for idx, opp_car in enumerate(opponent_cars)])
 
 
 def format_exceptions(exceptions: Optional[List[List[Union[int, float]]]] = None, exceptions_count: Optional[int] = None) -> str:
@@ -3202,78 +3211,70 @@ def write_aimap(race_type: str, race_index: int, config, opponent_cars, num_of_o
         opponent_data_formatted = format_opponent_data(opponent_cars, race_type, race_index)
         write_section(f, "[Opponent]", f"{num_of_opponents}\n{opponent_data_formatted}")
             
+    
+def check_race_count(race_type, config):
+    if race_type == RaceMode.CHECKPOINT:  
+        if len(config) > Threshold.CHECKPOINT_RACE_COUNT:
+            checkpoint_race_count_error = """
+            ***ERROR***
+            Number of Checkpoint races cannot be more than 12
+            """
+            raise ValueError(checkpoint_race_count_error)
+    
+    elif race_type == RaceMode.BLITZ or race_type == RaceMode.CIRCUIT:
+        if len(config) > Threshold.BLITZ_AND_CIRCUIT_RACE_COUNT:
+            race_count_error = """
+            ***ERROR***
+            Number of Blitz races and/or Circuit races cannot be more than 15
+            """ 
+            raise ValueError(race_count_error)
             
+        
 def create_races(race_data: dict) -> None:
     for race_key, config in race_data.items():
-        race_type, race_index_str = race_key.split('_')
+        race_type, race_index_str = race_key.split("_")
         race_index = int(race_index_str)
-
-        if race_type == RaceMode.CHECKPOINT:  
-            if len(config) > len(checkpoint_prefixes):
-                race_count_error = """
-                ***ERROR***
-                Number of Checkpoint races cannot be more than 12
-                """
-                raise ValueError(race_count_error)
-
-            prefix = checkpoint_prefixes[race_index]
-
+        
+        check_race_count(race_type, config)
+        
+        if race_type == RaceMode.CHECKPOINT: 
+            
             # Player Waypoints
-            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", 
-                            config["waypoints"], 
-                            race_type, 
-                            race_index)
+            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config["waypoints"], race_type, race_index)
+            
+            # Opponent Waypoints
+            for opp_index, (opp_car, opp_waypoints) in enumerate(config["opponent_cars"].items()):
+    
+                write_waypoints(
+                    f"OPP{opp_index}{race_type}{race_index}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}", 
+                    opp_waypoints, 
+                    race_type, 
+                    race_index, 
+                    opponent_num = opp_index)
+            
+            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, CHECKPOINT_PREFIXES[race_index])
+            
+            num_of_opponents = config["aimap"].get("num_of_opponents", len(config["opponent_cars"]))            
+            write_aimap(race_type, race_index, config["aimap"], config["opponent_cars"], num_of_opponents)
+            
+        elif race_type == RaceMode.BLITZ or race_type == RaceMode.CIRCUIT:
+            
+            # Player Waypoints
+            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config["waypoints"], race_type, race_index)
             
             # Opponent Waypoints
             for opp_idx, (opp_car, opp_waypoints) in enumerate(config["opponent_cars"].items()):
-    
                 write_waypoints(
-                    f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
+                    f"OPP{opp_idx}{race_type}{race_index}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}", 
                     opp_waypoints, 
                     race_type, 
                     race_index, 
                     opponent_num = opp_idx)
             
-            write_mm_data(f"MM{race_type}DATA.CSV", 
-                          {race_index: config}, 
-                          race_type, prefix)
+            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, RACE_TYPE_TO_PREFIX[race_type] )
             
-            num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars']))            
-
-            write_aimap(race_type, race_index, 
-                        config['aimap'], 
-                        config['opponent_cars'], 
-                        num_of_opponents)
-            
-        # BLITZES & CIRCUITS
-        else: 
-            prefix = race_type_to_prefix[race_type] 
-
-            # Player Waypoints
-            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", 
-                            config['waypoints'], 
-                            race_type, race_index)
-            
-            # Opponent-specific Waypoints
-            for opp_idx, (opp_car, opp_waypoints) in enumerate(config['opponent_cars'].items()):
-                write_waypoints(
-                    f"OPP{opp_idx}{race_type}{race_index}{race_type_to_extension[race_type]}{race_index}", 
-                    opp_waypoints, 
-                    race_type, 
-                    race_index, 
-                    opponent_num = opp_idx)
-            
-            write_mm_data(f"MM{race_type}DATA.CSV", 
-                          {race_index: config}, 
-                          race_type, 
-                          prefix)
-            
-            num_of_opponents = config['aimap'].get('num_of_opponents', len(config['opponent_cars'])) 
-            
-            write_aimap(race_type, race_index, 
-                        config['aimap'], 
-                        config['opponent_cars'],
-                        num_of_opponents)
+            num_of_opponents = config["aimap"].get("num_of_opponents", len(config["opponent_cars"])) 
+            write_aimap(race_type, race_index, config["aimap"], config["opponent_cars"], num_of_opponents)
 
                 
 def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
