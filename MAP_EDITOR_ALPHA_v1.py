@@ -87,9 +87,10 @@ set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI
 set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
 visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
 
-# Start Position
-# To manually set car start position in cruise, adjust the coordinates below and make sure no polygon has the option "base = True"
-# cruise_start_position = (40.0, 30.0, -40.0)
+# Car Start Position in Cruise (if no polygon has the option "base = True")
+cruise_start_position = (40.0, 30.0, -40.0)
+
+round_vector_values = True
 
 disable_progress_bar = False    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
@@ -201,10 +202,9 @@ def update_progress_bar(progress: float, buffer: str, top_divider: str, bottom_d
     else:
         color = Style.BRIGHT + Fore.GREEN
     
-    prog_int = int(progress)
-    prog_line = color + f"   Creating.. {MAP_NAME} [{'#' * (prog_int // 5)}{'.' * (20 - prog_int // 5)}] {prog_int}%" + Style.RESET_ALL
-
-    buffer = top_divider + "\n" + prog_line + "\n" + bottom_divider + "\n"
+    progress = int(progress)
+    progress_line = color + f"   Creating.. {MAP_NAME} [{'#' * (progress // 5)}{'.' * (20 - progress // 5)}] {progress}%" + Style.RESET_ALL
+    buffer = top_divider + "\n" + progress_line + "\n" + bottom_divider + "\n"
     
     if not disable_progress_bar:
         clear_command_prompt_screen()
@@ -228,15 +228,15 @@ def continuous_progress_bar(duration: float, buffer: str, top_divider: str, bott
         time.sleep(0.025)  
 
 
-def save_editor_run_time(run_time: float, run_time_file: Path) -> None:
-    with open(run_time_file, "wb") as f:
+def save_editor_run_time(run_time: float, output_file: Path) -> None:
+    with open(output_file, "wb") as f:
         pickle.dump(run_time, f)
 
 
-def load_last_editor_run_time(run_time_file: Path):
-    if run_time_file.exists():
+def load_last_editor_run_time(input_file: Path):
+    if input_file.exists():
         try:
-            with open(run_time_file, "rb") as f:
+            with open(input_file, "rb") as f:
                 return pickle.load(f)
         except EOFError:
             return 2.0  # Default to 2.0 seconds if the file is empty or corrupted
@@ -275,9 +275,10 @@ start_time = time.time()
 
 
 vertices = [] 
-polygons_data = []
 texture_names = []
 texcoords_data = {}
+
+polygons_data = []
 
 hudmap_vertices = []
 hudmap_properties = {}
@@ -355,7 +356,7 @@ class agiMeshSet:
     TEXCOORDS_AND_OFFSET = TEXCOORDS | OFFSET
     NORMALS_AND_PLANES = NORMALS | PLANES
     
-    FENDERS = TEXCOORDS | NORMALS | OFFSET | PLANES  # Used for Roadster Fenders
+    FENDERS = TEXCOORDS | NORMALS | OFFSET | PLANES  # Used for Fenders (Panoz Roadster)
     
     ALL_FEATURES = TEXCOORDS | NORMALS | COLORS | OFFSET | PLANES
         
@@ -787,7 +788,7 @@ INFO
     Or you can manually set the orientation in degrees (0.0 - 360.0).
 """
 
-#! Structure: (x,y,z, orientation, bridge number, bridge object)
+# Structure: (x, y, z, rotation, bridge ID, bridge object)
 bridge_list = [
     ((-50.0, 0.01, -100.0), Rotation.WEST, 2, Prop.BRIDGE_WIDE, [
     ((-50.0, 0.15, -115.0), Rotation.WEST, 2, Prop.CROSSGATE),
@@ -903,7 +904,7 @@ class Vector2:
     def Normalize(self) -> 'Vector2':
         return self * (self.Mag2() ** -0.5)
     
-    def __repr__(self, round_values: bool = False) -> str:
+    def __repr__(self, round_values: bool = round_vector_values) -> str:
         if round_values:
             return f'{round(self.x, 2):.2f}, {round(self.y, 2):.2f}'
         else:
@@ -1002,7 +1003,7 @@ class Vector3:
         self.y = y
         self.z = z
                 
-    def __repr__(self, round_values: bool = True) -> str:
+    def __repr__(self, round_values: bool = round_vector_values) -> str:
         if round_values:
             return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
         else:
@@ -1065,9 +1066,9 @@ class Polygon:
         plane_distance = read_unpack(f, '<f')
         return cls(cell_id, material_index, flags, vertex_index, plane_edges, plane_normal, plane_distance)
             
-    def write(self, f: BinaryIO) -> None:
-        if len(self.vertex_index) <= Shape.TRIANGLE:  # Each polygon requires four vertex indices
-            self.vertex_index += (0,) * (4 - len(self.vertex_index))
+    def write(self, f: BinaryIO) -> None:            
+        if len(self.vertex_index) == Shape.TRIANGLE:  # Each polygon requires four vertex indices
+            self.vertex_index += (0,)
         
         write_pack(f, '<HB', self.cell_id, self.material_index)
         write_pack(f, '<B', self.flags)
@@ -1084,10 +1085,10 @@ class Polygon:
         # plane_d = ', '.join(f'{d:.2f}' for d in self.plane_d)
         return f"""
 POLYGON
-    Bound Number: {self.cell_id}
+    Cell ID: {self.cell_id}
     Material Index: {self.material_index}
     Flags: {self.flags}
-    Vertices Indices: {self.vertex_index}
+    Vertex Indices: {self.vertex_index}
     Vertices Coordinates: {vertices_coordinates}
     Plane Edges: {self.plane_edges}
     Plane N: {self.plane_normal}
@@ -1313,7 +1314,7 @@ class Bounds:
             output_folder.mkdir(parents = True, exist_ok = True)
 
         for file in bnd_files:
-            output_file = output_folder / file.with_suffix('.txt').name
+            output_file = output_folder / file.with_suffix(".txt").name
             Bounds.debug_file(file, output_file, debug_bounds_folder)
             print(f"Processed {file.name} to {output_file.name}")
                     
@@ -1458,7 +1459,7 @@ class Meshes:
             write_pack(f, f"{self.adjunct_count}H", *self.enclosed_shape)
             write_pack(f, f"{self.surface_count}B", *self.surface_sides)
 
-            # A Triangle must always have 4 indices (the 4th index will be 0)
+            # Each polygon requires four vertex indices (add the value 0 as the 4th index in case of a triangle)
             for indices_side in self.indices_sides:
                 while len(indices_side) == Shape.TRIANGLE:
                     indices_side.append(0)
@@ -1544,23 +1545,23 @@ class Meshes:
         return f"""
 MESH
     Magic: {self.magic}
-    VertexCount: {self.vertex_count}
-    AdjunctCount: {self.adjunct_count}
-    SurfaceCount: {self.surface_count}
-    IndicesCount: {self.indices_count}
+    Vertex Count: {self.vertex_count}
+    Adjunct Count: {self.adjunct_count}
+    Surface Count: {self.surface_count}
+    Indices Count: {self.indices_count}
     Radius: {self.radius:.2f}
     Radius Sqr: {self.radius_sqr:.2f}
-    BoundingBoxRadius: {self.bounding_box_radius:.2f}
-    TextureCount: {self.texture_count}
+    BoundingBox Radius: {self.bounding_box_radius:.2f}
+    Texture Count: {self.texture_count}
     Flags: {self.flags}
     Cache Size: {self.cache_size}\n
-    TextureNames: {self.texture_names}\n
+    Texture Names: {self.texture_names}\n
     Vertices: {self.vertices}\n
     Normals: {self.normals}\n
-    TexCoords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
+    Tex Coords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
     Enclosed Shape: {self.enclosed_shape}\n
-    SurfaceSides: {self.surface_sides}\n
-    IndicesSides: {self.indices_sides}\n
+    Surface Sides: {self.surface_sides}\n
+    Indices Sides: {self.indices_sides}\n
     """
              
 ################################################################################################################               
@@ -1964,6 +1965,7 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
     
     if "entries" not in texcoords_data:
         texcoords_data["entries"] = {}
+        
     texcoords_data["entries"][bound_number] = {"tile_x": tile_x, "tile_y": tile_y, "angle_degrees": angle_degrees}
 
     return adjust_and_rotate_coords(coords, angle_degrees)
@@ -2030,13 +2032,13 @@ def initialize_mesh(
     surface_count = len(texture_indices)   
     texture_count = len(texture_name)
     
-    # A Triangle must have 4 indices (the 4th index will be 0)
-    if len(coordinates) in [Shape.QUAD, Shape.TRIANGLE]:
+    # Each polygon requires four indices 
+    if len(coordinates) in [Shape.QUAD, Shape.TRIANGLE]: 
         indices_count = surface_count * 4
 
     enclosed_shape = list(range(adjunct_count))
     normals = normals or [2] * adjunct_count  # 2 is the default value
-    tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]  
+    tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]  # tile x and y once if no tex coords are provided
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
     return Meshes(
@@ -2088,7 +2090,8 @@ def ensure_quad_ccw_order(vertex_coordinates):
     # Project vertices onto the plane defined by the normal
     projections = [
         (np.dot(vertex, basis1), np.dot(vertex, basis2))
-        for vertex in vertex_coordinates]
+        for vertex in vertex_coordinates
+        ]
 
     # Compute the centroid of the projected points
     centroid = np.mean(projections, axis = 0)
@@ -2132,6 +2135,7 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
     negate = 1.0
 
+    # TODO: Refactor
     if abs_plane_x < abs_plane_y or abs_plane_x < abs_plane_z:
         if abs_plane_y < abs_plane_x or abs_plane_y < abs_plane_z:
             if plane_normal[2] < 0.0:
@@ -2234,8 +2238,6 @@ def create_polygon(
     hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False) -> None:
 
-    global cruise_start_position
-
     # Vertex indices
     base_vertex_index = len(vertices)
     
@@ -2264,8 +2266,9 @@ def create_polygon(
     if sort_vertices: 
         vertex_coordinates = sort_coordinates(vertex_coordinates)
         
-    # Base polygon           
+    # Base polygon               
     if base:
+        global cruise_start_position
         x, y, z = calculate_center_tuples(vertex_coordinates)
         cruise_start_position = (x, y + 15, z)
           
@@ -2311,9 +2314,14 @@ def create_polygon(
     new_vertices = [Vector3(*coord) for coord in vertex_coordinates]
     vertices.extend(new_vertices)
     
-    vert_indices = [base_vertex_index + i for i in range(len(new_vertices))]
+    vertex_indices = [base_vertex_index + i for i in range(len(new_vertices))]
             
-    poly = Polygon(bound_number, material_index, flags, vert_indices, plane_edges, plane_normal, plane_distance, cell_type, always_visible)
+    poly = Polygon(
+        bound_number, material_index, flags, vertex_indices, 
+        plane_edges, plane_normal, plane_distance, 
+        cell_type, always_visible
+        )
+    
     polys.append(poly)
         
     # Save HUD data
@@ -2334,31 +2342,31 @@ def user_notes():
     If you're setting a Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are OK)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the constants under "Material types"    
-    Note: you can also set custom Material / Physics Properties (search for: "custom_physics" in the script)
+    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the Material class constants    
+    Note: you can also set custom Material / Physics Properties (search for: "custom_physics" in this script)
     
     Texture (UV) mapping examples:
     "tex_coords = compute_uv(bound_number = 1, tile_x = 5, tile_y = 2, angle_degrees = 0)"
     "tex_coords = compute_uv(bound_number = 2, tile_x = 4, tile_y = 8, angle_degrees = 90)"
         
-    The variable "normals" (an optional variable) in the function "save_mesh()" makes the texture edges darker / lighter. 
+    The variable "normals" (an optional variable) in the function "save_mesh()" makes the texture edges darker / lighter 
     If you're setting a Quad, you can for example do: "normals = [40, 2, 50, 1]"
-    Where 2 is the default value. I recommend trying out different values to get an idea of the result in-game
+    Where 2 is the default value. It is recommended to try different values to get an idea of the result in-game
         
     To properly set up the AI paths, adhere to the following for "bound_number = x":
     Open Areas: 1 - 199
     Roads: 201 - 859
     Intersections: 860 +
-    """
-
-#! EXTRA notes:
-#! The "bound_number" can not be equal to 0, 200, be negative, or be greater than 32767
-#! In addition, there must always exist one polygon with "bound_number = 1"
     
-#! If you wish to modify or add a Material, Cell, Texture or HUD constant and you are importing / exporting to Blender,
-#! then you must also modify the respective IMPORTS and EXPORTS. For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
-
-
+    IMPORTANT:
+    The "bound_number" can not be equal to 0, 200, be negative, or be greater than 32767
+    In addition, there must always exist one polygon with "bound_number = 1"
+    
+    If you wish to modify or add a Cell, Material, Texture or HUD constant and you are importing / exporting to Blender,
+    then you must also modify the respective IMPORTS and EXPORTS. For Cells, this would be "CELL_IMPORT" and "CELL_EXPORT"
+    """
+    
+    
 class Room:
     DEFAULT = 0x0
     TUNNEL = 0x1
@@ -2376,8 +2384,8 @@ class Material:
     DEFAULT = 0
     GRASS = 87
     WATER = 91
-    STICKY = 97
-    NO_FRICTION = 98
+    STICKY = 97         # Custom
+    NO_FRICTION = 98    # Custom
     
 
 class Texture:
@@ -2408,7 +2416,7 @@ class Texture:
     CHECKPOINT = "CHECK04"
     BUS_RED_TOP = "VPBUSRED_TP_BK"
     
-    # Custom Textures
+    # Custom Textures (see: MM1-Map-Editor \ Custom Textures)
     LAVA = "T_WATER_LAVA"
     BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
 
@@ -2734,7 +2742,7 @@ save_mesh(
 # Road connected to Bridge Prop
 create_polygon(
 	bound_number = 501,
-    base = True,
+    base = False,
 	vertex_coordinates = [
 		(20.0, 30.0, 0.0),
         (50.0, 30.0, 0.0),
@@ -3016,15 +3024,15 @@ CheckpointNames={'|'.join(checkpoint_race_names)}
 """)
 
     
-def copy_custom_textures(custom_textures_folder: Path, destination_folder: Path) -> None: 
-    for custom_tex in custom_textures_folder.iterdir():
-        shutil.copy(custom_tex, destination_folder / custom_tex.name)
+def copy_custom_textures(input_folder: Path, output_folder: Path) -> None: 
+    for custom_tex in input_folder.iterdir():
+        shutil.copy(custom_tex, output_folder / custom_tex.name)
         
         
-def copy_core_tune_files(tune_source_folder: Path, tune_destination_folder: Path) -> None:    
-    for file in tune_source_folder.glob("*"):
+def copy_core_tune_files(input_folder: Path, output_folder: Path) -> None:    
+    for file in input_folder.glob("*"):
         if not file.name.endswith(".MMBANGERDATA"):
-            shutil.copy(file, tune_destination_folder)
+            shutil.copy(file, output_folder)
             
             
 def copy_dev_folder(input_folder: Path, output_folder: Path) -> None:
@@ -6974,7 +6982,7 @@ Traffic Blocked, Ped Blocked, Road Divided, and Alley, all default to: {NO}
 cruise_start = {
     "street_name": "cruise_start",
     "vertices": [
-        (0, 0, 0),              # keep this
+        (0, 0, 0),              # Keep this
         cruise_start_position]}     
 
 main_west = {
