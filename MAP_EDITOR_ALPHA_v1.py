@@ -326,6 +326,7 @@ class NetworkMode:
 
 
 class Threshold:
+    BLITZ_WAYPOINT_COUNT = 11
     CHECKPOINT_RACE_COUNT = 12
     BLITZ_AND_CIRCUIT_RACE_COUNT = 15
     MESH_VERTEX_COUNT = 16
@@ -3236,55 +3237,52 @@ def check_race_count(race_type, config):
             Number of Blitz races and/or Circuit races cannot be more than 15
             """ 
             raise ValueError(race_count_error)
-            
         
+        
+def check_waypoint_count(race_type, waypoints):
+    if race_type == RaceMode.BLITZ:
+        if len(waypoints) > Threshold.BLITZ_WAYPOINT_COUNT:
+            blitz_waypoint_count_error = """
+            ***ERROR***
+            Number of waypoints for Blitz race cannot be more than 10
+            """
+            raise ValueError(blitz_waypoint_count_error)
+
+              
 def create_races(race_data: dict) -> None:
     for race_key, config in race_data.items():
-        race_type, race_index_str = race_key.split("_")
-        race_index = int(race_index_str)
+        race_type, race_index = race_key.split("_", 1)
+        race_index = int(race_index)
         
+        ai_map = config["aimap"]
+        opponent_car_data = config["opponent_cars"]
+        num_of_opponents = ai_map.get("num_of_opponents", len(opponent_car_data))   
+        player_waypoints = config["waypoints"]
+        
+        file_prefix = f"{race_type}{race_index}"
+        
+        # Safety Checks
         check_race_count(race_type, config)
+        check_waypoint_count(race_type, player_waypoints)
         
-        if race_type == RaceMode.CHECKPOINT: 
-            
-            # Player Waypoints
-            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config["waypoints"], race_type, race_index)
-            
-            # Opponent Waypoints
-            for opp_index, (opp_car, opp_waypoints) in enumerate(config["opponent_cars"].items()):
-    
-                write_waypoints(
-                    f"OPP{opp_index}{race_type}{race_index}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}", 
-                    opp_waypoints, 
-                    race_type, 
-                    race_index, 
-                    opponent_num = opp_index)
-            
+        # Player Waypoints
+        write_waypoints(f"{file_prefix}WAYPOINTS.CSV", player_waypoints, race_type, race_index)
+        
+        # Opponent Waypoints
+        for opp_index, opp_waypoints in enumerate(opponent_car_data.values()):
+            opp_file_name = f"OPP{opp_index}{file_prefix}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}"
+            write_waypoints(opp_file_name, opp_waypoints, race_type, race_index, opp_index)
+        
+        # MM DATA
+        if race_type == RaceMode.CHECKPOINT:
             write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, CHECKPOINT_PREFIXES[race_index])
+        else:
+            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, RACE_TYPE_TO_PREFIX[race_type])
             
-            num_of_opponents = config["aimap"].get("num_of_opponents", len(config["opponent_cars"]))            
-            write_aimap(race_type, race_index, config["aimap"], config["opponent_cars"], num_of_opponents)
-            
-        elif race_type == RaceMode.BLITZ or race_type == RaceMode.CIRCUIT:
-            
-            # Player Waypoints
-            write_waypoints(f"{race_type}{race_index}WAYPOINTS.CSV", config["waypoints"], race_type, race_index)
-            
-            # Opponent Waypoints
-            for opp_idx, (opp_car, opp_waypoints) in enumerate(config["opponent_cars"].items()):
-                write_waypoints(
-                    f"OPP{opp_idx}{race_type}{race_index}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}", 
-                    opp_waypoints, 
-                    race_type, 
-                    race_index, 
-                    opponent_num = opp_idx)
-            
-            write_mm_data(f"MM{race_type}DATA.CSV", {race_index: config}, race_type, RACE_TYPE_TO_PREFIX[race_type] )
-            
-            num_of_opponents = config["aimap"].get("num_of_opponents", len(config["opponent_cars"])) 
-            write_aimap(race_type, race_index, config["aimap"], config["opponent_cars"], num_of_opponents)
+        # AI MAP
+        write_aimap(race_type, race_index, ai_map, opponent_car_data, num_of_opponents)
 
-                
+       
 def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
         filler = ",0,0,0,0,0,\n"
         header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
