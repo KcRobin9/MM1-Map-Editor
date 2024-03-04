@@ -55,6 +55,7 @@ class Folder:
     SHOP = BASE / "SHOP"
     SHOP_CITY = SHOP / "CITY"
     SHOP_RACE = SHOP / "RACE"   
+    SHOP_TUNE = SHOP / "TUNE"
     SHOP_RACE_MAP = SHOP_RACE / f"{MAP_FILENAME}" 
     SHOP_MESH_LANDMARK = SHOP / "BMS" / f"{MAP_FILENAME}LM"
     SHOP_MESH_CITY = SHOP / "BMS" / f"{MAP_FILENAME}CITY"
@@ -62,7 +63,7 @@ class Folder:
     MIDTOWNMADNESS = BASE / "MidtownMadness"
     USER_RESOURCES = BASE / "Resources" / "UserResources"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
-    DEBUG_RESOURCES = BASE / "Resources" / "Debug"
+    DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
     
     
 #* SETUP II (Map Creation)      
@@ -7377,7 +7378,7 @@ def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize
 
 # Core
 create_folders()
-create_map_info(Folder.SHOP / "TUNE" / f"{MAP_FILENAME}.CINFO", blitz_race_names, circuit_race_names, checkpoint_race_names)
+create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}.CINFO", blitz_race_names, circuit_race_names, checkpoint_race_names)
 
 create_races(race_data)
 create_cops_and_robbers(Folder.SHOP_RACE_MAP / "COPSWAYPOINTS.CSV", cnr_waypoints)
@@ -7398,18 +7399,18 @@ for prop in random_props:
 prop_editor.process_all(prop_list, set_props)
 
 lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
-LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP / "TUNE" / "LIGHTING.CSV")
+LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
 copy_dev_folder(Folder.BASE / "dev", Folder.MIDTOWNMADNESS / "dev")
-edit_and_copy_mmbangerdata(bangerdata_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP / "TUNE") 
-copy_core_tune_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP / "TUNE")
+edit_and_copy_mmbangerdata(bangerdata_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE) 
+copy_core_tune_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
 copy_custom_textures(Folder.BASE / "Custom Textures", Folder.SHOP / "TEX16O")
 
 create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}.EXT", hudmap_vertices)
 create_animations(Folder.SHOP_CITY / MAP_FILENAME / "ANIM.CSV", Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
 create_bridges(bridge_list, set_bridges) 
-create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP / "TUNE")
+create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
 create_lars_race_maker("Lars_Race_Maker.html", street_list, hudmap_vertices, set_lars_race_maker)
 
