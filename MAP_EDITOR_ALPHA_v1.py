@@ -1788,58 +1788,36 @@ DLP
 #! ======================= COMMON HELPER FUNCTIONS ======================= !#
 
 
-def calculate_min(vertices: List[Vector3]):
-    min_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
-    for vertex in vertices:
-        min_.x = min(min_.x, vertex.x)
-        min_.y = min(min_.y, vertex.y)
-        min_.z = min(min_.z, vertex.z)
-    return min_     
-
-         
-def calculate_max(vertices: List[Vector3]):
-    max_ = Vector3(vertices[0].x, vertices[0].y, vertices[0].z)
-    for vertex in vertices:
-        max_.x = max(max_.x, vertex.x)
-        max_.y = max(max_.y, vertex.y)
-        max_.z = max(max_.z, vertex.z)
-    return max_
+def calculate_min(vertices: List[Vector3]) -> Vector3:
+    return Vector3(
+        min(vertex.x for vertex in vertices),
+        min(vertex.y for vertex in vertices),
+        min(vertex.z for vertex in vertices)
+    )
 
 
-def calculate_center(vertices: List[Vector3]):
-    center = Vector3(0.0, 0.0, 0.0)  # Do not change
-    for vertex in vertices:
-        center.x += vertex.x
-        center.y += vertex.y
-        center.z += vertex.z
-    center.x /= len(vertices)
-    center.y /= len(vertices)
-    center.z /= len(vertices)
-    return center
+def calculate_max(vertices: List[Vector3]) -> Vector3:
+    return Vector3(
+        max(vertex.x for vertex in vertices), 
+        max(vertex.y for vertex in vertices), 
+        max(vertex.z for vertex in vertices)
+        )
 
 
-def calculate_center_tuples(vertices: List[Tuple[float, float, float]]):
-    center = [0, 0, 0]
-    for vertex in vertices:
-        center[0] += vertex[0]
-        center[1] += vertex[1]
-        center[2] += vertex[2]
-    center[0] /= len(vertices)
-    center[1] /= len(vertices)
-    center[2] /= len(vertices)
-    return center
+def calculate_center(vertices: List[Vector3]) -> Vector3:
+    return sum(vertices, Vector3(0, 0, 0)) / len(vertices)
+
+
+def calculate_center_tuples(vertices: List[Tuple[float, float, float]]) -> Tuple[float, float, float]:
+    return (sum((Vector3.from_tuple(vertex) for vertex in vertices), Vector3(0, 0, 0)) / len(vertices)).to_tuple()
 
 
 def calculate_radius(vertices: List[Vector3], center: Vector3) -> float:
-    return calculate_radius_squared(vertices, center) ** 0.5
+    return max(vertex.Dist(center) for vertex in vertices)
 
 
 def calculate_radius_squared(vertices: List[Vector3], center: Vector3) -> float:
-    radius_sqr = 0
-    for vertex in vertices:
-        diff = Vector3(vertex.x - center.x, vertex.y - center.y, vertex.z - center.z)
-        radius_sqr = max(radius_sqr, diff.x ** 2 + diff.y ** 2 + diff.z ** 2)
-    return radius_sqr
+    return max(vertex.Dist2(center) for vertex in vertices)
 
 
 def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, float, float]:
@@ -1849,18 +1827,7 @@ def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, f
 
 
 def calculate_bounding_box_radius(vertices: List[Vector3]) -> float:
-    max_ = calculate_max(vertices)
-    min_ = calculate_min(vertices)
-
-    length_x = max_.x - min_.x
-    length_y = max_.y - min_.y
-    length_z = max_.z - min_.z
-
-    diagonal_length = math.sqrt(length_x ** 2 + length_y ** 2 + length_z ** 2)
-
-    bounding_box_radius = diagonal_length / 2
-
-    return bounding_box_radius
+    return (calculate_max(vertices) - calculate_min(vertices)).Mag() / 2  
 
 
 def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
