@@ -3184,7 +3184,7 @@ def prepare_aimap_data(config, race_type: str, race_index: int, opp_cars) -> tup
 def write_aimap(output_file: Path, traffic_density: float, exceptions_data_formatted, police_data_formatted, opponent_data_formatted, num_of_opponents: int) -> None:
     with open(output_file, "w") as f:
         
-        main_template = f"""
+        template = f"""
 # Ambient Traffic Density 
 [Density] 
 {traffic_density}
@@ -3196,7 +3196,7 @@ def write_aimap(output_file: Path, traffic_density: float, exceptions_data_forma
 # Ambient Traffic Exceptions
 # Rd Id, Density, Speed Limit 
 """
-        f.write(main_template)
+        f.write(template)
             
         write_section(f, "[Exceptions]", exceptions_data_formatted)
         write_section(f, "[Police]", police_data_formatted)
@@ -3284,8 +3284,8 @@ def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, 
             
             for i in range(0, len(cnr_waypoints), 3):
                 f.write(", ".join(map(str, cnr_waypoints[i])) + filler) 
-                f.write(", ".join(map(str, cnr_waypoints[i+1])) + filler)
-                f.write(", ".join(map(str, cnr_waypoints[i+2])) + filler)
+                f.write(", ".join(map(str, cnr_waypoints[i + 1])) + filler)
+                f.write(", ".join(map(str, cnr_waypoints[i + 2])) + filler)
   
 ################################################################################################################               
 ################################################################################################################              
@@ -3347,8 +3347,8 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
 def get_cell_visiblity(polys: List[Polygon]) -> List[int]:
     always_visible_cell_ids = [poly.cell_id for poly in polys if poly.always_visible]
     
-    if 1 not in always_visible_cell_ids:
-        always_visible_cell_ids.insert(0, 1)
+    if Default.ROOM not in always_visible_cell_ids:
+        always_visible_cell_ids.insert(0, Default.ROOM)
         
     return always_visible_cell_ids
 
@@ -5354,7 +5354,7 @@ def get_first_and_last_street_vertices(street_list):
 
 #! ############ Code by Lars (Modified) // start ############ !# 
 
-def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices, set_lars_race_maker: bool):    
+def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices: List[Vector3], set_lars_race_maker: bool) -> None:  
     if not set_lars_race_maker:
         return
 
@@ -5366,7 +5366,7 @@ def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices, set_
     vertices_processed = get_first_and_last_street_vertices(street_list)
     vertices_string = ",\n".join([str(coord) for coord in vertices_processed])
 
-    html_template = f"""
+    template = f"""
 <!DOCTYPE html>
 <html>
 <head>
@@ -5459,7 +5459,7 @@ def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices, set_
     """
 
     with open(output_file, "w") as f:
-        f.write(html_template)
+        f.write(template)
 
 #! ################# Code by Lars (Modified) // end ################# !# 
 
