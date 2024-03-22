@@ -654,7 +654,7 @@ checkpoint_race_names = ["Photo Finish"]
 # Races
 race_data = {
     "BLITZ_0": {
-        "waypoints": [
+        "player_waypoints": [
             [0.0, 0.0, 55.0, Rotation.NORTH, 12.0], 
             [0.0, 0.0, 15.0, Rotation.NORTH, 12.0], 
             [0.0, 0.0, -40.0, Rotation.NORTH, 12.0], 
@@ -665,28 +665,28 @@ race_data = {
             "pro": [TimeOfDay.EVENING, Weather.CLOUDY, MaxOpponents._8, CopDensity._100, AmbientDensity._100, PedDensity._100, Laps._3, 999], 
         },
         "aimap": {
-            "density": 0.25,
+            "ambient_density": 0.25,
             "num_of_police": 2,
-            "police_data": [
+            "police": [
                 f"{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
                 f"{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
             ],
+            "num_of_opponents": 1,
+            "opponents": {
+                PlayerCar.CADILLAC: [
+                    [5.0, 0.0, 35.0], 
+                    [5.0, 0.0, -130.0],
+                ],
+            },
             "num_of_exceptions": None,
             "exceptions": [
                 [4, 0.0, 45],
                 [5, 0.0, 45],
-            ],
-            "num_of_opponents": 1,
-        },
-            "opponent_cars": {
-                PlayerCar.VW_BEETLE: [
-                    [5.0, 0.0, 35.0], 
-                    [5.0, 0.0, -130.0]
-                ], 
+            ], 
         },
     },
     "RACE_0": {
-        "waypoints": [
+        "player_waypoints": [
             [0.0, 245, -850, Rotation.SOUTH, Width.MEDIUM], 
             [0.0, 110, -500, Rotation.SOUTH, Width.MEDIUM],  
             [0.0, 110, -497, Rotation.SOUTH, Width.MEDIUM],   
@@ -700,19 +700,19 @@ race_data = {
             "pro": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
         },
         "aimap": {
-            "density": 0.2,
+            "traffic_density": 0.2,
             "num_of_police": 0,
-            "police_data": [
+            "police": [
                 f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
             "num_of_opponents": 1,
-        },
-            "opponent_cars": {
+            "opponents": {
                 PlayerCar.PANOZ_GTR_1: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
-        }
+            },
+        },
     },
     "CIRCUIT_0": {
-        "waypoints": [
+        "player_waypoints": [
             [0.0, 245, -850, Rotation.SOUTH, Width.MEDIUM], 
             [0.0, 110, -500, Rotation.SOUTH, 30.0],    
             [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
@@ -725,14 +725,13 @@ race_data = {
             "pro": [TimeOfDay.NIGHT, Weather.SNOW, MaxOpponents._8, CopDensity._0, AmbientDensity._50, PedDensity._50, Laps._3],
         },
         "aimap": {
-            "density": 0.2,
+            "traffic_density": 0.2,
             "num_of_police": 0,
-            "police_data": [
+            "police": [
                 f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
             "num_of_opponents": 2,
-        },
-        "opponent_cars": {
+            "opponents": {
             TrafficCar.WHITE_LIMO: [
                 [-10.0, 245, -850], 
                 [0.0, 0.0, -100],
@@ -741,9 +740,10 @@ race_data = {
             TrafficCar.BLACK_LIMO: [
                 [10.0, 245, -850],
                 [0.0, 0.0, -100],
-                [10.0, 0.0, -75.0]
+                [10.0, 0.0, -75.0],
             ],
-        }
+            }
+        },
     }
 }
 
@@ -3165,18 +3165,18 @@ def format_exceptions(exceptions: Optional[List[List[Union[int, float]]]] = None
     return f"{exceptions_count}\n{formatted_exceptions}"
 
 
-def prepare_aimap_data(config, race_type: str, race_index: int, opp_cars) -> tuple:
-    traffic_density = config["density"]
+def prepare_aimap_data(config, race_type: str, race_index: int, opponents) -> tuple:
+    traffic_density = config.get("traffic_density", 0.0)
+        
+    police_data = config["police"]
+    num_of_police = config["num_of_police"]
     
     exceptions = config.get("exceptions", [])
     exception_count = config.get("num_of_exceptions", len(exceptions))
-    
-    police_data = config["police_data"]
-    num_of_police = config["num_of_police"]
 
     exceptions_data_formatted = format_exceptions(exceptions, exception_count)
     police_data_formatted = format_police_data(police_data, num_of_police)
-    opponent_data_formatted = format_opponent_data(opp_cars, race_type, race_index)
+    opponent_data_formatted = format_opponent_data(opponents, race_type, race_index)
     
     return (traffic_density, exceptions_data_formatted, police_data_formatted, opponent_data_formatted)
 
@@ -3236,21 +3236,19 @@ def create_races(race_data: dict) -> None:
         race_type, race_index = race_key.split("_", 1)
         race_index = int(race_index)
         
-        player_waypoints = config["waypoints"]
-                
+        player_waypoints = config["player_waypoints"]
         ai_map = config["aimap"]
         
-        opponent_car_data = config["opponent_cars"]                                 # TODO: this variable should become part of "aimap"
-        num_of_opponents = ai_map.get("num_of_opponents", len(opponent_car_data))   
+        opponents = ai_map["opponents"]
+        num_of_opponents = ai_map.get("num_of_opponents", len(opponents))  
                 
-        prepared_aimap_data = prepare_aimap_data(ai_map, race_type, race_index, opponent_car_data)
+        prepared_aimap_data = prepare_aimap_data(ai_map, race_type, race_index, opponents)
                                     
-        output_folder = Folder.SHOP_RACE_MAP
         file_prefix = f"{race_type}{race_index}"
         
-        ai_map_file = output_folder / f"{file_prefix}.AIMAP_P"
-        player_waypoint_file = output_folder / f"{file_prefix}WAYPOINTS.CSV"
-        mm_data_file = output_folder / f"MM{race_type}DATA.CSV"
+        ai_map_file = Folder.SHOP_RACE_MAP / f"{file_prefix}.AIMAP_P"
+        player_waypoint_file = Folder.SHOP_RACE_MAP / f"{file_prefix}WAYPOINTS.CSV"
+        mm_data_file = Folder.SHOP_RACE_MAP / f"MM{race_type}DATA.CSV"
         
         # Safety Checks
         check_race_count(race_type, config)
@@ -3260,9 +3258,9 @@ def create_races(race_data: dict) -> None:
         write_waypoints(player_waypoint_file, player_waypoints, race_type, race_index)
         
         # Opponent Waypoints
-        for opp_index, opp_waypoints in enumerate(opponent_car_data.values()):
+        for opp_index, opp_waypoints in enumerate(opponents.values()):
             opp_file_name = f"OPP{opp_index}{file_prefix}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}"
-            opp_waypoint_file = output_folder / opp_file_name
+            opp_waypoint_file = Folder.SHOP_RACE_MAP / opp_file_name
             write_waypoints(opp_waypoint_file, opp_waypoints, race_type, race_index, opp_index)
         
         # MM DATA
