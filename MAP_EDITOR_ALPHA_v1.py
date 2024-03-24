@@ -6128,7 +6128,7 @@ def format_decimal(value: Union[int, float]) -> str:
     
 def get_editor_script_path() -> Optional[Path]:
     try:
-        return Path(__file__).parent
+        return Folder.BASE
     except NameError:
         print("Warning: Unable to return editor script path.")
         return None
@@ -6708,7 +6708,7 @@ class LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
     bl_label = "Load CnR Waypoints from CSV"
 
     def execute(self, context: bpy.types.Context) -> set:
-        Path(__file__).parent
+        Folder.BASE
         load_cops_and_robbers_waypoints("COPSWAYPOINTS.CSV")
         self.report({'INFO'}, "Loaded Cops & Robber Waypoints from CSV")
         return {'FINISHED'}
