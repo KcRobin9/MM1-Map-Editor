@@ -153,6 +153,8 @@ round_debug_values = True       # Change to "True" if you want to round (some) d
 
 # File Debugging | The Output Files are written to: "Resources / Debug / ..."
 debug_props_file = False
+debug_props_file_to_csv = False
+
 debug_facades_file = False
 debug_portals_file = False
 debug_ai_file = False
@@ -4113,6 +4115,34 @@ class Bangers:
             for banger in bangers:
                 out_f.write(repr(banger))
         print(f"Processed {input_file.name} to {output_file.name}")
+        
+    @classmethod
+    def debug_file_to_csv(cls, input_file: Path, output_file: Path, debug_props_file_to_csv: bool) -> None:
+        if not debug_props_file_to_csv:
+            return
+        
+        if not input_file.exists():
+            print(f"The file {input_file} does not exist.")
+            return
+
+        if not output_file.parent.exists():
+            print(f"The output folder {output_file.parent} does not exist. Creating it.")
+            output_file.parent.mkdir(parents = True, exist_ok = True)
+
+        with open(input_file, 'rb') as in_f:
+            bangers = cls.read_all(in_f)
+
+        with open(output_file, 'w') as out_f:
+            out_f.write(f"{len(bangers)}\n")  # Count
+            
+            for banger in bangers:
+                formatted_line = f"{banger.room},{banger.flags}," \
+                                 f"{banger.offset.x:.2f},{banger.offset.y:.2f},{banger.offset.z:.2f}," \
+                                 f"{banger.face.x:.2f},{banger.face.y:.2f},{banger.face.z:.2f}," \
+                                 f"{banger.name}\n"
+                                           
+                out_f.write(formatted_line)
+        print(f"Processed {input_file.name} to {output_file.name} in CSV format")
                                     
     def __repr__(self):
         return f"""
@@ -7388,6 +7418,7 @@ DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dl
 # File Debugging
 debug_bai(debug_ai_data_file, debug_ai_file)
 Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
+Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".csv"), debug_props_file_to_csv)
 Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(".txt"), debug_facades_file)
 Portals.debug_file(debug_portals_data_file, Folder.DEBUG_RESOURCES / "PORTALS" / debug_portals_data_file.with_suffix(".txt"), debug_portals_file)
 Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG_RESOURCES / "MESHES" / debug_meshes_data_file.with_suffix(".txt"), debug_meshes_file)
@@ -7419,7 +7450,6 @@ setup_blender()
 initialize_blender_panels()
 initialize_blender_operators()
 initialize_blender_waypoint_editor()
-
 set_blender_keybinding()
 
 create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
