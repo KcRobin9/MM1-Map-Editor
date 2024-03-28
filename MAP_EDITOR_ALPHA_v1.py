@@ -4140,7 +4140,7 @@ class Bangers:
                                  f"{banger.offset.x:.2f},{banger.offset.y:.2f},{banger.offset.z:.2f}," \
                                  f"{banger.face.x:.2f},{banger.face.y:.2f},{banger.face.z:.2f}," \
                                  f"{banger.name}\n"
-                                           
+                                 
                 out_f.write(formatted_line)
         print(f"Processed {input_file.name} to {output_file.name} in CSV format")
                                     
@@ -4854,7 +4854,7 @@ class aiStreet:
         self.IntersectionIds = read_unpack(f, '<2I')
         self.LaneVertices = Vector3.readn(f, self.NumVertexs * (self.NumLanes + self.NumSidewalks))
 
-        # Center/Dividing line between the two sides of the road
+        # Center / Dividing line between the two sides of the road
         self.CenterVertices = Vector3.readn(f, self.NumVertexs, '<')
         self.VertXDirs = Vector3.readn(f, self.NumVertexs, '<')
         self.Normals = Vector3.readn(f, self.NumVertexs, '<')
@@ -4914,7 +4914,7 @@ class aiMap:
     def load(self, f: BinaryIO) -> None:
         num_isects, num_paths = read_unpack(f, '<2H')
 
-        print(f'{num_paths} roads, {num_isects} isects')
+        print(f"{num_paths} roads, {num_isects} isects")
 
         for _ in range(num_paths):
             self.Paths.append(aiStreet.read(f))
@@ -4997,7 +4997,7 @@ class MiniParser:
 
 ###################################################################################################################?
 
-def read_bai(input_file: Path):
+def read_ai(input_file: Path):
     ai_map = aiMap()
 
     with open(input_file, "rb") as f:
@@ -5008,7 +5008,7 @@ def read_bai(input_file: Path):
         assert here == f.tell()
 
     streets = []
-
+    
     for i, path in enumerate(ai_map.Paths):
         # ID matches path index
         assert i == path.ID     
@@ -5060,29 +5060,57 @@ def read_bai(input_file: Path):
                     break
                 
         if not has_sink:
-            print(f'No eligible roads identified to turn onto from road: {path.ID}.')
+            print(f"No eligible roads identified to turn onto from road: {path.ID}.")
 
         if path.ID < path.OncomingPath:
-            streets.append((f'Street{len(streets)}', (path, ai_map.Paths[path.OncomingPath])))
+            streets.append((f"Street{len(streets)}", (path, ai_map.Paths[path.OncomingPath])))
 
     assert len(streets) * 2 == len(ai_map.Paths)
     
     return ai_map, streets
 
 
-def write_bai_text(ai_map, streets):
-    with open(Folder.USER_RESOURCES / "AI" / "CHICAGO.map", 'w') as f:  # Write Map file
+def write_ai_map_txt(streets, output_map_file: Path) -> None:
+    with open(output_map_file, "w") as f:  
         
         parser = MiniParser(f)
 
-        parser.begin_class('mmMapData')
+        parser.begin_class("mmMapData")
 
-        parser.field('NumStreets', len(streets))
-        parser.field('Street', ['Street' + str(paths[0].ID) for _, paths in streets])
+        parser.field("NumStreets", len(streets))
+        parser.field("Street", ["Street" + str(paths[0].ID) for _, paths in streets])
 
-        parser.end_class()
+        parser.end_class() 
+        
+        
+def write_ai_intersections_txt(ai_map, file_path_pattern: Path):
+    for intersection in ai_map.Intersections:        
+        
+        output_files = Path(file_path_pattern.format(intersection_id = intersection.ID))
+        
+        with open(output_files, 'w') as f: 
+                    
+            parser = MiniParser(f)
+    
+            parser.begin_class("mmIntersection")
 
-    for street_name, paths in streets:
+            parser.field("ID", intersection.ID)
+            parser.field("Position", intersection.Position)
+
+            parser.field("NumSinks", len(intersection.Sinks))
+            parser.field("Sinks", intersection.Sinks)
+
+            parser.field("NumSources", len(intersection.Sources))
+            parser.field("Sources", intersection.Sources)
+
+            parser.field("Paths", intersection.Paths)
+            parser.field("Directions", intersection.Directions)
+
+            parser.end_class()
+ 
+
+def write_ai_paths_txt(streets, file_path_pattern: Path) -> None:  # validate ai_paths()    
+    for _, paths in streets:
         assert paths[0].NumVertexs == paths[1].NumVertexs
         assert paths[0].NumSidewalks == paths[1].NumSidewalks
         assert paths[0].Divided == paths[1].Divided
@@ -5104,7 +5132,7 @@ def write_bai_text(ai_map, streets):
                 angle = math.degrees(target.Angle(normal))
 
                 if angle > 0.01:
-                    print(f'Road {paths[0].ID} has suspicious normal {n}: Expected {target}, Calculated {normal} ({angle:.2f} degrees error)')
+                    print(f"Road {paths[0].ID} has suspicious normal {n}: Expected {target}, Calculated {normal} ({angle:.2f} degrees error)")
 
             for road in range(2):
                 path = paths[road]
@@ -5117,18 +5145,21 @@ def write_bai_text(ai_map, streets):
                     assert a.Dist2(b) < 0.00001
 
 
-        with open(Folder.USER_RESOURCES / "AI" / f'Street{paths[0].ID}.road', 'w') as f:  # Write Road files
+        output_road_files = Path(file_path_pattern.format(paths = paths[0].ID))
+                
+        with open(output_road_files, "w") as f:
+        
             parser = MiniParser(f)
     
-            parser.begin_class('mmRoadSect')
+            parser.begin_class("mmRoadSect")
 
-            parser.field('NumVertexs', paths[0].NumVertexs)
+            parser.field("NumVertexs", paths[0].NumVertexs)
 
-            parser.field('NumLanes[0]', paths[0].NumLanes)
-            parser.field('NumLanes[1]', paths[1].NumLanes)
+            parser.field("NumLanes[0]", paths[0].NumLanes)
+            parser.field("NumLanes[1]", paths[1].NumLanes)
 
-            parser.field('NumSidewalks[0]', paths[0].NumSidewalks * 2)
-            parser.field('NumSidewalks[1]', paths[1].NumSidewalks * 2)
+            parser.field("NumSidewalks[0]", paths[0].NumSidewalks * 2)
+            parser.field("NumSidewalks[1]", paths[1].NumSidewalks * 2)
 
             all_vertexs = []
 
@@ -5146,82 +5177,64 @@ def write_bai_text(ai_map, streets):
 
             assert len(all_vertexs) == expected_count
 
-            parser.field('TotalVertexs', len(all_vertexs))
-            parser.field('Vertexs', all_vertexs)
-            parser.field('Normals', paths[0].Normals)
+            parser.field("TotalVertexs", len(all_vertexs))
+            parser.field("Vertexs", all_vertexs)
+            parser.field("Normals", paths[0].Normals)
 
             # Yes, these are "supposed" to be backwards
-            parser.field('IntersectionType[0]', paths[1].IntersectionType)
-            parser.field('IntersectionType[1]', paths[0].IntersectionType)
-            parser.field('StopLightPos[0]', paths[1].StopLightPos[0])
-            parser.field('StopLightPos[1]', paths[1].StopLightPos[1])
-            parser.field('StopLightPos[2]', paths[0].StopLightPos[0])
-            parser.field('StopLightPos[3]', paths[0].StopLightPos[1])
+            parser.field("IntersectionType[0]", paths[1].IntersectionType)
+            parser.field("IntersectionType[1]", paths[0].IntersectionType)
+            parser.field("StopLightPos[0]", paths[1].StopLightPos[0])
+            parser.field("StopLightPos[1]", paths[1].StopLightPos[1])
+            parser.field("StopLightPos[2]", paths[0].StopLightPos[0])
+            parser.field("StopLightPos[3]", paths[0].StopLightPos[1])
             
-            parser.field('StopLightIndex', paths[0].StopLightIndex)
+            parser.field("StopLightIndex", paths[0].StopLightIndex)
         
-            parser.field('Blocked[0]', paths[0].Blocked)
-            parser.field('Blocked[1]', paths[1].Blocked)
+            parser.field("Blocked[0]", paths[0].Blocked)
+            parser.field("Blocked[1]", paths[1].Blocked)
 
-            parser.field('PedBlocked[0]', paths[0].PedBlocked)
-            parser.field('PedBlocked[1]', paths[1].PedBlocked)
+            parser.field("PedBlocked[0]", paths[0].PedBlocked)
+            parser.field("PedBlocked[1]", paths[1].PedBlocked)
 
             # Yes, these are "supposed" to be backwards
-            parser.field('StopLightName', [paths[1].StopLightName, paths[0].StopLightName])
+            parser.field("StopLightName", [paths[1].StopLightName, paths[0].StopLightName])
 
-            parser.field('Divided', paths[0].Divided)       
-            parser.field('Alley', paths[0].Alley)
-            parser.field('IsFlat', paths[0].IsFlat)
-            parser.field('HasBridge', paths[0].HasBridge)
-            parser.field('SpeedLimit', paths[0].SpeedLimit)
+            parser.field("Divided", paths[0].Divided)       
+            parser.field("Alley", paths[0].Alley)
+            parser.field("IsFlat", paths[0].IsFlat)
+            parser.field("HasBridge", paths[0].HasBridge)
+            parser.field("SpeedLimit", paths[0].SpeedLimit)
             
-            parser.field('ID', paths[0].ID)
-            parser.field('OncomingPath', paths[0].OncomingPath)
-            parser.field('PathIndex', paths[0].PathIndex)
-            parser.field('EdgeIndex', paths[0].EdgeIndex)
-            parser.field('IntersectionIds', paths[0].IntersectionIds)
+            parser.field("ID", paths[0].ID)
+            parser.field("OncomingPath", paths[0].OncomingPath)
+            parser.field("PathIndex", paths[0].PathIndex)
+            parser.field("EdgeIndex", paths[0].EdgeIndex)
+            parser.field("IntersectionIds", paths[0].IntersectionIds)
                         
-            parser.field('VertXDirs', paths[0].VertXDirs)
-            parser.field('VertZDirs', paths[0].VertZDirs)
-            parser.field('SubSectionDirs', paths[0].SubSectionDirs)
+            parser.field("VertXDirs", paths[0].VertXDirs)
+            parser.field("VertZDirs", paths[0].VertZDirs)
+            parser.field("SubSectionDirs", paths[0].SubSectionDirs)
             
-            parser.field('CenterOffsets', paths[0].CenterOffsets)
-            parser.field('SubSectionOffsets', paths[0].SubSectionOffsets)
+            parser.field("CenterOffsets", paths[0].CenterOffsets)
+            parser.field("SubSectionOffsets", paths[0].SubSectionOffsets)
                     
-            parser.field('RoadLength', paths[0].RoadLength)
-            parser.field('LaneWidths', paths[0].LaneWidths)
-            parser.field('LaneLengths', paths[0].LaneLengths)
+            parser.field("RoadLength", paths[0].RoadLength)
+            parser.field("LaneWidths", paths[0].LaneWidths)
+            parser.field("LaneLengths", paths[0].LaneLengths)
             
             parser.end_class()
-            
-            
-    for intersection in ai_map.Intersections:        
-        with open(Folder.USER_RESOURCES / "AI" / f'Intersection{intersection.ID}.int', 'w') as f:  # Write Intersection files
-            parser = MiniParser(f)
     
-            parser.begin_class('mmIntersection')
-
-            parser.field('ID', intersection.ID)
-            parser.field('Position', intersection.Position)
-
-            parser.field('NumSinks', len(intersection.Sinks))
-            parser.field('Sinks', intersection.Sinks)
-
-            parser.field('NumSources', len(intersection.Sources))
-            parser.field('Sources', intersection.Sources)
-
-            parser.field('Paths', intersection.Paths)
-            parser.field('Directions', intersection.Directions)
-
-            parser.end_class()
-            
-
-def debug_bai(input_file: Path, debug_file: bool) -> None:
+           
+def debug_ai(input_file: Path, debug_file: bool, output_map_file: Path, output_int_files: Path, output_road_files: Path) -> None:
     if not debug_file:
         return
         
-    ai_map, streets = read_bai(input_file)
-    write_bai_text(ai_map, streets)
+    ai_map, streets = read_ai(input_file)
+    
+    write_ai_map_txt(streets, output_map_file)
+    write_ai_paths_txt(streets, output_road_files)
+    write_ai_intersections_txt(ai_map, output_int_files)
         
 #! ############ Code by 0x1F9F1 (Modified) // end ############ !#         
 
@@ -7414,9 +7427,7 @@ create_lars_race_maker("Lars_Race_Maker.html", street_list, hudmap_vertices, set
 BangerEditor().append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
 
-
 # File Debugging
-debug_bai(debug_ai_data_file, debug_ai_file)
 Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
 Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".csv"), debug_props_file_to_csv)
 Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(".txt"), debug_facades_file)
@@ -7428,6 +7439,11 @@ Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" 
 DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
 DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
+debug_ai(debug_ai_data_file, debug_ai_file,
+         Folder.USER_RESOURCES / "AI" / "CHICAGO.map",                                  
+         str(Path(Folder.USER_RESOURCES) / "AI" / "Intersection{intersection_id}.int"),
+         str(Path(Folder.USER_RESOURCES) / "AI" / "Street{paths}.road")
+    )
 
 # Finalizing Part
 create_ar()
