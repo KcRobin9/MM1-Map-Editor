@@ -41,7 +41,7 @@ from itertools import cycle
 from mathutils import Vector
 import matplotlib.pyplot as plt                
 from colorama import Fore, Style, init
-from typing import List, Dict, Set, Union, Tuple, Optional, BinaryIO
+from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO
 
 
 #! SETUP 0 (Map Name)                           Control + F    "map=="  to jump to The Map Creation section
@@ -5010,17 +5010,10 @@ def read_ai(input_file: Path):
     streets = []
     
     for i, path in enumerate(ai_map.Paths):
-        # ID matches path index
-        assert i == path.ID     
-
-        # A path should not be its own oncoming
-        assert path.ID != path.OncomingPath
-
-        # A path should be properly linked with its oncoming
-        assert ai_map.Paths[path.OncomingPath].OncomingPath == path.ID
-
-        # No more than 1 sidewalk per road-side
-        assert path.NumSidewalks in [0, 1]
+        assert i == path.ID  # ID matches path index      
+        assert path.ID != path.OncomingPath  # A path should not be its own oncoming
+        assert ai_map.Paths[path.OncomingPath].OncomingPath == path.ID  # A path should be properly linked with its oncoming
+        assert path.NumSidewalks in [0, 1]  # No more than 1 sidewalk per road-side
 
         assert path.IntersectionType in [
             IntersectionType.STOP, 
@@ -5108,8 +5101,10 @@ def write_ai_intersections_txt(ai_map, file_path_pattern: Path):
 
             parser.end_class()
  
+        
+def validate_and_prepare_ai_paths(streets) -> List[Any]:
+    prepared_data = []
 
-def write_ai_paths_txt(streets, file_path_pattern: Path) -> None:  # validate ai_paths()    
     for _, paths in streets:
         assert paths[0].NumVertexs == paths[1].NumVertexs
         assert paths[0].NumSidewalks == paths[1].NumSidewalks
@@ -5118,7 +5113,6 @@ def write_ai_paths_txt(streets, file_path_pattern: Path) -> None:  # validate ai
         assert paths[0].Normals == list(reversed(paths[1].Normals))
         assert paths[0].Normals[0] == Vector3(0, 1, 0)
         assert paths[0].Normals[-1] == Vector3(0, 1, 0)
-        # assert paths[0].CenterVertices == list(reversed(paths[1].CenterVertices))
 
         if paths[0].NumSidewalks != 0:
             for n in range(1, len(paths[0].Normals) - 1):
@@ -5143,12 +5137,17 @@ def write_ai_paths_txt(streets, file_path_pattern: Path) -> None:  # validate ai
                     a = path.LaneVertices[i + (path.NumLanes * path.NumVertexs)]
                     b = (path.Boundaries[i] + path.Boundaries[i + path.NumVertexs]) * 0.5
                     assert a.Dist2(b) < 0.00001
+        
+        prepared_data.append(paths)
+    
+    return prepared_data
 
 
+def write_ai_paths(prepared_data: List[Any], file_path_pattern: Path) -> None:
+    for paths in prepared_data:
         output_road_files = Path(file_path_pattern.format(paths = paths[0].ID))
                 
         with open(output_road_files, "w") as f:
-        
             parser = MiniParser(f)
     
             parser.begin_class("mmRoadSect")
@@ -5224,8 +5223,8 @@ def write_ai_paths_txt(streets, file_path_pattern: Path) -> None:  # validate ai
             parser.field("LaneLengths", paths[0].LaneLengths)
             
             parser.end_class()
-    
-           
+            
+                    
 def debug_ai(input_file: Path, debug_file: bool, output_map_file: Path, output_int_files: Path, output_road_files: Path) -> None:
     if not debug_file:
         return
@@ -5233,7 +5232,10 @@ def debug_ai(input_file: Path, debug_file: bool, output_map_file: Path, output_i
     ai_map, streets = read_ai(input_file)
     
     write_ai_map_txt(streets, output_map_file)
-    write_ai_paths_txt(streets, output_road_files)
+    
+    paths = validate_and_prepare_ai_paths(streets)
+    write_ai_paths(paths, output_road_files)
+    
     write_ai_intersections_txt(ai_map, output_int_files)
         
 #! ############ Code by 0x1F9F1 (Modified) // end ############ !#         
