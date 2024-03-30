@@ -7,8 +7,7 @@
 
 [Midtown Madness](https://en.wikipedia.org/wiki/Midtown_Madness) is a racing game made by [Angel Studios](https://gitlab.com/kbrobin9/gitlab-resources/-/blob/main/SQL_LIBRARY.MD?ref_type=heads), featuring the city of Chicago.
 
-This Map Editor is developed to provide an easy way for users to create their own unique cities for Midtown Madness 1.            
-Not only can you design roads, hills, and walls, you may also customize textures, facades, props, drawbridges, animations, lighting, physics, AI paths, races, and even the HUD.
+This Map Editor is developed to provide an easy way for users to create their own unique cities for Midtown Madness 1.            Not only can you design roads, hills, and walls, you may also customize textures, facades, props, drawbridges, animations, lighting, physics, AI paths, races, and even the HUD.
 
 In addition, the Editor seamlessly integrates with the 3D modelling software [Blender](https://www.blender.org/). This enables quick importing & exporting of models. To further enhance the user experience, a custom Blender UI has been implemented. From here, all parameters of each polygon can be set and modified.   
 This visual integration, combined with Blender's extensive features, significantly streamlines the design process, enabling swift tweaks and iterations.
