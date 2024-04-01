@@ -2394,7 +2394,6 @@ class Texture:
 
 #! ==============================  MAIN AREA ============================== #*
 
-
 # Colored Checkpoints
 create_polygon(
     bound_number = 99,
@@ -6177,15 +6176,19 @@ def get_editor_script_path() -> Optional[Path]:
     except NameError:
         print("Warning: Unable to return editor script path.")
         return None
-
     
-def extract_polygon_data(obj):
-    if obj.name.startswith("P"):
-        bound_number = int(obj.name[1:])
-    elif obj.name.startswith("Shape_"):
-        bound_number = int(obj.name.split("_")[1])
+    
+def validate_and_extract_bound_number(name: str) -> int:
+    if name.startswith("P"):
+        return int(name[1:])
+    elif name.startswith("Shape_"):
+        return int(name.split("_")[1])
     else:
-        raise ValueError(f"Unrecognized object name format: {obj.name}")
+        raise ValueError(f"Unrecognized object name format: {name}")
+    
+    
+def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, bool, list]]:
+    bound_number = validate_and_extract_bound_number(obj.name)
     
     extracted_polygon_data = {
         "bound_number": bound_number,
@@ -6203,14 +6206,16 @@ def extract_polygon_data(obj):
 def extract_polygon_texture(obj) -> str:
     if obj.material_slots:
         mat = obj.material_slots[0].material
+        
         if mat and mat.use_nodes:
             for node in mat.node_tree.nodes:
                 if isinstance(node, bpy.types.ShaderNodeTexImage):
                     return os.path.splitext(node.image.name)[0].replace('.DDS', '').replace('.dds', '')
+                
     return Texture.CHECKPOINT  # Default value
 
 
-def export_formatted_polygons(obj) -> str:
+def export_formatted_polygons(obj: bpy.types.Object) -> str:
     poly_data = extract_polygon_data(obj)
     texture_name = extract_polygon_texture(obj).upper() 
     
@@ -6218,10 +6223,12 @@ def export_formatted_polygons(obj) -> str:
     formatted_texture = next((f'Texture.{name}' for name, value in vars(Texture).items() if value == texture_constant), f'"{texture_name}"')
 
     formatted_vertices = [] 
+    
     for vertex in poly_data['vertex_coordinates']:
         transformed_vertex = transform_coordinate_system(vertex.co, blender_to_game = True)
         formatted_vertex = f"({', '.join(format_decimal(comp) for comp in transformed_vertex)})"
         formatted_vertices.append(formatted_vertex)
+        
     vertex_export = ',\n\t\t'.join(formatted_vertices)
 
     optional_variables = []
@@ -6252,7 +6259,7 @@ def export_formatted_polygons(obj) -> str:
     tile_y = obj.get("tile_y", 1)
     rotation = poly_data.get('rotate', 999.0)  
 
-    polygon_export = f"""
+    template = f"""
 create_polygon(
     bound_number = {poly_data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
@@ -6262,7 +6269,7 @@ save_mesh(
     texture_name = [{formatted_texture}],
     tex_coords = compute_uv(bound_number = {poly_data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {rotation:.2f}))"""
 
-    return polygon_export
+    return template
 
 
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):
