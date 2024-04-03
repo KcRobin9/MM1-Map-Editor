@@ -335,8 +335,8 @@ class Threshold:
     MESH_VERTEX_COUNT = 16
     CELL_TYPE_SWITCH = 200
     CELL_CHARACTER_WARNING = 200
-    CELL_CHARACTER_LIMIT = 254
-    VERTEX_INDEX_COUNT = 32768      # Signed short
+    CELL_CHARACTER_LIMIT = 0xFF    
+    VERTEX_INDEX_COUNT = 0x8000
     
 
 class Portal:
