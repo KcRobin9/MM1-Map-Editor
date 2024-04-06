@@ -2392,7 +2392,7 @@ class Texture:
     BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
 
 
-#! ==============================  MAIN AREA ============================== #*
+#! ==============================MAIN AREA============================== #*
 
 # Colored Checkpoints
 create_polygon(
@@ -4830,44 +4830,44 @@ class TextureSheet:
 
 class aiStreet:                  
     def load(self, f: BinaryIO) -> None:
-        self.ID, = read_unpack(f, '<H')
-        self.NumVertexs, = read_unpack(f, '<H')
-        self.NumLanes, = read_unpack(f, '<H')
-        self.NumSidewalks, = read_unpack(f, '<H')
-        self.StopLightIndex, = read_unpack(f, '<H')
-        self.IntersectionType, = read_unpack(f, '<H')
-        self.Blocked, = read_unpack(f, '<H')
-        self.PedBlocked, = read_unpack(f, '<H')
-        self.Divided, = read_unpack(f, '<H')
-        self.IsFlat, = read_unpack(f, '<H')
-        self.HasBridge, = read_unpack(f, '<H')
-        self.Alley, = read_unpack(f, '<H')
-        self.RoadLength, = read_unpack(f, '<f')
-        self.SpeedLimit, = read_unpack(f, '<f')
-        self.StopLightName = read_binary_name(f, 32)
-        self.OncomingPath, = read_unpack(f, '<I')
-        self.EdgeIndex, = read_unpack(f, '<I')
-        self.PathIndex, = read_unpack(f, '<I')
-        self.SubSectionOffsets = read_unpack(f, f'<{self.NumVertexs * (self.NumLanes + self.NumSidewalks)}f')
-        self.CenterOffsets = read_unpack(f, f'<{self.NumVertexs}f')
-        self.IntersectionIds = read_unpack(f, '<2I')
-        self.LaneVertices = Vector3.readn(f, self.NumVertexs * (self.NumLanes + self.NumSidewalks))
+        self.id, = read_unpack(f, '<H')
+        self.num_vertexes, = read_unpack(f, '<H')
+        self.num_lanes, = read_unpack(f, '<H')
+        self.num_sidewalks, = read_unpack(f, '<H')
+        self.stop_light_index, = read_unpack(f, '<H')
+        self.intersection_type, = read_unpack(f, '<H')
+        self.blocked, = read_unpack(f, '<H')
+        self.ped_blocked, = read_unpack(f, '<H')
+        self.divided, = read_unpack(f, '<H')
+        self.is_flat, = read_unpack(f, '<H')
+        self.has_bridge, = read_unpack(f, '<H')
+        self.alley, = read_unpack(f, '<H')
+        self.road_length, = read_unpack(f, '<f')
+        self.speed_limit, = read_unpack(f, '<f')
+        self.stop_light_name = read_binary_name(f, 32)
+        self.oncoming_path, = read_unpack(f, '<I')
+        self.edge_index, = read_unpack(f, '<I')
+        self.path_index, = read_unpack(f, '<I')
+        self.sub_section_offsets = read_unpack(f, f'<{self.num_vertexes * (self.num_lanes + self.num_sidewalks)}f')
+        self.center_offsets = read_unpack(f, f'<{self.num_vertexes}f')
+        self.intersection_ids = read_unpack(f, '<2I')
+        self.lane_vertices = Vector3.readn(f, self.num_vertexes * (self.num_lanes + self.num_sidewalks))
 
         # Center / Dividing line between the two sides of the road
-        self.CenterVertices = Vector3.readn(f, self.NumVertexs, '<')
-        self.VertXDirs = Vector3.readn(f, self.NumVertexs, '<')
-        self.Normals = Vector3.readn(f, self.NumVertexs, '<')
-        self.VertZDirs = Vector3.readn(f, self.NumVertexs, '<')
-        self.SubSectionDirs = Vector3.readn(f, self.NumVertexs, '<')
+        self.center_vertices = Vector3.readn(f, self.num_vertexes, '<')
+        self.vert_x_dirs = Vector3.readn(f, self.num_vertexes, '<')
+        self.normals = Vector3.readn(f, self.num_vertexes, '<')
+        self.vert_z_dirs = Vector3.readn(f, self.num_vertexes, '<')
+        self.sub_section_dirs = Vector3.readn(f, self.num_vertexes, '<')
 
         # Outer Edges, Inner Edges (Curb)
-        self.Boundaries = Vector3.readn(f, self.NumVertexs * 2, '<')
+        self.boundaries = Vector3.readn(f, self.num_vertexes * 2, '<')
 
         # Inner Edges on the opposite side of the road
-        self.LBoundaries = Vector3.readn(f, self.NumVertexs, '<')
-        self.StopLightPos = Vector3.readn(f, 2, '<')
-        self.LaneWidths = read_unpack(f, '<5f')
-        self.LaneLengths = read_unpack(f, '<10f')
+        self.l_boundaries = Vector3.readn(f, self.num_vertexes, '<')
+        self.stop_light_pos = Vector3.readn(f, 2, '<')
+        self.lane_widths = read_unpack(f, '<5f')
+        self.lane_lengths = read_unpack(f, '<10f')
 
     def read(f: BinaryIO) -> 'aiStreet':
         result = aiStreet()
@@ -4878,17 +4878,17 @@ class aiStreet:
 
 class aiIntersection:
     def load(self, f: BinaryIO) -> None:
-        self.ID, = read_unpack(f, '<H')
-        self.Position = Vector3.read(f, '<')
+        self.id, = read_unpack(f, '<H')
+        self.position = Vector3.read(f, '<')
 
         num_sinks, = read_unpack(f, '<H')
-        self.Sinks = read_unpack(f, f'<{num_sinks}I')
+        self.sinks = read_unpack(f, f'<{num_sinks}I')
 
         num_sources, = read_unpack(f, '<H')
-        self.Sources = read_unpack(f, f'<{num_sources}I')
+        self.sources = read_unpack(f, f'<{num_sources}I')
 
-        self.Paths = read_unpack(f, f'<{num_sinks + num_sources}I')
-        self.Directions = read_unpack(f, f'<{num_sinks + num_sources}f')
+        self.paths = read_unpack(f, f'<{num_sinks + num_sources}I')
+        self.directions = read_unpack(f, f'<{num_sinks + num_sources}f')
 
     @staticmethod
     def read(f: BinaryIO) -> 'aiIntersection':
@@ -4905,10 +4905,10 @@ def read_array_list(f) -> List[int]:
 
 class aiMap:
     def __init__(self):
-        self.Paths = []
-        self.Intersections = []
-        self.AmbientRoads = []
-        self.PedRoads = []
+        self.paths = []
+        self.intersections = []
+        self.ambient_roads = []
+        self.ped_roads = []
 
     def load(self, f: BinaryIO) -> None:
         num_isects, num_paths = read_unpack(f, '<2H')
@@ -4916,18 +4916,19 @@ class aiMap:
         print(f"{num_paths} roads, {num_isects} isects")
 
         for _ in range(num_paths):
-            self.Paths.append(aiStreet.read(f))
+            self.paths.append(aiStreet.read(f))
 
         for _ in range(num_isects):
-            self.Intersections.append(aiIntersection.read(f))
+            self.intersections.append(aiIntersection.read(f))
 
         num_cells, = read_unpack(f, '<I')
 
         for _ in range(num_cells):
-            self.AmbientRoads.append(read_array_list(f))
+            self.ambient_roads.append(read_array_list(f))
 
         for _ in range(num_cells):
-            self.PedRoads.append(read_array_list(f))
+            self.ped_roads.append(read_array_list(f))
+
 
     def read(f: BinaryIO) -> 'aiMap':
         result = aiMap()
@@ -5008,13 +5009,13 @@ def read_ai(input_file: Path):
 
     streets = []
     
-    for i, path in enumerate(ai_map.Paths):
-        assert i == path.ID  # ID matches path index      
-        assert path.ID != path.OncomingPath  # A path should not be its own oncoming
-        assert ai_map.Paths[path.OncomingPath].OncomingPath == path.ID  # A path should be properly linked with its oncoming
-        assert path.NumSidewalks in [0, 1]  # No more than 1 sidewalk per road-side
+    for i, path in enumerate(ai_map.paths):
+        assert i == path.id  # ID matches path index      
+        assert path.id != path.oncoming_path  # A path should not be its own oncoming
+        assert ai_map.paths[path.oncoming_path].oncoming_path == path.id  # A path should be properly linked with its oncoming
+        assert path.num_sidewalks in [0, 1]  # No more than 1 sidewalk per road-side
 
-        assert path.IntersectionType in [
+        assert path.intersection_type in [
             IntersectionType.STOP, 
             IntersectionType.STOP_LIGHT, 
             IntersectionType.YIELD, 
@@ -5022,42 +5023,40 @@ def read_ai(input_file: Path):
             ]  
         
         # TODO: adjust or remove this (i.e. get the actual object name)
-        if path.IntersectionType == IntersectionType.STOP:
-            assert path.StopLightName == Prop.STOP_SIGN  
+        if path.intersection_type == IntersectionType.STOP:
+            assert path.stop_light_name == Prop.STOP_SIGN  
         else:
-            assert path.StopLightName in [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_DUAL]   
+            assert path.stop_light_name in [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_DUAL]   
 
-        sink_isect = path.LaneVertices[0]
-        source_isect = path.LaneVertices[path.NumVertexs - 1]
+        sink_isect = path.lane_vertices[0]
+        source_isect = path.lane_vertices[path.num_vertexes - 1]
 
-        for lane in range(1, path.NumLanes):
-            here = lane * path.NumVertexs
-            assert path.LaneVertices[here] == sink_isect
-            assert path.LaneVertices[here + path.NumVertexs - 1] == source_isect
+        for lane in range(1, path.num_lanes):
+            here = lane * path.num_vertexes
+            assert path.lane_vertices[here] == sink_isect
+            assert path.lane_vertices[here + path.num_vertexes - 1] == source_isect
 
-        # Only custom paths should have no sidewalks
-        if path.NumSidewalks == 0:
-            # If there are no sidewalks, all normals are straight up
-            assert all(v == Vector3(0, 1, 0) for v in path.Normals)
+        if path.num_sidewalks == 0:  # Only custom paths should have no sidewalks
+            assert all(v == Vector3(0, 1, 0) for v in path.normals)  # If there are no sidewalks, all normals are straight up
 
-        isect_id = path.IntersectionIds[0]
-        isect = ai_map.Intersections[isect_id]
+        isect_id = path.intersection_ids[0]
+        isect = ai_map.intersections[isect_id]
 
         has_sink = False
-        for isect_path in isect.Paths:
-            if isect_path != path.ID:
-                isect_path = ai_map.Paths[isect_path]
-                if isect_path.IntersectionIds[0] != isect_id and isect_path.OncomingPath != path.ID:
+        for isect_path in isect.paths:
+            if isect_path != path.id:
+                isect_path = ai_map.paths[isect_path]
+                if isect_path.intersection_ids[0] != isect_id and isect_path.oncoming_path != path.id:
                     has_sink = True
                     break
                 
         if not has_sink:
-            print(f"No eligible roads identified to turn onto from road: {path.ID}.")
+            print(f"No eligible roads identified to turn onto from road: {path.id}.")
 
-        if path.ID < path.OncomingPath:
-            streets.append((f"Street{len(streets)}", (path, ai_map.Paths[path.OncomingPath])))
+        if path.id < path.oncoming_path:
+            streets.append((f"Street{len(streets)}", (path, ai_map.paths[path.oncoming_path])))
 
-    assert len(streets) * 2 == len(ai_map.Paths)
+    assert len(streets) * 2 == len(ai_map.paths)
     
     return ai_map, streets
 
@@ -5070,15 +5069,15 @@ def write_ai_map_txt(streets, output_map_file: Path) -> None:
         parser.begin_class("mmMapData")
 
         parser.field("NumStreets", len(streets))
-        parser.field("Street", ["Street" + str(paths[0].ID) for _, paths in streets])
+        parser.field("Street", ["Street" + str(paths[0].id) for _, paths in streets])
 
         parser.end_class() 
         
         
-def write_ai_intersections_txt(ai_map, file_path_pattern: Path):
-    for intersection in ai_map.Intersections:        
+def write_ai_intersections_txt(ai_map, file_path_pattern: Path) -> None:
+    for intersection in ai_map.intersections:        
         
-        output_files = Path(file_path_pattern.format(intersection_id = intersection.ID))
+        output_files = Path(file_path_pattern.format(intersection_id = intersection.id))
         
         with open(output_files, 'w') as f: 
                     
@@ -5086,55 +5085,56 @@ def write_ai_intersections_txt(ai_map, file_path_pattern: Path):
     
             parser.begin_class("mmIntersection")
 
-            parser.field("ID", intersection.ID)
-            parser.field("Position", intersection.Position)
+            parser.field("ID", intersection.id)
+            parser.field("Position", intersection.position)
 
-            parser.field("NumSinks", len(intersection.Sinks))
-            parser.field("Sinks", intersection.Sinks)
+            parser.field("NumSinks", len(intersection.sinks))
+            parser.field("Sinks", intersection.sinks)
 
-            parser.field("NumSources", len(intersection.Sources))
-            parser.field("Sources", intersection.Sources)
+            parser.field("NumSources", len(intersection.sources))
+            parser.field("Sources", intersection.sources)
 
-            parser.field("Paths", intersection.Paths)
-            parser.field("Directions", intersection.Directions)
+            parser.field("Paths", intersection.paths)
+            parser.field("Directions", intersection.directions)
 
             parser.end_class()
+
  
         
 def validate_and_prepare_ai_paths(streets) -> List[Any]:
     prepared_data = []
 
     for _, paths in streets:
-        assert paths[0].NumVertexs == paths[1].NumVertexs
-        assert paths[0].NumSidewalks == paths[1].NumSidewalks
-        assert paths[0].Divided == paths[1].Divided
-        assert paths[0].Alley == paths[1].Alley
-        assert paths[0].Normals == list(reversed(paths[1].Normals))
-        assert paths[0].Normals[0] == Vector3(0, 1, 0)
-        assert paths[0].Normals[-1] == Vector3(0, 1, 0)
+        assert paths[0].num_vertexes == paths[1].num_vertexes
+        assert paths[0].num_sidewalks == paths[1].num_sidewalks
+        assert paths[0].divided == paths[1].divided
+        assert paths[0].alley == paths[1].alley
+        assert paths[0].normals == list(reversed(paths[1].normals))
+        assert paths[0].normals[0] == Vector3(0, 1, 0)
+        assert paths[0].normals[-1] == Vector3(0, 1, 0)
 
-        if paths[0].NumSidewalks != 0:
-            for n in range(1, len(paths[0].Normals) - 1):
-                target = paths[0].Normals[n]
+        if paths[0].num_sidewalks != 0:
+            for n in range(1, len(paths[0].normals) - 1):
+                target = paths[0].normals[n]
 
-                a = paths[0].LaneVertices[n]
-                b = paths[0].Boundaries[paths[0].NumVertexs + n - 1]
-                c = paths[0].Boundaries[paths[0].NumVertexs + n]
+                a = paths[0].lane_vertices[n]
+                b = paths[0].boundaries[paths[0].num_vertexes + n - 1]
+                c = paths[0].boundaries[paths[0].num_vertexes + n]
 
                 normal = calc_normal(a, b, c)
                 angle = math.degrees(target.Angle(normal))
 
                 if angle > 0.01:
-                    print(f"Road {paths[0].ID} has suspicious normal {n}: Expected {target}, Calculated {normal} ({angle:.2f} degrees error)")
+                    print(f"Road {paths[0].id} has suspicious normal {n}: Expected {target}, Calculated {normal} ({angle:.2f} degrees error)")
 
             for road in range(2):
                 path = paths[road]
 
-                assert path.Boundaries[path.NumVertexs:] == list(reversed(paths[road ^ 1].LBoundaries))
+                assert path.boundaries[path.num_vertexes:] == list(reversed(paths[road ^ 1].l_boundaries))
 
-                for i in range(path.NumVertexs):
-                    a = path.LaneVertices[i + (path.NumLanes * path.NumVertexs)]
-                    b = (path.Boundaries[i] + path.Boundaries[i + path.NumVertexs]) * 0.5
+                for i in range(path.num_vertexes):
+                    a = path.lane_vertices[i + (path.num_lanes * path.num_vertexes)]
+                    b = (path.boundaries[i] + path.boundaries[i + path.num_vertexes]) * 0.5
                     assert a.Dist2(b) < 0.00001
         
         prepared_data.append(paths)
@@ -5142,86 +5142,88 @@ def validate_and_prepare_ai_paths(streets) -> List[Any]:
     return prepared_data
 
 
+
 def write_ai_paths(prepared_data: List[Any], file_path_pattern: Path) -> None:
     for paths in prepared_data:
-        output_road_files = Path(file_path_pattern.format(paths = paths[0].ID))
+        output_road_files = Path(file_path_pattern.format(paths = paths[0].id))
                 
         with open(output_road_files, "w") as f:
             parser = MiniParser(f)
     
             parser.begin_class("mmRoadSect")
 
-            parser.field("NumVertexs", paths[0].NumVertexs)
+            parser.field("NumVertexs", paths[0].num_vertexes)
 
-            parser.field("NumLanes[0]", paths[0].NumLanes)
-            parser.field("NumLanes[1]", paths[1].NumLanes)
+            parser.field("NumLanes[0]", paths[0].num_lanes)
+            parser.field("NumLanes[1]", paths[1].num_lanes)
 
-            parser.field("NumSidewalks[0]", paths[0].NumSidewalks * 2)
-            parser.field("NumSidewalks[1]", paths[1].NumSidewalks * 2)
+            parser.field("NumSidewalks[0]", paths[0].num_sidewalks * 2)
+            parser.field("NumSidewalks[1]", paths[1].num_sidewalks * 2)
 
             all_vertexs = []
 
             for road in range(2):
                 path = paths[road]
-                split = path.NumLanes * path.NumVertexs
-                all_vertexs += path.LaneVertices[0:split]
+                split = path.num_lanes * path.num_vertexes
+                all_vertexs += path.lane_vertices[0:split]
 
-            if path.NumSidewalks:
+            if path.num_sidewalks:
                 for road in range(2):
                     path = paths[road]
-                    all_vertexs += path.Boundaries
+                    all_vertexs += path.boundaries
 
-            expected_count = paths[0].NumVertexs * (paths[0].NumLanes + paths[1].NumLanes + (paths[0].NumSidewalks + paths[1].NumSidewalks) * 2)
+            expected_count = paths[0].num_vertexes * (paths[0].num_lanes + paths[1].num_lanes + (paths[0].num_sidewalks + paths[1].num_sidewalks) * 2)
 
             assert len(all_vertexs) == expected_count
 
             parser.field("TotalVertexs", len(all_vertexs))
             parser.field("Vertexs", all_vertexs)
-            parser.field("Normals", paths[0].Normals)
+            parser.field("Normals", paths[0].normals)
 
             # Yes, these are "supposed" to be backwards
-            parser.field("IntersectionType[0]", paths[1].IntersectionType)
-            parser.field("IntersectionType[1]", paths[0].IntersectionType)
-            parser.field("StopLightPos[0]", paths[1].StopLightPos[0])
-            parser.field("StopLightPos[1]", paths[1].StopLightPos[1])
-            parser.field("StopLightPos[2]", paths[0].StopLightPos[0])
-            parser.field("StopLightPos[3]", paths[0].StopLightPos[1])
+            parser.field("IntersectionType[0]", paths[1].intersection_type)
+            parser.field("IntersectionType[1]", paths[0].intersection_type)
+            parser.field("StopLightPos[0]", paths[1].stop_light_pos[0])
+            parser.field("StopLightPos[1]", paths[1].stop_light_pos[1])
+            parser.field("StopLightPos[2]", paths[0].stop_light_pos[0])
+            parser.field("StopLightPos[3]", paths[0].stop_light_pos[1])
             
-            parser.field("StopLightIndex", paths[0].StopLightIndex)
+            parser.field("StopLightIndex", paths[0].stop_light_index)
         
-            parser.field("Blocked[0]", paths[0].Blocked)
-            parser.field("Blocked[1]", paths[1].Blocked)
+            parser.field("Blocked[0]", paths[0].blocked)
+            parser.field("Blocked[1]", paths[1].blocked)
 
-            parser.field("PedBlocked[0]", paths[0].PedBlocked)
-            parser.field("PedBlocked[1]", paths[1].PedBlocked)
+            parser.field("PedBlocked[0]", paths[0].ped_blocked)
+            parser.field("PedBlocked[1]", paths[1].ped_blocked)
 
             # Yes, these are "supposed" to be backwards
-            parser.field("StopLightName", [paths[1].StopLightName, paths[0].StopLightName])
+            parser.field("StopLightName", [paths[1].stop_light_name, paths[0].stop_light_name])
 
-            parser.field("Divided", paths[0].Divided)       
-            parser.field("Alley", paths[0].Alley)
-            parser.field("IsFlat", paths[0].IsFlat)
-            parser.field("HasBridge", paths[0].HasBridge)
-            parser.field("SpeedLimit", paths[0].SpeedLimit)
+            parser.field("Divided", paths[0].divided)       
+            parser.field("Alley", paths[0].alley)
+            parser.field("IsFlat", paths[0].is_flat)
+            parser.field("HasBridge", paths[0].has_bridge)
+            parser.field("SpeedLimit", paths[0].speed_limit)
             
-            parser.field("ID", paths[0].ID)
-            parser.field("OncomingPath", paths[0].OncomingPath)
-            parser.field("PathIndex", paths[0].PathIndex)
-            parser.field("EdgeIndex", paths[0].EdgeIndex)
-            parser.field("IntersectionIds", paths[0].IntersectionIds)
+            parser.field("ID", paths[0].id)
+            parser.field("OncomingPath", paths[0].oncoming_path)
+            parser.field("PathIndex", paths[0].path_index)
+            parser.field("EdgeIndex", paths[0].edge_index)
+            parser.field("IntersectionIds", paths[0].intersection_ids)
                         
-            parser.field("VertXDirs", paths[0].VertXDirs)
-            parser.field("VertZDirs", paths[0].VertZDirs)
-            parser.field("SubSectionDirs", paths[0].SubSectionDirs)
+            parser.field("VertXDirs", paths[0].vert_x_dirs)
+            parser.field("VertZDirs", paths[0].vert_z_dirs)
+            parser.field("SubSectionDirs", paths[0].sub_section_dirs)
             
-            parser.field("CenterOffsets", paths[0].CenterOffsets)
-            parser.field("SubSectionOffsets", paths[0].SubSectionOffsets)
+            parser.field("CenterOffsets", paths[0].center_offsets)
+            parser.field("SubSectionOffsets", paths[0].sub_section_offsets)
                     
-            parser.field("RoadLength", paths[0].RoadLength)
-            parser.field("LaneWidths", paths[0].LaneWidths)
-            parser.field("LaneLengths", paths[0].LaneLengths)
+            parser.field("RoadLength", paths[0].road_length)
+            parser.field("LaneWidths", paths[0].lane_widths)
+            parser.field("LaneLengths", paths[0].lane_lengths)
             
             parser.end_class()
+
             
                     
 def debug_ai(input_file: Path, debug_file: bool, output_map_file: Path, output_int_files: Path, output_road_files: Path) -> None:
@@ -7222,7 +7224,7 @@ lighting_configs = [
 #! ======================= SET PHYSICS ======================= !#
 
 
-# Available indices: 94, 95, 96, 97, 98,
+# Available indices: 94, 95, 96, 97, 98
 custom_physics = {
     97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # Sticky
     98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # Slippery
