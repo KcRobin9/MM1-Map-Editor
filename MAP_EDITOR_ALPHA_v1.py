@@ -5594,12 +5594,12 @@ def is_game_running(process_name: str) -> bool:
     return False
       
 
-def start_game(mm1_folder: str, play_game: bool) -> None:    
-    if not play_game or is_game_running("Open1560.exe") or is_blender_running():
+def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
+    if not play_game or is_game_running(executable) or is_blender_running():
         return
     
-    subprocess.run(mm1_folder / "Open1560.exe", cwd = mm1_folder)
-         
+    subprocess.run(mm1_folder / executable, cwd = mm1_folder)
+
 ###################################################################################################################
 ################################################################################################################### 
 #! ======================= BLENDER SETUP ======================= !#
@@ -7468,7 +7468,7 @@ print("\n" + create_bar_divider(colors_two))
 print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(create_bar_divider(colors_two))
 
-start_game(Folder.MIDTOWNMADNESS, play_game)
+start_game(Folder.MIDTOWNMADNESS, "Open1560.exe", play_game)
 
 
 # Blender
