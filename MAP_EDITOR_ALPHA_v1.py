@@ -91,8 +91,7 @@ visualize_ai_paths = False      # Change to "True" if you want to visualize the 
 # Car Start Position in Cruise (if no polygon has the option "base = True")
 cruise_start_position = (40.0, 30.0, -40.0)
 
-round_vector_values = True
-
+round_vector_values = True      
 disable_progress_bar = False    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
 ################################################################################################################
@@ -148,8 +147,6 @@ debug_portals = False           # Change to "True" if you want a PORTALS Debug t
 debug_lighting = False          # Change to "True" if you want a LIGHTING Debug text file
 debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
 debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
-
-round_debug_values = True       # Change to "True" if you want to round (some) debug values to 2 decimals
 
 # File Debugging | The Output Files are written to: "Resources / Debug / ..."
 debug_props_file = False
@@ -908,8 +905,8 @@ class Vector2:
     def Normalize(self) -> 'Vector2':
         return self * (self.Mag2() ** -0.5)
     
-    def __repr__(self, round_values: bool = round_vector_values) -> str:
-        if round_values:
+    def __repr__(self, round_vector_values: bool = round_vector_values) -> str:
+        if round_vector_values:
             return f'{round(self.x, 2):.2f}, {round(self.y, 2):.2f}'
         else:
             return f'{self.x:f}, {self.y:f}'
@@ -1007,8 +1004,8 @@ class Vector3:
         self.y = y
         self.z = z
                 
-    def __repr__(self, round_values: bool = round_vector_values) -> str:
-        if round_values:
+    def __repr__(self, round_vector_values: bool = round_vector_values) -> str:
+        if round_vector_values:
             return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
         else:
             return f'{{ {self.x:f}, {self.y:f}, {self.z:f} }}'
