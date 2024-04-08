@@ -32,8 +32,8 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 * Dading - Alpha tester, creator of [Moronville](https://cdn.discordapp.com/attachments/890529659756888074/1179102551724019773/MoronVille_City.ar?ex=66157252&is=6602fd52&hm=a38edf12a33944d1aa76d374e0a50f09081f21ac61a5b1023a192b7ae3c8802b&)
 * Vwp914 - Alpha tester, Blender tutor
 * [Lars](https://github.com/Larspolo) - For his Race Making Tool
-* DDucky - Code help with Prop Editor 
-
+* DDucky - Code help with Prop Editor
+* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, Contributer
 ## Gallery
 
 ![Preview](Resources/EditorResources/GALLERY/Gallery_1.png)
