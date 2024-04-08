@@ -227,8 +227,11 @@ def continuous_progress_bar(duration: float, buffer: str, top_divider: str, bott
         
         if progress >= 100:
             break
-        
-        time.sleep(0.025)  
+
+        if disable_progress_bar:
+            time.sleep(5.0)
+        else:
+            time.sleep(0.025)
 
 
 def save_editor_run_time(run_time: float, output_file: Path) -> None:
