@@ -437,21 +437,7 @@ class CopStartLane:
     IN_TRAFFIC = 2    
     
     
-class PedDensity:
-    _0 = 0.0
-    _10 = 0.1
-    _20 = 0.2
-    _30 = 0.3
-    _40 = 0.4
-    _50 = 0.5
-    _60 = 0.6
-    _70 = 0.7
-    _80 = 0.8
-    _90 = 0.9
-    _100 = 1.0
-    
-    
-class AmbientDensity:
+class Density:
     _0 = 0.0
     _10 = 0.1
     _20 = 0.2
@@ -464,6 +450,14 @@ class AmbientDensity:
     _90 = 0.9
     _100 = 1.0
 
+
+class PedDensity(Density):
+    pass
+    
+    
+class AmbientDensity(Density):
+    pass
+    
 
 class Rotation:
     AUTO = 0
