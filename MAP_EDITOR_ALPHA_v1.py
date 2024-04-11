@@ -480,8 +480,8 @@ class Width:
     MEDIUM = 15
     LARGE = 19
     
-    
-class MaxOpponents:
+
+class NumericOptions:
     _0 = 0
     _1 = 1
     _2 = 2
@@ -491,24 +491,19 @@ class MaxOpponents:
     _6 = 6
     _7 = 7
     _8 = 8
-    _128 = 128  # The game can (likely) support more than 128 opponents, however the game's "MAX_MOVERS" is capped at 128 
-                # (see: Open1560 / code / midtown / mmphysics / phys.cpp)  
-    
-    
-class Laps:
-    _0 = 0
-    _1 = 1
-    _2 = 2
-    _3 = 3
-    _4 = 4
-    _5 = 5
-    _6 = 6
-    _7 = 7
-    _8 = 8
+
+class MaxOpponents(NumericOptions):
+    # The game can (likely) support more than 128 opponents, however the game's "MAX_MOVERS" is capped at 128
+    # (see: Open1560 / code / midtown / mmphysics / phys.cpp)
+    _128 = 128  
+
+
+class Laps(NumericOptions):
+     # The game can load races with 1000+ laps, however the game's menu caps the number to 10
     _9 = 9
-    _10 = 10  # The game can load races with 1000+ laps, however the game's menu caps the number to 10
-   
-   
+    _10 = 10
+    
+    
 class Color:
     RED = (1, 0, 0, 1)
     GREEN = (0, 1, 0, 1)
