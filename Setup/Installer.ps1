@@ -3,6 +3,11 @@ Start-Sleep -Seconds 2
 python ./Test_Python.py
 Start-Sleep -Seconds 2
 
+Write-Host "Running Keybinding_Config.py..."
+Start-Sleep -Seconds 2
+python ./Keybinding_Config.py
+Start-Sleep -Seconds 2
+
 # Move up to the root directory (one level up from the current location)
 cd ..
 
