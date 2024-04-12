@@ -2,5 +2,6 @@ numpy
 psutil
 colorama
 mathutils
+pyautogui
 matplotlib
 fake-bpy-module-latest

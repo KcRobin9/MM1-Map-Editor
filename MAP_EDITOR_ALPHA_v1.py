@@ -32,9 +32,10 @@ import shutil
 import struct
 import random
 import textwrap
+import pyautogui
 import threading
 import subprocess
-import numpy as np   
+import numpy as np
 from enum import Enum
 from pathlib import Path
 from itertools import cycle
@@ -6307,6 +6308,13 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
                     file.write(export_script + '\n\n')
                     
             subprocess.Popen(["notepad.exe", export_file])
+            
+            time.sleep(1.0)  # Wait for Notepad++ to open and load the file
+
+            # Simulate CTRL + A and CTRL + C
+            pyautogui.hotkey("ctrl", "a")
+            pyautogui.hotkey("ctrl", "c")
+            
             self.report({'INFO'}, f"Saved data to {export_file}")
             bpy.ops.object.select_all(action = 'DESELECT')
             
