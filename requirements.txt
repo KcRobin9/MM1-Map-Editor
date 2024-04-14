@@ -1,5 +1,7 @@
+bpy
 numpy
 psutil
+debugpy
 colorama
 mathutils
 pyautogui
