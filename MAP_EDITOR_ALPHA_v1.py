@@ -36,7 +36,6 @@ import pyautogui
 import threading
 import subprocess
 import numpy as np
-from enum import Enum
 from pathlib import Path
 from itertools import cycle
 from mathutils import Vector

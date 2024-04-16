@@ -31,7 +31,6 @@ Write-Host "Installing required Python Packages from requirements.txt..."
 Start-Sleep -Seconds 2
 pip install -r requirements.txt
 
-
 Write-Host ""
 Write-Host "==================================================="
 Write-Host ""
@@ -41,6 +40,7 @@ Write-Host "==================================================="
 Write-Host ""
 Write-Host "*** Please press Enter to open the Map Editor and exit this Window ***"
 Write-Host ""
+
 
 # Wait for the Enter key to be pressed
 for ($i = 20; $i -gt 0; $i--)

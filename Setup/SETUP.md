@@ -1,45 +1,37 @@
 # Setup Guide
 
---- Welcome to this setup guide. ---        
-Depending on your current situation, the setup for the Map Editor may take around 30 minutes to complete.
-Please find all the (necessary) steps below
+Depending on your current situation, the setup for the Map Editor may take around 30 minutes to complete.  
+Please complete all the steps below.
 
 ## Download 
-[Python](https://www.python.org/downloads/) (required, tested on 3.10.7 & 3.12.1)     
+[Python](https://www.python.org/downloads/) (required, tested on multiple versions)   
 [Visual Studio Code](https://code.visualstudio.com/download) (strongly recommended)      
-[Blender](https://www.blender.org/download/) (strongly recommended, tested on 3.6 & 4.0)
+[Blender](https://www.blender.org/download/) (strongly recommended, tested on multiple versions) 
 
 ## Installation
 ### Python
-* Toggle `Add Python to PATH`
-* Click on install
-
-### Visual Studio Code
-* Open the program
-* Go to the Extensions tab (on the far left, or hold `Ctrl + Shift + X`)
-* In the search bar, search and install the following extensions:
-* * Pylance
-* * Blender Development (by Jacques Lucke)
-* * Better Comments (by Aaron Bond) [optional, recommended]
+* Click on `Add Python to PATH` in the Setup Wizard and then choose Install
 
 ### Test Python & Install Required Libraries
-* Double click on `CLICK ME.bat`
-* This will run a simple Python test script and install all required Python libraries
-* * If you get an error saying that `mathutils` cannot be installed, make sure you have Microsoft Visual C++ 14.0 or greater installed:  
-https://visualstudio.microsoft.com/visual-cpp-build-tools/
+* Double click on `CLICK ME.bat` to start the process
+* * If you get an error stating that `mathutils` cannot be installed, download [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). After launching this program, toggle `Desktop development with C++` and click on Install at the botto mright corner.
 
 ### Install Blender-Python Libraries
 * Since Blender uses its own Python interpreter, we must manually install a few libraries from the previous step into Blender's Python Environment
 	
 * First, locate the `python.exe` in your Blender installation. It may be located here:
-* * (Regular)  
-`C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe`	
-* * (Steam)  
-`E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe`	
+* (Default)  
+```
+C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe
+```	
+
+* (Steam)
+```
+E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe
+```
 			
-* Now go back to the Map Editor folder, copy `powershell.exe`, and paste it in the Blender folder with the `python.exe`. If your system is asking for permissions, click on *continue*			
-* Double click `powershell.exe` in the Blender folder. 
-In here, copy & paste the commands below (one at a time) to install the libraries and click on enter:
+* Now go back to the Map Editor folder, copy `powershell.exe`, and paste it in the Blender folder with the `python.exe`. If your system is asking for permission, click on *continue*			
+* Next, doucle click `powershell.exe` in the Blender folder and copy & paste the following lines in the terminal (one at a time) and press enter.
 ```
 python -m pip install psutil
 python -m pip install matplotlib
@@ -47,24 +39,30 @@ python -m pip install matplotlib
 
 Once the libraries are installed succesfully, you can exit the powershell program
 				
-				
 ### Connect Visual Studio Code to Blender
-* Launch Visual Studio Code as an **administrator** and open the `MAP_EDITOR_ALPHA_v1.py`
-* Here, click on the three-line menu icon at the top left corner. Then click on `File` and then click on `Add Folder to Workspace...` 
-* Now make sure that the folder you Add / Select is `MM1-Map-Editor`. Once selected, click on `Add` at the bottom right of your menu window
+* Launch Visual Studio Code as **administrator** and open `MAP_EDITOR_ALPHA_v1.py`
+* Next, click on the three-line menu icon at the top left corner. Then click on `File` and then on `Add Folder to Workspace...` 
+* Now make sure that the folder you select is `MM1-Map-Editor` and you click on `Add` at the bottom right of explorer menu
+* Go back to Visual Studio Code with the `MAP_EDITOR_ALPHA_v1.py` open, and hold `Shift + Q`
 
-// wip // 
+![Preview](Resources/EditorResources/GALLERY/OPEN_BLENDER_EXE_VIA_VSCODE.png)
 
-* Go back to Visual Studio Code with the Editor open, and press "Ctrl + Shift + P"
-			A search bar will appear at the top, in here, type "Blender"
-			Now various options should appear, click on the one that reads "Blender: Start"
-			This will start an instance of Blender, to which the Python script is connected
-			
-				To run the script, and import the test city in, again press "Ctrl + Shift + P" in Visual Studio Code
-				Again type "Blender" and click on the option that reads "Blender: Run Script", this will execute the script
-				
-				Wait a couple seconds, and click on the Blender exe you had opened before
-				Now you should see a test city in Blender, ready to be edited and build upon
+* Click on a Blender executable if available, or click on `Choose a new Blender executable...` and navigate to e.g.:
+`C:\Program Files\Blender Foundation\Blender 3.6` and select the `blender.exe`
+* Now press `Shift + Q` (again) and select your chosen Blender executable, the application will now start
+* If you see the following message in Visual Studio Code, it means VScode and Blender have succesfully connected:
+
+![Preview](Resources/EditorResources/GALLERY/SUCCES_VSCODE_CONNECT_TO_BLENDER.png)
+
+* Next, (in VScode), hold `Shift + W`, the Map Editor will now start processing
+* **Only** and **only** if you see a message very similar to this:
+
+![Preview](Resources/EditorResources/GALLERY/SUCCES_RAN_PYTHON_BLENDER_CODE.png)
+
+* it means that the script has *fully* and *succesfully* ran
+
+
+
 
 
 BUILDING "YOUR FIRST" CITY
