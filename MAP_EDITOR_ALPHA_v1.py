@@ -2381,6 +2381,7 @@ class Texture:
     BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
 
 
+#! ==============================TEST_CITY============================== #*
 #! ==============================MAIN AREA============================== #*
 
 # Colored Checkpoints

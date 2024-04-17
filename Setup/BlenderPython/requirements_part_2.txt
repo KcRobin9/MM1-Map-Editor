@@ -1,0 +1,7 @@
+numpy
+psutil
+debugpy
+colorama
+mathutils
+pyautogui
+matplotlib

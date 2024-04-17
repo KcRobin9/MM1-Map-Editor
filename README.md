@@ -20,7 +20,7 @@ Upon completion of your design, the Map Editor will generate all the necessary c
 ```
 git clone https://github.com/KcRobin9/MM1-Map-Editor.git
 ```
-* Follow the [setup guide](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/README.txt)
+* Follow the [setup guide](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/SETUP.MD)
 
 ## Contributions
 
