@@ -41,25 +41,25 @@ E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe
 * Make sure that the folder you select is `MM1-Map-Editor` and you click on `Add` at the bottom right of explorer menu
 * Go back to Visual Studio Code with `MAP_EDITOR_ALPHA_v1.py` open, and hold `Shift + Q`
 
-![Preview](Resources/EditorResources/GALLERY/OPEN_BLENDER_EXE_VIA_VSCODE.png)
+![Preview](Screenshots/OPEN_BLENDER_EXE_VIA_VSCODE.png)
 
 * Click on the Blender executable, if available, or click on `Choose a new Blender executable...` and navigate to e.g.:
 `C:\Program Files\Blender Foundation\Blender 4.0` and select the `blender.exe`
 * Now hold `Shift + Q` (again) and select an available Blender executable, the application will now start
 * If you see the following message in Visual Studio Code, it means VScode and Blender have succesfully connected:
 
-![Preview](Resources/EditorResources/GALLERY/SUCCES_VSCODE_CONNECT_TO_BLENDER.png)
+![Preview](Screenshots/SUCCES_VSCODE_CONNECT_TO_BLENDER.png)
 
 ### Building your Map
 
-* Note: the `MAP_EDITOR_ALPHA_v1.py` script contains a Test City, you may find the polygon data by searching for `TEST_CITY`
+* *Note*: `MAP_EDITOR_ALPHA_v1.py` contains a Test City, you may find the polygon data by searching for `TEST_CITY`
 -----------------------------------
-* Next, in VScode (with Blender connected), hold `Shift + W`, the Map Editor script will now start. *Only* and *only* when you see a message very similar to this it means the script has *fully* ran:
+* Next, in VScode (with Blender connected), hold `Shift + W`, the Map Editor will now start. *Only* and *only* when you see a message very similar to this, it means the script has *fully* ran:
 
-![Preview](Resources/EditorResources/GALLERY/SUCCES_RAN_PYTHON_BLENDER_CODE.png)
+![Preview](Screenshots//SUCCES_RAN_PYTHON_BLENDER_CODE.png)
 
 * Alternatively, you can build the prepared Map without Blender connected. To do this, open `powershell.exe` in the main folder, then type:
-```ps
+```py
 python MAP_EDITOR_ALPHA_v1.py 
 ```
 
