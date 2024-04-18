@@ -43,7 +43,7 @@ E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe
 
 ![Preview](Screenshots/OPEN_BLENDER_EXE_VIA_VSCODE.png)
 
-* Click on the Blender executable, if available, or click on `Choose a new Blender executable...` and navigate to e.g.:
+* Click on the Blender executable, if available, or click on `Choose a new Blender executable...` and navigate to e.g.:  
 `C:\Program Files\Blender Foundation\Blender 4.0` and select the `blender.exe`
 * Now hold `Shift + Q` (again) and select an available Blender executable, the application will now start
 * If you see the following message in Visual Studio Code, it means VScode and Blender have succesfully connected:
@@ -59,7 +59,7 @@ E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe
 ![Preview](Screenshots//SUCCES_RAN_PYTHON_BLENDER_CODE.png)
 
 * Alternatively, you can build the prepared Map without Blender connected. To do this, open `powershell.exe` in the main folder, then type:
-```py
+```shell
 python MAP_EDITOR_ALPHA_v1.py 
 ```
 

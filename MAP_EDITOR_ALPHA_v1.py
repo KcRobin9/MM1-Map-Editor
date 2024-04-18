@@ -2141,16 +2141,28 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 #! ======================= CREATE POLYGON ======================= !#
 
 
-def check_bound_number(bound_number: int) -> None:
-    if bound_number <= 0 or bound_number == Threshold.CELL_TYPE_SWITCH or bound_number >= Threshold.VERTEX_INDEX_COUNT:
-        error_message = """
+def check_bound_numbers(polys: List[Polygon]) -> None:
+    found_one = False
+    
+    for poly in polys[1:]:  # Skip the filler Polygon with Bound Number 0 
+        if poly.cell_id <= 0 or poly.cell_id == Threshold.CELL_TYPE_SWITCH or poly.cell_id >= Threshold.VERTEX_INDEX_COUNT:
+            error_message = f"""
+            ***ERROR***
+            - Polygon with "bound_number =  {poly.cell_id}" is not valid. 
+            - Bound Number must be between 1 and 199, and 201 and 32766.
+            """
+            raise ValueError(error_message)
+        
+        if poly.cell_id == 1:
+            found_one = True
+
+    if not found_one:
+        error_message = f"""
         ***ERROR***
-        Possible problems:
-        - Bound Number must be between 1 and 199, and 201 and 32766.
-        - There must be at least one polygon with Bound Number 1.
+        - There must be at least one Polygon with Bound Number 1 (this was not found).
         """
         raise ValueError(error_message)
-    
+
     
 def check_shape_type(vertex_coordinates: List[Vector3]) -> None:
     if vertex_coordinates is None:
@@ -2214,8 +2226,6 @@ def create_polygon(
     
     polygons_data.append(polygon_info)
     
-    # Safety checks
-    check_bound_number(bound_number)
     check_shape_type(vertex_coordinates)
 
     # Winding & Flags
@@ -7399,6 +7409,7 @@ create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}.CINFO", blitz_race_names, ci
 create_races(race_data)
 create_cops_and_robbers(Folder.SHOP_RACE_MAP / "COPSWAYPOINTS.CSV", cnr_waypoints)
 
+check_bound_numbers(polys)
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}.CELLS", polys, truncate_cells)
 Bounds.create(Folder.SHOP / "BND" / f"{MAP_FILENAME}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}.txt", debug_bounds)
 Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}.PTL", polys, vertices, lower_portals, empty_portals, debug_portals)
