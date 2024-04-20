@@ -5666,21 +5666,20 @@ def setup_blender() -> None:
 ###################################################################################################################
 #! ======================= BLENDER CREATE MODEL ======================= !#                   
                     
-                                        
-def load_textures(texture_folder: Path, load_all_texures: bool) -> None:
-    for file_name in os.listdir(texture_folder):
-        if file_name.lower().endswith(".dds"):
-            texture_path = os.path.join(texture_folder, file_name)
+                        
+def load_textures(input_folder: Path, load_all_textures: bool) -> None:
+    for texture in input_folder.glob("*.dds"):
+        texture_str = str(texture)
+        
+        if texture_str not in bpy.data.images:
+            texture_image = bpy.data.images.load(texture_str)
+        else:
+            texture_image = bpy.data.images[texture_str]
 
-            if texture_path not in bpy.data.images:
-                texture_image = bpy.data.images.load(texture_path)
-            else:
-                texture_image = bpy.data.images[texture_path]
-
-            if load_all_texures:
-                material_name = os.path.splitext(os.path.basename(texture_path))[0]
-                if material_name not in bpy.data.materials:
-                    create_material_from_texture(material_name, texture_image)
+        if load_all_textures:
+            material_name = texture.stem
+            if material_name not in bpy.data.materials:
+                create_material_from_texture(material_name, texture_image)
 
 
 def create_material_from_texture(material_name, texture_image):
@@ -5724,8 +5723,8 @@ def apply_texture_to_object(obj, texture_path):
 
     diffuse_shader = nodes.new(type = "ShaderNodeBsdfPrincipled")
     texture_node = nodes.new(type = "ShaderNodeTexImage")
-
-    texture_image = bpy.data.images.load(texture_path)
+    
+    texture_image = bpy.data.images.load(str(texture_path))  # Converting to String is necessary    
     texture_node.image = texture_image
 
     links = mat.node_tree.links
@@ -5800,19 +5799,16 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     return obj
 
 
-def create_blender_meshes(texture_folder: Path, load_all_texures: bool) -> None:
+def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None:
     if not is_blender_running():
         return
-    
-    load_textures(texture_folder, load_all_texures)
 
-    textures = [os.path.join(texture_folder, f"{texture_name}.DDS") for texture_name in texture_names]
+    load_textures(texture_folder, load_all_textures)
 
-    created_meshes = []
+    textures = [texture_folder / f"{texture_name}.DDS" for texture_name in texture_names]
 
     for poly, texture in zip(polygons_data, textures):
-        created_meshes.append(create_mesh_from_polygon_data(poly, texture)) 
-    
+        create_mesh_from_polygon_data(poly, texture)
     
 ###################################################################################################################
 ###################################################################################################################
