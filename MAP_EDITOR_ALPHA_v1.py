@@ -1936,7 +1936,7 @@ def determine_mesh_folder_and_filename(cell_id: int, texture_name: List[str]) ->
         target_folder = Folder.SHOP_MESH_LANDMARK
     else:
         target_folder = Folder.SHOP_MESH_CITY
-        
+                
     target_folder.mkdir(parents = True, exist_ok = True)
         
     if any(name.startswith(Texture.WATER) for name in texture_name):
@@ -2017,39 +2017,36 @@ def initialize_mesh(
 def ensure_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     vertex_1, vertex_2, vertex_3 = vertex_coordinates
     
-    edge1 = np.subtract(vertex_2, vertex_1)
-    edge2 = np.subtract(vertex_3, vertex_1)
-    
-    normal = np.cross(edge1, edge2)
+    normal = compute_normal(vertex_1, vertex_2, vertex_3)
     reference_up = np.array([0, 1, 0])
     
     dot_product = np.dot(normal, reference_up)
     
-    if dot_product < 0: # If clockwise, swap the order of the vertices
+    if dot_product < 0: # Clockwise --> swap the order of the vertices
         return [vertex_1, vertex_3, vertex_2]
-    else:               # If counterclockwise, no changes needed
+    else:               # Counterclockwise --> no changes needed
         return [vertex_1, vertex_2, vertex_3]
     
     
-def compute_normal(p1, p2, p3) -> Vector3:
-    v1 = np.array(p2) - np.array(p1)
-    v2 = np.array(p3) - np.array(p1)
-    return np.cross(v1, v2)
+def compute_normal(vertex_1: Vector3, vertex_2: Vector3, vertex_3: Vector3) -> np.ndarray:
+    v1 = np.array(vertex_2) - np.array(vertex_1)
+    v2 = np.array(vertex_3) - np.array(vertex_1)
+    normal = np.cross(v1, v2)
+    return normal / np.linalg.norm(normal)
 
 
-def ensure_quad_ccw_order(vertex_coordinates):
+def ensure_quad_ccw_order(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     normal = compute_normal(*vertex_coordinates[:3])
-    normal /= np.linalg.norm(normal)
     
     # Use Gram-Schmidt process to get two orthogonal vectors on the plane
-    basis1 = np.array(vertex_coordinates[1]) - np.array(vertex_coordinates[0])
-    basis1 -= np.dot(basis1, normal) * normal
-    basis1 /= np.linalg.norm(basis1)
-    basis2 = np.cross(normal, basis1)
+    basis_1 = np.array(vertex_coordinates[1]) - np.array(vertex_coordinates[0])
+    basis_1 -= np.dot(basis_1, normal) * normal
+    basis_1 /= np.linalg.norm(basis_1)
+    basis_2 = np.cross(normal, basis_1)
 
     # Project vertices onto the plane defined by the normal
     projections = [
-        (np.dot(vertex, basis1), np.dot(vertex, basis2))
+        (np.dot(vertex, basis_1), np.dot(vertex, basis_2))
         for vertex in vertex_coordinates
         ]
 
@@ -2066,14 +2063,10 @@ def ensure_quad_ccw_order(vertex_coordinates):
     return [vertex_coordinates[i] for i in sorted_indices]
 
 
-def compute_plane_edgenormals(p1, p2, p3):  # Only 3 vertices are being used  
-    vertex_1 = np.subtract(p2, p1)
-    vertex_2 = np.subtract(p3, p1)
-
-    plane_normal = np.cross(vertex_1, vertex_2)
-    plane_normal = plane_normal / np.linalg.norm(plane_normal)
-
-    plane_distance = -np.dot(plane_normal, p1)
+def compute_plane_edgenormals(vertex_1: Vector3, vertex_2: Vector3, vertex_3: Vector3):     
+    plane_normal = compute_normal(vertex_1, vertex_2, vertex_3)
+    
+    plane_distance = -np.dot(plane_normal, vertex_1)
 
     plane_normal = np.round(plane_normal, 3)
     plane_distance = round(plane_distance, 3)
