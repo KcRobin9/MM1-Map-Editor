@@ -6729,8 +6729,8 @@ class CREATE_SINGLE_WAYPOINT_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         create_waypoint(name = "WP_")  
-        self.report({'INFO'}, "Created Waypoint")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Created Waypoint")
+        return {"FINISHED"}
 
 
 class LOAD_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
@@ -6739,18 +6739,18 @@ class LOAD_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         load_waypoints_from_csv(waypoint_file)
-        self.report({'INFO'}, "Loaded Waypoints from CSV")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Loaded Waypoints from CSV")
+        return {"FINISHED"}
 
 
 class LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator(bpy.types.Operator):
-    bl_idname = "load.race_waypoints_from_race_data"
-    bl_label = "Load Race Waypoints from Race Data"
+    bl_idname = "load.waypoints_from_race_data"
+    bl_label = "Load Waypoints from Race Data"
 
     def execute(self, context: bpy.types.Context) -> set:
         load_waypoints_from_race_data(race_data, waypoint_type_input, waypoint_number_input)
-        self.report({'INFO'}, "Loaded Waypoints from Race Data")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Loaded Waypoints from Race Data")
+        return {"FINISHED"}
     
     
 class LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
@@ -6760,8 +6760,8 @@ class LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
     def execute(self, context: bpy.types.Context) -> set:
         Folder.BASE
         load_cops_and_robbers_waypoints("COPSWAYPOINTS.CSV")
-        self.report({'INFO'}, "Loaded Cops & Robber Waypoints from CSV")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Loaded Cops & Robber Waypoints from CSV")
+        return {"FINISHED"}
 
 
 class EXPORT_SELECTED_WAYPOINTS_OT_operator(bpy.types.Operator):
@@ -6770,8 +6770,8 @@ class EXPORT_SELECTED_WAYPOINTS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = False, add_brackets = False)
-        self.report({'INFO'}, "Exported Selected Waypoints")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Exported Selected Waypoints")
+        return {"FINISHED"}
     
     
 class EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
@@ -6780,8 +6780,8 @@ class EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = False, add_brackets = True)
-        self.report({'INFO'}, "Exported Selected Waypoints with Brackets")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Exported Selected Waypoints with Brackets")
+        return {"FINISHED"}
     
     
 class EXPORT_ALL_WAYPOINTS_OT_operator(bpy.types.Operator):
@@ -6790,8 +6790,8 @@ class EXPORT_ALL_WAYPOINTS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = True, add_brackets = False)
-        self.report({'INFO'}, "Exported All Waypoints")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Exported All Waypoints")
+        return {"FINISHED"}
 
 
 class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
@@ -6800,8 +6800,8 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         export_selected_waypoints(export_all = True, add_brackets = True)
-        self.report({'INFO'}, "Exported All Waypoints with Brackets")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Exported All Waypoints with Brackets")
+        return {"FINISHED"}
         
 ###################################################################################################################
 ################################################################################################################### 
@@ -6856,54 +6856,55 @@ def set_blender_keybinding() -> None:
     kc = wm.keyconfigs.addon
 
     if kc:
-        km = wm.keyconfigs.addon.keymaps.new(name = 'Object Mode', space_type = 'EMPTY')
+        km = wm.keyconfigs.addon.keymaps.new(name = "Object Mode", space_type = "EMPTY")
 
+        #? === Workflow Automation === ?#
         # Ctrl + E to export selected polygon(s)
-        kmi_export_selected = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', ctrl = True)
+        kmi_export_selected = km.keymap_items.new("object.export_polygons", "E", "PRESS", ctrl = True)
         kmi_export_selected.properties.select_all = False
 
         # Shift + E to export all polygons
-        kmi_export_all = km.keymap_items.new("object.export_polygons", 'E', 'PRESS', shift = True)
+        kmi_export_all = km.keymap_items.new("object.export_polygons", "E", "PRESS", shift = True)
         kmi_export_all.properties.select_all = True
 
         # Shift + P to assign custom properties to newly created polygon(s)
-        km.keymap_items.new("object.assign_custom_properties", 'P', 'PRESS', shift = True)
+        km.keymap_items.new("object.assign_custom_properties", "P", "PRESS", shift = True)
 
         # Shift + X to process an extruded mesh without triangulation
-        kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', shift = True)
+        kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", "X", "PRESS", shift = True)
         kmi_custom_extrude_no_triangulate.properties.triangulate = False    
         
         # Ctrl + Shift + X to process an extruded mesh with triangulation
-        kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", 'X', 'PRESS', ctrl = True, shift = True)
+        kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", "X", "PRESS", ctrl = True, shift = True)
         kmi_custom_extrude_triangulate.properties.triangulate = True
 
         # Ctrl + Shift + Q to rename children objects
-        km.keymap_items.new("object.auto_rename_children", 'Q', 'PRESS', ctrl = True, shift = True)
+        km.keymap_items.new("object.auto_rename_children", "Q", "PRESS", ctrl = True, shift = True)
         
-        # Shift + Y to create a single waypoint
-        km.keymap_items.new("create.single_waypoint", 'Y', 'PRESS', shift = True)  
+        #? === Waypoints === ?#
+        # Shift + Y to create a single aypoint
+        km.keymap_items.new("create.single_waypoint", "Y", "PRESS", shift = True)  
                 
         # Shift + C to load waypoints from CSV
-        km.keymap_items.new("load.waypoints_from_csv", 'C', 'PRESS', shift = True) 
+        km.keymap_items.new("load.waypoints_from_csv", "C", "PRESS", shift = True) 
 
-        # Shift + R to load waypoints from 'race_data' dictionary
-        km.keymap_items.new("load.race_waypoints_from_race_data", 'R', 'PRESS', shift = True)  
+        # Shift + R to load waypoints from "race_data" dictionary
+        km.keymap_items.new("load.waypoints_from_race_data", "R", "PRESS", shift = True)  
         
         # Shift + W to export selected waypoint(s)
-        km.keymap_items.new("export.selected_waypoints", 'W', 'PRESS', shift = True)
+        km.keymap_items.new("export.selected_waypoints", "W", "PRESS", shift = True)
         
         # Ctrl + W to export selected waypoint(s) with brackets
-        km.keymap_items.new("export.selected_waypoints_with_brackets", 'W', 'PRESS', ctrl = True)
+        km.keymap_items.new("export.selected_waypoints_with_brackets", "W", "PRESS", ctrl = True)
         
         # Ctrl + Shift + W to export all waypoints
-        km.keymap_items.new("export.all_waypoints", 'W', 'PRESS', ctrl = True, shift = True)
-
+        km.keymap_items.new("export.all_waypoints", "W", "PRESS", ctrl = True, shift = True)
+        
         # Ctrl + Alt + W to export all waypoins with brackets
-        km.keymap_items.new("export.all_waypoints_with_brackets", 'W', 'PRESS', ctrl = True, alt = True)
+        km.keymap_items.new("export.all_waypoints_with_brackets", "W", "PRESS", ctrl = True, alt = True)
         
         # Alt + C to load CnR waypoints from CSV
-        km.keymap_items.new("load.cnr_from_csv", 'O', 'PRESS', alt = True)
-        
+        km.keymap_items.new("load.cnr_from_csv", "O", "PRESS", alt = True)
 ###################################################################################################################   
 ################################################################################################################### 
 #! ======================= SET FACADES ======================= !#
