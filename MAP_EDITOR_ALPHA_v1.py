@@ -2189,11 +2189,18 @@ def process_flags(vertex_coordinates: List[Vector3], flags: int) -> int:
     if flags is not None:
         return flags  
     
-    if len(vertex_coordinates) == Shape.QUAD:
+    elif len(vertex_coordinates) == Shape.QUAD:
         return PlaneEdgesWinding.QUAD_Z_AXIS
     
-    elif len(vertex_coordinates) == Shape.TRIANGLE:
+    else len(vertex_coordinates) == Shape.TRIANGLE:
         return PlaneEdgesWinding.TRIANGLE_Z_AXIS
+    
+    
+    
+def update_cruise_start_position(vertex_coordinates: List[Vector3]) -> None:
+    global cruise_start_position
+    x, y, z = calculate_center_tuples(vertex_coordinates)
+    cruise_start_position = (x, y + 15, z)
     
     
 def create_polygon(
@@ -2231,9 +2238,7 @@ def create_polygon(
         
     # Base polygon               
     if base:
-        global cruise_start_position
-        x, y, z = calculate_center_tuples(vertex_coordinates)
-        cruise_start_position = (x, y + 15, z)
+        update_cruise_start_position(vertex_coordinates)
           
     # Plane Edges    
     if plane_edges is None:
