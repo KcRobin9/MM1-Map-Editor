@@ -3,7 +3,6 @@ numpy
 psutil
 debugpy
 colorama
-mathutils
 pyautogui
 matplotlib
 fake-bpy-module-latest

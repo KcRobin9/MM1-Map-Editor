@@ -38,7 +38,6 @@ import subprocess
 import numpy as np
 from pathlib import Path
 from itertools import cycle
-from mathutils import Vector
 import matplotlib.pyplot as plt                
 from colorama import Fore, Style, init
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO
@@ -2189,10 +2188,10 @@ def process_flags(vertex_coordinates: List[Vector3], flags: int) -> int:
     if flags is not None:
         return flags  
     
-    elif len(vertex_coordinates) == Shape.QUAD:
+    if len(vertex_coordinates) == Shape.QUAD:
         return PlaneEdgesWinding.QUAD_Z_AXIS
     
-    else len(vertex_coordinates) == Shape.TRIANGLE:
+    elif len(vertex_coordinates) == Shape.TRIANGLE:
         return PlaneEdgesWinding.TRIANGLE_Z_AXIS
     
     
@@ -5593,7 +5592,7 @@ def is_game_running(process_name: str) -> bool:
       
 
 def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
-    if not play_game or is_game_running(executable) or is_blender_running():
+    if not play_game or is_blender_running() or is_game_running(executable):  # This order is important
         return
     
     subprocess.run(mm1_folder / executable, cwd = mm1_folder)
