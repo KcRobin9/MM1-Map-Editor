@@ -3416,7 +3416,7 @@ def create_ext(output_file: Path, polygons: List[Vector3]) -> None:
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
     
-    if not set_minimap:
+    if not set_minimap or is_blender_running():
         return
     
     global hudmap_vertices
@@ -3441,8 +3441,8 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
 
         if add_label: 
             center = calculate_center_tuples(polygon)
-            ax.text(center[0], center[2], label, color = 'white', 
-                    ha = 'center', va = 'center', fontsize = 4.0)   
+            ax.text(center[0], center[2], label, color = "white", 
+                    ha = "center", va = "center", fontsize = 4.0)   
             
     # Regular Export (320 and 640 versions)
     _, ax = plt.subplots()
@@ -3454,16 +3454,16 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         draw_polygon(ax, polygon, minimap_outline_color, 
                      add_label = False, hud_fill = hud_fill, hud_color = hud_color)
 
-    ax.set_aspect('equal', 'box')
-    ax.axis('off')
+    ax.set_aspect("equal", "box")
+    ax.axis("off")
 
     # Save JPG 640 and 320 Pictures                    
     plt.savefig(Folder.SHOP / "BMP16" / f"{MAP_FILENAME}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
     plt.savefig(Folder.SHOP / "BMP16" / f"{MAP_FILENAME}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
 
     if debug_minimap or set_lars_race_maker:
-        fig, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
-        ax_debug.set_facecolor('black')
+        _, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
+        ax_debug.set_facecolor("black")
 
         for i, polygon in enumerate(hudmap_vertices):
             hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
