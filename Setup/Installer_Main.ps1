@@ -6,7 +6,7 @@ Start-Sleep -Seconds 1
 Write-Host ""
 
 
-# Upgrade pip to the latest version
+# Upgrade pip (Python library installer) to the latest version
 Write-Host "Upgrading pip..."
 Start-Sleep -Seconds 1
 Write-Host ""
@@ -15,13 +15,19 @@ Start-Sleep -Seconds 1
 Write-Host ""
 
 
-# Set Visual Studio Code Keybindings
+# Set Visual Studio Code Keybindings (if VS Code CLI is available)
 Write-Host ""
 Write-Host "Running Keybinding_Config.py..."
-Start-Sleep -Seconds 1
-python ./Keybinding_Config.py
-Start-Sleep -Seconds 1
-Write-Host ""
+if (Get-Command 'code' -ErrorAction SilentlyContinue) {
+    Start-Sleep -Seconds 1
+    python ./Keybinding_Config.py
+    Start-Sleep -Seconds 1
+    Write-Host ""
+} else {
+	Write-Host ""
+    Write-Host "Custom Visual Studio Code Keybindings are not configured as the program is not detected in PATH"
+	Write-Host ""
+}	
 
 
 # Install Visual Studio Code Extensions (if VS Code CLI is available)
@@ -33,7 +39,7 @@ if (Get-Command 'code' -ErrorAction SilentlyContinue) {
     & code --install-extension jacqueslucke.blender-development
     & code --install-extension aaron-bond.better-comments
 } else {
-    Write-Host "Visual Studio Code is not detected in PATH. Please ensure it is installed and added to PATH."
+    Write-Host "Visual Studio Code Extensions are not installed as the program is not detected in PATH"
 }
 Write-Host ""
 Start-Sleep -Seconds 1
