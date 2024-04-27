@@ -7,29 +7,35 @@ Please complete all steps below.
 
 | Software | Version / Option | Recommendation 
 |-------------------------------------------------|------------------------------------------|----------------------------------|
-| [Python ](https://www.python.org/downloads/) | 3.8.7 | Required |
+| [Python ](https://www.python.org/downloads/) | Latest* | Required |
 | [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | Desktop development with C++ | Required 
 | [Blender ](https://www.blender.org/download/) | Latest | Strongly recommended
 | [Visual Studio Code](https://code.visualstudio.com/download) | Latest | Strongly recommended |
 
-
+*if you run into issues installing `bpy`, try version [3.7.6](https://www.python.org/ftp/python/3.7.6/python-3.7.6-amd64.exe)
 
 ## Installation
 ### Python
 * Click on `Add Python to PATH` in the Setup Wizard and then choose Install
 
 ### Microsoft C++ Build Tools
-* After the installation is complete, it is recommended to reboot your computer
+* After the installation is complete, reboot your computer
 
 ### Test Python & Install Required Libraries
 * Double click on `📄CLICK_ME.bat` to start the process
 
 ### Install Blender-Python Libraries
-* Since Blender uses its own Python interpreter, you must also install a few libraries from the previous step into Blender's Python Environment. 
+* Since Blender uses its own Python interpreter, you must install a few libraries from the previous step into Blender's Python Environment
 * Open Blender as **administrator**, then click on the `Scripting` tab (top right corner)
-* A new grey window appears, click on `📁 Open`. 
+* A new grey window appears, click on `📁 Open`
 * Navigate to `...\MM1-Map-Editor\Setup` and select `blender_python_libraries.txt`
+* The grey window is now filled with Python code. Next, click on the ▶️ button or hold `ALT + P` to start
+* The process may take 30 - 120 seconds and Blender may freeze
+* After the libraries have been installed, a log file will automatically open with the results
+* Verify that all libraries (6) have been installed *succesfully*
+* Close Blender (the application will likely be frozen)
 
+![Preview](Screenshots/VERIFY_BLENDER_PYTHON_LIBRARIES.png)
 				
 ### Connect Visual Studio Code to Blender
 * Launch Visual Studio Code as **administrator** and open `MAP_EDITOR_ALPHA_v1.py`
