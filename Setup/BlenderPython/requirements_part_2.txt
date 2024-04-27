@@ -1,6 +1,0 @@
-numpy
-psutil
-debugpy
-colorama
-pyautogui
-matplotlib

@@ -5,35 +5,31 @@ Please complete all steps below.
 
 ## Download
 
-| Software                                        | Recommendation                   |
-|-------------------------------------------------|----------------------------------|
-| [Python](https://www.python.org/downloads/)     | Required (tested on multiple versions) |
-| [Blender](https://www.blender.org/download/)    | Strongly recommended (tested on multiple versions) |
-| [Visual Studio Code](https://code.visualstudio.com/download) | Strongly recommended            |
+| Software | Version / Option | Recommendation 
+|-------------------------------------------------|------------------------------------------|----------------------------------|
+| [Python ](https://www.python.org/downloads/) | 3.8.7 | Required |
+| [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | Desktop development with C++ | Required 
+| [Blender ](https://www.blender.org/download/) | Latest | Strongly recommended
+| [Visual Studio Code](https://code.visualstudio.com/download) | Latest | Strongly recommended |
+
+
 
 ## Installation
 ### Python
 * Click on `Add Python to PATH` in the Setup Wizard and then choose Install
 
-### Test Python & Install Python Libraries
-* Double click on `CLICK_ME_PART_1.bat` to start the process
-* * If you get an error stating that `mathutils` cannot be installed, download [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/). After launching the program, toggle `Desktop development with C++` and click on Install at the bottom right corner
+### Microsoft C++ Build Tools
+* After the installation is complete, it is recommended to reboot your computer
+
+### Test Python & Install Required Libraries
+* Double click on `📄CLICK_ME.bat` to start the process
 
 ### Install Blender-Python Libraries
-* Since Blender uses its own Python interpreter, you must also install a few libraries from the previous step into Blender's Python Environment. First, locate `python.exe` in your Blender installation. It may be located here:
+* Since Blender uses its own Python interpreter, you must also install a few libraries from the previous step into Blender's Python Environment. 
+* Open Blender as **administrator**, then click on the `Scripting` tab (top right corner)
+* A new grey window appears, click on `📁 Open`. 
+* Navigate to `...\MM1-Map-Editor\Setup` and select `blender_python_libraries.txt`
 
-*Default*  
-```
-C:\Program Files\Blender Foundation\Blender 4.0\4.0\python\bin\python.exe 
-```	
-*Steam*
-```
-E:\SteamLibrary\steamapps\common\Blender\4.0\python\bin\python.exe
-```
-			
-* Go (back) to the folder `/MM1-Map-Editor/Setup/BlenderPython` and copy all three files into the Blender folder with the Python executable. If your system is asking for permission, click on *continue*			
-* Next, double click on `CLICK_ME_PART_2.bat` in the Blender folder to start the process
-* Once the libraries are installed succesfully, you can exit the powershell program
 				
 ### Connect Visual Studio Code to Blender
 * Launch Visual Studio Code as **administrator** and open `MAP_EDITOR_ALPHA_v1.py`

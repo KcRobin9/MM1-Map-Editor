@@ -1,0 +1,46 @@
+import sys
+import subprocess
+from pathlib import Path
+
+
+log_file = Path.home() / "Desktop" / "blender_pip_install_log.txt"
+
+
+# If the log file already exists, delete it
+if log_file.exists():
+    log_file.unlink()
+
+# Function to append messages to the log file
+def log_to_file(message):
+    with log_file.open("a") as file:
+        file.write(message + "\n")
+
+# Python Packages
+packages = ["numpy", "psutil", "debugpy", "colorama", "pyautogui", "matplotlib"]
+
+# Ensure pip is installed
+ensure_pip = subprocess.run([sys.executable, "-m", "ensurepip"], capture_output = True, text = True)
+log_to_file("Ensure pip output:\n" + ensure_pip.stdout + "\n" + ensure_pip.stderr)
+
+# Install Packages
+install_packages = subprocess.run([sys.executable, "-m", "pip", "install"] + packages, capture_output = True, text = True)
+log_to_file("Install Packages output:\n" + install_packages.stdout + "\n" + install_packages.stderr)
+
+# Prepare Log
+installed_successfully = []
+installed_unsuccessfully = []
+
+for package in packages:
+    if package in install_packages.stdout:
+        installed_successfully.append(package)
+    else:
+        installed_unsuccessfully.append(package)
+
+# Log Installation Summary
+if installed_successfully:
+    log_to_file("INSTALLED SUCCESSFULLY:\n" + "\n".join(installed_successfully))
+if installed_unsuccessfully:
+    log_to_file("INSTALLED UNSUCCESSFULLY:\n" + "\n".join(installed_unsuccessfully))
+
+# Open the log file with Notepad
+subprocess.run(["notepad.exe", str(log_file)], check = True)
