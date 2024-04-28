@@ -13,5 +13,6 @@ MidtownMadness/screen
 MidtownMadness/*.log
 MidtownMadness/!*.ar
 MidtownMadness/!*.cfg
+MidtownMadness/MM.LOCK
 MidtownMadness/dev/
 MidtownMadness/shiplist.!*
