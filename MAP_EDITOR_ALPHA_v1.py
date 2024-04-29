@@ -6383,26 +6383,26 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
 class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
     bl_idname = "object.process_post_extrude"
     bl_label = "Process Post Extrude"
-    bl_options = {'REGISTER', 'UNDO'}
+    bl_options = {"REGISTER", "UNDO"}
     
     triangulate: bpy.props.BoolProperty(name = "Triangulate", default = False)
 
     def execute(self, context: bpy.types.Context) -> set:
-        if context.object and context.object.type == 'MESH':
-            bpy.ops.object.mode_set(mode = 'EDIT')
-            bpy.ops.mesh.select_all(action = 'SELECT')
+        if context.object and context.object.type == "MESH":
+            bpy.ops.object.mode_set(mode = "EDIT")
+            bpy.ops.mesh.select_all(action = "SELECT")
             
             if self.triangulate:
                 bpy.ops.mesh.quads_convert_to_tris()
             
             bpy.ops.mesh.edge_split()
-            bpy.ops.mesh.separate(type = 'LOOSE')
-            bpy.ops.object.mode_set(mode = 'OBJECT')
-            self.report({'INFO'}, "Processed Post Extrude")
-            return {'FINISHED'}
+            bpy.ops.mesh.separate(type = "LOOSE")
+            bpy.ops.object.mode_set(mode = "OBJECT")
+            self.report({"INFO"}, "Processed Post Extrude")
+            return {"FINISHED"}
         else:
-            self.report({'WARNING'}, "No mesh object selected")
-            return {'CANCELLED'}
+            self.report({"WARNING"}, "No mesh object selected")
+            return {"CANCELLED"}
     
     
 ###################################################################################################################? 
@@ -6412,27 +6412,19 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
     bl_label = "Auto Rename Children Objects"
 
     def execute(self, context: bpy.types.Context) -> set:
-        mothers_dict = {}
+        polygons = [obj for obj in context.scene.objects if re.match(r"^P\d+$", obj.name)]
 
-        for obj in context.scene.objects:
-            if re.match(r'P\d+$', obj.name):
-                mothers_dict[obj.name] = []
+        polygons.sort(key = lambda x: int(re.search(r"\d+", x.name).group(0)))
 
-        for obj in context.scene.objects:
-            match = re.match(r'(P\d+)\.(\d+)', obj.name)
-            if match:
-                mother_name, child_suffix = match.groups()
-                if mother_name in mothers_dict:
-                    mothers_dict[mother_name].append((int(child_suffix), obj))
+        new_index = 1
+        for obj in polygons:
+            if new_index == Threshold.CELL_TYPE_SWITCH:  # Skip the index 200
+                new_index += 1
+            obj.name = f"P{new_index}"
+            new_index += 1
 
-        for mother_name, children in mothers_dict.items():
-            children.sort(key = lambda x: x[0])
-            for index, (suffix, child_obj) in enumerate(children):
-                new_name = f"{mother_name}{index+1}"
-                child_obj.name = new_name
-                
-        self.report({'INFO'}, "Renamed Polygons")
-        return {'FINISHED'}
+        self.report({"INFO"}, "Renamed Polygons")
+        return {"FINISHED"}
             
 ###################################################################################################################   
 ################################################################################################################### 
