@@ -6331,52 +6331,41 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
 ###################################################################################################################    
 #! ======================= BLENDER MISC OPERATORS ======================= !#
 
-
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     bl_idname = "object.assign_custom_properties"
     bl_label = "Assign Custom Properties to Polygons"
     bl_description = "Assign Custom Properties to polygons that do not have them yet"
     bl_options = {"REGISTER", "UNDO"}
 
-    def execute(self, context: bpy.types.Context) -> set:
-        for obj in bpy.context.scene.objects:
-            if obj.type == 'MESH':
-                
-                # Cell & Material & HUD Color
-                if "cell_type" not in obj:
-                    obj["cell_type"] = Room.DEFAULT
-                if "material_index" not in obj:
-                    obj["material_index"] = Material.DEFAULT
-                if "hud_color" not in obj:
-                    obj["hud_color"] = Color.ROAD
-                    
-                # Misc
-                if "sort_vertices" not in obj:
-                    obj["sort_vertices"] = 0
-                if "always_visible" not in obj:
-                    obj["always_visible"] = 1
-                                
-                # UV mapping
-                if "tile_x" not in obj:
-                    obj["tile_x"] = 2.0
-                if "tile_y" not in obj:
-                    obj["tile_y"] = 2.0
-                if "rotate" not in obj:
-                    obj["rotate"] = 0.01
-                
-                if "original_uvs" not in obj:
-                    # Check if the object has an active UV layer, and if not, create one
-                    uv_layer = obj.data.uv_layers.active
-                    if uv_layer is None:
-                        uv_layer = obj.data.uv_layers.new(name = "UVMap")
+    def assign_defaults(self, obj: bpy.types.Object, property_name: str, default_value: any) -> None:
+        if property_name not in obj:
+            obj[property_name] = default_value
 
-                    # Now save the original UVs
+    def execute(self, context: bpy.types.Context) -> set:
+        for obj in context.scene.objects:
+            if obj.type == "MESH":
+                defaults = {
+                    "cell_type": Room.DEFAULT,
+                    "material_index": Material.DEFAULT,
+                    "hud_color": Color.ROAD,
+                    "sort_vertices": 0,
+                    "always_visible": 1,
+                    "tile_x": 2.0,
+                    "tile_y": 2.0,
+                    "rotate": 0.01
+                }
+
+                for prop_name, default_value in defaults.items():
+                    self.assign_defaults(obj, prop_name, default_value)
+
+                uv_layer = obj.data.uv_layers.active
+                if uv_layer is None:
+                    uv_layer = obj.data.uv_layers.new(name="UVMap")
                     original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in uv_layer.data]
                     obj["original_uvs"] = original_uvs
-                    
-        self.report({'INFO'}, "Assigned Custom Properties")
+
+        self.report({"INFO"}, "Assigned Custom Properties")
         return {"FINISHED"}
-    
     
 ###################################################################################################################?
 
