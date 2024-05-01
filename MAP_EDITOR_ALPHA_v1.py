@@ -6101,8 +6101,8 @@ bpy.types.Object.sort_vertices = bpy.props.BoolProperty(
 class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
     bl_label = "Polygon Options"
     bl_idname = "OBJECT_PT_polygon_options"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
     bl_context = "object"
 
     def draw(self, context):
@@ -6120,30 +6120,29 @@ class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
 def update_vertex_coordinates(self, context):
     obj = self.id_data
     if obj and hasattr(obj.data, "vertices"):
-        for i, coord in enumerate(obj.vertex_coords):
-            if len(obj.data.vertices) > i:
-                obj.data.vertices[i].co = (coord.x, coord.y, coord.z)
+        for index, coord in enumerate(obj.vertex_coords):
+            if len(obj.data.vertices) > index:
+                obj.data.vertices[index].co = (coord.x, coord.y, coord.z)
         obj.data.update()
+
 
 class VertexGroup(bpy.types.PropertyGroup):
     x: bpy.props.FloatProperty(name = "X", update = update_vertex_coordinates)
     y: bpy.props.FloatProperty(name = "Y", update = update_vertex_coordinates)
     z: bpy.props.FloatProperty(name = "Z", update = update_vertex_coordinates)
     
-bpy.utils.register_class(VertexGroup)
-
-bpy.types.Object.vertex_coords = bpy.props.CollectionProperty(type = VertexGroup)
-
+    
 class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
     bl_label = "Vertices"
     bl_idname = "OBJECT_PT_vertex_coordinates"
-    bl_space_type = 'PROPERTIES'
-    bl_region_type = 'WINDOW'
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
     bl_context = "object"
 
     def draw(self, context):
         obj = context.active_object
         layout = self.layout
+        
         if obj:
             for vertex in obj.vertex_coords:
                 col = layout.column(align = True)
@@ -6330,6 +6329,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
 ###################################################################################################################   
 ###################################################################################################################    
 #! ======================= BLENDER MISC OPERATORS ======================= !#
+
 
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     bl_idname = "object.assign_custom_properties"
@@ -6792,11 +6792,13 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
 ################################################################################################################### 
 #! ======================= BLENDER INIT ======================= !#
         
-        
+                
 def initialize_blender_panels() -> None:
     if not is_blender_running():
         return
     
+    bpy.utils.register_class(VertexGroup)
+    bpy.types.Object.vertex_coords = bpy.props.CollectionProperty(type = VertexGroup)
     bpy.utils.register_class(OBJECT_PT_CellTypePanel)
     bpy.utils.register_class(OBJECT_PT_MaterialTypePanel)
     bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
