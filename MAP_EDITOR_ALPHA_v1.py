@@ -6270,8 +6270,8 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         
         base_file_name = "Polygon_Export.txt"
         export_file = output_folder / base_file_name
-        
         count = 1
+        
         while export_file.exists():
             export_file = output_folder / f"{count}_{base_file_name}"
             count += 1
@@ -6646,19 +6646,8 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
         waypoints = get_all_waypoints()
     else:
         waypoints = [wp for wp in get_all_waypoints() if wp.select_get()]
-        
-    script_path = get_editor_script_path()
-    
-    
+            
     output_folder = Folder.BASE / "Waypoint Export"
-    
-
-    if script_path:
-        output_folder = script_path / 'Waypoint Export'
-    else:
-        print("Warning: Falling back to directory: Desktop / Waypoint Export")
-        output_folder = Path.home() / 'Desktop' / 'Waypoint Export'
-
     output_folder.mkdir(exist_ok = True)
 
     base_file_name = "Waypoint_Export.txt"
