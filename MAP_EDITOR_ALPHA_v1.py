@@ -6162,15 +6162,7 @@ def format_decimal(value: Union[int, float]) -> str:
         return f"{value:.1f}"
     else: 
         return f"{value:.2f}"
-    
-    
-def get_editor_script_path() -> Optional[Path]:
-    try:
-        return Folder.BASE
-    except NameError:
-        print("Warning: Unable to return editor script path.")
-        return None
-    
+
     
 def validate_and_extract_bound_number(name: str) -> int:
     if name.startswith("P"):
@@ -6272,30 +6264,23 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
     select_all: bpy.props.BoolProperty(default = True)
 
-    def execute(self, context: bpy.types.Context) -> set:
-        script_path = get_editor_script_path()
-        
-        if script_path:
-            output_folder = script_path / 'Polygon Export'
-        else:
-            print("Warning: Falling back to directory: Desktop / Blender Export")
-            output_folder = Path.home() / 'Desktop' / 'Polygon Export'
-           
+    def execute(self, context: bpy.types.Context) -> set:            
+        output_folder = Folder.BASE / "Polygon Export"
         output_folder.mkdir(exist_ok = True)
         
         base_file_name = "Polygon_Export.txt"
         export_file = output_folder / base_file_name
         
         count = 1
-        while os.path.exists(export_file):
+        while export_file.exists():
             export_file = output_folder / f"{count}_{base_file_name}"
             count += 1
         
-        # Conditionally select all meshes or use selected ones based on the 'select_all' property
+        # Conditionally select all Meshes or use selected ones based on the "select_all" property
         if self.select_all:
-            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == 'MESH']
+            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
         else:
-            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == 'MESH']
+            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
         
         if mesh_objects:
             context.view_layer.objects.active = mesh_objects[0]
@@ -6304,27 +6289,27 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
     
         try:
-            with open(export_file, 'w') as file:
+            with open(export_file, 'w') as f:
                 for obj in mesh_objects:
                     export_script = export_formatted_polygons(obj) 
-                    file.write(export_script + '\n\n')
+                    f.write(export_script + "\n\n")
                     
             subprocess.Popen(["notepad.exe", export_file])
             
-            time.sleep(1.0)  # Wait for Notepad++ to open and load the file
+            time.sleep(1.0)  # Wait for Notepad to open and load the file
 
             # Simulate CTRL + A and CTRL + C
             pyautogui.hotkey("ctrl", "a")
             pyautogui.hotkey("ctrl", "c")
             
-            self.report({'INFO'}, f"Saved data to {export_file}")
-            bpy.ops.object.select_all(action = 'DESELECT')
+            self.report({"INFO"}, f"Saved data to {export_file}")
+            bpy.ops.object.select_all(action = "DESELECT")
             
         except Exception as e:
-            self.report({'ERROR'}, str(e))
-            return {'CANCELLED'}
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
         
-        return {'FINISHED'}
+        return {"FINISHED"}
     
 ###################################################################################################################   
 ###################################################################################################################    
@@ -6663,6 +6648,10 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
         waypoints = [wp for wp in get_all_waypoints() if wp.select_get()]
         
     script_path = get_editor_script_path()
+    
+    
+    output_folder = Folder.BASE / "Waypoint Export"
+    
 
     if script_path:
         output_folder = script_path / 'Waypoint Export'
