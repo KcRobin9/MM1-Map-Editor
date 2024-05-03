@@ -470,6 +470,9 @@ class Rotation:
     NORTH_WEST = -45
     AUTO = 0
     
+    FULL_CIRCLE = 360
+    HALF_CIRCLE = 180
+    
     
 class Width:
     AUTO = 0
@@ -6667,10 +6670,10 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
             vertex.x, vertex.y, vertex.z = transform_coordinate_system(vertex, blender_to_game = True)
             
             rotation_euler = waypoint.rotation_euler
-            rotation_degrees = math.degrees(rotation_euler.z) % 360
+            rotation_degrees = math.degrees(rotation_euler.z) % Rotation.FULL_CIRCLE
             
-            if rotation_degrees > 180:
-                rotation_degrees -= 360
+            if rotation_degrees > Rotation.HALF_CIRCLE:
+                rotation_degrees -= Rotation.FULL_CIRCLE
                 
             wp_line = f"{vertex.x:.2f}, {vertex.y:.2f}, {vertex.z:.2f}, {rotation_degrees:.2f}, {waypoint.scale.x:.2f}"
             
