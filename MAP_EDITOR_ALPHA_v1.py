@@ -1955,18 +1955,18 @@ def save_mesh(
     normals: List[int] = None, tex_coords: List[float] = None, 
     randomize_textures: bool = randomize_textures, random_textures: List[str] = random_textures, 
     debug_meshes: bool = debug_meshes) -> None:
-        
+            
     poly = polys[-1]  # Get the last polygon added
-    target_folder, mesh_filename = determine_mesh_folder_and_filename(poly.cell_id, texture_name)
+    
+    cell_id = poly.cell_id
+    target_folder, mesh_filename = determine_mesh_folder_and_filename(cell_id, texture_name)
     
     if randomize_textures:
-        texture_name = [random.choice(random_textures)]
+        texture_name = [random.choice(random_textures)] 
         
     texture_names.append(texture_name[0])
-    single_poly = [Default.POLYGON, poly]
     
-    mesh = initialize_mesh(vertices, single_poly, texture_indices, texture_name, normals, tex_coords)
-    
+    mesh = initialize_mesh(vertices, [poly], texture_indices, texture_name, normals, tex_coords)
     mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
@@ -1981,8 +1981,7 @@ def initialize_mesh(
     flags = agiMeshSet.TEXCOORDS_AND_NORMALS
     cache_size = 0
        
-    shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys[1:]]  # Skip the first filler polygon
-
+    shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys] 
     coordinates = [coord for shape in shapes for coord in shape]
         
     radius = calculate_radius(coordinates, Default.VECTOR_3)  # Use Local Offset for the Center (this is not the case for the Bound files)
