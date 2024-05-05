@@ -16,11 +16,14 @@ Upon completion of your design, the Map Editor will generate all the necessary c
 
 ## Installation
 
-* Click the [download](https://github.com/KcRobin9/MM1-Map-Editor/archive/refs/heads/main.zip) button or clone the repo: 
+* Click the [Download](https://github.com/KcRobin9/MM1-Map-Editor/archive/refs/heads/main.zip) button or clone the repo: 
 ```
 git clone https://github.com/KcRobin9/MM1-Map-Editor.git
 ```
-* Follow the [setup guide](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/SETUP.md)
+* Follow the [Setup Guide](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/SETUP.md)
+* Further reading: 
+    * [Tips & Tricks](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/TIPS_TRICKS.md)
+    * [Troubleshooting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/RESOURCES.md)
 
 ## Contributions
 
