@@ -22,8 +22,8 @@ git clone https://github.com/KcRobin9/MM1-Map-Editor.git
 ```
 * Follow the [Setup Guide](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/SETUP.md)
 * Further reading: 
-    * [Tips & Tricks](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/TIPS_TRICKS.md)
-    * [Troubleshooting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/RESOURCES.md)
+    * [Tips & Tricks](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/TIPS_TRICKS.md)
+    * [Troubleshooting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/TROUBLESHOOTING.md)
 
 ## Contributions
 
