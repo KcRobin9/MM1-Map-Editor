@@ -31,6 +31,7 @@ import psutil
 import shutil
 import struct
 import random
+import datetime
 import textwrap
 import pyautogui
 import threading
@@ -6270,13 +6271,11 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         output_folder = Folder.BASE / "Polygon Export"
         output_folder.mkdir(exist_ok = True)
         
-        base_file_name = "Polygon_Export.txt"
+        now = datetime.datetime.now()
+        date_time_str = now.strftime("%Y_%d_%m_%H%M_%S")
+                
+        base_file_name = f"Polygon_Export_{date_time_str}.txt"
         export_file = output_folder / base_file_name
-        count = 1
-        
-        while export_file.exists():
-            export_file = output_folder / f"{count}_{base_file_name}"
-            count += 1
         
         # Conditionally select all Meshes or use selected ones based on the "select_all" property
         if self.select_all:
@@ -6291,11 +6290,11 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
     
         try:
-            with open(export_file, 'w') as f:
+            with open(export_file, "w") as f:
                 for obj in mesh_objects:
                     export_script = export_formatted_polygons(obj) 
                     f.write(export_script + "\n\n")
-                    
+                                        
             subprocess.Popen(["notepad.exe", export_file])
             
             time.sleep(1.0)  # Wait for Notepad to open and load the file
