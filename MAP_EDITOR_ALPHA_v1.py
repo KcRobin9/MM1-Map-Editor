@@ -1897,6 +1897,31 @@ def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, 
     
     return x, y, z
 
+
+def open_with_notepad_plus(filename: Path) -> None:
+    possible_paths = [
+        r"C:\Program Files\Notepad++\notepad++.exe",
+        r"C:\Program Files (x86)\Notepad++\notepad++.exe"
+    ]
+
+    # Check if Notepad++ is in the PATH
+    notepad_plus_exe = shutil.which("notepad++.exe")
+    
+    if notepad_plus_exe:
+        subprocess.Popen([notepad_plus_exe, filename])
+        print("Opening file with Notepad++ from PATH.")
+        return
+
+    # If Notepad++ is not in PATH, try the hardcoded paths
+    for path in possible_paths:
+        subprocess.Popen([path, filename])
+        print(f"Opening file with Notepad++ from hardcoded path: {path}")
+        return
+
+    # Final fallback to classic Notepad
+    subprocess.Popen(["notepad.exe", filename])
+    print("Notepad++ not found, opening file with Notepad.")
+
 ################################################################################################################ 
 ################################################################################################################               
 #! ======================= CREATE MESH ======================= !#
@@ -6294,8 +6319,9 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
                 for obj in mesh_objects:
                     export_script = export_formatted_polygons(obj) 
                     f.write(export_script + "\n\n")
-                                        
-            subprocess.Popen(["notepad.exe", export_file])
+                    
+            open_with_notepad_plus(export_file)                    
+            # subprocess.Popen(["notepad.exe", export_file])
             
             time.sleep(1.0)  # Wait for Notepad to open and load the file
 
