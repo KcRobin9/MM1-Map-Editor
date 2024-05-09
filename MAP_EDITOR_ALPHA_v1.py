@@ -6299,7 +6299,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         now = datetime.datetime.now()
         date_time_str = now.strftime("%Y_%d_%m_%H%M_%S")
                 
-        base_file_name = f"Polygon_Export_{date_time_str}.txt"
+        base_file_name = f"Polygons{date_time_str}.txt"
         export_file = output_folder / base_file_name
         
         # Conditionally select all Meshes or use selected ones based on the "select_all" property
@@ -6639,10 +6639,10 @@ def load_waypoints_from_csv(waypoint_file: Path) -> None:
     
     
 def load_cops_and_robbers_waypoints(input_file: Path) -> None:    
-    waypoint_types = cycle(['Bank Hideout', 'Gold Position', 'Robber Hideout'])
+    waypoint_types = cycle(["Bank Hideout", "Gold Position", "Robber Hideout"])
     set_count = 1
 
-    with open(input_file, 'r') as f:
+    with open(input_file, "r") as f:
         reader = csv.reader(f)
         next(reader)  
 
@@ -6654,17 +6654,17 @@ def load_cops_and_robbers_waypoints(input_file: Path) -> None:
                                               
             waypoint_type = next(waypoint_types)
 
-            if waypoint_type == 'Bank Hideout':
+            if waypoint_type == "Bank Hideout":
                 create_waypoint(x, y, z, name = f"CR_Bank{set_count}", flag_color = Color.PURPLE)
                 
-            elif waypoint_type == 'Gold Position':
+            elif waypoint_type == "Gold Position":
                 create_gold_bar((x, y, z), scale = 3.0) 
                 bpy.context.object.name = f"CR_Gold{set_count}"
                 
-            elif waypoint_type == 'Robber Hideout':
+            elif waypoint_type == "Robber Hideout":
                 create_waypoint(x, y, z, name = f"CR_Robber{set_count}", flag_color = Color.GREEN)  
                 
-            if waypoint_type == 'Robber Hideout':
+            if waypoint_type == "Robber Hideout":
                 set_count += 1  # Increase the set count after completing each set of three
     
     
@@ -6677,15 +6677,13 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     output_folder = Folder.BASE / "Waypoint Export"
     output_folder.mkdir(exist_ok = True)
 
-    base_file_name = "Waypoint_Export.txt"
-    export_file = output_folder / base_file_name
-    count = 1
-    
-    while export_file.exists():
-        export_file = output_folder / f"{count}_{base_file_name}"
-        count += 1
+    now = datetime.datetime.now()
+    date_time_str = now.strftime("%Y_%d_%m_%H%M_%S")
 
-    with export_file.open("w") as f:
+    base_file_name = f"Waypoints_{date_time_str}.txt"
+    export_file = output_folder / base_file_name
+
+    with open(export_file, "w") as f:
         print("")
         f.write("# x, y, z, rotation, scale \n")
         
@@ -6706,7 +6704,14 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
 
             f.write(wp_line + "\n")
             print(wp_line)
-            
+                        
+    open_with_notepad_plus(export_file)                    
+
+    time.sleep(1.0)  # Wait for Notepad to open and load the file   
+    
+    # Simulate CTRL + A and CTRL + C
+    pyautogui.hotkey("ctrl", "a")
+    pyautogui.hotkey("ctrl", "c")
             
 ###################################################################################################################
 ################################################################################################################### 
