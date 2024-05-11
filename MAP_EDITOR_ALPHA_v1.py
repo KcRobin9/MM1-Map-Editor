@@ -5537,12 +5537,12 @@ def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices: List
 #! ======================= FINALIZING FUNCTIONS ======================= !#
 
 
-def create_ar() -> None:
+def create_ar(shop_folder: Path) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
-            shutil.copy(file, Folder.SHOP / file.name)
+            shutil.copy(file, shop_folder / file.name)
             
-    subprocess.Popen(f"cmd.exe /c run !!!!!{MAP_FILENAME}", cwd = Folder.SHOP, creationflags = subprocess.CREATE_NO_WINDOW)
+    subprocess.Popen(f"cmd.exe /c run !!!!!{MAP_FILENAME}", cwd = shop_folder, creationflags = subprocess.CREATE_NO_WINDOW)
 
 
 def post_editor_cleanup(delete_shop: bool) -> None:
@@ -7452,7 +7452,7 @@ debug_ai(debug_ai_data_file, debug_ai_file,
     )
 
 # Finalizing Part
-create_ar()
+create_ar(Folder.SHOP)
 create_commandline(Folder.MIDTOWNMADNESS, no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
 editor_time = time.time() - start_time
