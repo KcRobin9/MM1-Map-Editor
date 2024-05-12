@@ -3000,8 +3000,8 @@ def create_folders() -> None:
         ]
     
     for path in FOLDER_STRUCTURE:
-        os.makedirs(path, exist_ok = True)
-        
+        path.mkdir(parents = True, exist_ok = True)
+
         
 def create_map_info(output_file: Path, blitz_race_names: List[str], circuit_race_names: List[str], checkpoint_race_names: List[str]) -> None:
     with open (output_file, "w") as f:
