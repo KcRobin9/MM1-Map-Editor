@@ -3024,11 +3024,10 @@ def copy_custom_textures(input_folder: Path, output_folder: Path) -> None:
         shutil.copy(custom_tex, output_folder / custom_tex.name)
         
         
-def copy_core_tune_files(input_folder: Path, output_folder: Path) -> None:    
-    for file in input_folder.glob("*"):
-        if not file.name.endswith(".MMBANGERDATA"):
-            shutil.copy(file, output_folder)
-            
+def copy_tune_mmcarsim_files(input_folder: Path, output_folder: Path) -> None:
+    for file in input_folder.glob("*.MMCARSIM"):
+        shutil.copy(file, output_folder)
+
             
 def copy_dev_folder(input_folder: Path, output_folder: Path) -> None:
     shutil.rmtree(output_folder, ignore_errors = True)  
