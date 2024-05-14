@@ -3059,6 +3059,37 @@ def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[
             tweaked_banger_files = output_folder / banger_files.name
             with open(tweaked_banger_files, "w") as f:
                 f.writelines(lines)
+                   
+################################################################################################################               
+################################################################################################################
+#! ======================= EXT ======================= !#
+
+
+def create_ext(output_file: Path, polygons: List[Vector3]) -> None:
+    min_x, min_z, max_x, max_z = calculate_extrema(polygons)
+
+    with open(output_file, "w") as f:
+        f.write(f"{min_x} {min_z} {max_x} {max_z}")
+        
+################################################################################################################               
+################################################################################################################
+#! ======================= ANIMATIONS ======================= !#
+
+                             
+def create_animations(output_file_main: Path, output_file_sub: Path,
+                      animations_data: Dict[str, List[Tuple]], set_animations: bool) -> None: 
+    
+    if not set_animations:    
+        return
+    
+    with open(output_file_main, "w", newline = "") as main_f:
+        for anim in animations_data:
+            csv.writer(main_f).writerow([f"anim_{anim}"])
+
+            with open(output_file_sub / f"ANIM_{anim.upper()}.CSV", "w", newline = "") as anim_f:                    
+                for coord in animations_data[anim]:
+    
+                    csv.writer(anim_f).writerow(coord)
                     
 ################################################################################################################               
 ################################################################################################################ 
@@ -3431,15 +3462,9 @@ def create_cells(output_file: Path, polys: List[Polygon], truncate_cells: bool) 
         
 ################################################################################################################               
 ################################################################################################################
-#! ======================= EXT & HUDMAP ======================= !#
+#! ======================= MINIMAP ======================= !#
 
-def create_ext(output_file: Path, polygons: List[Vector3]) -> None:
-    min_x, min_z, max_x, max_z = calculate_extrema(polygons)
 
-    with open(output_file, "w") as f:
-        f.write(f"{min_x} {min_z} {max_x} {max_z}")
-        
-        
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
     
@@ -3504,48 +3529,48 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
         ax_debug.set_position([0, 0, 1, 1]) 
         plt.savefig(Folder.BASE / f"{MAP_FILENAME}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = "purple")
-
+                            
 ################################################################################################################               
 ################################################################################################################
-#! ======================= ANIMATIONS & BRIDGES ======================= !#
+#! ======================= BRIDGES ======================= !#  
 
-                             
-def create_animations(output_file_main: Path, output_file_sub: Path,
-                      animations_data: Dict[str, List[Tuple]], set_animations: bool) -> None: 
     
-    if not set_animations:    
-        return
+BRIDGE_CONFIG_DEFAULT = {
+    "BridgeDelta": 0.20,
+    "BridgeOffGoal": 0.0,
+    "BridgeOnGoal": 0.47,
+    "GateDelta": 0.40,
+    "GateOffGoal": -1.57,
+    "GateOnGoal": 0.0,
+    "BridgeOnDelay": 7.79,
+    "GateOffDelay": 5.26,
+    "BridgeOffDelay": 0.0,
+    "GateOnDelay": 5.0,
+    "Mode": NetworkMode.SINGLE
+    }
     
-    with open(output_file_main, "w", newline = "") as main_f:
-        for anim in animations_data:
-            csv.writer(main_f).writerow([f"anim_{anim}"])
+    
+ORIENTATION_MAPPINGS = {
+    "NORTH": (-10, 0, 0),
+    "SOUTH": (10, 0, 0),
+    "EAST": (0, 0, 10),
+    "WEST": (0, 0, -10),
+    "NORTH_EAST": (10, 0, 10),
+    "NORTH_WEST": (10, 0, -10),
+    "SOUTH_EAST": (-10, 0, 10),
+    "SOUTH_WEST": (-10, 0, -10)
+    }
+   
+BRIDGE_ATTRIBUTE_FILLER = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"  
 
-            with open(output_file_sub / f"ANIM_{anim.upper()}.CSV", "w", newline = "") as anim_f:                    
-                for coord in animations_data[anim]:
-                    csv.writer(anim_f).writerow(coord)
-                        
-                        
-def create_bridges(all_bridges, set_bridges: bool):
+                               
+def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
     if not set_bridges:
         return
+        
+    if output_file.exists():
+        os.remove(output_file)
     
-    ORIENTATION_MAPPINGS = {
-        "NORTH": (-10, 0, 0),
-        "SOUTH": (10, 0, 0),
-        "EAST": (0, 0, 10),
-        "WEST": (0, 0, -10),
-        "NORTH_EAST": (10, 0, 10),
-        "NORTH_WEST": (10, 0, -10),
-        "SOUTH_EAST": (-10, 0, 10),
-        "SOUTH_WEST": (-10, 0, -10)
-    }
-
-    bridge_file = Folder.SHOP_CITY / f"{MAP_FILENAME}.GIZMO"
-
-    # Remove any existing Bridge files since we append to the file
-    if bridge_file.exists():
-        os.remove(bridge_file)
-
     def calculate_facing(offset: Tuple[float, float, float], orientation: Union[str, float]) -> List[float]:
         if isinstance(orientation, (float, int)):
             angle_radians = math.radians(orientation)
@@ -3590,9 +3615,8 @@ def create_bridges(all_bridges, set_bridges: bool):
         drawbridge_values = f"{drawbridge},0,{','.join(map(str, offset))},{','.join(map(str, face))}"
         attributes = generate_attribute_lines(bridge_attributes)
 
-        num_fillers = 5 - len(bridge_attributes)
-        filler = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"     
-        fillers = filler * num_fillers
+        num_fillers = 5 - len(bridge_attributes)        
+        fillers = BRIDGE_ATTRIBUTE_FILLER * num_fillers
 
         template = (
             f"DrawBridge{id}\n"
@@ -3601,33 +3625,19 @@ def create_bridges(all_bridges, set_bridges: bool):
             f"{fillers}"
             f"DrawBridge{id}\n"  
             )
-
+        
         bridge_data.append(template)
 
-    with open(bridge_file, "a") as f:
+    with open(output_file, "a") as f:
         f.writelines(bridge_data)
 
 
 def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_bridges: bool, output_folder: Path) -> None:
     if not set_bridges:
         return
-
-    default_config = {
-        "BridgeDelta": 0.20,
-        "BridgeOffGoal": 0.0,
-        "BridgeOnGoal": 0.47,
-        "GateDelta": 0.40,
-        "GateOffGoal": -1.57,
-        "GateOnGoal": 0.0,
-        "BridgeOnDelay": 7.79,
-        "GateOffDelay": 5.26,
-        "BridgeOffDelay": 0.0,
-        "GateOnDelay": 5.0,
-        "Mode": NetworkMode.SINGLE
-    }
-
+    
     for config in configs:
-        final_config = merge_bridge_configs (default_config, config)
+        final_config = merge_bridge_configs (BRIDGE_CONFIG_DEFAULT, config)
         config_str = generate_bridge_config_string(final_config)
         filenames = determine_bridge_filenames(final_config)
         write_bridge_config_to_files(filenames, config_str, output_folder)
@@ -3638,7 +3648,7 @@ def merge_bridge_configs(default_config: Dict[str, Union[float, int, str]], cust
 
 
 def generate_bridge_config_string(config: Dict[str, Union[float, int, str]]) -> str:
-    config_template = """
+    template = """
     mmBridgeMgr :076850a0 {{
         BridgeDelta {BridgeDelta}
         BridgeOffGoal {BridgeOffGoal}
@@ -3652,7 +3662,7 @@ def generate_bridge_config_string(config: Dict[str, Union[float, int, str]]) -> 
         GateOnDelay {GateOnDelay}
     }}
     """
-    return config_template.format(**config)
+    return template.format(**config)
 
 
 def determine_bridge_filenames(config: Dict[str, Union[float, int, str]]) -> List[str]:
@@ -7417,12 +7427,12 @@ LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "
 
 copy_dev_folder(Folder.BASE / "dev", Folder.MIDTOWNMADNESS / "dev")
 edit_and_copy_mmbangerdata(bangerdata_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE) 
-copy_core_tune_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
+copy_tune_mmcarsim_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
 copy_custom_textures(Folder.BASE / "Custom Textures", Folder.SHOP / "TEX16O")
 
 create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}.EXT", hudmap_vertices)
 create_animations(Folder.SHOP_CITY / MAP_FILENAME / "ANIM.CSV", Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
-create_bridges(bridge_list, set_bridges) 
+create_bridges(bridge_list, set_bridges, Folder.SHOP_CITY / f"{MAP_FILENAME}.GIZMO") 
 create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
 create_lars_race_maker("Lars_Race_Maker.html", street_list, hudmap_vertices, set_lars_race_maker)
