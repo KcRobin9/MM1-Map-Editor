@@ -4579,6 +4579,16 @@ class PhysicsEditor:
 #! ======================= LIGHTING ======================= !#
 
 
+LIGHTING_HEADER = [
+    "TimeOfDay", "Weather", "Sun Heading", "Sun Pitch", "Sun Red", "Sun Green", "Sun Blue",
+    "Fill-1 Heading", "Fill-1 Pitch", "Fill-1 Red", "Fill-1 Green", "Fill-1 Blue",
+    "Fill-2 Heading", "Fill-2 Pitch", "Fill-2 Red", "Fill-2 Green", "Fill-2 Blue",
+    "Ambient Red", "Ambient Green", "Ambient Blue", 
+    "Fog End", "Fog Red", "Fog Green", "Fog Blue", 
+    "Shadow Alpha", "Shadow Red", "Shadow Green", "Shadow Blue"
+]
+
+
 class LightingEditor:
     def __init__(self, time_of_day: int, weather: int, 
                  sun_heading: float, sun_pitch: float, sun_color: Tuple[float, float, float], 
@@ -4629,18 +4639,22 @@ class LightingEditor:
     @classmethod
     def read_file(cls, filename: Path):
         instances = []
+        
         with open(filename, newline = "") as f:
             reader = csv.reader(f)
             next(reader)  
+            
             for data in reader:
                 instance = cls.read_rows(data)
                 instances.append(instance)
+                
         return instances
         
     def apply_changes(self, changes):
         for attribute, new_value in changes.items():
             if hasattr(self, attribute):
                 current_value = getattr(self, attribute)
+                
                 if isinstance(current_value, tuple) and isinstance(new_value, tuple):
                     # Update only the specified components for tuple attributes
                     updated_value = tuple(new_value[i] if i < len(new_value) else current_value[i] for i in range(len(current_value)))
@@ -4682,19 +4696,11 @@ class LightingEditor:
     @classmethod
     def write_file(cls, instances, lighting_configs, filename: Path):
         cls.process_changes(instances, lighting_configs)
-        with open(filename, mode = "w", newline = "") as f:
-            writer = csv.writer(f)
         
-            header = [
-                "TimeOfDay", " Weather", " Sun Heading", " Sun Pitch", " Sun Red", " Sun Green", " Sun Blue",
-                " Fill-1 Heading", " Fill-1 Pitch", " Fill-1 Red", " Fill-1 Green", " Fill-1 Blue",
-                " Fill-2 Heading", " Fill-2 Pitch", " Fill-2 Red", " Fill-2 Green", " Fill-2 Blue",
-                " Ambient Red", " Ambient Green", " Ambient Blue", 
-                " Fog End", " Fog Red", " Fog Green", " Fog Blue", 
-                " Shadow Alpha", " Shadow Red", " Shadow Green", " Shadow Blue"
-                ]
-
-            writer.writerow(header)
+        with open(filename, mode = "w", newline = "") as f:
+            writer = csv.writer(f)        
+            writer.writerow(LIGHTING_HEADER)
+            
             for instance in instances:
                 writer.writerow(instance.write_rows())
                 
