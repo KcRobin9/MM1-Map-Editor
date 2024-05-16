@@ -4739,6 +4739,20 @@ LIGHTING
 ###################################################################################################################
 #! ======================= TEXTURESHEET ======================= !#
 
+TEXTURESHEET_HEADER = ["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"]
+
+TEXTURESHEET_MAPPING = {
+    "neighborhood": 1,
+    "lod_high": 2,
+    "lod_medium": 3,
+    "lod_low": 4,
+    "flags": 5,
+    "alternate": 6,
+    "sibling": 7,
+    "x_res": 8,
+    "y_res": 9,
+    "hex_color": 10
+}
 
 class AgiTexParameters:
     TRANSPARENT = "t"
@@ -4818,7 +4832,7 @@ class TextureSheet:
     def write(textures: Dict[str, List[str]], output_file: Path):
         with open(output_file, "w", newline = "") as f:
             writer = csv.writer(f)
-            writer.writerow(["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"])
+            writer.writerow(TEXTURESHEET_HEADER)
             
             for row in textures.values():
                 writer.writerow(row)
@@ -4826,19 +4840,6 @@ class TextureSheet:
     @classmethod
     def write_tweaked(cls, input_file: Path, output_file: Path, texture_changes: List[dict]):
         textures = cls.read_sheet(input_file)
-
-        attribute_mapping = {
-            "neighborhood": 1,
-            "lod_high": 2,
-            "lod_medium": 3,
-            "lod_low": 4,
-            "flags": 5,
-            "alternate": 6,
-            "sibling": 7,
-            "x_res": 8,
-            "y_res": 9,
-            "hex_color": 10
-        }
 
         for changes in texture_changes:
             target = changes.get("name")
@@ -4856,8 +4857,8 @@ class TextureSheet:
                 if key == "flags":
                     value = cls.parse_flags(value)  
                     
-                if key in attribute_mapping:
-                    texture[attribute_mapping[key]] = str(value)
+                if key in TEXTURESHEET_MAPPING:
+                    texture[TEXTURESHEET_MAPPING[key]] = str(value)
 
         cls.write(textures, output_file)
                     
