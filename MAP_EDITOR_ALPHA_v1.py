@@ -6359,6 +6359,18 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
 #! ======================= BLENDER MISC OPERATORS ======================= !#
 
 
+CUSTOM_PROPERTIES_CONFIG_DEFAULT = {
+    "cell_type": Room.DEFAULT,
+    "material_index": Material.DEFAULT,
+    "hud_color": Color.ROAD,
+    "sort_vertices": NO,
+    "always_visible": YES,
+    "tile_x": 2.0,
+    "tile_y": 2.0,
+    "rotate": 0.01
+}
+
+
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     bl_idname = "object.assign_custom_properties"
     bl_label = "Assign Custom Properties to Polygons"
@@ -6372,23 +6384,13 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     def execute(self, context: bpy.types.Context) -> set:
         for obj in context.scene.objects:
             if obj.type == "MESH":
-                defaults = {
-                    "cell_type": Room.DEFAULT,
-                    "material_index": Material.DEFAULT,
-                    "hud_color": Color.ROAD,
-                    "sort_vertices": 0,
-                    "always_visible": 1,
-                    "tile_x": 2.0,
-                    "tile_y": 2.0,
-                    "rotate": 0.01
-                }
-
-                for prop_name, default_value in defaults.items():
+                for prop_name, default_value in CUSTOM_PROPERTIES_CONFIG_DEFAULT.items():
                     self.assign_defaults(obj, prop_name, default_value)
 
                 uv_layer = obj.data.uv_layers.active
+                
                 if uv_layer is None:
-                    uv_layer = obj.data.uv_layers.new(name="UVMap")
+                    uv_layer = obj.data.uv_layers.new(name = "UVMap")
                     original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in uv_layer.data]
                     obj["original_uvs"] = original_uvs
 
