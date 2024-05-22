@@ -286,11 +286,10 @@ polygons_data = []
 hudmap_vertices = []
 hudmap_properties = {}
 
-NO, YES = 0, 1      # For example, AI Street Properties ("traffic_blocked = YES")
+NO = 0  # For example, AI Street Properties ("traffic_blocked = YES")
+YES = 1 
 HUGE = 100000000000
-
 PROP_COLLIDE_FLAG = 0x800
-MOVE = shutil.move
 
 
 class Shape:
