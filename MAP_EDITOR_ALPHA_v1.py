@@ -6320,27 +6320,26 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
     select_all: bpy.props.BoolProperty(default = True)
 
-    def execute(self, context: bpy.types.Context) -> set:            
+    def execute(self, context: bpy.types.Context) -> Set[set]:            
         output_folder = Folder.BASE / "Polygon Export"
         output_folder.mkdir(exist_ok = True)
-        
-        now = datetime.datetime.now()
-        date_time_str = now.strftime("%Y_%d_%m_%H%M_%S")
                 
-        base_file_name = f"Polygons{date_time_str}.txt"
-        export_file = output_folder / base_file_name
-        
-        # Conditionally select all Meshes or use selected ones based on the "select_all" property
+        current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
+        export_file = output_folder / f"Polygons_{current_time}.txt"
+                            
+        # Select Mesh Objects based on the "select_all" property
         if self.select_all:
             mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
         else:
             mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
+            
+        if not mesh_objects:
+            self.report({"WARNING"}, "No mesh objects found for export.")
+            return {"CANCELLED"}
         
-        if mesh_objects:
-            context.view_layer.objects.active = mesh_objects[0]
-
-            # Apply location transformation (to get Global coordinates)
-            bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
+        # Set the first mesh object as the active object and apply transformations (to get Global coordinates)
+        context.view_layer.objects.active = mesh_objects[0]
+        bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
     
         try:
             with open(export_file, "w") as f:
@@ -6348,12 +6347,9 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
                     export_script = export_formatted_polygons(obj) 
                     f.write(export_script + "\n\n")
                     
-            open_with_notepad_plus(export_file)                    
-            # subprocess.Popen(["notepad.exe", export_file])
-            
-            time.sleep(1.0)  # Wait for Notepad to open and load the file
-
-            # Simulate CTRL + A and CTRL + C
+            # Open the file with Notepad++ and simulate copy to clipboard
+            open_with_notepad_plus(export_file)                                
+            time.sleep(1.0)  # Give Notepad++ time to load the file
             pyautogui.hotkey("ctrl", "a")
             pyautogui.hotkey("ctrl", "c")
             
@@ -6361,7 +6357,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             bpy.ops.object.select_all(action = "DESELECT")
             
         except Exception as e:
-            self.report({"ERROR"}, str(e))
+            self.report({"ERROR"}, f"Failed to export polygons: {str(e)}")
             return {"CANCELLED"}
         
         return {"FINISHED"}
