@@ -6458,6 +6458,12 @@ class OBJECT_OT_RenameChildren(bpy.types.Operator):
 #! ======================= BLENDER WAYPOINT OBJECTS / FUNCTIONS ======================= !#
 
 
+POLE_HEIGHT = 3.0
+POLE_DIAMETER = 0.2
+FLAG_HEIGHT = 0.8
+FLAG_HEIGHT_OFFSET = 2.2
+
+
 def get_all_waypoints() -> List[bpy.types.Object]:
     return [obj for obj in bpy.data.objects if obj.name.startswith("WP_")]
 
@@ -6529,28 +6535,24 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
 
   
 def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Optional[float] = None, 
-                    rotation_deg: float = Rotation.NORTH, scale: float = Width.DEFAULT, name: Optional[str] = None, 
+                    rotation: float = Rotation.NORTH, width: float = Width.DEFAULT, name: Optional[str] = None, 
                     flag_color: Tuple[float, float, float, float] = Color.BLUE) -> bpy.types.Object:                
     
     if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
         cursor_location = bpy.context.scene.cursor.location.copy()
     else:
         cursor_location = Vector((x, y, z))  # If x, y, and z are provided, create a new location vector
-
-    pole_height, pole_diameter = 3.0, 0.2 
-    flag_width = scale            
   
-    pole_one_location = (cursor_location.x - flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
-    pole_two_location = (cursor_location.x + flag_width / 2, cursor_location.y, cursor_location.z + pole_height / 2)
+    pole_one_location = (cursor_location.x - width / 2, cursor_location.y, cursor_location.z + POLE_HEIGHT / 2)
+    pole_two_location = (cursor_location.x + width / 2, cursor_location.y, cursor_location.z + POLE_HEIGHT / 2)
     
-    pole_one = create_waypoint_pole(pole_height, pole_diameter, pole_one_location, Color.WHITE) 
-    pole_two = create_waypoint_pole(pole_height, pole_diameter, pole_two_location, Color.WHITE) 
+    pole_one = create_waypoint_pole(POLE_HEIGHT, POLE_DIAMETER, pole_one_location, Color.WHITE) 
+    pole_two = create_waypoint_pole(POLE_HEIGHT, POLE_DIAMETER, pole_two_location, Color.WHITE) 
 
-    flag_height, flag_height_offset, flag_location =  0.8, 2.2, cursor_location
+    flag = create_waypoint_flag(width, FLAG_HEIGHT, cursor_location.z, FLAG_HEIGHT_OFFSET, cursor_location, flag_color)
 
-    flag = create_waypoint_flag(flag_width, flag_height, cursor_location.z, flag_height_offset, flag_location, flag_color)
-
-    bpy.ops.object.select_all(action = 'DESELECT')
+    # Select and join the pole and flag objects
+    bpy.ops.object.select_all(action = "DESELECT")
     pole_one.select_set(True)
     pole_two.select_set(True)
     flag.select_set(True)
@@ -6558,22 +6560,18 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
     bpy.ops.object.join()
 
     waypoint = bpy.context.object    
-    waypoint.rotation_euler.z = math.radians(rotation_deg)
+    waypoint.rotation_euler.z = math.radians(rotation)
+    waypoint.name = name if name else "WP_Default"
     
-    if name:
-        waypoint.name = name
-    else:
-        waypoint.name = "WP_Default"
-
-    # Calculate and set the midpoint as the origin
+    # Set the origin to the midpoint of the poles
     midpoint = ((pole_one_location[0] + pole_two_location[0]) / 2, 
                 (pole_one_location[1] + pole_two_location[1]) / 2, 
                 cursor_location.z)
     
     bpy.context.scene.cursor.location = midpoint
-    bpy.ops.object.origin_set(type = 'ORIGIN_CURSOR')
+    bpy.ops.object.origin_set(type = "ORIGIN_CURSOR")
 
-    # Reset the cursor location if x, y, z were not provided
+    # Reset the cursor location if coordinates were not provided
     if x is None or y is None or z is None:
         bpy.context.scene.cursor.location = cursor_location
         
@@ -6581,9 +6579,7 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
 
     return waypoint
 
-
 ##############################################################################################################################################?
-
 
 def is_float(value: str) -> bool:
     try:
