@@ -325,6 +325,12 @@ class NetworkMode:
     SINGLE = "SINGLE"
     MULTI = "MULTI"
     SINGLE_AND_MULTI = "All Modes"
+    
+    
+class CnR:
+    BANK_HIDEOUT = "Bank Hideout"
+    GOLD_POSITION = "Gold Position"
+    ROBBER_HIDEOUT = "Robber Hideout"
 
 
 class Threshold:
@@ -3101,13 +3107,19 @@ RACE_TYPE_TO_PREFIX = {
     RaceMode.BLITZ: "ABL",
     RaceMode.CIRCUIT: "CIR",
     RaceMode.CHECKPOINT: CHECKPOINT_PREFIXES
-    }
+}
 
 RACE_TYPE_TO_EXTENSION = {
     RaceMode.BLITZ: ".B_",
     RaceMode.CIRCUIT: ".C_",
     RaceMode.CHECKPOINT: ".R_",
-    }
+}
+
+RACE_TYPE_INITIALS = {
+    RaceMode.BLITZ: "B",
+    RaceMode.CIRCUIT: "C",
+    RaceMode.CHECKPOINT: "R",
+}
 
 REPLACE_VALUES = {        
     RaceMode.BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
@@ -6581,6 +6593,11 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
 
 ##############################################################################################################################################?
 
+class CnR:
+    BANK_HIDEOUT = "Bank Hideout"
+    GOLD_POSITION = "Gold Position"
+    ROBBER_HIDEOUT = "Robber Hideout"
+    
 def is_float(value: str) -> bool:
     try:
         float(value)
@@ -6596,28 +6613,20 @@ def calculate_waypoint_rotation(x1: float, z1: float, x2: float, z2: float) -> f
     return math.degrees(rotation_rad)
 
 
-def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:
-    if race_type == RaceMode.CHECKPOINT:
-        race_type_initial = 'R'
-    elif race_type == RaceMode.CIRCUIT:
-        race_type_initial = 'C'
-    else:
-        race_type_initial = 'B'
-    return f"WP_{race_type_initial}{race_number}_{wp_idx}"
+def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:    
+    return f"WP_{RACE_TYPE_INITIALS[race_type]}{race_number}_{wp_idx}"
 
 
 def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_number_input: int) -> None:
     race_key = f"{race_type_input}_{race_number_input}"  
     
     if race_key in race_data:
-        waypoints = race_data[race_key]['waypoints']
+        waypoints = race_data[race_key]["waypoints"]
         
         for index, waypoint_data in enumerate(waypoints):
             x, y, z, rotation, scale = waypoint_data
-            
             x, y, z = transform_coordinate_system(Vector((x, y, z)), game_to_blender = True)
             waypoint_name = get_waypoint_name(race_type_input, race_number_input, index)
-                
             create_waypoint(x, y, z, rotation, scale, waypoint_name)
             
         update_waypoint_colors()
@@ -6626,67 +6635,66 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
         
 
 def load_waypoints_from_csv(waypoint_file: Path) -> None:
-    file_info = str(waypoint_file).replace('.CSV', '').replace('WAYPOINTS', '')
-
-    race_type = ''.join(filter(str.isalpha, file_info))
-    race_number = ''.join(filter(str.isdigit, file_info))
+    file_info = str(waypoint_file).replace(".CSV", "").replace("WAYPOINTS", "")
+    
+    race_type = "".join(filter(str.isalpha, file_info))
+    race_number = "".join(filter(str.isdigit, file_info))
     
     waypoints_data = []
 
-    with open(waypoint_file, 'r') as f:
+    with open(waypoint_file, "r") as f:
         reader = csv.reader(f)
-        next(reader) 
+        next(reader)  # Skip header
 
         for row in reader:
             if len(row) < 5:
                 continue  
+            
             waypoints_data.append([float(value) for value in row[:5]])
 
     for wp_idx, waypoint in enumerate(waypoints_data):
-        x, y, z, rotation_deg, scale = waypoint
-        
+        x, y, z, rotation, width = waypoint
         x, y, z = transform_coordinate_system(Vector((x, y, z)), game_to_blender = True)
         waypoint_name = get_waypoint_name(race_type, race_number, wp_idx)
         
-        if rotation_deg == Rotation.AUTO and wp_idx < len(waypoints_data) - 1:
+        if rotation == Rotation.AUTO and wp_idx < len(waypoints_data) - 1:
             next_waypoint = waypoints_data[wp_idx + 1]
-            rotation_deg = calculate_waypoint_rotation(x, z, next_waypoint[0], next_waypoint[2]) 
+            rotation = calculate_waypoint_rotation(x, z, next_waypoint[0], next_waypoint[2]) 
 
-        if scale == Width.AUTO:
-            scale = Width.DEFAULT
+        if width == Width.AUTO:
+            width = Width.DEFAULT
 
-        waypoint = create_waypoint(x, y, z, -rotation_deg, scale, waypoint_name)
+        waypoint = create_waypoint(x, y, z, -rotation, width, waypoint_name)
         
     update_waypoint_colors()
     
     
 def load_cops_and_robbers_waypoints(input_file: Path) -> None:    
-    waypoint_types = cycle(["Bank Hideout", "Gold Position", "Robber Hideout"])
+    waypoint_types = cycle([CnR.BANK_HIDEOUT, CnR.GOLD_POSITION, CnR.ROBBER_HIDEOUT])
     set_count = 1
 
     with open(input_file, "r") as f:
         reader = csv.reader(f)
-        next(reader)  
+        next(reader)  # Skip header 
 
         for row in reader:
             if len(row) < 3 or not all(is_float(val) for val in row[:3]):
                 raise ValueError("\nCSV file can't be parsed. Each row must have at least 3 floats or integer values.\n")
             
-            x, y, z = transform_coordinate_system(Vector(map(float, row[:3])), game_to_blender = True)
-                                              
+            x, y, z = transform_coordinate_system(Vector(map(float, row[:3])), game_to_blender = True)                           
             waypoint_type = next(waypoint_types)
 
-            if waypoint_type == "Bank Hideout":
+            if waypoint_type == CnR.BANK_HIDEOUT:
                 create_waypoint(x, y, z, name = f"CR_Bank{set_count}", flag_color = Color.PURPLE)
                 
-            elif waypoint_type == "Gold Position":
+            elif waypoint_type == CnR.GOLD_POSITION:
                 create_gold_bar((x, y, z), scale = 3.0) 
                 bpy.context.object.name = f"CR_Gold{set_count}"
                 
-            elif waypoint_type == "Robber Hideout":
+            elif waypoint_type == CnR.ROBBER_HIDEOUT:
                 create_waypoint(x, y, z, name = f"CR_Robber{set_count}", flag_color = Color.GREEN)  
                 
-            if waypoint_type == "Robber Hideout":
+            if waypoint_type == CnR.ROBBER_HIDEOUT:
                 set_count += 1  # Increase the set count after completing each set of three
     
     
@@ -6699,11 +6707,8 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     output_folder = Folder.BASE / "Waypoint Export"
     output_folder.mkdir(exist_ok = True)
 
-    now = datetime.datetime.now()
-    date_time_str = now.strftime("%Y_%d_%m_%H%M_%S")
-
-    base_file_name = f"Waypoints_{date_time_str}.txt"
-    export_file = output_folder / base_file_name
+    current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
+    export_file = output_folder / f"Waypoints_{current_time}.txt"
 
     with open(export_file, "w") as f:
         print("")
@@ -6726,12 +6731,10 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
 
             f.write(wp_line + "\n")
             print(wp_line)
-                        
-    open_with_notepad_plus(export_file)                    
-
-    time.sleep(1.0)  # Wait for Notepad to open and load the file   
-    
-    # Simulate CTRL + A and CTRL + C
+            
+    # Open the file with Notepad++ and simulate copy to clipboard
+    open_with_notepad_plus(export_file)                                
+    time.sleep(1.0)  # Give Notepad++ time to load the file
     pyautogui.hotkey("ctrl", "a")
     pyautogui.hotkey("ctrl", "c")
             
