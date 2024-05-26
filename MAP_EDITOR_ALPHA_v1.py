@@ -290,6 +290,7 @@ NO = 0  # For example, AI Street Properties ("traffic_blocked = YES")
 YES = 1 
 HUGE = 100000000000
 PROP_COLLIDE_FLAG = 0x800
+CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
 
 
 class Shape:
@@ -5589,12 +5590,12 @@ def post_editor_cleanup(delete_shop: bool) -> None:
     except Exception as e:
         print(f"Failed to delete the SHOP directory. Reason: {e}")
 
-   
+
 def create_commandline(
-    mm1_folder: Path, no_ui: bool, no_ui_type: str, 
+    output_file: Path, no_ui: bool, no_ui_type: str, 
     no_ai: bool, less_logs: bool, more_logs: bool) -> None:
 
-    base_cmd = f"-path ./dev -allrace -allcars -f -heapsize 499 -multiheap -maxcops 100 -mousemode 1 -speedycops -l {MAP_FILENAME.lower()}"
+    cmd_line = CMD_LINE
 
     if less_logs and more_logs:    
         log_error_message = f"""\n
@@ -5604,17 +5605,17 @@ def create_commandline(
         raise ValueError(log_error_message)
     
     if less_logs:
-        base_cmd += " -quiet"
+        cmd_line += " -quiet"
         
     if more_logs:
-        base_cmd += " -logopen -agiVerbose -console"
+        cmd_line += " -logopen -agiVerbose -console"
     
     if no_ai:
-        base_cmd += " -noai"
+        cmd_line += " -noai"
     
     if no_ui:
         if not no_ui_type or no_ui_type.lower() == "cruise":
-            base_cmd += f" -noui -keyboard"
+            cmd_line += f" -noui -keyboard"
         else:
             race_type, race_index = no_ui_type.split()
             if race_type not in ["circuit", "race", "blitz"]:
@@ -5631,14 +5632,12 @@ def create_commandline(
                 """
                 raise ValueError(index_error_message)
             
-            base_cmd += f" -noui -{race_type} {race_index} -keyboard"
-    
-    processed_cmd = base_cmd
-    
-    with open(mm1_folder / "commandline.txt", "w") as f:
-        f.write(processed_cmd)
+            cmd_line += f" -noui -{race_type} {race_index} -keyboard"
         
-        
+    with open(output_file, "w") as f:
+        f.write(cmd_line)
+		
+          
 def is_game_running(process_name: str) -> bool:
     for proc in psutil.process_iter(["name"]):
         if process_name.lower() in proc.info["name"].lower():
@@ -7478,7 +7477,7 @@ debug_ai(debug_ai_data_file, debug_ai_file,
 
 # Finalizing Part
 create_ar(Folder.SHOP)
-create_commandline(Folder.MIDTOWNMADNESS, no_ui, no_ui_type, no_ai, less_logs, more_logs)
+create_commandline(Folder.MIDTOWNMADNESS / "commandline.txt", no_ui, no_ui_type, no_ai, less_logs, more_logs)
 
 editor_time = time.time() - start_time
 save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / "last_run_time.pkl")
