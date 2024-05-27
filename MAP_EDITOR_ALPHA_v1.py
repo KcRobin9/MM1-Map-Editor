@@ -68,7 +68,7 @@ class Folder:
     
 #* SETUP II (Map Creation)      
 play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
+delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
 set_props = True                # Change to "True" if you want PROPS
@@ -5573,20 +5573,20 @@ def create_ar(shop_folder: Path) -> None:
     subprocess.Popen(f"cmd.exe /c run !!!!!{MAP_FILENAME}", cwd = shop_folder, creationflags = subprocess.CREATE_NO_WINDOW)
 
 
-def post_editor_cleanup(delete_shop: bool) -> None:
-    if not delete_shop:
+def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop_and_build: bool) -> None:
+    if not delete_shop_and_build:
         return
     
     os.chdir(Folder.BASE)
     time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
 
     try:  
-        shutil.rmtree(Folder.BASE / "build")
+        shutil.rmtree(build_folder)
     except Exception as e:
         print(f"Failed to delete the BUILD directory. Reason: {e}")
 
     try:
-        shutil.rmtree(Folder.SHOP)
+        shutil.rmtree(shop_folder)
     except Exception as e:
         print(f"Failed to delete the SHOP directory. Reason: {e}")
 
@@ -7504,7 +7504,7 @@ process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, "AI_PAT
 
 
 # Cleanup
-post_editor_cleanup(delete_shop)
+post_editor_cleanup(Folder.BASE / "build", Folder.SHOP, delete_shop_and_build)
 
 ###################################################################################################################   
 ################################################################################################################### 
