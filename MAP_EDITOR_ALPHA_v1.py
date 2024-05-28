@@ -3104,6 +3104,8 @@ def create_animations(output_file_main: Path, output_file_sub: Path,
 
 CHECKPOINT_PREFIXES = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
+MM_DATA_HEADER = ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"]
+
 RACE_TYPE_TO_PREFIX = {
     RaceMode.BLITZ: "ABL",
     RaceMode.CIRCUIT: "CIR",
@@ -3140,13 +3142,11 @@ def ordinal(n) -> str:
 }.get(n % 10, f"{n}th")
 
 
-def write_mm_data_header():
-    header = ",".join(
-        ["Description"] + 2 * [
-            "CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"
-            ]
-        )
-    return header + "\n"
+MM_DATA_HEADER = ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"]
+
+def write_mm_data_header() -> str:
+    header = ["Description"] + MM_DATA_HEADER * 2
+    return ",".join(header) + "\n"
 
 
 def determine_race_prefix(race_type: str, prefix: str, race_index: Optional[int] = None) -> str:
