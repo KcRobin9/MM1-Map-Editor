@@ -3105,6 +3105,9 @@ def create_animations(output_file_main: Path, output_file_sub: Path,
 CHECKPOINT_PREFIXES = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
 MM_DATA_HEADER = ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"]
+CNR_HEADER = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
+
+WAYPOINT_FILLER = ",0,0,0,0,0,\n"
 
 RACE_TYPE_TO_PREFIX = {
     RaceMode.BLITZ: "ABL",
@@ -3141,8 +3144,6 @@ def ordinal(n) -> str:
         3: f"{n}rd",
 }.get(n % 10, f"{n}th")
 
-
-MM_DATA_HEADER = ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"]
 
 def write_mm_data_header() -> str:
     header = ["Description"] + MM_DATA_HEADER * 2
@@ -3340,18 +3341,16 @@ def create_races(race_data: dict) -> None:
         # AI MAP                
         write_aimap(ai_map_file, *prepared_aimap_data, num_of_opponents)
 
-       
+
 def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
-        filler = ",0,0,0,0,0,\n"
-        header = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"
+    with open(output_file, "w") as f:
+        f.write(CNR_HEADER)
         
-        with open(output_file, "w") as f:
-            f.write(header)
-            
-            for i in range(0, len(cnr_waypoints), 3):
-                f.write(", ".join(map(str, cnr_waypoints[i])) + filler) 
-                f.write(", ".join(map(str, cnr_waypoints[i + 1])) + filler)
-                f.write(", ".join(map(str, cnr_waypoints[i + 2])) + filler)
+        for i in range(0, len(cnr_waypoints), 3):
+            f.write(", ".join(map(str, cnr_waypoints[i])) + WAYPOINT_FILLER)
+            f.write(", ".join(map(str, cnr_waypoints[i + 1])) + WAYPOINT_FILLER)
+            f.write(", ".join(map(str, cnr_waypoints[i + 2])) + WAYPOINT_FILLER)
+
   
 ################################################################################################################               
 ################################################################################################################              
@@ -6591,11 +6590,6 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
     return waypoint
 
 ##############################################################################################################################################?
-
-class CnR:
-    BANK_HIDEOUT = "Bank Hideout"
-    GOLD_POSITION = "Gold Position"
-    ROBBER_HIDEOUT = "Robber Hideout"
     
 def is_float(value: str) -> bool:
     try:
