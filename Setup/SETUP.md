@@ -55,7 +55,7 @@ Please complete all steps below.
 
 * Next, click on the Blender executable - if available, or click on `Choose a new Blender executable...` and navigate to e.g.:  
 `C:\Program Files\Blender Foundation\Blender 4.0` and select the `blender.exe`
-* Now hold `CTRL + SHIFT + P` to open the Command Palette again. Type and search for `Blender: Start` and click it. 
+* Now hold `CTRL + SHIFT + P` to open the Command Palette again. Type and search for `Blender: Start` and click it 
 * If you see the following message in Visual Studio Code, it means VScode and Blender have succesfully connected:
 
 ![Preview](Screenshots/SUCCES_VSCODE_CONNECT_TO_BLENDER.png)
@@ -63,7 +63,7 @@ Please complete all steps below.
 ### Building your Map
 
 * *Note*: `MAP_EDITOR_ALPHA_v1.py` contains a Test City, you may find the polygon data by searching for `===TEST_CITY===` in the script (hold `CTRL + F` to search)
-* Next, in VScode (with Blender connected), hold `CTRL + SHIFT + P` and type and search for `Blender: Run Script` and click it. The script will now start. 
+* Next, in VScode (with Blender connected), hold `CTRL + SHIFT + P` and type and search for `Blender: Run Script` and click it. The script will now start
 * *Only* and *only* when you see a message very similar to this, it means the script has *fully* ran:
 
 ![Preview](Screenshots//SUCCES_RAN_PYTHON_BLENDER_CODE.png)

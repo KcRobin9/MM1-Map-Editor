@@ -3127,7 +3127,7 @@ RACE_TYPE_INITIALS = {
     RaceMode.CHECKPOINT: "R",
 }
 
-REPLACE_VALUES = {        
+DEFAULT_MM_DATA_BY_RACE_MODE = {        
     RaceMode.BLITZ:      [1, 2, 3, 4, 5, 6, 7, 8],   # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps, TimeLimit
     RaceMode.CIRCUIT:    [1, 2, 3, 4, 5, 6, 7],      # TimeofDay, Weather, Opponents, Cops, Ambient, Peds, NumLaps
     RaceMode.CHECKPOINT: [1, 2, 3, 4, 5, 6]          # TimeofDay, Weather, Opponents, Cops, Ambient, Peds
@@ -3159,7 +3159,7 @@ def determine_race_prefix(race_type: str, prefix: str, race_index: Optional[int]
     
 def fill_mm_data_values(race_type: str, custom_mm_data: List[Union[int, float]]) -> List[Union[int, float]]:
     default_values = [1] * 11
-    replace_indices = REPLACE_VALUES.get(race_type, [])
+    replace_indices = DEFAULT_MM_DATA_BY_RACE_MODE.get(race_type, [])
     
     for index, custom_value in zip(replace_indices, custom_mm_data):
         default_values[index] = custom_value
