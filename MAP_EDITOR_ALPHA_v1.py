@@ -1105,6 +1105,8 @@ class Default:
     ROOM = 1
     VECTOR_2 = Vector2(0, 0)
     VECTOR_3 = Vector3(0, 0, 0)
+    NORMAL = "0.0 1.0 0.0"
+    GAP_2 = 101
 
 
 Default.POLYGON = Polygon(0, 0, 0, [0, 0, 0, 0], [Default.VECTOR_3 for _ in range(4)], Default.VECTOR_3, [0.0], 0)
@@ -3145,9 +3147,9 @@ def ordinal(n) -> str:
 }.get(n % 10, f"{n}th")
 
 
-def write_mm_data_header() -> str:
+def write_mm_data_header(input_file) -> None:
     header = ["Description"] + MM_DATA_HEADER * 2
-    return ",".join(header) + "\n"
+    input_file.write(",".join(header) + "\n")
 
 
 def determine_race_prefix(race_type: str, prefix: str, race_index: Optional[int] = None) -> str:
@@ -3175,8 +3177,7 @@ def generate_mm_data_string(prefix: str, ama_filled_values: List[Union[int, floa
 
 def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:    
     with open(output_file, "w") as f:
-        header = write_mm_data_header() 
-        f.write(header)
+        write_mm_data_header(f)
         
         for race_index, config in configs.items():
             final_prefix = determine_race_prefix(race_type, prefix, race_index)     
@@ -4011,7 +4012,7 @@ class Portals:
                 for cell_1, cell_2, v1, v2 in portal_tuples:
                     flags = Portal.ACTIVE
                     edge_count = Shape.LINE
-                    gap_2 = 101
+                    gap_2 = Default.GAP_2
                     height = MAX_Y - MIN_Y
                     _min = Vector3(v1.x, -50 if lower_portals else 0, v1.y)
                     _max = Vector3(v2.x, -50 if lower_portals else 0, v2.y)
@@ -4765,6 +4766,7 @@ TEXTURESHEET_MAPPING = {
     "hex_color": 10
 }
 
+
 class AgiTexParameters:
     TRANSPARENT = "t"
     SNOWABLE = "w"
@@ -5389,7 +5391,7 @@ class aiStreetEditor:
             f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
         
         normals = '\n\t\t'.join(
-            '0.0 1.0 0.0' for _ in range(num_vertices_per_lane))
+            Default.NORMAL for _ in range(num_vertices_per_lane))
         
         stop_light_positions = '\n\t'.join(
             f"""StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}"""
@@ -5735,6 +5737,7 @@ def load_textures(input_folder: Path, load_all_textures: bool) -> None:
 
         if load_all_textures:
             material_name = texture.stem
+            
             if material_name not in bpy.data.materials:
                 create_material_from_texture(material_name, texture_image)
 
@@ -6008,18 +6011,20 @@ CELL_IMPORT = [
     (str(Room.NO_SKIDS), "No Skids", "", "", Room.NO_SKIDS)
     ]
 
-bpy.types.Object.cell_type = bpy.props.EnumProperty(
-    items = CELL_IMPORT,
-    name = "Cell Type",
-    description = "Select the type of cell"
-    )
-
 CELL_EXPORT = {
     str(Room.TUNNEL): "Room.TUNNEL",
     str(Room.INDOORS): "Room.INDOORS",
     str(Room.DRIFT): "Room.DRIFT",
     str(Room.NO_SKIDS): "Room.NO_SKIDS"
 }
+
+
+bpy.types.Object.cell_type = bpy.props.EnumProperty(
+    items = CELL_IMPORT,
+    name = "Cell Type",
+    description = "Select the type of cell"
+)
+
 
 class OBJECT_PT_CellTypePanel(bpy.types.Panel):
     bl_label = "Cell Type"
@@ -6045,20 +6050,22 @@ MATERIAL_IMPORT = [
     (str(Material.WATER), "Water", "", "", Material.WATER),
     (str(Material.STICKY), "Sticky", "", "", Material.STICKY),
     (str(Material.NO_FRICTION), "No Friction", "", "", Material.NO_FRICTION)
-    ]
-
-bpy.types.Object.material_index = bpy.props.EnumProperty(
-    items = MATERIAL_IMPORT,
-    name = "Material Type",
-    description = "Select the type of material"
-    )
+]
 
 MATERIAL_EXPORT = {
     str(Material.GRASS): "Material.GRASS",
     str(Material.WATER): "Material.WATER",
     str(Material.STICKY): "Material.STICKY",
     str(Material.NO_FRICTION): "Material.NO_FRICTION"
-    }
+}
+
+
+bpy.types.Object.material_index = bpy.props.EnumProperty(
+    items = MATERIAL_IMPORT,
+    name = "Material Type",
+    description = "Select the type of material"
+)
+
 
 class OBJECT_PT_MaterialTypePanel(bpy.types.Panel):
     bl_label = "Material Type"
@@ -6088,19 +6095,7 @@ HUD_IMPORT = [
     (Color.RED_LIGHT, "Light Red", "", "", 7),
     (Color.RED_DARK, "Dark Red", "", "", 8),
     (Color.YELLOW_LIGHT, "Light Yellow", "", "", 9)
-    ]
-
-def set_hud_checkbox(color, obj):
-    for i, (color_value, _, _, _, _) in enumerate(HUD_IMPORT):
-        if color_value == color:
-            obj.hud_colors[i] = True
-            break
-
-bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
-    name = "HUD Colors",
-    description = "Select the color of the HUD",
-    size = 9, 
-    default = (False, False, False, False, False, False, False, False, False))
+]
 
 HUD_EXPORT = {
     # '#414441': "Color.ROAD",
@@ -6112,7 +6107,23 @@ HUD_EXPORT = {
     '#ffa500': "Color.ORANGE",
     '#ff7f7f': "Color.RED_LIGHT",
     '#ffffe0': "Color.YELLOW_LIGHT"
-    }
+}
+
+
+def set_hud_checkbox(color, obj):
+    for i, (color_value, _, _, _, _) in enumerate(HUD_IMPORT):
+        if color_value == color:
+            obj.hud_colors[i] = True
+            break
+
+
+bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
+    name = "HUD Colors",
+    description = "Select the color of the HUD",
+    size = 9, 
+    default = (False, False, False, False, False, False, False, False, False)
+)
+
 
 class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
     bl_label = "HUD Type"
@@ -6144,12 +6155,16 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
 bpy.types.Object.always_visible = bpy.props.BoolProperty(
     name = "Always Visible",
     description = "If true, the polygon is always visible",
-    default = False)
+    default = False
+)
+
 
 bpy.types.Object.sort_vertices = bpy.props.BoolProperty(
     name = "Sort Vertices",
     description = "If true, sort the vertices",
-    default = False)
+    default = False
+)
+
 
 class OBJECT_PT_PolygonMiscOptionsPanel(bpy.types.Panel):
     bl_label = "Polygon Options"
@@ -6184,7 +6199,7 @@ class VertexGroup(bpy.types.PropertyGroup):
     y: bpy.props.FloatProperty(name = "Y", update = update_vertex_coordinates)
     z: bpy.props.FloatProperty(name = "Z", update = update_vertex_coordinates)
     
-    
+
 class OBJECT_PT_VertexCoordinates(bpy.types.Panel):
     bl_label = "Vertices"
     bl_idname = "OBJECT_PT_vertex_coordinates"
