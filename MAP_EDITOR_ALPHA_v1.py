@@ -148,6 +148,8 @@ debug_lighting = False          # Change to "True" if you want a LIGHTING Debug 
 debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
 debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
+################################################################################################################
+
 # File Debugging | The Output Files are written to: "Resources / Debug / ..."
 debug_props_file = False
 debug_props_file_to_csv = False
@@ -164,6 +166,7 @@ debug_bounds_folder = False
 
 debug_dlp_file = False
 debug_dlp_folder = False
+################################################################################################################
 
 debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
@@ -1850,7 +1853,7 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
     return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
 
-################################################################################################################? 
+################################################################################################################ 
 
 def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: int = 0) -> str:
     name_data = bytearray()
@@ -2279,6 +2282,7 @@ def create_polygon(
     if plane_edges is None:
         plane_edges = compute_edges(vertex_coordinates) 
         
+    #TODO: Refactor
     # Plane Normals
     if wall_side is None:
         plane_normal, plane_distance = compute_plane_edgenormals(*vertex_coordinates[:3])
@@ -3546,6 +3550,8 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
 ################################################################################################################
 #! ======================= BRIDGES ======================= !#  
 
+
+BRIDGE_ATTRIBUTE_FILLER = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"  
     
 BRIDGE_CONFIG_DEFAULT = {
     "BridgeDelta": 0.20,
@@ -3559,8 +3565,7 @@ BRIDGE_CONFIG_DEFAULT = {
     "BridgeOffDelay": 0.0,
     "GateOnDelay": 5.0,
     "Mode": NetworkMode.SINGLE
-    }
-    
+}
     
 ORIENTATION_MAPPINGS = {
     "NORTH": (-10, 0, 0),
@@ -3571,10 +3576,8 @@ ORIENTATION_MAPPINGS = {
     "NORTH_WEST": (10, 0, -10),
     "SOUTH_EAST": (-10, 0, 10),
     "SOUTH_WEST": (-10, 0, -10)
-    }
+}
    
-BRIDGE_ATTRIBUTE_FILLER = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n"  
-
                                
 def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
     if not set_bridges:
@@ -3630,7 +3633,7 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
         num_fillers = 5 - len(bridge_attributes)        
         fillers = BRIDGE_ATTRIBUTE_FILLER * num_fillers
 
-        template = (
+        template = (  # Do not change
             f"DrawBridge{id}\n"
             f"\t{drawbridge_values}\n"
             f"{attributes}"
@@ -3781,7 +3784,7 @@ class Edge:
              (self.line.y * pos) - (self.line.x * self.line.z),
             -(self.line.x * pos) - (self.line.y * self.line.z))
         
-################################################################################################################?               
+################################################################################################################               
 
 class Cell:
     def __init__(self, id):
@@ -3865,7 +3868,7 @@ class Cell:
     def check_radius(self, other, fudge):
         return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
     
-################################################################################################################?  
+################################################################################################################  
 
 def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
     cells = {}
@@ -4928,7 +4931,6 @@ class aiStreet:
         result.load(f)
         return result
 
-###################################################################################################################?
 
 class aiIntersection:
     def load(self, f: BinaryIO) -> None:
@@ -4950,7 +4952,7 @@ class aiIntersection:
         result.load(f)
         return result
 
-###################################################################################################################?
+
 
 def read_array_list(f) -> List[int]:
     num_items, = read_unpack(f, '<I')
@@ -4988,9 +4990,8 @@ class aiMap:
         result = aiMap()
         result.load(f)
         return result
-    
-###################################################################################################################?
 
+    
 class MiniParser:
     def __init__(self, file):
         self.file = file
@@ -5049,7 +5050,6 @@ class MiniParser:
         self.indent -= 1
         self.print('}\n')
 
-###################################################################################################################?
 
 def read_ai(input_file: Path):
     ai_map = aiMap()
@@ -5154,7 +5154,6 @@ def write_ai_intersections_txt(ai_map, file_path_pattern: Path) -> None:
             parser.end_class()
 
  
-        
 def validate_and_prepare_ai_paths(streets) -> List[Any]:
     prepared_data = []
 
