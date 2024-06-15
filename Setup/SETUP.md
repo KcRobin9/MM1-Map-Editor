@@ -7,12 +7,10 @@ Please complete all steps below.
 
 | Software | Version / Option | Recommendation 
 |-------------------------------------------------|------------------------------------------|----------------------------------|
-| [Python ](https://www.python.org/ftp/python/3.7.6/python-3.7.6-amd64.exe) | 3.7.6* | Required |
+| [Python ](https://www.python.org/ftp/python/3.10.7/python-3.10.7-amd64.exe) | 3.10.7 | Required |
 | [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) | Desktop development with C++ | Required 
 | [Blender ](https://www.blender.org/download/) | Latest | Strongly recommended
 | [Visual Studio Code](https://code.visualstudio.com/download) | Latest | Strongly recommended |
-
-*other versions, specifically those outside range `>=3.7, <3.8` will likely result in `bpy` failing to install
 
 ## Installation
 ### Python
