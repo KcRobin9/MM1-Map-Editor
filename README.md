@@ -5,7 +5,7 @@
 [![Download Latest Version](https://img.shields.io/badge/download-latest-brightgreen?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHdpZHRoPSIyNCI%2BPHBhdGggZmlsbD0iIzRjMSIgZD0iTTUgMjBoMTR2LTJINXYyek0xOSA5aC00VjNIOXY2SDVsNyA3IDctN3oiLz48L3N2Zz4%3D)](https://github.com/KcRobin9/MM1-Map-Editor/archive/refs/heads/main.zip)
 [![Chat On Discord](https://img.shields.io/discord/239900961731117059?color=7289DA&logo=discord)](https://discord.gg/tjTQAbFdqQ)
 
-[Midtown Madness](https://en.wikipedia.org/wiki/Midtown_Madness) is a racing game made by [Angel Studios](https://gitlab.com/kbrobin9/gitlab-resources/-/blob/main/SQL_LIBRARY.MD?ref_type=heads), featuring the city of Chicago.
+[Midtown Madness](https://en.wikipedia.org/wiki/Midtown_Madness) is a racing game made by [Angel Studios](https://en.wikipedia.org/wiki/Rockstar_San_Diego) (now [Rockstar San Diego](https://en.wikipedia.org/wiki/Rockstar_San_Diego)), featuring the city of Chicago.
 
 This Map Editor is developed to provide an easy way for users to create their own unique cities for Midtown Madness 1.            Not only can you design roads, hills, and walls, you may also customize textures, facades, props, drawbridges, animations, lighting, physics, AI paths, races, and even the HUD.
 
