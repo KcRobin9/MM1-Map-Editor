@@ -347,6 +347,13 @@ class Threshold:
     CELL_CHARACTER_LIMIT = 0xFF    
     VERTEX_INDEX_COUNT = 0x8000
     
+    
+class Magic:
+    MESH = "3HSM"
+    BOUND = "2DNB"
+    PORTAL = 0
+    DEVELOPMENT = "DLP7"
+    
 
 class Portal:
     ACTIVE = 0x1
@@ -1212,7 +1219,7 @@ class Bounds:
     
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
-        magic = "2DNB"
+        magic = Magic.BOUND
         offset = Default.VECTOR_3
         x_dim, y_dim, z_dim = 0, 0, 0
         center = calculate_center(vertices)
@@ -1708,7 +1715,7 @@ class DLP:
         
     @classmethod
     def read(cls, f: BinaryIO) -> 'DLP':
-        magic = read_binary_name(f, 4)  # DLP7          
+        magic = read_binary_name(f, 4)          
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
         patches = [DLPPatch.read(f) for _ in range(num_patches)]
@@ -2014,7 +2021,7 @@ def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], normals: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
-    magic = "3HSM"    
+    magic = Magic.MESH    
     flags = agiMeshSet.TEXCOORDS_AND_NORMALS
     cache_size = 0
        
@@ -3993,7 +4000,7 @@ class Portals:
     
     @classmethod
     def write_n(cls, f: BinaryIO, portals: 'List[Portals]') -> None:
-        write_pack(f, '<I', 0) 
+        write_pack(f, '<I', Magic.PORTAL) 
         write_pack(f, '<I', len(portals))
                 
     @classmethod
@@ -7463,7 +7470,7 @@ create_lars_race_maker("Lars_Race_Maker.html", street_list, hudmap_vertices, set
 
 # Misc
 BangerEditor().append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
-DLP("DLP7", len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
+DLP(Magic.DEVELOPMENT, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
 
 # File Debugging
 Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
