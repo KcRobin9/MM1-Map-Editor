@@ -289,10 +289,10 @@ polygons_data = []
 hudmap_vertices = []
 hudmap_properties = {}
 
-NO = 0  # For example, AI Street Properties ("traffic_blocked = YES")
+NO = 0  
 YES = 1 
-HUGE = 100000000000
-PROP_COLLIDE_FLAG = 0x800
+HUGE = 1E10
+PROP_CAN_COLLIDE_FLAG = 0x800
 CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
 
 
@@ -3248,12 +3248,12 @@ def format_exceptions(exceptions: Optional[List[List[Union[int, float]]]] = None
 
 def prepare_aimap_data(config, race_type: str, race_index: int, opponents) -> tuple:
     traffic_density = config.get("traffic_density", 0.0)
-        
-    police_data = config["police"]
-    num_of_police = config["num_of_police"]
     
     exceptions = config.get("exceptions", [])
     exception_count = config.get("num_of_exceptions", len(exceptions))
+        
+    police_data = config["police"]
+    num_of_police = config["num_of_police"]
 
     exceptions_data_formatted = format_exceptions(exceptions, exception_count)
     police_data_formatted = format_police_data(police_data, num_of_police)
@@ -4131,7 +4131,7 @@ class Bangers:
             cls.write_n(f, bangers)
         
             for banger in bangers:
-                write_pack(f, '<2H', Default.ROOM, PROP_COLLIDE_FLAG)  
+                write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
                 banger.offset.write(f, '<')
                 banger.face.write(f, '<')
                 f.write(banger.name.encode('utf-8'))
@@ -4264,10 +4264,25 @@ class BangerEditor:
                 
                 for i in range(0, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
-                    self.props.append(Bangers(Default.ROOM, PROP_COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
-
+                    self.props.append(
+                        Bangers(
+                            Default.ROOM, 
+                            PROP_CAN_COLLIDE_FLAG, 
+                            dynamic_offset, 
+                            face, 
+                            name + "\x00"
+                            )
+                        )
             else:
-                self.props.append(Bangers(Default.ROOM, PROP_COLLIDE_FLAG, offset, face, name + "\x00"))
+                self.props.append(
+                    Bangers(
+                        Default.ROOM, 
+                        PROP_CAN_COLLIDE_FLAG, 
+                        offset, 
+                        face, 
+                        name + "\x00"
+                        )
+                    )
                 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if not append_props:
@@ -5305,15 +5320,14 @@ def debug_ai(input_file: Path, debug_file: bool, output_map_file: Path, output_i
 ###################################################################################################################
 #! ======================= BAI MAP ======================= !#
 
-
+       
 class BaiMap:
     def __init__(self, street_names):
-        self.map_filename = MAP_FILENAME
         self.street_names = street_names
         self.write_map()
              
     def write_map(self):           
-        with open(Folder.BASE / "dev" / "CITY" / self.map_filename / f"{self.map_filename}.map", 'w') as f:
+        with open(Folder.BASE / "dev" / "CITY" / MAP_FILENAME / f"{MAP_FILENAME}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
@@ -5385,7 +5399,7 @@ class aiStreetEditor:
         return BaiMap(street_names)
 
     def write(self):    
-        with open(Folder.BASE / "dev" / "CITY" / self.map_filename  / f"{self.street_name}.road", 'w') as f:
+        with open(Folder.BASE / "dev" / "CITY" / MAP_FILENAME / f"{self.street_name}.road", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):
