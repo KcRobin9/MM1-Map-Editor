@@ -71,12 +71,15 @@ play_game = True                # Change to "True" to start the game after the M
 delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
+set_bridges = True              #* Please set this to "False" (initially) when you're starting with your own map
 set_props = True                # Change to "True" if you want PROPS
 set_bridges = True              # Change to "True" if you want BRIDGES
 set_facades = True              # Change to "True" if you want FACADES
 set_physics = True              # Change to "True" if you want PHYSICS (custom)
 set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
 set_texture_sheet = True        # Change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures and modified existing Textures)
+
+set_music = True                #TODO: Update Open1560 (Change to "True" if you want MUSIC during gameplay)
 
 # Minimap
 set_minimap = True              # Change to "True" if you want a MINIMAP (defaults to False when Blender is running)
@@ -2258,11 +2261,14 @@ def create_polygon(
     # Vertex indices
     base_vertex_index = len(vertices)
     
-    # Store the Polygon Data for Blender (before any manipulation)
+    check_shape_type(vertex_coordinates)
+    
+    # Store the Polygon Data for Blender (before any manipulation) 
+    # TODO: should store data AFTER manipulation (but this needs more investigation in terms of making Game and Blender 1:1)
     polygon_info = {
-        "vertex_coordinates": vertex_coordinates,
         "bound_number": bound_number,
         "material_index": material_index,
+        "vertex_coordinates": vertex_coordinates,
         "always_visible": always_visible,
         "sort_vertices": sort_vertices,
         "cell_type": cell_type,
@@ -2271,8 +2277,6 @@ def create_polygon(
     
     polygons_data.append(polygon_info)
     
-    check_shape_type(vertex_coordinates)
-
     # Winding & Flags
     vertex_coordinates = process_winding(vertex_coordinates, fix_faulty_quads)
     flags = process_flags(vertex_coordinates, flags)
@@ -2289,7 +2293,7 @@ def create_polygon(
     if plane_edges is None:
         plane_edges = compute_edges(vertex_coordinates) 
         
-    #TODO: Refactor
+    # TODO: Refactor
     # Plane Normals
     if wall_side is None:
         plane_normal, plane_distance = compute_plane_edgenormals(*vertex_coordinates[:3])
@@ -2331,8 +2335,12 @@ def create_polygon(
     vertex_indices = [base_vertex_index + i for i in range(len(new_vertices))]
             
     poly = Polygon(
-        bound_number, material_index, flags, vertex_indices, 
-        plane_edges, plane_normal, plane_distance, 
+        bound_number, 
+        material_index, 
+        flags, 
+        vertex_indices, 
+        plane_edges, 
+        plane_normal, plane_distance, 
         cell_type, always_visible
         )
     
@@ -5614,7 +5622,7 @@ def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop_and_b
 
 def create_commandline(
     output_file: Path, no_ui: bool, no_ui_type: str, 
-    no_ai: bool, less_logs: bool, more_logs: bool) -> None:
+    no_ai: bool, set_music: bool, less_logs: bool, more_logs: bool) -> None:
 
     cmd_line = CMD_LINE
 
@@ -5630,6 +5638,9 @@ def create_commandline(
         
     if more_logs:
         cmd_line += " -logopen -agiVerbose -console"
+        
+    if set_music:
+        cmd_line += " -cdid"
     
     if no_ai:
         cmd_line += " -noai"
@@ -7506,7 +7517,7 @@ debug_ai(debug_ai_data_file, debug_ai_file,
 
 # Finalizing Part
 create_ar(Folder.SHOP)
-create_commandline(Folder.MIDTOWNMADNESS / "commandline.txt", no_ui, no_ui_type, no_ai, less_logs, more_logs)
+create_commandline(Folder.MIDTOWNMADNESS / "commandline.txt", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 
 editor_time = time.time() - start_time
 save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / "last_run_time.pkl")
