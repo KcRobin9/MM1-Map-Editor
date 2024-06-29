@@ -1177,7 +1177,7 @@ class Bounds:
                   
     @classmethod
     def read(cls, f: BinaryIO) -> 'Bounds':  
-        magic = read_binary_name(f, 4)      
+        magic = read_binary_name(f, len(Magic.BOUND))      
         offset = Vector3.read(f, '<')
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
         center = Vector3.read(f, '<')
@@ -1414,7 +1414,7 @@ class Meshes:
     @classmethod
     def read(cls, input_file: Path) -> 'Meshes':
         with open(input_file, "rb") as f:
-            magic = read_binary_name(f, 16)
+            magic = read_binary_name(f, len(Magic.MESH), padding = 12)
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sqr, bounding_box_radius = read_unpack(f, '<3f')
             texture_count, flags = read_unpack(f, '<2B')
@@ -1718,7 +1718,7 @@ class DLP:
         
     @classmethod
     def read(cls, f: BinaryIO) -> 'DLP':
-        magic = read_binary_name(f, 4)          
+        magic = read_binary_name(f, len(Magic.DEVELOPMENT))          
         num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
         patches = [DLPPatch.read(f) for _ in range(num_patches)]
@@ -3983,7 +3983,7 @@ class Portals:
         
     @classmethod
     def readn(cls, f: BinaryIO) -> int:
-        magic = read_binary_name(f, 4)
+        magic = read_binary_name(f, calc_size('<I'))
         count, = read_unpack(f, '<I')
         return count
         
