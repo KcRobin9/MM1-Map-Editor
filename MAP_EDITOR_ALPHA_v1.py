@@ -709,7 +709,7 @@ race_data = {
             [35.0, 30.0, 40.0, Rotation.SOUTH, Width.MEDIUM], 
         ],
         "mm_data": {
-            "ama": [TimeOfDay.NOON, Weather.CLEAR, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
+            "ama": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
             "pro": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
         },
         "aimap": {
@@ -720,7 +720,7 @@ race_data = {
             ],
             "num_of_opponents": 1,
             "opponents": {
-                PlayerCar.PANOZ_GTR_1: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
+                PlayerCar.MUSTANG99: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
             },
         },
     },
@@ -3166,9 +3166,10 @@ def ordinal(n) -> str:
 }.get(n % 10, f"{n}th")
 
 
-def write_mm_data_header(input_file) -> None:
+def write_mm_data_header(output_file: str) -> None:
     header = ["Description"] + MM_DATA_HEADER * 2
-    input_file.write(",".join(header) + "\n")
+    with open(output_file, "w") as f:
+        f.write(",".join(header) + "\n")
 
 
 def determine_race_prefix(race_type: str, prefix: str, race_index: Optional[int] = None) -> str:
@@ -3194,12 +3195,10 @@ def generate_mm_data_string(prefix: str, ama_filled_values: List[Union[int, floa
     return f"{prefix},{ama_data},{pro_data}\n"
 
 
-def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:    
-    with open(output_file, "w") as f:
-        write_mm_data_header(f)
-        
+def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:
+    with open(output_file, "a") as f:
         for race_index, config in configs.items():
-            final_prefix = determine_race_prefix(race_type, prefix, race_index)     
+            final_prefix = determine_race_prefix(race_type, prefix, race_index)
                        
             ama_filled_values = fill_mm_data_values(race_type, config["mm_data"]["ama"])
             pro_filled_values = fill_mm_data_values(race_type, config["mm_data"]["pro"])
@@ -3321,15 +3320,27 @@ def check_waypoint_count(race_type: str, waypoints) -> None:
 
               
 def create_races(race_data: dict) -> None:
+    mm_data_written = {
+        RaceMode.CHECKPOINT: False,
+        RaceMode.CIRCUIT: False,
+        RaceMode.BLITZ: False
+    }
+
+    mm_data_files = {
+        RaceMode.CHECKPOINT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CHECKPOINT}DATA.CSV",
+        RaceMode.CIRCUIT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CIRCUIT}DATA.CSV",
+        RaceMode.BLITZ: Folder.SHOP_RACE_MAP / f"MM{RaceMode.BLITZ}DATA.CSV"
+    }
+    
     for race_key, config in race_data.items():
         race_type, race_index = race_key.split("_", 1)
         race_index = int(race_index)
         
         player_waypoints = config["player_waypoints"]
-        ai_map = config["aimap"]
         
+        ai_map = config["aimap"]
         opponents = ai_map["opponents"]
-        num_of_opponents = ai_map.get("num_of_opponents", len(opponents))  
+        num_of_opponents = ai_map.get("num_of_opponents", len(opponents))
                 
         prepared_aimap_data = prepare_aimap_data(ai_map, race_type, race_index, opponents)
                                     
@@ -3337,7 +3348,7 @@ def create_races(race_data: dict) -> None:
         
         ai_map_file = Folder.SHOP_RACE_MAP / f"{file_prefix}.AIMAP_P"
         player_waypoint_file = Folder.SHOP_RACE_MAP / f"{file_prefix}WAYPOINTS.CSV"
-        mm_data_file = Folder.SHOP_RACE_MAP / f"MM{race_type}DATA.CSV"
+        mm_data_file = mm_data_files[race_type]
         
         # Safety Checks
         check_race_count(race_type, config)
@@ -3352,6 +3363,11 @@ def create_races(race_data: dict) -> None:
             opp_waypoint_file = Folder.SHOP_RACE_MAP / opp_file_name
             write_waypoints(opp_waypoint_file, opp_waypoints, race_type, race_index, opp_index)
         
+        # Write Header Only Once for Each File
+        if not mm_data_written[race_type]:
+            write_mm_data_header(mm_data_file)
+            mm_data_written[race_type] = True
+        
         # MM DATA
         if race_type == RaceMode.CHECKPOINT:
             write_mm_data(mm_data_file, {race_index: config}, race_type, CHECKPOINT_PREFIXES[race_index])
@@ -3360,7 +3376,7 @@ def create_races(race_data: dict) -> None:
             
         # AI MAP                
         write_aimap(ai_map_file, *prepared_aimap_data, num_of_opponents)
-
+        
 
 def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
     with open(output_file, "w") as f:
@@ -3371,7 +3387,6 @@ def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, 
             f.write(", ".join(map(str, cnr_waypoints[i + 1])) + WAYPOINT_FILLER)
             f.write(", ".join(map(str, cnr_waypoints[i + 2])) + WAYPOINT_FILLER)
 
-  
 ################################################################################################################               
 ################################################################################################################              
 #! ======================= CELLS ======================= !#
