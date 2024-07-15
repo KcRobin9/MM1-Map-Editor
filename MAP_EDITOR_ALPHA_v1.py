@@ -24,6 +24,7 @@ import os
 import re
 import bpy
 import csv
+import sys
 import math
 import time
 import pickle
@@ -43,8 +44,17 @@ import matplotlib.pyplot as plt
 from colorama import Fore, Style, init
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO
 
+
+# Enable Blender to correctly import the module "map_constants"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
+if script_dir not in sys.path:
+    sys.path.append(script_dir)
+
+
 from map_constants import *
 
+################################################################################################################
 
 #! SETUP 0 (Map Name)                           Control + F    "map=="  to jump to The Map Creation section
 MAP_NAME = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
