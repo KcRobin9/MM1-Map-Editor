@@ -477,6 +477,8 @@ ORIENTATION_MAPPINGS = {
 }
 
 
+TEXTURESHEET_HEADER = ["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"]
+
 TEXTURESHEET_MAPPING = {
     "neighborhood": 1,
     "lod_high": 2,
@@ -489,7 +491,6 @@ TEXTURESHEET_MAPPING = {
     "y_res": 9,
     "hex_color": 10
 }
-
 
 class AgiTexParameters:
     TRANSPARENT = "t"
@@ -510,7 +511,17 @@ class AgiTexParameters:
     CLAMP_BOTH = "c"
     CLAMP_U_OR_NEITHER = "U"
     CLAMP_V_OR_NEITHER = "V"
+
     
+LIGHTING_HEADER = [
+    "TimeOfDay", "Weather", "Sun Heading", "Sun Pitch", "Sun Red", "Sun Green", "Sun Blue",
+    "Fill-1 Heading", "Fill-1 Pitch", "Fill-1 Red", "Fill-1 Green", "Fill-1 Blue",
+    "Fill-2 Heading", "Fill-2 Pitch", "Fill-2 Red", "Fill-2 Green", "Fill-2 Blue",
+    "Ambient Red", "Ambient Green", "Ambient Blue", 
+    "Fog End", "Fog Red", "Fog Green", "Fog Blue", 
+    "Shadow Alpha", "Shadow Red", "Shadow Green", "Shadow Blue"
+]
+
     
 TEXTURE_EXPORT = {
     "SNOW": Texture.SNOW,

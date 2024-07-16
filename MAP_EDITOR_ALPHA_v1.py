@@ -65,7 +65,7 @@ play_game = True                # Change to "True" to start the game after the M
 delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_bridges = True              #* Please set this to "False" (initially) when you're starting with your own map
+set_bridges = True              #* Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
 set_props = True                # Change to "True" if you want PROPS
 set_bridges = True              # Change to "True" if you want BRIDGES
 set_facades = True              # Change to "True" if you want FACADES
@@ -73,11 +73,11 @@ set_physics = True              # Change to "True" if you want PHYSICS (custom)
 set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
 set_texture_sheet = True        # Change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures and modified existing Textures)
 
-set_music = True                #TODO: Update Open1560 (Change to "True" if you want MUSIC during gameplay)
+set_music = True                # TODO: Update Open1560 (Change to "True" if you want MUSIC during gameplay)
 
 # Minimap
-set_minimap = True              # Change to "True" if you want a MINIMAP (defaults to False when Blender is running)
-minimap_outline_color = None    # Change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to None
+set_minimap = False             # Initially set to "False" to save performance. Change to "True" if you want a MINIMAP (defaults to "False" when Blender is running)                              
+minimap_outline_color = None    # Change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to "None"
 
 # AI
 set_ai_streets = True           # Change to "True" if you want AI streets
@@ -108,7 +108,21 @@ class Folder:
     USER_RESOURCES = BASE / "Resources" / "UserResources"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
+    
+    
+# Advanced
+no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
+no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
+no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
 
+less_logs = False               # Change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
+more_logs = False               # Change to "True" if you want additional logs and open a logging console when running the game
+
+lower_portals = False           # Change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
+empty_portals = False           # Change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
+truncate_cells = False			# Change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
+
+fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
 # Misc
 set_dlp = False                 # Change to "True" if you want to create a DLP file 
@@ -135,22 +149,6 @@ waypoint_type_input = "RACE"
 
 ################################################################################################################
 
-# Advanced
-no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
-no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
-
-less_logs = False               # Change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
-more_logs = False               # Change to "True" if you want additional logs and open a logging console when running the game
-
-lower_portals = False           # Change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # Change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
-truncate_cells = False			# Change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
-
-fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
-
-################################################################################################################
-
 # Editor Debugging
 debug_props = False             # Change to "True" if you want a PROPS Debug text file
 debug_meshes = False            # Change to "True" if you want MESH Debug text files 
@@ -161,8 +159,6 @@ debug_portals = False           # Change to "True" if you want a PORTALS Debug t
 debug_lighting = False          # Change to "True" if you want a LIGHTING Debug text file
 debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
 debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
-
-################################################################################################################
 
 # File Debugging | The Output Files are written to: "Resources / Debug / ..."
 debug_props_file = False
@@ -180,8 +176,8 @@ debug_bounds_folder = False
 
 debug_dlp_file = False
 debug_dlp_folder = False
-################################################################################################################
 
+# File Input Locations
 debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
 debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
 debug_portals_data_file = Folder.EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
@@ -1585,8 +1581,7 @@ def open_with_notepad_plus(filename: Path) -> None:
         r"C:\Program Files (x86)\Notepad++\notepad++.exe"
     ]
 
-    # Check if Notepad++ is in the PATH
-    notepad_plus_exe = shutil.which("notepad++.exe")
+    notepad_plus_exe = shutil.which("notepad++.exe")  # Check if Notepad++ is in the PATH
     
     if notepad_plus_exe:
         subprocess.Popen([notepad_plus_exe, filename])
@@ -3086,7 +3081,7 @@ def create_cells(output_file: Path, polys: List[Polygon], truncate_cells: bool) 
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
     
-    if not set_minimap or is_blender_running():
+    if not set_minimap or is_process_running("blender"):
         return
     
     global hudmap_vertices
@@ -3356,9 +3351,8 @@ class Edge:
         return Vector2(
              (self.line.y * pos) - (self.line.x * self.line.z),
             -(self.line.x * pos) - (self.line.y * self.line.z))
-        
-################################################################################################################               
-
+    
+    
 class Cell:
     def __init__(self, id):
         self.id = id
@@ -3441,7 +3435,6 @@ class Cell:
     def check_radius(self, other, fudge):
         return self.center.Dist2(other.center) < (self.radius + other.radius + fudge) ** 2
     
-################################################################################################################  
 
 def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
     cells = {}
@@ -3876,6 +3869,7 @@ class BangerEditor:
                 x = random.uniform(*x_range)
                 z = random.uniform(*z_range)
                 y = props_dict.get("offset_y", 0.0)
+                
                 new_prop = {
                     "name": name,
                     "offset": (x, y, z)
@@ -4182,16 +4176,6 @@ class PhysicsEditor:
 #! ======================= LIGHTING ======================= !#
 
 
-LIGHTING_HEADER = [
-    "TimeOfDay", "Weather", "Sun Heading", "Sun Pitch", "Sun Red", "Sun Green", "Sun Blue",
-    "Fill-1 Heading", "Fill-1 Pitch", "Fill-1 Red", "Fill-1 Green", "Fill-1 Blue",
-    "Fill-2 Heading", "Fill-2 Pitch", "Fill-2 Red", "Fill-2 Green", "Fill-2 Blue",
-    "Ambient Red", "Ambient Green", "Ambient Blue", 
-    "Fog End", "Fog Red", "Fog Green", "Fog Blue", 
-    "Shadow Alpha", "Shadow Red", "Shadow Green", "Shadow Blue"
-]
-
-
 class LightingEditor:
     def __init__(self, time_of_day: int, weather: int, 
                  sun_heading: float, sun_pitch: float, sun_color: Tuple[float, float, float], 
@@ -4341,8 +4325,6 @@ LIGHTING
 ###################################################################################################################
 ###################################################################################################################
 #! ======================= TEXTURESHEET ======================= !#
-
-TEXTURESHEET_HEADER = ["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"]
 
 
 class TextureSheet:
@@ -4507,7 +4489,6 @@ class aiIntersection:
         return result
 
 
-
 def read_array_list(f) -> List[int]:
     num_items, = read_unpack(f, '<I')
     return read_unpack(f, f'<{num_items}I')
@@ -4545,7 +4526,7 @@ class aiMap:
         result.load(f)
         return result
 
-    
+
 class MiniParser:
     def __init__(self, file):
         self.file = file
@@ -4749,7 +4730,6 @@ def validate_and_prepare_ai_paths(streets) -> List[Any]:
     return prepared_data
 
 
-
 def write_ai_paths(prepared_data: List[Any], file_path_pattern: Path) -> None:
     for paths in prepared_data:
         output_road_files = Path(file_path_pattern.format(paths = paths[0].id))
@@ -4831,8 +4811,7 @@ def write_ai_paths(prepared_data: List[Any], file_path_pattern: Path) -> None:
             
             parser.end_class()
 
-            
-                    
+       
 def debug_ai(input_file: Path, debug_file: bool, output_map_file: Path, output_int_files: Path, output_road_files: Path) -> None:
     if not debug_file:
         return
@@ -5193,8 +5172,8 @@ def create_commandline(
     with open(output_file, "w") as f:
         f.write(cmd_line)
 		
-          
-def is_game_running(process_name: str) -> bool:
+
+def is_process_running(process_name: str) -> bool:
     for proc in psutil.process_iter(["name"]):
         if process_name.lower() in proc.info["name"].lower():
             return True
@@ -5202,7 +5181,7 @@ def is_game_running(process_name: str) -> bool:
       
 
 def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
-    if not play_game or is_blender_running() or is_game_running(executable):  # This order is important
+    if not play_game or is_process_running("blender") or is_process_running(executable):
         return
     
     subprocess.run(mm1_folder / executable, cwd = mm1_folder)
@@ -5212,6 +5191,7 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
 #! ======================= BLENDER SETUP ======================= !#
 
 
+# TODO: redundant?
 def is_blender_running() -> bool:
     try:
         import bpy   
@@ -5267,7 +5247,7 @@ def initialize_depsgraph_update_handler() -> None:
 
 
 def setup_blender() -> None:
-    if not is_blender_running():
+    if not is_process_running("blender"):
         return
     
     delete_existing_meshes()
@@ -5415,7 +5395,7 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
 
 
 def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None:
-    if not is_blender_running():
+    if not is_process_running("blender"):
         return
 
     load_textures(texture_folder, load_all_textures)
@@ -6365,7 +6345,7 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         
                 
 def initialize_blender_panels() -> None:
-    if not is_blender_running():
+    if not is_process_running("blender"):
         return
     
     bpy.utils.register_class(VertexGroup)
@@ -6378,7 +6358,7 @@ def initialize_blender_panels() -> None:
         
         
 def initialize_blender_operators() -> None:
-    if not is_blender_running():
+    if not is_process_running("blender"):
         return
     
     bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
@@ -6389,7 +6369,7 @@ def initialize_blender_operators() -> None:
     
 
 def initialize_blender_waypoint_editor() -> None:
-    if not is_blender_running():
+    if not is_process_running("blender"):
         return
     
     bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
@@ -6407,7 +6387,7 @@ def initialize_blender_waypoint_editor() -> None:
       
       
 def set_blender_keybinding() -> None:
-    if not is_blender_running():
+    if not is_process_running("blender"):
         return
     
     wm = bpy.context.window_manager
@@ -6758,6 +6738,7 @@ lighting_configs = [
         "fill_2_color": (40.0, 0.0, 40.0),
     },
 ]
+
 ###################################################################################################################   
 ################################################################################################################### 
 #! ======================= SET PHYSICS ======================= !#
@@ -6803,7 +6784,6 @@ physics_index = 0
 dlp_patch_name = ""
 dlp_group_name = "BOUND\x00" 
 
-# DLP Vertices
 dlp_normals = [
     DLPVertex(0, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
     DLPVertex(1, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
@@ -6811,7 +6791,6 @@ dlp_normals = [
     DLPVertex(3, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE)
     ]
 
-# Geometry Vertices
 dlp_vertices = [ 
       Vector3(-50.0, 0.0, 80.0),
       Vector3(-140.0, 0.0, 50.0),
@@ -6819,10 +6798,8 @@ dlp_vertices = [
       Vector3(-50.0, 0.0, 30.0)
       ]
 
-# DLP Groups
 dlp_groups = [DLPGroup(dlp_group_name, 0, 2, [], [0, 1])]
-
-# DLP Patches                  
+               
 dlp_patches = [
     DLPPatch(s_res, t_res, dlp_flags, r_opts, material_index, texture_index, physics_index, 
              [dlp_normals[0], dlp_normals[1], dlp_normals[2], dlp_normals[3]], dlp_patch_name),
@@ -6917,7 +6894,7 @@ def apply_path_color_scheme() -> None:
             
                       
 def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize_ai_paths: bool) -> None:
-    if not visualize_ai_paths or not is_blender_running():
+    if not visualize_ai_paths or not is_process_running("blender"):
         return
     
     extract_and_format_road_data(input_folder, output_file)
