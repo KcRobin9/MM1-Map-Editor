@@ -56,11 +56,11 @@ from map_constants import *
 
 ################################################################################################################
 
-#! SETUP 0 (Map Name)                           Control + F    "map=="  to jump to The Map Creation section
+#! SETUP I (Map Name)                           Control + F    "map=="  to jump to The Map Creation section
 MAP_NAME = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
 MAP_FILENAME = "First_City"                     # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
     
-#* SETUP II (Map Creation)      
+#! SETUP II (Map Creation)      
 play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
 delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
 
@@ -93,7 +93,7 @@ disable_progress_bar = False    # Change to "True" if you want to disable the pr
 
 ################################################################################################################
 
-#! SETUP I (Folder Paths)  
+#* (Folder Paths)  
 class Folder:
     BASE = Path(__file__).parent.resolve()
     SHOP = BASE / "SHOP"
@@ -109,8 +109,9 @@ class Folder:
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
     
+################################################################################################################
     
-# Advanced
+#* Advanced
 no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
 no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
 no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
@@ -124,7 +125,7 @@ truncate_cells = False			# Change to "True" if you want to truncate the characte
 
 fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
 
-# Misc
+#* Misc
 set_dlp = False                 # Change to "True" if you want to create a DLP file 
 
 append_props = False            # Change to "True" if you want to append props
@@ -136,7 +137,7 @@ random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK
 
 ################################################################################################################
 
-# Blender          
+#* Blender          
 load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
                                 # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
@@ -197,14 +198,14 @@ debug_dlp_data_folder = Folder.EDITOR_RESOURCES / "DLP" / "DLP FILES"           
 #! ======================= PROGRESS BAR, RUN TIME ======================= !#
 
 
+def clear_command_prompt_screen() -> None:
+    print("\033[H\033[J", end = "")
+
+
 def create_bar_divider(colors: List[str]) -> str:
     divider = "=" * 60  
-    color_divider = ''.join(colors[i % len(colors)] + char for i, char in enumerate(divider))
+    color_divider = "".join(colors[i % len(colors)] + char for i, char in enumerate(divider))
     return "\n" + color_divider + "\n"
-
-
-def clear_command_prompt_screen() -> None:
-    print("\033[H\033[J", end = '')
 
 
 def update_progress_bar(progress: float, buffer: str, top_divider: str, bottom_divider: str, disable_progress_bar: bool) -> None:
@@ -242,13 +243,8 @@ def continuous_progress_bar(duration: float, buffer: str, top_divider: str, bott
             time.sleep(5.0)
         else:
             time.sleep(0.025)
-
-
-def save_editor_run_time(run_time: float, output_file: Path) -> None:
-    with open(output_file, "wb") as f:
-        pickle.dump(run_time, f)
-
-
+            
+            
 def load_last_editor_run_time(input_file: Path):
     if input_file.exists():
         try:
@@ -258,6 +254,11 @@ def load_last_editor_run_time(input_file: Path):
             return 2.0  # Default to 2.0 seconds if the file is empty or corrupted
     return 2.0          # Default to 2.0 seconds if no run time file exists
 
+
+def save_editor_run_time(run_time: float, output_file: Path) -> None:
+    with open(output_file, "wb") as f:
+        pickle.dump(run_time, f)
+        
 ################################################################################################################
 #! ======================= COLORS, SETUP PROGRESS BAR ======================= !#
 
@@ -310,7 +311,7 @@ CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedy
 #! ======================= RACE EDITOR ======================= !#
 
 
-#* SETUP III (optional, Race Editor)
+#! SETUP III (Race Editor, optional)
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
 # Blitzes can have a total of 11 waypoints (including the start position), the number of waypoints for Circuits and Checkpoints is unlimited
 # The max number of laps in Circuit races is 10
@@ -417,7 +418,7 @@ race_data = {
 }
 
 
-#* SETUP IV (optional, Cops and Robbers)
+#! SETUP IV (Cops and Robbers, optional)
 cnr_waypoints = [                           
     ## 1st set, Name: ... ## 
     (20.0, 1.0, 80.0),                      #? Bank / Blue Team Hideout
@@ -426,36 +427,38 @@ cnr_waypoints = [
     ## 2nd set, Name: ... ## 
     (-90.0, 1.0, -90.0),
     (90.0, 1.0, 90.0),
-    (-90.0, 1.0, -90.0)]
+    (-90.0, 1.0, -90.0)
+]
 
 ################################################################################################################   
 ################################################################################################################
 #! ======================= ANIMATIONS & BRIDGES ======================= !#
 
 
-#* SETUP V (optional, Animations)
+#! SETUP V (Animations, optional)
 animations_data = {
     Anim.PLANE: [               # You can not have multiple Planes or Eltrains
         (450, 30.0, -450),      # You can set any number of coordinates for your path(s)
         (450, 30.0, 450),       
         (-450, 30.0, -450),     
-        (-450, 30.0, 450)], 
+        (-450, 30.0, 450)
+        ], 
     Anim.ELTRAIN: [
         (180, 25.0, -180),
         (180, 25.0, 180), 
         (-180, 25.0, -180),
-        (-180, 25.0, 180)]}
+        (-180, 25.0, 180)
+        ]
+}
 
 
-#* SETUP VI (optional, Bridges)
+#! SETUP VI Bridges, optional)
 """
 INFO
     1) You can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
     2) You can set a bridge without any attributes like this:
         (-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [])
-        
-    3) Supported orientations:
-    NORTH, NORTH_EAST, EAST, SOUTH_EAST SOUTH, SOUTH WEST, WEST, NORTH_WEST
+    3) Supported orientations --> see below
     Or you can manually set the orientation in degrees (0.0 - 360.0).
 """
 
@@ -484,14 +487,16 @@ bridge_race_0 = {
     "GateOffDelay": 5.26 ,
     "BridgeOffDelay": 0.0,
     "GateOnDelay": 5.0,
-    "Mode": NetworkMode.SINGLE}
+    "Mode": NetworkMode.SINGLE
+}
 
 bridge_cnr = {
     "RaceType": RaceMode.COPS_AND_ROBBERS,
     "BridgeDelta": 0.20,
     "BridgeOffGoal": 0.33,
     "BridgeOnGoal": 0.33,
-    "Mode": NetworkMode.MULTI}
+    "Mode": NetworkMode.MULTI
+}
 
 # Pack all Custom Bridge Configurations for processing
 bridge_config_list = [bridge_race_0, bridge_cnr]
@@ -1860,7 +1865,7 @@ def check_bound_numbers(polys: List[Polygon]) -> None:
         raise ValueError(error_message)
 
     
-def check_shape_type(vertex_coordinates: List[Vector3]) -> None:
+def check_shape_type(vertex_coordinates: Optional[List[Vector3]]) -> None:
     if vertex_coordinates is None:
         error_message = """
         ***ERROR***
@@ -1888,18 +1893,17 @@ def process_winding(vertex_coordinates: List[Vector3], fix_faulty_quads: bool) -
     return vertex_coordinates  
 
 
-def process_flags(vertex_coordinates: List[Vector3], flags: int) -> int:
+def process_flags(vertex_coordinates: List[Vector3], flags: Optional[int] = None) -> int:
     if flags is not None:
-        return flags  
-    
+        return flags
+   
     if len(vertex_coordinates) == Shape.QUAD:
         return PlaneEdgesWinding.QUAD_Z_AXIS
-    
+   
     elif len(vertex_coordinates) == Shape.TRIANGLE:
         return PlaneEdgesWinding.TRIANGLE_Z_AXIS
     
-    
-    
+
 def update_cruise_start_position(vertex_coordinates: List[Vector3]) -> None:
     global cruise_start_position
     x, y, z = calculate_center_tuples(vertex_coordinates)
@@ -1908,7 +1912,7 @@ def update_cruise_start_position(vertex_coordinates: List[Vector3]) -> None:
     
 def create_polygon(
     bound_number: int, vertex_coordinates: List[Vector3], 
-    material_index: int = 0, cell_type: int = 0, flags: int = None, 
+    material_index: int = Material.DEFAULT, cell_type: int = Room.DEFAULT, flags: int = None, 
     plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
     hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False) -> None:
@@ -2019,7 +2023,7 @@ def user_notes():
     If you're setting a Quad, make sure the vertices are in the correct order (both clockwise and counterclockwise are OK)
     If you're unsure, set "sort_vertices = True" in the "create_polygon()" function
     
-    The Material Index (an optional variable) defaults to 0 (normal road friction). You can use the Material class constants    
+    The Material Index (an optional variable) defaults to 0 (default road friction). You can use the Material class constants    
     Note: you can also set custom Material / Physics Properties (search for: "custom_physics" in this script)
     
     Texture (UV) mapping examples:
