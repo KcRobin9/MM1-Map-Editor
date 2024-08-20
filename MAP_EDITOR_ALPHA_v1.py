@@ -133,7 +133,7 @@ append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"
 append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
 
 randomize_textures = False      # Change to "True" if you want to randomize all textures in your Map
-random_textures = ["T_WATER", "T_GRASS", "T_WOOD", "T_WALL", "R6", "OT_BAR_BRICK", "FXLTGLOW"]
+random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LANE, Texture.BRICKS_GREY, Texture.CHECKPOINT]
 
 ################################################################################################################
 
@@ -192,6 +192,30 @@ debug_bounds_data_folder = Folder.EDITOR_RESOURCES / "BOUNDS" / "BND FILES"     
 
 debug_dlp_data_file = Folder.EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
 debug_dlp_data_folder = Folder.EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
+
+################################################################################################################               
+################################################################################################################
+#! ======================= INITIALIZATIONS & CONSTANTS ======================= !#
+
+
+vertices = [] 
+texture_names = []
+texcoords_data = {}
+
+polygons_data = []
+
+hudmap_vertices = []
+hudmap_properties = {}
+
+NO = 0  
+YES = 1 
+HUGE = 1E10
+PROP_CAN_COLLIDE_FLAG = 0x800
+CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
+
+BLENDER = "blender"
+MIDTOWN_MADNESS = "Open1560.exe"
+EDITOR_RUNTIME_FILE = "editor_run_time.pkl"
 
 ################################################################################################################               
 ################################################################################################################
@@ -276,37 +300,18 @@ colors_two = [Fore.LIGHTGREEN_EX, Fore.GREEN,Fore.CYAN, Fore.LIGHTCYAN_EX,Fore.B
 progress_thread = threading.Thread(
     target = continuous_progress_bar, 
     args = (
-        load_last_editor_run_time(Folder.EDITOR_RESOURCES / "last_run_time.pkl"), 
+        load_last_editor_run_time(Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE), 
         create_bar_divider(colors_one) + "\n" + " " * 60 + "\n" + create_bar_divider(colors_one), 
         create_bar_divider(colors_one), 
         create_bar_divider(colors_one), 
-        disable_progress_bar)
+        disable_progress_bar
+        )
     )
 
 progress_thread.start()
 start_time = time.time()
 
 ################################################################################################################               
-################################################################################################################
-#! ======================= INITIALIZATIONS & CONSTANTS ======================= !#
-
-
-vertices = [] 
-texture_names = []
-texcoords_data = {}
-
-polygons_data = []
-
-hudmap_vertices = []
-hudmap_properties = {}
-
-NO = 0  
-YES = 1 
-HUGE = 1E10
-PROP_CAN_COLLIDE_FLAG = 0x800
-CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
- 
-################################################################################################################   
 ################################################################################################################
 #! ======================= RACE EDITOR ======================= !#
 
@@ -1586,20 +1591,18 @@ def open_with_notepad_plus(filename: Path) -> None:
         r"C:\Program Files (x86)\Notepad++\notepad++.exe"
     ]
 
-    notepad_plus_exe = shutil.which("notepad++.exe")  # Check if Notepad++ is in the PATH
+    notepad_plus_exe = shutil.which("notepad++.exe")  
     
     if notepad_plus_exe:
         subprocess.Popen([notepad_plus_exe, filename])
         print("Opening file with Notepad++ from PATH.")
         return
 
-    # If Notepad++ is not in PATH, try the hardcoded paths
     for path in possible_paths:
         subprocess.Popen([path, filename])
         print(f"Opening file with Notepad++ from hardcoded path: {path}")
         return
 
-    # Final fallback to classic Notepad
     subprocess.Popen(["notepad.exe", filename])
     print("Notepad++ not found, opening file with Notepad.")
 
@@ -1999,8 +2002,10 @@ def create_polygon(
         flags, 
         vertex_indices, 
         plane_edges, 
-        plane_normal, plane_distance, 
-        cell_type, always_visible
+        plane_normal, 
+        plane_distance, 
+        cell_type, 
+        always_visible
         )
     
     polys.append(poly)
@@ -3085,7 +3090,7 @@ def create_cells(output_file: Path, polys: List[Polygon], truncate_cells: bool) 
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
     
-    if not set_minimap or is_process_running("blender"):
+    if not set_minimap or is_process_running(BLENDER):
         return
     
     global hudmap_vertices
@@ -5188,7 +5193,7 @@ def is_process_running(process_name: str) -> bool:
       
 
 def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
-    if not play_game or is_process_running("blender") or is_process_running(executable):
+    if not play_game or is_process_running(BLENDER) or is_process_running(executable):
         return
     
     subprocess.run(mm1_folder / executable, cwd = mm1_folder)
@@ -5254,7 +5259,7 @@ def initialize_depsgraph_update_handler() -> None:
 
 
 def setup_blender() -> None:
-    if not is_process_running("blender"):
+    if not is_process_running(BLENDER):
         return
     
     delete_existing_meshes()
@@ -5402,7 +5407,7 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
 
 
 def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None:
-    if not is_process_running("blender"):
+    if not is_process_running(BLENDER):
         return
 
     load_textures(texture_folder, load_all_textures)
@@ -6352,7 +6357,7 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         
                 
 def initialize_blender_panels() -> None:
-    if not is_process_running("blender"):
+    if not is_process_running(BLENDER):
         return
     
     bpy.utils.register_class(VertexGroup)
@@ -6365,7 +6370,7 @@ def initialize_blender_panels() -> None:
         
         
 def initialize_blender_operators() -> None:
-    if not is_process_running("blender"):
+    if not is_process_running(BLENDER):
         return
     
     bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
@@ -6376,7 +6381,7 @@ def initialize_blender_operators() -> None:
     
 
 def initialize_blender_waypoint_editor() -> None:
-    if not is_process_running("blender"):
+    if not is_process_running(BLENDER):
         return
     
     bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
@@ -6394,7 +6399,7 @@ def initialize_blender_waypoint_editor() -> None:
       
       
 def set_blender_keybinding() -> None:
-    if not is_process_running("blender"):
+    if not is_process_running(BLENDER):
         return
     
     wm = bpy.context.window_manager
@@ -6466,7 +6471,7 @@ def set_blender_keybinding() -> None:
 # ... / UserResources / FACADES / FACADE pictures
 
 # Flags (if applicable, consult the documentation for more info)
-#TODO: transform to hex
+# TODO: transform to hex
 FRONT = 1  # Sometimes 1 is also used for the full model
 FRONT_BRIGHT = 3
 
@@ -6901,7 +6906,7 @@ def apply_path_color_scheme() -> None:
             
                       
 def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize_ai_paths: bool) -> None:
-    if not visualize_ai_paths or not is_process_running("blender"):
+    if not visualize_ai_paths or not is_process_running(BLENDER):
         return
     
     extract_and_format_road_data(input_folder, output_file)
@@ -6983,14 +6988,14 @@ create_ar(Folder.SHOP)
 create_commandline(Folder.MIDTOWNMADNESS / "commandline.txt", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 
 editor_time = time.time() - start_time
-save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / "last_run_time.pkl")
+save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
 progress_thread.join()
 
 print("\n" + create_bar_divider(colors_two))
 print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(create_bar_divider(colors_two))
 
-start_game(Folder.MIDTOWNMADNESS, "Open1560.exe", play_game)
+start_game(Folder.MIDTOWNMADNESS, MIDTOWN_MADNESS, play_game)
 
 
 # Blender
