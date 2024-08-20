@@ -4394,7 +4394,10 @@ class TextureSheet:
                 writer.writerow(row)
 
     @classmethod
-    def write_tweaked(cls, input_file: Path, output_file: Path, texture_changes: List[dict]):
+    def write_tweaked(cls, input_file: Path, output_file: Path, texture_changes: List[dict], set_texture_sheet: bool):
+        if not set_texture_sheet:
+            return
+        
         textures = cls.read_sheet(input_file)
 
         for changes in texture_changes:
@@ -6929,7 +6932,7 @@ FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}.FCD", facade_list, set_f
 PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", Folder.SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
 
 TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.BASE / "Custom Textures", Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
-TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications)
+TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
                     
 prop_editor = BangerEditor()
 for prop in random_props:
