@@ -5202,16 +5202,6 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
 ################################################################################################################### 
 #! ======================= BLENDER SETUP ======================= !#
 
-
-# TODO: redundant?
-def is_blender_running() -> bool:
-    try:
-        import bpy   
-        _ = bpy.context.window_manager
-        return True 
-    except (AttributeError, ImportError):
-        return False
-    
     
 def delete_existing_meshes() -> None:
     bpy.ops.object.select_all(action = "SELECT")
@@ -6026,10 +6016,7 @@ def update_waypoint_colors() -> None:
         waypoint.data.materials[0].diffuse_color = Color.BLUE       # Intermediate Waypoints
         
          
-def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
-    if not is_blender_running():
-        return
-    
+def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:    
     if any(obj.name.startswith("WP_") for obj in bpy.data.objects):
         update_waypoint_colors()
 
