@@ -244,6 +244,11 @@ class Color:
     RED_DARK = "#af0000"
     RED_LIGHT = "#ff7f7f"
     YELLOW_LIGHT = "#ffffe0"
+
+    IND_WALL = "#7b816a"
+    BRICKS_MALL = "#e6cab4"
+    SHOP_BRICK = "#394441"
+    MARKT_BRICK = "#9c9183"
     
 
 class Anim:
@@ -297,6 +302,7 @@ class Prop:
     BIN = "tptcanc"
     CONE = "tpcone"
     BENCH = "tpbench"
+    BENCH_MALL = "tpbench_mall"
     DUMPSTER = "tpdmpstr"
     CRASH_CAN = "tpcrshcan"
     TRASH_BOXES = "tptrashalley02"
@@ -401,10 +407,16 @@ class Texture:
     ROAD_1_LANE = "R2"
     ROAD_2_LANE = "R4"
     ROAD_3_LANE = "R6"
+    ROAD = "ROAD"
+    ICE = "L_RIVET"
 
     BRICKS_MALL = "OT_MALL_BRICK"
     BRICKS_SAND = "OT_SHOP03_BRICK"
     BRICKS_GREY = "CT_FOOD_BRICK"
+    WALL = "T_WALL"
+    IND_WALL = "IND_WALL"
+    SHOP_BRICK = "CT_SHOP_BRICK"
+    MARKT_BRICK = "OT_MARKT_BRICK"
 
     GLASS = "R_WIN_01"
     STOP_SIGN = "T_STOP"

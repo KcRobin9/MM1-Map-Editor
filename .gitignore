@@ -2,6 +2,8 @@
 /dev/
 /WIP/
 /SHOP/
+/NoTrack/
+/__pycache__/
 /Polygon Export/
 /Waypoint Export/
 /Resources/Debug/
