@@ -772,8 +772,8 @@ POLYGON
     Vertex Indices: {self.vertex_index}
     Vertices Coordinates: {vertices_coordinates}
     Plane Edges: {self.plane_edges}
-    Plane N: {self.plane_normal}
-    Plane D: {self.plane_distance}
+    Plane Normal: {self.plane_normal}
+    Plane Distance: {self.plane_distance}
     """
     
 ################################################################################################################               
@@ -843,7 +843,7 @@ class Bounds:
                   
     @classmethod
     def read(cls, f: BinaryIO) -> 'Bounds':  
-        magic = read_binary_name(f, len(Magic.BOUND))      
+        magic = read_binary_name(f, len(Magic.BOUND))
         offset = Vector3.read(f, '<')
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
         center = Vector3.read(f, '<')
@@ -851,12 +851,9 @@ class Bounds:
         bb_min = Vector3.read(f, '<')
         bb_max = Vector3.read(f, '<')
         num_verts, num_polys = read_unpack(f, '<2l')
-        num_hot_verts_1, num_hot_verts_2, = read_unpack(f, '<2l')
-        num_edges = read_unpack(f, '<l')
+        num_hot_verts_1, num_hot_verts_2, num_edges = read_unpack(f, '<3l')
         x_scale, z_scale = read_unpack(f, '<2f')
-        num_indices, = read_unpack(f, '<l')
-        height_scale, = read_unpack(f, '<f')
-        cache_size, = read_unpack(f, '<l')
+        num_indices, height_scale, cache_size = read_unpack(f, '<lfl')
         
         vertices = Vector3.readn(f, num_verts, '<')
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
@@ -896,16 +893,13 @@ class Bounds:
         radius_sqr = calculate_radius_squared(vertices, center)
         bb_min = calculate_min(vertices)
         bb_max = calculate_max(vertices)
-        num_hot_verts_1, num_hot_verts_2 = 0, 0
-        num_edges = 0
+        num_hot_verts_1, num_hot_verts_2, num_edges = 0, 0, 0
         x_scale, z_scale = 0.0, 0.0
-        num_indices = 0
-        height_scale = 0.0
-        cache_size = 0
+        num_indices, height_scale, cache_size = 0, 0.0, 0
         
-        hot_verts = [Default.VECTOR_3]  
+        hot_verts = [Default.VECTOR_3]
         edge_verts_1, edge_verts_2 = [0], [1] 
-        edge_plane_normal = [Default.VECTOR_3] 
+        edge_plane_normal = [Default.VECTOR_3]
         edge_plane_distance = [0.0]  
         row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
 
@@ -922,7 +916,7 @@ class Bounds:
             )
             
     def write(self, f: BinaryIO) -> None:
-        write_binary_name(f, self.magic)        
+        write_binary_name(f, self.magic)
         self.offset.write(f, '<')         
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
         self.center.write(f, '<') 
@@ -930,12 +924,9 @@ class Bounds:
         self.bb_min.write(f, '<')
         self.bb_max.write(f, '<')
         write_pack(f, '<2l', self.num_verts, self.num_polys)
-        write_pack(f, '<2l', self.num_hot_verts_1, self.num_hot_verts_2)
-        write_pack(f, '<l', self.num_edges)
-        write_pack(f, '<2f', self.x_scale, self.z_scale) 
-        write_pack(f, '<l', self.num_indices)
-        write_pack(f, '<f', self.height_scale)
-        write_pack(f, '<I', self.cache_size)
+        write_pack(f, '<3l', self.num_hot_verts_1, self.num_hot_verts_2, self.num_edges)
+        write_pack(f, '<2f', self.x_scale, self.z_scale)
+        write_pack(f, '<lfl', self.num_indices, self.height_scale, self.cache_size)
  
         for vertex in self.vertices:       
             vertex.write(f, '<')   
@@ -1033,8 +1024,8 @@ BOUND
     Hot Verts: {self.hot_verts}
     Edge Verts 1: {self.edge_verts_1}
     Edge Verts 2: {self.edge_verts_2}
-    Edge Plane N: {self.edge_plane_normal}
-    Edge Plane D: {', '.join(f'{d:.2f}' for d in self.edge_plane_distance)}\n  
+    Edge Plane Normal: {self.edge_plane_normal}
+    Edge Plane Distance: {', '.join(f'{d:.2f}' for d in self.edge_plane_distance)}\n  
     ======= Split =======\n
     Row Offsets: {self.row_offsets}\n
     ======= Split =======\n
@@ -6914,7 +6905,6 @@ create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}.CINFO", blitz_race_names, ci
 
 create_races(race_data)
 create_cops_and_robbers(Folder.SHOP_RACE_MAP / "COPSWAYPOINTS.CSV", cnr_waypoints)
-
 check_bound_numbers(polys)
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}.CELLS", polys, truncate_cells)
 Bounds.create(Folder.SHOP / "BND" / f"{MAP_FILENAME}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}.txt", debug_bounds)
@@ -6964,10 +6954,11 @@ Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" 
 DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
 DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
-debug_ai(debug_ai_data_file, debug_ai_file,
-         Folder.USER_RESOURCES / "AI" / "CHICAGO.map",                                  
-         str(Path(Folder.USER_RESOURCES) / "AI" / "Intersection{intersection_id}.int"),
-         str(Path(Folder.USER_RESOURCES) / "AI" / "Street{paths}.road")
+debug_ai(
+    debug_ai_data_file, debug_ai_file,
+    Folder.USER_RESOURCES / "AI" / "CHICAGO.map",                                  
+    str(Path(Folder.USER_RESOURCES) / "AI" / "Intersection{intersection_id}.int"),
+    str(Path(Folder.USER_RESOURCES) / "AI" / "Street{paths}.road")
     )
 
 # Finalizing Part
