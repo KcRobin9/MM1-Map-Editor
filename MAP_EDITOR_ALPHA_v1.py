@@ -207,15 +207,7 @@ polygons_data = []
 hudmap_vertices = []
 hudmap_properties = {}
 
-NO = 0  
-YES = 1 
-HUGE = 1E10
-PROP_CAN_COLLIDE_FLAG = 0x800
 CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
-
-BLENDER = "blender"
-MIDTOWN_MADNESS = "Open1560.exe"
-EDITOR_RUNTIME_FILE = "editor_run_time.pkl"
 
 ################################################################################################################               
 ################################################################################################################
@@ -978,17 +970,17 @@ class Bounds:
         if not input_folder.exists():
             raise FileNotFoundError(f"The folder {input_folder} does not exist.")
 
-        bnd_files = list(input_folder.glob("*.BND"))
+        bnd_files = list(input_folder.glob(f"*{FileType.BOUND}"))
         
         if not bnd_files:
-            raise FileNotFoundError(f"No .BND files found in {input_folder}.")
+            raise FileNotFoundError(f"No {FileType.BOUND} files found in {input_folder}.")
 
         if not output_folder.exists():
             print(f"The output folder {output_folder} does not exist. Creating it.")
             output_folder.mkdir(parents = True, exist_ok = True)
 
         for file in bnd_files:
-            output_file = output_folder / file.with_suffix(".txt").name
+            output_file = output_folder / file.with_suffix({FileType.TEXT}).name
             Bounds.debug_file(file, output_file, debug_bounds_folder)
             print(f"Processed {file.name} to {output_file.name}")
                     
@@ -1202,17 +1194,17 @@ class Meshes:
         if not input_folder.exists():
             raise FileNotFoundError(f"The folder {input_folder} does not exist.")
 
-        mesh_files = list(input_folder.glob("*.BMS"))
+        mesh_files = list(input_folder.glob(f"*{FileType.MESH}"))
         
         if not mesh_files:
-            raise FileNotFoundError(f"No .BMS files found in {input_folder}.")
+            raise FileNotFoundError(f"No {FileType.MESH} files found in {input_folder}.")
             
         if not output_folder.exists():
             print(f"The output folder {output_folder} does not exist. Creating it.")
             output_folder.mkdir(parents = True, exist_ok = True)
 
         for file in mesh_files:
-            output_file = output_folder / file.with_suffix('.txt').name
+            output_file = output_folder / file.with_suffix({FileType.TEXT}).name
             cls.debug_file(file, output_file, debug_meshes_folder)
                                 
     def __repr__(self) -> str:
@@ -1427,17 +1419,17 @@ class DLP:
         if not input_folder.exists():
             raise FileNotFoundError(f"The folder {input_folder} does not exist.")
 
-        dlp_files = list(input_folder.glob("*.DLP"))
+        dlp_files = list(input_folder.glob(f"*{FileType.DEVELOPMENT}"))
         
         if not dlp_files:
-            raise FileNotFoundError(f"No .DLP files found in {input_folder}.")
+            raise FileNotFoundError(f"No {FileType.DEVELOPMENT} files found in {input_folder}.")
         
         if not output_folder.exists():
             print(f"The output folder {output_folder} does not exist. Creating it.")
             output_folder.mkdir(parents = True, exist_ok = True)
 
         for file in dlp_files:
-            output_file = output_folder / file.with_suffix(".txt").name
+            output_file = output_folder / file.with_suffix({FileType.TEXT}).name
             DLP.debug_file(file, output_file, debug_dlp_folder)     
 
             print(f"Processed {file.name} to {output_file.name}")    
@@ -1562,7 +1554,7 @@ def write_binary_name(f, name: str, length: int = None, encoding: str = "ascii",
 
 def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
     if blender_to_game and game_to_blender:
-        raise ValueError("Both transformation modes cannot be 'True' at the same time.")
+        raise ValueError("\nBoth transformation modes cannot be 'True' at the same time.\n")
  
     elif blender_to_game:
         x, y, z = vertex.x, vertex.z, -vertex.y
@@ -1571,7 +1563,7 @@ def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, 
         x, y, z = vertex.x, -vertex.z, vertex.y
         
     else:
-        raise ValueError("One of the transformation modes must be 'True'.")
+        raise ValueError("\nOne of the transformation modes must be 'True'.\n")
     
     return x, y, z
 
@@ -1582,7 +1574,7 @@ def open_with_notepad_plus(filename: Path) -> None:
         r"C:\Program Files (x86)\Notepad++\notepad++.exe"
     ]
 
-    notepad_plus_exe = shutil.which("notepad++.exe")  
+    notepad_plus_exe = shutil.which(NOTEPAD_PLUS_PLUS)  
     
     if notepad_plus_exe:
         subprocess.Popen([notepad_plus_exe, filename])
@@ -1594,8 +1586,8 @@ def open_with_notepad_plus(filename: Path) -> None:
         print(f"Opening file with Notepad++ from hardcoded path: {path}")
         return
 
-    subprocess.Popen(["notepad.exe", filename])
-    print("Notepad++ not found, opening file with Notepad.")
+    subprocess.Popen([NOTEPAD_PLUS_PLUS, filename])
+    print("Notepad++ not found, opening file with Classic Notepad.")
 
 ################################################################################################################ 
 ################################################################################################################               
@@ -1643,9 +1635,9 @@ def determine_mesh_folder_and_filename(cell_id: int, texture_name: List[str]) ->
     target_folder.mkdir(parents = True, exist_ok = True)
         
     if any(name.startswith(Texture.WATER) for name in texture_name):
-        mesh_filename = f"CULL{cell_id:02d}_A2.bms"
+        mesh_filename = f"CULL{cell_id:02d}_A2{FileType._MESH}"
     else:
-        mesh_filename = f"CULL{cell_id:02d}_H.bms"
+        mesh_filename = f"CULL{cell_id:02d}_H{FileType._MESH}"
 
     return target_folder, mesh_filename
 
@@ -1671,7 +1663,7 @@ def save_mesh(
     mesh.write(target_folder / mesh_filename)
     
     if debug_meshes:
-        mesh.debug(Path(mesh_filename).with_suffix(".txt"), Folder.DEBUG_RESOURCES / "MESHES" / MAP_FILENAME, debug_meshes)
+        mesh.debug(Path(mesh_filename).with_suffix({FileType.TEXT}), Folder.DEBUG_RESOURCES / "MESHES" / MAP_FILENAME, debug_meshes)
 
 
 def initialize_mesh(
@@ -2652,7 +2644,7 @@ def copy_custom_textures(input_folder: Path, output_folder: Path) -> None:
         
         
 def copy_tune_mmcarsim_files(input_folder: Path, output_folder: Path) -> None:
-    for file in input_folder.glob("*.MMCARSIM"):
+    for file in input_folder.glob(f"*{FileType.CAR_SIMULATION}"):
         shutil.copy(file, output_folder)
 
             
@@ -2667,12 +2659,12 @@ def copy_dev_folder(input_folder: Path, output_folder: Path) -> None:
 def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[int, str]]], 
                                input_folder: Path, output_folder: Path) -> None:
     
-    for file in input_folder.glob("*.MMBANGERDATA"):
+    for file in input_folder.glob(f"*{FileType.PROP_DATA}"):
         if file.stem not in bangerdata_properties:
             shutil.copy(file, output_folder)
             
     for prop_key, properties in bangerdata_properties.items():
-        banger_files = input_folder / f"{prop_key}.MMBANGERDATA"
+        banger_files = input_folder / f"{prop_key}{FileType.PROP_DATA}"
         
         if banger_files.exists():
             with open(banger_files, "r") as f: 
@@ -2713,7 +2705,7 @@ def create_animations(output_file_main: Path, output_file_sub: Path,
         for anim in animations_data:
             csv.writer(main_f).writerow([f"anim_{anim}"])
 
-            with open(output_file_sub / f"ANIM_{anim.upper()}.CSV", "w", newline = "") as anim_f:                    
+            with open(output_file_sub / f"ANIM_{anim.upper()}{FileType.CSV}", "w", newline = "") as anim_f:                    
                 for coord in animations_data[anim]:
     
                     csv.writer(anim_f).writerow(coord)
@@ -2894,9 +2886,9 @@ def create_races(race_data: dict) -> None:
     }
 
     mm_data_files = {
-        RaceMode.CHECKPOINT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CHECKPOINT}DATA.CSV",
-        RaceMode.CIRCUIT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CIRCUIT}DATA.CSV",
-        RaceMode.BLITZ: Folder.SHOP_RACE_MAP / f"MM{RaceMode.BLITZ}DATA.CSV"
+        RaceMode.CHECKPOINT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CHECKPOINT}DATA{FileType.CSV}",
+        RaceMode.CIRCUIT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CIRCUIT}DATA{FileType.CSV}",
+        RaceMode.BLITZ: Folder.SHOP_RACE_MAP / f"MM{RaceMode.BLITZ}DATA{FileType.CSV}"
     }
     
     for race_key, config in race_data.items():
@@ -2914,7 +2906,7 @@ def create_races(race_data: dict) -> None:
         file_prefix = f"{race_type}{race_index}"
         
         ai_map_file = Folder.SHOP_RACE_MAP / f"{file_prefix}.AIMAP_P"
-        player_waypoint_file = Folder.SHOP_RACE_MAP / f"{file_prefix}WAYPOINTS.CSV"
+        player_waypoint_file = Folder.SHOP_RACE_MAP / f"{file_prefix}WAYPOINTS{FileType.CSV}"
         mm_data_file = mm_data_files[race_type]
         
         # Safety Checks
@@ -3002,10 +2994,10 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
     for file in files:
         cell_id = int(re.findall(r'\d+', file.name)[0])
 
-        if file.name.endswith("_A2.bms"):
+        if file.name.endswith(f"_A2{FileType._MESH}"):
             meshes_water_drift.add(cell_id)
 
-        if file.name.endswith(".bms"):
+        if file.name.endswith(FileType._MESH):
             meshes_regular.append(cell_id)
             
     return meshes_regular, meshes_water_drift
@@ -3258,7 +3250,7 @@ def determine_bridge_filenames(config: Dict[str, Union[float, int, str]]) -> Lis
     elif race_type in [RaceMode.CHECKPOINT, RaceMode.CIRCUIT, RaceMode.BLITZ]:
         filenames += get_bridge_race_type_filenames(race_type, config["RaceNum"], config["Mode"])
     else:
-        raise ValueError(f"Invalid RaceType. Must be one of {RaceMode.ROAM}, {RaceMode.BLITZ}, {RaceMode.CHECKPOINT}, {RaceMode.CIRCUIT}, or {RaceMode.COPS_AND_ROBBERS}.")
+        raise ValueError(f"\nInvalid RaceType. Must be one of {RaceMode.ROAM}, {RaceMode.BLITZ}, {RaceMode.CHECKPOINT}, {RaceMode.CIRCUIT}, or {RaceMode.COPS_AND_ROBBERS}.\n")
 
     return filenames
 
@@ -3266,18 +3258,18 @@ def determine_bridge_filenames(config: Dict[str, Union[float, int, str]]) -> Lis
 def get_bridge_mode_filenames(base_name: str, mode: str) -> List[str]:
     filenames = []
     if mode in [NetworkMode.SINGLE, NetworkMode.SINGLE_AND_MULTI]:
-        filenames.append(f"{base_name}.MMBRIDGEMGR")
+        filenames.append(f"{base_name}{FileType.BRIDGE_MANAGER}")
     if mode in [NetworkMode.MULTI, NetworkMode.SINGLE_AND_MULTI]:
-        filenames.append(f"{base_name}M.MMBRIDGEMGR")
+        filenames.append(f"{base_name}M{FileType.BRIDGE_MANAGER}")
     return filenames
 
 
 def get_bridge_race_type_filenames(race_type: str, race_num: str, mode: str) -> List[str]:
     filenames = []
     if mode in [NetworkMode.SINGLE, NetworkMode.SINGLE_AND_MULTI]:
-        filenames.append(f"{race_type}{race_num}.MMBRIDGEMGR")
+        filenames.append(f"{race_type}{race_num}{FileType.BRIDGE_MANAGER}")
     if mode in [NetworkMode.MULTI, NetworkMode.SINGLE_AND_MULTI]:
-        filenames.append(f"{race_type}{race_num}M.MMBRIDGEMGR")
+        filenames.append(f"{race_type}{race_num}M{FileType.BRIDGE_MANAGER}")
     return filenames
 
 
@@ -3696,7 +3688,7 @@ class Bangers:
                 f.write(banger.name.encode('utf-8'))
                     
             if debug_props:
-                cls.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}.txt", bangers)
+                cls.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}{FileType.TEXT}", bangers)
                                     
     @classmethod
     def debug(cls, output_file: Path, bangers: List['Bangers']) -> None:
@@ -3891,12 +3883,12 @@ class BangerEditor:
     
     def _filename_with_suffix(self, race_key):        
         if race_key == "DEFAULT":
-            return self.map_filename.with_suffix(".BNG")
+            return self.map_filename.with_suffix(FileType.PROP)
             
         race_mode, race_num = race_key.split("_")
         short_race_mode = {RaceMode.CIRCUIT: "C", RaceMode.CHECKPOINT: "R", RaceMode.BLITZ: "B"}.get(race_mode, race_mode)
         race_num = race_num or "0"        
-        return self.map_filename.parent / f"{self.map_filename.stem}_{short_race_mode}{race_num}.BNG"
+        return self.map_filename.parent / f"{self.map_filename.stem}_{short_race_mode}{race_num}{FileType.PROP}"
                                                                             
     @staticmethod  
     def load_dimensions(input_file: Path) -> dict:
@@ -4021,7 +4013,7 @@ class FacadeEditor:
         Facades.write_all(output_file, facades)
 
         if debug_facades:
-            Facades.debug(facades, Folder.DEBUG_RESOURCES / "FACADES" / f"{MAP_FILENAME}.txt")
+            Facades.debug(facades, Folder.DEBUG_RESOURCES / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
 
     @staticmethod
     def read_scales(input_file: Path):
@@ -4354,7 +4346,7 @@ class TextureSheet:
 
     @staticmethod
     def get_custom_texture_filenames(input_textures: Path) -> List[str]:
-         return [f.stem for f in input_textures.glob("*.DDS")]
+         return [f.stem for f in input_textures.glob(f"*{FileType.DIRECTDRAW_SURFACE}")]
      
     @staticmethod
     def parse_flags(flags: List[str]) -> str:
@@ -4913,7 +4905,7 @@ class aiStreetEditor:
         return BaiMap(street_names)
 
     def write(self):    
-        with open(Folder.BASE / "dev" / "CITY" / MAP_FILENAME / f"{self.street_name}.road", 'w') as f:
+        with open(Folder.BASE / "dev" / "CITY" / MAP_FILENAME / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):
@@ -5255,7 +5247,7 @@ def setup_blender() -> None:
                     
                         
 def load_textures(input_folder: Path, load_all_textures: bool) -> None:
-    for texture in input_folder.glob("*.dds"):
+    for texture in input_folder.glob(f"*{FileType.DIRECTDRAW_SURFACE}"):
         texture_str = str(texture)
         
         if texture_str not in bpy.data.images:
@@ -5393,7 +5385,7 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None
 
     load_textures(texture_folder, load_all_textures)
 
-    textures = [texture_folder / f"{texture_name}.DDS" for texture_name in texture_names]
+    textures = [texture_folder / f"{texture_name}{FileType.DIRECTDRAW_SURFACE}" for texture_name in texture_names]
 
     for poly, texture in zip(polygons_data, textures):
         create_mesh_from_polygon_data(poly, texture)
@@ -5851,7 +5843,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         output_folder.mkdir(exist_ok = True)
                 
         current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
-        export_file = output_folder / f"Polygons_{current_time}.txt"
+        export_file = output_folder / f"Polygons_{current_time}{FileType.TEXT}"
                             
         # Select Mesh Objects based on the "select_all" property
         if self.select_all:
@@ -6141,7 +6133,7 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
         
 
 def load_waypoints_from_csv(waypoint_file: Path) -> None:
-    file_info = str(waypoint_file).replace(".CSV", "").replace("WAYPOINTS", "")
+    file_info = str(waypoint_file).replace(FileType.CSV, "").replace("WAYPOINTS", "")
     
     race_type = "".join(filter(str.isalpha, file_info))
     race_number = "".join(filter(str.isdigit, file_info))
@@ -6214,7 +6206,7 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     output_folder.mkdir(exist_ok = True)
 
     current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
-    export_file = output_folder / f"Waypoints_{current_time}.txt"
+    export_file = output_folder / f"Waypoints_{current_time}{FileType.TEXT}"
 
     with open(export_file, "w") as f:
         print("")
@@ -6698,7 +6690,8 @@ bangerdata_properties = {
 
 
 lighting_configs = [
-    {   # Actual lighting config for Evening and Cloudy
+    {   
+        # Actual lighting config for Evening and Cloudy
         "time_of_day": TimeOfDay.EVENING,
         "weather": Weather.CLOUDY,
         "sun_heading": 3.14,
@@ -6804,7 +6797,7 @@ dlp_patches = [
 
 def extract_and_format_road_data(input_folder: Path, output_file: Path) -> None: 
     for file in input_folder.iterdir():
-        if file.is_file() and file.suffix == '.road':
+        if file.is_file() and file.suffix == FileType.AI_STREET:
             
             with open(file, 'r') as f:
                 all_lines = f.readlines()
@@ -6901,17 +6894,17 @@ def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize
 
 # Core
 create_folders()
-create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}.CINFO", blitz_race_names, circuit_race_names, checkpoint_race_names)
+create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
 
 create_races(race_data)
-create_cops_and_robbers(Folder.SHOP_RACE_MAP / "COPSWAYPOINTS.CSV", cnr_waypoints)
+create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", cnr_waypoints)
 check_bound_numbers(polys)
-create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}.CELLS", polys, truncate_cells)
-Bounds.create(Folder.SHOP / "BND" / f"{MAP_FILENAME}_HITID.BND", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}.txt", debug_bounds)
-Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}.PTL", polys, vertices, lower_portals, empty_portals, debug_portals)
+create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys, truncate_cells)
+Bounds.create(Folder.SHOP / "BND" / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
+Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
-FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}.FCD", facade_list, set_facades, debug_facades)
-PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / "PHYSICS.DB", Folder.SHOP / "MTL" / "PHYSICS.DB", custom_physics, set_physics, debug_physics)
+FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
+PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP / "MTL" / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
 
 TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.BASE / "Custom Textures", Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
 TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
@@ -6930,28 +6923,28 @@ edit_and_copy_mmbangerdata(bangerdata_properties, Folder.EDITOR_RESOURCES / "TUN
 copy_tune_mmcarsim_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
 copy_custom_textures(Folder.BASE / "Custom Textures", Folder.SHOP / "TEX16O")
 
-create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}.EXT", hudmap_vertices)
-create_animations(Folder.SHOP_CITY / MAP_FILENAME / "ANIM.CSV", Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
-create_bridges(bridge_list, set_bridges, Folder.SHOP_CITY / f"{MAP_FILENAME}.GIZMO") 
+create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.EXT}", hudmap_vertices)
+create_animations(Folder.SHOP_CITY / MAP_FILENAME / f"ANIM{FileType.CSV}", Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
+create_bridges(bridge_list, set_bridges, Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.GIZMO}") 
 create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
-create_lars_race_maker("Lars_Race_Maker.html", street_list, hudmap_vertices, set_lars_race_maker)
+create_lars_race_maker(f"Lars_Race_Maker{FileType.HTML}", street_list, hudmap_vertices, set_lars_race_maker)
 
 
 # Misc
 BangerEditor().append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
-DLP(Magic.DEVELOPMENT, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write("TEST.DLP", set_dlp) 
+DLP(Magic.DEVELOPMENT, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
 
 # File Debugging
-Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".txt"), debug_props_file)
-Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(".csv"), debug_props_file_to_csv)
-Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(".txt"), debug_facades_file)
-Portals.debug_file(debug_portals_data_file, Folder.DEBUG_RESOURCES / "PORTALS" / debug_portals_data_file.with_suffix(".txt"), debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG_RESOURCES / "MESHES" / debug_meshes_data_file.with_suffix(".txt"), debug_meshes_file)
+Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
+Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
+Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
+Portals.debug_file(debug_portals_data_file, Folder.DEBUG_RESOURCES / "PORTALS" / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
+Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG_RESOURCES / "MESHES" / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
 Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG_RESOURCES / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG_RESOURCES / "BOUNDS" / debug_bounds_data_file.with_suffix(".txt"), debug_bounds_file)
+Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG_RESOURCES / "BOUNDS" / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
 Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
-DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(".txt"), debug_dlp_file)
+DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
 DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
 debug_ai(
@@ -6963,7 +6956,7 @@ debug_ai(
 
 # Finalizing Part
 create_ar(Folder.SHOP)
-create_commandline(Folder.MIDTOWNMADNESS / "commandline.txt", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
+create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 
 editor_time = time.time() - start_time
 save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
@@ -6986,7 +6979,7 @@ set_blender_keybinding()
 
 create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 
-process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, "AI_PATHS.txt", visualize_ai_paths)
+process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 
 # Cleanup

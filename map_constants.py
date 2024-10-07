@@ -429,6 +429,47 @@ class Texture:
     BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
     
     
+class FileType:
+    EXT = ".EXT"
+    _MESH = ".bms"
+    MESH = ".BMS"
+    PROP = ".BNG"
+    CELL = ".CELLS"
+    BOUND = ".BND"
+    GIZMO = ".GIZMO"
+    PORTAL = ".PTL"
+    FACADE = ".FCD"
+    DATABASE = ".DB"
+    CITY_INFO = ".cinfo"
+    DEVELOPMENT = ".DLP"
+    TEXTURE_SHEET = ".TSH"
+    
+    PROP_DATA = ".MMBANGERDATA"
+    CAR_SIMULATION = ".MMCARSIM"
+    BRIDGE_MANAGER = ".MMBRIDGEMGR"
+        
+    DIRECTDRAW_SURFACE = ".DDS"
+    
+    MAP = ".map"
+    AI_STREET = ".road"
+    INTERSECTION = ".int"
+        
+    CSV = ".CSV"
+    TEXT = ".txt"
+    HTML = "html"
+    
+
+MIDTOWN_MADNESS = "Open1560.exe"
+BLENDER = "blender"
+NOTEPAD_PLUS_PLUS = "notepad++.exe"
+EDITOR_RUNTIME_FILE = "editor_run_time.pkl"
+    
+NO = 0  
+YES = 1 
+HUGE = 1E10
+PROP_CAN_COLLIDE_FLAG = 0x800
+    
+    
 CHECKPOINT_PREFIXES = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
 MM_DATA_HEADER = ["CarType", "TimeofDay", "Weather", "Opponents", "Cops", "Ambient", "Peds", "NumLaps", "TimeLimit", "Difficulty"]
