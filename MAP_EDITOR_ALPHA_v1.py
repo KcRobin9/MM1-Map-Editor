@@ -3834,19 +3834,39 @@ class BangerEditor:
                         name + "\x00"
                         )
                     )
-                
+
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if not append_props:
             return
             
         with open(input_props_f, "rb") as f:
             original_props = Bangers.read_all(f)
-              
+
         self.props = original_props
+        original_count = len(self.props)
+        
+        with open(input_props_f, "rb") as f:
+            f.seek(0, 2)  # Move to the end of the file
+            append_offset = f.tell()
+        
         self.add_multiple(props_to_append)
         
-        Bangers.write_all(appended_props_f, self.props, debug_props)
-                            
+        with open(appended_props_f, "r+b") as f:
+            f.seek(0)  # Update the prop count
+            Bangers.write_n(f, self.props)
+            
+            # Append new props at the correct offset
+            f.seek(append_offset)
+            for i, prop in enumerate(self.props[original_count:], start=original_count):
+                write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
+                prop.offset.write(f, '<')
+                prop.face.write(f, '<')
+                f.write(prop.name.encode('utf-8'))
+        
+        if debug_props:
+            Bangers.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{appended_props_f.name}{FileType.TEXT}", self.props)
+
+                        
     def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
         assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
 
@@ -6930,10 +6950,12 @@ create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
 create_lars_race_maker(f"Lars_Race_Maker{FileType.HTML}", street_list, hudmap_vertices, set_lars_race_maker)
 
-
 # Misc
-BangerEditor().append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 DLP(Magic.DEVELOPMENT, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
+
+editor = BangerEditor()
+shutil.copy(append_input_props_file, append_output_props_file)
+editor.append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 
 # File Debugging
 Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
