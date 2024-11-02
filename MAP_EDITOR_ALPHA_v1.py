@@ -1071,7 +1071,7 @@ class Meshes:
             f.read(2)  # Padding
             cache_size, = read_unpack(f, '<I')
                                       
-            texture_names = [read_binary_name(f, 32, 'ascii', 16) for _ in range(texture_count)]
+            texture_names = [read_binary_name(f, 32, Encoding.ASCII, 16) for _ in range(texture_count)]
             
             if vertex_count < Threshold.MESH_VERTEX_COUNT:
                 vertices = Vector3.readn(f, vertex_count, '<')
@@ -1514,7 +1514,7 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
 ################################################################################################################ 
 
-def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: int = 0) -> str:
+def read_binary_name(f, length: int = None, encoding: str = Encoding.ASCII, padding: int = 0) -> str:
     name_data = bytearray()
     
     if length is None:
@@ -1537,7 +1537,7 @@ def read_binary_name(f, length: int = None, encoding: str = "ascii", padding: in
     return name_data.decode(encoding)
 
 
-def write_binary_name(f, name: str, length: int = None, encoding: str = "ascii", padding: int = 0, terminate: bool = False) -> None:
+def write_binary_name(f, name: str, length: int = None, encoding: str = Encoding.ASCII, padding: int = 0, terminate: bool = False) -> None:
     name_data = name.encode(encoding)
     
     if length is not None:
@@ -3685,7 +3685,7 @@ class Bangers:
                 write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
                 banger.offset.write(f, '<')
                 banger.face.write(f, '<')
-                f.write(banger.name.encode('utf-8'))
+                f.write(banger.name.encode(Encoding.UTF_8))
                     
             if debug_props:
                 cls.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}{FileType.TEXT}", bangers)
@@ -3861,7 +3861,7 @@ class BangerEditor:
                 write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
                 prop.offset.write(f, '<')
                 prop.face.write(f, '<')
-                f.write(prop.name.encode('utf-8'))
+                f.write(prop.name.encode(Encoding.UTF_8))
         
         if debug_props:
             Bangers.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{appended_props_f.name}{FileType.TEXT}", self.props)
@@ -4108,7 +4108,7 @@ class PhysicsEditor:
 
     @staticmethod
     def read(f: BinaryIO) -> 'PhysicsEditor':
-        name = read_binary_name(f, 32, 'latin-1')
+        name = read_binary_name(f, 32, Encoding.LATIN_1)
         friction, elasticity, drag = read_unpack(f, '>3f')
         bump_height, bump_width, bump_depth, sink_depth = read_unpack(f, '>4f')
         type, sound = read_unpack(f, '>2I')
@@ -4121,7 +4121,7 @@ class PhysicsEditor:
         return [cls.read(f) for _ in range(cls.readn(f))]
 
     def write(self, f: BinaryIO) -> None:        
-        write_binary_name(f, self.name, length = 32, encoding = "latin-1", terminate = True)
+        write_binary_name(f, self.name, length = 32, encoding = Encoding.LATIN_1, terminate = True)
         write_pack(f, '>3f', self.friction, self.elasticity, self.drag)
         write_pack(f, '>4f', self.bump_height, self.bump_width, self.bump_depth, self.sink_depth)
         write_pack(f, '>2I', self.type, self.sound)
@@ -5165,7 +5165,7 @@ def create_commandline(
     
     if no_ui:
         if not no_ui_type or no_ui_type.lower() == "cruise":
-            cmd_line += f" -noui -keyboard"
+            cmd_line += f" -noui {ControlType.KEYBOARD}"
         else:
             race_type, race_index = no_ui_type.split()
             if race_type not in ["circuit", "race", "blitz"]:
@@ -5182,7 +5182,7 @@ def create_commandline(
                 """
                 raise ValueError(index_error_message)
             
-            cmd_line += f" -noui -{race_type} {race_index} -keyboard"
+            cmd_line += f" -noui -{race_type} {race_index} -{ControlType.KEYBOARD}"
         
     with open(output_file, "w") as f:
         f.write(cmd_line)
