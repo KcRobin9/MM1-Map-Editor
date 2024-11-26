@@ -457,7 +457,13 @@ class FileType:
     CSV = ".CSV"
     TEXT = ".txt"
     HTML = "html"
-    
+
+
+class Encoding:
+    ASCII = "ascii"
+    UTF_8 = "utf-8"
+    LATIN_1 = "latin-1"
+
 
 MIDTOWN_MADNESS = "Open1560.exe"
 BLENDER = "blender"
