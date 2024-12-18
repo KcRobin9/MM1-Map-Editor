@@ -30,7 +30,6 @@ import time
 import pickle
 import psutil
 import shutil
-import struct
 import random
 import datetime
 import textwrap
@@ -43,6 +42,12 @@ from itertools import cycle
 import matplotlib.pyplot as plt                
 from colorama import Fore, Style, init
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO
+
+from src.Vector.vector_2 import Vector2
+from src.Vector.vector_3 import Vector3
+from src.Vector.vector_4 import Vector4
+
+from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binary_name, write_binary_name
 
 
 # Enable Blender to correctly import the module "map_constants"
@@ -500,202 +505,6 @@ bridge_config_list = [bridge_race_0, bridge_cnr]
 
 ################################################################################################################               
 ################################################################################################################     
-#! ======================= STRUCT & VECTOR CLASSES ======================= !#
-
-
-def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
-    return struct.unpack(fmt, file.read(calc_size(fmt)))
-
-
-def write_pack(file: BinaryIO, fmt: str, *args: object) -> None:
-    file.write(struct.pack(fmt, *args))
-
-
-def calc_size(fmt: str) -> int:
-    return struct.calcsize(fmt)
-
-
-class Vector2:
-    def __init__(self, x: float, y: float) -> None:
-        self.x = x
-        self.y = y
-            
-    @staticmethod
-    def read(file: BinaryIO, byte_order: str = '<') -> 'Vector2':
-        return Vector2(*read_unpack(file, f'{byte_order}2f'))
-
-    @staticmethod
-    def readn(file: BinaryIO, count: int, byte_order: str = '<') -> List['Vector2']:
-        return [Vector2.read(file, byte_order) for _ in range(count)]
-            
-    def write(self, file: BinaryIO, byte_order: str = '<') -> None:
-        write_pack(file, f'{byte_order}2f', self.x, self.y)
-        
-    @staticmethod
-    def binary_size() -> int:
-        return calc_size('2f')
-                
-    def __add__(self, other: 'Vector2') -> 'Vector2':
-        return Vector2(self.x + other.x, self.y + other.y)
-
-    def __sub__(self, other: 'Vector2') -> 'Vector2':
-        return Vector2(self.x - other.x, self.y - other.y)
-
-    def __mul__(self, other: float) -> 'Vector2':
-        return Vector2(self.x * other, self.y * other)
-
-    def __truediv__(self, other: float) -> 'Vector2':
-        return Vector2(self.x / other, self.y / other)
-
-    def __eq__(self, other: 'Vector2') -> bool:
-        return (self.x, self.y) == (other.x, other.y)
-
-    def __hash__(self) -> int:
-        return hash((self.x, self.y))
-
-    def tuple(self) -> Tuple[float, float]:
-        return (self.x, self.y)
-
-    def Cross(self, rhs: 'Vector2' = None) -> 'Vector2':
-        if rhs is None:
-            return Vector2(self.y, -self.x)
-
-        return Vector2((self.x*rhs.y) - (self.y*rhs.x))
-
-    def Dot(self, rhs: 'Vector2') -> float:
-        return (self.x * rhs.x) + (self.y * rhs.y)
-
-    def Mag2(self) -> float:
-        return (self.x * self.x) + (self.y * self.y)
-
-    def Dist2(self, other: 'Vector2') -> float:
-        return (other - self).Mag2()
-
-    def Dist(self, other: 'Vector2') -> float:
-        return self.Dist2(other) ** 0.5
-    
-    def Normalize(self) -> 'Vector2':
-        return self * (self.Mag2() ** -0.5)
-    
-    def __repr__(self, round_vector_values: bool = round_vector_values) -> str:
-        if round_vector_values:
-            return f'{round(self.x, 2):.2f}, {round(self.y, 2):.2f}'
-        else:
-            return f'{self.x:f}, {self.y:f}'
-
-
-class Vector3:
-    def __init__(self, x: float, y: float, z: float) -> None:
-        self.x = x
-        self.y = y
-        self.z = z
-        self._data = {"x": x, "y": y, "z": z}
-        
-    @staticmethod
-    def read(file: BinaryIO, byte_order: str = '<') -> 'Vector3':
-        return Vector3(*read_unpack(file, f'{byte_order}3f'))
-
-    @staticmethod
-    def readn(file: BinaryIO, count: int, byte_order: str = '<') -> List['Vector3']:
-        return [Vector3.read(file, byte_order) for _ in range(count)]
-    
-    def write(self, file: BinaryIO, byte_order: str = '<') -> None:
-        write_pack(file, f'{byte_order}3f', self.x, self.y, self.z)
-        
-    @staticmethod
-    def binary_size() -> int:
-        return calc_size('3f')
-        
-    @classmethod
-    def from_tuple(cls, vertex_tuple: Tuple[float, float, float]) -> 'Vector3':
-        return cls(*vertex_tuple)
-
-    def to_tuple(self) -> Tuple[float, float, float]:
-        return (self.x, self.y, self.z)
-        
-    def copy(self) -> 'Vector3':
-        return Vector3(self.x, self.y, self.z)
-    
-    def __getitem__(self, key: str) -> float:
-        return self._data[key]
-
-    def __setitem__(self, key: str, value: float) -> None:
-        if key in self._data:
-            self._data[key] = value
-            setattr(self, key, value)
-        else:
-            raise ValueError(f"Invalid key: {key}. Use 'x', 'y', or 'z'.")
-
-    def __add__(self, other: 'Vector3') -> 'Vector3':
-        return Vector3(self.x + other.x, self.y + other.y, self.z + other.z)
-
-    def __sub__(self, other: 'Vector3') -> 'Vector3':
-        return Vector3(self.x - other.x, self.y - other.y, self.z - other.z)
-
-    def __mul__(self, other: float) -> 'Vector3':
-        return Vector3(self.x * other, self.y * other, self.z * other)
-
-    def __truediv__(self, other: float) -> 'Vector3':
-        return Vector3(self.x / other, self.y / other, self.z / other)
-
-    def __eq__(self, other: 'Vector3') -> bool:
-        return (self.x, self.y, self.z) == (other.x, other.y, other.z)
-
-    def __hash__(self) -> int:
-        return hash((self.x, self.y, self.z))
-    
-    def Cross(self, rhs: 'Vector3') -> 'Vector3':
-        return Vector3(self.y * rhs.z - self.z * rhs.y, self.z * rhs.x - self.x * rhs.z, self.x * rhs.y - self.y * rhs.x)
-
-    def Dot(self, rhs: 'Vector3') -> float:
-        return (self.x * rhs.x) + (self.y * rhs.y) + (self.z * rhs.z)
-    
-    def Mag(self) -> float:
-        return self.Mag2() ** 0.5
-    
-    def Mag2(self) -> float:
-        return (self.x * self.x) + (self.y * self.y) + (self.z * self.z)
-
-    def Normalize(self) -> 'Vector3':
-        return self * (self.Mag2() ** -0.5)
-
-    def Dist2(self, other: 'Vector3') -> float:
-        return (other - self).Mag2()
-
-    def Dist(self, other: 'Vector3') -> float:
-        return self.Dist2(other) ** 0.5
-        
-    def Angle(self, rhs: 'Vector3') -> float:
-        return math.acos(self.Dot(rhs) * ((self.Mag2() * rhs.Mag2()) ** -0.5))
-    
-    def Negate(self) -> 'Vector3':
-        return Vector3(-self.x, -self.y, -self.z)
-
-    def Set(self, x: float, y: float, z: float) -> None:
-        self.x = x
-        self.y = y
-        self.z = z
-                
-    def __repr__(self, round_vector_values: bool = round_vector_values) -> str:
-        if round_vector_values:
-            return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'
-        else:
-            return f'{{ {self.x:f}, {self.y:f}, {self.z:f} }}'
-        
-        
-class Vector4:
-    def __init__(self, x: float, y: float, z: float, w: float) -> None:
-        self.x = x
-        self.y = y
-        self.z = z
-        self.w = w
-        
-    @staticmethod
-    def binary_size() -> int:
-        return calc_size('4f')  
-
-################################################################################################################               
-################################################################################################################ 
 #! ======================= POLYGON CLASS ======================= !#
 
 
@@ -1513,44 +1322,6 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
     return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
 
 ################################################################################################################ 
-
-def read_binary_name(f, length: int = None, encoding: str = Encoding.ASCII, padding: int = 0) -> str:
-    name_data = bytearray()
-    
-    if length is None:
-        while True:
-            char = f.read(1)
-            if char == b"\0" or not char:
-                break
-            name_data.extend(char)
-            
-    else:
-        name_data = bytearray(f.read(length))
-        null_pos = name_data.find(b'\0')
-        
-        if null_pos != -1:
-            name_data = name_data[:null_pos]
-        
-        if padding > 0:
-            f.read(padding)
-    
-    return name_data.decode(encoding)
-
-
-def write_binary_name(f, name: str, length: int = None, encoding: str = Encoding.ASCII, padding: int = 0, terminate: bool = False) -> None:
-    name_data = name.encode(encoding)
-    
-    if length is not None:
-        name_data = name_data[:length].ljust(length, b"\0")
-        
-    elif terminate:
-        name_data += b'\0'
-    
-    f.write(name_data)
-    
-    if padding > 0:
-        f.write(b"\0" * padding)
-
 
 def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
     if blender_to_game and game_to_blender:
