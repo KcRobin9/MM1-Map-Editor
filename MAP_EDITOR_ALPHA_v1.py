@@ -49,15 +49,21 @@ from src.Vector.vector_4 import Vector4
 
 from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binary_name, write_binary_name
 
+from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, TEXTURESHEET_MAPPING
+from src.Constants.textures import Texture, TEXTURE_EXPORT
+from src.Constants.vehicles import PlayerCar, TrafficCar
+from src.Constants.props import Prop, AudioProp
+from src.Constants.misc import Shape, Encoding, Executable, Threshold, Color
+from src.Constants.facades import Facade
+from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, AgiTexParameters, Magic, FileType, Anim
+from src.Constants.races import TimeOfDay, Weather, IntersectionType, RaceMode, NetworkMode, CnR, CopBehavior, CopDensity, CopStartLane, PedDensity, AmbientDensity, MaxOpponents, Laps, Rotation, Width
+from src.Constants.constants import *
 
 # Enable Blender to correctly import the module "map_constants"
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 if script_dir not in sys.path:
     sys.path.append(script_dir)
-
-
-from map_constants import *
 
 ################################################################################################################
 
@@ -94,7 +100,7 @@ visualize_ai_paths = False      # Change to "True" if you want to visualize the 
 cruise_start_position = (40.0, 30.0, -40.0)
 
 round_vector_values = True      
-disable_progress_bar = False    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
+disable_progress_bar = True    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
 
 ################################################################################################################
 
@@ -2844,7 +2850,7 @@ def create_cells(output_file: Path, polys: List[Polygon], truncate_cells: bool) 
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
                   minimap_outline_color: str, line_width: float, background_color: str) -> None:
     
-    if not set_minimap or is_process_running(BLENDER):
+    if not set_minimap or is_process_running(Executable.BLENDER):
         return
     
     global hudmap_vertices
@@ -4967,7 +4973,7 @@ def is_process_running(process_name: str) -> bool:
       
 
 def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
-    if not play_game or is_process_running(BLENDER) or is_process_running(executable):
+    if not play_game or is_process_running(Executable.BLENDER) or is_process_running(executable):
         return
     
     subprocess.run(mm1_folder / executable, cwd = mm1_folder)
@@ -5023,7 +5029,7 @@ def initialize_depsgraph_update_handler() -> None:
 
 
 def setup_blender() -> None:
-    if not is_process_running(BLENDER):
+    if not is_process_running(Executable.BLENDER):
         return
     
     delete_existing_meshes()
@@ -5171,7 +5177,7 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
 
 
 def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None:
-    if not is_process_running(BLENDER):
+    if not is_process_running(Executable.BLENDER):
         return
 
     load_textures(texture_folder, load_all_textures)
@@ -6118,7 +6124,7 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         
                 
 def initialize_blender_panels() -> None:
-    if not is_process_running(BLENDER):
+    if not is_process_running(Executable.BLENDER):
         return
     
     bpy.utils.register_class(VertexGroup)
@@ -6131,7 +6137,7 @@ def initialize_blender_panels() -> None:
         
         
 def initialize_blender_operators() -> None:
-    if not is_process_running(BLENDER):
+    if not is_process_running(Executable.BLENDER):
         return
     
     bpy.utils.register_class(OBJECT_OT_UpdateUVMapping)
@@ -6142,7 +6148,7 @@ def initialize_blender_operators() -> None:
     
 
 def initialize_blender_waypoint_editor() -> None:
-    if not is_process_running(BLENDER):
+    if not is_process_running(Executable.BLENDER):
         return
     
     bpy.utils.register_class(CREATE_SINGLE_WAYPOINT_OT_operator)
@@ -6160,7 +6166,7 @@ def initialize_blender_waypoint_editor() -> None:
       
       
 def set_blender_keybinding() -> None:
-    if not is_process_running(BLENDER):
+    if not is_process_running(Executable.BLENDER):
         return
     
     wm = bpy.context.window_manager
@@ -6668,7 +6674,7 @@ def apply_path_color_scheme() -> None:
             
                       
 def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize_ai_paths: bool) -> None:
-    if not visualize_ai_paths or not is_process_running(BLENDER):
+    if not visualize_ai_paths or not is_process_running(Executable.BLENDER):
         return
     
     extract_and_format_road_data(input_folder, output_file)
@@ -6759,7 +6765,7 @@ print("\n" + create_bar_divider(colors_two))
 print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(create_bar_divider(colors_two))
 
-start_game(Folder.MIDTOWNMADNESS, MIDTOWN_MADNESS, play_game)
+start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 
 
 # Blender

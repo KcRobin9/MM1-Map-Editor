@@ -1,0 +1,63 @@
+class Texture:
+    SNOW = "SNOW"
+    WOOD = "T_WOOD"
+    WATER = "T_WATER"
+    WATER_WINTER = "T_WATER_WIN"
+    GRASS = "T_GRASS"
+    GRASS_WINTER = "T_GRASS_WIN"
+    GRASS_BASEBALL = "24_GRASS"
+
+    SIDEWALK = "SDWLK2"
+    ZEBRA_CROSSING = "RWALK"
+    INTERSECTION = "RINTER"
+
+    FREEWAY = "FREEWAY2"
+    ROAD_1_LANE = "R2"
+    ROAD_2_LANE = "R4"
+    ROAD_3_LANE = "R6"
+    ROAD = "ROAD"
+    ICE = "L_RIVET"
+
+    BRICKS_MALL = "OT_MALL_BRICK"
+    BRICKS_SAND = "OT_SHOP03_BRICK"
+    BRICKS_GREY = "CT_FOOD_BRICK"
+    WALL = "T_WALL"
+    IND_WALL = "IND_WALL"
+    SHOP_BRICK = "CT_SHOP_BRICK"
+    MARKT_BRICK = "OT_MARKT_BRICK"
+
+    GLASS = "R_WIN_01"
+    STOP_SIGN = "T_STOP"
+    BARRICADE = "T_BARRICADE"
+    CHECKPOINT = "CHECK04"
+    BUS_RED_TOP = "VPBUSRED_TP_BK"
+    
+    # Custom Textures (see: MM1-Map-Editor \ Custom Textures)
+    LAVA = "T_WATER_LAVA"
+    BARRICADE_RED_BLACK = "T_RED_BLACK_BARRICADE"
+    
+
+TEXTURE_EXPORT = {
+    "SNOW": Texture.SNOW,
+    "T_WOOD": Texture.WOOD,
+    "T_WATER": Texture.WATER,
+    "T_WATER_WIN": Texture.WATER_WINTER,
+    "T_GRASS": Texture.GRASS,
+    "T_GRASS_WIN": Texture.GRASS_WINTER,
+    "24_GRASS": Texture.GRASS_BASEBALL,
+    "SDWLK2": Texture.SIDEWALK,
+    "RWALK": Texture.ZEBRA_CROSSING,
+    "RINTER": Texture.INTERSECTION,
+    "FREEWAY2": Texture.FREEWAY,
+    "R2": Texture.ROAD_1_LANE,
+    "R4": Texture.ROAD_2_LANE,
+    "R6": Texture.ROAD_3_LANE,
+    "OT_MALL_BRICK": Texture.BRICKS_MALL,
+    "OT_SHOP03_BRICK": Texture.BRICKS_SAND,
+    "CT_FOOD_BRICK": Texture.BRICKS_GREY,
+    "R_WIN_01": Texture.GLASS,
+    "T_STOP": Texture.STOP_SIGN,
+    "T_BARRICADE": Texture.BARRICADE,
+    "CHECK04": Texture.CHECKPOINT,
+    "VPBUSRED_TP_BK": Texture.BUS_RED_TOP,
+}
