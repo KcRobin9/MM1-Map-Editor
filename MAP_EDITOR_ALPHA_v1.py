@@ -53,156 +53,19 @@ from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, T
 from src.Constants.textures import Texture, TEXTURE_EXPORT
 from src.Constants.vehicles import PlayerCar, TrafficCar
 from src.Constants.props import Prop, AudioProp
-from src.Constants.misc import Shape, Encoding, Executable, Threshold, Color
+from src.Constants.misc import Shape, Encoding, Executable, Folder, Threshold, Color, Folder
 from src.Constants.facades import Facade
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, AgiTexParameters, Magic, FileType, Anim
 from src.Constants.races import TimeOfDay, Weather, IntersectionType, RaceMode, NetworkMode, CnR, CopBehavior, CopDensity, CopStartLane, PedDensity, AmbientDensity, MaxOpponents, Laps, Rotation, Width
 from src.Constants.constants import *
 
-# Enable Blender to correctly import the module "map_constants"
-script_dir = os.path.dirname(os.path.abspath(__file__))
+from src.User.main import *
+from src.User.advanced import *
+from src.User.blender import *
+from src.User.debug import *
+from src.User.append_props import *
 
-if script_dir not in sys.path:
-    sys.path.append(script_dir)
-
-################################################################################################################
-
-#! SETUP I (Map Name)                           Control + F    "map=="  to jump to The Map Creation section
-MAP_NAME = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
-MAP_FILENAME = "First_City"                     # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
-    
-#! SETUP II (Map Creation)      
-play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
-
-# Map Attributes
-set_bridges = True              #* Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
-set_props = True                # Change to "True" if you want PROPS
-set_bridges = True              # Change to "True" if you want BRIDGES
-set_facades = True              # Change to "True" if you want FACADES
-set_physics = True              # Change to "True" if you want PHYSICS (custom)
-set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
-set_texture_sheet = True        # Change to "True" if you want a TEXTURE SHEET (this will enable Custom Textures and modified existing Textures)
-
-set_music = True                # TODO: Update Open1560 (Change to "True" if you want MUSIC during gameplay)
-
-# Minimap
-set_minimap = False             # Initially set to "False" to save performance. Change to "True" if you want a MINIMAP (defaults to "False" when Blender is running)                              
-minimap_outline_color = None    # Change the outline of the minimap shapes to any color (e.g. "Red"), if you don't want any color, set to "None"
-
-# AI
-set_ai_streets = True           # Change to "True" if you want AI streets
-set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI streets
-set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
-visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
-
-# Car Start Position in Cruise (if no polygon has the option "base = True")
-cruise_start_position = (40.0, 30.0, -40.0)
-
-round_vector_values = True      
-disable_progress_bar = True    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
-
-################################################################################################################
-
-#* (Folder Paths)  
-class Folder:
-    BASE = Path(__file__).parent.resolve()
-    SHOP = BASE / "SHOP"
-    SHOP_CITY = SHOP / "CITY"
-    SHOP_RACE = SHOP / "RACE"   
-    SHOP_TUNE = SHOP / "TUNE"
-    SHOP_RACE_MAP = SHOP_RACE / f"{MAP_FILENAME}" 
-    SHOP_MESH_LANDMARK = SHOP / "BMS" / f"{MAP_FILENAME}LM"
-    SHOP_MESH_CITY = SHOP / "BMS" / f"{MAP_FILENAME}CITY"
-    
-    MIDTOWNMADNESS = BASE / "MidtownMadness"
-    USER_RESOURCES = BASE / "Resources" / "UserResources"
-    EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
-    DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
-    
-################################################################################################################
-    
-#* Advanced
-no_ui = False                   # Change to "True" if you want skip the game's menu and go straight into Cruise mode
-no_ui_type = "cruise"           # Other race types are currently not supported by the game in custom maps
-no_ai = False                   # Change to "True" if you want to disable the AI and AI paths
-
-less_logs = False               # Change to "True" if you want to hide most logs. This may prevent frame rate drops if the game is printing tons of errors or warnings
-more_logs = False               # Change to "True" if you want additional logs and open a logging console when running the game
-
-lower_portals = False           # Change to "True" if you want to lower the portals. This may be useful when you're "truncating" the cells file, and have cells below y = 0. This however may lead to issues with the AI
-empty_portals = False           # Change to "True" if you want to create an empty portals file. This may be useful if you're testing a city with tens of thousands of polygons, which the portals file cannot handle. Nevertheless, we can still test the city by creating an empty portals file (this will compromise game visiblity)
-truncate_cells = False			# Change to "True" if you want to truncate the characters in the cells file. This may be useful for testing large cities. A maximum of 254 characters is allowed per row in the cells file (~80 polygons). To avoid crashing the game, truncate any charachters past 254 (may compromise game visibility - lowering portals may mitigate this issue)
-
-fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
-
-#* Misc
-set_dlp = False                 # Change to "True" if you want to create a DLP file 
-
-append_props = False            # Change to "True" if you want to append props
-append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"  
-append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "APP_CHICAGO.BNG"  
-
-randomize_textures = False      # Change to "True" if you want to randomize all textures in your Map
-random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LANE, Texture.BRICKS_GREY, Texture.CHECKPOINT]
-
-################################################################################################################
-
-#* Blender          
-load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
-                                # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
-
-# Input waypoint file
-waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  
-
-# Waypoints from the Editor ("race_data")
-waypoint_number_input = "0", 
-waypoint_type_input = "RACE"
-
-################################################################################################################
-
-# Editor Debugging
-debug_props = False             # Change to "True" if you want a PROPS Debug text file
-debug_meshes = False            # Change to "True" if you want MESH Debug text files 
-debug_bounds = False            # Change to "True" if you want a BOUNDS Debug text file
-debug_facades = False           # Change to "True" if you want a FACADES Debug text file
-debug_physics = False           # Change to "True" if you want a PHYSICS Debug text file
-debug_portals = False           # Change to "True" if you want a PORTALS Debug text file
-debug_lighting = False          # Change to "True" if you want a LIGHTING Debug text file
-debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
-debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
-
-# File Debugging | The Output Files are written to: "Resources / Debug / ..."
-debug_props_file = False
-debug_props_file_to_csv = False
-
-debug_facades_file = False
-debug_portals_file = False
-debug_ai_file = False
-
-debug_meshes_file = False
-debug_meshes_folder = False
-
-debug_bounds_file = False
-debug_bounds_folder = False
-
-debug_dlp_file = False
-debug_dlp_folder = False
-
-# File Input Locations
-debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
-debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
-debug_portals_data_file = Folder.EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
-debug_ai_data_file = Folder.EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
-
-debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input Mesh file here
-debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input Mesh folder here
-
-debug_bounds_data_file = Folder.EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
-debug_bounds_data_folder = Folder.EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
-
-debug_dlp_data_file = Folder.EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
-debug_dlp_data_folder = Folder.EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
+sys.path.append(str(Path(__file__).parent))
 
 ################################################################################################################               
 ################################################################################################################
@@ -217,8 +80,6 @@ polygons_data = []
 
 hudmap_vertices = []
 hudmap_properties = {}
-
-CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
 
 ################################################################################################################               
 ################################################################################################################

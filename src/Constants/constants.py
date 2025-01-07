@@ -1,6 +1,6 @@
-
-from .races import RaceMode
-from .props import Prop
+from src.Constants.props import Prop
+from src.Constants.races import RaceMode
+from src.User.main import MAP_FILENAME
 
 
 NO = 0  
@@ -16,6 +16,8 @@ WAYPOINT_FILLER = ",0,0,0,0,0,\n"
 CHECKPOINT_PREFIXES = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
 
 BRIDGE_ATTRIBUTE_FILLER = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n" 
+
+CMD_LINE = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME.lower()}"
 
 # Headers
 CNR_HEADER = "# This is your Cops & Robbers file, note the structure (per 3): Bank/Blue Team Hideout, Gold, Robber/Red Team Hideout\n"

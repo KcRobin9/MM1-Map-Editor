@@ -1,5 +1,5 @@
-from typing import Tuple, BinaryIO
 import struct
+from typing import Tuple, BinaryIO
 
 
 def read_unpack(file: BinaryIO, fmt: str) -> Tuple:

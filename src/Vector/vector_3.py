@@ -1,6 +1,6 @@
-from src.IO.binary_parsing import read_unpack, write_pack, calc_size
-from typing import List, Tuple, BinaryIO
 import math
+from typing import List, Tuple, BinaryIO
+from src.IO.binary_parsing import read_unpack, write_pack, calc_size
 
 
 class Vector3:

@@ -1,3 +1,7 @@
+from pathlib import Path
+from src.User.main import MAP_FILENAME
+
+
 class Shape:
     LINE = 2
     TRIANGLE = 3
@@ -14,6 +18,22 @@ class Executable:
     MIDTOWN_MADNESS = "Open1560.exe"
     BLENDER = "Blender"
     NOTEPAD_PLUS_PLUS = "notepad++.exe"
+
+
+class Folder:
+    BASE = Path(__file__).parent.parent.parent.resolve()  # folder: MM1-Map-Editor
+    SHOP = BASE / "SHOP"
+    SHOP_CITY = SHOP / "CITY"
+    SHOP_RACE = SHOP / "RACE"   
+    SHOP_TUNE = SHOP / "TUNE"
+    SHOP_RACE_MAP = SHOP_RACE / f"{MAP_FILENAME}" 
+    SHOP_MESH_LANDMARK = SHOP / "BMS" / f"{MAP_FILENAME}LM"
+    SHOP_MESH_CITY = SHOP / "BMS" / f"{MAP_FILENAME}CITY"
+    
+    MIDTOWNMADNESS = BASE / "MidtownMadness"
+    USER_RESOURCES = BASE / "Resources" / "UserResources"
+    EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
+    DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
 
     
 class Threshold:

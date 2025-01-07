@@ -1,4 +1,4 @@
-from .races import NetworkMode
+from src.Constants.races import NetworkMode
 
 
 # Bridges    
