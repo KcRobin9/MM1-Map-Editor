@@ -27,20 +27,18 @@ import csv
 import sys
 import math
 import time
-import pickle
 import psutil
 import shutil
 import random
 import datetime
 import textwrap
 import pyautogui
-import threading
 import subprocess
 import numpy as np
 from pathlib import Path
 from itertools import cycle
 import matplotlib.pyplot as plt                
-from colorama import Fore, Style, init
+from colorama import Fore
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO
 
 from src.Vector.vector_2 import Vector2
@@ -57,7 +55,10 @@ from src.Constants.misc import Shape, Encoding, Executable, Folder, Threshold, C
 from src.Constants.facades import Facade
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, AgiTexParameters, Magic, FileType, Anim
 from src.Constants.races import TimeOfDay, Weather, IntersectionType, RaceMode, NetworkMode, CnR, CopBehavior, CopDensity, CopStartLane, PedDensity, AmbientDensity, MaxOpponents, Laps, Rotation, Width
+from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
 from src.Constants.constants import *
+
+from src.ProgressBar.code import start_progress_tracking, RunTimeManager
 
 from src.User.main import *
 from src.User.advanced import *
@@ -69,7 +70,7 @@ sys.path.append(str(Path(__file__).parent))
 
 ################################################################################################################               
 ################################################################################################################
-#! ======================= INITIALIZATIONS & CONSTANTS ======================= !#
+#! ======================= VARIABLE DECLARATIONS & PROGRESS BAR ======================= !#
 
 
 vertices = [] 
@@ -81,99 +82,7 @@ polygons_data = []
 hudmap_vertices = []
 hudmap_properties = {}
 
-################################################################################################################               
-################################################################################################################
-#! ======================= PROGRESS BAR, RUN TIME ======================= !#
-
-
-def clear_command_prompt_screen() -> None:
-    print("\033[H\033[J", end = "")
-
-
-def create_bar_divider(colors: List[str]) -> str:
-    divider = "=" * 60  
-    color_divider = "".join(colors[i % len(colors)] + char for i, char in enumerate(divider))
-    return "\n" + color_divider + "\n"
-
-
-def update_progress_bar(progress: float, buffer: str, top_divider: str, bottom_divider: str, disable_progress_bar: bool) -> None:
-    if progress < 33:
-        color = Style.BRIGHT + Fore.RED
-    elif progress < 66:
-        color = Style.BRIGHT + Fore.YELLOW
-    else:
-        color = Style.BRIGHT + Fore.GREEN
-    
-    progress = int(progress)
-    progress_line = color + f"   Creating.. {MAP_NAME} [{'#' * (progress // 5)}{'.' * (20 - progress // 5)}] {progress}%" + Style.RESET_ALL
-    buffer = top_divider + "\n" + progress_line + "\n" + bottom_divider + "\n"
-    
-    if not disable_progress_bar:
-        clear_command_prompt_screen()
-        
-    print(buffer, end = "")
-
-
-def continuous_progress_bar(duration: float, buffer: str, top_divider: str, bottom_divider: str, disable_progress_bar: bool) -> None:
-    start_time = time.time()
-    
-    while True:
-        elapsed_time = time.time() - start_time
-        progress = (elapsed_time / duration) * 100
-        progress = min(100, max(0, progress))  
-        
-        update_progress_bar(progress, buffer, top_divider, bottom_divider, disable_progress_bar)
-        
-        if progress >= 100:
-            break
-
-        if disable_progress_bar:
-            time.sleep(5.0)
-        else:
-            time.sleep(0.025)
-            
-            
-def load_last_editor_run_time(input_file: Path):
-    if input_file.exists():
-        try:
-            with open(input_file, "rb") as f:
-                return pickle.load(f)
-        except EOFError:
-            return 2.0  # Default to 2.0 seconds if the file is empty or corrupted
-    return 2.0          # Default to 2.0 seconds if no run time file exists
-
-
-def save_editor_run_time(run_time: float, output_file: Path) -> None:
-    with open(output_file, "wb") as f:
-        pickle.dump(run_time, f)
-        
-################################################################################################################
-#! ======================= COLORS, SETUP PROGRESS BAR ======================= !#
-
-
-init(autoreset = True)
-
-colors_one = [
-    Fore.RED, Fore.LIGHTRED_EX, Fore.YELLOW, Fore.LIGHTYELLOW_EX, Fore.GREEN, Fore.LIGHTGREEN_EX, 
-    Fore.CYAN, Fore.LIGHTCYAN_EX, Fore.BLUE, Fore.LIGHTBLUE_EX, Fore.MAGENTA, Fore.LIGHTMAGENTA_EX
-    ]
-
-colors_two = [Fore.LIGHTGREEN_EX, Fore.GREEN,Fore.CYAN, Fore.LIGHTCYAN_EX,Fore.BLUE, Fore.LIGHTBLUE_EX]
-
-
-progress_thread = threading.Thread(
-    target = continuous_progress_bar, 
-    args = (
-        load_last_editor_run_time(Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE), 
-        create_bar_divider(colors_one) + "\n" + " " * 60 + "\n" + create_bar_divider(colors_one), 
-        create_bar_divider(colors_one), 
-        create_bar_divider(colors_one), 
-        disable_progress_bar
-        )
-    )
-
-progress_thread.start()
-start_time = time.time()
+progress_thread, start_time = start_progress_tracking(MAP_NAME, EDITOR_RUNTIME_FILE, disable_progress_bar)
 
 ################################################################################################################               
 ################################################################################################################
@@ -6618,16 +6527,27 @@ debug_ai(
 create_ar(Folder.SHOP)
 create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 
-editor_time = time.time() - start_time
-save_editor_run_time(editor_time, Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
+end_time = time.monotonic()
+editor_time = end_time - start_time
+
+# Save the runtime
+runtime_manager = RunTimeManager(Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
+runtime_manager.save(editor_time)
+
+# Wait for progress bar to complete
 progress_thread.join()
 
-print("\n" + create_bar_divider(colors_two))
-print(Fore.LIGHTCYAN_EX  + "   Successfully created " + Fore.LIGHTYELLOW_EX  + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
-print(create_bar_divider(colors_two))
+# Create final output with bar divider using COLORS_TWO
+divider = "=" * BAR_WIDTH
+color_divider = "".join(COLORS_TWO[i % len(COLORS_TWO)] + char for i, char in enumerate(divider))
+final_divider = "\n" + color_divider + "\n"
+
+# Print completion message
+print(final_divider)
+print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
+print(final_divider)
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
-
 
 # Blender
 setup_blender()
@@ -6640,7 +6560,6 @@ set_blender_keybinding()
 create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
-
 
 # Cleanup
 post_editor_cleanup(Folder.BASE / "build", Folder.SHOP, delete_shop_and_build)
