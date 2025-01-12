@@ -65,6 +65,9 @@ from src.User.advanced import *
 from src.User.blender import *
 from src.User.debug import *
 from src.User.append_props import *
+from src.User.races import blitz_race_names, circuit_race_names, checkpoint_race_names, race_data
+from src.User.cnr import cnr_waypoints
+from src.User.anim import animations_data
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -84,151 +87,9 @@ hudmap_properties = {}
 
 progress_thread, start_time = start_progress_tracking(MAP_NAME, EDITOR_RUNTIME_FILE, disable_progress_bar)
 
-################################################################################################################               
-################################################################################################################
-#! ======================= RACE EDITOR ======================= !#
-
-
-#! SETUP III (Race Editor, optional)
-# Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
-# Blitzes can have a total of 11 waypoints (including the start position), the number of waypoints for Circuits and Checkpoints is unlimited
-# The max number of laps in Circuit races is 10
-
-# Race Names
-blitz_race_names = ["Chaotic Tower"]
-circuit_race_names = ["Circuit Race"] 
-checkpoint_race_names = ["Photo Finish"]
-
-# Races
-race_data = {
-    "BLITZ_0": {
-        "player_waypoints": [
-            [0.0, 0.0, 55.0, Rotation.NORTH, 12.0], 
-            [0.0, 0.0, 15.0, Rotation.NORTH, 12.0], 
-            [0.0, 0.0, -40.0, Rotation.NORTH, 12.0], 
-            [0.0, 0.0, -130.0, Rotation.NORTH, 12.0], 
-        ],
-        "mm_data": {
-            "ama": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._100, AmbientDensity._100, PedDensity._100, Laps._3, 999],        
-            "pro": [TimeOfDay.EVENING, Weather.CLOUDY, MaxOpponents._8, CopDensity._100, AmbientDensity._100, PedDensity._100, Laps._3, 999], 
-        },
-        "aimap": {
-            "ambient_density": 0.25,
-            "num_of_police": 2,
-            "police": [
-                f"{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
-                f"{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
-            ],
-            "num_of_opponents": 1,
-            "opponents": {
-                PlayerCar.CADILLAC: [
-                    [5.0, 0.0, 35.0], 
-                    [5.0, 0.0, -130.0],
-                ],
-            },
-            "num_of_exceptions": None,
-            "exceptions": [
-                [4, 0.0, 45],
-                [5, 0.0, 45],
-            ], 
-        },
-    },
-    "RACE_0": {
-        "player_waypoints": [
-            [0.0, 245, -850, Rotation.SOUTH, Width.MEDIUM], 
-            [0.0, 110, -500, Rotation.SOUTH, Width.MEDIUM],  
-            [0.0, 110, -497, Rotation.SOUTH, Width.MEDIUM],   
-            [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
-            [35.0, 12.0, -95.0, Rotation.SOUTH, Width.MEDIUM], 
-            [35.0, 30.0, 0.0, Rotation.SOUTH, Width.MEDIUM], 
-            [35.0, 30.0, 40.0, Rotation.SOUTH, Width.MEDIUM], 
-        ],
-        "mm_data": {
-            "ama": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
-            "pro": [TimeOfDay.NOON, Weather.CLOUDY, MaxOpponents._8, CopDensity._0, AmbientDensity._0, PedDensity._0],
-        },
-        "aimap": {
-            "traffic_density": 0.2,
-            "num_of_police": 0,
-            "police": [
-                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
-            ],
-            "num_of_opponents": 1,
-            "opponents": {
-                PlayerCar.MUSTANG99: [[5.0, 0.0, 35.0], [5.0, 0.0, -130.0]], 
-            },
-        },
-    },
-    "CIRCUIT_0": {
-        "player_waypoints": [
-            [0.0, 245, -850, Rotation.SOUTH, Width.MEDIUM], 
-            [0.0, 110, -500, Rotation.SOUTH, 30.0],    
-            [25.0, 45.0, -325, Rotation.SOUTH, 25.0],   
-            [35.0, 12.0, -95.0, Rotation.SOUTH, Width.MEDIUM], 
-            [35.0, 30.0, 0.0, Rotation.SOUTH, Width.MEDIUM], 
-            [35.0, 30.0, 40.0, Rotation.SOUTH, Width.MEDIUM], 
-        ],
-        "mm_data": {
-            "ama": [TimeOfDay.NIGHT, Weather.RAIN, MaxOpponents._8, CopDensity._0, AmbientDensity._50, PedDensity._50, Laps._2],
-            "pro": [TimeOfDay.NIGHT, Weather.SNOW, MaxOpponents._8, CopDensity._0, AmbientDensity._50, PedDensity._50, Laps._3],
-        },
-        "aimap": {
-            "traffic_density": 0.2,
-            "num_of_police": 0,
-            "police": [
-                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
-            ],
-            "num_of_opponents": 2,
-            "opponents": {
-            TrafficCar.WHITE_LIMO: [
-                [-10.0, 245, -850], 
-                [0.0, 0.0, -100],
-                [-10.0, 0.0, -75.0]
-            ],
-            TrafficCar.BLACK_LIMO: [
-                [10.0, 245, -850],
-                [0.0, 0.0, -100],
-                [10.0, 0.0, -75.0],
-            ],
-            }
-        },
-    }
-}
-
-
-#! SETUP IV (Cops and Robbers, optional)
-cnr_waypoints = [                           
-    ## 1st set, Name: ... ## 
-    (20.0, 1.0, 80.0),                      #? Bank / Blue Team Hideout
-    (80.0, 1.0, 20.0),                      #? Gold
-    (20.0, 1.0, 80.0),                      #? Robber / Red Team Hideout
-    ## 2nd set, Name: ... ## 
-    (-90.0, 1.0, -90.0),
-    (90.0, 1.0, 90.0),
-    (-90.0, 1.0, -90.0)
-]
-
 ################################################################################################################   
 ################################################################################################################
 #! ======================= ANIMATIONS & BRIDGES ======================= !#
-
-
-#! SETUP V (Animations, optional)
-animations_data = {
-    Anim.PLANE: [               # You can not have multiple Planes or Eltrains
-        (450, 30.0, -450),      # You can set any number of coordinates for your path(s)
-        (450, 30.0, 450),       
-        (-450, 30.0, -450),     
-        (-450, 30.0, 450)
-        ], 
-    Anim.ELTRAIN: [
-        (180, 25.0, -180),
-        (180, 25.0, 180), 
-        (-180, 25.0, -180),
-        (-180, 25.0, 180)
-        ]
-}
-
 
 #! SETUP VI Bridges, optional)
 """
