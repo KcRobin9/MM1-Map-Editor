@@ -68,6 +68,8 @@ from src.User.append_props import *
 from src.User.races import blitz_race_names, circuit_race_names, checkpoint_race_names, race_data
 from src.User.cnr import cnr_waypoints
 from src.User.anim import animations_data
+from src.User.bridges import bridge_list, bridge_config_list
+from src.User.physics import custom_physics
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -86,59 +88,6 @@ hudmap_vertices = []
 hudmap_properties = {}
 
 progress_thread, start_time = start_progress_tracking(MAP_NAME, EDITOR_RUNTIME_FILE, disable_progress_bar)
-
-################################################################################################################   
-################################################################################################################
-#! ======================= ANIMATIONS & BRIDGES ======================= !#
-
-#! SETUP VI Bridges, optional)
-"""
-INFO
-    1) You can set a maximum of 1 bridge per cull room, which may have up to 5 attributes
-    2) You can set a bridge without any attributes like this:
-        (-50.0, 0.01, -100.0), 270, 2, BRIDGE_WIDE, [])
-    3) Supported orientations --> see below
-    Or you can manually set the orientation in degrees (0.0 - 360.0).
-"""
-
-# Structure: (x, y, z, rotation, bridge ID, bridge object)
-bridge_list = [
-    ((-50.0, 0.01, -100.0), Rotation.WEST, 2, Prop.BRIDGE_WIDE, [
-    ((-50.0, 0.15, -115.0), Rotation.WEST, 2, Prop.CROSSGATE),
-    ((-50.0, 0.15, -85.0), Rotation.EAST, 2, Prop.CROSSGATE)
-    ]),  
-    ((-119.0, 0.01, -100.0), Rotation.EAST, 3, Prop.BRIDGE_WIDE, [
-    ((-119.0, 0.15, -115.0), Rotation.WEST, 3, Prop.CROSSGATE),
-    ((-119.0, 0.15, -85.0), Rotation.EAST, 3, Prop.CROSSGATE)
-    ])] 
-
-
-#* SETUP VII (optional, Custom Bridge Configs)
-bridge_race_0 = {
-    "RaceType": RaceMode.CHECKPOINT, 
-    "RaceNum": "0", 
-    "BridgeOffGoal": 0.50, 
-    "BridgeOnGoal": 0.50,
-    "GateDelta": 0.40,
-    "GateOffGoal": -1.57,
-    "GateOnGoal": 0.0,
-    "BridgeOnDelay": 7.79,
-    "GateOffDelay": 5.26 ,
-    "BridgeOffDelay": 0.0,
-    "GateOnDelay": 5.0,
-    "Mode": NetworkMode.SINGLE
-}
-
-bridge_cnr = {
-    "RaceType": RaceMode.COPS_AND_ROBBERS,
-    "BridgeDelta": 0.20,
-    "BridgeOffGoal": 0.33,
-    "BridgeOnGoal": 0.33,
-    "Mode": NetworkMode.MULTI
-}
-
-# Pack all Custom Bridge Configurations for processing
-bridge_config_list = [bridge_race_0, bridge_cnr]
 
 ################################################################################################################               
 ################################################################################################################     
@@ -6149,16 +6098,6 @@ lighting_configs = [
         "fill_2_color": (40.0, 0.0, 40.0),
     },
 ]
-
-###################################################################################################################   
-################################################################################################################### 
-#! ======================= SET PHYSICS ======================= !#
-
-
-# Available indices: 94, 95, 96, 97, 98
-custom_physics = {
-    97: {"friction": 20.0, "elasticity": 0.01, "drag": 0.0},  # Sticky
-    98: {"friction": 0.1, "elasticity": 0.01, "drag": 0.0}}   # Slippery
 
 ###################################################################################################################   
 ################################################################################################################### 
