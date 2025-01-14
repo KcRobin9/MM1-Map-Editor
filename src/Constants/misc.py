@@ -1,5 +1,7 @@
 from pathlib import Path
 from src.User.main import MAP_FILENAME
+from src.Vector.vector_2 import Vector2
+from src.Vector.vector_3 import Vector3
 
 
 class Shape:
@@ -18,6 +20,14 @@ class Executable:
     MIDTOWN_MADNESS = "Open1560.exe"
     BLENDER = "Blender"
     NOTEPAD_PLUS_PLUS = "notepad++.exe"
+
+
+class Default:
+    ROOM = 1
+    VECTOR_2 = Vector2(0, 0)
+    VECTOR_3 = Vector3(0, 0, 0)
+    NORMAL = "0.0 1.0 0.0"
+    GAP_2 = 101
 
 
 class Folder:

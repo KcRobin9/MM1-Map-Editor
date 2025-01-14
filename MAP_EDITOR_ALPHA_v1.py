@@ -51,7 +51,7 @@ from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, T
 from src.Constants.textures import Texture, TEXTURE_EXPORT
 from src.Constants.vehicles import PlayerCar, TrafficCar
 from src.Constants.props import Prop, AudioProp
-from src.Constants.misc import Shape, Encoding, Executable, Folder, Threshold, Color, Folder
+from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, Folder
 from src.Constants.facades import Facade
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, AgiTexParameters, Magic, FileType, Anim
 from src.Constants.races import TimeOfDay, Weather, IntersectionType, RaceMode, NetworkMode, CnR, CopBehavior, CopDensity, CopStartLane, PedDensity, AmbientDensity, MaxOpponents, Laps, Rotation, Width
@@ -70,6 +70,11 @@ from src.User.cnr import cnr_waypoints
 from src.User.anim import animations_data
 from src.User.bridges import bridge_list, bridge_config_list
 from src.User.physics import custom_physics
+from src.User.texture_mod import texture_modifications
+from src.User.props import prop_list, random_props, props_to_append
+from src.User.lighting import lighting_configs
+from src.User.prop_properties import prop_properties
+
 
 sys.path.append(str(Path(__file__).parent))
 
@@ -165,15 +170,6 @@ POLYGON
     
 ################################################################################################################               
 ################################################################################################################     
-
-
-class Default:
-    ROOM = 1
-    VECTOR_2 = Vector2(0, 0)
-    VECTOR_3 = Vector3(0, 0, 0)
-    NORMAL = "0.0 1.0 0.0"
-    GAP_2 = 101
-
 
 Default.POLYGON = Polygon(0, 0, 0, [0, 0, 0, 0], [Default.VECTOR_3 for _ in range(4)], Default.VECTOR_3, [0.0], 0)
 polys = [Default.POLYGON]
@@ -2013,14 +2009,14 @@ def copy_dev_folder(input_folder: Path, output_folder: Path) -> None:
     shutil.rmtree(dev_ai_files, ignore_errors = True)
         
          
-def edit_and_copy_mmbangerdata(bangerdata_properties: Dict[str, Dict[str, Union[int, str]]], 
+def edit_and_copy_mmbangerdata(prop_properties: Dict[str, Dict[str, Union[int, str]]], 
                                input_folder: Path, output_folder: Path) -> None:
     
     for file in input_folder.glob(f"*{FileType.PROP_DATA}"):
-        if file.stem not in bangerdata_properties:
+        if file.stem not in prop_properties:
             shutil.copy(file, output_folder)
             
-    for prop_key, properties in bangerdata_properties.items():
+    for prop_key, properties in prop_properties.items():
         banger_files = input_folder / f"{prop_key}{FileType.PROP_DATA}"
         
         if banger_files.exists():
@@ -5997,129 +5993,6 @@ street_list = [cruise_start,
                orange_hill]
 
 ###################################################################################################################   
-###################################################################################################################               
-#! ======================= SET PROPS ======================= !#
-
-
-trailer_set = {"offset": (60, 0.0, 70), 
-               "end": (60, 0.0, -50), 
-               "name": Prop.TRAILER, 
-               "separator": "x"} # Use the {}-axis dimension of the object as the spacing between each prop
-
-bridge_orange_buildling = {          
-          "offset": (35, 12.0, -70),
-          "face": (35 * HUGE, 12.0, -70),
-          "name": Prop.BRIDGE_SLIM}
-
-# Prop for CIRCUIT 0 
-china_gate = {"offset": (0, 0.0, -20), 
-              "face": (1 * HUGE, 0.0, -20), 
-              "name": Prop.CHINATOWN_GATE,
-              "race_mode": RaceMode.CIRCUIT,
-              "race_num": 0}
-
-# Put your non-randomized props here
-prop_list = [trailer_set, bridge_orange_buildling, china_gate] 
-
-# Put your randomized props here (you will add them to the list "random_parameters")
-random_trees = {
-        "offset_y": 0.0,
-        "name": [Prop.TREE_SLIM] * 20}
-
-random_sailboats = {
-        "offset_y": 0.0,
-        "name": [Prop.SAILBOAT] * 19}
-
-random_cars = {
-        "offset_y": 0.0,
-        "separator": 10.0,
-        "name": [PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350, 
-                 PlayerCar.FASTBACK, PlayerCar.MUSTANG99, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI]}
-
-
-# Configure your random props here
-random_props = [
-    {"seed": 123, "num_props": 1, "props_dict": random_trees, "x_range": (65, 135), "z_range": (-65, 65)},
-    {"seed": 99, "num_props": 1, "props_dict": random_sailboats, "x_range": (55, 135), "z_range": (-145, -205)},
-    {"seed": 1, "num_props": 2, "props_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}]
-
-# APPEND PROPS
-app_panoz_gtr = {
-    'offset': (5, 2, 5),
-    'end': (999, 2, 999),
-    'name': PlayerCar.PANOZ_GTR_1}
-
-props_to_append = [app_panoz_gtr]
-
-###################################################################################################################   
-################################################################################################################### 
-#! ======================= SET PROP PROPERTIES ======================= !#
-
-
-# The Size does affect how the prop moves after impact. CG stands for Center of Gravity. 
-bangerdata_properties = {
-    PlayerCar.VW_BEETLE: {"ImpulseLimit2": HUGE, "AudioId": AudioProp.GLASS},
-    PlayerCar.CITY_BUS:  {"ImpulseLimit2": 50, "Mass": 50, "AudioId": AudioProp.POLE, "Size": "18 6 5", "CG": "0 0 0"}}
-
-###################################################################################################################   
-###################################################################################################################   
-#! ======================= SET LIGHTING ======================= !#
-
-
-lighting_configs = [
-    {   
-        # Actual lighting config for Evening and Cloudy
-        "time_of_day": TimeOfDay.EVENING,
-        "weather": Weather.CLOUDY,
-        "sun_heading": 3.14,
-        "sun_pitch": 0.65,
-        "sun_color": (1.0, 0.6, 0.3),
-        "fill_1_heading": -2.5,
-        "fill_1_pitch": 0.45,
-        "fill_1_color": (0.8, 0.9, 1.0),
-        "fill_2_heading": 0.0,
-        "fill_2_pitch": 0.45,
-        "fill_2_color": (0.75, 0.8, 1.0),
-        "ambient_color": (0.1, 0.1, 0.2),
-        "fog_end": 600.0,
-        "fog_color": (230.0, 100.0, 35.0),
-        "shadow_alpha": 180.0,
-        "shadow_color": (15.0, 20.0, 30.0)
-    },
-    {
-        # Custom lighting config for Night and Clear
-        "time_of_day": TimeOfDay.NIGHT,
-        "weather": Weather.CLEAR,
-        "sun_pitch": 10.0,
-        "sun_color": (40.0, 0.0, 40.0),
-        "fill_1_pitch": 10.0,
-        "fill_1_color": (40.0, 0.0, 40.0),
-        "fill_2_pitch": 10.0,
-        "fill_2_color": (40.0, 0.0, 40.0),
-    },
-]
-
-###################################################################################################################   
-################################################################################################################### 
-#! ======================= TEXTURE MODIFICATIONS ======================= !#
-
-
-texture_modifications = [
-    {
-        "name": Texture.ROAD_3_LANE,
-        "flags": [AgiTexParameters.TRANSPARENT, AgiTexParameters.ALPHA_GLOW]
-    },
-    {
-        "name": Texture.ROAD_2_LANE,
-        "flags": [AgiTexParameters.TRANSPARENT, AgiTexParameters.ALPHA_GLOW]
-    },
-    {
-        "name": Texture.ROAD_1_LANE,
-        "flags": [AgiTexParameters.TRANSPARENT, AgiTexParameters.ALPHA_GLOW]
-    }
-]
-
-###################################################################################################################   
 ################################################################################################################### 
 #! ======================= SET DLP ======================= !#
 
@@ -6286,7 +6159,7 @@ LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE
 LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
 copy_dev_folder(Folder.BASE / "dev", Folder.MIDTOWNMADNESS / "dev")
-edit_and_copy_mmbangerdata(bangerdata_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE) 
+edit_and_copy_mmbangerdata(prop_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE) 
 copy_tune_mmcarsim_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
 copy_custom_textures(Folder.BASE / "Custom Textures", Folder.SHOP / "TEX16O")
 
