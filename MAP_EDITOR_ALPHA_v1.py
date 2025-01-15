@@ -49,12 +49,10 @@ from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binar
 
 from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, TEXTURESHEET_MAPPING
 from src.Constants.textures import Texture, TEXTURE_EXPORT
-from src.Constants.vehicles import PlayerCar, TrafficCar
-from src.Constants.props import Prop, AudioProp
+from src.Constants.props import Prop
 from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, Folder
-from src.Constants.facades import Facade
-from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, AgiTexParameters, Magic, FileType, Anim
-from src.Constants.races import TimeOfDay, Weather, IntersectionType, RaceMode, NetworkMode, CnR, CopBehavior, CopDensity, CopStartLane, PedDensity, AmbientDensity, MaxOpponents, Laps, Rotation, Width
+from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
+from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
 from src.Constants.constants import *
 
@@ -74,6 +72,8 @@ from src.User.texture_mod import texture_modifications
 from src.User.props import prop_list, random_props, props_to_append
 from src.User.lighting import lighting_configs
 from src.User.prop_properties import prop_properties
+from src.User.facades import facade_list
+from src.User.ai_streets import street_list
 
 
 sys.path.append(str(Path(__file__).parent))
@@ -5801,199 +5801,6 @@ def set_blender_keybinding() -> None:
         
 ###################################################################################################################   
 ################################################################################################################### 
-#! ======================= SET FACADES ======================= !#
-
-
-#* NOTES:
-#* Separator: (max_x - min_x) / separator(value) = number of facades
-#* Sides: omitted by default, but can be set (relates to lighting, but behavior is not clear)
-#* Scale: enlarges or shrinks non-fixed facades
-
-#* All information about Facades (including pictures) can be found in: 
-# ... / UserResources / FACADES / ...        
-# ... / UserResources / FACADES / FACADE pictures
-
-# Flags (if applicable, consult the documentation for more info)
-# TODO: transform to hex
-FRONT = 1  # Sometimes 1 is also used for the full model
-FRONT_BRIGHT = 3
-
-FRONT_LEFT = 9
-FRONT_BACK = 25
-FRONT_ROOFTOP = 33
-FRONT_LEFT = 41  # Value 73 is also commonly used for this
-FRONT_RIGHT = 49
-
-FRONT_LEFT_ROOF = 105 
-FRONT_RIGHT_ROOF = 145  # Value 177 is also commonly used for this
-FRONT_LEFT_RIGHT = 217
-FRONT_LEFT_RIGHT_ROOF = 249
-
-FRONT_BACK_ROOF = 1057
-FRONT_RIGHT_BACK = 1073
-FRONT_LEFT_ROOF_BACK = 1129
-FRONT_RIGHT_ROOF_BACK = 1201
-ALL_SIDES = 1273
-
-    
-orange_building_one = {
-	"flags": FRONT_BRIGHT,
-	"offset": (-10.0, 0.0, -50.0),
-	"end": (10, 0.0, -50.0),
-	"separator": 10.0,
-	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
-	"axis": "x"}
-
-orange_building_two = {
-	"flags": FRONT_BRIGHT,
-	"offset": (10.0, 0.0, -70.0),
-	"end": (-10, 0.0, -70.0),
-	"separator": 10.0,
-	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
-	"axis": "x"}
-
-orange_building_three = {
-	"flags": FRONT_BRIGHT,
-	"offset": (-10.0, 0.0, -70.0),
-	"end": (-10.0, 0.0, -50.0),
-	"separator": 10.0,
-	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
-	"axis": "z"}
-
-orange_building_four = {
-	"flags": FRONT_BRIGHT,
-	"offset": (10.0, 0.0, -50.0),
-	"end": (10.0, 0.0, -70.0),
-	"name": Facade.BUILDING_ORANGE_WITH_WINDOWS,
-    "axis": "z",
-    "separator": 10.0}
-
-
-# Pack all Facades for processing
-facade_list = [orange_building_one, orange_building_two, orange_building_three, orange_building_four]
-
-###################################################################################################################   
-###################################################################################################################
-#! ======================= SET AI STREETS ======================= !#
-
-
-f"""
-The following variables are OPTIONAL: 
-
-Intersection Type, defaults to: {IntersectionType.CONTINUE}
-(possbile types: 
-{IntersectionType.STOP}, {IntersectionType.STOP_LIGHT}, {IntersectionType.YIELD}, {IntersectionType.CONTINUE})
-
-Stop Light Name, defaults to: {Prop.STOP_LIGHT_SINGLE}
-(possbile names: {Prop.STOP_SIGN}, {Prop.STOP_LIGHT_SINGLE}, {Prop.STOP_LIGHT_DUAL})
-
-Stop Light Positions, defaults to: {(0, 0, 0)}
-Traffic Blocked, Ped Blocked, Road Divided, and Alley, all default to: {NO}
-(possbile values: {YES}, {NO})
-
-# Stop Lights will only show if the Intersection Type is {IntersectionType.STOP_LIGHT}
-"""
-
-#! Do not delete this Street
-cruise_start = {
-    "street_name": "cruise_start",
-    "vertices": [
-        (0, 0, 0),              # Keep this
-        cruise_start_position]}     
-
-main_west = {
-     "street_name": "main_west",
-     "vertices": [
-         (0.0, 0.0, 77.5),
-         (0.0, 0.0, 70.0),
-         (0.0, 0.0, 10.0),
-         (0.0, 0.0, 0.0),
-         (0.0, 0.0, -10.0),
-         (0.0, 0.0, -70.0),
-         (0.0, 0.0, -70.0),
-         (0.0, 0.0, -100.0)]}
-
-main_grass_horz = {
-     "street_name": "main_grass_horz",
-     "vertices": [
-         (0.0, 0.0, -100.0),
-         (20.0, 0.0, -100.0),
-         (25.0, 0.0, -100.0),
-         (30.0, 0.0, -100.0),
-         (35.0, 0.0, -100.0),
-         (40.0, 0.0, -100.0),
-         (45.0, 0.0, -100.0),
-         (50.0, 0.0, -100.0),
-         (95.0, 0.0, -110.0)]}
-
-main_barricade_wood = {
-     "street_name": "barricade_wood",
-     "vertices": [
-         (95.0, 0.0, -110.0),
-         (95.0, 0.0, -70.0),
-         (100.0, 0.0, -50.0),
-         (105.0, 0.0, -30.0),
-         (110.0, 0.0, -10.0),
-         (115.0, 0.0, 10.0),
-         (120.0, 0.0, 30.0),
-         (125.0, 0.0, 50.0),
-         (130.0, 0.0, 70.0),
-         (40.0, 0.0, 100.0)]}
-
-double_triangle = {
-    "street_name": "double_triangle",
-    "vertices": [
-        (40.0, 0.0, 100.0),
-        (-50.0, 0.0, 135.0),
-        (-59.88, 3.04, 125.52),
-        (-84.62, 7.67, 103.28),
-        (-89.69, 8.62, 62.57),
-        (-61.94, 3.42, 32.00),
-        (-20, 0.0, 70.0),
-        (0.0, 0.0, 77.5)]}
-
-orange_hill = {
-    "street_name": "orange_hill",
-    "vertices": [
-        (0.0, 245.0, -850.0),
-        (0.0, 0.0, -210.0),
-        (0.0, 0.0, -155.0),
-        (0.0, 0.0, -100.0)]}
-
-# Street example with multiple lanes and all optional settings
-street_example = {
-    "street_name": "example",
-    "lanes": {
-        "lane_1": [
-            (-40.0, 1.0, -20.0),
-            (-30.0, 1.0, -30.0),
-            (-30.0, 1.0, -50.0),
-        ],
-        "lane_2": [  # Add more lanes if desired
-            (-40.0, 1.0, -20.0),
-            (-40.0, 1.0, -30.0),
-            (-40.0, 1.0, -50.0),
-        ],
-    },
-    "intersection_types": [IntersectionType.STOP_LIGHT, IntersectionType.STOP_LIGHT],
-    "stop_light_names": [Prop.STOP_LIGHT_DUAL, Prop.STOP_LIGHT_DUAL],
-    "stop_light_positions": [
-         (10.0, 0.0, -20.0),        # Offset 1
-         (10.01, 0.0, -20.0),       # Direction 1
-         (-10.0, 0.0, -20.0),       # Offset 2
-         (-10.0, 0.0, -20.1)],      # Direction 2
-    "traffic_blocked": [NO, NO],
-    "ped_blocked": [NO, NO],
-    "road_divided": NO,
-    "alley": NO}
-
-# Pack all AI streets for processing
-street_list = [cruise_start, 
-               main_west, main_grass_horz, main_barricade_wood, double_triangle, 
-               orange_hill]
-
-###################################################################################################################   
-################################################################################################################### 
 #! ======================= SET DLP ======================= !#
 
 s_res = 4
@@ -6130,6 +5937,19 @@ def process_and_visualize_paths(input_folder: Path, output_file: Path, visualize
     apply_path_color_scheme()
             
 ###################################################################################################################   
+
+#! Do not delete or change this Street
+cruise_start = {
+    "street_name": "cruise_start",
+    "vertices": [
+    (0, 0, 0), 
+    cruise_start_position
+    ]
+}     
+
+street_list = street_list + [cruise_start]
+
+###################################################################################################################
 #! ======================= CALL FUNCTIONS ======================= !#
 
 # Core
