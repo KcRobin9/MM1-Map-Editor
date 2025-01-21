@@ -1978,10 +1978,11 @@ def create_folders() -> None:
 def create_map_info(output_file: Path, blitz_race_names: List[str], circuit_race_names: List[str], checkpoint_race_names: List[str]) -> None:
     with open (output_file, "w") as f:
         
+        # Removed 'lower()' for 'RaceDir'
         f.write(f"""
 LocalizedName={MAP_NAME}
 MapName={MAP_FILENAME}
-RaceDir={MAP_FILENAME.lower()}
+RaceDir={MAP_FILENAME}
 BlitzCount={len(blitz_race_names)}
 CircuitCount={len(circuit_race_names)}
 CheckpointCount={len(circuit_race_names)}
