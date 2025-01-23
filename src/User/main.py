@@ -12,7 +12,6 @@ delete_shop_and_build = True    # Change to "True" to delete the raw city files 
 # Map Attributes
 set_bridges = True              #* Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
 set_props = True                # Change to "True" if you want PROPS
-set_bridges = True              # Change to "True" if you want BRIDGES
 set_facades = True              # Change to "True" if you want FACADES
 set_physics = True              # Change to "True" if you want PHYSICS (custom)
 set_animations = True           # Change to "True" if you want ANIMATIONS (plane and eltrain)
