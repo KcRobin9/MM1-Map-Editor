@@ -3,7 +3,7 @@ from src.Constants.textures import Texture
 
 # Map Name
 MAP_NAME = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
-MAP_FILENAME = "First_City"                     # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
+MAP_FILENAME = "FirstCity"                     # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
    
 # Play Game
 play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)

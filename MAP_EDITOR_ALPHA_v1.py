@@ -37,9 +37,10 @@ import subprocess
 import numpy as np
 from pathlib import Path
 from itertools import cycle
-import matplotlib.pyplot as plt                
+import matplotlib.pyplot as plt  
+from dataclasses import dataclass              
 from colorama import Fore
-from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO
+from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO, Sequence
 
 from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
@@ -903,6 +904,21 @@ def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
     return [max_z_for_max_x, min_z_for_max_x, min_z_for_min_x, max_z_for_min_x]
 
+
+def calc_center_coords(points: Sequence[Tuple[float, float, float]]) -> Tuple[float, float, float]:
+    if not points:
+        raise ValueError("Empty sequence of points")
+    xs, ys, zs = zip(*points)
+    n = len(points)
+    return sum(xs) / n, sum(ys) / n, sum(zs) / n
+
+
+def calc_distance(p1: Tuple[float, float, float], p2: Tuple[float, float, float]) -> float:
+    dx = p2[0] - p1[0]
+    dy = p2[1] - p1[1]
+    dz = p2[2] - p1[2]
+    return (dx * dx + dy * dy + dz * dz) ** 0.5
+
 ################################################################################################################ 
 
 def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, game_to_blender: bool = False) -> Tuple[float, float, float]:
@@ -1354,7 +1370,6 @@ def create_polygon(
 ################################################################################################################               
 ################################################################################################################  
 #! =======================CREATING YOUR MAP======================= !#
-
 
 def user_notes():
     """ 
@@ -2305,38 +2320,24 @@ def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, 
 #! ======================= CELLS ======================= !#
 
 
-def update_max_counts(row_length: int, max_warning_count: int, max_error_count: int) -> Tuple[int, int]:
-    if Threshold.CELL_CHARACTER_WARNING <= row_length < Threshold.CELL_CHARACTER_LIMIT:
-        max_warning_count = max(max_warning_count, row_length)
-        
-    elif row_length >= Threshold.CELL_CHARACTER_LIMIT:
-        max_error_count = max(max_error_count, row_length)
-        
-    return max_warning_count, max_error_count
+@dataclass
+class CellCenter:
+    x: float
+    y: float
+    z: float
+    cell_id: int
 
 
-def check_row_size(max_warning_count: int, max_error_count: int) -> None:
-    if Threshold.CELL_CHARACTER_WARNING <= max_warning_count < Threshold.CELL_CHARACTER_LIMIT:
-        warning_message = f"""
-        ***WARNING***
-        Close to row character limit 254 in .CELLS file. 
-        Maximum character count encountered is {max_warning_count}.
-        To reduce the character count, consider setting "always_visible" to False for a few polygons.
-        If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters (2 + 1) in the CELLS file.
-        *************\n
-        """
-        print(warning_message)
-        
-    elif max_error_count >= Threshold.CELL_CHARACTER_LIMIT:
-        error_message = f"""
-        ***ERROR***
-        Character limit of 254 exceeded in .CELLS file.
-        Maximum character count encountered is {max_error_count}.
-        To solve the problem, set "always_visible" to False for a few polygons.
-        If the "cell_id" is e.g. 99 (2 characters), then it consumes 3 characters (2 + 1) in the CELLS file.
-        *************\n
-        """
-        raise ValueError(error_message)
+def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:  
+    for poly in polys:
+        if poly.cell_id == cell_id:
+            return poly.cell_type
+    return Room.DEFAULT
+
+
+def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
+    model = LevelOfDetail.DRIFT if cell_id in mesh_a2_files else LevelOfDetail.HIGH
+    return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
 
 def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
@@ -2357,68 +2358,101 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
     return meshes_regular, meshes_water_drift
 
 
-def get_cell_visiblity(polys: List[Polygon]) -> List[int]:
-    always_visible_cell_ids = [poly.cell_id for poly in polys if poly.always_visible]
+def calculate_cell_centers(polys: List[Polygon]) -> Dict[int, CellCenter]:
+    # print("\nCalculating cell centers...")
+    centers = {}
+    valid_cell_count = 0
     
-    if Default.ROOM not in always_visible_cell_ids:
-        always_visible_cell_ids.insert(0, Default.ROOM)
-        
-    return always_visible_cell_ids
-
-
-def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:  
     for poly in polys:
-        if poly.cell_id == cell_id:
-            return poly.cell_type
-    return Room.DEFAULT
+        if poly.cell_id > 0:  # Only count non-zero cells
+            valid_cell_count += 1
+            vertex_positions = [(vertices[i].x, vertices[i].y, vertices[i].z) for i in poly.vertex_index]
+            center_x, center_y, center_z = calc_center_coords(vertex_positions)
+            
+            centers[poly.cell_id] = CellCenter(center_x, center_y, center_z, poly.cell_id)
+            # print(f"Cell {poly.cell_id} center: ({center_x:.2f}, {center_y:.2f}, {center_z:.2f})")
+    
+    # print(f"Total valid cells (excluding 0): {valid_cell_count}")
+    return centers
 
 
-def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
-    model = LevelOfDetail.DRIFT if cell_id in mesh_a2_files else LevelOfDetail.HIGH
-    return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
+def calculate_distance(center1: CellCenter, center2: CellCenter) -> float:
+    p1 = (center1.x, center1.y, center1.z)
+    p2 = (center2.x, center2.y, center2.z)
+    return calc_distance(p1, p2)
 
 
-def truncate_always_visible(always_visible_cell_ids: List[int], cell_id: int, cell_type: int, mesh_a2_files: Set[int]) -> Tuple[str, int]:
-    always_visible_count = len(always_visible_cell_ids)
-    always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
-    cell_row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+def get_cell_count_limit(cell_id: int, model: int, cell_type: int) -> int:
+    base_line = f"{cell_id},{model},{cell_type},0\n"
+    base_length = len(base_line)
+    
+    # Each additional cell will need: a comma + the number. Assume worst case of 4 digits per cell ID
+    chars_per_cell = 4  # comma + 4 digits
+    
+    remaining_chars = Threshold.CELL_CHARACTER_LIMIT - base_length - 5  # Using actual limit since we handle length proactively
+    max_cells = remaining_chars // chars_per_cell
+    return max_cells
 
-    while len(cell_row) >= Threshold.CELL_CHARACTER_LIMIT:
-        always_visible_cell_ids.pop()
-        always_visible_count = len(always_visible_cell_ids)
-        always_visible_data = f",{always_visible_count},{','.join(map(str, always_visible_cell_ids))}"
-        cell_row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+
+def get_nearest_cells(cell_id: int, centers: Dict[int, CellCenter], max_cells: int) -> List[int]:
+    # (f"\nFinding nearest cells for cell {cell_id}...")
+    
+    if cell_id not in centers:
+        return []
         
-    return cell_row, len(cell_row) 
-        
-        
-def create_cells(output_file: Path, polys: List[Polygon], truncate_cells: bool) -> None:
+    source_center = centers[cell_id]
+    
+    # Calculate distances to all other cells (excluding 0 and self)
+    distances = []
+    for target_center in centers.values():
+        target_id = target_center.cell_id
+        if target_id == cell_id or target_id == 0:  # Skip self and cell 0
+            continue
+            
+        distance = calculate_distance(source_center, target_center)
+        distances.append((distance, target_id))
+    
+    # Sort by distance and take up to max_cells
+    distances.sort()  
+    nearest = [cell_id for _, cell_id in distances[:max_cells]]
+    
+    # print(f"Found {len(nearest)} nearest cells")
+    if nearest:
+        print(f"Distance order: {nearest[:10]}...")
+    
+    return nearest
+
+
+def get_cell_visibility_by_distance(cell_id: int, polys: List[Polygon], cell_type: int) -> List[int]:
+    centers = calculate_cell_centers(polys)
+    max_cells = get_cell_count_limit(cell_id, LevelOfDetail.HIGH, cell_type)
+    return get_nearest_cells(cell_id, centers, max_cells)
+
+
+def create_cells(output_file: Path, polys: List[Polygon]) -> None:
     mesh_files, mesh_a2_files = get_cell_ids(Folder.SHOP_MESH_LANDMARK, Folder.SHOP_MESH_CITY)
 
     with open(output_file, "w") as f:    
         f.write(f"{len(mesh_files)}\n")
         f.write(str(max(mesh_files) + 1000) + "\n")
 
-        always_visible_cell_ids = get_cell_visiblity(polys)
-        always_visible_cell_count = len(always_visible_cell_ids)
-
-        max_warning_count = max_error_count = 0
-
         for cell_id in sorted(mesh_files):
             cell_type = get_cell_type(cell_id, polys)
-            always_visible_data = ",0" if always_visible_cell_count == 0 else f",{always_visible_cell_count},{','.join(map(str, always_visible_cell_ids))}"
+            
+            # Get visible cells based on distance
+            visible_cell_ids = get_cell_visibility_by_distance(cell_id, polys, cell_type)
+            visible_count = len(visible_cell_ids)
+            
+            # Create the visibility data string
+            always_visible_data = f",{visible_count}"
+            if visible_count > 0:
+                always_visible_data += f",{','.join(map(str, visible_cell_ids))}"
+            
+            # Write the cell row
+            model = LevelOfDetail.DRIFT if cell_id in mesh_a2_files else LevelOfDetail.HIGH
             row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
-            row_length = len(row)
-            
-            if truncate_cells and row_length >= Threshold.CELL_CHARACTER_LIMIT:
-                row, row_length = truncate_always_visible(always_visible_cell_ids.copy(), cell_id, cell_type, mesh_a2_files)
-                    
-            max_warning_count, max_error_count = update_max_counts(row_length, max_warning_count, max_error_count)
-            
             f.write(row)
 
-        check_row_size(max_warning_count, max_error_count)
-        
 ################################################################################################################               
 ################################################################################################################
 #! ======================= MINIMAP ======================= !#
@@ -5960,7 +5994,8 @@ create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_
 create_races(race_data)
 create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", cnr_waypoints)
 check_bound_numbers(polys)
-create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys, truncate_cells)
+
+create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
 Bounds.create(Folder.SHOP / "BND" / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
 Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
