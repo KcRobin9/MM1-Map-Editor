@@ -89,11 +89,50 @@ class Vector3:
     
     def Negate(self) -> 'Vector3':
         return Vector3(-self.x, -self.y, -self.z)
+    
+    @classmethod
+    def min(cls, vertices: List['Vector3']) -> 'Vector3':
+        return cls(
+            min(vertex.x for vertex in vertices),
+            min(vertex.y for vertex in vertices),
+            min(vertex.z for vertex in vertices)
+        )
+
+    @classmethod
+    def max(cls, vertices: List['Vector3']) -> 'Vector3':
+        return cls(
+            max(vertex.x for vertex in vertices),
+            max(vertex.y for vertex in vertices),
+            max(vertex.z for vertex in vertices)
+        )
+        
+    @classmethod
+    def center(cls, vertices: List['Vector3']) -> 'Vector3':
+        return sum(vertices, cls(0, 0, 0)) / len(vertices)
+    
+    @staticmethod
+    def calc_normal(a: 'Vector3', b: 'Vector3', c: 'Vector3') -> 'Vector3':
+        try:
+            return (c - b).Cross(a - b).Normalize()
+        except:
+            return Vector3(0, 1, 0)
+            
+    @classmethod
+    def calculate_radius(cls, vertices: List['Vector3'], center: 'Vector3') -> float:
+        return max(vertex.Dist(center) for vertex in vertices)
+
+    @classmethod
+    def calculate_radius_squared(cls, vertices: List['Vector3'], center: 'Vector3') -> float:
+        return max(vertex.Dist2(center) for vertex in vertices)
+        
+    @classmethod
+    def calculate_bounding_box_radius(cls, vertices: List['Vector3']) -> float:
+        return (cls.max(vertices) - cls.min(vertices)).Mag() / 2
 
     def Set(self, x: float, y: float, z: float) -> None:
         self.x = x
         self.y = y
         self.z = z
-                
+     
     def __repr__(self) -> str:
         return f'{{ {round(self.x, 2):.2f}, {round(self.y, 2):.2f}, {round(self.z, 2):.2f} }}'

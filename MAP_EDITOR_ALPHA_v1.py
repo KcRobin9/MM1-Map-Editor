@@ -76,7 +76,6 @@ from src.User.prop_properties import prop_properties
 from src.User.facades import facade_list
 from src.User.ai_streets import street_list
 
-
 sys.path.append(str(Path(__file__).parent))
 
 ################################################################################################################               
@@ -272,11 +271,11 @@ class Bounds:
         magic = Magic.BOUND
         offset = Default.VECTOR_3
         x_dim, y_dim, z_dim = 0, 0, 0
-        center = calculate_center(vertices)
-        radius = calculate_radius(vertices, center)
-        radius_sqr = calculate_radius_squared(vertices, center)
-        bb_min = calculate_min(vertices)
-        bb_max = calculate_max(vertices)
+        center = Vector3.center(vertices)
+        radius = Vector3.calculate_radius(vertices, center)
+        radius_sqr = Vector3.calculate_radius_squared(vertices, center)
+        bb_min = Vector3.min(vertices)
+        bb_max = Vector3.max(vertices)
         num_hot_verts_1, num_hot_verts_2, num_edges = 0, 0, 0
         x_scale, z_scale = 0.0, 0.0
         num_indices, height_scale, cache_size = 0, 0.0, 0
@@ -844,53 +843,14 @@ DLP
 #! ======================= COMMON HELPER FUNCTIONS ======================= !#
 
 
-def calculate_min(vertices: List[Vector3]) -> Vector3:
-    return Vector3(
-        min(vertex.x for vertex in vertices),
-        min(vertex.y for vertex in vertices),
-        min(vertex.z for vertex in vertices)
-    )
-
-
-def calculate_max(vertices: List[Vector3]) -> Vector3:
-    return Vector3(
-        max(vertex.x for vertex in vertices), 
-        max(vertex.y for vertex in vertices), 
-        max(vertex.z for vertex in vertices)
-        )
-
-
-def calculate_center(vertices: List[Vector3]) -> Vector3:
-    return sum(vertices, Vector3(0, 0, 0)) / len(vertices)
-
-
 def calculate_center_tuples(vertices: List[Tuple[float, float, float]]) -> Tuple[float, float, float]:
     return (sum((Vector3.from_tuple(vertex) for vertex in vertices), Vector3(0, 0, 0)) / len(vertices)).to_tuple()
-
-
-def calculate_radius(vertices: List[Vector3], center: Vector3) -> float:
-    return max(vertex.Dist(center) for vertex in vertices)
-
-
-def calculate_radius_squared(vertices: List[Vector3], center: Vector3) -> float:
-    return max(vertex.Dist2(center) for vertex in vertices)
 
 
 def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, float, float]:
     min_values = [min(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
     max_values = [max(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
     return min_values + max_values
-
-
-def calculate_bounding_box_radius(vertices: List[Vector3]) -> float:
-    return (calculate_max(vertices) - calculate_min(vertices)).Mag() / 2  
-
-
-def calc_normal(a: Vector3, b: Vector3, c: Vector3) -> Vector3:
-    try:
-        return (c - b).Cross(a - b).Normalize()
-    except:
-        return Vector3(0, 1, 0)
 
 
 def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
@@ -1046,9 +1006,9 @@ def initialize_mesh(
     shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys] 
     coordinates = [coord for shape in shapes for coord in shape]
         
-    radius = calculate_radius(coordinates, Default.VECTOR_3)  # Use Local Offset for the Center (this is not the case for the Bound files)
-    radiussq = calculate_radius_squared(coordinates, Default.VECTOR_3)
-    bounding_box_radius = calculate_bounding_box_radius(coordinates)    
+    radius = Vector3.calculate_radius(coordinates, Default.VECTOR_3)  # Use Local Offset for the Center (this is not the case for the Bound files)
+    radiussq = Vector3.calculate_radius_squared(coordinates, Default.VECTOR_3)
+    bounding_box_radius = Vector3.calculate_bounding_box_radius(coordinates)  
     
     vertex_count = len(coordinates)
     adjunct_count = len(coordinates)
