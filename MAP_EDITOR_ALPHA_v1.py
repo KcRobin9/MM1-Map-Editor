@@ -20,11 +20,18 @@
     #! =====================================================================
 
 
+# 1. Core Python path setup
 import os
-import re
-import bpy
-import csv
 import sys
+from pathlib import Path
+
+project_root = Path(__file__).parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+    
+# 2. Standard library imports
+import re
+import csv
 import math
 import time
 import psutil
@@ -32,16 +39,19 @@ import shutil
 import random
 import datetime
 import textwrap
-import pyautogui
 import subprocess
-import numpy as np
-from pathlib import Path
 from itertools import cycle
-import matplotlib.pyplot as plt  
-from dataclasses import dataclass              
-from colorama import Fore
+from dataclasses import dataclass
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO, Sequence
 
+# 3. Third-party imports
+import bpy  # Blender's main module
+import numpy as np
+import pyautogui
+import matplotlib.pyplot as plt
+from colorama import Fore
+
+# 4. Map Editor Components
 from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
 from src.Vector.vector_4 import Vector4
@@ -75,8 +85,6 @@ from src.User.lighting import lighting_configs
 from src.User.prop_properties import prop_properties
 from src.User.facades import facade_list
 from src.User.ai_streets import street_list
-
-sys.path.append(str(Path(__file__).parent))
 
 ################################################################################################################               
 ################################################################################################################
@@ -2026,7 +2034,7 @@ def create_ext(output_file: Path, polygons: List[Vector3]) -> None:
                              
 def create_animations(output_file_main: Path, output_file_sub: Path,
                       animations_data: Dict[str, List[Tuple]], set_animations: bool) -> None: 
-    
+
     if not set_animations:    
         return
     
