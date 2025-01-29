@@ -5328,25 +5328,47 @@ class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
     
 ###################################################################################################################? 
 
+def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
+    polygons = [obj for obj in context.scene.objects if obj.name.startswith("P")]
+    if sort:
+        return sorted(polygons, key=lambda x: int(re.search(r"P(\d+)", x.name).group(1)))
+    return polygons
+
+
+def normalize_polygon_names(polygons: list) -> int:
+    for obj in polygons:
+        number = re.search(r"P(\d+)", obj.name).group(1)
+        obj.name = f"P{number}"
+    return len(polygons)
+
+
+def rename_sequential(polygons: list) -> int:
+    for i, obj in enumerate(polygons, 1):
+        obj.name = f"P{i}"
+    return len(polygons)
+
+
 class OBJECT_OT_RenameChildren(bpy.types.Operator):
     bl_idname = "object.auto_rename_children"
     bl_label = "Auto Rename Children Objects"
-
+    
     def execute(self, context: bpy.types.Context) -> set:
-        polygons = [obj for obj in context.scene.objects if re.match(r"^P\d+$", obj.name)]
-
-        polygons.sort(key = lambda x: int(re.search(r"\d+", x.name).group(0)))
-
-        new_index = 1
-        for obj in polygons:
-            if new_index == Threshold.CELL_TYPE_SWITCH:  # Skip the index 200
-                new_index += 1
-            obj.name = f"P{new_index}"
-            new_index += 1
-
-        self.report({"INFO"}, "Renamed Polygons")
+        polygons = get_polygon_objects(context, sort=False)
+        count = normalize_polygon_names(polygons)
+        self.report({"INFO"}, f"Normalized {count} polygon names (preserving order)")
         return {"FINISHED"}
-            
+
+
+class OBJECT_OT_RenameSequential(bpy.types.Operator):
+    bl_idname = "object.rename_sequential"
+    bl_label = "Rename Objects Sequentially"
+    
+    def execute(self, context: bpy.types.Context) -> set:
+        polygons = get_polygon_objects(context, sort=True)
+        count = rename_sequential(polygons)  # Use the new rename_sequential function
+        self.report({"INFO"}, f"Renamed {count} polygon names sequentially")
+        return {"FINISHED"}
+
 ###################################################################################################################   
 ################################################################################################################### 
 #! ======================= BLENDER WAYPOINT OBJECTS / FUNCTIONS ======================= !#
@@ -5724,6 +5746,7 @@ def initialize_blender_operators() -> None:
     bpy.utils.register_class(OBJECT_OT_AssignCustomProperties)
     bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
     bpy.utils.register_class(OBJECT_OT_RenameChildren)
+    bpy.utils.register_class(OBJECT_OT_RenameSequential)
     
 
 def initialize_blender_waypoint_editor() -> None:
@@ -5776,6 +5799,9 @@ def set_blender_keybinding() -> None:
 
         # Ctrl + Shift + Q to rename children objects
         km.keymap_items.new("object.auto_rename_children", "Q", "PRESS", ctrl = True, shift = True)
+
+        # Ctrl + Alt + Q to rename objects sequentially
+        km.keymap_items.new("object.rename_sequential", "Q", "PRESS", ctrl = True, alt = True)
         
         #? === Waypoints === ?#
         # Shift + Y to create a single aypoint
