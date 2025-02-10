@@ -45,18 +45,21 @@ class Folder:
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
 
-    
+
 class Threshold:
     BLITZ_WAYPOINT_COUNT = 11
+
     CHECKPOINT_RACE_COUNT = 12
-    BLITZ_AND_CIRCUIT_RACE_COUNT = 15
-    MESH_VERTEX_COUNT = 16
-    CELL_TYPE_SWITCH = 200
-    CELL_CHARACTER_WARNING = 200
-    CELL_CHARACTER_LIMIT = 0xFF    
-    VERTEX_INDEX_COUNT = 0x8000
+    BLITZ_RACE_COUNT = 15
+    CIRCUIT_RACE_COUNT = 15
     
-        
+    CELL_TYPE_SWITCH = 200
+    CELL_CHARACTER_LIMIT = 0xFF  # 255  
+
+    MESH_VERTEX_COUNT = 16
+    VERTEX_INDEX_COUNT = 0x8000  # 32768
+ 
+    
 class Color:
     RED = (1, 0, 0, 1)
     GREEN = (0, 1, 0, 1)

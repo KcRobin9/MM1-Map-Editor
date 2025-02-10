@@ -2051,16 +2051,6 @@ def create_animations(output_file_main: Path, output_file_sub: Path,
 ################################################################################################################ 
 #! ======================= RACES ======================= !#
 
-def ordinal(n) -> str:
-    if 10 <= n % 100 <= 13:
-        return f"{n}th"
-    
-    return {
-        1: f"{n}st",
-        2: f"{n}nd",
-        3: f"{n}rd",
-}.get(n % 10, f"{n}th")
-
 
 def write_mm_data_header(output_file: str) -> None:
     header = ["Description"] + MM_DATA_HEADER * 2
@@ -2068,7 +2058,7 @@ def write_mm_data_header(output_file: str) -> None:
         f.write(",".join(header) + "\n")
 
 
-def determine_race_prefix(race_type: str, prefix: str, race_index: Optional[int] = None) -> str:
+def determine_mm_data_description(race_type: str, prefix: str, race_index: Optional[int] = None) -> str:
     if race_type == RaceMode.CHECKPOINT:
         return prefix
     else:
@@ -2094,13 +2084,24 @@ def generate_mm_data_string(prefix: str, ama_filled_values: List[Union[int, floa
 def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, prefix: str) -> None:
     with open(output_file, "a") as f:
         for race_index, config in configs.items():
-            final_prefix = determine_race_prefix(race_type, prefix, race_index)
+            mm_data_description = determine_mm_data_description(race_type, prefix, race_index)
                        
             ama_filled_values = fill_mm_data_values(race_type, config["mm_data"]["ama"])
             pro_filled_values = fill_mm_data_values(race_type, config["mm_data"]["pro"])
                         
-            mm_data = generate_mm_data_string(final_prefix, ama_filled_values, pro_filled_values)
+            mm_data = generate_mm_data_string(mm_data_description, ama_filled_values, pro_filled_values)
             f.write(mm_data)
+
+
+def determine_ordinal(n) -> str:
+    if 10 <= n % 100 <= 13:
+        return f"{n}th"
+    
+    return {
+        1: f"{n}st",
+        2: f"{n}nd",
+        3: f"{n}rd",
+}.get(n % 10, f"{n}th")
 
 
 def write_waypoints(output_file, waypoints, race_type: str, race_index: int, opp_num: int = None):
@@ -2115,7 +2116,7 @@ def write_waypoints(output_file, waypoints, race_type: str, race_index: int, opp
                 f.write(opp_waypoints)
                 
         else:
-            player_waypoint_header = (f"# This is your {ordinal(race_index)} {race_type} race Waypoint file\n")
+            player_waypoint_header = (f"# This is your {determine_ordinal(race_index)} {race_type} race Waypoint file\n")
             f.write(player_waypoint_header)
             
             for waypoint in waypoints:
@@ -2190,27 +2191,35 @@ def write_aimap(output_file: Path, traffic_density: float, exceptions_data_forma
 def check_race_count(race_type: str, config) -> None:
     if race_type == RaceMode.CHECKPOINT:  
         if len(config) > Threshold.CHECKPOINT_RACE_COUNT:
-            checkpoint_race_count_error = """
+            checkpoint_race_count_error = f"""
             ***ERROR***
-            Number of Checkpoint races cannot be more than 12
+            Number of Checkpoint races cannot be more than {Threshold.CHECKPOINT_RACE_COUNT}
             """
             raise ValueError(checkpoint_race_count_error)
     
-    elif race_type == RaceMode.BLITZ or race_type == RaceMode.CIRCUIT:
-        if len(config) > Threshold.BLITZ_AND_CIRCUIT_RACE_COUNT:
-            race_count_error = """
+    elif race_type == RaceMode.BLITZ:
+        if len(config) > Threshold.BLITZ_RACE_COUNT:
+            blitz_race_count_error = f"""
             ***ERROR***
-            Number of Blitz races and/or Circuit races cannot be more than 15
+            Number of Blitz races cannot be more than {Threshold.BLITZ_RACE_COUNT}
             """ 
-            raise ValueError(race_count_error)
-        
-        
+            raise ValueError(blitz_race_count_error)
+            
+    elif race_type == RaceMode.CIRCUIT:
+        if len(config) > Threshold.CIRCUIT_RACE_COUNT:
+            circuit_race_count_error = f"""
+            ***ERROR***
+            Number of Circuit races cannot be more than {Threshold.CIRCUIT_RACE_COUNT}
+            """ 
+            raise ValueError(circuit_race_count_error)
+
+
 def check_waypoint_count(race_type: str, waypoints) -> None:
     if race_type == RaceMode.BLITZ:
         if len(waypoints) > Threshold.BLITZ_WAYPOINT_COUNT:
-            blitz_waypoint_count_error = """
+            blitz_waypoint_count_error = f"""
             ***ERROR***
-            Number of waypoints for Blitz race cannot be more than 10
+            Number of waypoints for Blitz race cannot be more than {Threshold.BLITZ_WAYPOINT_COUNT}
             """
             raise ValueError(blitz_waypoint_count_error)
 
