@@ -20,7 +20,7 @@
     #! =====================================================================
 
 
-# 1. Core Python path setup
+# Core Python path setup
 import os
 import sys
 from pathlib import Path
@@ -29,7 +29,7 @@ project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
     
-# 2. Standard library imports
+# Standard library imports
 import re
 import csv
 import math
@@ -44,14 +44,14 @@ from itertools import cycle
 from dataclasses import dataclass
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO, Sequence
 
-# 3. Third-party imports
+# Third-party imports
 import bpy  # Blender's main module
 import numpy as np
 import pyautogui
 import matplotlib.pyplot as plt
 from colorama import Fore
 
-# 4. Map Editor Components
+# Map Editor Components
 from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
 from src.Vector.vector_4 import Vector4
@@ -73,18 +73,21 @@ from src.User.main import *
 from src.User.advanced import *
 from src.User.blender import *
 from src.User.debug import *
-from src.User.append_props import *
-from src.User.races import blitz_race_names, circuit_race_names, checkpoint_race_names, race_data
-from src.User.cnr import cnr_waypoints
-from src.User.anim import animations_data
+
+from src.User.races import race_data, blitz_race_names, circuit_race_names, checkpoint_race_names
+from src.User.cops_and_robbers import cops_and_robbers_waypoints
+from src.User.ai_streets import street_list
+
+from src.User.animations import animations_data
 from src.User.bridges import bridge_list, bridge_config_list
 from src.User.physics import custom_physics
-from src.User.texture_mod import texture_modifications
-from src.User.props import prop_list, random_props, props_to_append
-from src.User.lighting import lighting_configs
-from src.User.prop_properties import prop_properties
 from src.User.facades import facade_list
-from src.User.ai_streets import street_list
+from src.User.lighting import lighting_configs
+from src.User.texture_mod import texture_modifications
+
+from src.User.props import random_props, prop_list
+from src.User.prop_properties import prop_properties
+from src.User.props_append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
 
 ################################################################################################################               
 ################################################################################################################
@@ -110,7 +113,7 @@ progress_thread, start_time = start_progress_tracking(MAP_NAME, EDITOR_RUNTIME_F
 class Polygon:
     def __init__(self, cell_id: int, material_index: int, flags: int, vertex_index: List[int],
                  plane_edges: List[Vector3], plane_normal: Vector3, plane_distance: float, 
-                 cell_type: int = 0, always_visible: bool = False) -> None:
+                 cell_type: int = Room.DEFAULT, always_visible: bool = False) -> None:
         
         self.cell_id = cell_id
         self.material_index = material_index
@@ -5663,7 +5666,7 @@ class LOAD_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
     bl_label = "Load Waypoints from CSV"
 
     def execute(self, context: bpy.types.Context) -> set:
-        load_waypoints_from_csv(waypoint_file)
+        load_waypoints_from_csv(input_waypoint_file)
         self.report({"INFO"}, "Loaded Waypoints from CSV")
         return {"FINISHED"}
 
@@ -6005,7 +6008,7 @@ aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP / "MTL" / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
 
-TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.BASE / "Custom Textures", Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
+TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.SRC_USER_CUSTOM_TEXTURES, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
 TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
                     
 prop_editor = BangerEditor()
@@ -6020,7 +6023,7 @@ LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "
 copy_dev_folder(Folder.BASE / "dev", Folder.MIDTOWNMADNESS / "dev")
 edit_and_copy_mmbangerdata(prop_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE) 
 copy_tune_mmcarsim_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
-copy_custom_textures(Folder.BASE / "Custom Textures", Folder.SHOP / "TEX16O")
+copy_custom_textures(Folder.SRC_USER_CUSTOM_TEXTURES, Folder.SHOP / "TEX16O")
 
 create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.EXT}", hudmap_vertices)
 create_animations(Folder.SHOP_CITY / MAP_FILENAME / f"ANIM{FileType.CSV}", Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   

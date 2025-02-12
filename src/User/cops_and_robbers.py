@@ -1,4 +1,4 @@
-cnr_waypoints = [                           
+cops_and_robbers_waypoints = [                           
     ## 1st set, Name: ... ## 
     (20.0, 1.0, 80.0),                      #? Bank / Blue Team Hideout
     (80.0, 1.0, 20.0),                      #? Gold

@@ -55,13 +55,3 @@ random_props = [
     {"seed": 99, "num_props": 1, "props_dict": random_sailboats, "x_range": (55, 135), "z_range": (-145, -205)},
     {"seed": 1, "num_props": 2, "props_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}
 ]
-
-
-# Put the Props that should be Appended to an existing BNG file here
-app_panoz_gtr = {
-    'offset': (5, 2, 5),
-    'end': (999, 2, 999),
-    'name': PlayerCar.PANOZ_GTR_1
-}
-
-props_to_append = [app_panoz_gtr]

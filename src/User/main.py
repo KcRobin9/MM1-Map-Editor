@@ -10,7 +10,7 @@ play_game = True                # Change to "True" to start the game after the M
 delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_bridges = True              #* Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
+set_bridges = True              #! Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
 set_props = True                # Change to "True" if you want PROPS
 set_facades = True              # Change to "True" if you want FACADES
 set_physics = True              # Change to "True" if you want PHYSICS (custom)
@@ -26,7 +26,6 @@ minimap_outline_color = None    # Change the outline of the minimap shapes to an
 set_ai_streets = True           # Change to "True" if you want AI streets
 set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI streets
 set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
-visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
 
 # Car Start Position in Cruise (if no polygon has the option "base = True")
 cruise_start_position = (40.0, 30.0, -40.0)
