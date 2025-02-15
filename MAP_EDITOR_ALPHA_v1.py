@@ -69,6 +69,8 @@ from src.Constants.constants import *
 
 from src.ProgressBar.code import start_progress_tracking, RunTimeManager
 
+from src.Blender.setup import delete_existing_meshes, enable_developer_extras, enable_vertex_snapping, adjust_3D_view_settings
+
 from src.User.main import *
 from src.User.advanced import *
 from src.User.blender import *
@@ -4573,52 +4575,12 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
 ################################################################################################################### 
 #! ======================= BLENDER SETUP ======================= !#
 
-    
-def delete_existing_meshes() -> None:
-    bpy.ops.object.select_all(action = "SELECT")
-    bpy.ops.object.delete()
 
-
-def enable_developer_extras() -> None:
-    prefs = bpy.context.preferences
-    view = prefs.view
-    
-    if not view.show_developer_ui:
-        view.show_developer_ui = True
-        bpy.ops.wm.save_userpref()
-        print("Developer Extras enabled!")
-    else:
-        print("Developer Extras already enabled!")
-        
-        
-def enable_vertex_snapping() -> None:
-    bpy.context.tool_settings.use_snap = True
-    bpy.context.tool_settings.snap_elements = {"VERTEX"}
-    bpy.context.tool_settings.snap_target = "CLOSEST"  
-        
-           
-def adjust_3D_view_settings() -> None:
-    for area in bpy.context.screen.areas:
-        if area.type == "VIEW_3D":
-            for space in area.spaces:
-                if space.type == "VIEW_3D":
-                    
-                    # Clip distance
-                    space.clip_end = 5000.0
-                    
-                    # Set the shading mode to Solid
-                    shading = space.shading
-                    shading.type = "SOLID"
-                    
-                    # Uniform Lighting
-                    shading.light = "FLAT"
-                    shading.color_type = "TEXTURE"
-                    
-                    
 def initialize_depsgraph_update_handler() -> None:    
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
 
 
+# TODO: move this to src/Blender/...
 def setup_blender() -> None:
     if not is_process_running(Executable.BLENDER):
         return
