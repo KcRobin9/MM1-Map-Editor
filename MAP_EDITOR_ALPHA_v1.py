@@ -71,6 +71,8 @@ from src.ProgressBar.code import start_progress_tracking, RunTimeManager
 
 from src.Blender.setup import delete_existing_meshes, enable_developer_extras, enable_vertex_snapping, adjust_3D_view_settings
 
+from src.FileFormats.DLP.dlp import DLP
+
 from src.User.main import *
 from src.User.advanced import *
 from src.User.blender import *
@@ -90,6 +92,8 @@ from src.User.texture_mod import texture_modifications
 from src.User.props import random_props, prop_list
 from src.User.prop_properties import prop_properties
 from src.User.props_append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
+
+from src.User.dlp import dlp_groups, dlp_patches, dlp_vertices
 
 ################################################################################################################               
 ################################################################################################################
@@ -633,224 +637,7 @@ MESH
     Surface Sides: {self.surface_sides}\n
     Indices Sides: {self.indices_sides}\n
     """
-             
-################################################################################################################               
-################################################################################################################   
-#! ======================= DLP CLASSES ======================= !#
-
-
-class DLPVertex: 
-    def __init__(self, id: int, normal: Vector3, uv: Vector2, color: int) -> None:
-        self.id = id
-        self.normal = normal
-        self.uv = uv
-        self.color = color
-        
-    @classmethod
-    def read(cls, f: BinaryIO) -> 'DLPVertex':
-        id, = read_unpack(f, '>H')
-        normal = Vector3.read(f, '>')
-        uv = Vector2.read(f, '>')
-        color, = read_unpack(f, '>I')       
-        return cls(id, normal, uv, color)
-    
-    def write(self, f: BinaryIO) -> None:
-        write_pack(f, '>H', self.id)
-        self.normal.write(f, '>')    
-        self.uv.write(f, '>')       
-        write_pack(f, '>I', self.color)
-           
-    def __repr__(self) -> str:
-        return f"""
-            Id: {self.id}
-            Normal: {self.normal}
-            UV: {self.uv}
-            Color: {self.color}
-            """
-    
-            
-class DLPPatch:
-    def __init__(self, s_res: int, t_res: int, flags: int, r_opts: int, 
-                 material_index: int, texture_index: int, physics_index: int, 
-                 vertices: List[DLPVertex], name: str) -> None:
-        
-        self.s_res = s_res
-        self.t_res = t_res
-        self.flags = flags
-        self.r_opts = r_opts
-        self.material_index = material_index
-        self.texture_index = texture_index
-        self.physics_index = physics_index
-        self.vertices = vertices
-        self.name = name
-        
-    @classmethod
-    def read(cls, f: BinaryIO) -> 'DLPPatch':
-        s_res, t_res = read_unpack(f, '>2H')
-        flags, r_opts = read_unpack(f, '>2H')
-        material_index, texture_index, physics_index = read_unpack(f, '>3H')        
-        vertices = [DLPVertex.read(f) for _ in range(s_res * t_res)]
-        name_length, = read_unpack(f, '>I')
-        name = read_binary_name(f, name_length)
-        return cls(s_res, t_res, flags, r_opts, material_index, texture_index, physics_index, vertices, name)
-    
-    def write(self, f: BinaryIO) -> None:
-        write_pack(f, '>2H', self.s_res, self.t_res) 
-        write_pack(f, '>2H', self.flags, self.r_opts)
-        write_pack(f, '>3H', self.material_index, self.texture_index, self.physics_index)
-        
-        for vertex in self.vertices:
-            vertex.write(f)
-            
-        write_pack(f, '>I', len(self.name))        
-        write_binary_name(f, self.name)
-        
-    def __repr__(self) -> str:
-        return f"""
-    Patch:
-        S Res: {self.s_res}
-        T Res: {self.t_res}
-        Flags: {self.flags}
-        R Opts: {self.r_opts}
-        Material Index: {self.material_index}
-        Texture Index: {self.texture_index}
-        Physics Index: {self.physics_index}
-        Name: {self.name}
-        Vertex: {self.vertices}
-        """
-
-
-class DLPGroup:
-    def __init__(self, name: str, num_vertices: int, num_patches: int, 
-                 vertex_indices: tuple[int, ...], patch_indices: tuple[int, ...]) -> None:
-        
-        self.name = name
-        self.num_vertices = num_vertices
-        self.num_patches = num_patches
-        self.vertex_indices = vertex_indices
-        self.patch_indices = patch_indices
-        
-    @classmethod
-    def read(cls, f: BinaryIO) -> 'DLPGroup':
-        name_length, = read_unpack(f, '>B')
-        name = read_binary_name(f, name_length)        
-        num_vertices, num_patches = read_unpack(f, '>2I')        
-        vertex_indices = [read_unpack(f, '>H')[0] for _ in range(num_vertices)]
-        patch_indices = [read_unpack(f, '>H')[0] for _ in range(num_patches)]     
-        return cls(name, num_vertices, num_patches, vertex_indices, patch_indices)
-
-    def write(self, f: BinaryIO) -> None:
-        write_pack(f, '>B', len(self.name))
-        write_binary_name(f, self.name)        
-        write_pack(f, '>2I', self.num_vertices, self.num_patches)
-        write_pack(f, f'>{self.num_vertices}H', *self.vertex_indices)
-        write_pack(f, f'>{self.num_patches}H', *self.patch_indices)
-        
-    def __repr__(self) -> str:
-        return f"""
-    Group:
-        Name: {self.name}
-        Num Vertices: {self.num_vertices}
-        Num Patches: {self.num_patches}
-        Vertex Indices: {self.vertex_indices}
-        Patch Indices: {self.patch_indices}
-        """
-
-
-class DLP:
-    def __init__(self, magic: str, num_groups: int, num_patches: int, num_vertices: int, 
-                 groups: List[DLPGroup], patches: List[DLPPatch], vertices: List[Vector3]) -> None:
-        
-        self.magic = magic
-        self.num_groups = num_groups
-        self.num_patches = num_patches
-        self.num_vertices = num_vertices
-        self.groups = groups
-        self.patches = patches
-        self.vertices = vertices 
-        
-    @classmethod
-    def read(cls, f: BinaryIO) -> 'DLP':
-        magic = read_binary_name(f, len(Magic.DEVELOPMENT))          
-        num_groups, num_patches, num_vertices = read_unpack(f, '>3I')
-        groups = [DLPGroup.read(f) for _ in range(num_groups)]
-        patches = [DLPPatch.read(f) for _ in range(num_patches)]
-        vertices = Vector3.readn(f, num_vertices, '>')
-        return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
-
-    def write(self, output_file: str, set_dlp: bool) -> None:
-        if not set_dlp:
-            return
-        
-        with open(output_file, "wb") as f:
-            write_binary_name(f, self.magic) 
-            write_pack(f, '>3I', self.num_groups, self.num_patches, self.num_vertices)      
-            
-            for group in self.groups:
-                group.write(f)
-                      
-            for patch in self.patches:
-                patch.write(f)    
-
-            for vertex in self.vertices: 
-                vertex.write(f, '>') 
-                                    
-    @staticmethod          
-    def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
-        if not debug_dlp_file:
-            return
-        
-        if not input_file.exists():
-            raise FileNotFoundError(f"The file {input_file} does not exist.")
-
-        if not output_file.parent.exists():
-            print(f"The output folder {output_file.parent} does not exist. Creating it.")
-            output_file.parent.mkdir(parents = True, exist_ok = True)
-        
-        with open(input_file, "rb") as in_f:
-            dlp_data = DLP.read(in_f)
-
-        with open(output_file, "w") as out_f:
-            out_f.write(repr(dlp_data))
-            
-        print(f"Processed {input_file.name} to {output_file.name}")
-             
-    @staticmethod
-    def debug_folder(input_folder: Path, output_folder: Path, debug_dlp_folder: bool) -> None:
-        if not debug_dlp_folder:
-            return
-        
-        if not input_folder.exists():
-            raise FileNotFoundError(f"The folder {input_folder} does not exist.")
-
-        dlp_files = list(input_folder.glob(f"*{FileType.DEVELOPMENT}"))
-        
-        if not dlp_files:
-            raise FileNotFoundError(f"No {FileType.DEVELOPMENT} files found in {input_folder}.")
-        
-        if not output_folder.exists():
-            print(f"The output folder {output_folder} does not exist. Creating it.")
-            output_folder.mkdir(parents = True, exist_ok = True)
-
-        for file in dlp_files:
-            output_file = output_folder / file.with_suffix({FileType.TEXT}).name
-            DLP.debug_file(file, output_file, debug_dlp_folder)     
-
-            print(f"Processed {file.name} to {output_file.name}")    
-                                                        
-    def __repr__(self) -> str:
-        return f"""
-DLP
-    Magic: {self.magic}
-    Num Groups: {self.num_groups}
-    Num Patches: {self.num_patches}
-    Num Vertices: {self.num_vertices}\n
-    {self.groups}\n
-    {self.patches}\n
-    Vertices: 
-        {self.vertices}
-    """
-            
+                         
 ################################################################################################################               
 ################################################################################################################     
 #! ======================= COMMON HELPER FUNCTIONS ======================= !#
@@ -4482,7 +4269,7 @@ def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices: List
 #! ======================= FINALIZING FUNCTIONS ======================= !#
 
 
-def create_ar(shop_folder: Path) -> None:
+def create_angel_resource_file(shop_folder: Path) -> None:
     for file in Path("angel").iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, shop_folder / file.name)
@@ -5801,44 +5588,6 @@ def set_blender_keybinding() -> None:
         
         # Alt + C to load CnR waypoints from CSV
         km.keymap_items.new("load.cnr_from_csv", "O", "PRESS", alt = True)
-        
-###################################################################################################################   
-################################################################################################################### 
-#! ======================= SET DLP ======================= !#
-
-s_res = 4
-t_res = 1
-r_opts = 636
-dlp_flags = 1289  # 1513
-material_index = 0
-texture_index = 0
-physics_index = 0
-
-dlp_patch_name = ""
-dlp_group_name = "BOUND\x00" 
-
-dlp_normals = [
-    DLPVertex(0, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
-    DLPVertex(1, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
-    DLPVertex(2, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE),
-    DLPVertex(3, Default.VECTOR_3, Default.VECTOR_2, Color.WHITE)
-    ]
-
-dlp_vertices = [ 
-      Vector3(-50.0, 0.0, 80.0),
-      Vector3(-140.0, 0.0, 50.0),
-      Vector3(-100.0, 0.0, 10.0),
-      Vector3(-50.0, 0.0, 30.0)
-      ]
-
-dlp_groups = [DLPGroup(dlp_group_name, 0, 2, [], [0, 1])]
-               
-dlp_patches = [
-    DLPPatch(s_res, t_res, dlp_flags, r_opts, material_index, texture_index, physics_index, 
-             [dlp_normals[0], dlp_normals[1], dlp_normals[2], dlp_normals[3]], dlp_patch_name),
-    DLPPatch(s_res, t_res, dlp_flags, r_opts, material_index, texture_index, physics_index, 
-             [dlp_normals[3], dlp_normals[2], dlp_normals[1], dlp_normals[0]], dlp_patch_name)
-    ] 
 
 ###################################################################################################################   
 ################################################################################################################### 
@@ -5960,7 +5709,7 @@ create_folders()
 create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
 
 create_races(race_data)
-create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", cnr_waypoints)
+create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
 check_bound_numbers(polys)
 
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
@@ -6021,7 +5770,7 @@ debug_ai(
     )
 
 # Finalizing Part
-create_ar(Folder.SHOP)
+create_angel_resource_file(Folder.SHOP)
 create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 
 end_time = time.monotonic()
