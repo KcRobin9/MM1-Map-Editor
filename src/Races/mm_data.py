@@ -1,3 +1,9 @@
+from typing import Optional, List, Union, Dict
+
+from src.Constants.constants import MM_DATA_HEADER, DEFAULT_MM_DATA_BY_RACE_MODE
+from src.Constants.races import RaceMode
+
+
 def write_mm_data_header(output_file: str) -> None:
     header = ["Description"] + MM_DATA_HEADER * 2
     with open(output_file, "w") as f:
@@ -36,4 +42,5 @@ def write_mm_data(output_file: str, configs: Dict[str, Dict], race_type: str, pr
             pro_filled_values = fill_mm_data_values(race_type, config["mm_data"]["pro"])
                         
             mm_data = generate_mm_data_string(mm_data_description, ama_filled_values, pro_filled_values)
+
             f.write(mm_data)
