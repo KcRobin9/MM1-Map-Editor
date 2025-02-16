@@ -67,11 +67,15 @@ from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Ro
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
 from src.Constants.constants import *
 
+from src.Geometry.utils import calculate_extrema
+
 from src.ProgressBar.code import start_progress_tracking, RunTimeManager
 
 from src.Blender.setup import delete_existing_meshes, enable_developer_extras, enable_vertex_snapping, adjust_3D_view_settings
 
-from src.FileFormats.DLP.dlp import DLP
+from src.FileFormats.dlp import DLP
+from src.FileFormats.ext import create_ext
+from src.FileFormats.animations import create_animations
 
 from src.User.main import *
 from src.User.advanced import *
@@ -568,15 +572,15 @@ class Meshes:
         self.cache_size += self.align_size(self.indices_count * calc_size('H'))
         self.cache_size += self.align_size(self.surface_count * calc_size('B'))
                                        
-    def debug(self, output_file: Path, debug_folder: Path, debug_meshes: bool) -> None:
+    def debug(self, output_file: Path, output_folder: Path, debug_meshes: bool) -> None:
         if not debug_meshes:
             return
             
-        if not debug_folder.exists():
-            print(f"The output folder {debug_folder} does not exist. Creating it.")
-            debug_folder.mkdir(parents = True, exist_ok = True)
+        if not output_folder.exists():
+            print(f"The output folder {output_folder} does not exist. Creating it.")
+            output_folder.mkdir(parents = True, exist_ok = True)
 
-        with open(debug_folder / output_file, "w") as f:
+        with open(output_folder / output_file, "w") as f:
             f.write(str(self))
             
     @classmethod
@@ -645,12 +649,6 @@ MESH
 
 def calculate_center_tuples(vertices: List[Tuple[float, float, float]]) -> Tuple[float, float, float]:
     return (sum((Vector3.from_tuple(vertex) for vertex in vertices), Vector3(0, 0, 0)) / len(vertices)).to_tuple()
-
-
-def calculate_extrema(vertices, coord_indexes = (0, 2)) -> Tuple[float, float, float, float]:
-    min_values = [min(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
-    max_values = [max(point[index] for polygon in vertices for point in polygon) for index in coord_indexes]
-    return min_values + max_values
 
 
 def sort_coordinates(vertex_coordinates: List[Vector3]) -> List[Vector3]:
@@ -1810,37 +1808,6 @@ def edit_and_copy_mmbangerdata(prop_properties: Dict[str, Dict[str, Union[int, s
                    
 ################################################################################################################               
 ################################################################################################################
-#! ======================= EXT ======================= !#
-
-
-def create_ext(output_file: Path, polygons: List[Vector3]) -> None:
-    min_x, min_z, max_x, max_z = calculate_extrema(polygons)
-
-    with open(output_file, "w") as f:
-        f.write(f"{min_x} {min_z} {max_x} {max_z}")
-        
-################################################################################################################               
-################################################################################################################
-#! ======================= ANIMATIONS ======================= !#
-
-                             
-def create_animations(output_file_main: Path, output_file_sub: Path,
-                      animations_data: Dict[str, List[Tuple]], set_animations: bool) -> None: 
-
-    if not set_animations:    
-        return
-    
-    with open(output_file_main, "w", newline = "") as main_f:
-        for anim in animations_data:
-            csv.writer(main_f).writerow([f"anim_{anim}"])
-
-            with open(output_file_sub / f"ANIM_{anim.upper()}{FileType.CSV}", "w", newline = "") as anim_f:                    
-                for coord in animations_data[anim]:
-    
-                    csv.writer(anim_f).writerow(coord)
-                    
-################################################################################################################               
-################################################################################################################ 
 #! ======================= RACES ======================= !#
 
 
@@ -5737,7 +5704,7 @@ copy_tune_mmcarsim_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
 copy_custom_textures(Folder.SRC_USER_CUSTOM_TEXTURES, Folder.SHOP / "TEX16O")
 
 create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.EXT}", hudmap_vertices)
-create_animations(Folder.SHOP_CITY / MAP_FILENAME / f"ANIM{FileType.CSV}", Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
+create_animations(Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
 create_bridges(bridge_list, set_bridges, Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.GIZMO}") 
 create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
@@ -5750,16 +5717,18 @@ editor = BangerEditor()
 shutil.copy(append_input_props_file, append_output_props_file)
 editor.append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 
-# File Debugging
+# File / Folder Debugging
+DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG_RESOURCES / "BOUNDS" / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
 Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
-Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
 Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
 Portals.debug_file(debug_portals_data_file, Folder.DEBUG_RESOURCES / "PORTALS" / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
 Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG_RESOURCES / "MESHES" / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
-Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG_RESOURCES / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG_RESOURCES / "BOUNDS" / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
-Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
 DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+
+Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
+Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG_RESOURCES / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
+Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
 DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
 debug_ai(
