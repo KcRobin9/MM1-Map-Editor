@@ -1744,7 +1744,7 @@ def create_folders() -> None:
         Folder.SHOP / "BMS" / f"{MAP_FILENAME}LM",
         Folder.SHOP / "BND" / f"{MAP_FILENAME}CITY",
         Folder.SHOP / "BND" / f"{MAP_FILENAME}LM",
-        Folder.BASE / "dev" / "CITY" / MAP_FILENAME,
+        Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME,
         ]
     
     for path in FOLDER_STRUCTURE:
@@ -1767,48 +1767,29 @@ CircuitNames={'|'.join(circuit_race_names)}
 CheckpointNames={'|'.join(checkpoint_race_names)}
 """)
 
-    
-def copy_custom_textures(input_folder: Path, output_folder: Path) -> None: 
-    for custom_tex in input_folder.iterdir():
-        shutil.copy(custom_tex, output_folder / custom_tex.name)
-        
-        
-def copy_tune_mmcarsim_files(input_folder: Path, output_folder: Path) -> None:
-    for file in input_folder.glob(f"*{FileType.CAR_SIMULATION}"):
-        shutil.copy(file, output_folder)
 
-            
-def copy_dev_folder(input_folder: Path, output_folder: Path) -> None:
-    shutil.rmtree(output_folder, ignore_errors = True)  
-    shutil.copytree(input_folder, output_folder)
-    
-    dev_ai_files = input_folder / "CITY" / MAP_FILENAME
-    shutil.rmtree(dev_ai_files, ignore_errors = True)
-        
-         
-def edit_and_copy_mmbangerdata(prop_properties: Dict[str, Dict[str, Union[int, str]]], 
-                               input_folder: Path, output_folder: Path) -> None:
-    
-    for file in input_folder.glob(f"*{FileType.PROP_DATA}"):
-        if file.stem not in prop_properties:
-            shutil.copy(file, output_folder)
-            
-    for prop_key, properties in prop_properties.items():
-        banger_files = input_folder / f"{prop_key}{FileType.PROP_DATA}"
-        
-        if banger_files.exists():
-            with open(banger_files, "r") as f: 
-                lines = f.readlines()
+def copy_files_to_folder (input_folder: Path, output_folder: Path, pattern: str = "*") -> None:
+    for file in input_folder.glob(pattern):
+        if file.is_file():
+            shutil.copy(file, output_folder / file.name)
 
-            for i, line in enumerate(lines):
-                for key, new_value in properties.items():
-                    if line.strip().startswith(key):
-                        lines[i] = f'\t{key} {new_value}\n'
-            
-            tweaked_banger_files = output_folder / banger_files.name
-            with open(tweaked_banger_files, "w") as f:
-                f.writelines(lines)
-                   
+
+def copy_custom_textures_to_shop(input_folder: Path, output_folder: Path) -> None:
+    copy_files_to_folder (input_folder, output_folder)
+
+
+def copy_carsim_files_to_shop(input_folder: Path, output_folder: Path, file_type: str) -> None:
+    copy_files_to_folder(input_folder, output_folder, f"*{file_type}")
+
+
+def ensure_empty_mm_dev_folder(input_folder: Path) -> None:
+    if input_folder.is_dir():
+        for file in input_folder.iterdir():
+            if file.is_file():
+                file.unlink()
+    else:
+        input_folder.mkdir(parents=True, exist_ok=True)
+
 ################################################################################################################               
 ################################################################################################################
 #! ======================= RACES ======================= !#
@@ -2997,6 +2978,43 @@ class BangerEditor:
 
 ################################################################################################################               
 ################################################################################################################
+#! ======================= MMBANGERDATA EDITOR ======================= !#
+
+def read_banger_file(file_path: Path) -> List[str]:
+    with open(file_path, "r") as f:
+        return f.readlines()
+
+
+def write_banger_file(file_path: Path, lines: List[str]) -> None:
+    with open(file_path, "w") as f:
+        f.writelines(lines)
+
+
+def update_banger_properties(lines: List[str], properties: Dict[str, Union[int, str]]) -> List[str]:
+    updated_lines = lines.copy()
+    for i, line in enumerate(updated_lines):
+        for key, new_value in properties.items():
+            if line.strip().startswith(key):
+                updated_lines[i] = f'\t{key} {new_value}\n'
+    return updated_lines
+
+
+def edit_and_copy_bangerdata_to_shop(prop_properties: Dict[str, Dict[str, Union[int, str]]], input_folder: Path, output_folder: Path, file_type: str) -> None:
+    for file in input_folder.glob(f"*{file_type}"):  # First copy unmodified files directly
+        if file.stem not in prop_properties:
+            shutil.copy(file, output_folder)
+   
+    for prop_key, properties in prop_properties.items():  # Then process and write modified files
+        banger_file = input_folder / f"{prop_key}{file_type}"
+       
+        if banger_file.exists():
+            lines = read_banger_file(banger_file)
+            updated_lines = update_banger_properties(lines, properties)
+            write_banger_file(output_folder / banger_file.name, updated_lines)
+
+################################################################################################################               
+################################################################################################################
+
 #! ======================= FACADES CLASS ======================= !#
 
 
@@ -3928,15 +3946,16 @@ class BaiMap:
         self.write_map()
              
     def write_map(self):           
-        with open(Folder.BASE / "dev" / "CITY" / MAP_FILENAME / f"{MAP_FILENAME}.map", 'w') as f:
+        with open(Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME / f"{MAP_FILENAME}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
+        num_streets = len(self.street_names)
         map_streets = '\n\t\t'.join([f'"{street}"' for street in self.street_names])
         
         map_data = f"""
 mmMapData :0 {{
-    NumStreets {len(self.street_names)}
+    NumStreets {num_streets}
     Street [
         {map_streets}
     ]
@@ -4000,7 +4019,7 @@ class aiStreetEditor:
         return BaiMap(street_names)
 
     def write(self):    
-        with open(Folder.BASE / "dev" / "CITY" / MAP_FILENAME / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
+        with open(Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):
@@ -5622,12 +5641,21 @@ street_list = street_list + [cruise_start]
 ###################################################################################################################
 #! ======================= CALL FUNCTIONS ======================= !#
 
-# Core
+# Setup
 create_folders()
+copy_custom_textures_to_shop(Folder.USER_CUSTOM_TEXTURES, Folder.SHOP / "TEX16O")
+copy_carsim_files_to_shop(Folder.EDITOR_RESOURCES / "TUNE" / "MMCARSIM", Folder.SHOP_TUNE, FileType.CAR_SIMULATION)
+ensure_empty_mm_dev_folder(Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME) 
+create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
 
+edit_and_copy_bangerdata_to_shop(prop_properties, Folder.EDITOR_RESOURCES / "TUNE" / "MMBANGERDATA", Folder.SHOP_TUNE, FileType.BANGER_DATA)
+
+# Races
 create_races(race_data)
 create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
+
+# Map
 check_bound_numbers(polys)
 
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
@@ -5637,7 +5665,7 @@ aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP / "MTL" / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
 
-TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.SRC_USER_CUSTOM_TEXTURES, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
+TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.USER_CUSTOM_TEXTURES, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
 TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
                     
 prop_editor = BangerEditor()
@@ -5648,11 +5676,6 @@ prop_editor.process_all(prop_list, set_props)
 lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
-
-copy_dev_folder(Folder.BASE / "dev", Folder.MIDTOWNMADNESS / "dev")
-edit_and_copy_mmbangerdata(prop_properties, Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE) 
-copy_tune_mmcarsim_files(Folder.EDITOR_RESOURCES / "TUNE", Folder.SHOP_TUNE)
-copy_custom_textures(Folder.SRC_USER_CUSTOM_TEXTURES, Folder.SHOP / "TEX16O")
 
 create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.EXT}", hudmap_vertices)
 create_animations(Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
@@ -5691,7 +5714,6 @@ debug_ai(
 
 # Finalizing Part
 create_angel_resource_file(Folder.SHOP)
-create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 
 end_time = time.monotonic()
 editor_time = end_time - start_time
@@ -5699,21 +5721,18 @@ editor_time = end_time - start_time
 # Save the runtime
 runtime_manager = RunTimeManager(Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
 runtime_manager.save(editor_time)
+progress_thread.join()  # Wait for progress bar to complete
 
-# Wait for progress bar to complete
-progress_thread.join()
-
-# Create final output with bar divider using COLORS_TWO
 divider = "=" * BAR_WIDTH
 color_divider = "".join(COLORS_TWO[i % len(COLORS_TWO)] + char for i, char in enumerate(divider))
 final_divider = "\n" + color_divider + "\n"
 
-# Print completion message
 print(final_divider)
 print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(final_divider)
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
+
 
 # Blender
 setup_blender()

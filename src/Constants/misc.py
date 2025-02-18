@@ -45,7 +45,7 @@ class Folder:
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
 
-    SRC_USER_CUSTOM_TEXTURES = BASE / "src" / "User" / "Custom Textures"
+    USER_CUSTOM_TEXTURES = BASE / "src" / "User" / "Custom Textures"
 
 
 class Threshold:
