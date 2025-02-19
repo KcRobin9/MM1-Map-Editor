@@ -69,6 +69,7 @@ from src.Constants.constants import *
 
 from src.Races.mm_data import write_mm_data_header, write_mm_data
 from src.Races.cops_and_robbers import create_cops_and_robbers
+from src.Races.waypoints import write_waypoints
 
 from src.Geometry.utils import calculate_extrema
 
@@ -1793,37 +1794,6 @@ def ensure_empty_mm_dev_folder(input_folder: Path) -> None:
 ################################################################################################################               
 ################################################################################################################
 #! ======================= RACES ======================= !#
-
-def determine_ordinal(n) -> str:
-    if 10 <= n % 100 <= 13:
-        return f"{n}th"
-    
-    return {
-        1: f"{n}st",
-        2: f"{n}nd",
-        3: f"{n}rd",
-}.get(n % 10, f"{n}th")
-
-
-def write_waypoints(output_file, waypoints, race_type: str, race_index: int, opp_num: int = None):
-    with open(output_file, "w") as f:
-        if opp_num is not None:
-                        
-            opp_waypoint_header = (f"This is your Opponent file for opponent number {opp_num}, in {race_type} race {race_index}\n")
-            f.write(opp_waypoint_header)
-
-            for waypoint in waypoints:
-                opp_waypoints = ', '.join(map(str, waypoint[:3])) + f", {Width.MEDIUM}, {Rotation.AUTO}, 0, 0,\n"
-                f.write(opp_waypoints)
-                
-        else:
-            player_waypoint_header = (f"# This is your {determine_ordinal(race_index)} {race_type} race Waypoint file\n")
-            f.write(player_waypoint_header)
-            
-            for waypoint in waypoints:
-                player_waypoints = ', '.join(map(str, waypoint)) + ", 0, 0,\n"
-                f.write(player_waypoints)
-                
                   
 def write_section(f, title: str, data: str) -> None:
     f.write(f"\n{title}\n{data}\n")
