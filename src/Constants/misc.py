@@ -41,7 +41,8 @@ class Folder:
     SHOP_MESH_CITY = SHOP / "BMS" / f"{MAP_FILENAME}CITY"
     
     MIDTOWNMADNESS = BASE / "MidtownMadness"
-    USER_RESOURCES = BASE / "Resources" / "UserResources"
+
+    USER_RESOURCES = BASE / "Resources" / "User"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
 

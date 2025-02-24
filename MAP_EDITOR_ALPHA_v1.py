@@ -61,7 +61,7 @@ from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binar
 from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, TEXTURESHEET_MAPPING
 from src.Constants.textures import Texture, TEXTURE_EXPORT
 from src.Constants.props import Prop
-from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, Folder
+from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
 from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
