@@ -67,6 +67,7 @@ from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Ro
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
 from src.Constants.constants import *
 
+from src.Races.checks import check_race_count, check_waypoint_count
 from src.Races.mm_data import write_mm_data_header, write_mm_data
 from src.Races.cops_and_robbers import create_cops_and_robbers
 from src.Races.waypoints import write_waypoints
@@ -1857,42 +1858,6 @@ def write_aimap(output_file: Path, traffic_density: float, exceptions_data_forma
         write_section(f, "[Exceptions]", exceptions_data_formatted)
         write_section(f, "[Police]", police_data_formatted)
         write_section(f, "[Opponent]", f"{num_of_opponents}\n{opponent_data_formatted}")
-
-            
-def check_race_count(race_type: str, config) -> None:
-    if race_type == RaceMode.CHECKPOINT:  
-        if len(config) > Threshold.CHECKPOINT_RACE_COUNT:
-            checkpoint_race_count_error = f"""
-            ***ERROR***
-            Number of Checkpoint races cannot be more than {Threshold.CHECKPOINT_RACE_COUNT}
-            """
-            raise ValueError(checkpoint_race_count_error)
-    
-    elif race_type == RaceMode.BLITZ:
-        if len(config) > Threshold.BLITZ_RACE_COUNT:
-            blitz_race_count_error = f"""
-            ***ERROR***
-            Number of Blitz races cannot be more than {Threshold.BLITZ_RACE_COUNT}
-            """ 
-            raise ValueError(blitz_race_count_error)
-            
-    elif race_type == RaceMode.CIRCUIT:
-        if len(config) > Threshold.CIRCUIT_RACE_COUNT:
-            circuit_race_count_error = f"""
-            ***ERROR***
-            Number of Circuit races cannot be more than {Threshold.CIRCUIT_RACE_COUNT}
-            """ 
-            raise ValueError(circuit_race_count_error)
-
-
-def check_waypoint_count(race_type: str, waypoints) -> None:
-    if race_type == RaceMode.BLITZ:
-        if len(waypoints) > Threshold.BLITZ_WAYPOINT_COUNT:
-            blitz_waypoint_count_error = f"""
-            ***ERROR***
-            Number of waypoints for Blitz race cannot be more than {Threshold.BLITZ_WAYPOINT_COUNT}
-            """
-            raise ValueError(blitz_waypoint_count_error)
 
               
 def create_races(race_data: dict) -> None:
