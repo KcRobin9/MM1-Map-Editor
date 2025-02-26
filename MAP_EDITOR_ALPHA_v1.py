@@ -67,10 +67,8 @@ from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Ro
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
 from src.Constants.constants import *
 
-from src.Races.checks import check_race_count, check_waypoint_count
-from src.Races.mm_data import write_mm_data_header, write_mm_data
+from src.Races.main import create_races
 from src.Races.cops_and_robbers import create_cops_and_robbers
-from src.Races.waypoints import write_waypoints
 
 from src.Geometry.utils import calculate_extrema
 
@@ -1793,133 +1791,7 @@ def ensure_empty_mm_dev_folder(input_folder: Path) -> None:
         input_folder.mkdir(parents=True, exist_ok=True)
 
 ################################################################################################################               
-################################################################################################################
-#! ======================= RACES ======================= !#
-                  
-def write_section(f, title: str, data: str) -> None:
-    f.write(f"\n{title}\n{data}\n")
-
-
-def format_police_data(police_data: List[str], num_of_police: int) -> str:
-    return "\n".join([str(num_of_police)] + police_data)
-
-
-def format_opponent_data(opp_cars: Dict, race_type: str, race_index: int) -> str:
-    return "\n".join(
-        [f"{opp_car} OPP{opp_index}{race_type}{race_index}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}" for opp_index, opp_car in enumerate(opp_cars)]
-        )
-
-
-def format_exceptions(exceptions: Optional[List[List[Union[int, float]]]] = None, exceptions_count: Optional[int] = None) -> str:
-    if exceptions is None:
-        exceptions = []
-        
-    if exceptions_count is None:
-        exceptions_count = len(exceptions)
-        
-    formatted_exceptions = "\n".join(" ".join(map(str, exception)) for exception in exceptions)
-    
-    return f"{exceptions_count}\n{formatted_exceptions}"
-
-
-def prepare_aimap_data(config, race_type: str, race_index: int, opponents) -> tuple:
-    traffic_density = config.get("traffic_density", 0.0)
-    
-    exceptions = config.get("exceptions", [])
-    exception_count = config.get("num_of_exceptions", len(exceptions))
-        
-    police_data = config["police"]
-    num_of_police = config["num_of_police"]
-
-    exceptions_data_formatted = format_exceptions(exceptions, exception_count)
-    police_data_formatted = format_police_data(police_data, num_of_police)
-    opponent_data_formatted = format_opponent_data(opponents, race_type, race_index)
-    
-    return (traffic_density, exceptions_data_formatted, police_data_formatted, opponent_data_formatted)
-
-
-def write_aimap(output_file: Path, traffic_density: float, exceptions_data_formatted, police_data_formatted, opponent_data_formatted, num_of_opponents: int) -> None:
-    with open(output_file, "w") as f:
-        
-        template = f"""
-# Ambient Traffic Density 
-[Density] 
-{traffic_density}
-
-# Default Road Speed Limit 
-[Speed Limit] 
-45 
-
-# Ambient Traffic Exceptions
-# Rd Id, Density, Speed Limit 
-"""
-        f.write(template)
-            
-        write_section(f, "[Exceptions]", exceptions_data_formatted)
-        write_section(f, "[Police]", police_data_formatted)
-        write_section(f, "[Opponent]", f"{num_of_opponents}\n{opponent_data_formatted}")
-
-              
-def create_races(race_data: dict) -> None:
-    mm_data_written = {
-        RaceMode.CHECKPOINT: False,
-        RaceMode.CIRCUIT: False,
-        RaceMode.BLITZ: False
-    }
-
-    mm_data_files = {
-        RaceMode.CHECKPOINT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CHECKPOINT}DATA{FileType.CSV}",
-        RaceMode.CIRCUIT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CIRCUIT}DATA{FileType.CSV}",
-        RaceMode.BLITZ: Folder.SHOP_RACE_MAP / f"MM{RaceMode.BLITZ}DATA{FileType.CSV}"
-    }
-    
-    for race_key, config in race_data.items():
-        race_type, race_index = race_key.split("_", 1)
-        race_index = int(race_index)
-        
-        player_waypoints = config["player_waypoints"]
-        
-        ai_map = config["aimap"]
-        opponents = ai_map["opponents"]
-        num_of_opponents = ai_map.get("num_of_opponents", len(opponents))
-                
-        prepared_aimap_data = prepare_aimap_data(ai_map, race_type, race_index, opponents)
-                                    
-        file_prefix = f"{race_type}{race_index}"
-        
-        ai_map_file = Folder.SHOP_RACE_MAP / f"{file_prefix}.AIMAP_P"
-        player_waypoint_file = Folder.SHOP_RACE_MAP / f"{file_prefix}WAYPOINTS{FileType.CSV}"
-        mm_data_file = mm_data_files[race_type]
-        
-        # Safety Checks
-        check_race_count(race_type, config)
-        check_waypoint_count(race_type, player_waypoints)
-        
-        # Player Waypoints
-        write_waypoints(player_waypoint_file, player_waypoints, race_type, race_index)
-        
-        # Opponent Waypoints
-        for opp_index, opp_waypoints in enumerate(opponents.values()):
-            opp_file_name = f"OPP{opp_index}{file_prefix}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}"
-            opp_waypoint_file = Folder.SHOP_RACE_MAP / opp_file_name
-            write_waypoints(opp_waypoint_file, opp_waypoints, race_type, race_index, opp_index)
-        
-        # Write Header Only Once for Each File
-        if not mm_data_written[race_type]:
-            write_mm_data_header(mm_data_file)
-            mm_data_written[race_type] = True
-        
-        # MM DATA
-        if race_type == RaceMode.CHECKPOINT:
-            write_mm_data(mm_data_file, {race_index: config}, race_type, CHECKPOINT_PREFIXES[race_index])
-        else:
-            write_mm_data(mm_data_file, {race_index: config}, race_type, RACE_TYPE_TO_PREFIX[race_type])
-            
-        # AI MAP                
-        write_aimap(ai_map_file, *prepared_aimap_data, num_of_opponents)
-
-################################################################################################################               
-################################################################################################################              
+################################################################################################################             
 #! ======================= CELLS ======================= !#
 
 

@@ -1,3 +1,7 @@
+from src.Constants.misc import Folder
+from src.Constants.file_types import FileType
+
+
 class TimeOfDay:
     MORNING = 0
     NOON = 1
@@ -140,3 +144,10 @@ class Width:
     SMALL = 11
     MEDIUM = 15
     LARGE = 19
+
+
+MM_DATA_FILES  = {
+        RaceMode.CHECKPOINT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CHECKPOINT}DATA{FileType.CSV}",
+        RaceMode.CIRCUIT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CIRCUIT}DATA{FileType.CSV}",
+        RaceMode.BLITZ: Folder.SHOP_RACE_MAP / f"MM{RaceMode.BLITZ}DATA{FileType.CSV}"
+}
