@@ -4106,11 +4106,6 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
 ################################################################################################################### 
 #! ======================= BLENDER SETUP ======================= !#
 
-
-def initialize_depsgraph_update_handler() -> None:    
-    bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
-
-
 # TODO: move this to src/Blender/...
 def setup_blender() -> None:
     if not is_process_running(Executable.BLENDER):
@@ -4885,6 +4880,7 @@ FLAG_HEIGHT = 0.8
 FLAG_HEIGHT_OFFSET = 2.2
 
 
+#! Duplicate (see src/Blender/waypoints)
 def get_all_waypoints() -> List[bpy.types.Object]:
     return [obj for obj in bpy.data.objects if obj.name.startswith("WP_")]
 
@@ -4901,11 +4897,6 @@ def update_waypoint_colors() -> None:
     for waypoint in waypoints[1:-1]:
         waypoint.data.materials[0].diffuse_color = Color.BLUE       # Intermediate Waypoints
         
-         
-def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:    
-    if any(obj.name.startswith("WP_") for obj in bpy.data.objects):
-        update_waypoint_colors()
-
 
 def create_waypoint_material(name: str, color: Tuple[float, float, float, float]) -> bpy.types.Material:
     material = bpy.data.materials.new(name)
