@@ -1,5 +1,7 @@
 import bpy
 
+from src.Blender.waypoints import update_waypoint_colors
+
 
 def initialize_depsgraph_update_handler() -> None:
     # Remove existing handlers to prevent duplicates
