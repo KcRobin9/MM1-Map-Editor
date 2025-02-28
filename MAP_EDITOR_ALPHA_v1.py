@@ -75,6 +75,9 @@ from src.Geometry.utils import calculate_extrema
 from src.ProgressBar.code import start_progress_tracking, RunTimeManager
 
 from src.Blender.setup import delete_existing_meshes, enable_developer_extras, enable_vertex_snapping, adjust_3D_view_settings
+from src.Blender.handlers import initialize_depsgraph_update_handler
+from src.Blender.Operators.process_extrude import OBJECT_OT_ProcessPostExtrude
+from src.Blender.Operators.rename_polygons import OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential
 
 from src.FileFormats.dlp import DLP
 from src.FileFormats.ext import create_ext
@@ -4798,77 +4801,7 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
 
         self.report({"INFO"}, "Assigned Custom Properties")
         return {"FINISHED"}
-    
-###################################################################################################################?
-
-class OBJECT_OT_ProcessPostExtrude(bpy.types.Operator):
-    bl_idname = "object.process_post_extrude"
-    bl_label = "Process Post Extrude"
-    bl_options = {"REGISTER", "UNDO"}
-    
-    triangulate: bpy.props.BoolProperty(name = "Triangulate", default = False)
-
-    def execute(self, context: bpy.types.Context) -> set:
-        if context.object and context.object.type == "MESH":
-            bpy.ops.object.mode_set(mode = "EDIT")
-            bpy.ops.mesh.select_all(action = "SELECT")
-            
-            if self.triangulate:
-                bpy.ops.mesh.quads_convert_to_tris()
-            
-            bpy.ops.mesh.edge_split()
-            bpy.ops.mesh.separate(type = "LOOSE")
-            bpy.ops.object.mode_set(mode = "OBJECT")
-            self.report({"INFO"}, "Processed Post Extrude")
-            return {"FINISHED"}
-        else:
-            self.report({"WARNING"}, "No mesh object selected")
-            return {"CANCELLED"}
-    
-    
-###################################################################################################################? 
-
-def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
-    polygons = [obj for obj in context.scene.objects if obj.name.startswith("P")]
-    if sort:
-        return sorted(polygons, key=lambda x: int(re.search(r"P(\d+)", x.name).group(1)))
-    return polygons
-
-
-def normalize_polygon_names(polygons: list) -> int:
-    for obj in polygons:
-        number = re.search(r"P(\d+)", obj.name).group(1)
-        obj.name = f"P{number}"
-    return len(polygons)
-
-
-def rename_sequential(polygons: list) -> int:
-    for i, obj in enumerate(polygons, 1):
-        obj.name = f"P{i}"
-    return len(polygons)
-
-
-class OBJECT_OT_RenameChildren(bpy.types.Operator):
-    bl_idname = "object.auto_rename_children"
-    bl_label = "Auto Rename Children Objects"
-    
-    def execute(self, context: bpy.types.Context) -> set:
-        polygons = get_polygon_objects(context, sort=False)
-        count = normalize_polygon_names(polygons)
-        self.report({"INFO"}, f"Normalized {count} polygon names (preserving order)")
-        return {"FINISHED"}
-
-
-class OBJECT_OT_RenameSequential(bpy.types.Operator):
-    bl_idname = "object.rename_sequential"
-    bl_label = "Rename Objects Sequentially"
-    
-    def execute(self, context: bpy.types.Context) -> set:
-        polygons = get_polygon_objects(context, sort=True)
-        count = rename_sequential(polygons)  # Use the new rename_sequential function
-        self.report({"INFO"}, f"Renamed {count} polygon names sequentially")
-        return {"FINISHED"}
-
+      
 ###################################################################################################################   
 ################################################################################################################### 
 #! ======================= BLENDER WAYPOINT OBJECTS / FUNCTIONS ======================= !#
