@@ -202,6 +202,49 @@ Default.POLYGON = Polygon(0, 0, 0, [0, 0, 0, 0], [Default.VECTOR_3 for _ in rang
 polys = [Default.POLYGON]
         
 ################################################################################################################               
+
+#TODO: move this somewhere else
+class Debug:
+    _created_folders = set()
+
+    @staticmethod
+    def _ensure_output_folder_exists(output_file: Path) -> None:
+        output_folder = output_file.parent
+
+        if output_folder in Debug._created_folders:
+            return
+
+        if not output_folder.exists():
+            print(f"The output folder {output_folder} does not exist. Creating it.")
+            output_folder.mkdir(parents = True, exist_ok = True)
+
+        Debug._created_folders.add(output_folder)
+
+    @staticmethod
+    def internal(instance: Any, debug_flag: bool, output_file: Path) -> None:
+        if not debug_flag:
+            return
+
+        Debug._ensure_output_folder_exists(output_file)
+        
+        with open(output_file, 'w') as out_f:
+            out_f.write(str(instance))
+        
+        print(f"Debugged instance data to {output_file.name}")
+
+    @staticmethod
+    def internal_list(instance_list: List[Any], debug_flag: bool, output_file: Path) -> None:
+        if not debug_flag:
+            return
+        
+        Debug._ensure_output_folder_exists(output_file)
+
+        with open(output_file, 'w') as out_f:
+            for instance in instance_list:
+                out_f.write(repr(instance)) 
+
+        print(f"Debugged list data to {output_file.name}")
+
 ################################################################################################################          
 #! ======================= BOUNDS CLASS ======================= !#
 
@@ -350,18 +393,12 @@ class Bounds:
                 
         with open (output_file, "wb") as f:
             bnd.write(f)
+
+        bnd.debug(debug_bounds, debug_file)
             
-            if debug_bounds:
-                bnd.debug(debug_file)
-                
-    def debug(self, output_file: Path) -> None:
-        if not output_file.parent.exists():
-            print(f"The output folder {output_file.parent} does not exist. Creating it.")
-            output_file.parent.mkdir(parents = True, exist_ok = True)
-        
-        with open(output_file, 'w') as out_f:
-            out_f.write(str(self))
-            
+    def debug(self, debug_bounds, output_file: Path) -> None:
+        Debug.internal(self, debug_bounds, output_file)
+                            
     @staticmethod
     def debug_file(input_file: Path, output_file: Path, debug_bounds_file: bool) -> None:
         if not debug_bounds_file:
@@ -577,7 +614,8 @@ class Meshes:
 
         self.cache_size += self.align_size(self.indices_count * calc_size('H'))
         self.cache_size += self.align_size(self.surface_count * calc_size('B'))
-                                       
+  
+    #! Debugging crashes ("line 778, in with_suffixif suffix and not suffix.startswith('.') or suffix == '.':")           
     def debug(self, output_file: Path, output_folder: Path, debug_meshes: bool) -> None:
         if not debug_meshes:
             return
@@ -588,7 +626,11 @@ class Meshes:
 
         with open(output_folder / output_file, "w") as f:
             f.write(str(self))
-            
+
+    #TODO:
+    # def debug(self, output_file: Path, output_folder: Path, debug_meshes: bool) -> None:
+    #     Debug.internal(self, debug_meshes, output_folder / output_file)
+                
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_meshes_file: bool) -> None:
         if not debug_meshes_file:
@@ -795,6 +837,7 @@ def save_mesh(
     mesh = initialize_mesh(vertices, [poly], texture_indices, texture_name, normals, tex_coords)
     mesh.write(target_folder / mesh_filename)
     
+    #TODO: see "Debug.internal()"
     if debug_meshes:
         mesh.debug(Path(mesh_filename).with_suffix({FileType.TEXT}), Folder.DEBUG_RESOURCES / "MESHES" / MAP_FILENAME, debug_meshes)
 
@@ -2454,19 +2497,11 @@ class Portals:
                     _min.write(f, '<')
                     _max.write(f, '<')
                     
-                if debug_portals:  
-                    cls.debug(portals, Folder.DEBUG_RESOURCES / "PORTALS" / f"{MAP_FILENAME}_PTL.txt")            
-    @classmethod
-    def debug(cls, portals: 'List[Portals]', output_file: Path) -> None:
-        if not output_file.parent.exists():
-            print(f"The output folder {output_file.parent} does not exist. Creating it.")
-            output_file.parent.mkdir(parents = True, exist_ok = True)
+                cls.debug(portals, debug_portals, Folder.DEBUG_RESOURCES / "PORTALS" / f"{MAP_FILENAME}_PTL.txt")            
 
-        with open(output_file, 'w') as out_f:
-            for portal in portals:
-                out_f.write(repr(portal))
-                
-        print(f"Processed portal data to {output_file.name}")
+    @classmethod
+    def debug(cls, portals: 'List[Portals]', debug_portals: bool, output_file: Path) -> None:
+        Debug.internal_list(portals, debug_portals, output_file)
                             
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_portals_file: bool) -> None:
@@ -2553,19 +2588,12 @@ class Bangers:
                 banger.face.write(f, '<')
                 f.write(banger.name.encode(Encoding.UTF_8))
                     
-            if debug_props:
-                cls.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}{FileType.TEXT}", bangers)
-                                    
+            cls.debug(bangers, debug_props, Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}{FileType.TEXT}")
+    
+    #! Works, but the Debug file should not land in "...\MM1-Map-Editor\SHOP\CITY"
     @classmethod
-    def debug(cls, output_file: Path, bangers: List['Bangers']) -> None:
-        if not output_file.parent.exists():
-            print(f"The output folder {output_file.parent} does not exist. Creating it.")
-            output_file.parent.mkdir(parents = True, exist_ok = True)
-
-        with open(output_file, 'w') as out_f:
-            for banger in bangers:
-                out_f.write(repr(banger))
-        print(f"Processed banger data to {output_file.name}")
+    def debug(cls, bangers: List['Bangers'], debug_props: bool, output_file: Path,) -> None:
+        Debug.internal_list(bangers, debug_props, output_file)
                     
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_props_file: bool) -> None:
@@ -2876,17 +2904,10 @@ class Facades:
             
             for facade in facades:
                 facade.write(f)
-                                 
-    @staticmethod
-    def debug(facades: List['Facades'], output_file: Path) -> None:
-        if not output_file.parent.exists():
-            print(f"The output folder {output_file.parent} does not exist. Creating it.")
-            output_file.parent.mkdir(parents = True, exist_ok = True)
 
-        with open(output_file, mode = 'w') as f:
-            for facade in facades:
-                f.write(str(facade))
-        print(f"Processed facade data to {output_file.name}")
+    @staticmethod
+    def debug(facades: List['Facades'], debug_facades: bool, output_file: Path) -> None:
+        Debug.internal_list(facades, debug_facades, output_file)
                                            
     @classmethod
     def debug_file(cls, input_file: Path, output_file: Path, debug_facade_file: bool) -> None:
@@ -2935,8 +2956,7 @@ class FacadeEditor:
         facades = cls.process(user_set_facades)
         Facades.write_all(output_file, facades)
 
-        if debug_facades:
-            Facades.debug(facades, Folder.DEBUG_RESOURCES / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
+        Facades.debug(facades, debug_facades, Folder.DEBUG_RESOURCES / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
 
     @staticmethod
     def read_scales(input_file: Path):
@@ -3050,7 +3070,7 @@ class PhysicsEditor:
         for phys_index, properties in user_set_properties.items():
             physics_obj = original_data[phys_index - 1]
             
-            for attr , value in properties.items():
+            for attr, value in properties.items():
                 setattr(physics_obj, attr, value)
                     
         cls.write_all(output_file, original_data)
@@ -4880,10 +4900,10 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
                     rotation: float = Rotation.NORTH, width: float = Width.DEFAULT, name: Optional[str] = None, 
                     flag_color: Tuple[float, float, float, float] = Color.BLUE) -> bpy.types.Object:                
     
-    if x is None or y is None or z is None:  # If x, y, or z is not provided, use the current cursor position
+    if x is None or y is None or z is None:  # If (x, y, z) is NOT provided, use the current cursor position
         cursor_location = bpy.context.scene.cursor.location.copy()
     else:
-        cursor_location = Vector((x, y, z))  # If x, y, and z are provided, create a new location vector
+        cursor_location = Vector((x, y, z))  # If (x, y, z) ARE provided, create a new location vector
   
     pole_one_location = (cursor_location.x - width / 2, cursor_location.y, cursor_location.z + POLE_HEIGHT / 2)
     pole_two_location = (cursor_location.x + width / 2, cursor_location.y, cursor_location.z + POLE_HEIGHT / 2)
