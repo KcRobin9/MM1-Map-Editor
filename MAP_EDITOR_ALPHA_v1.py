@@ -61,7 +61,7 @@ from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binar
 from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, TEXTURESHEET_MAPPING
 from src.Constants.textures import Texture, TEXTURE_EXPORT
 from src.Constants.props import Prop
-from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color
+from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, CommandArgs
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
 from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
@@ -4063,10 +4063,10 @@ def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop_and_b
 
 
 def create_commandline(
-    output_file: Path, no_ui: bool, no_ui_type: str, 
+    output_file: Path, no_ui: bool, no_ui_type: str,
     no_ai: bool, set_music: bool, less_logs: bool, more_logs: bool) -> None:
 
-    cmd_line = CMD_LINE
+    cmd_line = CommandArgs.DEFAULT
 
     if less_logs and more_logs:    
         log_error_message = f"""\n
@@ -4074,18 +4074,18 @@ def create_commandline(
         You can't have both 'quiet' and 'more logs' enabled. Please choose one."
         """
         raise ValueError(log_error_message)
-    
+   
     if less_logs:
-        cmd_line += " -quiet"
-        
+        cmd_line += f" {CommandArgs.QUIET}"
+       
     if more_logs:
-        cmd_line += " -logopen -agiVerbose -console"
-        
+        cmd_line += f" {CommandArgs.LOG_OPEN} {CommandArgs.VERBOSE} {CommandArgs.CONSOLE}"
+       
     if set_music:
-        cmd_line += " -cdid"
-    
+        cmd_line += f" {CommandArgs.CD_MUSIC}"
+   
     if no_ai:
-        cmd_line += " -noai"
+        cmd_line += f" {CommandArgs.NO_AI}"
     
     if no_ui:
         if not no_ui_type or no_ui_type.lower() == "cruise":

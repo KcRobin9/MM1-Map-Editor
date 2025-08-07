@@ -49,6 +49,20 @@ class Folder:
     USER_CUSTOM_TEXTURES = BASE / "src" / "User" / "Custom Textures"
 
 
+class CommandArgs:
+    DEFAULT = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME}"
+    QUIET = "-quiet"
+    LOG_OPEN = "-logopen"
+    VERBOSE = "-agiVerbose"
+    CONSOLE = "-console"
+    CD_MUSIC = "-cdid"
+    NO_AI = "-noai"
+    NO_UI = "-noui"
+    CIRCUIT = "-circuit"
+    RACE = "-race"
+    BLITZ = "-blitz"
+
+
 class Threshold:
     BLITZ_WAYPOINT_COUNT = 11
 
