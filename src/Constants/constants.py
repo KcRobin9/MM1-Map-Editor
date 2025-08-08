@@ -29,6 +29,12 @@ LIGHTING_HEADER = [
     "Shadow Alpha", "Shadow Red", "Shadow Green", "Shadow Blue"
 ]
 
+#TODO: find a better location for this
+NOTEPAD_PLUS_PATHS = [
+    r"C:\Program Files\Notepad++\notepad++.exe", 
+    r"C:\Program Files (x86)\Notepad++\notepad++.exe"
+    ]
+
 # Race constants
 RACE_TYPE_TO_PREFIX = {
     RaceMode.BLITZ: "ABL",

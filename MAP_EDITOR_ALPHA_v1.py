@@ -743,26 +743,25 @@ def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, 
     return x, y, z
 
 
-def open_with_notepad_plus(filename: Path) -> None:
-    possible_paths = [
-        r"C:\Program Files\Notepad++\notepad++.exe",
-        r"C:\Program Files (x86)\Notepad++\notepad++.exe"
-    ]
-
-    notepad_plus_exe = shutil.which(NOTEPAD_PLUS_PLUS)  
+def open_with_notepad_plus(input_file: Path) -> None:
+    notepad_plus_exe = shutil.which("notepad++.exe")  
     
     if notepad_plus_exe:
-        subprocess.Popen([notepad_plus_exe, filename])
+        subprocess.Popen([notepad_plus_exe, input_file])
         print("Opening file with Notepad++ from PATH.")
         return
 
-    for path in possible_paths:
-        subprocess.Popen([path, filename])
+    for path in NOTEPAD_PLUS_PATHS:
+        subprocess.Popen([path, input_file])
         print(f"Opening file with Notepad++ from hardcoded path: {path}")
         return
 
-    subprocess.Popen([NOTEPAD_PLUS_PLUS, filename])
-    print("Notepad++ not found, opening file with Classic Notepad.")
+    try:
+        subprocess.Popen(["notepad.exe", input_file])
+        print("Notepad++ not found, opening file with Classic Notepad.")
+    except FileNotFoundError:
+        print("Neither Notepad++ nor Classic Notepad found. Unable to open file.")
+        raise
 
 ################################################################################################################ 
 ################################################################################################################               
