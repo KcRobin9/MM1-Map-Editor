@@ -45,9 +45,9 @@ from dataclasses import dataclass
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO, Sequence
 
 # Third-party imports
-import bpy  # Blender's main module
-import numpy as np
+import bpy
 import pyautogui
+import numpy as np
 import matplotlib.pyplot as plt
 from colorama import Fore
 
@@ -57,6 +57,8 @@ from src.Vector.vector_3 import Vector3
 from src.Vector.vector_4 import Vector4
 
 from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binary_name, write_binary_name
+
+from src.Debug.main import Debug
 
 from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, TEXTURESHEET_MAPPING
 from src.Constants.textures import Texture, TEXTURE_EXPORT
@@ -72,7 +74,7 @@ from src.Races.cops_and_robbers import create_cops_and_robbers
 
 from src.Geometry.utils import calculate_extrema
 
-from src.ProgressBar.code import start_progress_tracking, RunTimeManager
+from src.ProgressBar.main import start_progress_tracking, RunTimeManager
 
 from src.Blender.setup import delete_existing_meshes, enable_developer_extras, enable_vertex_snapping, adjust_3D_view_settings
 from src.Blender.handlers import initialize_depsgraph_update_handler
@@ -83,26 +85,28 @@ from src.FileFormats.dlp import DLP
 from src.FileFormats.ext import create_ext
 from src.FileFormats.animations import create_animations
 
+# Map Settings
 from src.User.Settings.main import *
 from src.User.Settings.advanced import *
 from src.User.Settings.debug import *
 
-from src.User.Props.main import random_props, prop_list
+from src.User.Props.props import random_props, prop_list
 from src.User.Props.properties import prop_properties
 from src.User.Props.append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
 
-from src.User.races import race_data, blitz_race_names, circuit_race_names, checkpoint_race_names
-from src.User.cops_and_robbers import cops_and_robbers_waypoints
-from src.User.ai_streets import street_list
+from src.User.Races.races import race_data, blitz_race_names, circuit_race_names, checkpoint_race_names
+from src.User.Races.cops_and_robbers import cops_and_robbers_waypoints
 
+from src.User.Textures.properties import texture_modifications
+
+from src.User.Misc.dlp import dlp_groups, dlp_patches, dlp_vertices
+
+from src.User.ai_streets import street_list
 from src.User.animations import animations_data
 from src.User.bridges import bridge_list, bridge_config_list
 from src.User.physics import custom_physics
 from src.User.facades import facade_list
 from src.User.lighting import lighting_configs
-from src.User.texture_mod import texture_modifications
-
-from src.User.dlp import dlp_groups, dlp_patches, dlp_vertices
 
 ################################################################################################################               
 ################################################################################################################
@@ -743,7 +747,7 @@ def transform_coordinate_system(vertex: Vector3, blender_to_game: bool = False, 
 
 
 def open_with_notepad_plus(input_file: Path) -> None:
-    notepad_plus_exe = shutil.which("notepad++.exe")  
+    notepad_plus_exe = shutil.which(Executable.NOTEPAD_PLUS_PLUS)  
     
     if notepad_plus_exe:
         subprocess.Popen([notepad_plus_exe, input_file])
@@ -756,7 +760,7 @@ def open_with_notepad_plus(input_file: Path) -> None:
         return
 
     try:
-        subprocess.Popen(["notepad.exe", input_file])
+        subprocess.Popen([Executable.NOTEPAD, input_file])
         print("Notepad++ not found, opening file with Classic Notepad.")
     except FileNotFoundError:
         print("Neither Notepad++ nor Classic Notepad found. Unable to open file.")

@@ -19,7 +19,9 @@ class Encoding:
 class Executable:
     MIDTOWN_MADNESS = "Open1560.exe"
     BLENDER = "Blender"
+    NOTEPAD_REGULAR = "notepad.exe"
     NOTEPAD_PLUS_PLUS = "notepad++.exe"
+
 
 
 class Default:
@@ -46,7 +48,7 @@ class Folder:
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
 
-    USER_CUSTOM_TEXTURES = BASE / "src" / "User" / "Custom Textures"
+    USER_CUSTOM_TEXTURES = BASE / "src" / "User" / "Textures" / "Custom"
 
 
 class CommandArgs:
