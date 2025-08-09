@@ -83,10 +83,13 @@ from src.FileFormats.dlp import DLP
 from src.FileFormats.ext import create_ext
 from src.FileFormats.animations import create_animations
 
-from src.User.main import *
-from src.User.advanced import *
-from src.User.blender import *
-from src.User.debug import *
+from src.User.Settings.main import *
+from src.User.Settings.advanced import *
+from src.User.Settings.debug import *
+
+from src.User.Props.main import random_props, prop_list
+from src.User.Props.properties import prop_properties
+from src.User.Props.append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
 
 from src.User.races import race_data, blitz_race_names, circuit_race_names, checkpoint_race_names
 from src.User.cops_and_robbers import cops_and_robbers_waypoints
@@ -98,10 +101,6 @@ from src.User.physics import custom_physics
 from src.User.facades import facade_list
 from src.User.lighting import lighting_configs
 from src.User.texture_mod import texture_modifications
-
-from src.User.props import random_props, prop_list
-from src.User.prop_properties import prop_properties
-from src.User.props_append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
 
 from src.User.dlp import dlp_groups, dlp_patches, dlp_vertices
 

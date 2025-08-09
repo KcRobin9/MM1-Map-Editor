@@ -1,6 +1,6 @@
 from src.Constants.props import Prop
 from src.Constants.races import RaceMode
-from src.User.main import MAP_FILENAME
+from src.User.Settings.main import MAP_FILENAME
 
 
 NO = 0  

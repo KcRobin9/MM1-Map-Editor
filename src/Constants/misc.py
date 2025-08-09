@@ -1,5 +1,5 @@
 from pathlib import Path
-from src.User.main import MAP_FILENAME
+from src.User.Settings.main import MAP_FILENAME
 from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
 
