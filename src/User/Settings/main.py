@@ -7,7 +7,7 @@ MAP_FILENAME = "FirstCity"                     # One word (no spaces)  --- name 
    
 # Play Game
 play_game = True                # Change to "True" to start the game after the Map is created (defaults to False when Blender is running)
-delete_shop_and_build = True    # Change to "True" to delete the raw city files after the .AR file has been created
+delete_shop = True             # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
 set_bridges = True              #! Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
