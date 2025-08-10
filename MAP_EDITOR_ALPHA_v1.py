@@ -4046,22 +4046,22 @@ def create_angel_resource_file(shop_folder: Path) -> None:
     subprocess.Popen(f"cmd.exe /c run !!!!!{MAP_FILENAME}", cwd = shop_folder, creationflags = subprocess.CREATE_NO_WINDOW)
 
 
-def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop_and_build: bool) -> None:
-    if not delete_shop_and_build:
-        return
-    
+def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop: bool) -> None:
     os.chdir(Folder.BASE)
-    time.sleep(1)  # Make sure the SHOP folder is no longer in use (i.e. an .ar file is still being created)
-
+    time.sleep(1)  # Make sure folders are no longer in use (i.e. an .ar file is still being created)
+    
+    # Always delete the build folder
     try:  
         shutil.rmtree(build_folder)
     except Exception as e:
         print(f"Failed to delete the BUILD directory. Reason: {e}")
-
-    try:
-        shutil.rmtree(shop_folder)
-    except Exception as e:
-        print(f"Failed to delete the SHOP directory. Reason: {e}")
+    
+    # Only delete shop folder if "delete_shop" is True
+    if delete_shop:
+        try:
+            shutil.rmtree(shop_folder)
+        except Exception as e:
+            print(f"Failed to delete the SHOP directory. Reason: {e}")
 
 
 def create_commandline(
@@ -5500,7 +5500,7 @@ create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 # Cleanup
-post_editor_cleanup(Folder.BASE / "build", Folder.SHOP, delete_shop_and_build)
+post_editor_cleanup(Folder.BASE / "build", Folder.SHOP, delete_shop)
 
 ###################################################################################################################   
 ################################################################################################################### 
