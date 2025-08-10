@@ -56,7 +56,7 @@ from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
 from src.Vector.vector_4 import Vector4
 
-from src.IO.binary_parsing import read_unpack, write_pack, calc_size, read_binary_name, write_binary_name
+from src.IO.binary_parsing import read_unpack, write_pack, read_binary_name, write_binary_name, calc_size
 
 from src.Debug.main import Debug
 
@@ -66,7 +66,7 @@ from src.Constants.props import Prop
 from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, CommandArgs
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
 from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width
-from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLORS_ONE, COLORS_TWO, BAR_WIDTH
+from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLOR_DIVIDER
 from src.Constants.constants import *
 
 from src.Races.main import create_races
@@ -74,7 +74,7 @@ from src.Races.cops_and_robbers import create_cops_and_robbers
 
 from src.Geometry.utils import calculate_extrema
 
-from src.ProgressBar.main import start_progress_tracking, RunTimeManager
+from src.ProgressBar.main import RunTimeManager, start_progress_tracking
 
 from src.Blender.setup import delete_existing_meshes, enable_developer_extras, enable_vertex_snapping, adjust_3D_view_settings
 from src.Blender.handlers import initialize_depsgraph_update_handler
@@ -89,6 +89,7 @@ from src.FileFormats.animations import create_animations
 from src.User.Settings.main import *
 from src.User.Settings.advanced import *
 from src.User.Settings.debug import *
+from src.User.Settings.blender import load_all_texures, visualize_ai_paths, input_waypoint_file, waypoint_number_input, waypoint_type_input
 
 from src.User.Props.props import random_props, prop_list
 from src.User.Props.properties import prop_properties
@@ -5476,13 +5477,9 @@ runtime_manager = RunTimeManager(Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
 runtime_manager.save(editor_time)
 progress_thread.join()  # Wait for progress bar to complete
 
-divider = "=" * BAR_WIDTH
-color_divider = "".join(COLORS_TWO[i % len(COLORS_TWO)] + char for i, char in enumerate(divider))
-final_divider = "\n" + color_divider + "\n"
-
-print(final_divider)
+print(COLOR_DIVIDER)
 print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
-print(final_divider)
+print(COLOR_DIVIDER)
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 

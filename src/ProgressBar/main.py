@@ -5,11 +5,10 @@ import threading
 from pathlib import Path
 from colorama import Fore, Style, init
 
+from src.Constants.progress_bar import BAR_DIVIDER, PROGRESS_BAR_WIDTH, DEFAULT_RUN_TIME, PROGRESS_UPDATE_INTERVAL, DISABLED_UPDATE_INTERVAL
 
-from src.Constants.progress_bar import BAR_WIDTH, PROGRESS_BAR_WIDTH, DEFAULT_RUN_TIME, PROGRESS_UPDATE_INTERVAL, DISABLED_UPDATE_INTERVAL
 
-
-init(autoreset=True)  # Initialize colorama
+init(autoreset = True)  # Initialize colorama
 
 
 class ProgressBar:
@@ -26,8 +25,7 @@ class ProgressBar:
         return self.colors[2]
     
     def create_divider(self) -> str:
-        divider = "=" * BAR_WIDTH
-        return "\n" + "".join(self.colors[i % len(self.colors)] + char for i, char in enumerate(divider)) + "\n"
+        return "\n" + "".join(self.colors[i % len(self.colors)] + char for i, char in enumerate(BAR_DIVIDER)) + "\n"
     
     def update(self, progress: float) -> None:
         progress = max(0, min(100, progress))  # Clamp between 0-100
