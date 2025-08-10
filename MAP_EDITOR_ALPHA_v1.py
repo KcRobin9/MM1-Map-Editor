@@ -602,7 +602,7 @@ class Meshes:
             self.cache_size += self.align_size(8 * Vector3.binary_size())
 
         if self.flags & agiMeshSet.NORMALS:
-            self.cache_size += self.align_size(self.adjunct_count * 3 * calc_size('B'))
+            self.cache_size += self.align_size(self.adjunct_count * calc_size('B'))
 
         if self.flags & agiMeshSet.TEXCOORDS:
             self.cache_size += self.align_size(self.adjunct_count * Vector2.binary_size())
