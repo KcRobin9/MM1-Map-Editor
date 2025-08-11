@@ -5413,14 +5413,14 @@ create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", c
 check_bound_numbers(polys)
 
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
-Bounds.create(Folder.SHOP / "BND" / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
+Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
 Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
 PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP / "MTL" / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
 
 TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.USER_CUSTOM_TEXTURES, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
-TextureSheet.write_tweaked(Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", Folder.SHOP / "MTL" / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
+TextureSheet.write_tweaked(Folder.SHOP_MATERIAL / "TEMP_GLOBAL.TSH", Folder.SHOP_MATERIAL / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
                     
 prop_editor = BangerEditor()
 for prop in random_props:

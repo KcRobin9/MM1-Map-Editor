@@ -1,7 +1,7 @@
 from pathlib import Path
-from src.User.Settings.main import MAP_FILENAME
 from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
+from src.User.Settings.main import MAP_FILENAME
 
 
 class Shape:
@@ -23,7 +23,6 @@ class Executable:
     NOTEPAD_PLUS_PLUS = "notepad++.exe"
 
 
-
 class Default:
     ROOM = 1
     VECTOR_2 = Vector2(0, 0)
@@ -34,11 +33,18 @@ class Default:
 
 class Folder:
     BASE = Path(__file__).parent.parent.parent.resolve()  # folder: MM1-Map-Editor
+    
     SHOP = BASE / "SHOP"
+
     SHOP_CITY = SHOP / "CITY"
     SHOP_RACE = SHOP / "RACE"   
     SHOP_TUNE = SHOP / "TUNE"
+    SHOP_BOUND = SHOP / "BND" 
+    SHOP_MATERIAL = SHOP / "MTL"
+    SHOP_TEXTURES = SHOP / "TEX16O" 
+
     SHOP_RACE_MAP = SHOP_RACE / f"{MAP_FILENAME}" 
+
     SHOP_MESH_LANDMARK = SHOP / "BMS" / f"{MAP_FILENAME}LM"
     SHOP_MESH_CITY = SHOP / "BMS" / f"{MAP_FILENAME}CITY"
     
