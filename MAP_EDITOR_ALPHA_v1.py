@@ -64,8 +64,8 @@ from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, T
 from src.Constants.textures import Texture, TEXTURE_EXPORT
 from src.Constants.props import Prop
 from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, CommandArgs
-from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
-from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width
+from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType, Axis
+from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width, RaceModeNum, RaceMode
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLOR_DIVIDER
 from src.Constants.constants import *
 
@@ -2661,7 +2661,6 @@ BANGER
 ###############################################################################################################
 #! ======================= BANGERS EDITOR ======================= !#
 
-
 class BangerEditor:
     def __init__(self) -> None:  
         self.map_filename = Path(MAP_FILENAME)                      
@@ -2674,17 +2673,61 @@ class BangerEditor:
         per_race_props = {}
 
         for prop in user_set_props:
-            race_mode = prop.get('race_mode', 'DEFAULT')
-            race_num = prop.get('race_num', '')
-            race_key = f"{race_mode}_{race_num}" if race_mode != 'DEFAULT' else 'DEFAULT'
-            per_race_props.setdefault(race_key, []).append(prop)
+            race_keys = []
+            
+            if 'race' in prop:
+                race_value = prop['race']
+                
+                # Handle list of races
+                if isinstance(race_value, list):
+                    for race in race_value:
+                        race_keys.extend(self._expand_race_key(race))
+                else:
+                    race_keys = self._expand_race_key(race_value)
 
+            elif 'race_mode' in prop:  # Old method support
+                race_mode = prop.get('race_mode', RaceMode.ROAM)
+                race_num = prop.get('race_num', '')
+                if race_mode in [RaceMode.CIRCUIT, RaceMode.CHECKPOINT, RaceMode.BLITZ] and race_num != '':
+                    race_keys = [f"{race_mode}_{race_num}"]
+                else:
+                    race_keys = [race_mode]
+            else:
+                race_keys = [RaceMode.ROAM]  # No race specified - default to ROAM (goes to base map file)
+            
+            # Add prop to each specified race
+            for race_key in race_keys:
+                per_race_props.setdefault(race_key, []).append(prop)
+
+        # Process each race's props
         for race_key, race_props in per_race_props.items():                
             self.props.clear()
             self.add_multiple(race_props)
             current_filename = self._filename_with_suffix(race_key)
-            Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props) 
-            
+            Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props)
+
+    def _expand_race_key(self, race_value):
+        if race_value == RaceModeNum.CIRCUIT_ALL or race_value == RaceMode.CIRCUIT:
+            return [
+                getattr(RaceModeNum, attr) 
+                for attr in dir(RaceModeNum) 
+                if attr.startswith("CIRCUIT_") and attr != "CIRCUIT_ALL" and not attr.startswith('_')
+            ]
+        elif race_value == RaceModeNum.CHECKPOINT_ALL or race_value == RaceMode.CHECKPOINT:
+            return [
+                getattr(RaceModeNum, attr) 
+                for attr in dir(RaceModeNum) 
+                if attr.startswith("CHECKPOINT_") and attr != "CHECKPOINT_ALL" and not attr.startswith('_')
+            ]
+        elif race_value == RaceModeNum.BLITZ_ALL or race_value == RaceMode.BLITZ:
+            return [
+                getattr(RaceModeNum, attr) 
+                for attr in dir(RaceModeNum) 
+                if attr.startswith("BLITZ_") and attr != "BLITZ_ALL" and not attr.startswith('_')
+            ]
+        else:
+            return [race_value]
+
     def add_multiple(self, user_set_props):    
         for prop in user_set_props:
             offset = Vector3(*prop['offset']) 
@@ -2702,7 +2745,7 @@ class BangerEditor:
                 
                 separator = prop.get('separator', 10.0)
             
-                if isinstance(separator, str) and separator.lower() in ["x", "y", "z"]:
+                if isinstance(separator, str) and separator.lower() in (Axis.X, Axis.Y, Axis.Z):
                     prop_dims = self.load_dimensions(Folder.EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt").get(name, Vector3(1, 1, 1))
                     separator = getattr(prop_dims, separator.lower())
                 elif not isinstance(separator, (int, float)):
@@ -2763,7 +2806,6 @@ class BangerEditor:
         if debug_props:
             Bangers.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{appended_props_f.name}{FileType.TEXT}", self.props)
 
-                        
     def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
         assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
 
@@ -2797,14 +2839,25 @@ class BangerEditor:
                 random_props.append(new_prop)
                 
         return random_props
-    
+
     def _filename_with_suffix(self, race_key):        
-        if race_key == "DEFAULT":
-            return self.map_filename.with_suffix(FileType.PROP)
-            
-        race_mode, race_num = race_key.split("_")
-        short_race_mode = {RaceMode.CIRCUIT: "C", RaceMode.CHECKPOINT: "R", RaceMode.BLITZ: "B"}.get(race_mode, race_mode)
-        race_num = race_num or "0"        
+        if race_key == RaceMode.ROAM:
+            return self.map_filename.with_suffix(FileType.PROP)  # basename gets no suffix, i.e.: First_City.BNG
+        
+        if "_" in race_key:  # Numbered races like "CIRCUIT_0"
+            parts = race_key.rsplit("_", 1)  
+            if len(parts) == 2 and parts[1].isdigit():
+                race_mode = parts[0]
+                race_num = parts[1]
+            else:
+                race_mode = race_key
+                race_num = "0"
+        else:
+            race_mode = race_key
+            race_num = "0"
+        
+        short_race_mode = RACE_TYPE_INITIALS.get(race_mode, race_mode)
+        
         return self.map_filename.parent / f"{self.map_filename.stem}_{short_race_mode}{race_num}{FileType.PROP}"
                                                                             
     @staticmethod  

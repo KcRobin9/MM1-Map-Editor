@@ -1,14 +1,15 @@
 from src.Constants.props import Prop
 from src.Constants.constants import HUGE
-from src.Constants.races import RaceMode
-from src.Constants.vehicles import PlayerCar
+from src.Constants.file_types import Axis
 
+from src.Constants.races import RaceModeNum, RaceMode
+from src.Constants.vehicles import PlayerCar
 
 trailer_set = {
     "offset": (60, 0.0, 70),
     "end": (60, 0.0, -50),
     "name": Prop.TRAILER,
-    "separator": "x"  # Use the {}-axis dimension of the object as the spacing between each prop
+    "separator": Axis.X,
 }
 
 bridge_orange_buildling = {
@@ -17,19 +18,20 @@ bridge_orange_buildling = {
     "name": Prop.BRIDGE_SLIM
 }
 
-china_gate = {
-    "offset": (0, 0.0, -20),
-    "face": (1 * HUGE, 0.0, -20),
-    "name": Prop.CHINATOWN_GATE,
-    "race_mode": RaceMode.CIRCUIT,
-    "race_num": 0  # Prop for CIRCUIT 0
+# Race specific props
+trash_boxes = {
+    "offset": (0, 0.0, 0),
+    "face": (HUGE, 0.0, 0),
+    "name": Prop.TRASH_BOXES,
+    "race": [RaceModeNum.CIRCUIT_0, RaceModeNum.CIRCUIT_1]  # Also possible: RaceModeNum.CIRCUIT_ALL
 }
 
 # Put the non-randomized props here
-prop_list = [trailer_set, bridge_orange_buildling, china_gate]
+prop_list = [trailer_set, bridge_orange_buildling, trash_boxes]
 
 
 # Put the randomized props here (you will add them to the list "random props")
+#TODO: also support RaceMode and RaceModeNum here
 random_trees = {
     "offset_y": 0.0,
     "name": [Prop.TREE_SLIM] * 20

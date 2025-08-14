@@ -107,6 +107,12 @@ class Magic:
     DEVELOPMENT = "DLP7"
 
 
+class Axis:
+    X = "x"
+    Y = "y"
+    Z = "z"
+
+
 class FileType:
     EXT = ".EXT"
     _MESH = ".bms"
