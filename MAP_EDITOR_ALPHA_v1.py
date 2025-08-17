@@ -41,6 +41,7 @@ import datetime
 import textwrap
 import subprocess
 from itertools import cycle
+from collections import Counter
 from dataclasses import dataclass
 from typing import List, Dict, Set, Any, Union, Tuple, Optional, BinaryIO, Sequence
 
@@ -1006,26 +1007,48 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 ################################################################################################################ 
 #! ======================= CREATE POLYGON ======================= !#
 
-
 def check_bound_numbers(polys: List[Polygon]) -> None:
-    found_one = False
+    found_bound_number_one = False
+    bound_numbers = []
     
-    for poly in polys[1:]:  # Skip the filler Polygon with Bound Number 0 
-        if poly.cell_id <= 0 or poly.cell_id == Threshold.CELL_TYPE_SWITCH or poly.cell_id >= Threshold.VERTEX_INDEX_COUNT:
+    for poly in polys[1:]:  # Skip the filler Polygon with Bound Number 0
+        bound_number = poly.cell_id
+        
+        if bound_number <= 0 or bound_number == Threshold.CELL_TYPE_SWITCH or bound_number >= Threshold.VERTEX_INDEX_COUNT:
             error_message = f"""
             ***ERROR***
-            - Polygon with "bound_number =  {poly.cell_id}" is not valid. 
-            - Bound Number must be between 1 and 199, and 201 and 32766.
+            - Polygon with "bound_number = {bound_number}" is not allowed. 
+            - Bound Number must be between 1 and 199.
+            - Bound Number must be between 201 and 32766.
             """
             raise ValueError(error_message)
         
-        if poly.cell_id == 1:
-            found_one = True
-
-    if not found_one:
+        if bound_number == 1:
+            found_bound_number_one = True
+        
+        bound_numbers.append(bound_number)
+    
+    if not found_bound_number_one:
         error_message = f"""
         ***ERROR***
-        - There must be at least one Polygon with Bound Number 1 (this was not found).
+        - There must be at least one Polygon with "bound_number = 1" (this was not found).
+        """
+        raise ValueError(error_message)
+
+    bound_counter = Counter(bound_numbers)
+    duplicate_bound_numbers = {num: count for num, count in bound_counter.items() if count > 1}
+    
+    if duplicate_bound_numbers:
+        duplicate_details = []
+
+        for bound_num, count in duplicate_bound_numbers.items():
+            duplicate_details.append(f"\tbound_number = {bound_num} is used {count} times")
+        
+        error_message = f"""\n
+        ***ERROR***
+        - Duplicate bound numbers found. Each "bound_number" must be unique.
+        - The following bound number(s) are used multiple times:
+{chr(10).join(duplicate_details)}
         """
         raise ValueError(error_message)
 
