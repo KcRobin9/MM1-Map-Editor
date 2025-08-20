@@ -807,16 +807,14 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
 
 def determine_mesh_folder_and_filename(cell_id: int, texture_name: List[str]) -> Tuple[Path, str]:
     if cell_id < Threshold.CELL_TYPE_SWITCH:
-        target_folder = Folder.SHOP_MESH_LANDMARK
+        target_folder = Folder.SHOP_MESH_LANDMARK_MAP
     else:
-        target_folder = Folder.SHOP_MESH_CITY
-                
-    target_folder.mkdir(parents = True, exist_ok = True)
-        
+        target_folder = Folder.SHOP_MESH_CITY_MAP
+                        
     if any(name.startswith(Texture.WATER) for name in texture_name):
-        mesh_filename = f"CULL{cell_id:02d}_A2{FileType._MESH}"
+        mesh_filename = f"CULL{cell_id:02d}_A2{FileType.MESH_lowercase}"
     else:
-        mesh_filename = f"CULL{cell_id:02d}_H{FileType._MESH}"
+        mesh_filename = f"CULL{cell_id:02d}_H{FileType.MESH_lowercase}"
 
     return target_folder, mesh_filename
 
@@ -1202,6 +1200,40 @@ def create_polygon(
     
 ################################################################################################################               
 ################################################################################################################  
+
+#TODO: move this somewhere else
+def create_folders() -> None:
+    FOLDER_STRUCTURE = [
+        Folder.BUILD,
+
+        Folder.SHOP_TEXTURES_BITMAP,
+        Folder.SHOP_TEXTURES_ALPHA,
+        Folder.SHOP_TEXTURES_OPAQUE,
+
+        Folder.SHOP_TUNE,
+        Folder.SHOP_MATERIAL,
+
+        Folder.SHOP_CITY_MAP,
+        Folder.SHOP_RACE_MAP,
+
+        Folder.SHOP_MESH_CITY_MAP,
+        Folder.SHOP_MESH_LANDMARK_MAP,
+
+        Folder.SHOP_BOUND_CITY_MAP,
+        Folder.SHOP_BOUND_LANDMARK_MAP,
+
+        Folder.MIDTOWNMADNESS_DEV_CITY_MAP
+        ]
+    
+    for path in FOLDER_STRUCTURE:
+        path.mkdir(parents=True, exist_ok=True)
+
+
+create_folders()
+
+################################################################################################################               
+################################################################################################################  
+
 #! =======================CREATING YOUR MAP======================= !#
 
 def user_notes():
@@ -1803,30 +1835,11 @@ save_mesh(
 #! ======================= SETUP PREPARATION ======================= !#
 
 
-def create_folders() -> None:
-    FOLDER_STRUCTURE = [
-        Folder.BASE / "build", 
-        Folder.SHOP / "BMP16", 
-        Folder.SHOP / "TEX16O", 
-        Folder.SHOP / "TUNE", 
-        Folder.SHOP / "MTL",
-        Folder.SHOP / "CITY" / MAP_FILENAME,
-        Folder.SHOP / "RACE" / MAP_FILENAME,
-        Folder.SHOP / "BMS" / f"{MAP_FILENAME}CITY",
-        Folder.SHOP / "BMS" / f"{MAP_FILENAME}LM",
-        Folder.SHOP / "BND" / f"{MAP_FILENAME}CITY",
-        Folder.SHOP / "BND" / f"{MAP_FILENAME}LM",
-        Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME,
-        ]
-    
-    for path in FOLDER_STRUCTURE:
-        path.mkdir(parents = True, exist_ok = True)
 
         
 def create_map_info(output_file: Path, blitz_race_names: List[str], circuit_race_names: List[str], checkpoint_race_names: List[str]) -> None:
     with open (output_file, "w") as f:
         
-        # Removed 'lower()' for 'RaceDir'
         f.write(f"""
 LocalizedName={MAP_NAME}
 MapName={MAP_FILENAME}
@@ -1896,10 +1909,10 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
     for file in files:
         cell_id = int(re.findall(r'\d+', file.name)[0])
 
-        if file.name.endswith(f"_A2{FileType._MESH}"):
+        if file.name.endswith(f"_A2{FileType.MESH_lowercase}"):
             meshes_water_drift.add(cell_id)
 
-        if file.name.endswith(FileType._MESH):
+        if file.name.endswith(FileType.MESH_lowercase):
             meshes_regular.append(cell_id)
             
     return meshes_regular, meshes_water_drift
@@ -1977,7 +1990,7 @@ def get_cell_visibility_by_distance(cell_id: int, polys: List[Polygon], cell_typ
 
 
 def create_cells(output_file: Path, polys: List[Polygon]) -> None:
-    mesh_files, mesh_a2_files = get_cell_ids(Folder.SHOP_MESH_LANDMARK, Folder.SHOP_MESH_CITY)
+    mesh_files, mesh_a2_files = get_cell_ids(Folder.SHOP_MESH_LANDMARK_MAP, Folder.SHOP_MESH_CITY_MAP)
 
     with open(output_file, "w") as f:    
         f.write(f"{len(mesh_files)}\n")
@@ -2050,8 +2063,8 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
     ax.axis("off")
 
     # Save JPG 640 and 320 Pictures                    
-    plt.savefig(Folder.SHOP / "BMP16" / f"{MAP_FILENAME}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
-    plt.savefig(Folder.SHOP / "BMP16" / f"{MAP_FILENAME}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
+    plt.savefig(Folder.SHOP_TEXTURES_BITMAP / f"{MAP_FILENAME}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
+    plt.savefig(Folder.SHOP_TEXTURES_BITMAP / f"{MAP_FILENAME}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
 
     if debug_minimap or set_lars_race_maker:
         _, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
@@ -2078,8 +2091,8 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
     if not set_bridges:
         return
         
-    if output_file.exists():
-        os.remove(output_file)
+    # if output_file.exists():
+    #     os.remove(output_file)
     
     def calculate_facing(offset: Tuple[float, float, float], orientation: Union[str, float]) -> List[float]:
         if isinstance(orientation, (float, int)):
@@ -2128,7 +2141,8 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
         num_fillers = 5 - len(bridge_attributes)        
         fillers = BRIDGE_ATTRIBUTE_FILLER * num_fillers
 
-        template = (  # Do not change
+        # Do not change
+        template = (
             f"DrawBridge{id}\n"
             f"\t{drawbridge_values}\n"
             f"{attributes}"
@@ -3855,7 +3869,7 @@ class BaiMap:
         self.write_map()
              
     def write_map(self):           
-        with open(Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME / f"{MAP_FILENAME}.map", 'w') as f:
+        with open(Folder.MIDTOWNMADNESS_DEV_CITY_MAP / f"{MAP_FILENAME}.map", 'w') as f:
             f.write(self.map_template())
     
     def map_template(self):
@@ -3928,7 +3942,7 @@ class aiStreetEditor:
         return BaiMap(street_names)
 
     def write(self):    
-        with open(Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
+        with open(Folder.MIDTOWNMADNESS_DEV_CITY_MAP / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):
@@ -4116,7 +4130,7 @@ def create_lars_race_maker(output_file: Path, street_list, hudmap_vertices: List
 
 
 def create_angel_resource_file(shop_folder: Path) -> None:
-    for file in Path("angel").iterdir():
+    for file in Folder.ANGEL.iterdir():
         if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
             shutil.copy(file, shop_folder / file.name)
             
@@ -4127,18 +4141,16 @@ def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop: bool
     os.chdir(Folder.BASE)
     time.sleep(1)  # Make sure folders are no longer in use (i.e. an .ar file is still being created)
     
-    # Always delete the build folder
-    try:  
+    try:  # Always delete the build folder
         shutil.rmtree(build_folder)
     except Exception as e:
-        print(f"Failed to delete the BUILD directory. Reason: {e}")
+        print(f"\nFailed to delete the BUILD directory. Reason: {e}\n")
     
-    # Only delete shop folder if "delete_shop" is True
-    if delete_shop:
+    if delete_shop:  # Only delete shop folder if "delete_shop" is True
         try:
             shutil.rmtree(shop_folder)
         except Exception as e:
-            print(f"Failed to delete the SHOP directory. Reason: {e}")
+            print(f"\nFailed to delete the SHOP directory. Reason: {e}\n")
 
 
 def create_commandline(
@@ -4817,7 +4829,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     select_all: bpy.props.BoolProperty(default = True)
 
     def execute(self, context: bpy.types.Context) -> Set[set]:            
-        output_folder = Folder.BASE / "Polygon Export"
+        output_folder = Folder.EXPORT_POLYGON
         output_folder.mkdir(exist_ok = True)
                 
         current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
@@ -5127,12 +5139,9 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
         waypoints = get_all_waypoints()
     else:
         waypoints = [wp for wp in get_all_waypoints() if wp.select_get()]
-            
-    output_folder = Folder.BASE / "Waypoint Export"
-    output_folder.mkdir(exist_ok = True)
 
     current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
-    export_file = output_folder / f"Waypoints_{current_time}{FileType.TEXT}"
+    export_file = Folder.EXPORT_WAYPOINTS / f"Waypoints_{current_time}{FileType.TEXT}"
 
     with open(export_file, "w") as f:
         print("")
@@ -5472,10 +5481,9 @@ street_list = street_list + [cruise_start]
 #! ======================= CALL FUNCTIONS ======================= !#
 
 # Setup
-create_folders()
-copy_custom_textures_to_shop(Folder.USER_CUSTOM_TEXTURES, Folder.SHOP / "TEX16O")
+copy_custom_textures_to_shop(Folder.USER_TEXTURES_CUSTOM, Folder.SHOP_TEXTURES_OPAQUE)
 copy_carsim_files_to_shop(Folder.EDITOR_RESOURCES / "TUNE" / "MMCARSIM", Folder.SHOP_TUNE, FileType.CAR_SIMULATION)
-ensure_empty_mm_dev_folder(Folder.MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME) 
+ensure_empty_mm_dev_folder(Folder.MIDTOWNMADNESS_DEV_CITY_MAP) 
 create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
 
@@ -5493,9 +5501,9 @@ Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", verti
 Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
-PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP / "MTL" / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
+PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP_MATERIAL / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
 
-TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.USER_CUSTOM_TEXTURES, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
+TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.USER_TEXTURES_CUSTOM, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
 TextureSheet.write_tweaked(Folder.SHOP_MATERIAL / "TEMP_GLOBAL.TSH", Folder.SHOP_MATERIAL / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
                     
 prop_editor = BangerEditor()
@@ -5507,9 +5515,9 @@ lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTIN
 LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
-create_ext(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.EXT}", hudmap_vertices)
-create_animations(Folder.SHOP_CITY / MAP_FILENAME, animations_data, set_animations)   
-create_bridges(bridge_list, set_bridges, Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.GIZMO}") 
+create_ext(f"{Folder.SHOP_CITY_MAP}{FileType.EXTREMA}", hudmap_vertices)
+create_animations(Folder.SHOP_CITY_MAP, animations_data, set_animations)   
+create_bridges(bridge_list, set_bridges, f"{Folder.SHOP_CITY_MAP}{FileType.GIZMO}") 
 create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
 create_lars_race_maker(f"Lars_Race_Maker{FileType.HTML}", street_list, hudmap_vertices, set_lars_race_maker)
@@ -5573,7 +5581,7 @@ create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 # Cleanup
-post_editor_cleanup(Folder.BASE / "build", Folder.SHOP, delete_shop)
+post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
 
 ###################################################################################################################   
 ################################################################################################################### 

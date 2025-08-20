@@ -114,12 +114,13 @@ class Axis:
 
 
 class FileType:
-    EXT = ".EXT"
-    _MESH = ".bms"
+    EXTREMA = ".EXT"
     MESH = ".BMS"
+    MESH_lowercase = ".bms"
     PROP = ".BNG"
     CELL = ".CELLS"
     BOUND = ".BND"
+    EXTREMA = ".EXT"
     GIZMO = ".GIZMO"
     PORTAL = ".PTL"
     FACADE = ".FCD"
@@ -134,9 +135,9 @@ class FileType:
         
     DIRECTDRAW_SURFACE = ".DDS"
     
-    MAP = ".map"
+    AI_MAP = ".map"
     AI_STREET = ".road"
-    INTERSECTION = ".int"
+    AI_INTERSECTION = ".int"
         
     CSV = ".CSV"
     TEXT = ".txt"

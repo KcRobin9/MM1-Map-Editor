@@ -35,26 +35,43 @@ class Folder:
     BASE = Path(__file__).parent.parent.parent.resolve()  # folder: MM1-Map-Editor
     
     SHOP = BASE / "SHOP"
+    BUILD = BASE / "build"
+    ANGEL = BASE / "angel"
+
+    EXPORT = BASE / "Export"
+    EXPORT_POLYGON = EXPORT / "Polygon"
+    EXPORT_WAYPOINTS = EXPORT / "Waypoints"
 
     SHOP_CITY = SHOP / "CITY"
     SHOP_RACE = SHOP / "RACE"   
     SHOP_TUNE = SHOP / "TUNE"
     SHOP_BOUND = SHOP / "BND" 
+    SHOP_MESHES = SHOP / "BMS" 
     SHOP_MATERIAL = SHOP / "MTL"
-    SHOP_TEXTURES = SHOP / "TEX16O" 
 
+    SHOP_TEXTURES_BITMAP = SHOP / "BMP16"
+    SHOP_TEXTURES_ALPHA = SHOP / "TEX16A" 
+    SHOP_TEXTURES_OPAQUE = SHOP / "TEX16O" 
+    SHOP_TEXTURES_PALETTE = SHOP / "TEXP" 
+
+    SHOP_CITY_MAP = SHOP_CITY / f"{MAP_FILENAME}" 
     SHOP_RACE_MAP = SHOP_RACE / f"{MAP_FILENAME}" 
 
-    SHOP_MESH_LANDMARK = SHOP / "BMS" / f"{MAP_FILENAME}LM"
-    SHOP_MESH_CITY = SHOP / "BMS" / f"{MAP_FILENAME}CITY"
+    SHOP_MESH_CITY_MAP = SHOP_MESHES / f"{MAP_FILENAME}CITY"
+    SHOP_MESH_LANDMARK_MAP = SHOP_MESHES / f"{MAP_FILENAME}LM"
+
+    SHOP_BOUND_CITY_MAP = SHOP_BOUND / f"{MAP_FILENAME}CITY"
+    SHOP_BOUND_LANDMARK_MAP = SHOP_BOUND / f"{MAP_FILENAME}LM"
     
     MIDTOWNMADNESS = BASE / "MidtownMadness"
+
+    MIDTOWNMADNESS_DEV_CITY_MAP = MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME
 
     USER_RESOURCES = BASE / "Resources" / "User"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
     DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
 
-    USER_CUSTOM_TEXTURES = BASE / "src" / "User" / "Textures" / "Custom"
+    USER_TEXTURES_CUSTOM = BASE / "src" / "User" / "Textures" / "Custom"
 
 
 class CommandArgs:
