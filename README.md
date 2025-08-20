@@ -31,7 +31,7 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 ## Credits
 
 * [0x1F9F1](https://github.com/0x1F9F1) - Instrumental help, including [Open1560](https://github.com/0x1F9F1/Open1560) features and coding Q & A
-* [Dading](https://www.youtube.com/@dading5962) - Alpha tester, creator of [Moronville](https://cdn.discordapp.com/attachments/890529659756888074/1179102551724019773/MoronVille_City.ar?ex=664cd152&is=664b7fd2&hm=d5833aaee8cfc1e7e6eeadf64c64b0cd4d7dd29a2cf1fb752d6ae38c8c6f4989&)
+* [Dading](https://www.youtube.com/@dading5962) - Alpha tester, creator of [Miniville](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Resources/User/_FINISHED_MAPS/Miniville)
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
 * [Lars](https://github.com/Larspolo) - For his Race Making Tool
 * DDucky - Code help with Prop Editor

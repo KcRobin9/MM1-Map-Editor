@@ -2,6 +2,22 @@
 ###### Made by Dading ######
 ############################
 
+# Last update: August 2025
+
+# Polygon 500 | BND spawn
+create_polygon(
+    bound_number = 500, 
+    vertex_coordinates = [
+        (-80, 0.0, -80), 
+        (-80, 0.0, 80), 	
+        (80, 0.0, 80), 
+        (80, 0.0, -80)])
+    
+# Generate BMS for Polygon 500 spawn
+save_mesh(
+    texture_name = [Texture.ROAD], 
+    normals = [1, 1, 1, 1], 
+    tex_coords = compute_uv(bound_number = 500, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Polygon 1 | BND floor
 create_polygon(
@@ -10,11 +26,12 @@ create_polygon(
         (-10, 15.0, -10), 
         (-10, 15.0, -80), 	
         (-80, 15.0, -80), 
-        (-80, 15.0, -10)])
+        (-80, 15.0, -10)],
+        hud_color=Color.WOOD)
 
 # Polygon 1 | Texture
 save_mesh(
-    texture_name = ["T_WALL"], 
+    texture_name = [Texture.ROAD], 
     tex_coords = compute_uv(bound_number = 1, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
 # Polygon 2 | BND WALL1 1
@@ -28,7 +45,7 @@ create_polygon(
 
 # Generate BMS for Polygon 2 WALL1 1
 save_mesh(
-    texture_name = ["T_WOOD"], 
+    texture_name = [Texture.WOOD], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 2, tile_x = 5, tile_y = 5, angle_degrees = 0))
  
@@ -42,7 +59,7 @@ create_polygon(
         (-10, 15.0, -10)], wall_side = "inside")
 
 save_mesh( 
-    texture_name = ["T_WOOD"], 
+    texture_name = [Texture.WOOD], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 3, tile_x = 1, tile_y = 1, angle_degrees = 0))  
     
@@ -57,7 +74,7 @@ create_polygon(
     
 # Generate BMS for Polygon 4 WALL1 3
 save_mesh(
-    texture_name = ["T_WOOD"], 
+    texture_name = [Texture.WOOD], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 4, tile_x = 5, tile_y = 5, angle_degrees = 0)) 
     
@@ -72,7 +89,7 @@ create_polygon(
     
 # Generate BMS for Polygon 5 WALL1 4
 save_mesh( 
-    texture_name = ["T_WOOD"], 
+    texture_name = [Texture.WOOD], 
     tex_coords = compute_uv(bound_number = 5, tile_x = 5, tile_y = 5, angle_degrees = 0))    
     
 # Polygon 12 | BND road floor
@@ -83,10 +100,10 @@ create_polygon(
         (80, 15.0, -80), 	
         (40, 15.0, -80), 
         (40, 15.0, -10)])
-    
+
 # Generate BMS for Polygon 12
 save_mesh(
-    texture_name = ["T_WALL"],
+    texture_name = [Texture.ROAD],
     tex_coords = compute_uv(bound_number = 12, tile_x = 1, tile_y = 1, angle_degrees = 0))   
 
 # Polygon 13 | BND WALL2 1
@@ -100,7 +117,7 @@ create_polygon(
     
 # Generate BMS for Polygon 13 WALL2 1
 save_mesh(
-    texture_name = ["IND_WALL"], 
+    texture_name = [Texture.IND_WALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 13, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -115,7 +132,7 @@ create_polygon(
     
 # Generate BMS for Polygon 14 WALL2 2
 save_mesh(
-    texture_name = ["IND_WALL"], 
+    texture_name = [Texture.IND_WALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 14, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -130,7 +147,7 @@ create_polygon(
     
 # Generate BMS for Polygon 15 WALL2 3
 save_mesh(
-    texture_name = ["IND_WALL"], 
+    texture_name = [Texture.IND_WALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 15, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -145,7 +162,7 @@ create_polygon(
     
 # Generate BMS for Polygon 16 WALL2 4
 save_mesh(
-    texture_name = ["IND_WALL"], 
+    texture_name = [Texture.IND_WALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 16, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -157,10 +174,10 @@ create_polygon(
         (10, 15.0, 40), 
         (80, 15.0, 40), 
         (80, 15.0, 10)])
-    
+
 # Generate BMS for Polygon 21 floor
 save_mesh(
-    texture_name = ["T_WALL"],
+    texture_name = [Texture.ROAD],
     tex_coords = compute_uv(bound_number = 21, tile_x = 1, tile_y = 1, angle_degrees = 0))       
 
 # Polygon 22 | BND WALL3 1
@@ -174,7 +191,7 @@ create_polygon(
     
 # Generate BMS for Polygon 22 WALL3 1
 save_mesh(
-    texture_name = ["OT_BAR_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 22, tile_x = 12, tile_y = 5, angle_degrees = 0))
 
@@ -189,7 +206,7 @@ create_polygon(
     
 # Generate BMS for Polygon 23 WALL3 2
 save_mesh(
-    texture_name = ["OT_BAR_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 23, tile_x = 1, tile_y = 1, angle_degrees = 0))
 
@@ -204,7 +221,7 @@ create_polygon(
     
 # Generate BMS for Polygon 24 WALL3 3
 save_mesh(
-    texture_name = ["OT_BAR_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 24, tile_x = 12, tile_y = 5, angle_degrees = 0))
 
@@ -219,7 +236,7 @@ create_polygon(
     
 # Generate BMS for Polygon 25 WALL3 4
 save_mesh(
-    texture_name = ["OT_BAR_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals= [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 25, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -234,7 +251,7 @@ create_polygon(
     
 # Generate BMS for Polygon 26
 save_mesh(
-    texture_name = ["ROAD"], 
+    texture_name = [Texture.ROAD], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 26, tile_x = 12, tile_y = 5, angle_degrees = 0))
 
@@ -246,10 +263,10 @@ create_polygon(
         (10, 15.0, 80), 
         (80, 15.0, 80), 
         (80, 15.0, 50)])
-    
+
 # Generate BMS for Polygon 27 floor
 save_mesh(
-    texture_name = ["T_WALL"],
+    texture_name = [Texture.ROAD],
     tex_coords = compute_uv(bound_number = 27, tile_x = 12, tile_y = 5, angle_degrees = 0))  
 
 # Polygon 28 | BND WALL4 1
@@ -263,7 +280,7 @@ create_polygon(
     
 # Generate BMS for Polygon 28 WALL4 1
 save_mesh(
-    texture_name = ["CT_SHOP_BRICK"], 
+    texture_name = [Texture.SHOP_BRICK], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 28, tile_x = 12, tile_y = 5, angle_degrees = 0))
 
@@ -278,7 +295,7 @@ create_polygon(
     
 # Generate BMS for Polygon 29 WALL4 2
 save_mesh(
-    texture_name = ["CT_SHOP_BRICK"], 
+    texture_name = [Texture.SHOP_BRICK], 
     normals= [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 29, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -293,7 +310,7 @@ create_polygon(
     
 # Generate BMS for Polygon 30 WALL4 3
 save_mesh(
-    texture_name = ["CT_SHOP_BRICK"], 
+    texture_name = [Texture.SHOP_BRICK], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 30, tile_x = 12, tile_y = 5, angle_degrees = 0))
 
@@ -308,7 +325,7 @@ create_polygon(
     
 # Generate BMS for Polygon 31 WALL4 4
 save_mesh(
-    texture_name = ["CT_SHOP_BRICK"], 
+    texture_name = [Texture.SHOP_BRICK], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 31, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -319,16 +336,18 @@ create_polygon(
         (-80, 15.0, 10), 		
         (-80, 15.0, 80), 
         (-10, 15.0, 80), 
-        (-10, 15.0, 10)])
+        (-10, 15.0, 10)],
+        hud_color=Color.YELLOW)
     
 # Generate BMS for Polygon 50
 save_mesh(
-    texture_name = ["T_WALL"],
+    texture_name = [Texture.WALL],
     tex_coords = compute_uv(bound_number = 50, tile_x = 5, tile_y = 5, angle_degrees = 0))      
 
 # Polygon 6 | BND spawn
 create_polygon(
     bound_number = 6, 
+#    base=True,
     vertex_coordinates = [
         (-10, 15.0, -10), 
         (-10, 15.0, 10), 	
@@ -337,9 +356,10 @@ create_polygon(
     
 # Generate BMS for Polygon 6 spawn
 save_mesh(
-    texture_name = ["RINTER"], 
+    texture_name = [Texture.INTERSECTION], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 6, tile_x = 5, tile_y = 5, angle_degrees = 0))
+
      
 # Polygon 7 | BND
 create_polygon(
@@ -352,15 +372,14 @@ create_polygon(
     
 # Generate BMS for Polygon 7
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 7, tile_x = 10, tile_y = 2, angle_degrees = 0))
 
 # Polygon 8 | BND
 create_polygon(
     bound_number = 8, 
-    material_index = Material.NO_FRICTION, 
-    cell_type = Room.INDOORS, 
+    material_index = 98,
     hud_color = Color.SNOW, 
     vertex_coordinates = [
         (40, 15.0, -10), 
@@ -370,7 +389,7 @@ create_polygon(
     
 # Generate BMS for Polygon 8
 save_mesh(
-    texture_name = ["L_RIVET"], 
+    texture_name = [Texture.ICE], 
     normals = [3, 3, 3, 3], 
     tex_coords = compute_uv(bound_number = 8, tile_x = 21, tile_y = 21, angle_degrees = 90)) 
 
@@ -385,7 +404,7 @@ create_polygon(
     
 # Generate BMS for Polygon 9
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 9, tile_x = 7, tile_y = 1, angle_degrees = 0))
 
@@ -402,7 +421,7 @@ create_polygon(
     
 # Polygon 10 | Texture
 save_mesh(
-     texture_name = ["T_GRASS"], normals = [2, 2, 2, 2], 
+     texture_name = [Texture.GRASS], normals = [2, 2, 2, 2], 
      tex_coords = compute_uv(bound_number = 24, tile_x = 20, tile_y = 20, angle_degrees = 0))
 
 # Polygon 11 | BND 
@@ -419,7 +438,7 @@ create_polygon(
     
 # Generate BMS for Polygon 11
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 11, tile_x = 25, tile_y = 25, angle_degrees = 0))
     
@@ -434,7 +453,7 @@ create_polygon(
 
 # Generate BMS for Polygon 17
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 17, tile_x = 10, tile_y = 2, angle_degrees = 0))
 
@@ -449,7 +468,7 @@ create_polygon(
     
 # Generate BMS for Polygon 18
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 18, tile_x = 7, tile_y = 1, angle_degrees = 0))
 
@@ -466,7 +485,7 @@ create_polygon(
     
 # Generate BMS for Polygon 19
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals= [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 19, tile_x = 5, tile_y = 5, angle_degrees = 0))   
 
@@ -484,9 +503,9 @@ create_polygon(
     
 # Generate BMS for Polygon 20
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 20, tile_x = 25, tile_y = 25, angle_degrees = 0))  
+    tex_coords = compute_uv(bound_number = 20, tile_x = 25, tile_y = 25, angle_degrees = 90))  
 
 # Polygon 32 | BND
 create_polygon(
@@ -499,7 +518,7 @@ create_polygon(
     
 # Generate BMS for Polygon 32
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 32, tile_x = 10, tile_y = 2, angle_degrees = 90))    
     
@@ -514,7 +533,7 @@ create_polygon(
     
 # Generate BMS for Polygon 47
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 47, tile_x = 7, tile_y = 1, angle_degrees = 90))
 
@@ -531,7 +550,7 @@ create_polygon(
     
 # Generate BMS for Polygon 48
 save_mesh( 
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals= [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 48, tile_x = 5, tile_y = 5, angle_degrees = 0))  
 
@@ -549,9 +568,9 @@ create_polygon(
     
 # Generate BMS for Polygon 49
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 49, tile_x = 20, tile_y = 20, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 49, tile_x = 25, tile_y = 25, angle_degrees = 90))
 
 # Polygon 33 | BND
 create_polygon(
@@ -564,7 +583,7 @@ create_polygon(
 
 # Generate BMS for Polygon 33
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 33, tile_x = 10, tile_y = 2, angle_degrees = 90))
 
@@ -579,7 +598,7 @@ create_polygon(
     
 # Generate BMS for Polygon 35 WALL5 1
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 35, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -594,7 +613,7 @@ create_polygon(
     
 # Generate BMS for Polygon 36 WALL5 2
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 36, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -609,7 +628,7 @@ create_polygon(
     
 # Generate BMS for Polygon 37 WALL5 3
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 37, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -624,7 +643,7 @@ create_polygon(
     
 # Generate BMS for Polygon 38 WALL5 4
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 38, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -639,7 +658,7 @@ create_polygon(
     
 # Generate BMS for Polygon 43 WALL7 1
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 43, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -654,7 +673,7 @@ create_polygon(
     
 # Generate BMS for Polygon 44 WALL7 2
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 44, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -669,7 +688,7 @@ create_polygon(
     
 # Generate BMS for Polygon 45 WALL7 3
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 45, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -684,7 +703,7 @@ create_polygon(
     
 # Generate BMS for Polygon 51 WALL6 1
 save_mesh(
-    texture_name = ["OT_MARKT_BRICK"], 
+    texture_name = [Texture.MARKT_BRICK], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 51, tile_x = 5, tile_y = 5, angle_degrees = 0))   
 
@@ -699,7 +718,7 @@ create_polygon(
     
 # Generate BMS for Polygon 52 WALL6 2
 save_mesh(
-    texture_name = ["OT_MARKT_BRICK"], 
+    texture_name = [Texture.MARKT_BRICK], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 52, tile_x = 5, tile_y = 5, angle_degrees = 0))   
 
@@ -714,7 +733,7 @@ create_polygon(
     
 # Generate BMS for Polygon 53 WALL6 3
 save_mesh( 
-    texture_name = ["OT_MARKT_BRICK"], 
+    texture_name = [Texture.MARKT_BRICK], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 53, tile_x = 5, tile_y = 5, angle_degrees = 0))   
 
@@ -729,7 +748,7 @@ create_polygon(
     
 # Generate BMS for Polygon 54 WALL6 4
 save_mesh(
-    texture_name = ["OT_MARKT_BRICK"], 
+    texture_name = [Texture.MARKT_BRICK], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 54, tile_x = 5, tile_y = 5, angle_degrees = 0))  
 
@@ -744,7 +763,7 @@ create_polygon(
     
 # Generate BMS for Polygon 55
 save_mesh(
-    texture_name = ["R4"], 
+    texture_name = [Texture.ROAD_2_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 55, tile_x = 7, tile_y = 1, angle_degrees = 90))
 
@@ -761,7 +780,7 @@ create_polygon(
     
 # Generate BMS for Polygon 56
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 56, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -779,9 +798,9 @@ create_polygon(
     
 # Generate BMS for Polygon 57
 save_mesh( 
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 57, tile_x = 25, tile_y = 25, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 57, tile_x = 25, tile_y = 25, angle_degrees = 90))
 
 # Polygon 58 | BND
 create_polygon(
@@ -794,7 +813,7 @@ create_polygon(
     
 # Generate BMS for Polygon 58
 save_mesh(
-    texture_name = ["R2"], 
+    texture_name = [Texture.ROAD_1_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 58, tile_x = 1, tile_y = 1, angle_degrees = 45))
          
@@ -809,9 +828,9 @@ create_polygon(
     
 # Generate BMS for Polygon 59
 save_mesh(
-    texture_name = ["R2"], 
+    texture_name = [Texture.ROAD_1_LANE], 
     normals = [1, 1, 1, 1], 
-    tex_coords = compute_uv(bound_number = 59, tile_x = 1, tile_y = 1, angle_degrees = 45))     
+    tex_coords = compute_uv(bound_number = 59, tile_x = 1, tile_y = 1, angle_degrees = 45))    
 
 # Polygon 60 | BND
 create_polygon(
@@ -825,7 +844,7 @@ create_polygon(
     
 # Generate BMS for Polygon 60
 save_mesh(
-    texture_name = ["R2"], 
+    texture_name = [Texture.ROAD_1_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 60, tile_x = 1, tile_y = 1, angle_degrees = 45))   
 
@@ -841,39 +860,39 @@ create_polygon(
     
 # Generate BMS for Polygon 61
 save_mesh(
-    texture_name = ["R2"], 
+    texture_name = [Texture.ROAD_1_LANE], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 61, tile_x = 1, tile_y = 1, angle_degrees = 0))    
          
 # Polygon 39 | BND
 create_polygon(
     bound_number = 39, 
-    hud_color = '#F2B935', 
     vertex_coordinates = [
         (-40, 15.0, 10), 		
         (-50, 15.0, 10), 
         (-50, 25.0, 40), 
-        (-40, 25.0, 40)])
+        (-40, 25.0, 40)],
+        hud_color=Color.RED)
       
 # Generate BMS for Polygon 39
 save_mesh( 
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals= [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 39, tile_x = 10, tile_y = 10, angle_degrees = 0))
 
 # Polygon 62 | BND
 create_polygon(
-    bound_number = 62, 
-    hud_color = '#F2B935', 
+    bound_number = 62,
     vertex_coordinates = [
         (-50, 15.0, 80), 		
         (-40, 15.0, 80), 
         (-40, 25.0, 50), 
-        (-50, 25.0, 50)])
+        (-50, 25.0, 50)],
+        hud_color=Color.RED)
       
 # Generate BMS for Polygon 62
 save_mesh( 
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals= [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 62, tile_x = 5, tile_y = 5, angle_degrees = 0))   
 
@@ -888,39 +907,39 @@ create_polygon(
     
 # Generate BMS for Polygon 63 WALL7 4
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 63, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
 # Polygon 40 | BND
 create_polygon(
     bound_number = 40, 
-    hud_color = '#F2B935', 
     vertex_coordinates = [
         (-25, 25.0, 40), 		
         (-50, 25.0, 40), 
         (-50, 25.0, 50), 
-        (-25, 25.0, 50)])
+        (-25, 25.0, 50)],
+        hud_color=Color.RED)
     
 # Generate BMS for Polygon 40
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 40, tile_x = 10, tile_y = 10, angle_degrees = 0))  
     
 # Polygon 41 | BND
 create_polygon(
     bound_number = 41, 
-    hud_color = '#F2B935', 
     vertex_coordinates = [
         (-10, 30.0, 50), 		
         (-10, 30.0, 40), 
         (-25, 25.0, 40), 
-        (-25, 25.0, 50)])
+        (-25, 25.0, 50)],
+        hud_color=Color.RED)
     
 # Generate BMS for Polygon 41
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [0, 1, 2, 3], 
     tex_coords = compute_uv(bound_number = 41, tile_x = 10, tile_y = 10, angle_degrees = 0))  
 
@@ -951,7 +970,7 @@ create_polygon(
         (-89.9, 15.0, -90)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 71, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -967,7 +986,7 @@ create_polygon(
         (-90, 15.0, -90)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 72, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -983,7 +1002,7 @@ create_polygon(
         (-90, 15.0, 89.9)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 73, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -999,7 +1018,7 @@ create_polygon(
         (-90, 15.0, 90)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 74, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -1015,7 +1034,7 @@ create_polygon(
         (90, 15.0, 90)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 75, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -1031,7 +1050,7 @@ create_polygon(
         (89.9, 15.0, 90)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 76, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -1047,7 +1066,7 @@ create_polygon(
         (90, 15.0, -89.9)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 77, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
@@ -1063,13 +1082,13 @@ create_polygon(
         (90, 15.0, -90)])
 
 save_mesh(
-    texture_name = ["T_GRASS"], 
+    texture_name = [Texture.GRASS], 
     normals = [2, 2, 2, 2], 
     tex_coords = compute_uv(bound_number = 78, tile_x = 5, tile_y = 5, angle_degrees = 0))
 
-# Polygon 90 | BND | Water Missing Part 1
+# Polygon 201 | BND | Water Missing Part 1
 create_polygon(
-    bound_number = 90, 
+    bound_number = 201, 
     material_index = Material.WATER, 
     cell_type = Room.DRIFT, 
     hud_color = Color.WATER,  
@@ -1079,15 +1098,15 @@ create_polygon(
         (500, 4.0, 115), 
         (115, 4.0, 115)])
     
-# Generate BMS for Polygon 90
+# Generate BMS for Polygon 201
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 90, tile_x = 1, tile_y = 1, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 90, tile_x = 25, tile_y = 25, angle_degrees = 0))
 
-# Polygon 91 | BND | Water Missing Part 2
+# Polygon 202 | BND | Water Missing Part 2
 create_polygon(
-    bound_number = 91, 
+    bound_number = 202, 
     material_index = Material.WATER, 
     cell_type = Room.DRIFT, 
     hud_color = Color.WATER,  
@@ -1097,15 +1116,15 @@ create_polygon(
         (-115, 4.0, -500), 
         (-500, 4.0, -500)])
     
-# Generate BMS for Polygon 91
+# Generate BMS for Polygon 202
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 91, tile_x = 5, tile_y = 5, angle_degrees = 0))  
+    tex_coords = compute_uv(bound_number = 91, tile_x = 25, tile_y = 25, angle_degrees = 0))  
 
-# Polygon 92 | BND | Water Missing Part 3
+# Polygon 203 | BND | Water Missing Part 3
 create_polygon(
-    bound_number = 92, 
+    bound_number = 203, 
     material_index = Material.WATER, 
     cell_type = Room.DRIFT, 
     hud_color = Color.WATER,  
@@ -1115,15 +1134,15 @@ create_polygon(
         (115, 4.0, -500), 
         (115, 4.0, -115)])
     
-# Generate BMS for Polygon 92
+# Generate BMS for Polygon 203
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 92, tile_x = 25, tile_y = 25, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 92, tile_x = 25, tile_y = 25, angle_degrees = 90))
 
-# Polygon 93 | BND | Water Missing Part 4
+# Polygon 204 | BND | Water Missing Part 4
 create_polygon(
-    bound_number = 93, 
+    bound_number = 204, 
     material_index = Material.WATER, 
     cell_type = Room.DRIFT, 
     hud_color = Color.WATER,  
@@ -1133,15 +1152,16 @@ create_polygon(
          (-115, 4.0, 500),                 
          (-115, 4.0, 115)]), 
 
-# Generate BMS for Polygon 93
+# Generate BMS for Polygon 204
 save_mesh(
-    texture_name = ["T_WATER"], 
+    texture_name = [Texture.WATER], 
     normals = [2, 2, 2, 2], 
-    tex_coords = compute_uv(bound_number = 93, tile_x = 25, tile_y = 25, angle_degrees = 0))  
+    tex_coords = compute_uv(bound_number = 93, tile_x = 25, tile_y = 25, angle_degrees = 90))  
 
-# Polygon 991 | BND floor roof
+# Polygon 991 | BND floor roof wood 1
 create_polygon(
     bound_number = 991, 
+    hud_color=Color.WOOD,
     vertex_coordinates = [
         (-10, 35.0, -10), 
         (-10, 35.0, -80), 	
@@ -1150,13 +1170,14 @@ create_polygon(
 
 # Polygon 991 | Texture roof
 save_mesh(
-    texture_name = ["T_WOOD"], 
+    texture_name = [Texture.WOOD], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 991, tile_x = 7, tile_y = 7, angle_degrees = 0))
 
-# Polygon 992 | BND road floor roof
+# Polygon 992 | BND road floor roof 12
 create_polygon(
     bound_number = 992, 
+    hud_color=Color.BLUE_DARK,
     vertex_coordinates = [
         (80, 25.0, -10), 
         (80, 25.0, -80), 	
@@ -1165,13 +1186,14 @@ create_polygon(
     
 # Generate BMS for Polygon 992 roof
 save_mesh(
-    texture_name = ["IND_WALL"], 
+    texture_name = [Texture.IND_WALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 992, tile_x = 4, tile_y = 7, angle_degrees = 0))   
 
-# Polygon 993 | BND floor roof
+# Polygon 993 | BND floor roof 21
 create_polygon(
     bound_number = 993, 
+    hud_color=Color.BRICKS_MALL,
     vertex_coordinates = [
         (10, 25.0, 10), 		
         (10, 25.0, 40), 
@@ -1180,13 +1202,14 @@ create_polygon(
     
 # Generate BMS for Polygon 993 floor roof
 save_mesh(
-    texture_name = ["OT_BAR_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 993, tile_x = 7, tile_y = 3, angle_degrees = 0)) 
 
-# Polygon 994 | BND floor roof
+# Polygon 994 | BND floor roof 27
 create_polygon(
     bound_number = 994, 
+    hud_color=Color.RED_DARK,
     vertex_coordinates = [
         (10, 25.0, 50), 		
         (10, 25.0, 80), 
@@ -1195,13 +1218,14 @@ create_polygon(
     
 # Generate BMS for Polygon 994 floor roof
 save_mesh(
-    texture_name = ["CT_SHOP_BRICK"], 
+    texture_name = [Texture.SHOP_BRICK], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 994, tile_x = 7, tile_y = 3, angle_degrees = 0))
 
 # Polygon 995 | BND floor roof
 create_polygon(
     bound_number = 995, 
+    hud_color=Color.BRICKS_MALL,
     vertex_coordinates = [
         (-10, 40.0, 10), 		
         (-40, 40.0, 10), 
@@ -1210,13 +1234,14 @@ create_polygon(
     
 # Generate BMS for Polygon 995 floor roof
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 995, tile_x = 3, tile_y = 3, angle_degrees = 0)) 
 
 # Polygon 996 | BND floor roof
 create_polygon(
     bound_number = 996, 
+    hud_color=Color.BRICKS_MALL,
     vertex_coordinates = [
         (-10, 40.0, 50), 		
         (-40, 40.0, 50), 
@@ -1225,13 +1250,14 @@ create_polygon(
     
 # Generate BMS for Polygon 996 floor roof
 save_mesh(
-    texture_name = ["OT_MALL_BRICK"], 
+    texture_name = [Texture.BRICKS_MALL], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 996, tile_x = 4, tile_y = 3, angle_degrees = 0))  
 
 # Polygon 997 | BND floor roof
 create_polygon(
     bound_number = 997, 
+    hud_color=Color.MARKT_BRICK,
     vertex_coordinates = [
         (-80, 35.0, 80), 		
         (-50, 35.0, 80), 
@@ -1240,34 +1266,6 @@ create_polygon(
     
 # Generate BMS for Polygon 997 floor roof
 save_mesh(
-    texture_name = ["OT_MARKT_BRICK"], 
+    texture_name = [Texture.MARKT_BRICK], 
     normals = [1, 1, 1, 1], 
     tex_coords = compute_uv(bound_number = 997, tile_x = 3, tile_y = 7, angle_degrees = 0))   
-
-# Polygon 999 BND Garage
-create_polygon(
-    bound_number = 999, 
-    vertex_coordinates = [
-        (90, 0, 90), 
-        (90, 0, -90), 
-        (-90, 0, -90), 
-        (-90, 0, 90)]), 
-
-save_mesh(
-    texture_name = ["ROAD"], 
-    normals = [1, 1, 1, 1], 
-    tex_coords = compute_uv(bound_number = 999, tile_x = 1, tile_y = 1, angle_degrees = 0)) 
-
-# Polygon 998 BND Garage HILL
-create_polygon(
-    bound_number = 998, 
-    vertex_coordinates = [
-        (-10, -0.5, -10), 
-        (-10, 15, -60), 
-        (10, 15, -60), 
-        (10, -0.5, -10)])
-
-save_mesh(
-    texture_name = ["ROAD"], 
-    normals = [1, 1, 1, 1], 
-    tex_coords = compute_uv(bound_number = 998, tile_x = 1, tile_y = 1, angle_degrees = 0))
