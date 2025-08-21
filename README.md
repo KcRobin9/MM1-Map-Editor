@@ -1,17 +1,17 @@
 # Midtown Madness Map Editor
 
-![Preview](Resources/EditorResources/GALLERY/Preview.png)
+![Preview](.github/images/Preview.png)
 
 [![Download Latest Version](https://img.shields.io/badge/download-latest-brightgreen?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHdpZHRoPSIyNCI%2BPHBhdGggZmlsbD0iIzRjMSIgZD0iTTUgMjBoMTR2LTJINXYyek0xOSA5aC00VjNIOXY2SDVsNyA3IDctN3oiLz48L3N2Zz4%3D)](https://github.com/KcRobin9/MM1-Map-Editor/archive/refs/heads/main.zip)
 
 [Midtown Madness](https://en.wikipedia.org/wiki/Midtown_Madness) is a racing game made by [Angel Studios](https://en.wikipedia.org/wiki/Rockstar_San_Diego) (now [Rockstar San Diego](https://en.wikipedia.org/wiki/Rockstar_San_Diego)), featuring the city of Chicago.
 
-This Map Editor is developed to provide an easy way for users to create their own unique cities for Midtown Madness 1.            Not only can you design roads, hills, and walls, you may also customize textures, facades, props, drawbridges, animations, lighting, physics, AI paths, races, and even the HUD.
+This Map Editor is developed to provide an easy way for users to create their own unique cities for Midtown Madness 1. Not only can you design roads, hills, and walls, you may also customize textures, facades, props, drawbridges, animations, lighting, physics, AI paths, races, and even the HUD.
 
 In addition, the Editor seamlessly integrates with the 3D modelling software [Blender](https://www.blender.org/). This enables quick importing & exporting of models. To further enhance the user experience, a custom Blender UI has been implemented. From here, all parameters of each polygon can be set and modified.   
 This visual integration, combined with Blender's extensive features, significantly streamlines the design process, enabling swift tweaks and iterations.
 
-Upon completion of your design, the Map Editor will generate all the necessary city files, compile them into an `.AR` file, and automatically boot the game with the new city preloaded.
+Upon completion of your design, the Map Editor will generate all the necessary city files, compile them into an Angel Resource file, and automatically boot the game with the new city preloaded.
 
 ## Installation
 
@@ -21,8 +21,8 @@ git clone https://github.com/KcRobin9/MM1-Map-Editor.git
 ```
 * Follow the [Setup Guide](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/Setup/SETUP.md)
 * Further reading: 
-    * [Tips & Tricks](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/TIPS_TRICKS.md)
-    * [Troubleshooting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/TROUBLESHOOTING.md)
+    * [Tips & Tricks](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/TIPS_TRICKS.md)
+    * [Troubleshooting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/TROUBLESHOOTING.md)
 
 ## Contributions
 
@@ -38,14 +38,14 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 * [fatiyesman](https://github.com/fatiyesman) - Alpha tester, Contributer
 ## Gallery
 
-![Preview](Resources/EditorResources/GALLERY/Gallery_1.png)
+![Preview](.github/images/Gallery_1.png)
 
-![Preview](Resources/EditorResources/GALLERY/Gallery_2.png)
+![Preview](.github/images/Gallery_2.png)
 
-![Preview](Resources/EditorResources/GALLERY/Gallery_3.png)
+![Preview](.github/images/Gallery_3.png)
 
-![Preview](Resources/EditorResources/GALLERY/Gallery_4.png)
+![Preview](.github/images/Gallery_4.png)
 
-![Preview](Resources/EditorResources/GALLERY/Gallery_5.png)
+![Preview](.github/images/Gallery_5.png)
 
-![Preview](Resources/EditorResources/GALLERY/Gallery_6.png)
+![Preview](.github/images/Gallery_6.png)
