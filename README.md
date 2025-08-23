@@ -31,7 +31,7 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 ## Credits
 
 * [0x1F9F1](https://github.com/0x1F9F1) - Instrumental help, including [Open1560](https://github.com/0x1F9F1/Open1560) features and coding Q & A
-* [Dading](https://www.youtube.com/@dading5962) - Alpha tester, creator of [Miniville](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finishd_maps/Miniville/)
+* [Dading](https://www.youtube.com/@dading5962) - Alpha tester, creator of [Miniville](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Miniville/)
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
 * [Lars](https://github.com/Larspolo) - For his Race Making Tool
 * DDucky - Code help with Prop Editor
