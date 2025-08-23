@@ -5,17 +5,10 @@ from src.Constants.file_types import Axis
 from src.Constants.races import RaceModeNum, RaceMode
 from src.Constants.vehicles import PlayerCar
 
-
-#trailer_set = {
- #   "offset": (-4, 15, 183),
-  #  "end": (-4, 15, 195),
-   # "name": Prop.TRAILER,
-    #"separator": "x"  # Use the {}-axis dimension of the object as the spacing between each prop
-#}
-
-# Race specific props
+# Race specific props  # Also possible: RaceModeNum.CIRCUIT_ALL
 ########################
 
+# / Isle Driving Test Props / #
 race2_barricade_1= {
     "offset": (9, 1, 34),
     "end": (25, 1, 6),
@@ -94,14 +87,7 @@ race2_barricade_11= {
     "separator": "x"
     }
 
-
-
-
-
-
-
-
-
+# / Left or Right Props / #
 race_barricade_1= {
     "offset": (75, 15, 241.5),
     "end": (75, 15, 251),
@@ -127,16 +113,8 @@ race_trash_2 = {
     "face": (-45, 0, -120),
     "race": [RaceModeNum.CHECKPOINT_2],
     "name": Prop.TRASH_BOXES}
-    
 
-
-
-
-
-
-
-
-
+# / Unsettling Jumps Props / #
 uns_cone_1= {
     "offset": (-124, -1.5, 141),
     "end": (-156, -1.5, 165),
@@ -187,15 +165,6 @@ uns_glass_1= {
     "separator": "x"
     }
 
-
-
-
-
-
-
-
-
-
 # / Snail Loop Props / #
 snail_barricade_1= {
     "offset": (21, 19.5, 255),
@@ -229,18 +198,8 @@ snail_barricade_5= {
     "race": [RaceModeNum.CIRCUIT_3],
     "name": Prop.BARRICADE, 
     "separator": "x"
-    }                                                                    # Also possible: RaceModeNum.CIRCUIT_ALL
-
-
+    }                                                                   
 #######################################################
-
-
-
-pp_beetle_1 = {
-    "offset": (-1, 15, 183),
-    "face": (-1, 15, 195),
-    "name": PlayerCar.VW_BEETLE}
-
 
 app_trailer_1 = {
     "offset": (-4, 15, 183),
@@ -378,15 +337,6 @@ random_sailboats = {
     "name": [Prop.SAILBOAT] * 20
 }
 
-#random_cars = {
- #   "offset_y": 0.0,
-#    "separator": 10.0,
- #   "name": [
-  #      PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350,
-   #     PlayerCar.FASTBACK, PlayerCar.MUSTANG99, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI
-    #]
-#}
-
 # Configure the random props here
 random_props = [
     
@@ -403,9 +353,4 @@ random_props = [
     #The Parking Lot Green area (Away from Spawn)
     {"seed": 69, "num_props": 1, "props_dict": random_trees_slim_2, "x_range": (8, 54), "z_range": (533, 428)},
     {"seed": 69, "num_props": 1, "props_dict": random_trees_slim_3, "x_range": (-5, -51), "z_range": (426, 533)},
-    
-    #Sailboats#
-    #{"seed": 27, "num_props": 4, "props_dict": random_sailboats, "x_range": (447, -419), "z_range": (-329, 812)},
-    
-    #{"seed": 1, "num_props": 2, "props_dict": random_cars, "x_range": (52, 138), "z_range": (-136, -68)}
 ]
