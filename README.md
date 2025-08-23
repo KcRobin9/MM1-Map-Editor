@@ -35,7 +35,7 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
 * [Lars](https://github.com/Larspolo) - For his Race Making Tool
 * DDucky - Code help with Prop Editor
-* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, Contributer
+* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, Contributer, creator of [Treehugger Isle](https://github.com/fatiyesman/MM1-Map-Editor/tree/main/examples/finished_maps/Treehugger%20Isle)
 ## Gallery
 
 ![Preview](.github/images/Gallery_1.png)
@@ -49,3 +49,4 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 ![Preview](.github/images/Gallery_5.png)
 
 ![Preview](.github/images/Gallery_6.png)
+
