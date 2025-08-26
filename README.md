@@ -1,6 +1,6 @@
 # Midtown Madness Map Editor
 
-![Preview](.github/images/Preview.png)
+![Preview](.github/images/readme/preview.png)
 
 [![Download Latest Version](https://img.shields.io/badge/download-latest-brightgreen?logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIGhlaWdodD0iMjQiIHdpZHRoPSIyNCI%2BPHBhdGggZmlsbD0iIzRjMSIgZD0iTTUgMjBoMTR2LTJINXYyek0xOSA5aC00VjNIOXY2SDVsNyA3IDctN3oiLz48L3N2Zz4%3D)](https://github.com/KcRobin9/MM1-Map-Editor/archive/refs/heads/main.zip)
 
@@ -38,15 +38,15 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 * [fatiyesman](https://github.com/fatiyesman) - Alpha tester, Contributer, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger%20Isle)
 ## Gallery
 
-![Preview](.github/images/Gallery_1.png)
+![Preview](.github/images/readme/gallery_1.png)
 
-![Preview](.github/images/Gallery_2.png)
+![Preview](.github/images/readme/gallery_2.png)
 
-![Preview](.github/images/Gallery_3.png)
+![Preview](.github/images/readme/gallery_3.png)
 
-![Preview](.github/images/Gallery_4.png)
+![Preview](.github/images/readme/gallery_4.png)
 
-![Preview](.github/images/Gallery_5.png)
+![Preview](.github/images/readme/gallery_5.png)
 
-![Preview](.github/images/Gallery_6.png)
+![Preview](.github/images/readme/gallery_6.png)
 

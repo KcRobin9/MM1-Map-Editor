@@ -1,7 +1,7 @@
 # Test Python
-Write-Host "Running Test_Python.py..."
+Write-Host "Running test_python.py..."
 Start-Sleep -Seconds 1
-python ./Test_Python.py
+python ./test_python.py
 Start-Sleep -Seconds 1
 Write-Host ""
 
@@ -17,10 +17,10 @@ Write-Host ""
 
 # Set Visual Studio Code Keybindings (if VS Code CLI is available)
 Write-Host ""
-Write-Host "Running Keybinding_Config.py..."
+Write-Host "Running configure_vscode_keybindings..."
 if (Get-Command 'code' -ErrorAction SilentlyContinue) {
     Start-Sleep -Seconds 1
-    python ./Keybinding_Config.py
+    python ./configure_vscode_keybindings.py
     Start-Sleep -Seconds 1
     Write-Host ""
 } else {

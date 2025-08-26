@@ -56,6 +56,6 @@ def merge_keybindings_files(input_file: Path, dest_file: Path):
 
 
 merge_keybindings_files(
-    Path(__file__).parent.resolve() / "keybindings.json", 
+    Path(__file__).parent.resolve() / "vscode_keybindings.json", 
     Path(os.getenv("APPDATA")) / "Code/User/keybindings.json"
     )

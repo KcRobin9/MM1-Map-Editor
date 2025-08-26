@@ -26,20 +26,20 @@ Please complete all steps below.
 * No additional information required. Just follow the installation wizard
 
 ### Test Python & Install Required Libraries
-* In `📁 Setup`, double click on `📄INSTALLER.bat` to start the process
+* In `📁 setup`, double click on `📄installer.bat` to start the process
 
 ### Install Blender-Python Libraries
 * Since Blender uses its own Python interpreter, you must install a few libraries from the previous step into Blender's Python Environment
 * Open Blender as **administrator**, then click on the `Scripting` tab (top right corner)
 * A new grey window appears, click on `📁 Open`
-* Navigate to `...\MM1-Map-Editor\Setup` and select `blender_python_libraries.txt`
+* Navigate to `...\MM1-Map-Editor\setup` and select `blender_python_libraries.txt`
 * The grey window is now filled with Python code. Next, click on the ▶️ button or hold `ALT + P` to start
 * The process may take 30 - 120 seconds and Blender may freeze
 * After the libraries have been installed, a log file will automatically open with the results
 * Verify that all libraries (6) have been installed *succesfully*
 * Close Blender (the application will likely be frozen)
 
-![Preview](Screenshots/VERIFY_BLENDER_PYTHON_LIBRARIES.png)
+![Preview](../.github/images/setup/verify_blender_python_libraries.png)
 				
 ### Connect Visual Studio Code to Blender
 * Launch Visual Studio Code as **administrator** and open `MAP_EDITOR_ALPHA_v1.py`
@@ -49,14 +49,14 @@ Please complete all steps below.
 * Go back to Visual Studio Code with `MAP_EDITOR_ALPHA_v1.py` open, and hold `CTRL + SHIFT + P`. 
 * A Command Palette opens. Now type and search for `Blender: Start` and click it
 
-![Preview](Screenshots/OPEN_BLENDER_EXE_VIA_VSCODE.png)
+![Preview](../.github/images/setup/open_blender_exe_via_vscode.png)
 
 * Next, click on the Blender executable - if available, or click on `Choose a new Blender executable...` and navigate to e.g.:  
 `C:\Program Files\Blender Foundation\Blender 4.0` and select the `blender.exe`
 * Now hold `CTRL + SHIFT + P` to open the Command Palette again. Type and search for `Blender: Start` and click it 
 * If you see the following message in Visual Studio Code, it means VScode and Blender have succesfully connected:
 
-![Preview](Screenshots/SUCCES_VSCODE_CONNECT_TO_BLENDER.png)
+![Preview](../.github/images/setup/success_vscode_connect_to_blender.png)
 
 ### Building your Map
 
@@ -64,7 +64,7 @@ Please complete all steps below.
 * Next, in VScode (with Blender connected), hold `CTRL + SHIFT + P` and type and search for `Blender: Run Script` and click it. The script will now start
 * *Only* and *only* when you see a message very similar to this, it means the script has *fully* ran:
 
-![Preview](Screenshots//SUCCES_RAN_PYTHON_BLENDER_CODE.png)
+![Preview](../.github/images/setup/success_ran_python_blender_code.png)
 
 * *Note* if the VScode Keybindings installed succesfully, you can invoke `Blender: Start` by holding `Shift + Q`, and subsequently `Blender: Run Script` by holding `Shift + W`
 
