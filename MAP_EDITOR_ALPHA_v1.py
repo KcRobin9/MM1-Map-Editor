@@ -34,10 +34,8 @@ import re
 import csv
 import math
 import time
-import psutil
 import shutil
 import random
-import datetime
 import textwrap
 import subprocess
 from functools import partial
@@ -84,9 +82,11 @@ from src.Blender.handlers import initialize_depsgraph_update_handler
 from src.Blender.Operators.process_extrude import OBJECT_OT_ProcessPostExtrude
 from src.Blender.Operators.rename_polygons import OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential
 
-from src.FileFormats.dlp import DLP
-from src.FileFormats.ext import create_ext
+from src.FileFormats.development import DLP
+from src.FileFormats.extrema import create_extrema
 from src.FileFormats.animations import create_animations
+
+from src.misc.helper import is_process_running
 
 # Map Settings
 from src.User.Settings.main import *
@@ -1203,37 +1203,7 @@ def create_polygon(
 ################################################################################################################               
 ################################################################################################################  
 
-#TODO: move this somewhere else
-def create_folders() -> None:
-    FOLDER_STRUCTURE = [
-        Folder.BUILD,
-
-        Folder.SHOP_TEXTURES_BITMAP,
-        Folder.SHOP_TEXTURES_ALPHA,
-        Folder.SHOP_TEXTURES_OPAQUE,
-
-        Folder.SHOP_TUNE,
-        Folder.SHOP_MATERIAL,
-
-        Folder.SHOP_CITY_MAP,
-        Folder.SHOP_RACE_MAP,
-
-        Folder.SHOP_MESH_CITY_MAP,
-        Folder.SHOP_MESH_LANDMARK_MAP,
-
-        Folder.SHOP_BOUND_CITY_MAP,
-        Folder.SHOP_BOUND_LANDMARK_MAP,
-
-        Folder.MIDTOWNMADNESS_DEV_CITY_MAP,
-
-        Folder.EXPORT_POLYGON
-        ]
-    
-    for path in FOLDER_STRUCTURE:
-        path.mkdir(parents=True, exist_ok=True)
-
-
-create_folders()
+Folder.create_all() 
 
 ################################################################################################################               
 ################################################################################################################  
@@ -4205,15 +4175,8 @@ def create_commandline(
         
     with open(output_file, "w") as f:
         f.write(cmd_line)
-		
 
-def is_process_running(process_name: str) -> bool:
-    for proc in psutil.process_iter(["name"]):
-        if process_name.lower() in proc.info["name"].lower():
-            return True
-    return False
       
-
 def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
     if not play_game or is_process_running(Executable.BLENDER) or is_process_running(executable):
         return
@@ -4833,8 +4796,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     select_all: bpy.props.BoolProperty(default = True)
 
     def execute(self, context: bpy.types.Context) -> Set[set]:                            
-        current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
-        export_file = Folder.EXPORT_POLYGON / f"Polygons_{current_time}{FileType.TEXT}"
+        export_file = Folder.BLENDER_EXPORT_POLYGON / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
                             
         # Select Mesh Objects based on the "select_all" property
         if self.select_all:
@@ -5141,8 +5103,7 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     else:
         waypoints = [wp for wp in get_all_waypoints() if wp.select_get()]
 
-    current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
-    export_file = Folder.EXPORT_WAYPOINTS / f"Waypoints_{current_time}{FileType.TEXT}"
+    export_file = Folder.BLENDER_EXPORT_WAYPOINTS / f"Waypoints_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
 
     with open(export_file, "w") as f:
         print("")
@@ -5303,9 +5264,6 @@ def initialize_blender_waypoint_editor() -> None:
 ###################################################################################################################
 ################################################################################################################### 
 #! ======================= BLENDER KEYBINDINGS ======================= !#
-
-from functools import partial
-from typing import Dict, Optional, Any
 
 def create_keybinding(keymap, operator: str, key: str, modifier: Optional[Dict] = None, properties: Optional[Dict[str, Any]] = None) -> None:
     modifier = modifier or {}
@@ -5513,7 +5471,7 @@ lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTIN
 LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
-create_ext(f"{Folder.SHOP_CITY_MAP}{FileType.EXTREMA}", hudmap_vertices)
+create_extrema(f"{Folder.SHOP_CITY_MAP}{FileType.EXTREMA}", hudmap_vertices)
 create_animations(Folder.SHOP_CITY_MAP, animations_data, set_animations)   
 create_bridges(bridge_list, set_bridges, f"{Folder.SHOP_CITY_MAP}{FileType.GIZMO}") 
 create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)

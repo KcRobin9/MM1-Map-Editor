@@ -2,6 +2,7 @@ from pathlib import Path
 from src.Vector.vector_2 import Vector2
 from src.Vector.vector_3 import Vector3
 from src.User.Settings.main import MAP_FILENAME
+from src.misc.helper import is_process_running
 
 
 class Shape:
@@ -38,9 +39,9 @@ class Folder:
     BUILD = BASE / "build"
     ANGEL = BASE / "angel"
 
-    EXPORT = BASE / "Export"
-    EXPORT_POLYGON = EXPORT / "Polygon"
-    EXPORT_WAYPOINTS = EXPORT / "Waypoints"
+    BLENDER_EXPORT = BASE / "blender_export"
+    BLENDER_EXPORT_POLYGON = BLENDER_EXPORT / "polygons"
+    BLENDER_EXPORT_WAYPOINTS = BLENDER_EXPORT / "waypoints"
 
     SHOP_CITY = SHOP / "CITY"
     SHOP_RACE = SHOP / "RACE"   
@@ -73,6 +74,42 @@ class Folder:
 
     USER_TEXTURES_CUSTOM = BASE / "src" / "User" / "Textures" / "Custom"
 
+    MAIN = [
+        BUILD,
+
+        SHOP_TEXTURES_BITMAP,
+        SHOP_TEXTURES_ALPHA,
+        SHOP_TEXTURES_OPAQUE,
+
+        SHOP_TUNE,
+        SHOP_MATERIAL,
+
+        SHOP_CITY_MAP,
+        SHOP_RACE_MAP,
+
+        SHOP_MESH_CITY_MAP,
+        SHOP_MESH_LANDMARK_MAP,
+
+        SHOP_BOUND_CITY_MAP,
+        SHOP_BOUND_LANDMARK_MAP,
+
+        MIDTOWNMADNESS_DEV_CITY_MAP,
+    ]
+    
+    BLENDER = [
+        BLENDER_EXPORT_POLYGON,
+        BLENDER_EXPORT_WAYPOINTS
+    ]
+
+    @classmethod
+    def create_all(cls) -> None:
+        for folder in cls.MAIN:
+            folder.mkdir(parents = True, exist_ok = True)
+
+        if is_process_running(Executable.BLENDER):
+            for folder in cls.BLENDER:
+                folder.mkdir(parents = True, exist_ok = True)
+    
 
 class CommandArgs:
     DEFAULT = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME}"

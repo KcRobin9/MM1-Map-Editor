@@ -1,3 +1,5 @@
+import datetime
+
 from src.Constants.props import Prop
 from src.Constants.races import RaceMode
 from src.User.Settings.main import MAP_FILENAME
@@ -9,6 +11,8 @@ YES = 1
 HUGE = 1E10
 
 PROP_CAN_COLLIDE_FLAG = 0x800
+
+CURRENT_TIME_FORMATTED = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
     
 WAYPOINT_FILLER = ",0,0,0,0,0,\n"
 CHECKPOINT_PREFIXES = ["ASP1", "ASP2", "ASP3", "ASU1", "ASU2", "ASU3", "AFA1", "AFA2", "AFA3", "AWI1", "AWI2", "AWI3"]
