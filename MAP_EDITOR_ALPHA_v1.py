@@ -40,6 +40,7 @@ import random
 import datetime
 import textwrap
 import subprocess
+from functools import partial
 from itertools import cycle
 from collections import Counter
 from dataclasses import dataclass
@@ -69,6 +70,7 @@ from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiM
 from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width, RaceModeNum, RaceMode
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLOR_DIVIDER
 from src.Constants.constants import *
+from src.Constants.keyboard import Key, KeyEvent, KeyModifier
 
 from src.Races.main import create_races
 from src.Races.cops_and_robbers import create_cops_and_robbers
@@ -1222,7 +1224,9 @@ def create_folders() -> None:
         Folder.SHOP_BOUND_CITY_MAP,
         Folder.SHOP_BOUND_LANDMARK_MAP,
 
-        Folder.MIDTOWNMADNESS_DEV_CITY_MAP
+        Folder.MIDTOWNMADNESS_DEV_CITY_MAP,
+
+        Folder.EXPORT_POLYGON
         ]
     
     for path in FOLDER_STRUCTURE:
@@ -4828,12 +4832,9 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     
     select_all: bpy.props.BoolProperty(default = True)
 
-    def execute(self, context: bpy.types.Context) -> Set[set]:            
-        output_folder = Folder.EXPORT_POLYGON
-        output_folder.mkdir(exist_ok = True)
-                
+    def execute(self, context: bpy.types.Context) -> Set[set]:                            
         current_time = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
-        export_file = output_folder / f"Polygons_{current_time}{FileType.TEXT}"
+        export_file = Folder.EXPORT_POLYGON / f"Polygons_{current_time}{FileType.TEXT}"
                             
         # Select Mesh Objects based on the "select_all" property
         if self.select_all:
@@ -5302,8 +5303,45 @@ def initialize_blender_waypoint_editor() -> None:
 ###################################################################################################################
 ################################################################################################################### 
 #! ======================= BLENDER KEYBINDINGS ======================= !#
-      
-      
+
+from functools import partial
+from typing import Dict, Optional, Any
+
+def create_keybinding(keymap, operator: str, key: str, modifier: Optional[Dict] = None, properties: Optional[Dict[str, Any]] = None) -> None:
+    modifier = modifier or {}
+    kmi = keymap.keymap_items.new(operator, key, KeyEvent.PRESS, **modifier)
+    
+    if properties:
+        for prop_name, prop_value in properties.items():
+            setattr(kmi.properties, prop_name, prop_value)
+
+def setup_export_keybindings(bind_func) -> None:
+    bind_func("object.export_polygons", Key.E, KeyModifier.CTRL, {"select_all": False})
+    bind_func("object.export_polygons", Key.E, KeyModifier.SHIFT, {"select_all": True})
+
+def setup_extrude_keybindings(bind_func) -> None:
+    bind_func("object.process_post_extrude", Key.X, KeyModifier.SHIFT, {"triangulate": False})
+    bind_func("object.process_post_extrude", Key.X, KeyModifier.CTRL_SHIFT, {"triangulate": True})
+
+def setup_property_keybindings(bind_func) -> None:
+    bind_func("object.assign_custom_properties", Key.P, KeyModifier.SHIFT)
+
+def setup_rename_keybindings(bind_func) -> None:
+    bind_func("object.auto_rename_children", Key.Q, KeyModifier.CTRL_SHIFT)
+    bind_func("object.rename_sequential", Key.Q, KeyModifier.CTRL_ALT)
+
+def setup_waypoint_creation_keybindings(bind_func) -> None:
+    bind_func("create.single_waypoint", Key.Y, KeyModifier.SHIFT)
+    bind_func("load.waypoints_from_csv", Key.C, KeyModifier.SHIFT)
+    bind_func("load.waypoints_from_race_data", Key.R, KeyModifier.SHIFT)
+    bind_func("load.cnr_from_csv", Key.O, KeyModifier.ALT)
+
+def setup_waypoint_export_keybindings(bind_func) -> None:
+    bind_func("export.selected_waypoints", Key.W, KeyModifier.SHIFT)
+    bind_func("export.selected_waypoints_with_brackets", Key.W, KeyModifier.CTRL)
+    bind_func("export.all_waypoints", Key.W, KeyModifier.CTRL_SHIFT)
+    bind_func("export.all_waypoints_with_brackets", Key.W, KeyModifier.CTRL_ALT)
+
 def set_blender_keybinding() -> None:
     if not is_process_running(Executable.BLENDER):
         return
@@ -5311,59 +5349,19 @@ def set_blender_keybinding() -> None:
     wm = bpy.context.window_manager
     kc = wm.keyconfigs.addon
 
-    if kc:
-        km = wm.keyconfigs.addon.keymaps.new(name = "Object Mode", space_type = "EMPTY")
-
-        #? === Workflow Automation === ?#
-        # Ctrl + E to export selected polygon(s)
-        kmi_export_selected = km.keymap_items.new("object.export_polygons", "E", "PRESS", ctrl = True)
-        kmi_export_selected.properties.select_all = False
-
-        # Shift + E to export all polygons
-        kmi_export_all = km.keymap_items.new("object.export_polygons", "E", "PRESS", shift = True)
-        kmi_export_all.properties.select_all = True
-
-        # Shift + P to assign custom properties to newly created polygon(s)
-        km.keymap_items.new("object.assign_custom_properties", "P", "PRESS", shift = True)
-
-        # Shift + X to process an extruded mesh without triangulation
-        kmi_custom_extrude_no_triangulate = km.keymap_items.new("object.process_post_extrude", "X", "PRESS", shift = True)
-        kmi_custom_extrude_no_triangulate.properties.triangulate = False    
-        
-        # Ctrl + Shift + X to process an extruded mesh with triangulation
-        kmi_custom_extrude_triangulate = km.keymap_items.new("object.process_post_extrude", "X", "PRESS", ctrl = True, shift = True)
-        kmi_custom_extrude_triangulate.properties.triangulate = True
-
-        # Ctrl + Shift + Q to rename children objects
-        km.keymap_items.new("object.auto_rename_children", "Q", "PRESS", ctrl = True, shift = True)
-
-        # Ctrl + Alt + Q to rename objects sequentially
-        km.keymap_items.new("object.rename_sequential", "Q", "PRESS", ctrl = True, alt = True)
-        
-        #? === Waypoints === ?#
-        # Shift + Y to create a single aypoint
-        km.keymap_items.new("create.single_waypoint", "Y", "PRESS", shift = True)  
-                
-        # Shift + C to load waypoints from CSV
-        km.keymap_items.new("load.waypoints_from_csv", "C", "PRESS", shift = True) 
-
-        # Shift + R to load waypoints from "race_data" dictionary
-        km.keymap_items.new("load.waypoints_from_race_data", "R", "PRESS", shift = True)  
-        
-        # Shift + W to export selected waypoint(s)
-        km.keymap_items.new("export.selected_waypoints", "W", "PRESS", shift = True)
-        
-        # Ctrl + W to export selected waypoint(s) with brackets
-        km.keymap_items.new("export.selected_waypoints_with_brackets", "W", "PRESS", ctrl = True)
-        
-        # Ctrl + Shift + W to export all waypoints
-        km.keymap_items.new("export.all_waypoints", "W", "PRESS", ctrl = True, shift = True)
-        
-        # Ctrl + Alt + W to export all waypoins with brackets
-        km.keymap_items.new("export.all_waypoints_with_brackets", "W", "PRESS", ctrl = True, alt = True)
-        
-        # Alt + C to load CnR waypoints from CSV
-        km.keymap_items.new("load.cnr_from_csv", "O", "PRESS", alt = True)
+    if not kc:
+        return
+    
+    km = kc.keymaps.new(name = "Object Mode", space_type = "EMPTY")
+    
+    bind = partial(create_keybinding, km)
+    
+    setup_export_keybindings(bind)
+    setup_extrude_keybindings(bind)
+    setup_property_keybindings(bind)
+    setup_rename_keybindings(bind)
+    setup_waypoint_creation_keybindings(bind)
+    setup_waypoint_export_keybindings(bind)
 
 ###################################################################################################################   
 ################################################################################################################### 
