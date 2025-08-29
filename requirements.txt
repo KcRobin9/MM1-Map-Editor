@@ -1,4 +1,3 @@
-bpy
 numpy
 psutil
 debugpy

@@ -26,7 +26,7 @@ Please complete all steps below.
 * No additional information required. Just follow the installation wizard
 
 ### Test Python & Install Required Libraries
-* In `📁 setup`, double click on `📄installer.bat` to start the process
+* In `📁 setup`, double click on `📄run_installer.bat` to start the process
 
 ### Install Blender-Python Libraries
 * Since Blender uses its own Python interpreter, you must install a few libraries from the previous step into Blender's Python Environment
