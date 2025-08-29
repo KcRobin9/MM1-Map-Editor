@@ -843,7 +843,7 @@ def save_mesh(
     
     #TODO: see "Debug.internal()"
     if debug_meshes:
-        mesh.debug(Path(mesh_filename).with_suffix({FileType.TEXT}), Folder.DEBUG_RESOURCES / "MESHES" / MAP_FILENAME, debug_meshes)
+        mesh.debug(Path(mesh_filename).with_suffix({FileType.TEXT}), Folder.DEBUG / "MESHES" / MAP_FILENAME, debug_meshes)
 
 
 def initialize_mesh(
@@ -2757,7 +2757,7 @@ class BangerEditor:
                 separator = prop.get('separator', 10.0)
             
                 if isinstance(separator, str) and separator.lower() in (Axis.X, Axis.Y, Axis.Z):
-                    prop_dims = self.load_dimensions(File.PROP_DIMENSIONS).get(name, Vector3(1, 1, 1))
+                    prop_dims = self.load_dimensions(Folder.EDITOR_RESOURCES / "PROPS" / "prop_dimensions.txt").get(name, Vector3(1, 1, 1))
                     separator = getattr(prop_dims, separator.lower())
                 elif not isinstance(separator, (int, float)):
                     separator = 10.0
