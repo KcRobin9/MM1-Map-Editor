@@ -1,10 +1,16 @@
-/dev/
-/WIP/
-/SHOP/
 __pycache__/
-/Polygon Export/
-/Waypoint Export/
-/Resources/Debug/
+
+/dev/
+
+/blender_export/
+
+/debug/
+
+/SHOP/
+
+/WIP/
+
+/Resources/debug/
 /Resources/EditorResources/*.pkl
 
 MidtownMadness/commandline.txt

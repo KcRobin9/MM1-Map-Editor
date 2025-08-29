@@ -2511,7 +2511,7 @@ class Portals:
                     _min.write(f, '<')
                     _max.write(f, '<')
                     
-                cls.debug(portals, debug_portals, Folder.DEBUG_RESOURCES / "PORTALS" / f"{MAP_FILENAME}_PTL.txt")            
+                cls.debug(portals, debug_portals, Folder.DEBUG / "PORTALS" / f"{MAP_FILENAME}_PTL.txt")            
 
     @classmethod
     def debug(cls, portals: 'List[Portals]', debug_portals: bool, output_file: Path) -> None:
@@ -2602,7 +2602,7 @@ class Bangers:
                 banger.face.write(f, '<')
                 f.write(banger.name.encode(Encoding.UTF_8))
                     
-            cls.debug(bangers, debug_props, Folder.DEBUG_RESOURCES / "PROPS" / f"{output_file}{FileType.TEXT}")
+            cls.debug(bangers, debug_props, Folder.DEBUG / "PROPS" / f"{output_file}{FileType.TEXT}")
     
     #! Works, but the Debug file should not land in "...\MM1-Map-Editor\SHOP\CITY"
     @classmethod
@@ -2757,7 +2757,7 @@ class BangerEditor:
                 separator = prop.get('separator', 10.0)
             
                 if isinstance(separator, str) and separator.lower() in (Axis.X, Axis.Y, Axis.Z):
-                    prop_dims = self.load_dimensions(Folder.EDITOR_RESOURCES / "PROPS" / "Prop Dimensions.txt").get(name, Vector3(1, 1, 1))
+                    prop_dims = self.load_dimensions(File.PROP_DIMENSIONS).get(name, Vector3(1, 1, 1))
                     separator = getattr(prop_dims, separator.lower())
                 elif not isinstance(separator, (int, float)):
                     separator = 10.0
@@ -2815,7 +2815,7 @@ class BangerEditor:
                 f.write(prop.name.encode(Encoding.UTF_8))
         
         if debug_props:
-            Bangers.debug(Folder.DEBUG_RESOURCES / "PROPS" / f"{appended_props_f.name}{FileType.TEXT}", self.props)
+            Bangers.debug(Folder.DEBUG / "PROPS" / f"{appended_props_f.name}{FileType.TEXT}", self.props)
 
     def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
         assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
@@ -3023,7 +3023,7 @@ class FacadeEditor:
         facades = cls.process(user_set_facades)
         Facades.write_all(output_file, facades)
 
-        Facades.debug(facades, debug_facades, Folder.DEBUG_RESOURCES / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
+        Facades.debug(facades, debug_facades, Folder.DEBUG / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
 
     @staticmethod
     def read_scales(input_file: Path):
@@ -3143,8 +3143,8 @@ class PhysicsEditor:
         cls.write_all(output_file, original_data)
         
         if debug_physics:
-            os.makedirs(Folder.DEBUG_RESOURCES / "PHYSICS", exist_ok = True)
-            cls.debug(Folder.DEBUG_RESOURCES / "PHYSICS" / "PHYSICS_DB.txt", original_data)
+            os.makedirs(Folder.DEBUG / "PHYSICS", exist_ok = True)
+            cls.debug(Folder.DEBUG / "PHYSICS" / "PHYSICS_DB.txt", original_data)
                         
     @classmethod
     def debug(cls, debug_filename: Path, physics_params: List['PhysicsEditor']) -> None: 
@@ -5453,7 +5453,7 @@ create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", c
 check_bound_numbers(polys)
 
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
-Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG_RESOURCES / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
+Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
 Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
@@ -5469,7 +5469,7 @@ prop_editor.process_all(prop_list, set_props)
 
 lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
-LightingEditor.debug(lighting_instances, Folder.DEBUG_RESOURCES / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
+LightingEditor.debug(lighting_instances, Folder.DEBUG / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
 create_extrema(f"{Folder.SHOP_CITY_MAP}{FileType.EXTREMA}", hudmap_vertices)
 create_animations(Folder.SHOP_CITY_MAP, animations_data, set_animations)   
@@ -5486,18 +5486,18 @@ shutil.copy(append_input_props_file, append_output_props_file)
 editor.append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 
 # File / Folder Debugging
-DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
-Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG_RESOURCES / "BOUNDS" / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
-Bangers.debug_file(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
-Facades.debug_file(debug_facades_data_file, Folder.DEBUG_RESOURCES / "FACADES" / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
-Portals.debug_file(debug_portals_data_file, Folder.DEBUG_RESOURCES / "PORTALS" / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG_RESOURCES / "MESHES" / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
-DLP.debug_file(debug_dlp_data_file, Folder.DEBUG_RESOURCES / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+DLP.debug_file(debug_dlp_data_file, Folder.DEBUG / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG / "BOUNDS" / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
+Bangers.debug_file(debug_props_data_file, Folder.DEBUG / "PROPS" / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
+Facades.debug_file(debug_facades_data_file, Folder.DEBUG / "FACADES" / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
+Portals.debug_file(debug_portals_data_file, Folder.DEBUG / "PORTALS" / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
+Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG / "MESHES" / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
+DLP.debug_file(debug_dlp_data_file, Folder.DEBUG / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
 
-Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG_RESOURCES / "PROPS" / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
-Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG_RESOURCES / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG_RESOURCES / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
-DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG_RESOURCES / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
+Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG / "PROPS" / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
+Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
+Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
+DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
 
 debug_ai(
     debug_ai_data_file, debug_ai_file,

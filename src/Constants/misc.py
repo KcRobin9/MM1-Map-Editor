@@ -38,6 +38,7 @@ class Folder:
     SHOP = BASE / "SHOP"
     BUILD = BASE / "build"
     ANGEL = BASE / "angel"
+    DEBUG = BASE / "debug" 
 
     BLENDER_EXPORT = BASE / "blender_export"
     BLENDER_EXPORT_POLYGON = BLENDER_EXPORT / "polygons"
@@ -70,12 +71,14 @@ class Folder:
 
     USER_RESOURCES = BASE / "Resources" / "User"
     EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
-    DEBUG_RESOURCES = BASE / "Resources" / "Debug" 
+
+    DEBUG = BASE / "debug" 
 
     USER_TEXTURES_CUSTOM = BASE / "src" / "User" / "Textures" / "Custom"
 
     MAIN = [
         BUILD,
+        DEBUG,
 
         SHOP_TEXTURES_BITMAP,
         SHOP_TEXTURES_ALPHA,
