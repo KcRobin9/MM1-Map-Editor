@@ -1,13 +1,9 @@
 __pycache__/
-
 /dev/
-
 /blender_export/
-
 /debug/
-
+/setup/*.whl
 /SHOP/
-
 /WIP/
 
 /Resources/debug/

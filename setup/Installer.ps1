@@ -28,26 +28,8 @@ if ($python310Check -ne 'y' -and $python310Check -ne 'Y') {
 }
 Write-Host ""
 
-# BPY Wheel File Check
-Write-Host "2. Did you download the BPY wheel file and put it in the correct folder?"
-Write-Host "   Link: https://download.blender.org/pypi/bpy/bpy-4.0.0-cp310-cp310-win_amd64.whl"
-Write-Host "   Location: ./setup/"
-Write-Host "   (This file should be in the setup folder of this project)"
-Write-Host ""
-Write-Host "   Is the BPY wheel file in the setup folder? (y/n): " -NoNewline
-$bpyFileCheck = Read-Host
-if ($bpyFileCheck -ne 'y' -and $bpyFileCheck -ne 'Y') {
-    Write-Host ""
-    Write-Host "Please download the BPY wheel file and place it in ./setup/"
-    Write-Host "Then run this installer again."
-    Write-Host "Press Enter to exit..."
-    pause
-    [Environment]::Exit(1)
-}
-Write-Host ""
-
 # Microsoft C++ Build Tools Check
-Write-Host "3. Did you install Microsoft C++ Build Tools?"
+Write-Host "2. Did you install Microsoft C++ Build Tools?"
 Write-Host "   Link: https://visualstudio.microsoft.com/visual-cpp-build-tools/"
 Write-Host "   (Select 'Desktop development with C++' and reboot after installation)"
 Write-Host ""
@@ -64,7 +46,7 @@ if ($cppToolsCheck -ne 'y' -and $cppToolsCheck -ne 'Y') {
 Write-Host ""
 
 # Blender Check
-Write-Host "4. Did you install Blender?"
+Write-Host "3. Did you install Blender?"
 Write-Host "   Link: https://www.blender.org/download/"
 Write-Host "   (Latest version recommended)"
 Write-Host ""
@@ -81,7 +63,7 @@ if ($blenderCheck -ne 'y' -and $blenderCheck -ne 'Y') {
 Write-Host ""
 
 # Visual Studio Code Check
-Write-Host "5. Did you install Visual Studio Code?"
+Write-Host "4. Did you install Visual Studio Code?"
 Write-Host "   Link: https://code.visualstudio.com/download"
 Write-Host "   (Latest version recommended)"
 Write-Host ""
@@ -198,16 +180,16 @@ if (Get-Command 'code' -ErrorAction SilentlyContinue) {
     Start-Sleep -Seconds 1
     Write-Host ""
 } else {
-	Write-Host ""
+    Write-Host ""
     Write-Host "Custom Visual Studio Code Keybindings are not configured as the program is not detected in PATH"
-	Write-Host ""
-}	
+    Write-Host ""
+}
 
 # Install Visual Studio Code Extensions (if VS Code CLI is available)
 if (Get-Command 'code' -ErrorAction SilentlyContinue) {
     Write-Host "Installing Visual Studio Code Extensions..."
-	Start-Sleep -Seconds 1
-	Write-Host ""
+    Start-Sleep -Seconds 1
+    Write-Host ""
     & code --install-extension ms-python.vscode-pylance
     & code --install-extension jacqueslucke.blender-development
     & code --install-extension aaron-bond.better-comments
@@ -217,13 +199,15 @@ if (Get-Command 'code' -ErrorAction SilentlyContinue) {
 Write-Host ""
 Start-Sleep -Seconds 1
 
-# Install Python Libraries
+# Move to parent directory for package installation
 cd ..
+
+# Install Python Libraries
 Write-Host ""
 Write-Host "Installing required Python Packages from requirements.txt..."
 Write-Host ""
 Start-Sleep -Seconds 1
-pip install -r requirements.txt
+& $pythonCmd -m pip install -r requirements.txt
 Write-Host ""
 Write-Host "Did the requirements install successfully without errors? (y/n): " -NoNewline
 $requirementsCheck = Read-Host
@@ -237,30 +221,99 @@ Write-Host ""
 Write-Host "Requirements installed successfully! Continuing..."
 Write-Host ""
 
-# Install bpy library from wheel file
-Write-Host "Installing bpy library..."
+# Download and Install BPY Library
+Write-Host "==================================================="
+Write-Host "          DOWNLOADING BPY LIBRARY"
+Write-Host "==================================================="
+Write-Host ""
+
+Write-Host "NOTE: The BPY library is approximately 400 MB."
+Write-Host "Download time may vary from 1 to 10 minutes depending on your internet speed."
+Write-Host "Please wait - the download may appear to freeze but is still working."
+Write-Host ""
+
+$bpyWheelUrl = "https://download.blender.org/pypi/bpy/bpy-4.0.0-cp310-cp310-win_amd64.whl"
+$bpyWheelPath = "./setup/bpy-4.0.0-cp310-cp310-win_amd64.whl"
+
+# Check if BPY wheel file already exists
+if (Test-Path $bpyWheelPath) {
+    Write-Host "BPY wheel file already exists in ./setup/"
+    Write-Host "Using existing file: $bpyWheelPath"
+} else {
+    Write-Host "Downloading BPY wheel file..."
+    Write-Host "From: $bpyWheelUrl"
+    Write-Host "To: $bpyWheelPath"
+    Write-Host ""
+    
+    try {
+        # Create setup directory if it doesn't exist
+        if (!(Test-Path "./setup")) {
+            New-Item -ItemType Directory -Path "./setup" -Force
+        }
+        
+        # Download the wheel file
+        Invoke-WebRequest -Uri $bpyWheelUrl -OutFile $bpyWheelPath -UseBasicParsing
+        Write-Host "BPY wheel file downloaded successfully!"
+    }
+    catch {
+        Write-Host "Failed to download BPY wheel file automatically."
+        Write-Host "Error: $($_.Exception.Message)"
+        Write-Host ""
+        Write-Host "Please download manually from:"
+        Write-Host "$bpyWheelUrl"
+        Write-Host "And place it in: $bpyWheelPath"
+        Write-Host ""
+        Write-Host "After downloading manually, press Enter to continue or Ctrl+C to exit..."
+        pause
+        
+        # Check again if file exists after manual download
+        if (!(Test-Path $bpyWheelPath)) {
+            Write-Host "BPY wheel file still not found. Installation cannot continue."
+            Write-Host "Press Enter to exit..."
+            pause
+            [Environment]::Exit(1)
+        }
+    }
+}
+
+Write-Host ""
+Write-Host "Installing BPY library from wheel file..."
 Write-Host ""
 Start-Sleep -Seconds 1
-pip install "./setup/bpy-4.0.0-cp310-cp310-win_amd64.whl"
+
+& $pythonCmd -m pip install $bpyWheelPath
+
 Write-Host ""
-Write-Host "Did the bpy library install successfully without errors? (y/n): " -NoNewline
+Write-Host "Did the BPY library install successfully without errors? (y/n): " -NoNewline
 $bpyCheck = Read-Host
 if ($bpyCheck -ne 'y' -and $bpyCheck -ne 'Y') {
-    Write-Host "Bpy library installation failed. Please check the error messages above."
+    Write-Host ""
+    Write-Host "BPY library installation failed. This could be because:"
+    Write-Host "- Microsoft C++ Build Tools are not installed properly"
+    Write-Host "- You haven't rebooted after installing C++ Build Tools"
+    Write-Host "- The wheel file is corrupted"
+    Write-Host "- Python version mismatch (must be exactly 3.10.x)"
+    Write-Host ""
+    Write-Host "Please check the error messages above and resolve the issue."
     Write-Host "Press Enter to exit..."
     pause
     [Environment]::Exit(1)
 }
 Write-Host ""
-Write-Host "Bpy library installed successfully! Continuing..."
+Write-Host "BPY library installed successfully! Continuing..."
 Write-Host ""
 
 Start-Sleep -Seconds 1
 Write-Host "==================================================="
 Write-Host ""
-Write-Host "Installation Complete!"
+Write-Host "INSTALLATION COMPLETE!"
 Write-Host ""
 Write-Host "==================================================="
+Write-Host ""
+Write-Host "Next steps:"
+Write-Host "1. Install libraries in Blender (see SETUP.MD for details)"
+Write-Host "2. Connect VS Code to Blender"
+Write-Host "3. Create your first map!"
 Write-Host ""
 Write-Host "*** Press Enter to open the Map Editor and close this Window ***"
 Write-Host ""
