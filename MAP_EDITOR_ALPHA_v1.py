@@ -63,12 +63,14 @@ from src.Debug.main import Debug
 from src.Constants.configs import BRIDGE_CONFIG_DEFAULT, ORIENTATION_MAPPINGS, TEXTURESHEET_MAPPING
 from src.Constants.textures import Texture, TEXTURE_EXPORT
 from src.Constants.props import Prop
-from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, CommandArgs
+from src.Constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color, CommandArgs, ControlType
 from src.Constants.file_types import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType, Axis
 from src.Constants.races import IntersectionType, RaceMode, NetworkMode, CnR, Rotation, Width, RaceModeNum, RaceMode
 from src.Constants.progress_bar import EDITOR_RUNTIME_FILE, COLOR_DIVIDER
 from src.Constants.constants import *
 from src.Constants.keyboard import Key, KeyEvent, KeyModifier
+
+from src.bridges.errors import BRIDGE_ORIENTATION_ERROR
 
 from src.Races.main import create_races
 from src.Races.cops_and_robbers import create_cops_and_robbers
@@ -2020,8 +2022,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
 
         if add_label: 
             center = calculate_center_tuples(polygon)
-            ax.text(center[0], center[2], label, color = "white", 
-                    ha = "center", va = "center", fontsize = 4.0)   
+            ax.text(center[0], center[2], label, color = "white", ha = "center", va = "center", fontsize = 4.0)   
             
     # Regular Export (320 and 640 versions)
     _, ax = plt.subplots()
@@ -2030,8 +2031,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
     for i, polygon in enumerate(hudmap_vertices):
         hud_fill, hud_color, _, bound_label = hudmap_properties.get(i, (False, None, None, None))
 
-        draw_polygon(ax, polygon, minimap_outline_color, 
-                     add_label = False, hud_fill = hud_fill, hud_color = hud_color)
+        draw_polygon(ax, polygon, minimap_outline_color, add_label = False, hud_fill = hud_fill, hud_color = hud_color)
 
     ax.set_aspect("equal", "box")
     ax.axis("off")
@@ -2081,14 +2081,7 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
         if orientation in ORIENTATION_MAPPINGS:
             return [offset[i] + ORIENTATION_MAPPINGS[orientation][i] for i in range(3)]
          
-        orientation_error = f"""
-        ***ERROR***
-        Invalid Bridge Orientation.
-        Please choose from one of the following: NORTH, SOUTH, EAST, WEST,
-        NORTH_EAST, NORTH_WEST, SOUTH_EAST, SOUTH_WEST or set the orientation
-        using a numeric value between 0 and 360 degrees.
-        """
-        raise ValueError(orientation_error)
+        raise ValueError(BRIDGE_ORIENTATION_ERROR)
         
     def generate_attribute_lines(bridge_attributes) -> str:
         lines = ""
@@ -4821,8 +4814,8 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             # Open the file with Notepad++ and simulate copy to clipboard
             open_with_notepad_plus(export_file)                                
             time.sleep(1.0)  # Give Notepad++ time to load the file
-            pyautogui.hotkey("ctrl", "a")
-            pyautogui.hotkey("ctrl", "c")
+            pyautogui.hotkey(Key.CTRL, Key.A)
+            pyautogui.hotkey(Key.CTRL, Key.A)
             
             self.report({"INFO"}, f"Saved data to {export_file}")
             bpy.ops.object.select_all(action = "DESELECT")
@@ -5130,8 +5123,8 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     # Open the file with Notepad++ and simulate copy to clipboard
     open_with_notepad_plus(export_file)                                
     time.sleep(1.0)  # Give Notepad++ time to load the file
-    pyautogui.hotkey("ctrl", "a")
-    pyautogui.hotkey("ctrl", "c")
+    pyautogui.hotkey(Key.CTRL, Key.A)
+    pyautogui.hotkey(Key.CTRL, Key.C)
             
 ###################################################################################################################
 ################################################################################################################### 

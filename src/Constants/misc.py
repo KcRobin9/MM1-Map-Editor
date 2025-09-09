@@ -142,6 +142,11 @@ class Threshold:
     VERTEX_INDEX_COUNT = 0x8000  # 32768
 
 
+class ControlType:
+    KEYBOARD = "keyboard"
+    MOUSE = "mouse"
+
+
 class Color:
     RED = "#ff0000"
     RED_LIGHT = "#ff8080"

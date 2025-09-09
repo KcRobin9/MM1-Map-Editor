@@ -56,7 +56,11 @@ class Key:
     ESC = "ESC"
     DELETE = "DEL"
     BACKSPACE = "BACK_SPACE"
-
+    
+    CONTROL = "ctrl"
+    CTRL = "ctrl" 
+    SHIFT = "shift"
+    ALT = "alt"
 
 class KeyEvent:
     PRESS = "PRESS"
