@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Dict, List, Tuple, Any
 
-from src.Races.formatters import write_section, format_exceptions, format_police_data, format_opponent_data
+from src.races.formatters import write_section, format_exceptions, format_police_data, format_opponent_data
 
 
 def prepare_aimap_data(config: Dict[str, Any], race_type: str, race_index: int, opponents: Dict[str, List[List[float]]]) -> Tuple[float, int, str, str, str]:

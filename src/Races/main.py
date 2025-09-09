@@ -5,10 +5,10 @@ from src.Constants.misc import Folder
 from src.Constants.constants import RACE_TYPE_TO_EXTENSION, RACE_TYPE_TO_PREFIX, CHECKPOINT_PREFIXES
 from src.Constants.file_types import FileType
 
-from src.Races.checks import check_race_count, check_waypoint_count
-from src.Races.aimap import prepare_aimap_data, write_aimap
-from src.Races.mm_data import write_mm_data_header, write_mm_data
-from src.Races.waypoints import write_waypoints
+from src.races.checks import check_race_count, check_waypoint_count
+from src.races.aimap import prepare_aimap_data, write_aimap
+from src.races.mm_data import write_mm_data_header, write_mm_data
+from src.races.waypoints import write_waypoints
 
 
 def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:

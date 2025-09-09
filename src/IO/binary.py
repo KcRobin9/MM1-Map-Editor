@@ -1,6 +1,8 @@
 import struct
 from typing import Tuple, BinaryIO
 
+from src.helpers.main import calc_size
+
 
 def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
     return struct.unpack(fmt, file.read(calc_size(fmt)))
@@ -8,10 +10,6 @@ def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
 
 def write_pack(file: BinaryIO, fmt: str, *args: object) -> None:
     file.write(struct.pack(fmt, *args))
-
-
-def calc_size(fmt: str) -> int:
-    return struct.calcsize(fmt)
 
 
 def read_binary_name(f, length: int = None, encoding: str = 'ascii', padding: int = 0) -> str:  # add ascii constant

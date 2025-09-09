@@ -1,3 +1,5 @@
+BRIDGE_ATTRIBUTE_FILLER = f"\t{Prop.CROSSGATE},0,-999.99,0.00,-999.99,-999.99,0.00,-999.99\n" 
+
 BRIDGE_ORIENTATION_ERROR = f"""
 ***ERROR***
 Invalid Bridge Orientation.

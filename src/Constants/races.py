@@ -1,19 +1,5 @@
-from src.Constants.misc import Folder
-from src.Constants.file_types import FileType
-
-
-class TimeOfDay:
-    MORNING = 0
-    NOON = 1
-    EVENING = 2
-    NIGHT = 3
-
-
-class Weather:
-    CLEAR = 0
-    CLOUDY = 1
-    RAIN = 2
-    SNOW = 3
+from src.constants.misc import Folder
+from src.constants.file_types import FileType
 
 
 class IntersectionType:
@@ -23,75 +9,7 @@ class IntersectionType:
     CONTINUE = 3
 
 
-class RaceMode:
-    ROAM = "ROAM"
-    CRUISE = "CRUISE"
-    BLITZ = "BLITZ"
-    CHECKPOINT = "RACE"
-    CIRCUIT = "CIRCUIT"
-    COPS_AND_ROBBERS = "COPSANDROBBERS"
-
-
-class RaceModeNum:
-    CIRCUIT_ALL = "CIRCUIT_ALL"
-    CHECKPOINT_ALL = "CHECKPOINT_ALL"
-    BLITZ_ALL = "BLITZ_ALL"
-    
-    BLITZ_0 = "BLITZ_0"
-    BLITZ_1 = "BLITZ_1"
-    BLITZ_2 = "BLITZ_2"
-    BLITZ_3 = "BLITZ_3"
-    BLITZ_4 = "BLITZ_4"
-    BLITZ_5 = "BLITZ_5"
-    BLITZ_6 = "BLITZ_6"
-    BLITZ_7 = "BLITZ_7"
-    BLITZ_8 = "BLITZ_8"
-    BLITZ_9 = "BLITZ_9"
-    BLITZ_10 = "BLITZ_10"
-    BLITZ_11 = "BLITZ_11"
-    BLITZ_12 = "BLITZ_12"
-    BLITZ_13 = "BLITZ_13"
-    BLITZ_14 = "BLITZ_14"
-
-    CHECKPOINT_0 = "RACE_0"
-    CHECKPOINT_1 = "RACE_1"
-    CHECKPOINT_2 = "RACE_2"
-    CHECKPOINT_3 = "RACE_3"
-    CHECKPOINT_4 = "RACE_4"
-    CHECKPOINT_5 = "RACE_5"
-    CHECKPOINT_6 = "RACE_6"
-    CHECKPOINT_7 = "RACE_7"
-    CHECKPOINT_8 = "RACE_8"
-    CHECKPOINT_9 = "RACE_9"
-    CHECKPOINT_10 = "RACE_10"
-    CHECKPOINT_11 = "RACE_11"
-    CHECKPOINT_11 = "RACE_12"
-    
-    CIRCUIT_0 = "CIRCUIT_0"
-    CIRCUIT_1 = "CIRCUIT_1"
-    CIRCUIT_2 = "CIRCUIT_2"
-    CIRCUIT_3 = "CIRCUIT_3"
-    CIRCUIT_4 = "CIRCUIT_4"
-    CIRCUIT_5 = "CIRCUIT_5"
-    CIRCUIT_6 = "CIRCUIT_6"
-    CIRCUIT_7 = "CIRCUIT_7"
-    CIRCUIT_8 = "CIRCUIT_8"
-    CIRCUIT_9 = "CIRCUIT_9"
-    CIRCUIT_10 = "CIRCUIT_10"
-    CIRCUIT_11 = "CIRCUIT_11"
-    CIRCUIT_12 = "CIRCUIT_12"
-    CIRCUIT_13 = "CIRCUIT_13"
-    CIRCUIT_14 = "CIRCUIT_14"
-    CIRCUIT_15 = "CIRCUIT_15"
-
-
-class NetworkMode:
-    SINGLE = "SINGLE"
-    MULTI = "MULTI"
-    SINGLE_AND_MULTI = "All Modes"
-
-
-class CnR:
+class CopsAndRobbers:
     BANK_HIDEOUT = "Bank Hideout"
     GOLD_POSITION = "Gold Position"
     ROBBER_HIDEOUT = "Robber Hideout"
@@ -172,31 +90,6 @@ class Laps(NumericOptions):
      # The game can load races with 1000+ laps, however the game's menu caps the number to 10
     _9 = 9
     _10 = 10
-
-
-class Rotation:
-    AUTO = 0
-    NORTH = 0.01
-    NORTH_EAST = 45
-    EAST = 90
-    SOUTH_EAST = 135
-    SOUTH = 179.99
-    SOUTH_WEST = -135
-    WEST = -90
-    NORTH_WEST = -45
-    AUTO = 0
-    
-    FULL_CIRCLE = 360
-    HALF_CIRCLE = 180
-    
-    
-class Width:
-    AUTO = 0
-    DEFAULT = 15
-    ALLEY = 3
-    SMALL = 11
-    MEDIUM = 15
-    LARGE = 19
 
 
 MM_DATA_FILES  = {

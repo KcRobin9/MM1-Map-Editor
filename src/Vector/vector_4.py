@@ -1,4 +1,4 @@
-from src.IO.binary_parsing import calc_size
+from src.IO.binary import calc_size
 
 
 class Vector4:

@@ -1,7 +1,7 @@
 from typing import Optional, List, Union, Dict
 
-from src.Constants.constants import MM_DATA_HEADER, DEFAULT_MM_DATA_BY_RACE_MODE
-from src.Constants.races import RaceMode
+from src.constants.constants import MM_DATA_HEADER, DEFAULT_MM_DATA_BY_RACE_MODE
+from src.constants.races import RaceMode
 
 
 def write_mm_data_header(output_file: str) -> None:

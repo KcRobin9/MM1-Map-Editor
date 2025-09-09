@@ -5,8 +5,7 @@ import threading
 from pathlib import Path
 from colorama import Fore, Style, init
 
-from src.Constants.progress_bar import BAR_DIVIDER, PROGRESS_BAR_WIDTH, DEFAULT_RUN_TIME, PROGRESS_UPDATE_INTERVAL, DISABLED_UPDATE_INTERVAL
-
+from src.progress_bar.constants import BAR_DIVIDER, PROGRESS_BAR_WIDTH, DEFAULT_RUN_TIME,  PROGRESS_UPDATE_INTERVAL, DISABLED_UPDATE_INTERVAL
 
 init(autoreset = True)  # Initialize colorama
 

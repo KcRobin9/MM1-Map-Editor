@@ -2,7 +2,7 @@ import csv
 from pathlib import Path
 from typing import List, Optional
 
-from src.Constants.races import Width, Rotation
+from src.races.waypoints import Width, Rotation
 
 
 def determine_ordinal(n) -> str:
