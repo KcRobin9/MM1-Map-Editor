@@ -15,8 +15,8 @@ from src.constants.file_formats import FileType, Axis
 from src.file_formats.props.props import Bangers
 from src.io.binary import write_pack
 
-from src.USER.Settings.main import MAP_FILENAME
-from src.USER.Settings.debug import debug_props 
+from src.USER.settings.main import MAP_FILENAME
+from src.USER.settings.debug import debug_props 
 
 
 class BangerEditor:

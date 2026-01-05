@@ -1,11 +1,10 @@
 import bpy
-
 from functools import partial
 from typing import Any, Dict, Optional
 
-from constants.misc import Executable
-from constants.keyboard import Key, KeyEvent, KeyModifier
-from helpers.main import is_process_running
+from src.constants.misc import Executable
+from src.constants.keyboard import Key, KeyEvent, KeyModifier
+from src.helpers.main import is_process_running
 
 
 def create_keybinding(keymap, operator: str, key: str, modifier: Optional[Dict] = None, properties: Optional[Dict[str, Any]] = None) -> None:

@@ -2,7 +2,7 @@ import shutil
 from typing import List
 from pathlib import Path
 
-from src.USER.Settings.main import MAP_NAME, MAP_FILENAME
+from src.USER.settings.main import MAP_NAME, MAP_FILENAME
 
 
 def create_map_info(output_file: Path, blitz_race_names: List[str], circuit_race_names: List[str], checkpoint_race_names: List[str]) -> None:

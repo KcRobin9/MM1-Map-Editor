@@ -1,12 +1,14 @@
 import os
-from pathlib import Path
 import bpy
-from constants.file_formats import FileType
-from constants.misc import Executable
-from core.geometry.main import transform_coordinate_system
-from core.vector.vector_3 import Vector3
-from helpers.main import is_process_running
-from integrations.blender.uv_mapping import tile_uvs, rotate_uvs, unwrap_uv_to_aspect_ratio, update_uv_tiling
+from pathlib import Path
+
+from src.constants.file_formats import FileType
+from src.constants.misc import Executable
+from src.core.geometry.main import transform_coordinate_system
+from src.core.vector.vector_3 import Vector3
+from src.helpers.main import is_process_running
+from src.integrations.blender.modeling.uv_mapping import rotate_uvs, tile_uvs, unwrap_uv_to_aspect_ratio, update_uv_tiling
+from src.integrations.blender.panels.hud import set_hud_checkbox
 
 
 def load_textures(input_folder: Path, load_all_textures: bool) -> None:

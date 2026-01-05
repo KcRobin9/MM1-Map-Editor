@@ -1,3 +1,6 @@
+import bpy
+
+
 def update_vertex_coordinates(self, context):
     obj = self.id_data
     if obj and hasattr(obj.data, "vertices"):

@@ -6,13 +6,10 @@ from src.constants.keyboard import Key
 from src.constants.misc import Folder
 from src.constants.file_formats import FileType
 from src.constants.constants import CURRENT_TIME_FORMATTED
-from src.constants.file_formats import FileType
 
 from src.misc.main import open_with_notepad_plus
 from src.game.waypoints.constants import Rotation
-
 from src.integrations.blender.waypoints.helpers import get_all_waypoints
-
 from src.core.geometry.main import transform_coordinate_system
 
 

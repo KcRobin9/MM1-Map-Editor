@@ -2,7 +2,7 @@ import os
 import bpy
 from typing import Dict, List, Union
 
-from constants.textures import TEXTURE_EXPORT, Texture
+from src.constants.textures import TEXTURE_EXPORT, Texture
 
 
 def format_decimal(value: Union[int, float]) -> str:

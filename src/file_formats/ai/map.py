@@ -9,7 +9,7 @@ from src.io.binary import read_unpack
 
 from src.constants.misc import Folder
 
-from src.USER.Settings.main import MAP_FILENAME
+from src.USER.settings.main import MAP_FILENAME
 
 
 class aiMap:

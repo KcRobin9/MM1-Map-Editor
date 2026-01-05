@@ -5,10 +5,9 @@ from pathlib import Path
 from mathutils import Vector
 from helpers.main import is_process_running
 
-
-from constants.file_formats import FileType
-from constants.misc import Color, Executable
-from core.geometry.main import transform_coordinate_system
+from src.constants.file_formats import FileType
+from src.constants.misc import Color, Executable
+from src.core.geometry.main import transform_coordinate_system
 
 
 def extract_and_format_road_data(input_folder: Path, output_file: Path) -> None: 

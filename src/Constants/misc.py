@@ -3,7 +3,7 @@ from pathlib import Path
 from src.core.vector.vector_2 import Vector2
 from src.core.vector.vector_3 import Vector3
 
-from src.USER.Settings.main import MAP_FILENAME
+from src.USER.settings.main import MAP_FILENAME
 from src.helpers.main import is_process_running
 
 

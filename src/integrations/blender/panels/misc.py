@@ -1,3 +1,6 @@
+import bpy
+
+
 bpy.types.Object.always_visible = bpy.props.BoolProperty(
     name = "Always Visible",
     description = "If true, the polygon is always visible",

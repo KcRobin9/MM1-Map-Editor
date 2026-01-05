@@ -1,6 +1,5 @@
 import bpy
-
-from src.integrations.blender.create import update_waypoint_colors
+from integrations.blender.waypoints.helpers import update_waypoint_colors
 
 
 def initialize_depsgraph_update_handler() -> None:

@@ -5,7 +5,7 @@ from src.constants.misc import Folder, Default
 from src.constants.file_formats import FileType
 
 from src.file_formats.facades.facades import Facades
-from src.USER.Settings.main import MAP_FILENAME
+from src.USER.settings.main import MAP_FILENAME
 
 
 class FacadeEditor:    

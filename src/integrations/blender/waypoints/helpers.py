@@ -1,7 +1,7 @@
 import bpy 
 from typing import List
 
-from constants.misc import Color
+from src.constants.misc import Color
 
 
 def get_all_waypoints() -> List[bpy.types.Object]:

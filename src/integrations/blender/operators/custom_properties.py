@@ -1,3 +1,21 @@
+import bpy
+
+from src.constants.misc import Color
+from src.constants.constants import YES, NO
+from src.constants.file_formats import Material, Room
+
+
+CUSTOM_PROPERTIES_CONFIG_DEFAULT = {
+    "cell_type": Room.DEFAULT,
+    "material_index": Material.DEFAULT,
+    "hud_color": Color.ROAD,
+    "sort_vertices": NO,
+    "always_visible": YES,
+    "tile_x": 2.0,
+    "tile_y": 2.0,
+    "rotate": 0.01
+}
+
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
     bl_idname = "object.assign_custom_properties"
     bl_label = "Assign Custom Properties to Polygons"

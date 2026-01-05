@@ -8,7 +8,7 @@ from src.constants.misc import Folder, Default
 from src.game.races.constants_2 import IntersectionType
 from src.file_formats.ai.map import BaiMap
 
-from src.USER.Settings.main import MAP_FILENAME
+from src.USER.settings.main import MAP_FILENAME
 
 
 class aiStreetEditor:

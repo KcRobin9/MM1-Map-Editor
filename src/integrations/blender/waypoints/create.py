@@ -8,8 +8,6 @@ from src.game.waypoints.constants import Rotation, Width
 from src.integrations.blender.waypoints.helpers import update_waypoint_colors
 from src.integrations.blender.waypoints.constants import POLE_HEIGHT, POLE_DIAMETER, FLAG_HEIGHT, FLAG_HEIGHT_OFFSET  
 
-from src.integrations.blender.waypoints.helpers import update_waypoint_colors
-
 
 def create_waypoint_material(name: str, color: Tuple[float, float, float, float]) -> bpy.types.Material:
     material = bpy.data.materials.new(name)

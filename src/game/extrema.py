@@ -1,8 +1,10 @@
 from typing import List
 from pathlib import Path
 
+from core.geometry.main import calculate_extrema
+
 from src.core.vector.vector_3 import Vector3
-from src.helpers.main import calculate_extrema
+
 
 
 def create_extrema(output_file: Path, polygons: List[Vector3]) -> None:

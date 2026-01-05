@@ -3,7 +3,7 @@ import shutil
 from pathlib import Path
 
 from src.constants.misc import Folder
-from src.USER.Settings.main import MAP_FILENAME
+from src.USER.settings.main import MAP_FILENAME
 from src.constants.constants import REQUIRED_ANGEL_FILES
 
 

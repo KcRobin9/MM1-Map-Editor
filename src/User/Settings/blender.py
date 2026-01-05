@@ -1,4 +1,4 @@
-from src.Constants.misc import Folder
+from src.constants.misc import Folder
 
 
 # Textures

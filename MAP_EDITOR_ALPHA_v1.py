@@ -24,6 +24,8 @@
 import sys
 from pathlib import Path
 
+from misc.angel import create_angel_resource_file
+
 project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
@@ -49,7 +51,7 @@ from src.core.vector.vector_2 import Vector2
 from src.core.vector.vector_3 import Vector3
 from src.core.vector.vector_4 import Vector4
 
-from src.core.geometry.main import calc_center_coords, calc_distance, calculate_center_tuples
+from src.core.geometry.main import calc_center_coords, calc_distance, calculate_center_tuples, calculate_extrema, sort_coordinates
 from src.core.geometry.planes import ensure_ccw_order, ensure_quad_ccw_order, compute_plane_edgenormals, compute_edges
 
 # Debug imports
@@ -84,15 +86,20 @@ from src.game.texture_sheet import TextureSheet
 from src.game.setup import create_map_info, copy_custom_textures_to_shop, copy_carsim_files_to_shop, ensure_empty_mm_dev_folder
 
 # Helper imports
-from src.helpers.main import calc_size, calculate_extrema, is_process_running
+from src.helpers.main import calc_size, is_process_running
 
 # Integration imports
+from src.integrations.blender.setup import setup_blender
+from src.integrations.blender.inits import initialize_blender_operators, initialize_blender_panels, initialize_blender_waypoint_editor
+from src.integrations.blender.keybindings import set_blender_keybinding
+from src.integrations.blender.modeling.ai_paths import process_and_visualize_paths
+from src.integrations.blender.modeling.meshes import create_blender_meshes
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
 
 # Misc imports
-from src.misc.main import create_commandline, start_game, create_angel_resource_file, post_editor_cleanup
+from src.misc.main import create_commandline, start_game, post_editor_cleanup
 
 # Progress bar imports
 from src.ui.progress_bar.main import RunTimeManager, start_progress_tracking
@@ -104,11 +111,8 @@ from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, ag
 from src.constants.textures import Texture
 from src.constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color
 
-# Integration imports
-from src.integrations.blender.setup import setup_blender
-
 # USER imports
-from src.USER.Settings.main import (
+from src.USER.settings.main import (
     MAP_NAME, MAP_FILENAME,
     play_game, delete_shop,
     set_bridges, set_props, set_facades, set_physics, set_animations, set_texture_sheet, set_music,
@@ -120,14 +124,14 @@ from src.USER.Settings.main import (
     round_vector_values, disable_progress_bar
 )
 
-from src.USER.Settings.advanced import (
+from src.USER.settings.advanced import (
     no_ui, no_ui_type, no_ai, 
     less_logs, more_logs, 
     lower_portals, empty_portals, 
     set_dlp, fix_faulty_quads
 ) 
 
-from src.USER.Settings.debug import (
+from src.USER.settings.debug import (
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
     debug_props_file, debug_props_file_to_csv, debug_facades_file, debug_portals_file, debug_ai_file,
     debug_meshes_file, debug_meshes_folder, debug_bounds_file, debug_bounds_folder, debug_dlp_file, debug_dlp_folder,
@@ -142,16 +146,16 @@ from src.USER.lighting import lighting_configs
 from src.USER.animations import animations_data
 from src.USER.bridges import bridge_list, bridge_config_list
 
-from src.USER.Races.cops_and_robbers import cops_and_robbers_waypoints
-from src.USER.Races.races import blitz_race_names, checkpoint_race_names, circuit_race_names, race_data
+from src.USER.races.cops_and_robbers import cops_and_robbers_waypoints
+from src.USER.races.races import blitz_race_names, checkpoint_race_names, circuit_race_names, race_data
 
-from src.USER.Props.props import prop_list, random_props
-from src.USER.Props.properties import prop_properties
-from src.USER.Props.append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
+from src.USER.props.props import prop_list, random_props
+from src.USER.props.properties import prop_properties
+from src.USER.props.append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
 
-from src.USER.Textures.properties import texture_modifications
+from src.USER.textures.properties import texture_modifications
 
-from src.USER.Misc.dlp import dlp_groups, dlp_patches, dlp_vertices
+from src.USER.misc.dlp import dlp_groups, dlp_patches, dlp_vertices
 
 ################################################################################################################               
 ################################################################################################################
@@ -2446,21 +2450,17 @@ print(COLOR_DIVIDER)
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 
-from src.integrations.blender.setup import setup_blender
-
-# jump
-
 # # Blender
 setup_blender()
 
-# initialize_blender_panels()
-# initialize_blender_operators()
-# initialize_blender_waypoint_editor()
-# set_blender_keybinding()
+initialize_blender_panels()
+initialize_blender_operators()
+initialize_blender_waypoint_editor()
+set_blender_keybinding()
 
-# create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
+create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 
-# process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
+process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 # # Cleanup
 post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
