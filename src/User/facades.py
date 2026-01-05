@@ -1,4 +1,4 @@
-from src.Constants.facades import Facade
+from src.constants.facades import Facade
 
 
 #* NOTES:
@@ -7,8 +7,7 @@ from src.Constants.facades import Facade
 #* Scale: enlarges or shrinks non-fixed facades
 
 #* All information about Facades (including pictures) can be found in: 
-# ... / UserResources / FACADES / ...        
-# ... / UserResources / FACADES / FACADE pictures
+# ... / docs / visual_reference / facades   
 
 # Flags (if applicable, consult the documentation for more info)
 # TODO: transform to hex

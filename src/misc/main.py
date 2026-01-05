@@ -1,9 +1,14 @@
-def create_angel_resource_file(shop_folder: Path) -> None:
-    for file in Folder.ANGEL.iterdir():
-        if file.name in ["CMD.EXE", "RUN.BAT", "SHIP.BAT"]:
-            shutil.copy(file, shop_folder / file.name)
-            
-    subprocess.Popen(f"cmd.exe /c run !!!!!{MAP_FILENAME}", cwd = shop_folder, creationflags = subprocess.CREATE_NO_WINDOW)
+import os
+import time 
+import shutil
+import subprocess
+from pathlib import Path
+
+from src.constants.misc import Folder, Executable, CommandArgs, ControlType
+from src.constants.modes import RaceMode
+from src.constants.constants import NOTEPAD_PLUS_PATHS
+
+from src.helpers.main import is_process_running
 
 
 def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop: bool) -> None:
@@ -22,9 +27,7 @@ def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop: bool
             print(f"\nFailed to delete the SHOP directory. Reason: {e}\n")
 
 
-def create_commandline(
-    output_file: Path, no_ui: bool, no_ui_type: str,
-    no_ai: bool, set_music: bool, less_logs: bool, more_logs: bool) -> None:
+def create_commandline(output_file: Path, no_ui: bool, no_ui_type: str, no_ai: bool, set_music: bool, less_logs: bool, more_logs: bool) -> None:
 
     cmd_line = CommandArgs.DEFAULT
 
@@ -77,3 +80,24 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
         return
     
     subprocess.run(mm1_folder / executable, cwd = mm1_folder)
+
+
+def open_with_notepad_plus(input_file: Path) -> None:
+    notepad_plus_exe = shutil.which(Executable.NOTEPAD_PLUS_PLUS)  
+    
+    if notepad_plus_exe:
+        subprocess.Popen([notepad_plus_exe, input_file])
+        print("Opening file with Notepad++ from PATH.")
+        return
+
+    for path in NOTEPAD_PLUS_PATHS:
+        subprocess.Popen([path, input_file])
+        print(f"Opening file with Notepad++ from hardcoded path: {path}")
+        return
+
+    try:
+        subprocess.Popen([Executable.NOTEPAD, input_file])
+        print("Notepad++ not found, opening file with Classic Notepad.")
+    except FileNotFoundError:
+        print("Neither Notepad++ nor Classic Notepad found. Unable to open file.")
+        raise

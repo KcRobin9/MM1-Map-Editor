@@ -1,4 +1,4 @@
-from src.Constants.file_types import Anim
+from src.constants.file_formats import Anim
 
 
 animations_data = {

@@ -1,5 +1,9 @@
-from src.Constants.races import Rotation, RaceMode, NetworkMode
-from src.Constants.props import Prop
+# from src.constants.waypoints import Rotation
+
+from src.game.waypoints.constants import Rotation
+
+from src.constants.props import Prop
+from src.constants.modes import NetworkMode, RaceMode
 
 
 """

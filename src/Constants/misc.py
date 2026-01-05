@@ -1,8 +1,10 @@
 from pathlib import Path
-from src.Vector.vector_2 import Vector2
-from src.Vector.vector_3 import Vector3
-from src.User.Settings.main import MAP_FILENAME
-from src.misc.helper import is_process_running
+
+from src.core.vector.vector_2 import Vector2
+from src.core.vector.vector_3 import Vector3
+
+from src.USER.Settings.main import MAP_FILENAME
+from src.helpers.main import is_process_running
 
 
 class Shape:

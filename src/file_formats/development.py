@@ -1,10 +1,10 @@
 from pathlib import Path
 from typing import List, BinaryIO
 
-from src.Vector.vector_2 import Vector2
-from src.Vector.vector_3 import Vector3
-from src.IO.binary_parsing import read_unpack, write_pack, read_binary_name, write_binary_name
-from src.Constants.file_types import FileType, Magic
+from src.core.vector.vector_2 import Vector2
+from src.core.vector.vector_3 import Vector3
+from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
+from src.constants.file_formats import FileType, Magic
 
 
 class DLPVertex: 

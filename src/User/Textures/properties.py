@@ -1,5 +1,5 @@
-from src.Constants.textures import Texture
-from src.Constants.file_types import AgiTexParameters
+from src.constants.textures import Texture
+from src.constants.file_formats import AgiTexParameters
 
 
 texture_modifications = [

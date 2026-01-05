@@ -1,5 +1,3 @@
-from src.constants.races import NetworkMode
-
 # Texturesheet
 TEXTURESHEET_MAPPING = {
     "neighborhood": 1,

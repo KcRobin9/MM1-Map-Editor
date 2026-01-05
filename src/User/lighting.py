@@ -1,4 +1,4 @@
-from src.Constants.races import TimeOfDay, Weather
+from src.constants.time_weather import TimeOfDay, Weather
 
 
 lighting_configs = [

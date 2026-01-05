@@ -1,6 +1,7 @@
-from src.Constants.props import Prop
-from src.Constants.constants import YES, NO
-from src.Constants.races import IntersectionType
+from src.constants.props import Prop
+
+from src.constants.constants import YES, NO
+from src.game.races.constants_2 import IntersectionType
 
 
 f"""

@@ -1,9 +1,8 @@
-from src.Constants.misc import Folder
-
-from src.Constants.props import Prop
-from src.Constants.constants import HUGE
-from src.Constants.races import RaceMode
-from src.Constants.vehicles import PlayerCar
+from src.constants.misc import Folder
+from src.constants.props import Prop
+from src.constants.vehicles import PlayerCar
+from src.constants.constants import HUGE
+from src.constants.modes import NetworkMode, RaceMode # remove (?)
 
 
 # Append Props
@@ -19,5 +18,3 @@ app_panoz_gtr = {
 }
 
 props_to_append = [app_panoz_gtr]
-
-# Ideally this section should be moved into "main.py" in this folder, but this leads to a circular import error

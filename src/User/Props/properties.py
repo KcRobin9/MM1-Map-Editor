@@ -1,6 +1,6 @@
-from src.Constants.constants import HUGE
-from src.Constants.vehicles import PlayerCar
-from src.Constants.props import Prop, AudioProp
+from src.constants.vehicles import PlayerCar
+from src.constants.props import Prop, AudioProp
+from src.constants.constants import HUGE
 
 
 prop_properties = {

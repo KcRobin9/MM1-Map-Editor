@@ -1,9 +1,10 @@
-from src.Constants.props import Prop
-from src.Constants.constants import HUGE
-from src.Constants.file_types import Axis
+from src.constants.props import Prop
+from src.constants.vehicles import PlayerCar
+from src.constants.constants import HUGE
+from src.constants.file_formats import Axis
 
-from src.Constants.races import RaceModeNum, RaceMode
-from src.Constants.vehicles import PlayerCar
+from src.game.races.constants import RaceModeNum
+
 
 trailer_set = {
     "offset": (60, 0.0, 70),

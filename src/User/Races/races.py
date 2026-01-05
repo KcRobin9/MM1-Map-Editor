@@ -1,5 +1,9 @@
-from src.Constants.vehicles import PlayerCar, TrafficCar
-from src.Constants.races import Rotation, Width, TimeOfDay, Weather, MaxOpponents, CopDensity, AmbientDensity, PedDensity, Laps, CopStartLane, CopBehavior
+from src.game.races.constants_2 import MaxOpponents, CopDensity, AmbientDensity, PedDensity, Laps, CopStartLane, CopBehavior
+from src.game.waypoints.constants import Rotation, Width
+
+from src.constants.vehicles import PlayerCar, TrafficCar
+from src.constants.time_weather import TimeOfDay, Weather
+
 
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
 # Blitzes can have a total of 11 waypoints (including the start position), the number of waypoints for Circuits and Checkpoints is unlimited
