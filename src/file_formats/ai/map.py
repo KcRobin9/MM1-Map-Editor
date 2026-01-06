@@ -52,6 +52,7 @@ class BaiMap:
     def write_map(self):           
         with open(Folder.MIDTOWNMADNESS_DEV_CITY_MAP / f"{MAP_FILENAME}.map", 'w') as f:
             f.write(self.map_template())
+        print(f"Successfully created AI map file")
     
     def map_template(self):
         num_streets = len(self.street_names)

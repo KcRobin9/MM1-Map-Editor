@@ -5,7 +5,6 @@ from typing import Dict, Union, List
 
 from src.core.vector.vector_3 import Vector3
 
-
 from src.game.races.constants import RaceModeNum, RaceMode, RACE_TYPE_INITIALS
 
 from src.constants.constants import PROP_CAN_COLLIDE_FLAG, HUGE
@@ -57,12 +56,28 @@ class BangerEditor:
             for race_key in race_keys:
                 per_race_props.setdefault(race_key, []).append(prop)
 
-        # Process each race's props
+        total_props = 0
+        prop_counts = {}
+        
         for race_key, race_props in per_race_props.items():                
             self.props.clear()
             self.add_multiple(race_props)
             current_filename = self._filename_with_suffix(race_key)
-            Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props) 
+            Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props)
+            total_props += len(self.props)
+            
+            # Count props by name
+            for prop in self.props:
+                prop_name = prop.name.rstrip('\x00')
+                prop_counts[prop_name] = prop_counts.get(prop_name, 0) + 1
+        
+        # Build the prop breakdown string
+        if prop_counts:
+            breakdown = ", ".join([f"{count}x {name}" for name, count in sorted(prop_counts.items())])
+            print(f"Successfully created props file with {total_props} prop(s)\n{breakdown}, ")
+        else:
+            print(f"Successfully created props file with {total_props} prop(s)")
+
 
     def _expand_race_key(self, race_value):
         if race_value == RaceModeNum.CIRCUIT_ALL or race_value == RaceMode.CIRCUIT:

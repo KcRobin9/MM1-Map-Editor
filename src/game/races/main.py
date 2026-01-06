@@ -19,9 +19,18 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
         RaceMode.BLITZ: False
     }
     
+    race_counts = {
+        RaceMode.CHECKPOINT: 0,
+        RaceMode.CIRCUIT: 0,
+        RaceMode.BLITZ: 0
+    }
+    
     for race_key, config in race_data.items():
         race_type, race_index = race_key.split("_", 1)
         race_index = int(race_index)
+        
+        # Count this race
+        race_counts[race_type] += 1
 
         player_waypoints = config["player_waypoints"]
                 
@@ -71,4 +80,18 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
         # AI MAP                
         write_aimap(ai_map_file, *prepared_aimap_data, num_of_opponents)
 
-        print(f"Successfully created race files")
+    # Build the race breakdown
+    total_races = sum(race_counts.values())
+    breakdown_parts = []
+    if race_counts[RaceMode.CHECKPOINT] > 0:
+        breakdown_parts.append(f"checkpoint: {race_counts[RaceMode.CHECKPOINT]}")
+    if race_counts[RaceMode.BLITZ] > 0:
+        breakdown_parts.append(f"blitz: {race_counts[RaceMode.BLITZ]}")
+    if race_counts[RaceMode.CIRCUIT] > 0:
+        breakdown_parts.append(f"circuit: {race_counts[RaceMode.CIRCUIT]}")
+    
+    if breakdown_parts:
+        breakdown = ", ".join(breakdown_parts)
+        print(f"Successfully created {total_races} race file(s) ({breakdown})")
+    else:
+        print(f"Successfully created 0 race file(s)")

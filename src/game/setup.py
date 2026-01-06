@@ -23,9 +23,15 @@ CheckpointNames={'|'.join(checkpoint_race_names)}
 
 
 def copy_files_to_folder (input_folder: Path, output_folder: Path, pattern: str = "*") -> None:
+    files_copied = 0
     for file in input_folder.glob(pattern):
         if file.is_file():
             shutil.copy(file, output_folder / file.name)
+            files_copied += 1
+    
+    if files_copied > 0:
+        folder_name = input_folder.name
+        print(f"Successfully copied {files_copied} file(s) from {folder_name}")
 
 
 def copy_custom_textures_to_shop(input_folder: Path, output_folder: Path) -> None:
@@ -38,8 +44,13 @@ def copy_carsim_files_to_shop(input_folder: Path, output_folder: Path, file_type
 
 def ensure_empty_mm_dev_folder(input_folder: Path) -> None:
     if input_folder.is_dir():
+        files_deleted = 0  # Initialize before the loop
         for file in input_folder.iterdir():
             if file.is_file():
                 file.unlink()
+                files_deleted += 1
+        if files_deleted > 0:
+            print(f"Successfully cleared {files_deleted} file(s) from MM dev folder")
     else:
         input_folder.mkdir(parents=True, exist_ok=True)
+        print(f"Successfully created MM dev folder")

@@ -58,7 +58,8 @@ class aiStreetEditor:
             editor = cls(data, set_reverse_ai_streets)
             editor.write()
             street_names.append(editor.street_name)
-
+    
+        print(f"Successfully created {len(street_names)} AI street file(s)")
         return BaiMap(street_names)
 
     def write(self):    

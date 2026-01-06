@@ -21,4 +21,8 @@ def create_animations(output_folder: Path, anim_data: Dict[str, List[Tuple]], se
                for coord in anim_data[anim_name]:
                    csv.writer(coord_file).writerow(coord)
 
-   print(f"Successfully created animation files")
+   if anim_data:
+       anim_names = ", ".join(sorted(anim_data.keys()))
+       print(f"Successfully created {len(anim_data)} animation file(s) ({anim_names})")
+   else:
+       print(f"Successfully created 0 animation file(s)")

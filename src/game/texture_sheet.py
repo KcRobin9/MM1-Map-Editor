@@ -41,19 +41,21 @@ class TextureSheet:
     @staticmethod
     def parse_flags(flags: List[str]) -> str:
         flag_str = "".join(flags)
-        print(f"Parsing flags {flags} to {flag_str}")  
+        # print(f"Parsing flags {flags} to {flag_str}")  
         return flag_str
 
     @classmethod
     def append_custom_textures(cls, input_file: Path, input_textures: Path, output_file: Path, set_texture_sheet: bool) -> None:
         if not set_texture_sheet:
             return
-              
+            
         with open(input_file, "r") as in_f:
             texturesheet_lines = in_f.readlines()
                     
         existing_texture_names = set(line.split(',')[0].strip() for line in texturesheet_lines)
         custom_texture_names = TextureSheet.get_custom_texture_filenames(input_textures)
+        
+        added_textures = []
         
         with open(output_file, "w") as out_f: 
             out_f.writelines(texturesheet_lines)  # Write the existing texturesheet lines first
@@ -61,7 +63,14 @@ class TextureSheet:
             for custom_tex in custom_texture_names:
                 if custom_tex not in existing_texture_names:
                     out_f.write(f"{custom_tex},0,0,0,1,,{custom_tex},,64,64,000000\n")  # TODO: Add support for custom flags
-                    
+                    added_textures.append(custom_tex)
+        
+        if added_textures:
+            texture_list = ", ".join([f"{tex}{FileType.DIRECTDRAW_SURFACE}" for tex in added_textures])
+            print(f"Successfully appended {len(added_textures)} custom texture(s) to texture sheet ({texture_list})")
+        else:
+            print(f"No new custom textures to append")
+            
     @staticmethod
     def write(textures: Dict[str, List[str]], output_file: Path):
         with open(output_file, "w", newline = "") as f:

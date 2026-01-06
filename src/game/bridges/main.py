@@ -8,6 +8,7 @@ from src.game.bridges.configs import BRIDGE_CONFIG_DEFAULT, BRIDGE_CONFIG_TEMPLA
 from src.constants.modes import NetworkMode, RaceMode
 from src.constants.file_formats import FileType
 
+
 def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
     if not set_bridges:
         return
@@ -43,7 +44,8 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
             
         return lines
 
-    bridge_data = []  
+    bridge_data = []
+    bridge_type_counts = {}
 
     for bridge in all_bridges:
         offset, orientation, id, drawbridge, bridge_attributes = bridge
@@ -65,11 +67,19 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
             )
         
         bridge_data.append(template)
+        
+        # Count bridge types
+        bridge_type_counts[drawbridge] = bridge_type_counts.get(drawbridge, 0) + 1
 
     with open(output_file, "a") as f:
         f.writelines(bridge_data)
 
-    print(f"Successfully created bridge file with {len(all_bridges)} bridge(s)")
+    # Build the bridge breakdown string
+    if bridge_type_counts:
+        breakdown = " , ".join([f"{count}x {bridge_type}" for bridge_type, count in sorted(bridge_type_counts.items())])
+        print(f"Successfully created bridge file with {len(all_bridges)} bridge(s) ({breakdown})")
+    else:
+        print(f"Successfully created bridge file with {len(all_bridges)} bridge(s)")
 
 
 def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_bridges: bool, output_folder: Path) -> None:

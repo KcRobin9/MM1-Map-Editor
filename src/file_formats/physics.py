@@ -59,7 +59,7 @@ class PhysicsEditor:
             
             for param in custom_params:                
                 param.write(f)
-                
+
     @classmethod    
     def edit(cls, input_file: Path, output_file: Path, user_set_properties: dict, set_physics: bool, debug_physics: bool) -> None:
         if not set_physics:
@@ -75,6 +75,10 @@ class PhysicsEditor:
                 setattr(physics_obj, attr, value)
                     
         cls.write_all(output_file, original_data)
+        
+        # Build the physics indices list
+        indices_str = ", ".join([f"#{idx}" for idx in sorted(user_set_properties.keys())])
+        print(f"Successfully created physics file with {len(user_set_properties)} custom material(s) (indices: {indices_str})")
         
         if debug_physics:
             os.makedirs(Folder.DEBUG / "PHYSICS", exist_ok = True)

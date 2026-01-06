@@ -1760,8 +1760,9 @@ def get_nearest_cells(cell_id: int, centers: Dict[int, CellCenter], max_cells: i
     nearest = [cell_id for _, cell_id in distances[:max_cells]]
     
     # print(f"Found {len(nearest)} nearest cells")
-    if nearest:
-        print(f"Distance order: {nearest[:10]}...")
+
+    # if nearest:
+    #     print(f"Distance order: {nearest[:10]}...")
     
     return nearest
 
@@ -1796,6 +1797,15 @@ def create_cells(output_file: Path, polys: List[Polygon]) -> None:
             row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
             f.write(row)
 
+    # Build the cell IDs list
+    sorted_cells = sorted(mesh_files)
+    min_cell = min(sorted_cells) if sorted_cells else 0
+    max_cell = max(sorted_cells) if sorted_cells else 0
+    cell_ids_str = ", ".join(map(str, sorted_cells))
+    
+    print(f"Successfully created cells file (count: {len(mesh_files)}, min: {min_cell}, max: {max_cell})")
+    print(f"cell IDs: {cell_ids_str}")
+    
 ################################################################################################################               
 ################################################################################################################
 #! ======================= MINIMAP ======================= !#
@@ -1847,6 +1857,8 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
     plt.savefig(Folder.SHOP_TEXTURES_BITMAP / f"{MAP_FILENAME}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
     plt.savefig(Folder.SHOP_TEXTURES_BITMAP / f"{MAP_FILENAME}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
 
+    print(f"Successfully created minimap with {len(hudmap_vertices)} polygon(s)")
+
     if debug_minimap or set_lars_race_maker:
         _, ax_debug = plt.subplots(figsize = (width, height), dpi = 1)
         ax_debug.set_facecolor("black")
@@ -1863,6 +1875,9 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
         ax_debug.set_ylim([max_z, min_z])  # Flip the image vertically
         ax_debug.set_position([0, 0, 1, 1]) 
         plt.savefig(Folder.BASE / f"{MAP_FILENAME}_HUD_debug.jpg", dpi = 1, bbox_inches = None, pad_inches = 0, facecolor = "purple")
+
+        print(f"Successfully created debug minimap with {len(hudmap_vertices)} polygon(s)")
+        print(f"Minimap dimensions: Width = {width}, Height = {height}")
                             
 ################################################################################################################               
 ################################################################################################################

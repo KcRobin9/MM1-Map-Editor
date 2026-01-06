@@ -16,6 +16,18 @@ class FacadeEditor:
         
         facades = cls.process(user_set_facades)
         Facades.write_all(output_file, facades)
+        
+        # Count facades by name
+        facade_counts = {}
+        for facade in facades:
+            facade_counts[facade.name] = facade_counts.get(facade.name, 0) + 1
+        
+        # Build the facade breakdown string
+        if facade_counts:
+            breakdown = ", ".join([f"{count}x {name}" for name, count in sorted(facade_counts.items())])
+            print(f"Successfully created facades file with {len(facades)} facade(s)\n{breakdown}")
+        else:
+            print(f"Successfully created facades file with {len(facades)} facade(s)")
 
         Facades.debug(facades, debug_facades, Folder.DEBUG / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
 
