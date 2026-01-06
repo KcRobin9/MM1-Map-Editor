@@ -76,6 +76,8 @@ def create_commandline(output_file: Path, no_ui: bool, no_ui_type: str, no_ai: b
     with open(output_file, "w") as f:
         f.write(cmd_line)
 
+    print(f"Successfully created command line arguments file")
+
       
 def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
     if not play_game or is_process_running(Executable.BLENDER) or is_process_running(executable):

@@ -98,4 +98,5 @@ class TextureSheet:
                     texture[TEXTURESHEET_MAPPING[key]] = str(value)
 
         cls.write(textures, output_file)
+        print(f"Successfully created texture sheet file")
                     

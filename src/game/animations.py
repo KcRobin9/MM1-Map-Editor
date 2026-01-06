@@ -20,3 +20,5 @@ def create_animations(output_folder: Path, anim_data: Dict[str, List[Tuple]], se
            with open(anim_coordinate_file, "w", newline="") as coord_file:                    
                for coord in anim_data[anim_name]:
                    csv.writer(coord_file).writerow(coord)
+
+   print(f"Successfully created animation files")

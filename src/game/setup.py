@@ -19,6 +19,7 @@ BlitzNames={'|'.join(blitz_race_names)}
 CircuitNames={'|'.join(circuit_race_names)}
 CheckpointNames={'|'.join(checkpoint_race_names)}
 """)
+    print(f"Successfully created map info file")
 
 
 def copy_files_to_folder (input_folder: Path, output_folder: Path, pattern: str = "*") -> None:

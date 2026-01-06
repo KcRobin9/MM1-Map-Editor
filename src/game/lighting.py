@@ -127,6 +127,8 @@ class LightingEditor:
             
             for instance in instances:
                 writer.writerow(instance.write_rows())
+
+        print(f"Successfully created lighting file")
                 
     @classmethod
     def debug(cls, instances, debug_file: str, debug_lighting: bool) -> None:

@@ -13,3 +13,5 @@ def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, 
             f.write(", ".join(map(str, cnr_waypoints[i])) + WAYPOINT_FILLER)
             f.write(", ".join(map(str, cnr_waypoints[i + 1])) + WAYPOINT_FILLER)
             f.write(", ".join(map(str, cnr_waypoints[i + 2])) + WAYPOINT_FILLER)
+
+    print(f"Successfully created Cops & Robbers file")

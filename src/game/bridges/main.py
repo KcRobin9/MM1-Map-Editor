@@ -69,6 +69,8 @@ def create_bridges(all_bridges, set_bridges: bool, output_file: Path):
     with open(output_file, "a") as f:
         f.writelines(bridge_data)
 
+    print(f"Successfully created bridge file with {len(all_bridges)} bridge(s)")
+
 
 def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_bridges: bool, output_folder: Path) -> None:
     if not set_bridges:
@@ -79,6 +81,8 @@ def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_b
         config_str = generate_bridge_config_string(final_config)
         filenames = determine_bridge_filenames(final_config)
         write_bridge_config_to_files(filenames, config_str, output_folder)
+
+    print(f"Successfully created bridge configuration files")
 
 
 def merge_bridge_configs(default_config: Dict[str, Union[float, int, str]], custom_config: Dict[str, Union[float, int, str]]) -> Dict[str, Union[float, int, str]]:

@@ -70,3 +70,5 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
             
         # AI MAP                
         write_aimap(ai_map_file, *prepared_aimap_data, num_of_opponents)
+
+        print(f"Successfully created race files")
