@@ -27,7 +27,14 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
                 
         ai_map = config["aimap"]
         opponents = ai_map["opponents"]
-        num_of_opponents = ai_map.get("num_of_opponents", len(opponents))
+        
+        # Handle both dict and list formats for opponents
+        if isinstance(opponents, dict):
+            opponent_list = [(car_name, waypoints) for car_name, waypoints in opponents.items()]
+        else:
+            opponent_list = [(list(opp.keys())[0], list(opp.values())[0]) for opp in opponents]
+        
+        num_of_opponents = ai_map.get("num_of_opponents", len(opponent_list))
 
         prepared_aimap_data = prepare_aimap_data(ai_map, race_type, race_index, opponents)
                                     
@@ -44,8 +51,8 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
         # Player Waypoints
         write_waypoints(player_waypoint_file, player_waypoints, race_type, race_index)
         
-        # Opponent Waypoints
-        for opp_index, opp_waypoints in enumerate(opponents.values()):
+        # Opponent Waypoints - iterate through all opponents
+        for opp_index, (opp_car_name, opp_waypoints) in enumerate(opponent_list):
             opp_file_name = f"OPP{opp_index}{file_prefix}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}"
             opp_waypoint_file = Folder.SHOP_RACE_MAP / opp_file_name
             write_waypoints(opp_waypoint_file, opp_waypoints, race_type, race_index, opp_index)
