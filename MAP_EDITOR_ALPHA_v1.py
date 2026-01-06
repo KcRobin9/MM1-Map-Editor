@@ -2439,6 +2439,8 @@ debug_ai(
 # Finalizing Part
 create_angel_resource_file(Folder.SHOP)
 
+post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
+
 end_time = time.monotonic()
 editor_time = end_time - start_time
 
@@ -2452,8 +2454,6 @@ print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{
 print(COLOR_DIVIDER)
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
-
-post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
 
 # Blender
 setup_blender()

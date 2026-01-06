@@ -17,12 +17,14 @@ def post_editor_cleanup(build_folder: Path, shop_folder: Path, delete_shop: bool
     
     try:  # Always delete the build folder
         shutil.rmtree(build_folder)
+        print(f"Successfully deleted the BUILD folder")
     except Exception as e:
         print(f"\nFailed to delete the BUILD directory. Reason: {e}\n")
     
     if delete_shop:  # Only delete shop folder if "delete_shop" is True
         try:
             shutil.rmtree(shop_folder)
+            print(f"Successfully deleted the SHOP folder")
         except Exception as e:
             print(f"\nFailed to delete the SHOP directory. Reason: {e}\n")
 
@@ -80,6 +82,7 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
         return
     
     subprocess.run(mm1_folder / executable, cwd = mm1_folder)
+    print(f"Successfully started {executable}")
 
 
 def open_with_notepad_plus(input_file: Path) -> None:

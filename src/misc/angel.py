@@ -13,11 +13,10 @@ def copy_angel_resources(shop_folder: Path) -> None:
             shutil.copy(file, shop_folder / file.name)
             print(f"Copied {file.name} to SHOP folder.")
 
-
 def run_angel_process(shop_folder: Path) -> None:
     subprocess.Popen(f"cmd.exe /c run !!!!!{MAP_FILENAME}", cwd=shop_folder, creationflags=subprocess.CREATE_NO_WINDOW)
-
 
 def create_angel_resource_file(shop_folder: Path) -> None:
     copy_angel_resources(shop_folder)
     run_angel_process(shop_folder)
+    print(f"Successfully created {MAP_FILENAME}.ar file")
