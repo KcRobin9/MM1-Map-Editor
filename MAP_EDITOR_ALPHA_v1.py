@@ -24,8 +24,6 @@
 import sys
 from pathlib import Path
 
-from misc.angel import create_angel_resource_file
-
 project_root = Path(__file__).parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
@@ -100,6 +98,7 @@ from src.io.binary import read_unpack, write_pack, read_binary_name, write_binar
 
 # Misc imports
 from src.misc.main import create_commandline, start_game, post_editor_cleanup
+from src.misc.angel import create_angel_resource_file
 
 # Progress bar imports
 from src.ui.progress_bar.main import RunTimeManager, start_progress_tracking
@@ -137,6 +136,10 @@ from src.USER.settings.debug import (
     debug_meshes_file, debug_meshes_folder, debug_bounds_file, debug_bounds_folder, debug_dlp_file, debug_dlp_folder,
     debug_props_data_file, debug_facades_data_file, debug_portals_data_file, debug_ai_data_file,
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
+)
+
+from src.USER.settings.blender import (
+load_all_texures, visualize_ai_paths
 )
 
 from src.USER.facades import facade_list
@@ -2450,7 +2453,9 @@ print(COLOR_DIVIDER)
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 
-# # Blender
+post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
+
+# Blender
 setup_blender()
 
 initialize_blender_panels()
@@ -2461,9 +2466,6 @@ set_blender_keybinding()
 create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
 
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
-
-# # Cleanup
-post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
 
 ###################################################################################################################   
 ################################################################################################################### 
