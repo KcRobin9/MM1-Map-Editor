@@ -1797,14 +1797,32 @@ def create_cells(output_file: Path, polys: List[Polygon]) -> None:
             row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
             f.write(row)
 
-    # Build the cell IDs list
     sorted_cells = sorted(mesh_files)
     min_cell = min(sorted_cells) if sorted_cells else 0
     max_cell = max(sorted_cells) if sorted_cells else 0
     cell_ids_str = ", ".join(map(str, sorted_cells))
     
+    # Count cell types
+    cell_type_counts = {}
+    for poly in polys[1:]:  # Skip default
+        if poly.cell_id in sorted_cells:
+            cell_type = poly.cell_type
+            cell_type_counts[cell_type] = cell_type_counts.get(cell_type, 0) + 1
+
+    # Map cell types to readable names
+    cell_type_names = {
+        Room.DEFAULT: "default",
+        Room.TUNNEL: "tunnel", 
+        Room.DRIFT: "drift",
+        Room.NO_SKIDS: "no_skids"
+    }
+
+    type_breakdown = "x, ".join([f"{cell_type_names.get(t, f'type_{t}')}: {count}" 
+                               for t, count in sorted(cell_type_counts.items())])
+    
     print(f"Successfully created cells file (count: {len(mesh_files)}, min: {min_cell}, max: {max_cell})")
-    print(f"cell IDs: {cell_ids_str}")
+    print(f"---cell IDs: {cell_ids_str}")
+    print(f"---cell types: {type_breakdown}")
     
 ################################################################################################################               
 ################################################################################################################
@@ -2184,6 +2202,7 @@ class Portals:
                     _min.write(f, '<')
                     _max.write(f, '<')
                     
+                print(f"Successfully created {len(portal_tuples)} portal(s)")
                 cls.debug(portals, debug_portals, Folder.DEBUG / "PORTALS" / f"{MAP_FILENAME}_PTL.txt")            
 
     @classmethod
@@ -2396,6 +2415,17 @@ create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", c
 
 # Map
 check_bound_numbers(polys)
+
+total_polys = len(polys) - 1  # Exclude default polygon at index 0
+quads = sum(1 for poly in polys[1:] if poly.is_quad)
+triangles = total_polys - quads
+print(f"Successfully created {total_polys} polygon(s) (triangles: {triangles}x, quads: {quads}x, vertices: {len(vertices)}x)")
+
+# Texture usage statistics
+texture_counter = Counter(texture_names)
+unique_textures = len(texture_counter)
+all_textures_str = ", ".join([f"{tex}: {count}x" for tex, count in texture_counter.items()])
+print(f"Succesfully utilized: {unique_textures} unique texture(s)\n---textures: ({all_textures_str})")
 
 create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
 Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)

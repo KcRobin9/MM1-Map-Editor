@@ -51,7 +51,6 @@ class aiStreetEditor:
     def create(cls, dataset, set_ai_streets: bool, set_reverse_ai_streets: bool):
         if not set_ai_streets:
             return None
-
         street_names = []
         
         for data in dataset:
@@ -59,7 +58,9 @@ class aiStreetEditor:
             editor.write()
             street_names.append(editor.street_name)
     
-        print(f"Successfully created {len(street_names)} AI street file(s)")
+        # Build the street names list
+        street_names_str = ", ".join(street_names)
+        print(f"Successfully created {len(street_names)} AI street file(s)\n---streets names: {street_names_str}")
         return BaiMap(street_names)
 
     def write(self):    

@@ -84,14 +84,80 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
     total_races = sum(race_counts.values())
     breakdown_parts = []
     if race_counts[RaceMode.CHECKPOINT] > 0:
-        breakdown_parts.append(f"checkpoint: {race_counts[RaceMode.CHECKPOINT]}")
+        breakdown_parts.append(f"checkpoint: {race_counts[RaceMode.CHECKPOINT]}x")
     if race_counts[RaceMode.BLITZ] > 0:
-        breakdown_parts.append(f"blitz: {race_counts[RaceMode.BLITZ]}")
+        breakdown_parts.append(f"blitz: {race_counts[RaceMode.BLITZ]}x")
     if race_counts[RaceMode.CIRCUIT] > 0:
-        breakdown_parts.append(f"circuit: {race_counts[RaceMode.CIRCUIT]}")
+        breakdown_parts.append(f"circuit: {race_counts[RaceMode.CIRCUIT]}x")
     
     if breakdown_parts:
         breakdown = ", ".join(breakdown_parts)
         print(f"Successfully created {total_races} race file(s) ({breakdown})")
+        
+        # Collect all race names
+        all_race_names = []
+        for race_key in race_data.keys():
+            race_type, race_index = race_key.split("_", 1)
+            race_index = int(race_index)
+            
+            if race_type == RaceMode.CHECKPOINT:
+                race_name = CHECKPOINT_PREFIXES[race_index]
+            else:
+                race_name = f"{RACE_TYPE_TO_PREFIX[race_type]}{race_index}"
+            all_race_names.append(race_name)
+        
+        race_names_str = ", ".join(all_race_names)
+        print(f"---race names: {race_names_str}")
+        
+        # Count total waypoints (player + all opponents)
+        total_waypoints = 0
+        for race_key, config in race_data.items():
+            # Player waypoints
+            total_waypoints += len(config["player_waypoints"])
+            
+            # Opponent waypoints
+            ai_map = config["aimap"]
+            opponents = ai_map["opponents"]
+            
+            if isinstance(opponents, dict):
+                for opp_waypoints in opponents.values():
+                    total_waypoints += len(opp_waypoints)
+            else:
+                for opp in opponents:
+                    opp_waypoints = list(opp.values())[0]
+                    total_waypoints += len(opp_waypoints)
+        
+        print(f"---waypoints set: {total_waypoints}x")
+        
+        # Count total number of opponents across all races
+        total_opponents = 0
+        for race_key, config in race_data.items():
+            ai_map = config["aimap"]
+            opponents = ai_map["opponents"]
+            
+            if isinstance(opponents, dict):
+                total_opponents += len(opponents)
+            else:
+                total_opponents += len(opponents)
+        
+        print(f"---opponents used: {total_opponents}x")
+        
+        # Count opponent car types
+        from collections import Counter
+        opponent_cars = []
+        for race_key, config in race_data.items():
+            ai_map = config["aimap"]
+            opponents = ai_map["opponents"]
+            
+            if isinstance(opponents, dict):
+                opponent_cars.extend(opponents.keys())
+            else:
+                for opp in opponents:
+                    car_name = list(opp.keys())[0]
+                    opponent_cars.append(car_name)
+        
+        car_counter = Counter(opponent_cars)
+        car_breakdown = ", ".join([f"{car}: {count}x" for car, count in sorted(car_counter.items())])
+        print(f"---opponent cars used: {car_breakdown}")
     else:
         print(f"Successfully created 0 race file(s)")

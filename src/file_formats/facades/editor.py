@@ -25,7 +25,7 @@ class FacadeEditor:
         # Build the facade breakdown string
         if facade_counts:
             breakdown = ", ".join([f"{count}x {name}" for name, count in sorted(facade_counts.items())])
-            print(f"Successfully created facades file with {len(facades)} facade(s)\n{breakdown}")
+            print(f"Successfully created facades file with {len(facades)} facade(s)\n---facades: {breakdown}")
         else:
             print(f"Successfully created facades file with {len(facades)} facade(s)")
 

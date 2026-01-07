@@ -128,7 +128,15 @@ class LightingEditor:
             for instance in instances:
                 writer.writerow(instance.write_rows())
 
-        print(f"Successfully created lighting file")
+        # Build the modified configs list
+        if lighting_configs:
+            config_details = [f"Time {config['time_of_day']}/Weather {config['weather']}" 
+                            for config in lighting_configs]
+            config_str = ", ".join(config_details)
+            print(f"Successfully created lighting file with {len(lighting_configs)} modified config(s) ({config_str})")
+        else:
+            print(f"Successfully created lighting file (no modifications)")
+
                 
     @classmethod
     def debug(cls, instances, debug_file: str, debug_lighting: bool) -> None:

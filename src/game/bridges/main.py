@@ -92,8 +92,6 @@ def create_bridge_config(configs: List[Dict[str, Union[float, int, str]]], set_b
         filenames = determine_bridge_filenames(final_config)
         write_bridge_config_to_files(filenames, config_str, output_folder)
 
-    print(f"Successfully created bridge configuration files")
-
 
 def merge_bridge_configs(default_config: Dict[str, Union[float, int, str]], custom_config: Dict[str, Union[float, int, str]]) -> Dict[str, Union[float, int, str]]:
     return {**default_config, **custom_config}
