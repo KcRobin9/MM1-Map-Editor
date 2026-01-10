@@ -36,4 +36,4 @@ random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LA
 
 # Other
 round_vector_values = True
-disable_progress_bar = True    # Change to "True" if you want to disable the progress bar (this will display Errors and Warnings again)
+disable_progress_bar = True    # Change to "True" to see errors, warnings, and print statements in the console output
