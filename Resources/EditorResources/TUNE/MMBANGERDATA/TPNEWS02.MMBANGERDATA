@@ -1,0 +1,47 @@
+mmBangerData :05e225d8 {
+    NodeName "tpnews02"
+    AudioId 5 
+    Size 0.5885 1.106 0.5598
+    CG -0.0007665 0.5528 0.007136
+    Offset 0 0 0
+    GlowOffset 0 0 0
+    Mass 36.4283 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 3.64283e+007 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :05e22664 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 15 14 15
+            Life 4 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 0.3 
+            RadiusVar 0.2 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 4 
+            DRotationVar 2 
+            InitialBlast 11 
+            SpewRate 11 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 2 
+            TexFrameEnd 3 
+            BirthFlags 0 
+        }
+    TexNumber 7 
+    BillFlags 0 
+    YRadius 0.417174 
+}

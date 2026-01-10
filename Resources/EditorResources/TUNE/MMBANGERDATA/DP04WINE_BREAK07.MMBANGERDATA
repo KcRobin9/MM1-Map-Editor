@@ -1,0 +1,47 @@
+mmBangerData :178ff940 {
+    NodeName "DP04WINE_BREAK07"
+    AudioId 0 
+    Size 5.733 2.519 1.33
+    CG 12.46 1.71 2.892
+    Offset 0 0 0
+    GlowOffset -12.46 -1.71 -2.892
+    Mass 1921.58 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 1.92158e+009 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 2 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :178ff9a8 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 4 
+            TexFrameEnd 4 
+            BirthFlags 0 
+        }
+    TexNumber 3 
+    BillFlags 0 
+    YRadius 0 
+}

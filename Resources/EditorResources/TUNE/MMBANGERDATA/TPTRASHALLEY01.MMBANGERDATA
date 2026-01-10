@@ -1,0 +1,52 @@
+mmBangerData :06584728 {
+    NodeName "tptrashalley01"
+    AudioId 7 
+    Size 3.562 1.095 1.348
+    CG -0.07964 0.5477 0.2388
+    Offset 0 0 0
+    GlowOffset 0.07964 -0.5477 -0.2388
+    Mass 526.041 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 0.0
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 4 
+    PartNames [
+"BREAKPART01"         
+"BREAKPART02"         
+"BREAKPART03"         
+"BREAKPART04"         
+        ]
+    BirthRule asBirthRule :06584790 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius .6 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 0 
+    YRadius 1.94982 
+}

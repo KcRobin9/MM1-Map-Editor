@@ -1,0 +1,50 @@
+mmBangerData :05e20530 {
+    NodeName "opstlite"
+    AudioId 3 
+    Size 0.3829 2.885 0.3829
+    CG -0.004882 1.441 0.002056
+    Offset 0 0 0
+    GlowOffset 0 1.8 0
+    Mass 42.2898 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 4.22898e+007 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 2 
+    PartNames [
+"BREAK_OPSTLITE01"         
+"BREAK_OPSTLITE02"         
+        ]
+    BirthRule asBirthRule :05e205bc {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 0 
+    YRadius 2.13907 
+}

@@ -1,0 +1,47 @@
+mmBangerData :05e1f950 {
+    NodeName "tppmtr"
+    AudioId 6 
+    Size 0.2032 1.066 0.039
+    CG 0.00757 0.5328 0
+    Offset 0 0 0
+    GlowOffset 0 0 0
+    Mass 0.844501 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 844501 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :05e1f9dc {
+            Position -0.1 0.1 -0.1
+            PositionVar 0 0 0
+            Velocity 0.02818 -1.122 -0.006662
+            VelocityVar 9 5 9
+            Life 4.5 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 0.05 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 8 
+            DRotationVar 2 
+            InitialBlast 11 
+            SpewRate 10 
+            SpewTimeLimit 2 
+            Gravity -10 
+            TexFrameStart 2 
+            TexFrameEnd 4 
+            BirthFlags 0 
+        }
+    TexNumber 1 
+    BillFlags 0 
+    YRadius 0.118352 
+}

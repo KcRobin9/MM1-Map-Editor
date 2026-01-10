@@ -1,0 +1,50 @@
+mmBangerData :17bbf8c0 {
+    NodeName "tpswrng"
+    AudioId 0 
+    Size 0.7827 3.228 0.1
+    CG 0.0003305 1.614 -0.02804
+    Offset 0 0 0
+    GlowOffset -0.0003305 -1.614 0.02804
+    Mass 25.2643 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 2.52643e+007 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 2 
+    PartNames [
+"BREAKSIGN01"         
+"BREAKSIGN02"         
+        ]
+    BirthRule asBirthRule :17bbf928 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 0 
+            TexFrameEnd 0 
+            BirthFlags 0 
+        }
+    TexNumber 0 
+    BillFlags 0 
+    YRadius 0.392993 
+}

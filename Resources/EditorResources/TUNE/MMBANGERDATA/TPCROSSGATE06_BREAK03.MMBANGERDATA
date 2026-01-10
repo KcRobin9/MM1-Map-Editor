@@ -1,0 +1,47 @@
+mmBangerData :17bcb33c {
+    NodeName "tpcrossgate06_BREAK03"
+    AudioId 0 
+    Size 2.206 0.3083 0.1
+    CG -7.718 0.9275 -4.992e-007
+    Offset 0 0 0
+    GlowOffset 7.718 -0.9275 4.992e-007
+    Mass 6.80125 
+    Elasticity 0.5 
+    Friction 0.9 
+    ImpulseLimit2 6.80125e+006 
+    SpinAxis 0 
+    Flash 0 
+    CollisionType 4 
+    NumParts 0 
+    PartNames $0
+    BirthRule asBirthRule :17bcb3a4 {
+            Position 0 0 0
+            PositionVar 0 0 0
+            Velocity 0 0 0
+            VelocityVar 0 0 0
+            Life 1 
+            LifeVar 0 
+            Mass 1 
+            MassVar 0 
+            Radius 1 
+            RadiusVar 0 
+            Drag 0 
+            DragVar 0 
+            DRadius 0 
+            DRadiusVar 0 
+            DAlpha 0 
+            DAlphaVar 0 
+            DRotation 0 
+            DRotationVar 0 
+            InitialBlast 0 
+            SpewRate 0 
+            SpewTimeLimit 0 
+            Gravity -9.8 
+            TexFrameStart 4 
+            TexFrameEnd 4 
+            BirthFlags 0 
+        }
+    TexNumber 3 
+    BillFlags 0 
+    YRadius 0 
+}
