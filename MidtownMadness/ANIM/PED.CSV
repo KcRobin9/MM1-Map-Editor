@@ -1,4 +1,0 @@
-# anim name,mma name,first frame,last frame,default next[,optional next,...]
-# transition moves [by convention] are of the form: from_to where the
-# source and destination are looped animations
-WALK,woman,11,31,WALK

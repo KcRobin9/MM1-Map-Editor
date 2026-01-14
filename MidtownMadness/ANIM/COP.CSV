@@ -1,9 +1,0 @@
-# anim name,mma name,first frame,last frame,Y AXIS Offset,Y AXIS DISTANCE,X AXIS Offset,X AXIS DISTANCE,default next[,optional next,...]
-# transition moves [by convention] are of the form: from_to where the,,,,,,,,,,
-# source and destination are looped animations,,,,,,,,,,
-STAND,cop_stop,1,1,0,0,0,0,STAND,STAND_WAVING,
-STAND_WAVING,cop_stop,1,16,0,0,0,0,WAVING,,
-WAVING_STAND,cop_stop,16,1,0,0,0,0,STAND,,
-WAVING,cop_stop,17,41,0,0,0,0,WAVING,DIVING,WAVING_STAND
-DIVING,cop_stop,42,69,0,0,0,0,PRONE,,
-PRONE,cop_stop,70,70,0,0,0,0,PRONE,,

@@ -1,8 +1,0 @@
-mmBridgeSet :013cd108 {
-    InitialPos 0 
-    DownInterval 50 
-    UpInterval 11 
-    Triggered 0 
-    TriggerPos 0 0 0
-    TriggerDist2 100 
-}

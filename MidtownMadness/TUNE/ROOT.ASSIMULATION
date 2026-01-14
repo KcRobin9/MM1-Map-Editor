@@ -1,7 +1,0 @@
-asSimulation :00b20860 {
-    Flags 3 
-    NextNode $00000000
-    ChildNode $009afa90
-    ParentNode $00000000
-    NodeName "Root"
-}
