@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 from src.constants.misc import Executable
 from src.constants.keyboard import Key, KeyEvent, KeyModifier
+
 from src.helpers.main import is_process_running
 
 

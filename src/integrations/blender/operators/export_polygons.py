@@ -7,7 +7,9 @@ from src.constants.constants import CURRENT_TIME_FORMATTED
 from src.constants.file_formats import FileType
 from src.constants.keyboard import Key
 from src.constants.misc import Folder
+
 from src.integrations.blender.export_polygons import export_formatted_polygons
+
 from src.misc.main import open_with_notepad_plus
 
 

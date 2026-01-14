@@ -1,8 +1,7 @@
 from typing import List
 from pathlib import Path
 
-from core.geometry.main import calculate_extrema
-
+from src.core.geometry.main import calculate_extrema
 from src.core.vector.vector_3 import Vector3
 
 

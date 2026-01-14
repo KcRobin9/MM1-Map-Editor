@@ -4,11 +4,14 @@ from pathlib import Path
 
 from src.constants.file_formats import FileType
 from src.constants.misc import Executable
+
 from src.core.geometry.main import transform_coordinate_system
 from src.core.vector.vector_3 import Vector3
-from src.helpers.main import is_process_running
+
 from src.integrations.blender.modeling.uv_mapping import rotate_uvs, tile_uvs, unwrap_uv_to_aspect_ratio, update_uv_tiling
 from src.integrations.blender.panels.hud import set_hud_checkbox
+
+from src.helpers.main import is_process_running
 
 
 def load_textures(input_folder: Path, load_all_textures: bool) -> None:

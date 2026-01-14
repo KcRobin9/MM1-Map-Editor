@@ -9,8 +9,8 @@ from src.constants.constants import CURRENT_TIME_FORMATTED
 
 from src.misc.main import open_with_notepad_plus
 from src.game.waypoints.constants import Rotation
-from src.integrations.blender.waypoints.helpers import get_all_waypoints
 from src.core.geometry.main import transform_coordinate_system
+from src.integrations.blender.waypoints.helpers import get_all_waypoints
 
 
 def export_selected_waypoints(export_all: bool = False, add_brackets: bool = False) -> None:

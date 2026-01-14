@@ -1,6 +1,6 @@
 from src.constants.props import Prop
-
 from src.constants.constants import YES, NO
+
 from src.game.races.constants_2 import IntersectionType
 
 

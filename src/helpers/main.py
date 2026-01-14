@@ -1,6 +1,5 @@
 import struct
 import psutil
-from typing import Tuple
 
 
 def is_float(value: str) -> bool:

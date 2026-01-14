@@ -5,6 +5,7 @@ from typing import Optional, Tuple
 
 from src.constants.misc import Color
 from src.game.waypoints.constants import Rotation, Width
+
 from src.integrations.blender.waypoints.helpers import update_waypoint_colors
 from src.integrations.blender.waypoints.constants import POLE_HEIGHT, POLE_DIAMETER, FLAG_HEIGHT, FLAG_HEIGHT_OFFSET  
 

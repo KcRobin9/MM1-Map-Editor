@@ -3,8 +3,8 @@ import shutil
 from pathlib import Path
 
 from src.constants.misc import Folder
-from src.USER.settings.main import MAP_FILENAME
 from src.constants.constants import REQUIRED_ANGEL_FILES
+from src.USER.settings.main import MAP_FILENAME
 
 
 def copy_angel_resources(shop_folder: Path) -> None:

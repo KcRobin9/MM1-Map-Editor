@@ -2,9 +2,9 @@ import bpy
 from bpy.types import Area, SpaceView3D
 from typing import Optional
 
-from src.integrations.blender.handlers import initialize_depsgraph_update_handler
 from src.helpers.main import is_process_running 
 from src.constants.misc import Executable
+from src.integrations.blender.handlers import initialize_depsgraph_update_handler
 
 
 def setup_blender() -> None:
