@@ -154,7 +154,7 @@ from src.USER.races.races import blitz_race_names, checkpoint_race_names, circui
 
 from src.USER.props.props import prop_list, random_props
 from src.USER.props.properties import prop_properties
-from src.USER.props.append_to_file import append_props, props_to_append, append_input_props_file, append_output_props_file
+from src.USER.props.append import append_props, props_to_append, append_input_props_file, append_output_props_file
 
 from src.USER.textures.properties import texture_modifications
 
