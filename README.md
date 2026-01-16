@@ -23,11 +23,12 @@ git clone https://github.com/KcRobin9/MM1-Map-Editor.git
 Step-by-step guides to help you get started:
 * [Blender](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/blender.md)
 * [Props](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/props.md)
+* [Facades](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/facades.md)
 
 ## Visual Reference
 Reference images and assets for building your city:
-* [Facades](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/visual_reference/facades)
 * [Props](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/visual_reference/props)
+* [Facades](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/visual_reference/facades)
 * [Textures](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/visual_reference/textures)
 
 ## Contributions
