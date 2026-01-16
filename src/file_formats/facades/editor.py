@@ -39,7 +39,7 @@ class FacadeEditor:
     @classmethod
     def process(cls, user_set_facades):
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(Folder.EDITOR_RESOURCES / "FACADES" / "FCD scales.txt")
+        scales = cls.read_scales(Folder.RESOURCES_EDITOR / "FACADES" / "FCD scales.txt")
 
         facades = []
         for params in user_set_facades:

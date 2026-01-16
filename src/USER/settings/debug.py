@@ -30,16 +30,16 @@ debug_dlp_file = False
 debug_dlp_folder = False
 
 # File Input Locations
-debug_props_data_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
-debug_facades_data_file = Folder.EDITOR_RESOURCES / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
-debug_portals_data_file = Folder.EDITOR_RESOURCES / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
-debug_ai_data_file = Folder.EDITOR_RESOURCES / "AI" / "CHICAGO.BAI"                # Change the input AI file here
+debug_props_data_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO.BNG"          # Change the input Prop file here
+debug_facades_data_file = Folder.RESOURCES_EDITOR / "FACADES" / "CHICAGO.FCD"      # Change the input Facade file here
+debug_portals_data_file = Folder.RESOURCES_EDITOR / "PORTALS" / "CHICAGO.PTL"      # Change the input Portal file here
+debug_ai_data_file = Folder.RESOURCES_EDITOR / "AI" / "CHICAGO.BAI"                # Change the input AI file here
 
-debug_meshes_data_file = Folder.EDITOR_RESOURCES / "MESHES" / "CULL01_H.BMS"       # Change the input Mesh file here
-debug_meshes_data_folder = Folder.EDITOR_RESOURCES / "MESHES" / "MESH FILES"       # Change the input Mesh folder here
+debug_meshes_data_file = Folder.RESOURCES_EDITOR / "MESHES" / "CULL01_H.BMS"       # Change the input Mesh file here
+debug_meshes_data_folder = Folder.RESOURCES_EDITOR / "MESHES" / "MESH FILES"       # Change the input Mesh folder here
 
-debug_bounds_data_file = Folder.EDITOR_RESOURCES / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
-debug_bounds_data_folder = Folder.EDITOR_RESOURCES / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
+debug_bounds_data_file = Folder.RESOURCES_EDITOR / "BOUNDS" / "CHICAGO_HITID.BND"  # Change the input Bound file here
+debug_bounds_data_folder = Folder.RESOURCES_EDITOR / "BOUNDS" / "BND FILES"        # Change the input Bound folder here
 
-debug_dlp_data_file = Folder.EDITOR_RESOURCES / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
-debug_dlp_data_folder = Folder.EDITOR_RESOURCES / "DLP" / "DLP FILES"              # Change the input DLP folder here
+debug_dlp_data_file = Folder.RESOURCES_EDITOR / "DLP" / "VPFER_L.DLP"              # Change the input DLP file here
+debug_dlp_data_folder = Folder.RESOURCES_EDITOR / "DLP" / "DLP FILES"              # Change the input DLP folder here

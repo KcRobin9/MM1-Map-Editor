@@ -72,12 +72,12 @@ class Folder:
 
     MIDTOWNMADNESS_DEV_CITY_MAP = MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME
 
-    USER_RESOURCES = BASE / "Resources" / "User"
-    EDITOR_RESOURCES = BASE / "Resources" / "EditorResources"
+    RESOURCES_USER = BASE / "resources" / "user"
+    RESOURCES_EDITOR = BASE / "resources" / "editor"
 
     DEBUG = BASE / "debug" 
 
-    USER_TEXTURES_CUSTOM = BASE / "src" / "User" / "Textures" / "Custom"
+    USER_TEXTURES_CUSTOM = BASE / "src" / "USER" / "textures" / "custom"
 
     MAIN = [
         BUILD,

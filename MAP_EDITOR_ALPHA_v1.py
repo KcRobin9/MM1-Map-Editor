@@ -2402,12 +2402,12 @@ street_list = street_list + [cruise_start]
 
 # Setup
 copy_custom_textures_to_shop(Folder.USER_TEXTURES_CUSTOM, Folder.SHOP_TEXTURES_OPAQUE)
-copy_carsim_files_to_shop(Folder.EDITOR_RESOURCES / "TUNE" / "MMCARSIM", Folder.SHOP_TUNE, FileType.CAR_SIMULATION)
+copy_carsim_files_to_shop(Folder.RESOURCES_EDITOR / "TUNE" / "MMCARSIM", Folder.SHOP_TUNE, FileType.CAR_SIMULATION)
 ensure_empty_mm_dev_folder(Folder.MIDTOWNMADNESS_DEV_CITY_MAP) 
 create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
 create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
 
-edit_and_copy_bangerdata_to_shop(prop_properties, Folder.EDITOR_RESOURCES / "TUNE" / "MMBANGERDATA", Folder.SHOP_TUNE, FileType.BANGER_DATA)
+edit_and_copy_bangerdata_to_shop(prop_properties, Folder.RESOURCES_EDITOR / "TUNE" / "MMBANGERDATA", Folder.SHOP_TUNE, FileType.BANGER_DATA)
 
 # Races
 create_races(race_data)
@@ -2432,9 +2432,9 @@ Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", verti
 Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
 aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
 FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
-PhysicsEditor.edit(Folder.EDITOR_RESOURCES / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP_MATERIAL / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
+PhysicsEditor.edit(Folder.RESOURCES_EDITOR / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP_MATERIAL / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
 
-TextureSheet.append_custom_textures(Folder.EDITOR_RESOURCES / "MTL" / "GLOBAL.TSH", Folder.USER_TEXTURES_CUSTOM, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
+TextureSheet.append_custom_textures(Folder.RESOURCES_EDITOR / "MTL" / "GLOBAL.TSH", Folder.USER_TEXTURES_CUSTOM, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
 TextureSheet.write_tweaked(Folder.SHOP_MATERIAL / "TEMP_GLOBAL.TSH", Folder.SHOP_MATERIAL / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
                     
 prop_editor = BangerEditor()
@@ -2442,7 +2442,7 @@ for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
 prop_editor.process_all(prop_list, set_props)
 
-lighting_instances = LightingEditor.read_file(Folder.EDITOR_RESOURCES / "LIGHTING" / "LIGHTING.CSV")
+lighting_instances = LightingEditor.read_file(Folder.RESOURCES_EDITOR / "LIGHTING" / "LIGHTING.CSV")
 LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
 LightingEditor.debug(lighting_instances, Folder.DEBUG / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
 
@@ -2476,9 +2476,9 @@ DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG / "DLP" / "DLP TEXT FILES",
 
 debug_ai(
     debug_ai_data_file, debug_ai_file,
-    Folder.USER_RESOURCES / "AI" / "CHICAGO.map",                                  
-    str(Path(Folder.USER_RESOURCES) / "AI" / "Intersection{intersection_id}.int"),
-    str(Path(Folder.USER_RESOURCES) / "AI" / "Street{paths}.road")
+    Folder.RESOURCES_USER / "AI" / "CHICAGO.map",                                  
+    str(Path(Folder.RESOURCES_USER) / "AI" / "Intersection{intersection_id}.int"),
+    str(Path(Folder.RESOURCES_USER) / "AI" / "Street{paths}.road")
     )
 
 # Finalizing Part
@@ -2490,7 +2490,7 @@ end_time = time.monotonic()
 editor_time = end_time - start_time
 
 # Save the runtime
-runtime_manager = RunTimeManager(Folder.EDITOR_RESOURCES / EDITOR_RUNTIME_FILE)
+runtime_manager = RunTimeManager(Folder.RESOURCES_EDITOR / EDITOR_RUNTIME_FILE)
 runtime_manager.save(editor_time)
 progress_thread.join()  # Wait for progress bar to complete
 
@@ -2508,7 +2508,7 @@ initialize_blender_operators()
 initialize_blender_waypoint_editor()
 set_blender_keybinding()
 
-create_blender_meshes(Folder.EDITOR_RESOURCES / "TEXTURES", load_all_texures)
+create_blender_meshes(Folder.RESOURCES_EDITOR / "TEXTURES", load_all_texures)
 
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 

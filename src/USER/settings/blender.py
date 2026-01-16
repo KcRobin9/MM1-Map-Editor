@@ -9,7 +9,7 @@ load_all_texures = False        # Change to "True" if you want to load all textu
 visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
 
 # Waypoints
-input_waypoint_file = Folder.EDITOR_RESOURCES / "RACE" / "RACE2WAYPOINTS.CSV"  
+input_waypoint_file = Folder.RESOURCES_EDITOR / "RACE" / "RACE2WAYPOINTS.CSV"  
 
 # Waypoints from the Editor ("race_data")
 waypoint_number_input = "0", 
