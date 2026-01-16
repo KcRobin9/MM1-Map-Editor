@@ -24,6 +24,7 @@ Step-by-step guides to help you get started:
 * [Blender](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/blender.md)
 * [Props](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/props.md)
 * [Facades](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/facades.md)
+* [Physics](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/physics.md)
 
 ## Visual Reference
 Reference images and assets for building your city:
@@ -40,7 +41,7 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
 * [Lars](https://github.com/Larspolo) - For his Race Making Tool
 * DDucky - Code help with Prop Editor
-* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, Contributer, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger%20Isle)
+* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, contributer, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger%20Isle)
 
 ## Gallery
 ![Preview](https://raw.githubusercontent.com/KcRobin9/MM1-Map-Editor/main/.github/images/readme/gallery_1.png)
