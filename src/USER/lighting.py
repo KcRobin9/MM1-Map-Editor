@@ -7,7 +7,7 @@ lighting_configs = [
         "time_of_day": TimeOfDay.NIGHT,
         "weather": Weather.CLEAR,
         "sun_pitch": 10.0,
-        "sun_color": (40.0, 0.0, 40.0),
+        "sun_color": (400.0, 0.0, 400.0),
         "fill_1_pitch": 10.0,
         "fill_1_color": (40.0, 0.0, 40.0),
         "fill_2_pitch": 10.0,

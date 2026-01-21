@@ -26,6 +26,7 @@ Step-by-step guides to help you get started:
 * [Facades](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/facades.md)
 * [Physics](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/physics.md)
 * [Animations](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/animations.md)
+* [Lighting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/lighting.md)
 
 ## Visual Reference
 Reference images and assets for building your city:
