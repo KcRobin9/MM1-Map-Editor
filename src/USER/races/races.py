@@ -31,8 +31,8 @@ race_data = {
             "ambient_density": 0.25,
             "num_of_police": 2,
             "police": [
-                f"{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
-                f"{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
+                f"{PlayerCar.POLICE} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
+                f"{PlayerCar.POLICE} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
             ],
             "num_of_opponents": 1,
             "opponents": {
@@ -66,16 +66,16 @@ race_data = {
             "traffic_density": 0.2,
             "num_of_police": 0,
             "police": [
-                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
+                f"{PlayerCar.POLICE} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
             # NEW FORMAT: Use a list of dicts to allow duplicate car types
             "num_of_opponents": 2,  # Total count of all opponents
             "opponents": [
-                {PlayerCar.MUSTANG99: [
+                {PlayerCar.MUSTANG_GT: [
                     [5.0, 0.0, 35.0],
                     [5.0, 0.0, -130.0]
                 ]},
-                {PlayerCar.MUSTANG99: [  # Second Mustang with different waypoints
+                {PlayerCar.MUSTANG_GT: [  # Second Mustang with different waypoints
                     [10.0, 0.0, 35.0],
                     [10.0, 0.0, -130.0]
                 ]},
@@ -99,17 +99,17 @@ race_data = {
             "traffic_density": 0.2,
             "num_of_police": 0,
             "police": [
-                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
+                f"{PlayerCar.POLICE} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
             # OLD FORMAT: Still supported, but only one of each car type
             "num_of_opponents": 2,
             "opponents": {
-                TrafficCar.WHITE_LIMO: [
+                TrafficCar.LIMO_WHITE: [
                     [-10.0, 245, -850],
                     [0.0, 0.0, -100],
                     [-10.0, 0.0, -75.0]
                 ],
-                TrafficCar.BLACK_LIMO: [
+                TrafficCar.LIMO_BLACK: [
                     [10.0, 245, -850],
                     [0.0, 0.0, -100],
                     [10.0, 0.0, -75.0],
@@ -133,7 +133,7 @@ race_data = {
             "traffic_density": 0.2,
             "num_of_police": 0,
             "police": [
-                f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
+                f"{PlayerCar.POLICE} 15.0 0.0 75.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
             ],
             # NEW FORMAT: Multiple of the same car (3 Cadillacs)
             "num_of_opponents": 3,

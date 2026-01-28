@@ -47,8 +47,8 @@ random_cars = {
     "offset_y": 0.0,
     "separator": 10.0,
     "name": [
-        PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.CRUISER, PlayerCar.FORD_F350,
-        PlayerCar.FASTBACK, PlayerCar.MUSTANG99, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR_1, PlayerCar.SEMI
+        PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.POLICE, PlayerCar.FORD_F350,
+        PlayerCar.FASTBACK, PlayerCar.MUSTANG_GT, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR1, PlayerCar.SEMI
     ]
 }
 
