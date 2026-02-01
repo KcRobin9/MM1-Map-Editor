@@ -61,6 +61,7 @@ from src.file_formats.ai.street_editor import aiStreetEditor
 
 from src.file_formats.props.props import Bangers
 from src.file_formats.props.editor import BangerEditor, edit_and_copy_bangerdata_to_shop
+from src.file_formats.props.subtract import subtract_props_from_file
 
 from src.file_formats.facades.facades import Facades
 from src.file_formats.facades.editor import FacadeEditor
@@ -154,6 +155,15 @@ from src.USER.races.races import blitz_race_names, checkpoint_race_names, circui
 
 from src.USER.props.props import prop_list, random_props
 from src.USER.props.properties import prop_properties
+from src.USER.props.subtract import (
+    subtract_props,
+    props_to_subtract,
+    ranges_to_subtract,
+    subtract_tolerance,
+    subtract_require_confirmation,
+    subtract_input_props_file,
+    subtract_output_props_file
+)
 from src.USER.props.append import append_props, props_to_append, append_input_props_file, append_output_props_file
 
 from src.USER.textures.properties import texture_modifications
@@ -2457,8 +2467,6 @@ create_lars_race_maker(f"Lars_Race_Maker{FileType.HTML}", street_list, hudmap_ve
 DLP(Magic.DEVELOPMENT, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
 
 editor = BangerEditor()
-shutil.copy(append_input_props_file, append_output_props_file)
-editor.append_to_file(append_input_props_file, props_to_append, append_output_props_file, append_props)
 
 # File / Folder Debugging
 DLP.debug_file(debug_dlp_data_file, Folder.DEBUG / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
@@ -2484,8 +2492,6 @@ debug_ai(
 # Finalizing Part
 create_angel_resource_file(Folder.SHOP)
 
-post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
-
 end_time = time.monotonic()
 editor_time = end_time - start_time
 
@@ -2497,6 +2503,27 @@ progress_thread.join()  # Wait for progress bar to complete
 print(COLOR_DIVIDER)
 print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(COLOR_DIVIDER)
+
+post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
+
+if subtract_props:
+    shutil.copy(subtract_input_props_file, subtract_output_props_file) 
+    subtract_props_from_file(
+        input_file=subtract_input_props_file,
+        output_file=subtract_output_props_file,
+        exact_rules=props_to_subtract,
+        range_rules=ranges_to_subtract,
+        tolerance=subtract_tolerance,
+        require_confirmation=subtract_require_confirmation
+    )
+if append_props:
+    shutil.copy(append_input_props_file, append_output_props_file)
+    editor.append_to_file(
+        append_output_props_file,
+        props_to_append,
+        append_output_props_file,
+        append_props
+    )
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 

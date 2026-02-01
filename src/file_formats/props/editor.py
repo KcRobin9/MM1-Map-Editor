@@ -37,14 +37,13 @@ class BangerEditor:
             if 'race' in prop:
                 race_value = prop['race']
                 
-                # Handle list of races
                 if isinstance(race_value, list):
                     for race in race_value:
                         race_keys.extend(self._expand_race_key(race))
                 else:
                     race_keys = self._expand_race_key(race_value)
 
-            elif 'race_mode' in prop:  # Old method support
+            elif 'race_mode' in prop:
                 race_mode = prop.get('race_mode', RaceMode.ROAM)
                 race_num = prop.get('race_num', '')
                 if race_mode in [RaceMode.CIRCUIT, RaceMode.CHECKPOINT, RaceMode.BLITZ] and race_num != '':
@@ -52,9 +51,8 @@ class BangerEditor:
                 else:
                     race_keys = [race_mode]
             else:
-                race_keys = [RaceMode.ROAM]  # No race specified - default to ROAM (goes to base map file)
+                race_keys = [RaceMode.ROAM]
             
-            # Add prop to each specified race
             for race_key in race_keys:
                 per_race_props.setdefault(race_key, []).append(prop)
 
@@ -68,12 +66,10 @@ class BangerEditor:
             Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props)
             total_props += len(self.props)
             
-            # Count props by name
             for prop in self.props:
                 prop_name = prop.name.rstrip('\x00')
                 prop_counts[prop_name] = prop_counts.get(prop_name, 0) + 1
         
-        # Build the prop breakdown string
         if prop_counts:
             breakdown = ", ".join([f"{count}x {name}" for name, count in sorted(prop_counts.items())])
             print(f"Successfully created props file with {total_props} prop(s)")
@@ -81,7 +77,6 @@ class BangerEditor:
         else:
             print(f"Successfully created props file with {total_props} prop(s)")
         
-        # Print placement statistics
         self.print_placement_statistics(user_set_props)
 
     def print_placement_statistics(self, prop_list: list) -> None:
@@ -91,14 +86,12 @@ class BangerEditor:
         total_props = len(prop_list)
         manual_props = total_props - self.random_props_placed
         
-        # Count race-specific props and collect race details
         race_details = []
         
         for prop in prop_list:
             if "race" in prop:
                 race_value = prop['race']
                 
-                # Handle list of races
                 if isinstance(race_value, list):
                     for race in race_value:
                         race_name = self._format_race_name(race)
@@ -108,9 +101,8 @@ class BangerEditor:
                     race_details.append(race_name)
         
         if race_details:
-            # Remove duplicates and sort
             unique_races = sorted(set(race_details))
-            race_specific_count = len(unique_races)  # Count unique races, not props
+            race_specific_count = len(unique_races)
             races_str = ", ".join(unique_races)
             print(f"Prop placement: {total_props} total (manual: {manual_props}x, random: {self.random_props_placed}x, race-specific: {race_specific_count}x)")
             print(f"---race-specific props for: {races_str}")
@@ -118,8 +110,6 @@ class BangerEditor:
             print(f"Prop placement: {total_props} total (manual: {manual_props}x, random: {self.random_props_placed}x, race-specific: 0x")
 
     def _format_race_name(self, race_value: str) -> str:
-        """Format race value into a readable name"""
-        # Handle _ALL variants
         if race_value == RaceModeNum.CIRCUIT_ALL or race_value == RaceMode.CIRCUIT:
             return "all circuits"
         elif race_value == RaceModeNum.CHECKPOINT_ALL or race_value == RaceMode.CHECKPOINT:
@@ -127,7 +117,6 @@ class BangerEditor:
         elif race_value == RaceModeNum.BLITZ_ALL or race_value == RaceMode.BLITZ:
             return "all blitz"
         
-        # Handle specific numbered races like "CIRCUIT_0"
         if "_" in race_value:
             parts = race_value.split("_")
             if len(parts) == 2:
@@ -135,7 +124,6 @@ class BangerEditor:
                 race_num = parts[1]
                 return f"{race_type} {race_num}"
         
-        # Fallback for other race modes
         return race_value.lower()
 
     def _expand_race_key(self, race_value):
@@ -218,16 +206,15 @@ class BangerEditor:
         original_count = len(self.props)
         
         with open(input_props_f, "rb") as f:
-            f.seek(0, 2)  # Move to the end of the file
+            f.seek(0, 2)
             append_offset = f.tell()
         
         self.add_multiple(props_to_append)
         
         with open(appended_props_f, "r+b") as f:
-            f.seek(0)  # Update the prop count
+            f.seek(0)
             Bangers.write_n(f, self.props)
             
-            # Append new props at the correct offset
             f.seek(append_offset)
             for i, prop in enumerate(self.props[original_count:], start=original_count):
                 write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
@@ -235,7 +222,6 @@ class BangerEditor:
                 prop.face.write(f, '<')
                 f.write(prop.name.encode(Encoding.UTF_8))
         
-        # Print appended props info
         if props_to_append:
             appended_names = [prop["name"] for prop in props_to_append]
             appended_names_str = ", ".join(appended_names)
@@ -277,16 +263,15 @@ class BangerEditor:
                 new_prop.update({k: v for k, v in props_dict.items() if k not in new_prop})
                 random_props.append(new_prop)
         
-        # Track random props placed
         self.random_props_placed += len(random_props)
         
         return random_props
 
     def _filename_with_suffix(self, race_key):        
         if race_key == RaceMode.ROAM:
-            return self.map_filename.with_suffix(FileType.PROP)  # basename gets no suffix, i.e.: First_City.BNG
+            return self.map_filename.with_suffix(FileType.PROP)
         
-        if "_" in race_key:  # Numbered races like "CIRCUIT_0"
+        if "_" in race_key:
             parts = race_key.rsplit("_", 1)  
             if len(parts) == 2 and parts[1].isdigit():
                 race_mode = parts[0]
@@ -333,11 +318,11 @@ def update_banger_properties(lines: List[str], properties: Dict[str, Union[int, 
 
 
 def edit_and_copy_bangerdata_to_shop(prop_properties: Dict[str, Dict[str, Union[int, str]]], input_folder: Path, output_folder: Path, file_type: str) -> None:
-    for file in input_folder.glob(f"*{file_type}"):  # First copy unmodified files directly
+    for file in input_folder.glob(f"*{file_type}"):
         if file.stem not in prop_properties:
             shutil.copy(file, output_folder)
    
-    for prop_key, properties in prop_properties.items():  # Then process and write modified files
+    for prop_key, properties in prop_properties.items():
         banger_file = input_folder / f"{prop_key}{file_type}"
        
         if banger_file.exists():
@@ -345,13 +330,11 @@ def edit_and_copy_bangerdata_to_shop(prop_properties: Dict[str, Dict[str, Union[
             updated_lines = update_banger_properties(lines, properties)
             write_banger_file(output_folder / banger_file.name, updated_lines)
     
-    # Print prop properties modifications
     if prop_properties:
         prop_names = list(prop_properties.keys())
         prop_names_str = ", ".join(prop_names)
         print(f"Successfully modified properties for {len(prop_properties)} prop(s) (props: {prop_names_str})")
         
-        # Show detailed modifications for each prop
         for prop_name, modifications in prop_properties.items():
             mod_details = ", ".join([f"{key}={value}" for key, value in modifications.items()])
             print(f"---{prop_name}: {mod_details}")
