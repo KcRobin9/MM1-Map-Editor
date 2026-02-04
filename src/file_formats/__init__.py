@@ -17,8 +17,6 @@ from src.file_formats.props.batch import (
     create_filter_combined,
     duplicate_and_translate,
     find_props_by_proximity,
-    align_props_to_grid,
-    randomize_face_rotation,
     sort_props_by_distance,
     get_prop_statistics,
     print_statistics
@@ -28,9 +26,6 @@ from src.file_formats.props.copy import (
     copy_and_transform,
     duplicate_props_in_file,
     clone_props_with_offset,
-    create_prop_grid,
-    create_prop_line,
-    create_prop_circle
 )
 
 __all__ = [
