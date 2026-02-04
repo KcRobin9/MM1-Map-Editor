@@ -8,6 +8,11 @@ Props are physical objects placed in your Midtown Madness map - from cars to tre
 - [Randomized Props](#randomized-props)
 - [Race-Specific Props](#race-specific-props)
 - [Customizing Prop Properties](#customizing-prop-properties)
+- [Modifying Existing Prop Files](#modifying-existing-prop-files)
+  - [Subtracting Props](#subtracting-props)
+  - [Editing Props](#editing-props)
+  - [Replacing Props](#replacing-props)
+  - [Duplicating Props](#duplicating-props)
 - [Appending Props to Existing Files](#appending-props-to-existing-files)
 - [Visual Reference Gallery](#visual-reference-gallery)
 - [Troubleshooting](#troubleshooting)
@@ -200,11 +205,286 @@ For a complete list of available properties, see the `PlayerCar.ROADSTER` exampl
 
 ---
 
+## Modifying Existing Prop Files
+
+The editor provides tools to modify existing `.BNG` prop files (like the original Chicago). This is useful when you want to customize an existing map rather than building from scratch.
+
+All modification operations share the same filtering system to select which props to affect.
+
+### Filtering Props
+
+Before modifying props, you need to specify which ones to target. **Filters work independently** - you can use any single filter or combine multiple filters.
+
+| Filter | Description | Example |
+|--------|-------------|---------|
+| `name` | Match by prop type | `"name": Prop.TRAILER` |
+| `id` | Match single prop by its index in the file | `"id": 5591` |
+| `ids` | Match multiple specific indices | `"ids": [100, 101, 102]` |
+| `id_min`, `id_max` | Match a range of indices | `"id_min": 100, "id_max": 200` |
+| `offset` | Match by position (with tolerance) | `"offset": (150.5, 0, -220.3)` |
+| `offset_min`, `offset_max` | Match props within a bounding box | `"offset_min": (0, 0, 0), "offset_max": (100, 50, 100)` |
+| `end`, `separator` | Match a line of props | `"offset": (100, 0, 100), "end": (100, 0, 200), "separator": 10` |
+
+**Filter examples:**
+
+```python
+# Match ALL trailers (just name)
+{"name": Prop.TRAILER}
+
+# Match prop at index 5591 regardless of type (just id)
+{"id": 5591}
+
+# Match ALL props in an area (just position)
+{"offset_min": (0, 0, 0), "offset_max": (100, 50, 100)}
+
+# Match only trailers in a specific area (combined)
+{"name": Prop.TRAILER, "offset_min": (0, 0, 0), "offset_max": (100, 50, 100)}
+
+# Match trailer #5591 specifically (combined - more restrictive)
+{"name": Prop.TRAILER, "id": 5591}
+```
+
+---
+
+### Subtracting Props
+
+Remove props from an existing file. Configure in `src/USER/props/subtract.py`:
+
+```python
+subtract_props = True
+subtract_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO.BNG"
+subtract_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_CLEANED.BNG"
+
+# Remove a specific prop by ID
+remove_by_id = {
+    "name": Prop.TRAILER,
+    "id": 5591,
+}
+
+# Remove all props in an area
+clear_area = {
+    "offset_min": (300, 0, 300),
+    "offset_max": (350, 10, 400),
+}
+
+# Remove a line of barricades
+remove_barricade_line = {
+    "name": Prop.BARRICADE,
+    "offset": (322, 0, 387),
+    "end": (322, 0, 317),
+    "separator": 4,
+}
+
+props_to_subtract = [remove_by_id, clear_area]
+ranges_to_subtract = [remove_barricade_line]
+```
+
+When you run the editor, it will show matched props and ask for confirmation before removing.
+
+---
+
+### Editing Props
+
+Modify props in place - move them, change their facing, adjust height. Configure in `src/USER/props/edit.py`:
+
+```python
+edit_props = True
+edit_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO.BNG"
+edit_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_EDITED.BNG"
+
+props_to_edit = [
+    # ... your edit rules here
+]
+```
+
+**Available transforms:**
+
+#### Moving Props
+
+```python
+# Move props by a delta (relative movement)
+{
+    "name": Prop.TRAILER,
+    "id": 5591,
+    "translate": (10, 0, 5),  # Move 10 units on X, 5 on Z
+}
+
+# Set absolute position
+{
+    "name": Prop.BARRICADE,
+    "offset": (100, 0, 100),      # Find prop at this location
+    "set_offset": (150, 0, 150),  # Move it here
+}
+
+# Adjust height only
+{
+    "name": Prop.TREE_SLIM,
+    "add_offset_y": 2.0,  # Raise all trees by 2 units
+}
+
+# Set all props to ground level
+{
+    "offset_min": (0, -100, 0),
+    "offset_max": (500, 100, 500),
+    "set_offset_y": 0.0,  # Set Y to exactly 0
+}
+```
+
+#### Changing Facing Direction
+
+```python
+# Set facing direction
+{
+    "name": Prop.BARRICADE,
+    "offset": (322, 0, 387),
+    "set_face": (1.0, 0.0, 0.0),  # Face along X axis
+}
+```
+
+#### Mirroring Props
+
+Mirror props across an axis - useful for creating symmetric maps:
+
+```python
+# Mirror props across X axis (left-right)
+{
+    "name": Prop.TREE_SLIM,
+    "offset_min": (0, 0, 0),
+    "offset_max": (100, 50, 100),
+    "mirror_x": True,
+    "mirror_x_pivot": 50.0,  # Mirror around X=50
+}
+
+# Mirror props across Z axis (front-back)
+{
+    "name": Prop.BARRICADE,
+    "mirror_z": True,
+    "mirror_z_pivot": 0.0,  # Mirror around Z=0
+}
+```
+
+**How mirroring works:**
+- `mirror_x` reflects the prop's X position around the pivot point
+- A prop at X=30 with pivot=50 moves to X=70 (same distance from pivot, opposite side)
+- The prop's facing direction is also flipped
+
+---
+
+### Replacing Props
+
+Swap one prop type for another throughout the file. Configure in `src/USER/props/replace.py`:
+
+```python
+replace_props = True
+replace_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO.BNG"
+replace_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_REPLACED.BNG"
+
+props_to_replace = [
+    # Replace all slim trees with wide trees
+    {
+        "name": Prop.TREE_SLIM,
+        "replace_with": Prop.TREE_WIDE,
+    },
+    
+    # Replace barricades in a specific area with cones
+    {
+        "name": Prop.BARRICADE,
+        "offset_min": (100, 0, 100),
+        "offset_max": (200, 50, 200),
+        "replace_with": Prop.CONE,
+    },
+    
+    # Replace a specific prop by ID
+    {
+        "name": Prop.TRAILER,
+        "id": 5591,
+        "replace_with": Prop.SAILBOAT,
+    },
+]
+```
+
+---
+
+### Duplicating Props
+
+Copy existing props and apply transformations to the copies. The original props remain unchanged. Configure in `src/USER/props/duplicate.py`:
+
+```python
+duplicate_props = True
+duplicate_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO.BNG"
+duplicate_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_DUPLICATED.BNG"
+
+props_to_duplicate = [
+    # Duplicate a trailer and offset the copy
+    {
+        "name": Prop.TRAILER,
+        "id": 5591,
+        "translate": (50, 0, 0),  # Copy will be 50 units away on X
+    },
+    
+    # Duplicate all trees in an area and mirror them
+    {
+        "name": Prop.TREE_SLIM,
+        "offset_min": (0, 0, 0),
+        "offset_max": (100, 50, 100),
+        "mirror_x": True,
+        "mirror_x_pivot": 50.0,
+    },
+    
+    # Duplicate and change prop type
+    {
+        "name": Prop.BARRICADE,
+        "id_min": 100,
+        "id_max": 150,
+        "translate": (0, 0, 100),
+        "set_name": Prop.CONE,  # Copies become cones
+    },
+]
+```
+
+**Use cases:**
+- Creating symmetric maps by duplicating and mirroring one half
+- Adding variations of existing prop arrangements
+- Testing different prop configurations without losing the original
+
+---
+
+### Analyzing Prop Files
+
+To understand what's in an existing BNG file, you can use the statistics function:
+
+```python
+from src.file_formats.props import Bangers, print_statistics
+
+with open("path/to/CHICAGO.BNG", "rb") as f:
+    props = Bangers.read_all(f)
+
+print_statistics(props)
+```
+
+This outputs:
+```
+Prop Statistics:
+  Total count: 5847
+  Unique types: 42
+  Bounds min: (-1200.50, -5.00, -1500.25)
+  Bounds max: (1180.00, 45.00, 1420.75)
+  Center: (-10.25, 20.00, -39.75)
+  
+  Type breakdown:
+    tp_tree10m: 892
+    tp_barricade: 456
+    tp_trailer: 234
+    ...
+```
+
+---
+
 ## Appending Props to Existing Files
 
 Add props to an existing `.BNG` file without recreating it.
 
-In `src/USER/props/append_to_file.py`:
+In `src/USER/props/append.py`:
 ```python
 append_props = True
 
@@ -242,3 +522,11 @@ The most common props are documented with images in `docs/visual_reference/props
 **Props floating or underground:**
 - Adjust the Y coordinate in `offset`
 - Check terrain height at placement location
+
+**Edit/Replace/Subtract not finding props:**
+- Check that `tolerance` is appropriate (default 0.25 units)
+- Use `print_statistics()` to verify the prop exists in the file
+- Verify prop name matches exactly (check `src/constants/props.py`)
+
+**Confirmation prompt annoying:**
+- Set `require_confirmation = False` in the config file to skip prompts

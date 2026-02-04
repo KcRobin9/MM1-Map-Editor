@@ -19,7 +19,6 @@
 #! =====================================================================
 #! =====================================================================
 
-
 #* Core Python path setup
 import sys
 from pathlib import Path
@@ -139,9 +138,7 @@ from src.USER.settings.debug import (
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
 )
 
-from src.USER.settings.blender import (
-load_all_texures, visualize_ai_paths
-)
+from src.USER.settings.blender import load_all_texures, visualize_ai_paths
 
 from src.USER.facades import facade_list
 from src.USER.ai_streets import street_list
@@ -153,8 +150,14 @@ from src.USER.bridges import bridge_list, bridge_config_list
 from src.USER.races.cops_and_robbers import cops_and_robbers_waypoints
 from src.USER.races.races import blitz_race_names, checkpoint_race_names, circuit_race_names, race_data
 
-from src.USER.props.props import prop_list, random_props
 from src.USER.props.properties import prop_properties
+
+from src.USER.props.props import prop_list, random_props  # 'Set' props could be a better name? I.e. create from scratch
+from src.USER.props.edit import edit_props, props_to_edit, edit_tolerance, edit_require_confirmation, edit_input_props_file, edit_output_props_file
+from src.USER.props.replace import replace_props, props_to_replace, replace_tolerance, replace_require_confirmation, replace_input_props_file, replace_output_props_file
+from src.USER.props.duplicate import duplicate_props, props_to_duplicate, duplicate_tolerance, duplicate_input_props_file, duplicate_output_props_file
+from src.USER.props.append import append_props, props_to_append, append_input_props_file, append_output_props_file
+
 from src.USER.props.subtract import (
     subtract_props,
     props_to_subtract,
@@ -164,7 +167,6 @@ from src.USER.props.subtract import (
     subtract_input_props_file,
     subtract_output_props_file
 )
-from src.USER.props.append import append_props, props_to_append, append_input_props_file, append_output_props_file
 
 from src.USER.textures.properties import texture_modifications
 
@@ -2516,6 +2518,7 @@ if subtract_props:
         tolerance=subtract_tolerance,
         require_confirmation=subtract_require_confirmation
     )
+
 if append_props:
     shutil.copy(append_input_props_file, append_output_props_file)
     editor.append_to_file(
@@ -2523,6 +2526,38 @@ if append_props:
         props_to_append,
         append_output_props_file,
         append_props
+    )
+
+if edit_props:
+    shutil.copy(edit_input_props_file, edit_output_props_file)
+    from src.file_formats.props.edit import edit_props_in_file
+    edit_props_in_file(
+        input_file=edit_input_props_file,
+        output_file=edit_output_props_file,
+        edit_rules=props_to_edit,
+        tolerance=edit_tolerance,
+        require_confirmation=edit_require_confirmation
+    )
+
+if replace_props:
+    shutil.copy(replace_input_props_file, replace_output_props_file)
+    from src.file_formats.props.replace import replace_props_in_file
+    replace_props_in_file(
+        input_file=replace_input_props_file,
+        output_file=replace_output_props_file,
+        replace_rules=props_to_replace,
+        tolerance=replace_tolerance,
+        require_confirmation=replace_require_confirmation
+    )
+
+if duplicate_props:
+    shutil.copy(duplicate_input_props_file, duplicate_output_props_file)
+    from src.file_formats.props.copy import duplicate_props_in_file
+    duplicate_props_in_file(
+        input_file=duplicate_input_props_file,
+        output_file=duplicate_output_props_file,
+        duplicate_rules=props_to_duplicate,
+        tolerance=duplicate_tolerance
     )
 
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)

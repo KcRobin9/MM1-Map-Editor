@@ -1,21 +1,25 @@
-YELLOW = "\033[93m"
-GREEN = "\033[92m"
-RED = "\033[91m"
-CYAN = "\033[96m"
-RESET = "\033[0m"
+from colorama import Fore, Style
 
 
-def yellow(msg: str) -> str:
-    return f"{YELLOW}{msg}{RESET}"
+def yellow(text: str) -> str:
+    return f"{Fore.YELLOW}{text}{Style.RESET_ALL}"
 
 
-def green(msg: str) -> str:
-    return f"{GREEN}{msg}{RESET}"
+def green(text: str) -> str:
+    return f"{Fore.GREEN}{text}{Style.RESET_ALL}"
 
 
-def red(msg: str) -> str:
-    return f"{RED}{msg}{RESET}"
+def red(text: str) -> str:
+    return f"{Fore.RED}{text}{Style.RESET_ALL}"
 
 
-def cyan(msg: str) -> str:
-    return f"{CYAN}{msg}{RESET}"
+def cyan(text: str) -> str:
+    return f"{Fore.CYAN}{text}{Style.RESET_ALL}"
+
+
+def magenta(text: str) -> str:
+    return f"{Fore.MAGENTA}{text}{Style.RESET_ALL}"
+
+
+def white(text: str) -> str:
+    return f"{Fore.WHITE}{text}{Style.RESET_ALL}"
