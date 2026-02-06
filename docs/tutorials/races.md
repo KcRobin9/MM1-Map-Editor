@@ -66,8 +66,8 @@ Here's a simple Blitz race example:
         "ambient_density": 0.25,
         "num_of_police": 2,
         "police": [
-            f"{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
-            f"{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
+            f"{PlayerCar.POLICE} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
+            f"{PlayerCar.POLICE} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
         ],
         "num_of_opponents": 1,
         "opponents": [
@@ -229,8 +229,8 @@ The `aimap` section controls traffic, police, and opponents during the race.
 ```python
 "num_of_police": 2,  # Total number of police cars
 "police": [
-    f"{PlayerCar.CRUISER} X Y Z {Rotation} {StartLane} {Behavior}",
-    f"{PlayerCar.CRUISER} X Y Z {Rotation} {StartLane} {Behavior}",
+    f"{PlayerCar.POLICE} X Y Z {Rotation} {StartLane} {Behavior}",
+    f"{PlayerCar.POLICE} X Y Z {Rotation} {StartLane} {Behavior}",
 ],
 ```
 
@@ -268,13 +268,13 @@ The `aimap` section controls traffic, police, and opponents during the race.
 
 ```python
 # Stationary roadblock at race start
-f"{PlayerCar.CRUISER} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
+f"{PlayerCar.POLICE} 10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.STATIONARY} {CopBehavior.ROADBLOCK}",
 
 # Aggressive cop in traffic
-f"{PlayerCar.CRUISER} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
+f"{PlayerCar.POLICE} -10.0 0.0 65.0 {Rotation.NORTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.MIX}",
 
 # Pusher cop waiting at checkpoint
-f"{PlayerCar.CRUISER} 15.0 0.0 75.0 {Rotation.SOUTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
+f"{PlayerCar.POLICE} 15.0 0.0 75.0 {Rotation.SOUTH} {CopStartLane.STATIONARY} {CopBehavior.PUSH}",
 ```
 
 ### Opponent Configuration
@@ -295,7 +295,7 @@ Allows multiple opponents of the same car type:
         [10.0, 0.0, 35.0],
         [10.0, 0.0, -130.0],
     ]},
-    {PlayerCar.MUSTANG99: [   # Different car type
+    {PlayerCar.MUSTANG_GT: [   # Different car type
         [15.0, 0.0, 35.0],
         [15.0, 0.0, -130.0],
     ]},
@@ -308,12 +308,12 @@ Only allows one of each car type:
 ```python
 "num_of_opponents": 2,
 "opponents": {
-    TrafficCar.WHITE_LIMO: [
+    TrafficCar.LIMO_WHITE: [
         [-10.0, 245, -850],   # Spawn
         [0.0, 0.0, -100],     # Waypoint 1
         [-10.0, 0.0, -75.0]   # Waypoint 2
     ],
-    TrafficCar.BLACK_LIMO: [
+    TrafficCar.LIMO_BLACK: [
         [10.0, 245, -850],
         [0.0, 0.0, -100],
         [10.0, 0.0, -75.0],
@@ -323,34 +323,35 @@ Only allows one of each car type:
 
 ### Available Opponent Cars
 
-**Player Cars** (from `src/constants/vehicles.py`):
+**Player Cars:**
 ```python
 PlayerCar.VW_BEETLE
 PlayerCar.CITY_BUS
 PlayerCar.CADILLAC
-PlayerCar.CRUISER        # Police car
+PlayerCar.POLICE        # Police car
 PlayerCar.FORD_F350
 PlayerCar.FASTBACK
-PlayerCar.MUSTANG99
+PlayerCar.MUSTANG_GT
 PlayerCar.ROADSTER
-PlayerCar.PANOZ_GTR_1
+PlayerCar.PANOZ_GTR1
 PlayerCar.SEMI
 ```
 
 **Traffic Cars:**
 ```python
-TrafficCar.TINY_CAR
+TrafficCar.TINY
 TrafficCar.SEDAN_SMALL
 TrafficCar.SEDAN_LARGE
-TrafficCar.YELLOW_TAXI
-TrafficCar.GREEN_TAXI
-TrafficCar.WHITE_LIMO
-TrafficCar.BLACK_LIMO
+TrafficCar.TAXI_YELLOW
+TrafficCar.TAXI_GREEN
+TrafficCar.LIMO_WHITE
+TrafficCar.LIMO_BLACK
 TrafficCar.PICKUP
-TrafficCar.SMALL_VAN
-TrafficCar.DELIVERY_VAN
-TrafficCar.LARGE_TRUCK
-TrafficCar.TRAFFIC_BUS
+TrafficCar.VAN_SMALL
+TrafficCar.VAN_LARGE
+TrafficCar.TRUCK
+TrafficCar.BUS
+TrafficCar.PLANE
 ```
 
 ### Traffic Exceptions
@@ -387,11 +388,11 @@ Control traffic behavior on specific road segments:
         "ambient_density": 0.3,
         "num_of_police": 1,
         "police": [
-            f"{PlayerCar.CRUISER} 0.0 0.0 75.0 {Rotation.SOUTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.FOLLOW}",
+            f"{PlayerCar.POLICE} 0.0 0.0 75.0 {Rotation.SOUTH} {CopStartLane.IN_TRAFFIC} {CopBehavior.FOLLOW}",
         ],
         "num_of_opponents": 2,
         "opponents": [
-            {PlayerCar.MUSTANG99: [[5.0, 0.0, 100.0], [5.0, 0.0, -50.0]]},
+            {PlayerCar.MUSTANG_GT: [[5.0, 0.0, 100.0], [5.0, 0.0, -50.0]]},
             {PlayerCar.CADILLAC: [[-5.0, 0.0, 100.0], [-5.0, 0.0, -50.0]]},
         ],
     },
@@ -420,8 +421,8 @@ Control traffic behavior on specific road segments:
         "num_of_opponents": 4,
         "opponents": [
             {PlayerCar.ROADSTER: [[10.0, 0.0, 100.0], [60.0, 0.0, 50.0], [60.0, 0.0, -50.0]]},
-            {PlayerCar.MUSTANG99: [[20.0, 0.0, 100.0], [70.0, 0.0, 50.0], [70.0, 0.0, -50.0]]},
-            {TrafficCar.BLACK_LIMO: [[-10.0, 0.0, 100.0], [40.0, 0.0, 50.0], [40.0, 0.0, -50.0]]},
+            {PlayerCar.MUSTANG_GT: [[20.0, 0.0, 100.0], [70.0, 0.0, 50.0], [70.0, 0.0, -50.0]]},
+            {TrafficCar.LIMO_BLACK: [[-10.0, 0.0, 100.0], [40.0, 0.0, 50.0], [40.0, 0.0, -50.0]]},
             {TrafficCar.PICKUP: [[-20.0, 0.0, 100.0], [30.0, 0.0, 50.0], [30.0, 0.0, -50.0]]},
         ],
     },
