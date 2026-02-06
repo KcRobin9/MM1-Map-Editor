@@ -28,6 +28,7 @@ Step-by-step guides to help you get started:
 * [Animations](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/animations.md)
 * [Lighting](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/lighting.md)
 * [Races](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/races.md)
+* [AI streets](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/ai_streets.md)
 
 ## Visual Reference
 Reference images and assets for building your city:
