@@ -9,7 +9,7 @@ prop_properties = {
 
     # Example of possible values for the Panoz Roadster (original values)
     PlayerCar.ROADSTER: {
-        "NodeName": "vppanoz",
+        "NodeName": f"{PlayerCar.ROADSTER}",
         "AudioId": 0,
         "Size": "6 3 4",
         "CG": "0 0 0",

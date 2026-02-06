@@ -7,6 +7,7 @@ Props are physical objects placed in your Midtown Madness map - from cars to tre
 - [Advanced Placement Techniques](#advanced-placement-techniques)
 - [Randomized Props](#randomized-props)
 - [Race-Specific Props](#race-specific-props)
+- [Using Vehicles as Props](#using-vehicles-as-props)
 - [Customizing Prop Properties](#customizing-prop-properties)
 - [Modifying Existing Prop Files](#modifying-existing-prop-files)
   - [Subtracting Props](#subtracting-props)
@@ -35,7 +36,7 @@ prop_list = [simple_tree]
 **Parameters:**
 - `offset`: `(x, y, z)` - The prop's position in 3D space
 - `face`: `(x, y, z)` - Direction the prop faces (needs more documentation)
-- `name`: The prop's name (see `src.constants.props.py`)
+- `name`: The prop's name (see `src/constants/props.py`)
 
 ---
 
@@ -69,7 +70,7 @@ trailer_line = {
 
 **Available axes:** `Axis.X`, `Axis.Y`, `Axis.Z`
 
-This is particularly useful for props with varying sizes - the editor reads dimensions from `src\Resources\EditorResources\PROPS\prop_dimensions.txt`.
+This is particularly useful for props with varying sizes - the editor reads dimensions from `src\resources\editor\PROPS\prop_dimensions.txt`.
 
 ### Facing Direction
 
@@ -122,7 +123,7 @@ random_cars = {
     "name": [
         PlayerCar.VW_BEETLE, 
         PlayerCar.CITY_BUS, 
-        PlayerCar.MUSTANG99
+        PlayerCar.MUSTANG_GT
     ]
 }
 
@@ -180,6 +181,69 @@ cones = {
 
 ---
 
+## Using Vehicles as Props
+
+All player cars and traffic vehicles can be used as static props! This is perfect for creating parking lots, traffic jams, roadblocks, or decorative scenes.
+
+### Example: Parking Lot
+
+```python
+parking_lot_props = [
+    # Player cars
+    {"offset": (10, 0.0, 20), "name": PlayerCar.MUSTANG_GT},
+    {"offset": (16, 0.0, 20), "name": PlayerCar.CADILLAC},
+    {"offset": (22, 0.0, 20), "name": PlayerCar.VW_BEETLE},
+    
+    # Traffic vehicles
+    {"offset": (10, 0.0, 28), "name": TrafficCar.SEDAN_LARGE},
+    {"offset": (16, 0.0, 28), "name": TrafficCar.PICKUP},
+    {"offset": (22, 0.0, 28), "name": TrafficCar.VAN_SMALL},
+    
+    # Large vehicles
+    {"offset": (10, 0.0, 40), "name": PlayerCar.SEMI},
+    {"offset": (20, 0.0, 40), "name": TrafficCar.BUS},
+]
+```
+
+### Example: Roadblock
+
+```python
+roadblock = {
+    "offset": (50, 0.0, 100),
+    "end": (80, 0.0, 100),
+    "name": PlayerCar.POLICE,
+    "separator": 10.0
+}
+```
+
+### Example: Traffic Jam
+
+```python
+traffic_jam = {
+    "offset_y": 0.0,
+    "name": [
+        TrafficCar.TAXI_YELLOW,
+        TrafficCar.SEDAN_SMALL,
+        TrafficCar.VAN_SMALL,
+        TrafficCar.PICKUP,
+    ] * 5  # 20 total vehicles
+}
+
+traffic_jam_placement = {
+    "seed": 42,
+    "num_props": 1,
+    "props_dict": traffic_jam,
+    "x_range": (40, 60),
+    "z_range": (80, 120)
+}
+```
+
+**Quick reference:**
+- **Player cars**: `VW_BEETLE`, `CITY_BUS`, `CADILLAC`, `POLICE`, `FORD_F350`, `FASTBACK`, `MUSTANG_GT`, `ROADSTER`, `PANOZ_GTR1`, `SEMI`
+- **Traffic vehicles**: `TINY`, `SEDAN_SMALL`, `SEDAN_LARGE`, `TAXI_YELLOW`, `TAXI_GREEN`, `LIMO_WHITE`, `LIMO_BLACK`, `PICKUP`, `VAN_SMALL`, `VAN_LARGE`, `TRUCK`, `BUS`
+
+---
+
 ## Customizing Prop Properties
 
 Modify prop's physical properties in `src/USER/props/properties.py`:
@@ -201,6 +265,7 @@ prop_properties = {
 ```
 For a complete list of available properties, see the `PlayerCar.ROADSTER` example in `properties.py`.
 
+### Audio Properties Reference
 *TODO: needs more testing and documentation*
 
 ---
@@ -487,7 +552,6 @@ Add props to an existing `.BNG` file without recreating it.
 In `src/USER/props/append.py`:
 ```python
 append_props = True
-
 append_input_props_file = Folder.EDITOR_RESOURCES / "PROPS" / "CHICAGO.BNG"
 
 append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "MODIFIED_CHICAGO.BNG"
@@ -495,7 +559,7 @@ append_output_props_file = Folder.USER_RESOURCES / "PROPS" / "MODIFIED_CHICAGO.B
 app_panoz = {
     'offset': (5, 2, 5),
     'end': (999, 2, 999),
-    'name': PlayerCar.PANOZ_GTR_1
+    'name': PlayerCar.PANOZ_GTR1
 }
 
 props_to_append = [app_panoz]
@@ -527,6 +591,10 @@ The most common props are documented with images in `docs/visual_reference/props
 - Check that `tolerance` is appropriate (default 0.25 units)
 - Use `print_statistics()` to verify the prop exists in the file
 - Verify prop name matches exactly (check `src/constants/props.py`)
+
+**Vehicles as props look wrong:**
+- Adjust the `face` parameter to orient them correctly
+- Check that you're using the correct constant names
 
 **Confirmation prompt annoying:**
 - Set `require_confirmation = False` in the config file to skip prompts
