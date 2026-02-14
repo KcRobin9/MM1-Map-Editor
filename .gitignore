@@ -6,8 +6,8 @@ __pycache__/
 /SHOP/
 /WIP/
 
-/Resources/debug/
-/Resources/EditorResources/*.pkl
+/resources/debug/
+/resources/editor/*.pkl
 
 MidtownMadness/commandline.txt
 MidtownMadness/crashes
