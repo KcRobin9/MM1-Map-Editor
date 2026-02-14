@@ -10,9 +10,9 @@ from src.integrations.blender.waypoints.helpers import update_waypoint_colors
 from src.integrations.blender.waypoints.constants import POLE_HEIGHT, POLE_DIAMETER, FLAG_HEIGHT, FLAG_HEIGHT_OFFSET  
 
 
-def create_waypoint_material(name: str, color: Tuple[float, float, float, float]) -> bpy.types.Material:
+def create_waypoint_material(name: str, color: str) -> bpy.types.Material:
     material = bpy.data.materials.new(name)
-    material.diffuse_color = color
+    material.diffuse_color = Color.to_rgba(color)
     return material
 
 

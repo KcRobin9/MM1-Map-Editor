@@ -14,8 +14,8 @@ def update_waypoint_colors() -> None:
     if not waypoints:
         return
 
-    waypoints[0].data.materials[0].diffuse_color = Color.WHITE      # First Waypoint
-    waypoints[-1].data.materials[0].diffuse_color = Color.GREEN     # Last Waypoint
+    waypoints[0].data.materials[0].diffuse_color = Color.to_rgba(Color.WHITE)      # First Waypoint
+    waypoints[-1].data.materials[0].diffuse_color = Color.to_rgba(Color.GREEN)     # Last Waypoint
 
     for waypoint in waypoints[1:-1]:
-        waypoint.data.materials[0].diffuse_color = Color.BLUE       # Intermediate Waypoints
+        waypoint.data.materials[0].diffuse_color = Color.to_rgba(Color.BLUE)        # Intermediate Waypoints
