@@ -80,6 +80,8 @@ class Folder:
 
     USER_TEXTURES_CUSTOM = BASE / "src" / "USER" / "textures" / "custom"
 
+    BLENDER_MODELS = BASE / "blender_models"
+
     MAIN = [
         BUILD,
         DEBUG,

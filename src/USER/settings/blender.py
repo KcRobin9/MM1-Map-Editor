@@ -1,10 +1,10 @@
 from src.constants.misc import Folder
 
-# Model
-dont_delete_existing_model = True       # Change to "True" if you don't want to delete the existing model in Blender (useful for testing)
+load_target_model = True               # Set True to load an external model instead of the test city
+target_blend_file = Folder.BLENDER_MODELS / "RACECITY_2ND.blend"  # Only used when load_target_model = True
 
 # Textures
-load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
+load_all_textures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
                                 # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
 # AI streets

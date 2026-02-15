@@ -138,7 +138,7 @@ from src.USER.settings.debug import (
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
 )
 
-from src.USER.settings.blender import dont_delete_existing_model, load_all_texures, visualize_ai_paths
+from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths
 
 from src.USER.facades import facade_list
 from src.USER.ai_streets import street_list
@@ -2563,7 +2563,7 @@ if duplicate_props:
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 
 # Blender
-setup_blender(dont_delete_existing_model)
+setup_blender(load_target_model)
 
 initialize_blender_panels()
 initialize_blender_operators()
@@ -2723,8 +2723,11 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
     return obj
 
 
-def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None:
+def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_target_model: bool) -> None:
     if not is_process_running(Executable.BLENDER):
+        return
+
+    if load_target_model:
         return
 
     load_textures(texture_folder, load_all_textures)
@@ -2736,7 +2739,7 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool) -> None
 ###################################################################################################################   
 ###################################################################################################################
 
-create_blender_meshes(Folder.RESOURCES_EDITOR / "TEXTURES", load_all_texures)
+create_blender_meshes(Folder.RESOURCES_EDITOR / "TEXTURES", load_all_textures, load_target_model)
 
 process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
