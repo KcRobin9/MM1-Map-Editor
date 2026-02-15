@@ -1,5 +1,7 @@
 from src.constants.misc import Folder
 
+# Model
+dont_delete_existing_model = True       # Change to "True" if you don't want to delete the existing model in Blender (useful for testing)
 
 # Textures
 load_all_texures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)

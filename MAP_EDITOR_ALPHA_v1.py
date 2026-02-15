@@ -138,7 +138,7 @@ from src.USER.settings.debug import (
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
 )
 
-from src.USER.settings.blender import load_all_texures, visualize_ai_paths
+from src.USER.settings.blender import dont_delete_existing_model, load_all_texures, visualize_ai_paths
 
 from src.USER.facades import facade_list
 from src.USER.ai_streets import street_list
@@ -2563,7 +2563,7 @@ if duplicate_props:
 start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
 
 # Blender
-setup_blender()
+setup_blender(dont_delete_existing_model)
 
 initialize_blender_panels()
 initialize_blender_operators()
