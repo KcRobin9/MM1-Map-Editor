@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MM Map Editor — Settings</title>
+<style>
+/* ================================================================
+   FONTS
+   ================================================================ */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+/* ================================================================
+   CSS VARIABLES
+   ================================================================ */
+:root {
+    /* Background layers */
+    --bg-deep:        #0c0e12;
+    --bg-base:        #12151a;
+    --bg-surface:     #1a1d24;
+    --bg-raised:      #22262f;
+    --bg-hover:       #2a2f3a;
+    --bg-input:       #161920;
+
+    /* Borders */
+    --border-subtle:  #2a2f3a;
+    --border-default: #353b48;
+    --border-focus:   #5b9cf5;
+
+    /* Text */
+    --text-primary:   #e8ecf1;
+    --text-secondary: #8b95a5;
+    --text-muted:     #5c6575;
+    --text-heading:   #f0f4f8;
+
+    /* Accents */
+    --accent:         #5b9cf5;
+    --accent-hover:   #7bb3ff;
+    --accent-dim:     #3a6db5;
+    --accent-glow:    rgba(91, 156, 245, 0.15);
+
+    --green:          #4ade80;
+    --green-dim:      rgba(74, 222, 128, 0.12);
+    --yellow:         #fbbf24;
+    --yellow-dim:     rgba(251, 191, 36, 0.12);
+    --red:            #f87171;
+    --red-dim:        rgba(248, 113, 113, 0.12);
+    --orange:         #fb923c;
+    --purple:         #a78bfa;
+
+    /* Sizing */
+    --radius-sm:  4px;
+    --radius-md:  8px;
+    --radius-lg:  12px;
+    --radius-xl:  16px;
+
+    /* Fonts */
+    --font-body:  'IBM Plex Sans', -apple-system, sans-serif;
+    --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
+    --font-heading: 'Space Grotesk', sans-serif;
+
+    /* Transitions */
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ================================================================
+   RESET & BASE
+   ================================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+    font-size: 14px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    font-family: var(--font-body);
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Subtle background texture */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse at 20% 0%, rgba(91, 156, 245, 0.03) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 100%, rgba(167, 139, 250, 0.02) 0%, transparent 60%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+::selection {
+    background: var(--accent);
+    color: #fff;
+}
+
+/* ================================================================
+   SCROLLBAR
+   ================================================================ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-default); }
+
+/* ================================================================
+   LAYOUT
+   ================================================================ */
+.app {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 32px 64px;
+}
+
+/* ================================================================
+   HEADER
+   ================================================================ */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 28px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 28px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    font-family: var(--font-heading);
+    letter-spacing: -1px;
+    box-shadow: 0 4px 16px rgba(91, 156, 245, 0.25);
+}
+
+.header-title {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    letter-spacing: -0.5px;
+}
+
+.header-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-family: var(--font-mono);
+    font-weight: 300;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* ================================================================
+   STATUS INDICATOR
+   ================================================================ */
+.status-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+    position: relative;
+    top: -0.5px;
+}
+.status-dot.ok   { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.status-dot.warn { background: var(--yellow); }
+.status-dot.err  { background: var(--red); }
+
+/* ================================================================
+   BUTTONS
+   ================================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-md);
+    background: var(--bg-raised);
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-out);
+    user-select: none;
+}
+
+.btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-focus);
+}
+
+.btn-primary {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+    color: #fff;
+}
+.btn-primary:hover {
+    background: var(--accent);
+    box-shadow: 0 0 20px rgba(91, 156, 245, 0.3);
+}
+.btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+.btn-primary:disabled:hover {
+    background: var(--accent-dim);
+}
+
+.btn-danger {
+    border-color: var(--red);
+    color: var(--red);
+}
+.btn-danger:hover {
+    background: var(--red-dim);
+}
+
+.btn-small {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+}
+
+.btn-icon {
+    padding: 6px 8px;
+    font-size: 1rem;
+}
+
+/* ================================================================
+   TABS
+   ================================================================ */
+.tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg-base);
+    padding: 4px;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-subtle);
+    margin-bottom: 24px;
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.tab {
+    flex: 1;
+    padding: 10px 18px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s var(--ease-out);
+    position: relative;
+    text-align: center;
+}
+
+.tab:hover {
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+}
+
+.tab.active {
+    color: var(--text-heading);
+    background: var(--bg-raised);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.tab .tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 6px;
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+
+.tab.active .tab-badge {
+    background: var(--accent-glow);
+    color: var(--accent);
+}
+
+/* ================================================================
+   PANELS
+   ================================================================ */
+.panel {
+    display: none;
+    animation: fadeIn 0.3s var(--ease-out);
+}
+.panel.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================================
+   SECTION / GROUP
+   ================================================================ */
+.settings-group {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    transition: border-color 0.2s;
+}
+.settings-group:hover {
+    border-color: var(--border-default);
+}
+
+.group-title {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-heading);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    letter-spacing: -0.3px;
+}
+
+.group-title .group-icon {
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+/* ================================================================
+   SETTING ROW
+   ================================================================ */
+.setting-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(42, 47, 58, 0.5);
+}
+.setting-row:last-child { border-bottom: none; }
+
+.setting-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.setting-name {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.setting-comment {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.setting-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ================================================================
+   TOGGLE SWITCH
+   ================================================================ */
+.toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+.toggle input { display: none; }
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    transition: all 0.3s var(--ease-out);
+}
+
+.toggle-thumb {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 3px;
+    left: 3px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: all 0.3s var(--ease-out);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.toggle input:checked ~ .toggle-track {
+    background: var(--accent-dim);
+    border-color: var(--accent);
+}
+
+.toggle input:checked ~ .toggle-thumb {
+    left: 23px;
+    background: #fff;
+    box-shadow: 0 1px 8px rgba(91, 156, 245, 0.4);
+}
+
+.toggle-label {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    min-width: 32px;
+    text-align: center;
+    transition: color 0.2s;
+}
+.toggle-label.on  { color: var(--green); }
+.toggle-label.off { color: var(--text-muted); }
+
+/* ================================================================
+   TEXT / NUMBER INPUT
+   ================================================================ */
+.input-text, .input-number {
+    padding: 6px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s;
+    min-width: 0;
+}
+
+.input-text { width: 220px; }
+.input-number { width: 100px; text-align: right; }
+
+.input-text:focus, .input-number:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.input-tuple {
+    padding: 6px 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    outline: none;
+    transition: all 0.2s;
+    width: 260px;
+}
+.input-tuple:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Read-only fields */
+.input-readonly {
+    padding: 6px 12px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: default;
+}
+
+/* ================================================================
+   MODIFIED INDICATOR
+   ================================================================ */
+.setting-row.modified .setting-name::after {
+    content: '●';
+    color: var(--yellow);
+    margin-left: 6px;
+    font-size: 0.7rem;
+}
+
+/* ================================================================
+   TOAST / NOTIFICATIONS
+   ================================================================ */
+.toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.toast {
+    padding: 12px 20px;
+    border-radius: var(--radius-md);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #fff;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    animation: toastIn 0.4s var(--ease-out), toastOut 0.3s 3.5s var(--ease-out) forwards;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 400px;
+}
+
+.toast.success { background: #1a3a2a; border: 1px solid var(--green); }
+.toast.error   { background: #3a1a1a; border: 1px solid var(--red); }
+.toast.info    { background: #1a2a3a; border: 1px solid var(--accent); }
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(16px) scale(0.95); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes toastOut {
+    from { opacity: 1; }
+    to   { opacity: 0; transform: translateX(40px); }
+}
+
+/* ================================================================
+   SAVE BAR (sticky bottom)
+   ================================================================ */
+.save-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: var(--bg-base);
+    border-top: 1px solid var(--border-subtle);
+    padding: 12px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    transform: translateY(100%);
+    transition: transform 0.35s var(--ease-out);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+.save-bar.visible {
+    transform: translateY(0);
+}
+
+.save-bar .change-count {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--yellow);
+}
+
+/* ================================================================
+   BACKUP PANEL
+   ================================================================ */
+.backup-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.backup-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+}
+
+.backup-item .backup-name { color: var(--text-primary); }
+.backup-item .backup-date { color: var(--text-muted); font-size: 0.75rem; }
+
+/* ================================================================
+   SEARCH
+   ================================================================ */
+.search-bar {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 16px 10px 40px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+}
+.search-bar input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.search-bar input::placeholder { color: var(--text-muted); }
+
+.search-bar .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    pointer-events: none;
+}
+
+/* ================================================================
+   EMPTY STATE
+   ================================================================ */
+.empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--text-muted);
+}
+.empty-state .empty-icon { font-size: 2rem; margin-bottom: 12px; opacity: 0.5; }
+.empty-state p { font-size: 0.9rem; }
+
+/* ================================================================
+   LOADING
+   ================================================================ */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border-subtle);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ================================================================
+   RESPONSIVE
+   ================================================================ */
+@media (max-width: 700px) {
+    .app { padding: 16px; }
+    .header { flex-direction: column; align-items: flex-start; gap: 12px; }
+    .tabs { flex-wrap: wrap; position: static; }
+    .setting-row { grid-template-columns: 1fr; gap: 8px; }
+    .input-text, .input-tuple { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo-icon">MM</div>
+            <div>
+                <div class="header-title">Map Editor Settings</div>
+                <div class="header-subtitle" id="project-path">loading...</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn" onclick="loadAllSettings()" title="Reload settings from disk">↻ Reload</button>
+            <button class="btn" onclick="switchPanel('backups')" title="View and restore backups">⟳ Backups</button>
+        </div>
+    </header>
+
+    <!-- SEARCH -->
+    <div class="search-bar">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-input" placeholder="Search settings..." oninput="handleSearch(this.value)">
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="main" onclick="switchTab('main')">
+            Main <span class="tab-badge" id="badge-main">—</span>
+        </button>
+        <button class="tab" data-tab="advanced" onclick="switchTab('advanced')">
+            Advanced <span class="tab-badge" id="badge-advanced">—</span>
+        </button>
+        <button class="tab" data-tab="debug" onclick="switchTab('debug')">
+            Debug <span class="tab-badge" id="badge-debug">—</span>
+        </button>
+        <button class="tab" data-tab="blender" onclick="switchTab('blender')">
+            Blender <span class="tab-badge" id="badge-blender">—</span>
+        </button>
+    </div>
+
+    <!-- PANELS -->
+    <div id="panels-container">
+        <div class="panel active" id="panel-main"></div>
+        <div class="panel" id="panel-advanced"></div>
+        <div class="panel" id="panel-debug"></div>
+        <div class="panel" id="panel-blender"></div>
+        <div class="panel" id="panel-backups"></div>
+    </div>
+</div>
+
+<!-- SAVE BAR -->
+<div class="save-bar" id="save-bar">
+    <span class="change-count" id="change-count">0 unsaved changes</span>
+    <button class="btn" onclick="discardChanges()">Discard</button>
+    <button class="btn btn-primary" id="save-btn" onclick="saveAllChanges()">💾 Save Changes</button>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+
+// ---- State ----
+let settingsData = {};       // { main: { path, variables: [...] }, ... }
+let pendingChanges = {};     // { "main": { "var_name": new_value, ... }, ... }
+let originalValues = {};     // { "main": { "var_name": original_value, ... }, ... }
+let activeTab = 'main';
+let searchQuery = '';
+
+// ---- Grouping definitions ----
+// Maps file_key -> groups of variable names
+const GROUPS = {
+    main: [
+        { title: '🏷️ Map Identity',        vars: ['MAP_NAME', 'MAP_FILENAME'] },
+        { title: '🎮 Game Launch',          vars: ['play_game', 'delete_shop'] },
+        { title: '🧩 Map Features',         vars: ['set_bridges', 'set_props', 'set_facades', 'set_physics', 'set_animations', 'set_texture_sheet', 'set_music'] },
+        { title: '🗺️ Minimap',             vars: ['set_minimap', 'minimap_outline_color'] },
+        { title: '🚗 AI Traffic',           vars: ['set_ai_streets', 'set_reverse_ai_streets', 'set_lars_race_maker'] },
+        { title: '📍 Cruise Start',         vars: ['cruise_start_position'] },
+        { title: '🎨 Texture Randomization', vars: ['randomize_textures', 'random_textures'] },
+        { title: '⚙️ Other',               vars: ['round_vector_values', 'disable_progress_bar'] },
+    ],
+    advanced: [
+        { title: '🖥️ Command Line',         vars: ['no_ui', 'no_ui_type', 'no_ai', 'less_logs', 'more_logs'] },
+        { title: '🚪 Portals',              vars: ['lower_portals', 'empty_portals'] },
+        { title: '📦 DLP',                  vars: ['set_dlp'] },
+        { title: '🔧 Quad Fixing',          vars: ['fix_faulty_quads'] },
+    ],
+    debug: [
+        { title: '🔍 Editor Debug Output',  vars: ['debug_props', 'debug_meshes', 'debug_bounds', 'debug_facades', 'debug_physics', 'debug_portals', 'debug_lighting', 'debug_minimap', 'debug_minimap_id'] },
+        { title: '📄 File Debugging',       vars: ['debug_props_file', 'debug_props_file_to_csv', 'debug_facades_file', 'debug_portals_file', 'debug_ai_file', 'debug_meshes_file', 'debug_meshes_folder', 'debug_bounds_file', 'debug_bounds_folder', 'debug_dlp_file', 'debug_dlp_folder'] },
+        { title: '📂 Debug Input Files',    vars: ['debug_props_data_file', 'debug_facades_data_file', 'debug_portals_data_file', 'debug_ai_data_file', 'debug_meshes_data_file', 'debug_meshes_data_folder', 'debug_bounds_data_file', 'debug_bounds_data_folder', 'debug_dlp_data_file', 'debug_dlp_data_folder'] },
+    ],
+    blender: [
+        { title: '🎨 Textures',             vars: ['load_all_texures', 'load_all_textures'] },
+        { title: '🛣️ AI Visualization',     vars: ['visualize_ai_paths'] },
+        { title: '📌 Waypoints',            vars: ['input_waypoint_file', 'waypoint_number_input', 'waypoint_type_input'] },
+    ],
+};
+
+
+// ---- API calls ----
+
+async function fetchJSON(url, opts = {}) {
+    const res = await fetch(url, opts);
+    return res.json();
+}
+
+async function loadAllSettings() {
+    try {
+        settingsData = await fetchJSON('/api/settings');
+        originalValues = {};
+        pendingChanges = {};
+
+        for (const [key, data] of Object.entries(settingsData)) {
+            originalValues[key] = {};
+            pendingChanges[key] = {};
+            for (const v of data.variables) {
+                originalValues[key][v.name] = v.value;
+            }
+        }
+
+        renderAll();
+        updateSaveBar();
+
+        // Set project path
+        const firstPath = Object.values(settingsData)[0]?.path || '';
+        const projectDir = firstPath.replace(/[/\\]src[/\\]USER[/\\]settings[/\\].*/, '');
+        document.getElementById('project-path').textContent = projectDir;
+
+        toast('Settings loaded', 'success');
+    } catch (e) {
+        console.error(e);
+        toast('Failed to load settings: ' + e.message, 'error');
+    }
+}
+
+async function saveAllChanges() {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loading-spinner"></span> Saving...';
+
+    let totalChanged = 0;
+    let errors = [];
+
+    for (const [fileKey, changes] of Object.entries(pendingChanges)) {
+        if (Object.keys(changes).length === 0) continue;
+
+        try {
+            const result = await fetchJSON('/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: fileKey, changes })
+            });
+
+            if (result.ok) {
+                totalChanged += result.changed || 0;
+            } else {
+                errors.push(`${fileKey}: ${result.error}`);
+            }
+        } catch (e) {
+            errors.push(`${fileKey}: ${e.message}`);
+        }
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '💾 Save Changes';
+
+    if (errors.length > 0) {
+        toast('Errors: ' + errors.join('; '), 'error');
+    } else if (totalChanged > 0) {
+        toast(`Saved ${totalChanged} change(s) — backup created`, 'success');
+        await loadAllSettings();
+    } else {
+        toast('No changes to save', 'info');
+    }
+}
+
+async function loadBackups() {
+    try {
+        const backups = await fetchJSON('/api/backups');
+        renderBackups(backups);
+    } catch (e) {
+        toast('Failed to load backups', 'error');
+    }
+}
+
+async function restoreBackup(name) {
+    if (!confirm(`Restore backup "${name}"?\n\nA backup of the current file will be created first.`)) return;
+
+    try {
+        const result = await fetchJSON('/api/restore', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ backup: name })
+        });
+
+        if (result.ok) {
+            toast(`Restored ${result.restored} from backup`, 'success');
+            await loadAllSettings();
+            switchTab(result.restored);
+        } else {
+            toast(result.error, 'error');
+        }
+    } catch (e) {
+        toast('Restore failed: ' + e.message, 'error');
+    }
+}
+
+
+// ---- Change tracking ----
+
+function setChange(fileKey, varName, newValue) {
+    const original = originalValues[fileKey]?.[varName];
+
+    // Deep compare for simple types
+    if (newValue === original || JSON.stringify(newValue) === JSON.stringify(original)) {
+        delete pendingChanges[fileKey][varName];
+    } else {
+        pendingChanges[fileKey][varName] = newValue;
+    }
+
+    updateSaveBar();
+    updateModifiedIndicators(fileKey);
+}
+
+function discardChanges() {
+    for (const key of Object.keys(pendingChanges)) {
+        pendingChanges[key] = {};
+    }
+    renderAll();
+    updateSaveBar();
+    toast('Changes discarded', 'info');
+}
+
+function getTotalChanges() {
+    let total = 0;
+    for (const changes of Object.values(pendingChanges)) {
+        total += Object.keys(changes).length;
+    }
+    return total;
+}
+
+function updateSaveBar() {
+    const count = getTotalChanges();
+    const bar = document.getElementById('save-bar');
+    const countEl = document.getElementById('change-count');
+
+    if (count > 0) {
+        bar.classList.add('visible');
+        countEl.textContent = `${count} unsaved change${count !== 1 ? 's' : ''}`;
+    } else {
+        bar.classList.remove('visible');
+    }
+
+    // Update tab badges
+    for (const key of Object.keys(settingsData)) {
+        const badge = document.getElementById(`badge-${key}`);
+        if (!badge) continue;
+        const n = Object.keys(pendingChanges[key] || {}).length;
+        const total = settingsData[key]?.variables?.length || 0;
+        if (n > 0) {
+            badge.textContent = `${n}✎`;
+            badge.style.color = 'var(--yellow)';
+        } else {
+            badge.textContent = total;
+            badge.style.color = '';
+        }
+    }
+}
+
+function updateModifiedIndicators(fileKey) {
+    const panel = document.getElementById(`panel-${fileKey}`);
+    if (!panel) return;
+
+    panel.querySelectorAll('.setting-row[data-var]').forEach(row => {
+        const varName = row.dataset.var;
+        if (pendingChanges[fileKey]?.[varName] !== undefined) {
+            row.classList.add('modified');
+        } else {
+            row.classList.remove('modified');
+        }
+    });
+}
+
+
+// ---- Rendering ----
+
+function renderAll() {
+    for (const key of Object.keys(settingsData)) {
+        renderPanel(key);
+    }
+}
+
+function renderPanel(fileKey) {
+    const panel = document.getElementById(`panel-${fileKey}`);
+    if (!panel) return;
+
+    const data = settingsData[fileKey];
+    if (!data?.exists) {
+        panel.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">⚠️</div>
+                <p>File not found:<br><code>${data?.path || 'unknown'}</code></p>
+            </div>`;
+        return;
+    }
+
+    const groups = GROUPS[fileKey] || [{ title: 'Settings', vars: data.variables.map(v => v.name) }];
+    const varMap = {};
+    for (const v of data.variables) {
+        varMap[v.name] = v;
+    }
+
+    // Find ungrouped variables
+    const groupedVars = new Set(groups.flatMap(g => g.vars));
+    const ungrouped = data.variables.filter(v => !groupedVars.has(v.name));
+
+    let html = '';
+
+    for (const group of groups) {
+        const groupVars = group.vars.map(n => varMap[n]).filter(Boolean);
+        if (groupVars.length === 0) continue;
+
+        // Filter by search
+        const filtered = searchQuery
+            ? groupVars.filter(v =>
+                v.name.toLowerCase().includes(searchQuery) ||
+                (v.comment || '').toLowerCase().includes(searchQuery))
+            : groupVars;
+
+        if (filtered.length === 0) continue;
+
+        html += `<div class="settings-group">`;
+        html += `<div class="group-title">${group.title}</div>`;
+
+        for (const v of filtered) {
+            html += renderSettingRow(fileKey, v);
+        }
+
+        html += `</div>`;
+    }
+
+    // Ungrouped
+    if (ungrouped.length > 0) {
+        const filtered = searchQuery
+            ? ungrouped.filter(v =>
+                v.name.toLowerCase().includes(searchQuery) ||
+                (v.comment || '').toLowerCase().includes(searchQuery))
+            : ungrouped;
+
+        if (filtered.length > 0) {
+            html += `<div class="settings-group">`;
+            html += `<div class="group-title">📎 Other</div>`;
+            for (const v of filtered) {
+                html += renderSettingRow(fileKey, v);
+            }
+            html += `</div>`;
+        }
+    }
+
+    if (!html) {
+        html = `<div class="empty-state"><div class="empty-icon">🔍</div><p>No matching settings</p></div>`;
+    }
+
+    panel.innerHTML = html;
+    updateModifiedIndicators(fileKey);
+}
+
+function renderSettingRow(fileKey, v) {
+    const currentValue = pendingChanges[fileKey]?.[v.name] !== undefined
+        ? pendingChanges[fileKey][v.name]
+        : v.value;
+    const isModified = pendingChanges[fileKey]?.[v.name] !== undefined;
+
+    let controlHTML = '';
+
+    if (v.value_type === 'bool') {
+        const checked = currentValue ? 'checked' : '';
+        const labelClass = currentValue ? 'on' : 'off';
+        const labelText = currentValue ? 'ON' : 'OFF';
+        controlHTML = `
+            <span class="toggle-label ${labelClass}" id="lbl-${fileKey}-${v.name}">${labelText}</span>
+            <label class="toggle">
+                <input type="checkbox" ${checked}
+                    onchange="handleToggle('${fileKey}', '${v.name}', this.checked)">
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+            </label>`;
+
+    } else if (v.value_type === 'str') {
+        const escaped = (currentValue || '').replace(/"/g, '&quot;');
+        controlHTML = `<input type="text" class="input-text" value="${escaped}"
+            onchange="handleText('${fileKey}', '${v.name}', this.value)">`;
+
+    } else if (v.value_type === 'int') {
+        controlHTML = `<input type="number" class="input-number" value="${currentValue}"
+            step="1"
+            onchange="handleNumber('${fileKey}', '${v.name}', this.value, 'int')">`;
+
+    } else if (v.value_type === 'float') {
+        controlHTML = `<input type="number" class="input-number" value="${currentValue}"
+            step="0.1"
+            onchange="handleNumber('${fileKey}', '${v.name}', this.value, 'float')">`;
+
+    } else if (v.value_type === 'tuple') {
+        const display = typeof currentValue === 'string' ? currentValue : v.value_raw;
+        controlHTML = `<input type="text" class="input-tuple" value="${display}"
+            onchange="handleTuple('${fileKey}', '${v.name}', this.value)">`;
+
+    } else if (v.value_type === 'none') {
+        controlHTML = `<input type="text" class="input-text" value="None"
+            onchange="handleNoneOrText('${fileKey}', '${v.name}', this.value)">`;
+
+    } else {
+        // Read-only (path, list, expr, texture)
+        const display = v.value_raw || String(v.value);
+        controlHTML = `<span class="input-readonly" title="${display}">${display}</span>`;
+    }
+
+    return `
+        <div class="setting-row ${isModified ? 'modified' : ''}" data-var="${v.name}">
+            <div class="setting-info">
+                <div class="setting-name">${v.name}</div>
+                ${v.comment ? `<div class="setting-comment" title="${v.comment}">${v.comment}</div>` : ''}
+            </div>
+            <div class="setting-control">
+                ${controlHTML}
+            </div>
+        </div>`;
+}
+
+
+function renderBackups(backups) {
+    const panel = document.getElementById('panel-backups');
+
+    if (!backups || backups.length === 0) {
+        panel.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">📁</div>
+                <p>No backups yet. Backups are created automatically when you save changes.</p>
+            </div>`;
+        return;
+    }
+
+    let html = `<div class="settings-group"><div class="group-title">⟳ Backups</div><div class="backup-list">`;
+
+    for (const b of backups) {
+        const date = new Date(b.modified * 1000);
+        const dateStr = date.toLocaleString();
+        const sizeStr = (b.size / 1024).toFixed(1) + ' KB';
+
+        html += `
+            <div class="backup-item">
+                <div>
+                    <div class="backup-name">${b.name}</div>
+                    <div class="backup-date">${dateStr} — ${sizeStr}</div>
+                </div>
+                <button class="btn btn-small" onclick="restoreBackup('${b.name}')">Restore</button>
+            </div>`;
+    }
+
+    html += `</div></div>`;
+    panel.innerHTML = html;
+}
+
+
+// ---- Event handlers ----
+
+function handleToggle(fileKey, varName, checked) {
+    setChange(fileKey, varName, checked);
+
+    // Update label
+    const lbl = document.getElementById(`lbl-${fileKey}-${varName}`);
+    if (lbl) {
+        lbl.textContent = checked ? 'ON' : 'OFF';
+        lbl.className = `toggle-label ${checked ? 'on' : 'off'}`;
+    }
+}
+
+function handleText(fileKey, varName, value) {
+    setChange(fileKey, varName, value);
+}
+
+function handleNumber(fileKey, varName, value, type) {
+    const parsed = type === 'int' ? parseInt(value, 10) : parseFloat(value);
+    if (!isNaN(parsed)) {
+        setChange(fileKey, varName, parsed);
+    }
+}
+
+function handleTuple(fileKey, varName, value) {
+    // Validate it looks like a tuple
+    const trimmed = value.trim();
+    if (/^\([\d\s.,+-]+\)$/.test(trimmed)) {
+        setChange(fileKey, varName, trimmed);
+    } else {
+        toast('Invalid tuple format. Expected: (x, y, z)', 'error');
+    }
+}
+
+function handleNoneOrText(fileKey, varName, value) {
+    if (value.trim() === 'None' || value.trim() === 'none') {
+        setChange(fileKey, varName, null);
+    } else {
+        // Treat as string
+        setChange(fileKey, varName, value);
+    }
+}
+
+function handleSearch(query) {
+    searchQuery = query.toLowerCase().trim();
+    renderAll();
+}
+
+
+// ---- Tab / Panel switching ----
+
+function switchTab(tabName) {
+    if (tabName === 'backups') {
+        switchPanel('backups');
+        return;
+    }
+
+    activeTab = tabName;
+
+    // Update tab buttons
+    document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tabName);
+    });
+
+    // Update panels
+    document.querySelectorAll('.panel').forEach(p => {
+        p.classList.toggle('active', p.id === `panel-${tabName}`);
+    });
+}
+
+function switchPanel(panelName) {
+    // Deactivate all tabs
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+
+    // Show target panel
+    document.querySelectorAll('.panel').forEach(p => {
+        p.classList.toggle('active', p.id === `panel-${panelName}`);
+    });
+
+    if (panelName === 'backups') {
+        loadBackups();
+    }
+}
+
+
+// ---- Toast ----
+
+function toast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+
+    const icon = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+    el.innerHTML = `<span>${icon}</span> ${message}`;
+
+    container.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+}
+
+
+// ---- Keyboard shortcuts ----
+
+document.addEventListener('keydown', (e) => {
+    // Ctrl+S / Cmd+S = Save
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        if (getTotalChanges() > 0) saveAllChanges();
+    }
+
+    // Escape = Discard or clear search
+    if (e.key === 'Escape') {
+        const searchInput = document.getElementById('search-input');
+        if (document.activeElement === searchInput && searchQuery) {
+            searchInput.value = '';
+            handleSearch('');
+        } else if (getTotalChanges() > 0) {
+            discardChanges();
+        }
+    }
+
+    // Ctrl+F = Focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        document.getElementById('search-input').focus();
+    }
+
+    // Tab switching with 1-4
+    if (e.altKey && ['1','2','3','4'].includes(e.key)) {
+        e.preventDefault();
+        const tabs = ['main', 'advanced', 'debug', 'blender'];
+        switchTab(tabs[parseInt(e.key) - 1]);
+    }
+});
+
+
+// ---- Init ----
+
+loadAllSettings();
+
+</script>
+</body>
+</html>
