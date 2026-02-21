@@ -21,7 +21,9 @@ git clone https://github.com/KcRobin9/MM1-Map-Editor.git
 
 ## Tutorials
 Step-by-step guides to help you get started:
-* [Blender](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/blender.md)
+* Blender
+    * [Blender Shortcuts](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/blender_shortcuts.md)
+    * [Blender Waypoints](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/blender_waypoints.md)
 * [Props](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/props.md)
 * [Facades](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/facades.md)
 * [Physics](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/physics.md)
