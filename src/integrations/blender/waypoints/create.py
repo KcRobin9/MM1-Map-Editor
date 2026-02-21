@@ -3,7 +3,7 @@ import math
 from mathutils import Vector
 from typing import Optional, Tuple
 
-from src.constants.misc import Color
+from src.constants.color import Color
 from src.game.waypoints.constants import Rotation, Width
 
 from src.integrations.blender.waypoints.helpers import update_waypoint_colors

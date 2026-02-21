@@ -5,7 +5,8 @@ from pathlib import Path
 from mathutils import Vector
 
 from src.constants.file_formats import FileType
-from src.constants.misc import Color, Executable
+from src.constants.color import Color
+from src.constants.misc import Executable
 
 from src.helpers.main import is_process_running
 from src.core.geometry.main import transform_coordinate_system

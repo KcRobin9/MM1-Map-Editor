@@ -2,7 +2,8 @@ from src.core.vector.vector_3 import Vector3
 
 from src.file_formats.development import DLPVertex, DLPPatch, DLPGroup
 
-from src.constants.misc import Default, Color
+from src.constants.color import Color
+from src.constants.misc import Default
 
 
 s_res = 4

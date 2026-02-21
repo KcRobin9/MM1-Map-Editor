@@ -1,6 +1,6 @@
 import bpy
 
-from src.constants.misc import Color
+from src.constants.color import Color
 
 
 HUD_IMPORT = [

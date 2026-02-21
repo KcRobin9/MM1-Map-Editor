@@ -5,8 +5,7 @@ from pathlib import Path
 from itertools import cycle
 from mathutils import Vector
 
-from src.constants.file_formats import FileType
-from src.constants.misc import Color
+from src.constants.color import Color
 
 from src.game.races.constants import RACE_TYPE_INITIALS
 from src.game.races.constants_2 import CopsAndRobbers

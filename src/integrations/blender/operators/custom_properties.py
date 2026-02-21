@@ -1,6 +1,6 @@
 import bpy
 
-from src.constants.misc import Color
+from src.constants.color import Color
 from src.constants.constants import YES, NO
 from src.constants.file_formats import Material, Room
 

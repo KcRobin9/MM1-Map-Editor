@@ -109,7 +109,8 @@ from src.constants.constants import *
 from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
 from src.constants.textures import Texture
 from src.constants.folder import Folder
-from src.constants.misc import Shape, Encoding, Executable, Default, Threshold, Color
+from src.constants.misc import Shape, Encoding, Executable, Default, Threshold
+from src.constants.color import Color
 
 # USER imports
 from src.USER.settings.main import (
