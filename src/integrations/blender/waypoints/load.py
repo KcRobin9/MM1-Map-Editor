@@ -35,7 +35,7 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
     race_key = f"{race_type_input}_{race_number_input}"  
     
     if race_key in race_data:
-        waypoints = race_data[race_key]["waypoints"]
+        waypoints = race_data[race_key]["player_waypoints"]
         
         for index, waypoint_data in enumerate(waypoints):
             x, y, z, rotation, scale = waypoint_data
@@ -49,8 +49,9 @@ def load_waypoints_from_race_data(race_data: dict, race_type_input: str, race_nu
         
 
 def load_waypoints_from_csv(waypoint_file: Path) -> None:
-    file_info = str(waypoint_file).replace(FileType.CSV, "").replace("WAYPOINTS", "")
-    
+    # file_info = str(waypoint_file).replace(FileType.CSV, "").replace("WAYPOINTS", "")
+    file_info = waypoint_file.stem.replace("WAYPOINTS", "")  # e.g. "RACE0" from "RACE0WAYPOINTS.csv"
+        
     race_type = "".join(filter(str.isalpha, file_info))
     race_number = "".join(filter(str.isdigit, file_info))
     

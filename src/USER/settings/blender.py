@@ -1,6 +1,6 @@
 from src.constants.folder import Folder
 
-load_target_model = True               # Set True to load an external model instead of the test city
+load_target_model = False               # Set True to load an external model instead of the test city
 target_blend_file = Folder.Blender.Models / "RACECITY_2ND.blend"  # Only used when load_target_model = True
 
 # Textures
@@ -14,5 +14,5 @@ visualize_ai_paths = False      # Change to "True" if you want to visualize the 
 input_waypoint_file = Folder.Resources.Editor.Race / "RACE2WAYPOINTS.CSV"
 
 # Waypoints from the Editor ("race_data")
-waypoint_number_input = "0", 
+waypoint_number_input = "0"
 waypoint_type_input = "RACE"

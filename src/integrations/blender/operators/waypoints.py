@@ -6,6 +6,9 @@ from src.integrations.blender.waypoints.create import create_waypoint
 from src.integrations.blender.waypoints.export import export_selected_waypoints
 from src.integrations.blender.waypoints.load import load_cops_and_robbers_waypoints, load_waypoints_from_csv, load_waypoints_from_race_data
 
+from src.USER.settings.blender import input_waypoint_file, waypoint_number_input, waypoint_type_input
+from src.USER.races.races import race_data
+
 
 class CREATE_SINGLE_WAYPOINT_OT_operator(bpy.types.Operator):
     bl_idname = "create.single_waypoint"
