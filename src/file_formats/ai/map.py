@@ -7,7 +7,7 @@ from src.file_formats.ai.helpers import read_array_list
 
 from src.io.binary import read_unpack
 
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 
 from src.USER.settings.main import MAP_FILENAME
 
@@ -50,7 +50,7 @@ class BaiMap:
         self.write_map()
              
     def write_map(self):           
-        with open(Folder.MIDTOWNMADNESS_DEV_CITY_MAP / f"{MAP_FILENAME}.map", 'w') as f:
+        with open(Folder.MidtownMadness.DevCityMap / f"{MAP_FILENAME}.map", 'w') as f:
             f.write(self.map_template())
         print(f"Successfully created AI map file")
     

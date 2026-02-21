@@ -1,11 +1,11 @@
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.props import Prop
 
 
 # Configuration
 replace_props = False           # Change to "True" if you want to replace props
-replace_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO_INPUT.BNG"
-replace_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_REPLACED.BNG"
+replace_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"
+replace_output_props_file = Folder.Resources.User.Props / "CHICAGO_REPLACED.BNG"
 
 replace_tolerance = 0.25
 replace_require_confirmation = True

@@ -2,13 +2,13 @@ import subprocess
 import shutil
 from pathlib import Path
 
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.constants import REQUIRED_ANGEL_FILES
 from src.USER.settings.main import MAP_FILENAME
 
 
 def copy_angel_resources(shop_folder: Path) -> None:
-    for file in Folder.ANGEL.iterdir():
+    for file in Folder.Angel.iterdir():
         if file.name.upper() in REQUIRED_ANGEL_FILES:
             shutil.copy(file, shop_folder / file.name)
             print(f"Copied {file.name} to SHOP folder.")

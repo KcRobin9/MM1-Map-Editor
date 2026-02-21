@@ -5,7 +5,8 @@ from typing import List, BinaryIO
 from src.core.vector.vector_2 import Vector2
 from src.core.vector.vector_3 import Vector3
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
-from src.constants.misc import Encoding, Folder
+from src.constants.misc import Encoding
+from src.constants.folder import Folder
 
 
 class PhysicsEditor:

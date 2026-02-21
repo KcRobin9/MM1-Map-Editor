@@ -8,7 +8,8 @@ from src.core.vector.vector_3 import Vector3
 from src.game.races.constants import RaceModeNum, RaceMode, RACE_TYPE_INITIALS
 
 from src.constants.constants import PROP_CAN_COLLIDE_FLAG, HUGE
-from src.constants.misc import Folder, Encoding, Default
+from src.constants.folder import Folder
+from src.constants.misc import Encoding, Default
 from src.constants.file_formats import FileType, Axis
 
 from src.file_formats.props.props import Bangers
@@ -63,7 +64,7 @@ class BangerEditor:
             self.props.clear()
             self.add_multiple(race_props)
             current_filename = self._filename_with_suffix(race_key)
-            Bangers.write_all(Folder.SHOP_CITY / current_filename, self.props, debug_props)
+            Bangers.write_all(Folder.Shop.City / current_filename, self.props, debug_props)
             total_props += len(self.props)
             
             for prop in self.props:
@@ -166,7 +167,7 @@ class BangerEditor:
                 separator = prop.get('separator', 10.0)
             
                 if isinstance(separator, str) and separator.lower() in (Axis.X, Axis.Y, Axis.Z):
-                    prop_dims = self.load_dimensions(Folder.RESOURCES_EDITOR / "PROPS" / "prop_dimensions.txt").get(name, Vector3(1, 1, 1))
+                    prop_dims = self.load_dimensions(Folder.Resources.Editor.Props / "prop_dimensions.txt").get(name, Vector3(1, 1, 1))
                     separator = getattr(prop_dims, separator.lower())
                 elif not isinstance(separator, (int, float)):
                     separator = 10.0
@@ -229,7 +230,7 @@ class BangerEditor:
             print(f"---output file: {appended_props_f.name}")
         
         if debug_props:
-            Bangers.debug(Folder.DEBUG / "PROPS" / f"{appended_props_f.name}{FileType.TEXT}", self.props)
+            Bangers.debug(Folder.Debug.Props / f"{appended_props_f.name}{FileType.TEXT}", self.props)
 
     def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
         assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."

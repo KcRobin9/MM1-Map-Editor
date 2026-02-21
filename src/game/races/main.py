@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from src.constants.modes import RaceMode
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.file_formats import FileType
 
 from src.game.races.checks import check_race_count, check_waypoint_count
@@ -49,8 +49,8 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
                                     
         file_prefix = f"{race_type}{race_index}"
 
-        ai_map_file = Folder.SHOP_RACE_MAP / f"{file_prefix}.AIMAP_P"
-        player_waypoint_file = Folder.SHOP_RACE_MAP / f"{file_prefix}WAYPOINTS{FileType.CSV}"
+        ai_map_file = Folder.Shop.Map.Race / f"{file_prefix}.AIMAP_P"
+        player_waypoint_file = Folder.Shop.Map.Race / f"{file_prefix}WAYPOINTS{FileType.CSV}"
         mm_data_file = MM_DATA_FILES[race_type]
         
         # Safety Checks
@@ -63,7 +63,7 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
         # Opponent Waypoints - iterate through all opponents
         for opp_index, (opp_car_name, opp_waypoints) in enumerate(opponent_list):
             opp_file_name = f"OPP{opp_index}{file_prefix}{RACE_TYPE_TO_EXTENSION[race_type]}{race_index}"
-            opp_waypoint_file = Folder.SHOP_RACE_MAP / opp_file_name
+            opp_waypoint_file = Folder.Shop.Map.Race / opp_file_name
             write_waypoints(opp_waypoint_file, opp_waypoints, race_type, race_index, opp_index)
         
         # Write Header Only Once for Each File

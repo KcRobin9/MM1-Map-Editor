@@ -1,10 +1,7 @@
-from pathlib import Path
 from typing import Tuple
 
 from src.core.vector.vector_2 import Vector2
 from src.core.vector.vector_3 import Vector3
-
-from src.helpers.main import is_process_running
 
 from src.USER.settings.main import MAP_FILENAME
 
@@ -35,90 +32,6 @@ class Default:
     NORMAL = "0.0 1.0 0.0"
     GAP_2 = 101
 
-
-class Folder:
-    BASE = Path(__file__).parent.parent.parent.resolve()  # folder: MM1-Map-Editor
-    
-    SHOP = BASE / "SHOP"
-    BUILD = BASE / "build"
-    ANGEL = BASE / "angel"
-    DEBUG = BASE / "debug" 
-
-    BLENDER_EXPORT = BASE / "blender_export"
-    BLENDER_EXPORT_POLYGON = BLENDER_EXPORT / "polygons"
-    BLENDER_EXPORT_WAYPOINTS = BLENDER_EXPORT / "waypoints"
-
-    SHOP_CITY = SHOP / "CITY"
-    SHOP_RACE = SHOP / "RACE"   
-    SHOP_TUNE = SHOP / "TUNE"
-    SHOP_BOUND = SHOP / "BND" 
-    SHOP_MESHES = SHOP / "BMS" 
-    SHOP_MATERIAL = SHOP / "MTL"
-
-    SHOP_TEXTURES_BITMAP = SHOP / "BMP16"
-    SHOP_TEXTURES_ALPHA = SHOP / "TEX16A" 
-    SHOP_TEXTURES_OPAQUE = SHOP / "TEX16O" 
-    SHOP_TEXTURES_PALETTE = SHOP / "TEXP" 
-
-    SHOP_CITY_MAP = SHOP_CITY / f"{MAP_FILENAME}" 
-    SHOP_RACE_MAP = SHOP_RACE / f"{MAP_FILENAME}" 
-
-    SHOP_MESH_CITY_MAP = SHOP_MESHES / f"{MAP_FILENAME}CITY"
-    SHOP_MESH_LANDMARK_MAP = SHOP_MESHES / f"{MAP_FILENAME}LM"
-
-    SHOP_BOUND_CITY_MAP = SHOP_BOUND / f"{MAP_FILENAME}CITY"
-    SHOP_BOUND_LANDMARK_MAP = SHOP_BOUND / f"{MAP_FILENAME}LM"
-    
-    MIDTOWNMADNESS = BASE / "MidtownMadness"
-
-    MIDTOWNMADNESS_DEV_CITY_MAP = MIDTOWNMADNESS / "dev" / "CITY" / MAP_FILENAME
-
-    RESOURCES_USER = BASE / "resources" / "user"
-    RESOURCES_EDITOR = BASE / "resources" / "editor"
-
-    DEBUG = BASE / "debug" 
-
-    USER_TEXTURES_CUSTOM = BASE / "src" / "USER" / "textures" / "custom"
-
-    BLENDER_MODELS = BASE / "blender_models"
-
-    MAIN = [
-        BUILD,
-        DEBUG,
-
-        SHOP_TEXTURES_BITMAP,
-        SHOP_TEXTURES_ALPHA,
-        SHOP_TEXTURES_OPAQUE,
-
-        SHOP_TUNE,
-        SHOP_MATERIAL,
-
-        SHOP_CITY_MAP,
-        SHOP_RACE_MAP,
-
-        SHOP_MESH_CITY_MAP,
-        SHOP_MESH_LANDMARK_MAP,
-
-        SHOP_BOUND_CITY_MAP,
-        SHOP_BOUND_LANDMARK_MAP,
-
-        MIDTOWNMADNESS_DEV_CITY_MAP,
-    ]
-    
-    BLENDER = [
-        BLENDER_EXPORT_POLYGON,
-        BLENDER_EXPORT_WAYPOINTS
-    ]
-
-    @classmethod
-    def create_all(cls) -> None:
-        for folder in cls.MAIN:
-            folder.mkdir(parents = True, exist_ok = True)
-
-        if is_process_running(Executable.BLENDER):
-            for folder in cls.BLENDER:
-                folder.mkdir(parents = True, exist_ok = True)
-    
 
 class CommandArgs:
     DEFAULT = f"-path ./dev -allrace -allcars -f -heapsize 499 -maxcops 100 -speedycops -mousemode 1 -l {MAP_FILENAME}"

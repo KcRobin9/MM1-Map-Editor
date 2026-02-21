@@ -3,7 +3,8 @@ import textwrap
 from src.constants.file_formats import FileType
 from src.constants.props import Prop
 from src.constants.constants import NO
-from src.constants.misc import Folder, Default
+from src.constants.folder import Folder
+from src.constants.misc import Default
 
 from src.game.races.constants_2 import IntersectionType
 from src.file_formats.ai.map import BaiMap
@@ -64,7 +65,7 @@ class aiStreetEditor:
         return BaiMap(street_names)
 
     def write(self):    
-        with open(Folder.MIDTOWNMADNESS_DEV_CITY_MAP / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
+        with open(Folder.MidtownMadness.DevCityMap / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
             f.write(self.set_template())
 
     def set_template(self):

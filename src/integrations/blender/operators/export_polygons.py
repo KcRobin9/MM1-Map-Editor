@@ -6,7 +6,7 @@ import pyautogui
 from src.constants.constants import CURRENT_TIME_FORMATTED
 from src.constants.file_formats import FileType
 from src.constants.keyboard import Key
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 
 from src.integrations.blender.export_polygons import export_formatted_polygons
 
@@ -20,7 +20,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     select_all: bpy.props.BoolProperty(default = True)
 
     def execute(self, context: bpy.types.Context) -> Set[set]:                            
-        export_file = Folder.BLENDER_EXPORT_POLYGON / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+        export_file = Folder.Blender.Polygons / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
                             
         # Select Mesh Objects based on the "select_all" property
         if self.select_all:

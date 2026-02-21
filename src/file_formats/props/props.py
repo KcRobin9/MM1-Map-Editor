@@ -4,7 +4,8 @@ from typing import List, BinaryIO
 from src.core.vector.vector_3 import Vector3
 from src.io.binary import read_unpack, write_pack, read_binary_name
 from src.debug.main import Debug
-from src.constants.misc import Encoding, Folder, Default
+from src.constants.misc import Encoding, Default
+from src.constants.folder import Folder
 from src.constants.file_formats import FileType
 from src.constants.constants import PROP_CAN_COLLIDE_FLAG
 
@@ -49,7 +50,7 @@ class Bangers:
                 banger.face.write(f, '<')
                 f.write(banger.name.encode(Encoding.UTF_8))
                     
-            cls.debug(bangers, debug_props, Folder.DEBUG / "PROPS" / f"{output_file}{FileType.TEXT}")
+            cls.debug(bangers, debug_props, Folder.Debug.Props / f"{output_file}{FileType.TEXT}")
     
     #! Works, but the Debug file should not land in "...\MM1-Map-Editor\SHOP\CITY"
     @classmethod

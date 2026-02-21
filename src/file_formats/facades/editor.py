@@ -1,7 +1,8 @@
 import math
 from pathlib import Path
 
-from src.constants.misc import Folder, Default
+from src.constants.folder import Folder
+from src.constants.misc import Default
 from src.constants.file_formats import FileType
 
 from src.file_formats.facades.facades import Facades
@@ -29,7 +30,7 @@ class FacadeEditor:
         else:
             print(f"Successfully created facades file with {len(facades)} facade(s)")
 
-        Facades.debug(facades, debug_facades, Folder.DEBUG / "FACADES" / f"{MAP_FILENAME}{FileType.TEXT}")
+        Facades.debug(facades, debug_facades, Folder.Debug.Facades / f"{MAP_FILENAME}{FileType.TEXT}")
 
     @staticmethod
     def read_scales(input_file: Path):
@@ -39,7 +40,7 @@ class FacadeEditor:
     @classmethod
     def process(cls, user_set_facades):
         axis_dict = {'x': 0, 'y': 1, 'z': 2}
-        scales = cls.read_scales(Folder.RESOURCES_EDITOR / "FACADES" / "FCD scales.txt")
+        scales = cls.read_scales(Folder.Resources.Editor.Facades / "FCD scales.txt")
 
         facades = []
         for params in user_set_facades:

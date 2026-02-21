@@ -102,13 +102,14 @@ from src.misc.angel import create_angel_resource_file
 
 # Progress bar imports
 from src.ui.progress_bar.main import RunTimeManager, start_progress_tracking
-from src.ui.progress_bar.constants import EDITOR_RUNTIME_FILE, COLOR_DIVIDER
+from src.ui.progress_bar.constants import COLOR_DIVIDER
 
 # Constants imports
 from src.constants.constants import * 
 from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
 from src.constants.textures import Texture
-from src.constants.misc import Shape, Encoding, Executable, Default, Folder, Threshold, Color
+from src.constants.folder import Folder
+from src.constants.misc import Shape, Encoding, Executable, Default, Threshold, Color
 
 # USER imports
 from src.USER.settings.main import (
@@ -185,7 +186,7 @@ polygons_data = []
 hudmap_vertices = []
 hudmap_properties = {}
 
-progress_thread, start_time = start_progress_tracking(MAP_NAME, EDITOR_RUNTIME_FILE, disable_progress_bar)
+progress_thread, start_time = start_progress_tracking(MAP_NAME, Folder.Resources.Editor.Root / "editor_runtime.pkl", disable_progress_bar)
 
 ################################################################################################################               
 ################################################################################################################     
@@ -795,9 +796,9 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
 
 def determine_mesh_folder_and_filename(cell_id: int, texture_name: List[str]) -> Tuple[Path, str]:
     if cell_id < Threshold.CELL_TYPE_SWITCH:
-        target_folder = Folder.SHOP_MESH_LANDMARK_MAP
+        target_folder = Folder.Shop.Map.MeshLandmark
     else:
-        target_folder = Folder.SHOP_MESH_CITY_MAP
+        target_folder = Folder.Shop.Map.MeshCity
                         
     if any(name.startswith(Texture.WATER) for name in texture_name):
         mesh_filename = f"CULL{cell_id:02d}_A2{FileType.MESH_lowercase}"
@@ -1786,7 +1787,7 @@ def get_cell_visibility_by_distance(cell_id: int, polys: List[Polygon], cell_typ
 
 
 def create_cells(output_file: Path, polys: List[Polygon]) -> None:
-    mesh_files, mesh_a2_files = get_cell_ids(Folder.SHOP_MESH_LANDMARK_MAP, Folder.SHOP_MESH_CITY_MAP)
+    mesh_files, mesh_a2_files = get_cell_ids(Folder.Shop.Map.MeshLandmark, Folder.Shop.Map.MeshCity)
 
     with open(output_file, "w") as f:    
         f.write(f"{len(mesh_files)}\n")
@@ -1884,8 +1885,8 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
     ax.axis("off")
 
     # Save JPG 640 and 320 Pictures                    
-    plt.savefig(Folder.SHOP_TEXTURES_BITMAP / f"{MAP_FILENAME}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
-    plt.savefig(Folder.SHOP_TEXTURES_BITMAP / f"{MAP_FILENAME}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
+    plt.savefig(Folder.Shop.Textures.Bitmap / f"{MAP_FILENAME}640.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color)
+    plt.savefig(Folder.Shop.Textures.Bitmap / f"{MAP_FILENAME}320.JPG", dpi = 1000, bbox_inches = "tight", pad_inches = 0.02, facecolor = background_color) 
 
     print(f"Successfully created minimap with {len(hudmap_vertices)} polygon(s)")
 
@@ -2215,7 +2216,7 @@ class Portals:
                     _max.write(f, '<')
                     
                 print(f"Successfully created {len(portal_tuples)} portal(s)")
-                cls.debug(portals, debug_portals, Folder.DEBUG / "PORTALS" / f"{MAP_FILENAME}_PTL.txt")            
+                cls.debug(portals, debug_portals, Folder.Debug.Portals / f"{MAP_FILENAME}_PTL.txt")            
 
     @classmethod
     def debug(cls, portals: 'List[Portals]', debug_portals: bool, output_file: Path) -> None:
@@ -2413,17 +2414,16 @@ street_list = street_list + [cruise_start]
 #! ======================= CALL FUNCTIONS ======================= !#
 
 # Setup
-copy_custom_textures_to_shop(Folder.USER_TEXTURES_CUSTOM, Folder.SHOP_TEXTURES_OPAQUE)
-copy_carsim_files_to_shop(Folder.RESOURCES_EDITOR / "TUNE" / "MMCARSIM", Folder.SHOP_TUNE, FileType.CAR_SIMULATION)
-ensure_empty_mm_dev_folder(Folder.MIDTOWNMADNESS_DEV_CITY_MAP) 
-create_commandline(Folder.MIDTOWNMADNESS / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
-create_map_info(Folder.SHOP_TUNE / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
-
-edit_and_copy_bangerdata_to_shop(prop_properties, Folder.RESOURCES_EDITOR / "TUNE" / "MMBANGERDATA", Folder.SHOP_TUNE, FileType.BANGER_DATA)
+copy_custom_textures_to_shop(Folder.Src.User.Textures.Custom, Folder.Shop.Textures.Opaque)
+copy_carsim_files_to_shop(Folder.Resources.Editor.Tune.CarSimulation, Folder.Shop.Tune, FileType.CAR_SIMULATION)
+ensure_empty_mm_dev_folder(Folder.MidtownMadness.DevCityMap) 
+create_commandline(Folder.MidtownMadness.Root / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
+create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
+edit_and_copy_bangerdata_to_shop(prop_properties, Folder.Resources.Editor.Tune.BangerData, Folder.Shop.Tune, FileType.BANGER_DATA)
 
 # Races
 create_races(race_data)
-create_cops_and_robbers(Folder.SHOP_RACE_MAP / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
+create_cops_and_robbers(Folder.Shop.Map.Race / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
 
 # Map
 check_bound_numbers(polys)
@@ -2439,66 +2439,129 @@ unique_textures = len(texture_counter)
 all_textures_str = ", ".join([f"{tex}: {count}x" for tex, count in texture_counter.items()])
 print(f"Succesfully utilized: {unique_textures} unique texture(s)\n---textures: ({all_textures_str})")
 
-create_cells(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.CELL}", polys)
-Bounds.create(Folder.SHOP_BOUND / f"{MAP_FILENAME}_HITID{FileType.BOUND}", vertices, polys, Folder.DEBUG / "BOUNDS" / f"{MAP_FILENAME}{FileType.TEXT}", debug_bounds)
-Portals.write_all(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.PORTAL}", polys, vertices, lower_portals, empty_portals, debug_portals)
-aiStreetEditor.create(street_list, set_ai_streets, set_reverse_ai_streets)
-FacadeEditor.create(Folder.SHOP_CITY / f"{MAP_FILENAME}{FileType.FACADE}", facade_list, set_facades, debug_facades)
-PhysicsEditor.edit(Folder.RESOURCES_EDITOR / "PHYSICS" / f"PHYSICS{FileType.DATABASE}", Folder.SHOP_MATERIAL / f"PHYSICS{FileType.DATABASE}", custom_physics, set_physics, debug_physics)
+create_cells(
+    Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", 
+    polys
+)
 
-TextureSheet.append_custom_textures(Folder.RESOURCES_EDITOR / "MTL" / "GLOBAL.TSH", Folder.USER_TEXTURES_CUSTOM, Folder.SHOP / "MTL" / "TEMP_GLOBAL.TSH", set_texture_sheet)
-TextureSheet.write_tweaked(Folder.SHOP_MATERIAL / "TEMP_GLOBAL.TSH", Folder.SHOP_MATERIAL / "GLOBAL.TSH", texture_modifications, set_texture_sheet)
+Bounds.create(
+    Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}", 
+    vertices, 
+    polys, 
+    Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}", 
+    debug_bounds
+)
+
+Portals.write_all(
+    Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}", 
+    polys, 
+    vertices, 
+    lower_portals, 
+    empty_portals, 
+    debug_portals
+)
+
+aiStreetEditor.create(
+    street_list, 
+    set_ai_streets, 
+    set_reverse_ai_streets
+)
+
+FacadeEditor.create(
+    Folder.Shop.City / f"{MAP_FILENAME}{FileType.FACADE}", 
+    facade_list, 
+    set_facades, 
+    debug_facades
+)
+
+PhysicsEditor.edit(
+    Folder.Resources.Editor.Physics / f"PHYSICS{FileType.DATABASE}", 
+    Folder.Shop.Material / f"PHYSICS{FileType.DATABASE}", 
+    custom_physics, 
+    set_physics, 
+    debug_physics
+)
+
+TextureSheet.append_custom_textures(
+    Folder.Resources.Editor.MTL / "GLOBAL.TSH", 
+    Folder.Src.User.Textures.Custom, 
+    Folder.Shop.Material / "TEMP_GLOBAL.TSH", 
+    set_texture_sheet
+)
+
+TextureSheet.write_tweaked(
+    Folder.Shop.Material / "TEMP_GLOBAL.TSH", 
+    Folder.Shop.Material / "GLOBAL.TSH", 
+    texture_modifications, 
+    set_texture_sheet
+)
                     
 prop_editor = BangerEditor()
 for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(**prop))
 prop_editor.process_all(prop_list, set_props)
 
-lighting_instances = LightingEditor.read_file(Folder.RESOURCES_EDITOR / "LIGHTING" / "LIGHTING.CSV")
-LightingEditor.write_file(lighting_instances, lighting_configs, Folder.SHOP_TUNE / "LIGHTING.CSV")
-LightingEditor.debug(lighting_instances, Folder.DEBUG / "LIGHTING" / "LIGHTING_DATA.txt", debug_lighting)
+lighting_instances = LightingEditor.read_file(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")
+LightingEditor.write_file(lighting_instances, lighting_configs, Folder.Shop.Tune / "LIGHTING.CSV")
+LightingEditor.debug(lighting_instances, Folder.Debug.Lighting / "LIGHTING_DATA.txt", debug_lighting)
 
-create_extrema(f"{Folder.SHOP_CITY_MAP}{FileType.EXTREMA}", hudmap_vertices)
-create_animations(Folder.SHOP_CITY_MAP, animations_data, set_animations)   
-create_bridges(bridge_list, set_bridges, f"{Folder.SHOP_CITY_MAP}{FileType.GIZMO}") 
-create_bridge_config(bridge_config_list, set_bridges, Folder.SHOP_TUNE)
+create_extrema(f"{Folder.Shop.Map.City}{FileType.EXTREMA}", hudmap_vertices)
+create_animations(Folder.Shop.Map.City, animations_data, set_animations)   
+create_bridges(bridge_list, set_bridges, f"{Folder.Shop.Map.City}{FileType.GIZMO}") 
+create_bridge_config(bridge_config_list, set_bridges, Folder.Shop.Tune)
 create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
-create_lars_race_maker(f"Lars_Race_Maker{FileType.HTML}", street_list, hudmap_vertices, set_lars_race_maker)
+
+create_lars_race_maker(
+    f"Lars_Race_Maker{FileType.HTML}", 
+    street_list, 
+    hudmap_vertices, 
+    set_lars_race_maker
+)
 
 # Misc
-DLP(Magic.DEVELOPMENT, len(dlp_groups), len(dlp_patches), len(dlp_vertices), dlp_groups, dlp_patches, dlp_vertices).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
+DLP(
+    Magic.DEVELOPMENT, 
+    len(dlp_groups), 
+    len(dlp_patches), 
+    len(dlp_vertices), 
+    dlp_groups, 
+    dlp_patches, 
+    dlp_vertices
+).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
 
 editor = BangerEditor()
 
-# File / Folder Debugging
-DLP.debug_file(debug_dlp_data_file, Folder.DEBUG / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
-Bounds.debug_file(debug_bounds_data_file, Folder.DEBUG / "BOUNDS" / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
-Bangers.debug_file(debug_props_data_file, Folder.DEBUG / "PROPS" / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
-Facades.debug_file(debug_facades_data_file, Folder.DEBUG / "FACADES" / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
-Portals.debug_file(debug_portals_data_file, Folder.DEBUG / "PORTALS" / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, Folder.DEBUG / "MESHES" / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
-DLP.debug_file(debug_dlp_data_file, Folder.DEBUG / "DLP" / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+# File debugging
+DLP.debug_file(debug_dlp_data_file, Folder.Debug.DLP / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+Bounds.debug_file(debug_bounds_data_file, Folder.Debug.Bounds / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
+Bangers.debug_file(debug_props_data_file, Folder.Debug.Props / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
+Bangers.debug_file_to_csv(debug_props_data_file, Folder.Debug.Props / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
+Facades.debug_file(debug_facades_data_file, Folder.Debug.Facades / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
+Portals.debug_file(debug_portals_data_file, Folder.Debug.Portals / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
+Meshes.debug_file(debug_meshes_data_file, Folder.Debug.Meshes / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
+DLP.debug_file(debug_dlp_data_file, Folder.Debug.DLP / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
 
-Bangers.debug_file_to_csv(debug_props_data_file, Folder.DEBUG / "PROPS" / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
-Meshes.debug_folder(debug_meshes_data_folder, Folder.DEBUG / "MESHES" / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_folder(debug_bounds_data_folder, Folder.DEBUG / "BOUNDS" / "BND TEXT FILES", debug_bounds_folder)
-DLP.debug_folder(debug_dlp_data_folder, Folder.DEBUG / "DLP" / "DLP TEXT FILES", debug_dlp_folder)
+# Folder debugging
+Meshes.debug_folder(debug_meshes_data_folder, Folder.Debug.Meshes / "MESH TEXT FILES", debug_meshes_folder) 
+Bounds.debug_folder(debug_bounds_data_folder, Folder.Debug.Bounds / "BND TEXT FILES", debug_bounds_folder)
+DLP.debug_folder(debug_dlp_data_folder, Folder.Debug.DLP / "DLP TEXT FILES", debug_dlp_folder)
 
 debug_ai(
-    debug_ai_data_file, debug_ai_file,
-    Folder.RESOURCES_USER / "AI" / "CHICAGO.map",                                  
-    str(Path(Folder.RESOURCES_USER) / "AI" / "Intersection{intersection_id}.int"),
-    str(Path(Folder.RESOURCES_USER) / "AI" / "Street{paths}.road")
+    debug_ai_data_file, 
+    debug_ai_file,
+    Folder.Resources.User.AI / "CHICAGO.map",                                  
+    str(Folder.Resources.User.AI / "Intersection{intersection_id}.int"),
+    str(Folder.Resources.User.AI / "Street{paths}.road")
     )
 
 # Finalizing Part
-create_angel_resource_file(Folder.SHOP)
+create_angel_resource_file(Folder.Shop.Root)
 
 end_time = time.monotonic()
 editor_time = end_time - start_time
 
 # Save the runtime
-runtime_manager = RunTimeManager(Folder.RESOURCES_EDITOR / EDITOR_RUNTIME_FILE)
+runtime_manager = RunTimeManager(Folder.Resources.Editor.Root / "editor_runtime.pkl")
 runtime_manager.save(editor_time)
 progress_thread.join()  # Wait for progress bar to complete
 
@@ -2506,7 +2569,7 @@ print(COLOR_DIVIDER)
 print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
 print(COLOR_DIVIDER)
 
-post_editor_cleanup(Folder.BUILD, Folder.SHOP, delete_shop)
+post_editor_cleanup(Folder.Build, Folder.Shop.Root, delete_shop)
 
 if subtract_props:
     shutil.copy(subtract_input_props_file, subtract_output_props_file) 
@@ -2560,7 +2623,7 @@ if duplicate_props:
         tolerance=duplicate_tolerance
     )
 
-start_game(Folder.MIDTOWNMADNESS, Executable.MIDTOWN_MADNESS, play_game)
+start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game)
 
 # Blender
 setup_blender(load_target_model)
@@ -2739,9 +2802,12 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
 ###################################################################################################################   
 ###################################################################################################################
 
-create_blender_meshes(Folder.RESOURCES_EDITOR / "TEXTURES", load_all_textures, load_target_model)
+create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
 
-process_and_visualize_paths(Folder.SHOP / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
+process_and_visualize_paths(
+    Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", 
+    visualize_ai_paths
+)
 
 ###################################################################################################################   
 ################################################################################################################### 

@@ -1,4 +1,4 @@
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.props import Prop
 from src.constants.vehicles import PlayerCar
 from src.constants.constants import HUGE
@@ -8,8 +8,8 @@ from src.constants.modes import NetworkMode, RaceMode
 
 # Append Props
 append_props = False            # Change to "True" if you want to append props
-append_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO_INPUT.BNG"  
-append_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_APPENDED.BNG"  
+append_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"  
+append_output_props_file = Folder.Resources.User.Props / "CHICAGO_APPENDED.BNG"  
 
 # Put the Props that should be Appended to an existing BNG file here
 trailer_set = {

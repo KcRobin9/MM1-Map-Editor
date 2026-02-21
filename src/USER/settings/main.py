@@ -10,7 +10,7 @@ play_game = True                # Change to "True" to start the game after the M
 delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_bridges = True              #! Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
+set_bridges = False              #! Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
 set_props = True                # Change to "True" if you want PROPS
 set_facades = True              # Change to "True" if you want FACADES
 set_physics = True              # Change to "True" if you want PHYSICS (custom)

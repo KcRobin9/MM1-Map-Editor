@@ -3,7 +3,7 @@ import time
 import pyautogui
 
 from src.constants.keyboard import Key
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.file_formats import FileType
 from src.constants.constants import CURRENT_TIME_FORMATTED
 
@@ -19,7 +19,7 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     else:
         waypoints = [wp for wp in get_all_waypoints() if wp.select_get()]
 
-    export_file = Folder.BLENDER_EXPORT_WAYPOINTS / f"Waypoints_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+    export_file = Folder.Blender.Waypoints / f"Waypoints_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
 
     with open(export_file, "w") as f:
         print("")

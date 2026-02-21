@@ -1,6 +1,6 @@
 import bpy
 
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 
 from src.integrations.blender.waypoints.create import create_waypoint
 from src.integrations.blender.waypoints.export import export_selected_waypoints

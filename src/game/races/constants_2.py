@@ -1,4 +1,4 @@
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.modes import RaceMode
 from src.constants.file_formats import FileType
 
@@ -94,7 +94,7 @@ class Laps(NumericOptions):
 
 
 MM_DATA_FILES  = {
-        RaceMode.CHECKPOINT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CHECKPOINT}DATA{FileType.CSV}",
-        RaceMode.CIRCUIT: Folder.SHOP_RACE_MAP / f"MM{RaceMode.CIRCUIT}DATA{FileType.CSV}",
-        RaceMode.BLITZ: Folder.SHOP_RACE_MAP / f"MM{RaceMode.BLITZ}DATA{FileType.CSV}"
+        RaceMode.CHECKPOINT: Folder.Shop.Map.Race / f"MM{RaceMode.CHECKPOINT}DATA{FileType.CSV}",
+        RaceMode.CIRCUIT: Folder.Shop.Map.Race / f"MM{RaceMode.CIRCUIT}DATA{FileType.CSV}",
+        RaceMode.BLITZ: Folder.Shop.Map.Race / f"MM{RaceMode.BLITZ}DATA{FileType.CSV}"
 }

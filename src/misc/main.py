@@ -4,7 +4,8 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from src.constants.misc import Folder, Executable, CommandArgs, ControlType
+from src.constants.folder import Folder
+from src.constants.misc import Executable, CommandArgs, ControlType
 from src.constants.modes import RaceMode
 from src.constants.constants import NOTEPAD_PLUS_PATHS
 

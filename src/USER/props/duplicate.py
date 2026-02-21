@@ -1,11 +1,11 @@
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.props import Prop
 
 
 # Configuration
 duplicate_props = False         # Change to "True" if you want to duplicate props
-duplicate_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO_INPUT.BNG"
-duplicate_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_DUPLICATED.BNG"
+duplicate_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"
+duplicate_output_props_file = Folder.Resources.User.Props / "CHICAGO_DUPLICATED.BNG"
 
 duplicate_tolerance = 0.25
 

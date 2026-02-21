@@ -1,12 +1,12 @@
 
-from src.constants.misc import Folder
+from src.constants.folder import Folder
 from src.constants.props import Prop
 
 
 # Configuration
 edit_props = False              # Change to "True" if you want to edit props
-edit_input_props_file = Folder.RESOURCES_EDITOR / "PROPS" / "CHICAGO_INPUT.BNG"
-edit_output_props_file = Folder.RESOURCES_USER / "PROPS" / "CHICAGO_EDITED.BNG"
+edit_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"
+edit_output_props_file = Folder.Resources.User.Props / "CHICAGO_EDITED.BNG"
 
 edit_tolerance = 0.25
 edit_require_confirmation = True
