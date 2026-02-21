@@ -6,7 +6,7 @@ from src.integrations.blender.waypoints.create import create_waypoint
 from src.integrations.blender.waypoints.export import export_selected_waypoints
 from src.integrations.blender.waypoints.load import load_cops_and_robbers_waypoints, load_waypoints_from_csv, load_waypoints_from_race_data
 
-from src.USER.settings.blender import input_waypoint_file, waypoint_number_input, waypoint_type_input
+from src.USER.settings.blender import input_waypoint_file, waypoint_number_input, waypoint_type_input, input_cnr_waypoint_file
 from src.USER.races.races import race_data
 
 
@@ -46,7 +46,7 @@ class LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         Folder.BASE
-        load_cops_and_robbers_waypoints("COPSWAYPOINTS.CSV")
+        load_cops_and_robbers_waypoints(input_cnr_waypoint_file)
         self.report({"INFO"}, "Loaded Cops & Robber Waypoints from CSV")
         return {"FINISHED"}
 

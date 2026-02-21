@@ -13,6 +13,9 @@ visualize_ai_paths = False      # Change to "True" if you want to visualize the 
 # Waypoints
 input_waypoint_file = Folder.Resources.Editor.Race / "RACE2WAYPOINTS.CSV"
 
+# Cops & Robbers Waypoints
+input_cnr_waypoint_file = Folder.Resources.Editor.Race / "COPSWAYPOINTS.CSV"
+
 # Waypoints from the Editor ("race_data")
 waypoint_number_input = "0"
 waypoint_type_input = "RACE"
