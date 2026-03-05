@@ -107,10 +107,53 @@ class Magic:
     DEVELOPMENT = "DLP7"
 
 
+class AxisRef:
+    def __init__(self, axis: str, offset: float = 0.0):
+        self.axis = axis
+        self.offset = offset
+
+    def __add__(self, value):
+        if isinstance(value, (int, float)):
+            return AxisRef(self.axis, self.offset + value)
+        return NotImplemented
+
+    def __radd__(self, value):
+        return self.__add__(value)
+
+    def __sub__(self, value):
+        if isinstance(value, (int, float)):
+            return AxisRef(self.axis, self.offset - value)
+        return NotImplemented
+
+    def __repr__(self):
+        if self.offset == 0:
+            return f"Axis.{self.axis.upper()}"
+        sign = "+" if self.offset > 0 else "-"
+        return f"Axis.{self.axis.upper()} {sign} {abs(self.offset)}"
+
+    def resolve(self, dimensions) -> float:
+        if self.axis in ("x", "y", "z"):
+            return getattr(dimensions, self.axis) + self.offset
+
+        values = (dimensions.x, dimensions.y, dimensions.z)
+
+        if self.axis == "longest":
+            return max(values) + self.offset
+        elif self.axis == "shortest":
+            return min(values) + self.offset
+        elif self.axis == "middle":
+            return sorted(values)[1] + self.offset
+
+        return 10.0 + self.offset
+
+
 class Axis:
-    X = "x"
-    Y = "y"
-    Z = "z"
+    X = AxisRef("x")
+    Y = AxisRef("y")
+    Z = AxisRef("z")
+    Longest = AxisRef("longest")
+    Shortest = AxisRef("shortest")
+    Middle = AxisRef("middle")
 
 
 class FileType:

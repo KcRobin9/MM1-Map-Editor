@@ -1,4 +1,5 @@
 from src.constants.textures import Texture
+from src.constants.file_formats import Axis
 
 
 # Map Name
@@ -37,3 +38,5 @@ random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LA
 # Other
 round_vector_values = True
 disable_progress_bar = True    # Change to "True" to see errors, warnings, and print statements in the console output
+
+default_separator = Axis.Longest

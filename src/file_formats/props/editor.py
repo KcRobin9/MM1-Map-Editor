@@ -10,12 +10,12 @@ from src.game.races.constants import RaceModeNum, RaceMode, RACE_TYPE_INITIALS
 from src.constants.constants import PROP_CAN_COLLIDE_FLAG, HUGE
 from src.constants.folder import Folder
 from src.constants.misc import Encoding, Default
-from src.constants.file_formats import FileType, Axis
+from src.constants.file_formats import FileType, AxisRef
 
 from src.file_formats.props.props import Bangers
 from src.io.binary import write_pack
 
-from src.USER.settings.main import MAP_FILENAME
+from src.USER.settings.main import MAP_FILENAME, default_separator
 from src.USER.settings.debug import debug_props 
 
 
@@ -164,13 +164,8 @@ class BangerEditor:
                 if face == Vector3(HUGE, HUGE, HUGE):
                     face = normalized_diagonal * HUGE
                 
-                separator = prop.get('separator', 10.0)
-            
-                if isinstance(separator, str) and separator.lower() in (Axis.X, Axis.Y, Axis.Z):
-                    prop_dims = self.load_dimensions(Folder.Resources.Editor.Props / "prop_dimensions.txt").get(name, Vector3(1, 1, 1))
-                    separator = getattr(prop_dims, separator.lower())
-                elif not isinstance(separator, (int, float)):
-                    separator = 10.0
+                separator = prop.get('separator', default_separator)
+                separator = self._resolve_separator(separator, name)
                                             
                 num_props = int(diagonal_length / separator)
                 
@@ -297,6 +292,24 @@ class BangerEditor:
                 prop_name, value_x, value_y, value_z = line.split()
                 extracted_prop_dim[prop_name] = Vector3(float(value_x), float(value_y), float(value_z))
         return extracted_prop_dim
+
+
+    def _resolve_separator(self, separator, prop_name: str) -> float:
+        if isinstance(separator, (int, float)):
+            return float(separator)
+
+        if isinstance(separator, AxisRef):
+            dims = self._get_prop_dimensions(prop_name)
+            return separator.resolve(dims)
+        
+        return 10.0  # Fallback
+
+    def _get_prop_dimensions(self, prop_name: str) -> 'Vector3':
+        if not hasattr(self, '_dimensions_cache'):
+            self._dimensions_cache = self.load_dimensions(
+                Folder.Resources.Editor.Props / "prop_dimensions.txt"
+            )
+        return self._dimensions_cache.get(prop_name, Vector3(1, 1, 1))
 
 
 def read_banger_file(file_path: Path) -> List[str]:

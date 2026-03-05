@@ -10,7 +10,7 @@ trailer_set = {
     "offset": (60, 0.0, 70),
     "end": (60, 0.0, -50),
     "name": Prop.TRAILER,
-    "separator": Axis.X,
+    "separator": Axis.Longest # Trailer dimensions: x=16.34, y=4.69, z=4.00 --> Axis.Longest returns x
 }
 
 bridge_orange_buildling = {
