@@ -2499,7 +2499,7 @@ TextureSheet.write_tweaked(
                     
 prop_editor = BangerEditor()
 for prop in random_props:
-    prop_list.extend(prop_editor.place_randomly(**prop))
+    prop_list.extend(prop_editor.place_randomly(prop))
 prop_editor.process_all(prop_list, set_props)
 
 lighting_instances = LightingEditor.read_file(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")
@@ -2522,12 +2522,8 @@ create_lars_race_maker(
 # Misc
 DLP(
     Magic.DEVELOPMENT, 
-    len(dlp_groups), 
-    len(dlp_patches), 
-    len(dlp_vertices), 
-    dlp_groups, 
-    dlp_patches, 
-    dlp_vertices
+    len(dlp_groups), len(dlp_patches), len(dlp_vertices), 
+    dlp_groups, dlp_patches, dlp_vertices
 ).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
 
 editor = BangerEditor()
@@ -2548,8 +2544,7 @@ Bounds.debug_folder(debug_bounds_data_folder, Folder.Debug.Bounds / "BND TEXT FI
 DLP.debug_folder(debug_dlp_data_folder, Folder.Debug.DLP / "DLP TEXT FILES", debug_dlp_folder)
 
 debug_ai(
-    debug_ai_data_file, 
-    debug_ai_file,
+    debug_ai_data_file, debug_ai_file,
     Folder.Resources.User.AI / "CHICAGO.map",                                  
     str(Folder.Resources.User.AI / "Intersection{intersection_id}.int"),
     str(Folder.Resources.User.AI / "Street{paths}.road")

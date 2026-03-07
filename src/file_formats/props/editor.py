@@ -222,41 +222,50 @@ class BangerEditor:
         if debug_props:
             Bangers.debug(Folder.Debug.Props / f"{appended_props_f.name}{FileType.TEXT}", self.props)
 
-    def place_randomly(self, seed: int, num_props: int, props_dict: dict, x_range: tuple, z_range: tuple):
-        assert len(x_range) == 2 and len(z_range) == 2, "x_range and z_range must each contain exactly two values."
+    def place_randomly(self, config: dict):
+            seed = config["seed"]
+            num_props = config.get("num_props", 1)
+            area_min, area_max = config["area"]
+            x_min, y_min, z_min = area_min
+            x_max, y_max, z_max = area_max
 
-        random.seed(seed)
-        names = props_dict.get("name", [])
-        names = names if isinstance(names, list) else [names]
-        
-        random_props = []
-        
-        for name in names:
-            for _ in range(num_props):
-                x = random.uniform(*x_range)
-                z = random.uniform(*z_range)
-                y = props_dict.get("offset_y", 0.0)
-                
-                new_prop = {
-                    "name": name,
-                    "offset": (x, y, z)
-                } 
+            # Build the name list
+            names = config.get("name", [])
+            if isinstance(names, str):
+                names = [names]
+            count = config.get("count", None)
+            if count is not None and len(names) == 1:
+                names = names * count
 
-                if "face" not in props_dict:
-                    new_prop["face"] = (
-                        random.uniform(-HUGE, HUGE),
-                        random.uniform(-HUGE, HUGE), 
-                        random.uniform(-HUGE, HUGE)
-                    )
-                else:
-                    new_prop["face"] = props_dict["face"]
+            has_fixed_face = "face" in config
+            has_fixed_angle = "angle" in config
+            separator = config.get("separator", None)
 
-                new_prop.update({k: v for k, v in props_dict.items() if k not in new_prop})
-                random_props.append(new_prop)
-        
-        self.random_props_placed += len(random_props)
-        
-        return random_props
+            random.seed(seed)
+            random_props = []
+
+            for name in names:
+                for _ in range(num_props):
+                    x = random.uniform(x_min, x_max)
+                    z = random.uniform(z_min, z_max)
+                    y = y_min if y_min == y_max else random.uniform(y_min, y_max)
+
+                    new_prop = {"name": name, "offset": (x, y, z)}
+
+                    if has_fixed_face:
+                        new_prop["face"] = config["face"]
+                    elif has_fixed_angle:
+                        new_prop["angle"] = config["angle"]
+                    else:
+                        new_prop["face"] = (random.uniform(-HUGE, HUGE), random.uniform(-HUGE, HUGE), random.uniform(-HUGE, HUGE))
+
+                    if separator is not None:
+                        new_prop["separator"] = separator
+
+                    random_props.append(new_prop)
+
+            self.random_props_placed += len(random_props)
+            return random_props
 
     def _filename_with_suffix(self, race_key):        
         if race_key == RaceMode.ROAM:
