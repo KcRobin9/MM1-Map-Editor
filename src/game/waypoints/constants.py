@@ -2,7 +2,6 @@ WAYPOINT_FILLER = ",0,0,0,0,0,\n"
 
 
 class Rotation:
-    AUTO = 0
     NORTH = 0.01
     NORTH_EAST = 45
     EAST = 90
@@ -11,7 +10,8 @@ class Rotation:
     SOUTH_WEST = -135
     WEST = -90
     NORTH_WEST = -45
-    AUTO = 0
+
+    AUTO = 0  # Faces the next a Waypoint incase of Player Waypoints
     
     FULL_CIRCLE = 360
     HALF_CIRCLE = 180

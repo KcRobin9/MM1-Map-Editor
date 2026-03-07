@@ -4,7 +4,15 @@ from src.constants.constants import HUGE
 from src.constants.file_formats import Axis
 
 from src.game.races.constants import RaceModeNum
+from src.game.waypoints.constants import Rotation
 
+
+car_angle_test = {
+    "offset": (40, 0.0, -50),
+    "angle": Rotation.NORTH_WEST,       #   -45.0, where North is z-negative
+    # "angle": Rotation.NORTH_EAST,    ##   +45.0, where North is z-negative
+    "name": PlayerCar.CADILLAC,
+}
 
 trailer_set = {
     "offset": (60, 0.0, 70),
@@ -28,7 +36,7 @@ trash_boxes = {
 }
 
 # Put the non-randomized props here
-prop_list = [trailer_set, bridge_orange_buildling, trash_boxes]
+prop_list = [car_angle_test, trailer_set, bridge_orange_buildling, trash_boxes]
 
 
 # Put the randomized props here (you will add them to the list "random props")

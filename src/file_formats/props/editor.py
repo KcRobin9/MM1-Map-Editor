@@ -1,3 +1,4 @@
+import math
 import random
 import shutil
 from pathlib import Path
@@ -153,7 +154,15 @@ class BangerEditor:
         for prop in user_set_props:
             offset = Vector3(*prop['offset']) 
             end = Vector3(*prop['end']) if 'end' in prop else None
-            face = Vector3(*prop.get('face', (HUGE, HUGE, HUGE)))
+
+            if 'face' in prop:
+                face = Vector3(*prop['face'])
+            elif 'angle' in prop:
+                angle_rad = math.radians(prop['angle'])
+                face = Vector3(HUGE * math.cos(angle_rad), 0.0, HUGE * math.sin(angle_rad))
+            else:
+                face = Vector3(HUGE, HUGE, HUGE)
+
             name = prop['name']
             
             if end is not None:
@@ -172,24 +181,10 @@ class BangerEditor:
                 for i in range(0, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
                     self.props.append(
-                        Bangers(
-                            Default.ROOM, 
-                            PROP_CAN_COLLIDE_FLAG, 
-                            dynamic_offset, 
-                            face, 
-                            name + "\x00"
-                            )
-                        )
+                        Bangers(Default.ROOM, PROP_CAN_COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
             else:
                 self.props.append(
-                    Bangers(
-                        Default.ROOM, 
-                        PROP_CAN_COLLIDE_FLAG, 
-                        offset, 
-                        face, 
-                        name + "\x00"
-                        )
-                    )
+                    Bangers(Default.ROOM, PROP_CAN_COLLIDE_FLAG, offset, face, name + "\x00"))
 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if not append_props:
