@@ -1,7 +1,7 @@
-import time
-from typing import Set
 import bpy
+import time
 import pyautogui
+from typing import Set
 
 from src.constants.constants import CURRENT_TIME_FORMATTED
 from src.constants.file_formats import FileType
