@@ -43,11 +43,15 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 
 ## Credits
 * [0x1F9F1](https://github.com/0x1F9F1) - Instrumental help, including [Open1560](https://github.com/0x1F9F1/Open1560) features and coding Q & A
-* [Dading](https://www.youtube.com/@dading5962) - Alpha tester, creator of [Miniville](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Miniville/)
+* [Dading](https://www.youtube.com/@dading5962) - Alpha tester, contributor, creator of [Miniville](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Miniville/)
+* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, contributor, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger%20Isle)
+* [AstrixTube](https://www.youtube.com/@astrixtube/) - Alpha tester, Prop Editing Expansions/Improvements inspired from his Standalone Prop Editor
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
+* [Rodrighazzo](https://www.youtube.com/@Rodrighazzo/videos) - Alpha tester, experimenting with the original 3D Studio Max R2.5 dev plugin
 * [Lars](https://github.com/Larspolo) - For his Race Making Tool
-* DDucky - Code help with Prop Editor
-* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, contributer, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger%20Isle)
+* [MadManMammoth](https://www.youtube.com/@MadManMammoth) - Tutorial feedback
+* DDucky - Code help with Legacy Prop Editor
+* [sharkwouter](https://github.com/sharkwouter) - Small code fix
 
 ## Gallery
 ![Preview](https://raw.githubusercontent.com/KcRobin9/MM1-Map-Editor/main/.github/images/readme/gallery_1.png)
