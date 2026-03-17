@@ -407,43 +407,108 @@ class Facade:
     SKYWAY_THELOOP_NO_VISIBILITY      = "tfskyway"
 
 
-class Facade:
-    BUILDING_ORANGE_WITH_WINDOWS = "ofbldg02"
-    
-    WALL_FREEWAY = "freewaywall02"
-    RAIL_WATER = "t_rail01"
-    
-    SHOP_SUIT = "dfsuitstore"
-    SHOP_PIZZA = "hfpizza"
-    SHOP_SODA = "ofsodashop"
-    SHOP_LIQUOR = "cfliquor"
-    
-    HOME_ONE = "OFHOME01"
-    HOME_TWO = "OFHOME02"
-    HOME_THREE = "OFHOME03"
+class FcdFlags:
+    """
+    Facade rendering flags for Chicago.
+    Decoded from FCD_CHICAGO.txt (3389 records, 34 distinct values).
 
+    ── Verified constraints (zero exceptions in the full dataset) ────────────
+      - Bit 0 is set on every single record. It is the base enable bit.
+      - BRIGHT, LEFT, RIGHT, ROOF, BACK never appear without bit 0.
+      - LEFT_B never appears without LEFT.
+      - RIGHT_B never appears without RIGHT.
+      - BACK never appears without ROOF.
+      - Bit 2 is set on every DT## record and on no other record.
 
-# TODO: transform to hex
-class FcdFlags:    
-    FRONT = 1            
-    FRONT_BRIGHT = 3     
-    
-    FRONT_LEFT = 9  
-    FRONT_BACK = 25
-    FRONT_RIGHT = 49
-    FRONT_ROOFTOP = 33
-    
-    FRONT_LEFT_ROOF = 105
-    FRONT_RIGHT_ROOF = 145
-    FRONT_LEFT_RIGHT = 217
-    
-    FRONT_LEFT_RIGHT_ROOF = 249
-    FRONT_BACK_ROOF = 1057
-    FRONT_RIGHT_BACK = 1073
-    FRONT_LEFT_ROOF_BACK = 1129
-    FRONT_RIGHT_ROOF_BACK = 1201
-    
-    ALL_SIDES = 1273
-    
-    FRONT_LEFT_ALT = 73  
-    FRONT_RIGHT_ROOF_ALT = 177 
+    ── Inferred semantics (consistent with data, not engine-confirmed) ───────
+      - LEFT/RIGHT/ROOF/BACK: face-selection bits (which sides of the building
+        to render). Directional names are inferred from the DT face name
+        convention (dt##_left, dt##_back, etc.) and game-design convention.
+      - LEFT_B / RIGHT_B: a second tile of the left or right face, used when
+        the building is wider than a single tile on that side. 18 facades mix
+        LEFT-only and LEFT+LEFT_B placements, so they are independent — not a
+        required pair.
+      - BRIGHT: selects a different render path. Highly correlated with
+        Scale=10 (dense window tiling) vs Scale=30-60 (solid surfaces). Could
+        be an emissive/additive pass for lit windows, or simply a brightness
+        multiplier. The engine source is unknown.
+
+    ── DT buildings ─────────────────────────────────────────────────────────
+      DT## core buildings use an entirely different rendering system — their
+      Sides vector encodes a 3D projected footprint rather than a quad height,
+      and Scale is much larger (27–210 vs 8–80 for regular facades). The two
+      DT-specific bits are included here for completeness, but practically
+      FcdFlags describes the regular (non-DT) facade system.
+
+      Bit 2 (0x004): set on all DT records, none others. Likely signals the
+        engine to enter projection mode instead of the normal panel renderer.
+        Named DT_BLDG for identification only — the real engine meaning is
+        unknown.
+      Bit 9 (0x200): set on 15 of 21 DT _front faces. The 6 without it
+        (dt02, dt12, dt33a, dt33d, dt38, dt54) may face alleys or side
+        streets. Named DT_FRONT_STREET as a hypothesis — unconfirmed.
+    """
+
+    # ── Primitive bits ────────────────────────────────────────────────────────
+    FRONT    = 0x001   # always set; base enable bit
+    BRIGHT   = 0x002   # different render path (inferred: emissive/lit windows)
+    LEFT     = 0x008   # left face
+    RIGHT    = 0x010   # right face
+    ROOF     = 0x020   # roof face
+    LEFT_B   = 0x040   # second left tile (wider left side); requires LEFT
+    RIGHT_B  = 0x080   # second right tile (wider right side); requires RIGHT
+    BACK     = 0x400   # rear face; requires ROOF
+
+    # DT-system bits (different rendering mode entirely — see docstring)
+    DT_BLDG         = 0x004   # marks all DT## projection-mode buildings
+    DT_FRONT_STREET = 0x200   # hypothesis: DT front faces a main street
+
+    # Named constants for the most-used combinations:
+    FRONT_BRIGHT_ROOF            = FRONT | BRIGHT | ROOF            # 0x023
+    FRONT_ROOF                   = FRONT | ROOF                     # 0x021
+    FRONT_RIGHT_WIDE_ROOF        = FRONT | RIGHT | ROOF | RIGHT_B   # 0x0B1
+    FRONT_LEFT_WIDE_ROOF         = FRONT | LEFT  | ROOF | LEFT_B    # 0x069
+    FRONT_LEFT_WIDE              = FRONT | LEFT  | LEFT_B           # 0x049
+    FRONT_RIGHT_WIDE             = FRONT | RIGHT | RIGHT_B          # 0x091
+    FRONT_LEFT_RIGHT_WIDE_ROOF   = FRONT | LEFT  | RIGHT | ROOF | LEFT_B | RIGHT_B   # 0x0F9
+    FRONT_ALL_WIDE_BRIGHT_ROOF   = FRONT | BRIGHT | LEFT | RIGHT | ROOF | LEFT_B | RIGHT_B  # 0x0FB
+    FRONT_ROOF_BACK              = FRONT | ROOF | BACK              # 0x421
+    FRONT_LEFT_WIDE_ROOF_BACK    = FRONT | LEFT | ROOF | LEFT_B | BACK   # 0x469
+    FRONT_RIGHT_WIDE_ROOF_BACK   = FRONT | RIGHT | ROOF | RIGHT_B | BACK  # 0x4B1
+    ALL_SIDES                    = FRONT | LEFT | RIGHT | ROOF | LEFT_B | RIGHT_B | BACK  # 0x4F9
+
+    # ── Common non-DT combinations (sorted by frequency) ─────────────────────
+    #
+    # count  hex    decimal  composition
+    # 1341×  0x023   35      FRONT + BRIGHT + ROOF
+    #  441×  0x021   33      FRONT + ROOF
+    #  295×  0x0B1  177      FRONT + RIGHT + ROOF + RIGHT_B
+    #  295×  0x069  105      FRONT + LEFT + ROOF + LEFT_B
+    #  168×  0x03B   59      FRONT + BRIGHT + LEFT + RIGHT + ROOF
+    #  139×  0x0F9  249      FRONT + LEFT + RIGHT + ROOF + LEFT_B + RIGHT_B
+    #  101×  0x001    1      FRONT
+    #   87×  0x0FB  251      FRONT + BRIGHT + LEFT + RIGHT + ROOF + LEFT_B + RIGHT_B
+    #   79×  0x02B   43      FRONT + BRIGHT + LEFT + ROOF
+    #   79×  0x033   51      FRONT + BRIGHT + RIGHT + ROOF
+    #   43×  0x421 1057      FRONT + ROOF + BACK
+    #   43×  0x049   73      FRONT + LEFT + LEFT_B
+    #   39×  0x091  145      FRONT + RIGHT + RIGHT_B
+    #   17×  0x469 1129      FRONT + LEFT + ROOF + LEFT_B + BACK
+    #   16×  0x01B   27      FRONT + BRIGHT + LEFT + RIGHT
+    #   15×  0x019   25      FRONT + LEFT + RIGHT
+    #   15×  0x029   41      FRONT + LEFT + ROOF
+    #   14×  0x031   49      FRONT + RIGHT + ROOF
+    #   13×  0x0BB  187      FRONT + BRIGHT + LEFT + RIGHT + ROOF + RIGHT_B
+    #   12×  0x07B  123      FRONT + BRIGHT + LEFT + RIGHT + ROOF + LEFT_B
+    #    9×  0x4F9 1273      FRONT + LEFT + RIGHT + ROOF + LEFT_B + RIGHT_B + BACK
+    #    7×  0x4B1 1201      FRONT + RIGHT + ROOF + RIGHT_B + BACK
+    #    6×  0x0B9  185      FRONT + LEFT + RIGHT + ROOF + RIGHT_B
+    #    5×  0x079  121      FRONT + LEFT + RIGHT + ROOF + LEFT_B
+    #    5×  0x431 1073      FRONT + RIGHT + ROOF + BACK
+    #    2×  0x009    9      FRONT + LEFT
+    #    2×  0x429 1065      FRONT + LEFT + ROOF + BACK
+    #    1×  0x0B3  179      FRONT + BRIGHT + RIGHT + ROOF + RIGHT_B
+    #    1×  0x059   89      FRONT + LEFT + RIGHT + LEFT_B
+    #    1×  0x011   17      FRONT + RIGHT
+    #    1×  0x0D9  217      FRONT + LEFT + RIGHT + LEFT_B + RIGHT_B
+    #    1×  0x479 1145      FRONT + LEFT + RIGHT + ROOF + LEFT_B + BACK
