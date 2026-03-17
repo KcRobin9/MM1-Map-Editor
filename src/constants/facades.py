@@ -464,6 +464,7 @@ class FcdFlags:
     DT_FRONT_STREET = 0x200   # hypothesis: DT front faces a main street
 
     # Named constants for the most-used combinations:
+    FRONT_BRIGHT                 = FRONT | BRIGHT                   # 0x003
     FRONT_BRIGHT_ROOF            = FRONT | BRIGHT | ROOF            # 0x023
     FRONT_ROOF                   = FRONT | ROOF                     # 0x021
     FRONT_RIGHT_WIDE_ROOF        = FRONT | RIGHT | ROOF | RIGHT_B   # 0x0B1
