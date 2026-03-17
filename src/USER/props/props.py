@@ -1,6 +1,5 @@
 from src.constants.props import Prop
 from src.constants.vehicles import PlayerCar
-from src.constants.constants import HUGE
 from src.constants.file_formats import Axis
 
 from src.game.races.constants import RaceModeNum
@@ -11,9 +10,9 @@ from src.game.waypoints.constants import Rotation
 
 china_gate = {
     "offset": (0, 0.0, -20),
-    "angle": Rotation.SOUTH,          # face: (1 * HUGE, 0.0, -20) → pointing south
+    "angle": Rotation.SOUTH, 
     "name": Prop.CHINATOWN_GATE,
-    "race": [RaceModeNum.CIRCUIT_0],  # was race_mode: CIRCUIT, race_num: 0
+    "race": [RaceModeNum.CIRCUIT_0],
 }
 
 trailer_set = {
@@ -25,7 +24,7 @@ trailer_set = {
 
 bridge_orange_building = {
     "offset": (35, 12.0, -70),
-    "angle": Rotation.EAST,           # face: (35 * HUGE, 12.0, -70) → pointing east
+    "angle": Rotation.EAST,
     "name": Prop.BRIDGE_SLIM,
 }
 
@@ -52,25 +51,20 @@ start_barricades_three = {
 
 wrong_way_one = {
     "offset": (0.0, -15.0, -294.5),
-    "angle": Rotation.SOUTH,          # face: (0.0, -15.0, 2570.0) → z-positive = south
+    "angle": Rotation.SOUTH,
     "name": Prop.WRONG_WAY,
 }
 
 wrong_way_two = {
     "offset": (0.0, -15.0, -276.2),
-    "angle": Rotation.SOUTH,          # face: (0.0, -15.0, 2750.0) → z-positive = south
+    "angle": Rotation.SOUTH,
     "name": Prop.WRONG_WAY,
 }
 
 prop_list = [
-    china_gate,
-    trailer_set,
-    bridge_orange_building,
-    start_barricades_one,
-    start_barricades_two,
-    start_barricades_three,
-    wrong_way_one,
-    wrong_way_two,
+    china_gate, trailer_set, bridge_orange_building,
+    start_barricades_one, start_barricades_two, start_barricades_three,
+    wrong_way_one, wrong_way_two,
 ]
 
 
@@ -107,11 +101,11 @@ random_cars = {
 random_trash = {
     "name": [
         Prop.DUMPSTER, Prop.TRASH_BOXES, Prop.CONE,
-        Prop.CRASH_CAN, Prop.PLANT, Prop.MAILBOX, Prop.SAWHORSE,  # "tpsawhrslt" → SAWHORSE     geen idee meer wat deze was
+        Prop.CRASH_CAN, Prop.PLANT, Prop.MAILBOX, Prop.BARRICADE_SAWHORSE,
     ],
     "seed": 2,
     "num_props": 5,
-    "area": ((195, 0, -545), (230, 0, 390)),  # note: z_range was (390, -545), swapped to (min, max)
+    "area": ((195, 0, -545), (230, 0, 390)),
 }
 
 random_props = [random_trees, random_sailboats, random_cars, random_trash]
