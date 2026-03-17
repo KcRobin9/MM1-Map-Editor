@@ -7,38 +7,75 @@ from src.game.races.constants import RaceModeNum
 from src.game.waypoints.constants import Rotation
 
 
-car_angle_test = {
-    "offset": (40, 0.0, -50),
-    "angle": Rotation.NORTH_WEST,       #   -45.0, where North is z-negative
-    "name": PlayerCar.CADILLAC,
+# ─── Non-randomized props ────────────────────────────────────────────────────
+
+china_gate = {
+    "offset": (0, 0.0, -20),
+    "angle": Rotation.SOUTH,          # face: (1 * HUGE, 0.0, -20) → pointing south
+    "name": Prop.CHINATOWN_GATE,
+    "race": [RaceModeNum.CIRCUIT_0],  # was race_mode: CIRCUIT, race_num: 0
 }
 
 trailer_set = {
-    "offset": (60, 0.0, 70),
-    "end": (60, 0.0, -50),
+    "offset": (52, 0.0, 65),
+    "end": (52, 0.0, -65),
     "name": Prop.TRAILER,
-    "separator": Axis.Longest  # Trailer dimensions: x=16.34, y=4.69, z=4.00 --> Axis.Longest returns x
+    "separator": Axis.Longest,
 }
 
-bridge_orange_buildling = {
+bridge_orange_building = {
     "offset": (35, 12.0, -70),
-    "angle": Rotation.NORTH,
-    "name": Prop.BRIDGE_SLIM
+    "angle": Rotation.EAST,           # face: (35 * HUGE, 12.0, -70) → pointing east
+    "name": Prop.BRIDGE_SLIM,
 }
 
-# Race specific props
-trash_boxes = {
-    "offset": (0, 0.0, 0),
-    "angle": Rotation.NORTH, 
-    "name": Prop.TRASH_BOXES,
-    "race": [RaceModeNum.CIRCUIT_0, RaceModeNum.CIRCUIT_1]  # Also possible: RaceModeNum.CIRCUIT_ALL
+start_barricades_one = {
+    "offset": (-24.0, 0.0, 86.0),
+    "end": (24.0, 0.0, 86.0),
+    "name": Prop.BARRICADE,
+    "separator": Axis.Longest,
 }
 
-# Put the non-randomized props here
-prop_list = [car_angle_test, trailer_set, bridge_orange_buildling, trash_boxes]
+start_barricades_two = {
+    "offset": (-23.75, 0.0, 86.0),
+    "end": (-23.75, 0.0, 70.0),
+    "name": Prop.BARRICADE,
+    "separator": Axis.Longest,
+}
+
+start_barricades_three = {
+    "offset": (24.0, 0.0, 86.0),
+    "end": (24.0, 0.0, 70.0),
+    "name": Prop.BARRICADE,
+    "separator": Axis.Longest,
+}
+
+wrong_way_one = {
+    "offset": (0.0, -15.0, -294.5),
+    "angle": Rotation.SOUTH,          # face: (0.0, -15.0, 2570.0) → z-positive = south
+    "name": Prop.WRONG_WAY,
+}
+
+wrong_way_two = {
+    "offset": (0.0, -15.0, -276.2),
+    "angle": Rotation.SOUTH,          # face: (0.0, -15.0, 2750.0) → z-positive = south
+    "name": Prop.WRONG_WAY,
+}
+
+prop_list = [
+    china_gate,
+    trailer_set,
+    bridge_orange_building,
+    start_barricades_one,
+    start_barricades_two,
+    start_barricades_three,
+    wrong_way_one,
+    wrong_way_two,
+]
 
 
-#TODO: also support RaceMode and RaceModeNum here
+# ─── Randomized props ─────────────────────────────────────────────────────────
+
 random_trees = {
     "name": Prop.TREE_SLIM,
     "count": 20,
@@ -57,8 +94,9 @@ random_sailboats = {
 
 random_cars = {
     "name": [
-        PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC, PlayerCar.POLICE, PlayerCar.FORD_F350,
-        PlayerCar.FASTBACK, PlayerCar.MUSTANG_GT, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR1, PlayerCar.SEMI
+        PlayerCar.VW_BEETLE, PlayerCar.CITY_BUS, PlayerCar.CADILLAC,
+        PlayerCar.POLICE, PlayerCar.FORD_F350, PlayerCar.FASTBACK,
+        PlayerCar.MUSTANG_GT, PlayerCar.ROADSTER, PlayerCar.PANOZ_GTR1, PlayerCar.SEMI,
     ],
     "seed": 1,
     "num_props": 2,
@@ -66,4 +104,14 @@ random_cars = {
     "separator": 10.0,
 }
 
-random_props = [random_trees, random_sailboats, random_cars]
+random_trash = {
+    "name": [
+        Prop.DUMPSTER, Prop.TRASH_BOXES, Prop.CONE,
+        Prop.CRASH_CAN, Prop.PLANT, Prop.MAILBOX, Prop.SAWHORSE,  # "tpsawhrslt" → SAWHORSE     geen idee meer wat deze was
+    ],
+    "seed": 2,
+    "num_props": 5,
+    "area": ((195, 0, -545), (230, 0, 390)),  # note: z_range was (390, -545), swapped to (min, max)
+}
+
+random_props = [random_trees, random_sailboats, random_cars, random_trash]
