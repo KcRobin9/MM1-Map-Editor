@@ -734,7 +734,8 @@ class Meshes:
         for file in mesh_files:
             output_file = output_folder / file.with_suffix({FileType.TEXT}).name
             cls.debug_file(file, output_file, debug_meshes_folder)
-                                
+
+    # Keep the '\n's after 'Cache Size'  
     def __repr__(self) -> str:
         return f"""
 MESH
@@ -752,7 +753,7 @@ MESH
     Texture Names: {self.texture_names}\n
     Vertices: {self.vertices}\n
     Normals: {self.normals}\n
-    Tex Coords: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
+    UVs: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
     Enclosed Shape: {self.enclosed_shape}\n
     Surface Sides: {self.surface_sides}\n
     Indices Sides: {self.indices_sides}\n
