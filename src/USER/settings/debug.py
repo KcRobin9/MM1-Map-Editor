@@ -13,7 +13,7 @@ debug_minimap = False           # Change to "True" if you want a HUD Debug JPG f
 debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
 # File Debugging | The Output Files are written to: "Resources / Debug / ..."
-debug_props_file = False
+debug_props_file = True
 debug_props_file_to_csv = False
 
 debug_facades_file = False

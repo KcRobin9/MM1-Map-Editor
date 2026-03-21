@@ -4,7 +4,7 @@ from src.constants.props import Prop
 
 # Configuration
 subtract_props = False           # Change to "True" if you want to subtract props
-subtract_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"
+subtract_input_props_file = Folder.Resources.Editor.Props / "CHICAGO.BNG"
 subtract_output_props_file = Folder.Resources.User.Props / "CHICAGO_SUB.BNG"
 
 subtract_tolerance = 0.25

@@ -5,7 +5,7 @@ from src.constants.props import Prop
 
 # Configuration
 edit_props = False              # Change to "True" if you want to edit props
-edit_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"
+edit_input_props_file = Folder.Resources.Editor.Props / "CHICAGO.BNG"
 edit_output_props_file = Folder.Resources.User.Props / "CHICAGO_EDITED.BNG"
 
 edit_tolerance = 0.25

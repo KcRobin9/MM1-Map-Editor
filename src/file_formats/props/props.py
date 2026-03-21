@@ -25,8 +25,8 @@ class Bangers:
     @classmethod
     def read(cls, f: BinaryIO) -> 'Bangers':
         room, flags = read_unpack(f, '<2H')
-        offset = Vector3.read(f, '<')
-        face = Vector3.read(f, '<')  
+        offset = Vector3.read(f)
+        face = Vector3.read(f)  
         name = read_binary_name(f)
         return cls(room, flags, offset, face, name)
     
@@ -46,8 +46,8 @@ class Bangers:
         
             for banger in bangers:
                 write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
-                banger.offset.write(f, '<')
-                banger.face.write(f, '<')
+                banger.offset.write(f)
+                banger.face.write(f)
                 f.write(banger.name.encode(Encoding.UTF_8))
                     
             cls.debug(bangers, debug_props, Folder.Debug.Props / f"{output_file}{FileType.TEXT}")

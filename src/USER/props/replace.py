@@ -4,7 +4,7 @@ from src.constants.props import Prop
 
 # Configuration
 replace_props = False           # Change to "True" if you want to replace props
-replace_input_props_file = Folder.Resources.Editor.Props / "CHICAGO_INPUT.BNG"
+replace_input_props_file = Folder.Resources.Editor.Props / "CHICAGO.BNG"
 replace_output_props_file = Folder.Resources.User.Props / "CHICAGO_REPLACED.BNG"
 
 replace_tolerance = 0.25
