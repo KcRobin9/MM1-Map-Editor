@@ -2260,8 +2260,7 @@ PORTAL
     Height: {self.height:.2f}
     Min: {self._min}
     Max: {self._max}
-    {'Vertex C ' + str(self.vertex_c) if self.vertex_c is not None else ''}
-    """
+    {'Vertex C ' + str(self.vertex_c) if self.vertex_c is not None else ''}"""
  
 ################################################################################################################               
 ###############################################################################################################
