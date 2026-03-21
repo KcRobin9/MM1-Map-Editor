@@ -28,7 +28,7 @@ class Facades:
         offset = Vector3.read(f)
         face = Vector3.read(f)
         sides = Vector3.read(f)
-        scale, = read_unpack(f)
+        scale, = read_unpack(f, '<f')
         name = read_binary_name(f)
         return cls(room, flags, offset, face, sides, scale, name)
     
