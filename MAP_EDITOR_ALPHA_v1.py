@@ -79,7 +79,7 @@ from src.game.waypoints.constants import Rotation, Width
 
 from src.game.animations import create_animations
 from src.game.extrema import create_extrema
-from src.game.lighting import LightingEditor
+from src.game.lighting import Lighting
 from src.game.texture_sheet import TextureSheet
 from src.game.setup import create_map_info, copy_custom_textures_to_shop, copy_carsim_files_to_shop, ensure_empty_mm_dev_folder
 
@@ -134,7 +134,7 @@ from src.USER.settings.advanced import (
 
 from src.USER.settings.debug import (
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
-    debug_props_file, debug_props_file_to_csv, debug_facades_file, debug_portals_file, debug_ai_file,
+    debug_props_file, debug_props_file_to_csv, debug_facades_file, debug_portals_file, debug_ai_file, debug_lighting_file,
     debug_meshes_file, debug_meshes_folder, debug_bounds_file, debug_bounds_folder, debug_dlp_file, debug_dlp_folder,
     debug_props_data_file, debug_facades_data_file, debug_portals_data_file, debug_ai_data_file,
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
@@ -2502,9 +2502,10 @@ for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(prop))
 prop_editor.process_all(prop_list, set_props)
 
-lighting_instances = LightingEditor.read_file(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")
-LightingEditor.write_file(lighting_instances, lighting_configs, Folder.Shop.Tune / "LIGHTING.CSV")
-LightingEditor.debug(lighting_instances, Folder.Debug.Lighting / "LIGHTING_DATA.txt", debug_lighting)
+lighting_instances = Lighting.read_all(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")  # Read original
+Lighting.write_all(lighting_instances, lighting_configs, Folder.Shop.Tune / "LIGHTING.CSV")  # Tweak and write new file
+Lighting.debug(lighting_instances, Folder.Resources.User.Lighting / "LIGHTING_self.txt", debug_lighting)
+Lighting.debug_file(Folder.Resources.Editor.Lighting / "LIGHTING.CSV", Folder.Resources.User.Lighting / "LIGHTING.txt", debug_lighting_file)
 
 create_extrema(f"{Folder.Shop.Map.City}{FileType.EXTREMA}", hudmap_vertices)
 create_animations(Folder.Shop.Map.City, animations_data, set_animations)   

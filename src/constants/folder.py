@@ -57,6 +57,12 @@ class Folder:
             Root  = _RESOURCES / "user"
             AI    = _RESOURCES / "user" / "AI"
             Props = _RESOURCES / "user" / "PROPS"
+            Facades = _RESOURCES / "user" / "FACADES"
+            Portals = _RESOURCES / "user" / "PORTALS"
+            Lighting = _RESOURCES / "user" / "LIGHTING"
+            Meshes = _RESOURCES / "user" / "MESHES"
+            Bounds = _RESOURCES / "user" / "BOUNDS"
+            DLP = _RESOURCES / "user" / "DLP"
         
         class Editor:
             Root        = _RESOURCES / "editor"

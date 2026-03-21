@@ -12,13 +12,14 @@ debug_lighting = False          # Change to "True" if you want a LIGHTING Debug 
 debug_minimap = False           # Change to "True" if you want a HUD Debug JPG file (defaults to "True" when "set_lars_race_maker" is set to "True")
 debug_minimap_id = False        # Change to "True" if you want to display the Bound IDs in the HUD Debug JPG file
 
-# File Debugging | The Output Files are written to: "Resources / Debug / ..."
-debug_props_file = True
+# File Debugging | The Output Files are written to: "resources / user / ..."
+debug_props_file = False
 debug_props_file_to_csv = False
 
 debug_facades_file = False
 debug_portals_file = False
 debug_ai_file = False
+debug_lighting_file = False
 
 debug_meshes_file = False
 debug_meshes_folder = False
@@ -30,13 +31,13 @@ debug_dlp_file = False
 debug_dlp_folder = False
 
 # File Input Locations
-# File Input Locations
 debug_props_data_file = Folder.Resources.Editor.Props / "CHICAGO.BNG"          # Change the input Prop file here
 debug_facades_data_file = Folder.Resources.Editor.Facades / "CHICAGO.FCD"      # Change the input Facade file here
 debug_portals_data_file = Folder.Resources.Editor.Portals / "CHICAGO.PTL"      # Change the input Portal file here
 debug_ai_data_file = Folder.Resources.Editor.AI / "CHICAGO.BAI"                # Change the input AI file here
+debug_lighting_data_file = Folder.Resources.Editor.Lighting / "LIGHTING.CSV"   # Change the input Lighting file here
 
-debug_meshes_data_file = Folder.Resources.Editor.Meshes / "CULL01_H.BMS"       # Change the input Mesh file here
+debug_meshes_data_file = Folder.Resources.Editor.Meshes / "CULL09_H.BMS"       # Change the input Mesh file here
 debug_meshes_data_folder = Folder.Resources.Editor.Meshes / "MESH FILES"       # Change the input Mesh folder here
 
 debug_bounds_data_file = Folder.Resources.Editor.Bounds / "CHICAGO_HITID.BND"  # Change the input Bound file here
