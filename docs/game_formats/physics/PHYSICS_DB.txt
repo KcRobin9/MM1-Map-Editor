@@ -1,1376 +1,1372 @@
-/////////////////////////////////////////
-Velocity is (likely) not used by the game
-/////////////////////////////////////////
-
-
-[AgiPhysParameters(
-  name        = 'BENCH',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF010_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF011_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF012_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF013_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF014_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF015_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF016_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF01_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF01_DS',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF01_I',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF01_O',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF02_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF02_DS',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF02_I',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF02_O',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF03_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF03_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF03_DS',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF03_I',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF03_O',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF03_W',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF04_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF04_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF04_I',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF04_O',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF04_W',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF05_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF05_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF05_I',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF06',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF06_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF06_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF07_C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BF07_D',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'BUSH',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'DIRT',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'FACADE_SF2',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'FIREHY',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'FLAGSTONE',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 4,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'GRASS1',
-  friction    = 0.50,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 2,
-  sound       = 2,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LANDMARK',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.48,
-  bump_width  = 0.12,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LIGHT01',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LIGHT02',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LIGHTTP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LIGHTTS',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LMOSQR_GRND',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.50,
-  bump_width  = 1.00,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 4,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'LMPARK_GRASS',
-  friction    = 0.50,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 2,
-  sound       = 2,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'MBOX',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'NEW2',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'P_BMAN',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'P_DINE',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'P_TCOP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'P_TWAIT',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'P_WWMN',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'PMETER',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 4,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R1',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R2',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R2C',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.18,
-  bump_width  = 0.40,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R2I',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R4',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R6',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'R8',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RD1RR_TRACK',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.10,
-  bump_width  = 0.50,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 3,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RD2LANE_COB',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.10,
-  bump_width  = 0.50,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 3,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RD2LANE_IND',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RD2LANEP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RD4LANEP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RD4LANEPI',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 5,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RF08',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RF10',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RFWY',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RINTER',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'RWALK',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SDWLK',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.20,
-  bump_width  = 2.00,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SGN_OW',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SGN_SL',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SGN_ST',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SGN_STP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SGN_XW',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SHRSE',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SHRUB',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SIGN_CONST',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SIGN_DEADEND',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SIGN_STOP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'SIGN_STOPLIGHT',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'T_GRASS',
-  friction    = 0.68,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.20,
-  bump_width  = 5.00,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 2,
-  sound       = 2,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'T_STEP_SIDE',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'T_STEP_TOP',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'T_WALK_ALLEY',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 1,
-  sound       = 1,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'T_WATER',
-  friction    = 666.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 0.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'TBPARK03GRASS',
-  friction    = 0.50,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 2,
-  sound       = 2,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'TCANM',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'TEST1',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.20,
-  bump_width  = 2.00,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'TEST2',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.50,
-  bump_width  = 5.00,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'TEST3',
-  friction    = 2.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'TEST4',
-  friction    = 0.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
-
-AgiPhysParameters(
-  name        = 'WPOBJ',
-  friction    = 1.00,
-  elasticity  = 0.10,
-  drag        = 0.00,
-  bump_height = 0.00,
-  bump_width  = 0.05,
-  bump_depth  = 0.00,
-  sink_depth  = 1.00,
-  type        = 0,
-  sound       = 0,
-  velocity    = x = 0.0, y = 0.0),
-  ptx_color   = x = 1.0, y = 1.0, z = 1.0)
+
+PHYSICS (# 1)
+    Name: BENCH
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 2)
+    Name: BF010_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 3)
+    Name: BF011_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 4)
+    Name: BF012_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 5)
+    Name: BF013_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 6)
+    Name: BF014_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 7)
+    Name: BF015_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 8)
+    Name: BF016_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 9)
+    Name: BF01_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 10)
+    Name: BF01_DS
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 11)
+    Name: BF01_I
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 12)
+    Name: BF01_O
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 13)
+    Name: BF02_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 14)
+    Name: BF02_DS
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 15)
+    Name: BF02_I
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 16)
+    Name: BF02_O
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 17)
+    Name: BF03_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 18)
+    Name: BF03_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 19)
+    Name: BF03_DS
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 20)
+    Name: BF03_I
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 21)
+    Name: BF03_O
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 22)
+    Name: BF03_W
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 23)
+    Name: BF04_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 24)
+    Name: BF04_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 25)
+    Name: BF04_I
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 26)
+    Name: BF04_O
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 27)
+    Name: BF04_W
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 28)
+    Name: BF05_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 29)
+    Name: BF05_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 30)
+    Name: BF05_I
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 31)
+    Name: BF06
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 32)
+    Name: BF06_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 33)
+    Name: BF06_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 34)
+    Name: BF07_C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 35)
+    Name: BF07_D
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 36)
+    Name: BUSH
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 37)
+    Name: DIRT
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 38)
+    Name: FACADE_SF2
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 39)
+    Name: FIREHY
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 40)
+    Name: FLAGSTONE
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 4
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 41)
+    Name: GRASS1
+    Friction: 0.50,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 2
+    Sound: 2
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 42)
+    Name: LANDMARK
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.48
+    Bump width: 0.12
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 43)
+    Name: LIGHT01
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 44)
+    Name: LIGHT02
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 45)
+    Name: LIGHTTP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 46)
+    Name: LIGHTTS
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 47)
+    Name: LMOSQR_GRND
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.50
+    Bump width: 1.00
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 4
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 48)
+    Name: LMPARK_GRASS
+    Friction: 0.50,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 2
+    Sound: 2
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 49)
+    Name: MBOX
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 50)
+    Name: NEW2
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 51)
+    Name: P_BMAN
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 52)
+    Name: P_DINE
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 53)
+    Name: P_TCOP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 54)
+    Name: P_TWAIT
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 55)
+    Name: P_WWMN
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 56)
+    Name: PMETER
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 4
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 57)
+    Name: R1
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 58)
+    Name: R2
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 59)
+    Name: R2C
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.18
+    Bump width: 0.40
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 60)
+    Name: R2I
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 61)
+    Name: R4
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 62)
+    Name: R6
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 63)
+    Name: R8
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 64)
+    Name: RD1RR_TRACK
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.10
+    Bump width: 0.50
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 3
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 65)
+    Name: RD2LANE_COB
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.10
+    Bump width: 0.50
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 3
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 66)
+    Name: RD2LANE_IND
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 67)
+    Name: RD2LANEP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 68)
+    Name: RD4LANEP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 69)
+    Name: RD4LANEPI
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 5
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 70)
+    Name: RF08
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 71)
+    Name: RF10
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 72)
+    Name: RFWY
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 73)
+    Name: RINTER
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 74)
+    Name: RWALK
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 75)
+    Name: SDWLK
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.20
+    Bump width: 2.00
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 76)
+    Name: SGN_OW
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 77)
+    Name: SGN_SL
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 78)
+    Name: SGN_ST
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 79)
+    Name: SGN_STP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 80)
+    Name: SGN_XW
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 81)
+    Name: SHRSE
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 82)
+    Name: SHRUB
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 83)
+    Name: SIGN_CONST
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 84)
+    Name: SIGN_DEADEND
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 85)
+    Name: SIGN_STOP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 86)
+    Name: SIGN_STOPLIGHT
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 87)
+    Name: T_GRASS
+    Friction: 0.68,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.20
+    Bump width: 5.00
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 2
+    Sound: 2
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 88)
+    Name: T_STEP_SIDE
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 89)
+    Name: T_STEP_TOP
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 90)
+    Name: T_WALK_ALLEY
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 1
+    Sound: 1
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 91)
+    Name: T_WATER
+    Friction: 666.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 0.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 92)
+    Name: TBPARK03GRASS
+    Friction: 0.50,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 2
+    Sound: 2
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 93)
+    Name: TCANM
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 94)
+    Name: TEST1
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.20
+    Bump width: 2.00
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 95)
+    Name: TEST2
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.50
+    Bump width: 5.00
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 96)
+    Name: TEST3
+    Friction: 2.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 97)
+    Name: TEST4
+    Friction: 0.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
+
+PHYSICS (# 98)
+    Name: WPOBJ
+    Friction: 1.00,
+    Elasticity: 0.10
+    Drag: 0.00
+    Bump height: 0.00
+    Bump width: 0.05
+    Bump depth: 0.00
+    Sink depth: 1.00
+    Type: 0
+    Sound: 0
+    Velocity: 0.00, 0.00
+    Ptx color: { 0.00, 0.00, 0.00 }
