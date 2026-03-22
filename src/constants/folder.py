@@ -63,6 +63,7 @@ class Folder:
             Meshes = _RESOURCES / "user" / "MESHES"
             Bounds = _RESOURCES / "user" / "BOUNDS"
             DLP = _RESOURCES / "user" / "DLP"
+            Physics = _RESOURCES / "user" / "PHYSICS"
         
         class Editor:
             Root        = _RESOURCES / "editor"

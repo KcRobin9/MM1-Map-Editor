@@ -20,6 +20,7 @@ debug_facades_file = False
 debug_portals_file = False
 debug_ai_file = False
 debug_lighting_file = False
+debug_physics_file = False
 
 debug_meshes_file = False
 debug_meshes_folder = False
@@ -36,6 +37,7 @@ debug_facades_data_file = Folder.Resources.Editor.Facades / "CHICAGO.FCD"      #
 debug_portals_data_file = Folder.Resources.Editor.Portals / "CHICAGO.PTL"      # Change the input Portal file here
 debug_ai_data_file = Folder.Resources.Editor.AI / "CHICAGO.BAI"                # Change the input AI file here
 debug_lighting_data_file = Folder.Resources.Editor.Lighting / "LIGHTING.CSV"   # Change the input Lighting file here
+debug_physics_data_file = Folder.Resources.Editor.Physics / "PHYSICS.DB"       # Change the input Physics file here
 
 debug_meshes_data_file = Folder.Resources.Editor.Meshes / "CULL09_H.BMS"       # Change the input Mesh file here
 debug_meshes_data_folder = Folder.Resources.Editor.Meshes / "MESH FILES"       # Change the input Mesh folder here

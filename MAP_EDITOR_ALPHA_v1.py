@@ -65,7 +65,7 @@ from src.file_formats.props.subtract import subtract_props_from_file
 from src.file_formats.facades.facades import Facades
 from src.file_formats.facades.editor import FacadeEditor
 
-from src.file_formats.physics import PhysicsEditor
+from src.file_formats.physics import Physics
 
 from src.file_formats.development import DLP
 
@@ -134,9 +134,9 @@ from src.USER.settings.advanced import (
 
 from src.USER.settings.debug import (
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
-    debug_props_file, debug_props_file_to_csv, debug_facades_file, debug_portals_file, debug_ai_file, debug_lighting_file,
+    debug_props_file, debug_props_file_to_csv, debug_facades_file, debug_portals_file, debug_ai_file, debug_lighting_file, debug_physics_file,
     debug_meshes_file, debug_meshes_folder, debug_bounds_file, debug_bounds_folder, debug_dlp_file, debug_dlp_folder,
-    debug_props_data_file, debug_facades_data_file, debug_portals_data_file, debug_ai_data_file,
+    debug_props_data_file, debug_facades_data_file, debug_portals_data_file, debug_ai_data_file, debug_physics_data_file,
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
 )
 
@@ -229,8 +229,8 @@ class Polygon:
         cell_id, material_index, = read_unpack(f, '<HB')
         flags = read_unpack(f, '<B')
         vertex_index = read_unpack(f, '<4H') 
-        plane_edges = Vector3.readn(f, Shape.QUAD, '<')
-        plane_normal = Vector3.read(f, '<')
+        plane_edges = Vector3.readn(f, Shape.QUAD)
+        plane_normal = Vector3.read(f)
         plane_distance = read_unpack(f, '<f')
         return cls(cell_id, material_index, flags, vertex_index, plane_edges, plane_normal, plane_distance)
             
@@ -243,9 +243,9 @@ class Polygon:
         write_pack(f, '<4H', *self.vertex_index)
 
         for edge in self.plane_edges:
-            edge.write(f, '<')
+            edge.write(f)
             
-        self.plane_normal.write(f, '<')
+        self.plane_normal.write(f)
         write_pack(f, '<f', self.plane_distance)
     
     def __repr__(self, bnd_instance) -> str:
@@ -2475,12 +2475,18 @@ FacadeEditor.create(
     debug_facades
 )
 
-PhysicsEditor.edit(
+Physics.edit(
     Folder.Resources.Editor.Physics / f"PHYSICS{FileType.DATABASE}", 
     Folder.Shop.Material / f"PHYSICS{FileType.DATABASE}", 
     custom_physics, 
     set_physics, 
     debug_physics
+)
+
+Physics.debug_file(
+    debug_physics_data_file,
+    Folder.Resources.User.Physics / "PHYSICS_DB.txt",
+    debug_physics_file
 )
 
 TextureSheet.append_custom_textures(
