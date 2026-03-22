@@ -2535,14 +2535,13 @@ DLP(
 
 editor = BangerEditor()
 
-# File debugging
-DLP.debug_file(debug_dlp_data_file, Folder.Debug.DLP / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
+# File debuggingd
 Bounds.debug_file(debug_bounds_data_file, Folder.Debug.Bounds / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
+Meshes.debug_file(debug_meshes_data_file, Folder.Debug.Meshes / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
 Bangers.debug_file(debug_props_data_file, Folder.Debug.Props / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
 Bangers.debug_file_to_csv(debug_props_data_file, Folder.Debug.Props / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
 Facades.debug_file(debug_facades_data_file, Folder.Debug.Facades / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
 Portals.debug_file(debug_portals_data_file, Folder.Debug.Portals / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
-Meshes.debug_file(debug_meshes_data_file, Folder.Debug.Meshes / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
 DLP.debug_file(debug_dlp_data_file, Folder.Debug.DLP / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
 
 # Folder debugging
