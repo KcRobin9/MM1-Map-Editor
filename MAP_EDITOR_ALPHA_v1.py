@@ -2641,18 +2641,11 @@ set_blender_keybinding()
 
 import os
 import bpy
-from pathlib import Path
-
-from src.constants.file_formats import FileType
-from src.constants.misc import Executable
 
 from src.core.geometry.main import transform_coordinate_system
-from src.core.vector.vector_3 import Vector3
 
 from src.integrations.blender.modeling.uv_mapping import rotate_uvs, tile_uvs, unwrap_uv_to_aspect_ratio, update_uv_tiling
 from src.integrations.blender.panels.hud import set_hud_checkbox
-
-from src.helpers.main import is_process_running
 
 
 def load_textures(input_folder: Path, load_all_textures: bool) -> None:
@@ -2672,103 +2665,132 @@ def load_textures(input_folder: Path, load_all_textures: bool) -> None:
 
 
 def create_material_from_texture(material_name, texture_image):
-    mat = bpy.data.materials.new(name = material_name)
+    mat = bpy.data.materials.new(name=material_name)
     mat.use_nodes = True
 
     nodes = mat.node_tree.nodes
     for node in nodes:
         nodes.remove(node)
 
-    diffuse_shader = nodes.new(type = "ShaderNodeBsdfPrincipled")
-    texture_node = nodes.new(type = "ShaderNodeTexImage")
+    diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
+    texture_node = nodes.new(type="ShaderNodeTexImage")
     texture_node.image = texture_image
 
     links = mat.node_tree.links
     link = links.new
     link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
 
-    output_node = nodes.new(type = "ShaderNodeOutputMaterial")
-    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])     
-    
-    
+    output_node = nodes.new(type="ShaderNodeOutputMaterial")
+    link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+
+
 def apply_texture_to_object(obj, texture_path):
-    # Extract the filename (without extension) from the texture_path
     material_name = os.path.splitext(os.path.basename(texture_path))[0]
     
-    # Check if the material with this name already exists
     if material_name in bpy.data.materials:
         mat = bpy.data.materials[material_name]
     else:
-        mat = bpy.data.materials.new(name = material_name)
+        mat = bpy.data.materials.new(name=material_name)
 
     obj.data.materials.append(mat)
     obj.active_material = mat
-
     mat.use_nodes = True
-    nodes = mat.node_tree.nodes
 
+    nodes = mat.node_tree.nodes
     for node in nodes:
         nodes.remove(node)
 
-    diffuse_shader = nodes.new(type = "ShaderNodeBsdfPrincipled")
-    texture_node = nodes.new(type = "ShaderNodeTexImage")
-    
-    texture_image = bpy.data.images.load(str(texture_path))  # Converting to String is necessary    
+    diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
+    texture_node = nodes.new(type="ShaderNodeTexImage")
+    texture_image = bpy.data.images.load(str(texture_path))
     texture_node.image = texture_image
 
     links = mat.node_tree.links
     link = links.new
     link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
 
-    output_node = nodes.new(type = "ShaderNodeOutputMaterial")
+    output_node = nodes.new(type="ShaderNodeOutputMaterial")
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+    # unwrap_uv_to_aspect_ratio intentionally removed — done in batch below
 
-    unwrap_uv_to_aspect_ratio(obj, texture_image)
-    
-       
-def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
+
+def unwrap_all_objects(objects):
+    prev_active = bpy.context.view_layer.objects.active
+
+    for o in bpy.context.selected_objects:
+        o.select_set(False)
+
+    for obj in objects:
+        if obj.type != 'MESH':
+            continue
+
+        obj.select_set(True)
+        bpy.context.view_layer.objects.active = obj
+
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
+        bpy.ops.object.mode_set(mode='OBJECT')
+
+        obj.select_set(False)
+
+        uv_layer = obj.data.uv_layers.active
+        if not uv_layer:
+            continue
+
+        us = [d.uv[0] for d in uv_layer.data]
+        vs = [d.uv[1] for d in uv_layer.data]
+        u_range = (max(us) - min(us)) or 1.0
+        v_range = (max(vs) - min(vs)) or 1.0
+
+        for d in uv_layer.data:
+            d.uv[0] = (d.uv[0] - min(us)) / u_range
+            d.uv[1] = (d.uv[1] - min(vs)) / v_range
+
+        obj["original_uvs"] = [(d.uv[0], d.uv[1]) for d in uv_layer.data]
+
+    bpy.context.view_layer.objects.active = prev_active
+
+
+def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
     name = f"P{polygon_data['bound_number']}"
     bound_number = polygon_data["bound_number"]
     script_vertices = polygon_data["vertex_coordinates"]
 
-    transformed_vertices = [transform_coordinate_system(Vector3.from_tuple(vertex), game_to_blender = True) for vertex in script_vertices]
-    
+    transformed_vertices = [transform_coordinate_system(Vector3.from_tuple(vertex), game_to_blender=True) for vertex in script_vertices]
+
     edges = []
     faces = [range(len(transformed_vertices))]
 
     mesh = bpy.data.meshes.new(name)
     obj = bpy.data.objects.new(name, mesh)
-    
+
     obj["cell_type"] = str(polygon_data["cell_type"])
     obj["material_index"] = str(polygon_data["material_index"])
-    
+
     set_hud_checkbox(polygon_data["hud_color"], obj)
-    
+
     for vertex in transformed_vertices:
         vertex_item = obj.vertex_coords.add()
         vertex_item.x, vertex_item.y, vertex_item.z = vertex
-    
+
     bpy.context.collection.objects.link(obj)
     mesh.from_pydata(transformed_vertices, edges, faces)
     mesh.update()
-    
+
     custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
-    
+
     for custom_prop in custom_properties:
         if custom_prop in polygon_data:
             obj[custom_prop] = polygon_data[custom_prop]
-    
+
     if not obj.data.uv_layers:
         obj.data.uv_layers.new()
 
-    # Retrieve the original UVs after creating the object and before tiling
-    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in obj.data.uv_layers.active.data]
-    obj["original_uvs"] = original_uvs
-    
-    bpy.types.Object.tile_x = bpy.props.FloatProperty(name = "Tile X", default = 2.0, update = update_uv_tiling)
-    bpy.types.Object.tile_y = bpy.props.FloatProperty(name = "Tile Y", default = 2.0, update = update_uv_tiling)
-    bpy.types.Object.rotate = bpy.props.FloatProperty(name = "Rotate", default = 0.0, update = update_uv_tiling)
-    
+    bpy.types.Object.tile_x = bpy.props.FloatProperty(name="Tile X", default=2.0, update=update_uv_tiling)
+    bpy.types.Object.tile_y = bpy.props.FloatProperty(name="Tile Y", default=2.0, update=update_uv_tiling)
+    bpy.types.Object.rotate = bpy.props.FloatProperty(name="Rotate", default=0.0, update=update_uv_tiling)
+
     if bound_number in texcoords_data.get("entries", {}):
         obj.tile_x = texcoords_data["entries"][bound_number].get("tile_x", 1)
         obj.tile_y = texcoords_data["entries"][bound_number].get("tile_y", 1)
@@ -2777,14 +2799,10 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder = None):
         obj.tile_x = 2
         obj.tile_y = 2
         obj.rotate = 0.1
-        
+
     if texture_folder:
-        apply_texture_to_object(obj, texture_folder)    
-        tile_uvs(obj, obj.tile_x, obj.tile_y)
-        rotate_uvs(obj, obj.rotate)  
-        
-        obj.data.update()
-            
+        apply_texture_to_object(obj, texture_folder)
+
     return obj
 
 
@@ -2797,10 +2815,19 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
 
     load_textures(texture_folder, load_all_textures)
 
+    created_objects = []
     for poly, texture_name in zip(polygons_data, texture_names):
         texture_path = texture_folder / f"{texture_name}{FileType.DIRECTDRAW_SURFACE}"
-        create_mesh_from_polygon_data(poly, texture_path)
-    
+        obj = create_mesh_from_polygon_data(poly, texture_path)
+        created_objects.append(obj)
+
+    unwrap_all_objects(created_objects)
+
+    for obj in created_objects:
+        tile_uvs(obj, obj.tile_x, obj.tile_y)
+        rotate_uvs(obj, obj.rotate)
+        obj.data.update()
+
 ###################################################################################################################   
 ###################################################################################################################
 
