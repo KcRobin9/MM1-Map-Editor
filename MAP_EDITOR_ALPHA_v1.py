@@ -974,13 +974,14 @@ def create_polygon(
     hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color, 
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False) -> None:
 
-    # Vertex indices
     base_vertex_index = len(vertices)
-    
     check_shape_type(vertex_coordinates)
-    
-    # Store the Polygon Data for Blender (before any manipulation) 
-    # TODO: should store data AFTER manipulation (but this needs more investigation in terms of making Game and Blender 1:1)
+    vertex_coordinates = process_winding(vertex_coordinates, fix_faulty_quads)
+    flags = process_flags(vertex_coordinates, flags)
+
+    if sort_vertices:
+        vertex_coordinates = sort_coordinates(vertex_coordinates)
+
     polygon_info = {
         "bound_number": bound_number,
         "material_index": material_index,
@@ -992,20 +993,10 @@ def create_polygon(
     }
     
     polygons_data.append(polygon_info)
-    
-    # Winding & Flags
-    vertex_coordinates = process_winding(vertex_coordinates, fix_faulty_quads)
-    flags = process_flags(vertex_coordinates, flags)
-     
-    # Sorting        
-    if sort_vertices: 
-        vertex_coordinates = sort_coordinates(vertex_coordinates)
-        
-    # Base polygon               
+              
     if base:
         update_cruise_start_position(vertex_coordinates)
           
-    # Plane Edges    
     if plane_edges is None:
         plane_edges = compute_edges(vertex_coordinates) 
         
@@ -2711,7 +2702,6 @@ def apply_texture_to_object(obj, texture_path):
 
     output_node = nodes.new(type="ShaderNodeOutputMaterial")
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
-    # unwrap_uv_to_aspect_ratio intentionally removed — done in batch below
 
 
 def unwrap_all_objects(objects):
@@ -2750,6 +2740,44 @@ def unwrap_all_objects(objects):
         obj["original_uvs"] = [(d.uv[0], d.uv[1]) for d in uv_layer.data]
 
     bpy.context.view_layer.objects.active = prev_active
+
+
+def apply_computed_uvs(objects):
+    import math
+
+    for obj in objects:
+        if obj.type != 'MESH':
+            continue
+
+        uv_layer = obj.data.uv_layers.active
+        if not uv_layer:
+            continue
+
+        bound_number = int(obj.name.lstrip("P").split(".")[0])
+        entry = texcoords_data.get("entries", {}).get(bound_number, {})
+
+        tile_x = entry.get("tile_x", 1.0)
+        tile_y = entry.get("tile_y", 1.0)
+        angle_degrees = entry.get("angle_degrees", 0.0)
+
+        base_coords = [(0, 0), (1, 0), (1, 1), (0, 1)]
+        center_x, center_y = 0.5, 0.5
+        rad = math.radians(angle_degrees)
+
+        computed_uvs = []
+        for x, y in base_coords:
+            x -= center_x
+            y -= center_y
+            rx = x * math.cos(rad) - y * math.sin(rad)
+            ry = x * math.sin(rad) + y * math.cos(rad)
+            computed_uvs.append(((rx + center_x) * tile_x, (ry + center_y) * tile_y))
+
+        for i, uv_data in enumerate(uv_layer.data):
+            u, v = computed_uvs[i % len(computed_uvs)]
+            uv_data.uv = (u, 1.0 - v)
+
+        obj.data.update()
+
 
 
 def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
@@ -2821,12 +2849,7 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
         obj = create_mesh_from_polygon_data(poly, texture_path)
         created_objects.append(obj)
 
-    unwrap_all_objects(created_objects)
-
-    for obj in created_objects:
-        tile_uvs(obj, obj.tile_x, obj.tile_y)
-        rotate_uvs(obj, obj.rotate)
-        obj.data.update()
+    apply_computed_uvs(created_objects)
 
 ###################################################################################################################   
 ###################################################################################################################

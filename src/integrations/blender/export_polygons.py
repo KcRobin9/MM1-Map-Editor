@@ -38,7 +38,6 @@ def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, boo
         "sort_vertices": obj["sort_vertices"],
         "vertex_coordinates": obj.data.vertices,
         "hud_color": obj["hud_color"],
-        "rotate": obj["rotate"]
         }
     
     return extracted_polygon_data
@@ -104,9 +103,9 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
     formatted_vertices = format_vertices(poly_data["vertex_coordinates"])
     optional_variables_str = gather_optional_variables(poly_data, obj)
 
-    tile_x = obj.get("tile_x", 1)
-    tile_y = obj.get("tile_y", 1)
-    rotation = poly_data.get("rotate", 999.0)
+    tile_x = obj.tile_x
+    tile_y = obj.tile_y
+    rotation = obj.rotate
     
     if optional_variables_str:
         optional_variables_str = f"\n\t{optional_variables_str}"
