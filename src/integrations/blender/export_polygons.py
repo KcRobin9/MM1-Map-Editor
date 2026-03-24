@@ -105,11 +105,11 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
 
     tile_x = obj.tile_x
     tile_y = obj.tile_y
-    rotation = obj.rotate
-    
+    angle_degrees = obj.angle_degrees
+
     if optional_variables_str:
         optional_variables_str = f"\n\t{optional_variables_str}"
-    
+
     template = f"""
 create_polygon(
     bound_number = {poly_data['bound_number']},{optional_variables_str}
@@ -118,8 +118,6 @@ create_polygon(
 
 save_mesh(
     texture_name = [{formatted_texture}],
-    tex_coords = compute_uv(bound_number = {poly_data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {rotation:.2f}))
+    tex_coords = compute_uv(bound_number = {poly_data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {angle_degrees:.2f}))
 """
-
     return template
-    

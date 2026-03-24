@@ -1539,15 +1539,15 @@ save_mesh(texture_name = [Texture.FREEWAY],
 	tex_coords = compute_uv(bound_number = 2220, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
 
 create_polygon(
-	bound_number = 2221,
-	vertex_coordinates = [
-		(-200.0, -0.00, -120.0),
-        (-160.0, -3.0, -160.0),
+    bound_number = 2221,
+    vertex_coordinates = [
+        (-200.0, 0.0, -120.0),
+		(-160.0, -3.0, -160.0),
 		(-200.0, -3.0, -160.0)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2221, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2221, tile_x = 3.00, tile_y = 4.00, angle_degrees = -45.00))
 
 create_polygon(
 	bound_number = 2222,
@@ -2635,7 +2635,7 @@ import bpy
 
 from src.core.geometry.main import transform_coordinate_system
 
-from src.integrations.blender.modeling.uv_mapping import rotate_uvs, tile_uvs, unwrap_uv_to_aspect_ratio, update_uv_tiling
+from src.integrations.blender.modeling.uv_mapping import update_uv_tiling
 from src.integrations.blender.panels.hud import set_hud_checkbox
 
 
@@ -2704,44 +2704,6 @@ def apply_texture_to_object(obj, texture_path):
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
 
 
-def unwrap_all_objects(objects):
-    prev_active = bpy.context.view_layer.objects.active
-
-    for o in bpy.context.selected_objects:
-        o.select_set(False)
-
-    for obj in objects:
-        if obj.type != 'MESH':
-            continue
-
-        obj.select_set(True)
-        bpy.context.view_layer.objects.active = obj
-
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.unwrap(method='ANGLE_BASED', margin=0.001)
-        bpy.ops.object.mode_set(mode='OBJECT')
-
-        obj.select_set(False)
-
-        uv_layer = obj.data.uv_layers.active
-        if not uv_layer:
-            continue
-
-        us = [d.uv[0] for d in uv_layer.data]
-        vs = [d.uv[1] for d in uv_layer.data]
-        u_range = (max(us) - min(us)) or 1.0
-        v_range = (max(vs) - min(vs)) or 1.0
-
-        for d in uv_layer.data:
-            d.uv[0] = (d.uv[0] - min(us)) / u_range
-            d.uv[1] = (d.uv[1] - min(vs)) / v_range
-
-        obj["original_uvs"] = [(d.uv[0], d.uv[1]) for d in uv_layer.data]
-
-    bpy.context.view_layer.objects.active = prev_active
-
-
 def apply_computed_uvs(objects):
     import math
 
@@ -2777,7 +2739,6 @@ def apply_computed_uvs(objects):
             uv_data.uv = (u, 1.0 - v)
 
         obj.data.update()
-
 
 
 def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
@@ -2817,16 +2778,16 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
 
     bpy.types.Object.tile_x = bpy.props.FloatProperty(name="Tile X", default=2.0, update=update_uv_tiling)
     bpy.types.Object.tile_y = bpy.props.FloatProperty(name="Tile Y", default=2.0, update=update_uv_tiling)
-    bpy.types.Object.rotate = bpy.props.FloatProperty(name="Rotate", default=0.0, update=update_uv_tiling)
+    bpy.types.Object.angle_degrees = bpy.props.FloatProperty(name="Angle Degrees", default=0.0, update=update_uv_tiling)
 
     if bound_number in texcoords_data.get("entries", {}):
-        obj.tile_x = texcoords_data["entries"][bound_number].get("tile_x", 1)
-        obj.tile_y = texcoords_data["entries"][bound_number].get("tile_y", 1)
-        obj.rotate = texcoords_data["entries"][bound_number].get("angle_degrees", 5)
+        obj.tile_x = texcoords_data["entries"][bound_number].get("tile_x", 1.0)
+        obj.tile_y = texcoords_data["entries"][bound_number].get("tile_y", 1.0)
+        obj.angle_degrees = texcoords_data["entries"][bound_number].get("angle_degrees", 0.0)
     else:
-        obj.tile_x = 2
-        obj.tile_y = 2
-        obj.rotate = 0.1
+        obj.tile_x = 2.0
+        obj.tile_y = 2.0
+        obj.angle_degrees = 0.0
 
     if texture_folder:
         apply_texture_to_object(obj, texture_folder)
