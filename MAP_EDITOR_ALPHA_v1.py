@@ -91,7 +91,6 @@ from src.integrations.blender.setup import setup_blender
 from src.integrations.blender.inits import initialize_blender_operators, initialize_blender_panels, initialize_blender_waypoint_editor
 from src.integrations.blender.keybindings import set_blender_keybinding
 from src.integrations.blender.modeling.ai_paths import process_and_visualize_paths
-# from src.integrations.blender.modeling.meshes import create_blender_meshes
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
@@ -122,7 +121,7 @@ from src.USER.settings.main import (
     set_lars_race_maker, 
     cruise_start_position,
     randomize_textures, random_textures,
-    round_vector_values, disable_progress_bar
+    disable_progress_bar
 )
 
 from src.USER.settings.advanced import (
@@ -152,6 +151,10 @@ from src.USER.bridges import bridge_list, bridge_config_list
 from src.USER.races.cops_and_robbers import cops_and_robbers_waypoints
 from src.USER.races.races import blitz_race_names, checkpoint_race_names, circuit_race_names, race_data
 
+from src.USER.textures.properties import texture_modifications
+
+from src.USER.misc.dlp import dlp_groups, dlp_patches, dlp_vertices
+
 from src.USER.props.properties import prop_properties
 
 from src.USER.props.props import prop_list, random_props  # 'Set' props could be a better name? I.e. create from scratch
@@ -169,10 +172,6 @@ from src.USER.props.subtract import (
     subtract_input_props_file,
     subtract_output_props_file
 )
-
-from src.USER.textures.properties import texture_modifications
-
-from src.USER.misc.dlp import dlp_groups, dlp_patches, dlp_vertices
 
 ################################################################################################################               
 ################################################################################################################
@@ -365,24 +364,24 @@ class Bounds:
     @classmethod
     def read(cls, f: BinaryIO) -> 'Bounds':  
         magic = read_binary_name(f, len(Magic.BOUND))
-        offset = Vector3.read(f, '<')
+        offset = Vector3.read(f)
         x_dim, y_dim, z_dim = read_unpack(f, '<3l')
-        center = Vector3.read(f, '<')
+        center = Vector3.read(f)
         radius, radius_sqr = read_unpack(f, '<2f')
-        bb_min = Vector3.read(f, '<')
-        bb_max = Vector3.read(f, '<')
+        bb_min = Vector3.read(f)
+        bb_max = Vector3.read(f)
         num_verts, num_polys = read_unpack(f, '<2l')
         num_hot_verts_1, num_hot_verts_2, num_edges = read_unpack(f, '<3l')
         x_scale, z_scale = read_unpack(f, '<2f')
         num_indices, height_scale, cache_size = read_unpack(f, '<lfl')
         
-        vertices = Vector3.readn(f, num_verts, '<')
+        vertices = Vector3.readn(f, num_verts)
         polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
 
-        hot_verts = Vector3.readn(f, num_hot_verts_2, '<')
+        hot_verts = Vector3.readn(f, num_hot_verts_2)
         edge_verts_1 = read_unpack(f, f'<{num_edges}I')
         edge_verts_2 = read_unpack(f, f'<{num_edges}I')
-        edge_plane_normal = Vector3.readn(f, num_edges, '<')
+        edge_plane_normal = Vector3.readn(f, num_edges)
         edge_plane_distance = read_unpack(f, f'<{num_edges}f')
 
         row_offsets = None
@@ -438,19 +437,19 @@ class Bounds:
             
     def write(self, f: BinaryIO) -> None:
         write_binary_name(f, self.magic)
-        self.offset.write(f, '<')         
+        self.offset.write(f)
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
-        self.center.write(f, '<') 
+        self.center.write(f)
         write_pack(f, '<2f', self.radius, self.radius_sqr)
-        self.bb_min.write(f, '<')
-        self.bb_max.write(f, '<')
+        self.bb_min.write(f)
+        self.bb_max.write(f)
         write_pack(f, '<2l', self.num_verts, self.num_polys)
         write_pack(f, '<3l', self.num_hot_verts_1, self.num_hot_verts_2, self.num_edges)
         write_pack(f, '<2f', self.x_scale, self.z_scale)
         write_pack(f, '<lfl', self.num_indices, self.height_scale, self.cache_size)
  
         for vertex in self.vertices:       
-            vertex.write(f, '<')   
+            vertex.write(f)
         
         for poly in self.polys:           
             poly.write(f)
@@ -597,9 +596,9 @@ class Meshes:
             texture_names = [read_binary_name(f, 32, Encoding.ASCII, 16) for _ in range(texture_count)]
             
             if vertex_count < Threshold.MESH_VERTEX_COUNT:
-                vertices = Vector3.readn(f, vertex_count, '<')
+                vertices = Vector3.readn(f, vertex_count)
             else:
-                vertices = Vector3.readn(f, vertex_count + 8, '<')
+                vertices = Vector3.readn(f, vertex_count + 8)
                                         
             normals = list(read_unpack(f, f"{adjunct_count}B"))
             tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f"))
@@ -632,11 +631,11 @@ class Meshes:
                 write_binary_name(f, texture_name, length = 32, padding = 16) 
                             
             for vertex in self.vertices:
-                vertex.write(f, '<')
+                vertex.write(f)
 
             if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
                 for _ in range(8):
-                    Default.VECTOR_3.write(f, '<')
+                    Default.VECTOR_3.write(f)
                                                                         
             write_pack(f, f"{self.adjunct_count}B", *self.normals)
                         
@@ -2156,12 +2155,12 @@ class Portals:
         gap_2, = read_unpack(f, '<H')
         cell_1, cell_2, = read_unpack(f, '<2H')  
         height, = read_unpack(f, '<f')   
-        _min = Vector3.read(f, '<')
-        _max = Vector3.read(f, '<')
+        _min = Vector3.read(f)
+        _max = Vector3.read(f)
         
         vertex_c = None
         if edge_count == Shape.TRIANGLE:
-            vertex_c = Vector3.read(f, '<')
+            vertex_c = Vector3.read(f)
 
         return cls(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max, vertex_c)
         
@@ -2205,8 +2204,8 @@ class Portals:
                     write_pack(f, '<H', gap_2)
                     write_pack(f, '<2H', cell_2, cell_1)
                     write_pack(f, '<f', height)
-                    _min.write(f, '<')
-                    _max.write(f, '<')
+                    _min.write(f)
+                    _max.write(f)
                     
                 print(f"Successfully created {len(portal_tuples)} portal(s)")
                 cls.debug(portals, debug_portals, Folder.Debug.Portals / f"{MAP_FILENAME}_PTL.txt")            
@@ -2431,32 +2430,25 @@ unique_textures = len(texture_counter)
 all_textures_str = ", ".join([f"{tex}: {count}x" for tex, count in texture_counter.items()])
 print(f"Succesfully utilized: {unique_textures} unique texture(s)\n---textures: ({all_textures_str})")
 
-create_cells(
-    Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", 
-    polys
-)
+create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
 Bounds.create(
     Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}", 
-    vertices, 
-    polys, 
+    vertices, polys, 
     Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}", 
     debug_bounds
 )
 
 Portals.write_all(
     Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}", 
-    polys, 
-    vertices, 
-    lower_portals, 
-    empty_portals, 
+    polys, vertices, 
+    lower_portals, empty_portals, 
     debug_portals
 )
 
 aiStreetEditor.create(
     street_list, 
-    set_ai_streets, 
-    set_reverse_ai_streets
+    set_ai_streets, set_reverse_ai_streets
 )
 
 FacadeEditor.create(
