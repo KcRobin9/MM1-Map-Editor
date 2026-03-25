@@ -1,6 +1,7 @@
 import re
 import bpy
 
+from src.integrations.blender.utils import get_used_bound_numbers, next_available_bound_number
 
 def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
     polygons = [obj for obj in context.scene.objects if obj.name.startswith("P")]
@@ -62,3 +63,57 @@ class OBJECT_OT_RenameSequential(bpy.types.Operator):
         except Exception as e:
             self.report({"ERROR"}, f"Error renaming objects: {str(e)}")
             return {"CANCELLED"}
+        
+
+class OBJECT_OT_FixPolygonNames(bpy.types.Operator):
+    bl_idname = "object.fix_polygon_names"
+    bl_label = "Fix Polygon Names"
+    bl_description = "Rename polygons with invalid .001-style names to valid unused bound numbers"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context: bpy.types.Context) -> set:
+        used = get_used_bound_numbers(context.scene)
+        renamed = []
+
+        invalid_objects = [
+            obj for obj in context.scene.objects
+            if obj.type == "MESH" and obj.name.startswith("P") and "." in obj.name
+        ]
+
+        if not invalid_objects:
+            self.report({"INFO"}, "No invalid names found.")
+            return {"FINISHED"}
+
+        for obj in invalid_objects:
+            old_name = obj.name
+            new_num = next_available_bound_number(used)
+            used.add(new_num)
+            obj.name = f"P{new_num}"
+            renamed.append(f"{old_name} → P{new_num}")
+
+        self.report({"INFO"}, f"Renamed {len(renamed)}: " + ", ".join(renamed))
+        return {"FINISHED"}
+    
+
+class OBJECT_OT_CreatePolygon(bpy.types.Operator):
+    bl_idname = "object.create_polygon"
+    bl_label = "Create New Polygon"
+    bl_description = "Create a flat quad at the cursor with all Map Editor properties pre-assigned"
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context: bpy.types.Context) -> set:
+        from src.integrations.blender.utils import (
+            get_used_bound_numbers, next_available_bound_number, assign_map_editor_properties
+        )
+
+        used = get_used_bound_numbers(context.scene)
+        bound_num = next_available_bound_number(used)
+
+        bpy.ops.mesh.primitive_plane_add(size=10, location=context.scene.cursor.location)
+        obj = context.object
+        obj.name = f"P{bound_num}"
+
+        assign_map_editor_properties(obj)
+
+        self.report({"INFO"}, f"Created P{bound_num}")
+        return {"FINISHED"}

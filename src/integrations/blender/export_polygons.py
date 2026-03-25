@@ -10,6 +10,8 @@ from src.integrations.blender.panels.cells import CELL_EXPORT
 from src.integrations.blender.panels.hud import HUD_EXPORT, HUD_IMPORT
 from src.integrations.blender.panels.materials import MATERIAL_EXPORT, MATERIAL_IMPORT
 
+from src.integrations.blender.utils import has_invalid_polygon_names
+
 
 def format_decimal(value: Union[int, float]) -> str:
     if value == int(value): 
@@ -18,14 +20,23 @@ def format_decimal(value: Union[int, float]) -> str:
         return f"{value:.2f}"
 
     
+# def validate_and_extract_bound_number(name: str) -> int:
+#     if name.startswith("P"):
+#         return int(name[1:])
+#     elif name.startswith("Shape_"):
+#         return int(name.split("_")[1])
+#     else:
+#         raise ValueError(f"Unrecognized Polygon Name Format: {name}")
+    
+
 def validate_and_extract_bound_number(name: str) -> int:
     if name.startswith("P"):
-        return int(name[1:])
+        return int(name[1:].split(".")[0])
     elif name.startswith("Shape_"):
-        return int(name.split("_")[1])
+        return int(name.split("_")[1].split(".")[0])
     else:
         raise ValueError(f"Unrecognized Polygon Name Format: {name}")
-    
+
     
 def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, bool, list]]:
     bound_number = validate_and_extract_bound_number(obj.name)

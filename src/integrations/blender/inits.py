@@ -21,6 +21,12 @@ from src.integrations.blender.panels.uv import OBJECT_PT_UVMappingPanel
 from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 
 
+from src.integrations.blender.operators.rename_polygons import (
+    OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential,
+    OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon  # NEW
+)
+
+
 def initialize_blender_panels() -> None:
     if not is_process_running(Executable.BLENDER):
         return
@@ -47,6 +53,9 @@ def initialize_blender_operators() -> None:
     bpy.utils.register_class(OBJECT_OT_ProcessPostExtrude)
     bpy.utils.register_class(OBJECT_OT_RenameChildren)
     bpy.utils.register_class(OBJECT_OT_RenameSequential)
+
+    bpy.utils.register_class(OBJECT_OT_FixPolygonNames)   # NEW
+    bpy.utils.register_class(OBJECT_OT_CreatePolygon)     # NEW
     
 
 def initialize_blender_waypoint_editor() -> None:

@@ -13,6 +13,10 @@ from src.integrations.blender.export_polygons import export_formatted_polygons
 from src.misc.main import open_with_notepad_plus
 
 
+from src.integrations.blender.utils import has_invalid_polygon_names
+
+
+
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     bl_idname = "object.export_polygons"
     bl_label = "Export Blender Polygons"
@@ -32,6 +36,17 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             self.report({"WARNING"}, "No mesh objects found for export.")
             return {"CANCELLED"}
         
+
+
+        #! NEW — block export if any names are invalid
+        invalid = has_invalid_polygon_names(context.scene)
+        if invalid:
+            names = ", ".join(invalid)
+            self.report({"ERROR"}, f"Cannot export — invalid names found: {names}. Use 'Fix Names' in the Map Editor panel.")
+            return {"CANCELLED"}
+
+
+
         # Set the first mesh object as the active object and apply transformations (to get Global coordinates)
         context.view_layer.objects.active = mesh_objects[0]
         bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)

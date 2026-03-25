@@ -128,11 +128,26 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         op = row.operator("object.export_polygons", text="All", icon='WORLD')
         op.select_all = True
 
+        # layout.separator()
+        # layout.label(text="Naming", icon='FONT_DATA')
+        # row = layout.row(align=True)
+        # row.operator("object.auto_rename_children", text="Normalize", icon='SORTALPHA')
+        # row.operator("object.rename_sequential", text="Sequential", icon='LINENUMBERS_ON')
+
+        #! NEW
         layout.separator()
         layout.label(text="Naming", icon='FONT_DATA')
         row = layout.row(align=True)
         row.operator("object.auto_rename_children", text="Normalize", icon='SORTALPHA')
         row.operator("object.rename_sequential", text="Sequential", icon='LINENUMBERS_ON')
+        layout.operator("object.fix_polygon_names", text="Fix Names (.001)", icon='ERROR')  # NEW
+
+        layout.separator()
+        layout.label(text="Create", icon='ADD')                                              # NEW
+        layout.operator("object.create_polygon", text="New Polygon", icon='MESH_PLANE')     # NEW
+
+
+
 
         layout.separator()
         layout.label(text="Mesh", icon='MESH_DATA')
