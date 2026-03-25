@@ -13,7 +13,7 @@ CUSTOM_PROPERTIES_CONFIG_DEFAULT = {
     "always_visible": YES,
     "tile_x": 2.0,
     "tile_y": 2.0,
-    "rotate": 0.01
+    "angle_degrees": 0.0,
 }
 
 class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
@@ -32,13 +32,8 @@ class OBJECT_OT_AssignCustomProperties(bpy.types.Operator):
                 for prop_name, default_value in CUSTOM_PROPERTIES_CONFIG_DEFAULT.items():
                     self.assign_defaults(obj, prop_name, default_value)
 
-                uv_layer = obj.data.uv_layers.active
-                
-                if uv_layer is None:
-                    uv_layer = obj.data.uv_layers.new(name = "UVMap")
-                    original_uvs = [(uv_data.uv[0], uv_data.uv[1]) for uv_data in uv_layer.data]
-                    obj["original_uvs"] = original_uvs
+                if obj.data.uv_layers.active is None:
+                    obj.data.uv_layers.new(name="UVMap")
 
         self.report({"INFO"}, "Assigned Custom Properties")
         return {"FINISHED"}
-      

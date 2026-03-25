@@ -17,6 +17,8 @@ from src.integrations.blender.panels.hud import OBJECT_PT_HUDColorPanel
 from src.integrations.blender.panels.materials import OBJECT_PT_MaterialTypePanel
 from src.integrations.blender.panels.misc import OBJECT_PT_PolygonMiscOptionsPanel
 from src.integrations.blender.panels.vertex import OBJECT_PT_VertexCoordinates, VertexGroup
+from src.integrations.blender.panels.uv import OBJECT_PT_UVMappingPanel
+from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 
 
 def initialize_blender_panels() -> None:
@@ -30,6 +32,9 @@ def initialize_blender_panels() -> None:
     bpy.utils.register_class(OBJECT_PT_PolygonMiscOptionsPanel)
     bpy.utils.register_class(OBJECT_PT_HUDColorPanel)
     bpy.utils.register_class(OBJECT_PT_VertexCoordinates)
+    bpy.utils.register_class(OBJECT_PT_UVMappingPanel)   
+    for cls in SIDEBAR_CLASSES:
+        bpy.utils.register_class(cls)
         
         
 def initialize_blender_operators() -> None:
