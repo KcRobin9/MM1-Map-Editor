@@ -9,12 +9,9 @@ from src.constants.keyboard import Key
 from src.constants.folder import Folder
 
 from src.integrations.blender.export_polygons import export_formatted_polygons
-
-from src.misc.main import open_with_notepad_plus
-
-
 from src.integrations.blender.utils import has_invalid_polygon_names
 
+from src.misc.main import open_with_notepad_plus
 
 
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):

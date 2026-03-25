@@ -1,6 +1,6 @@
 import os
 import bpy
-from typing import Dict, List, Union
+from typing import Dict, Union
 
 from src.constants.textures import TEXTURE_EXPORT, Texture
 
@@ -10,8 +10,6 @@ from src.integrations.blender.panels.cells import CELL_EXPORT
 from src.integrations.blender.panels.hud import HUD_EXPORT, HUD_IMPORT
 from src.integrations.blender.panels.materials import MATERIAL_EXPORT, MATERIAL_IMPORT
 
-from src.integrations.blender.utils import has_invalid_polygon_names
-
 
 def format_decimal(value: Union[int, float]) -> str:
     if value == int(value): 
@@ -19,15 +17,6 @@ def format_decimal(value: Union[int, float]) -> str:
     else: 
         return f"{value:.2f}"
 
-    
-# def validate_and_extract_bound_number(name: str) -> int:
-#     if name.startswith("P"):
-#         return int(name[1:])
-#     elif name.startswith("Shape_"):
-#         return int(name.split("_")[1])
-#     else:
-#         raise ValueError(f"Unrecognized Polygon Name Format: {name}")
-    
 
 def validate_and_extract_bound_number(name: str) -> int:
     if name.startswith("P"):
@@ -37,7 +26,7 @@ def validate_and_extract_bound_number(name: str) -> int:
     else:
         raise ValueError(f"Unrecognized Polygon Name Format: {name}")
 
-    
+
 def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, bool, list]]:
     bound_number = validate_and_extract_bound_number(obj.name)
     
@@ -47,9 +36,8 @@ def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, boo
         "cell_type": obj["cell_type"],
         "always_visible": obj["always_visible"], 
         "sort_vertices": obj["sort_vertices"],
-        "vertex_coordinates": obj.data.vertices,
         "hud_color": obj["hud_color"],
-        }
+    }
     
     return extracted_polygon_data
 
@@ -71,14 +59,21 @@ def format_texture_name(texture_name: str) -> str:
     return next((f'Texture.{name}' for name, value in vars(Texture).items() if value == texture_constant), f'"{texture_name}"')
 
 
-def format_vertices(vertices: List[bpy.types.MeshVertex]) -> str:
+def format_vertices(obj: bpy.types.Object) -> str:
+    mesh = obj.data
+    if not mesh.polygons:
+        return ""
+
+    face = mesh.polygons[0]  # Each polygon object has exactly one face
     formatted_vertices = []
-    
-    for vertex in vertices:
-        transformed_vertex = transform_coordinate_system(vertex.co, blender_to_game = True)
+
+    for loop_idx in face.loop_indices:
+        loop = mesh.loops[loop_idx]
+        vertex = mesh.vertices[loop.vertex_index]
+        transformed_vertex = transform_coordinate_system(vertex.co, blender_to_game=True)
         formatted_vertex = f"({', '.join(format_decimal(comp) for comp in transformed_vertex)})"
         formatted_vertices.append(formatted_vertex)
-        
+
     return ",\n\t\t".join(formatted_vertices)
 
 
@@ -111,7 +106,7 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
     poly_data = extract_polygon_data(obj)
     texture_name = extract_polygon_texture(obj).upper()
     formatted_texture = format_texture_name(texture_name)
-    formatted_vertices = format_vertices(poly_data["vertex_coordinates"])
+    formatted_vertices = format_vertices(obj) 
     optional_variables_str = gather_optional_variables(poly_data, obj)
 
     tile_x = obj.tile_x

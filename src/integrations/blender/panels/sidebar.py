@@ -38,6 +38,9 @@ class VIEW3D_PT_MapEditorUV(bpy.types.Panel):
         if not obj or obj.type != 'MESH':
             return
 
+        layout.prop(obj, "texture_name", text="Texture")
+        layout.separator()
+
         col = layout.column(align=True)
         col.prop(obj, "tile_x", text="Tile X")
         col.prop(obj, "tile_y", text="Tile Y")
@@ -128,13 +131,6 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         op = row.operator("object.export_polygons", text="All", icon='WORLD')
         op.select_all = True
 
-        # layout.separator()
-        # layout.label(text="Naming", icon='FONT_DATA')
-        # row = layout.row(align=True)
-        # row.operator("object.auto_rename_children", text="Normalize", icon='SORTALPHA')
-        # row.operator("object.rename_sequential", text="Sequential", icon='LINENUMBERS_ON')
-
-        #! NEW
         layout.separator()
         layout.label(text="Naming", icon='FONT_DATA')
         row = layout.row(align=True)
@@ -145,9 +141,6 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         layout.separator()
         layout.label(text="Create", icon='ADD')                                              # NEW
         layout.operator("object.create_polygon", text="New Polygon", icon='MESH_PLANE')     # NEW
-
-
-
 
         layout.separator()
         layout.label(text="Mesh", icon='MESH_DATA')

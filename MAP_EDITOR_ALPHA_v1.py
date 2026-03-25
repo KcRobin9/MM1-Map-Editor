@@ -2802,6 +2802,9 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
     if load_target_model:
         return
 
+    from src.integrations.blender.modeling.uv_mapping import set_texture_folder
+    set_texture_folder(texture_folder)
+
     load_textures(texture_folder, load_all_textures)
 
     created_objects = []
@@ -2810,17 +2813,20 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
         obj = create_mesh_from_polygon_data(poly, texture_path)
         created_objects.append(obj)
 
+    # Set texture_name on each object after all materials are loaded
+    for obj, texture_name in zip(created_objects, texture_names):
+        try:
+            obj.texture_name = texture_name
+        except TypeError:
+            pass
+
     apply_computed_uvs(created_objects)
 
 ###################################################################################################################   
 ###################################################################################################################
 
 create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
-
-process_and_visualize_paths(
-    Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", 
-    visualize_ai_paths
-)
+process_and_visualize_paths(Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 ###################################################################################################################   
 ################################################################################################################### 

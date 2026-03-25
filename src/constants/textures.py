@@ -61,3 +61,9 @@ TEXTURE_EXPORT = {
     "CHECK04": Texture.CHECKPOINT,
     "VPBUSRED_TP_BK": Texture.BUS_RED_TOP,
 }
+
+
+DDS_TO_CONSTANT = {
+    v: k for k, v in vars(Texture).items()
+    if not k.startswith('_') and isinstance(v, str)
+}

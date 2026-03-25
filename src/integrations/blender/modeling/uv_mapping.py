@@ -1,6 +1,67 @@
 import bpy
 import math
 
+from src.constants.textures import Texture
+
+_texture_folder = None
+
+
+def set_texture_folder(folder):
+    global _texture_folder
+    _texture_folder = folder
+
+
+def _build_texture_items():
+    items = []
+    for attr_name, dds_name in vars(Texture).items():
+        if attr_name.startswith('_') or not isinstance(dds_name, str):
+            continue
+        display_name = attr_name.replace('_', ' ').title()
+        items.append((dds_name, display_name, dds_name))
+    items.sort(key=lambda x: x[1])
+    return items
+
+
+TEXTURE_ENUM_ITEMS = _build_texture_items()
+
+
+def update_texture_name(self, context):
+    if not _texture_folder or not self.texture_name:
+        return
+
+    from pathlib import Path
+    from src.constants.file_formats import FileType
+
+    texture_path = Path(str(_texture_folder)) / f"{self.texture_name}{FileType.DIRECTDRAW_SURFACE}"
+    if not texture_path.exists():
+        return
+
+    self.data.materials.clear()
+
+    material_name = self.texture_name
+    if material_name in bpy.data.materials:
+        mat = bpy.data.materials[material_name]
+    else:
+        mat = bpy.data.materials.new(name=material_name)
+
+    self.data.materials.append(mat)
+    self.active_material = mat
+    mat.use_nodes = True
+
+    nodes = mat.node_tree.nodes
+    for node in nodes:
+        nodes.remove(node)
+
+    diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
+    texture_node = nodes.new(type="ShaderNodeTexImage")
+    texture_image = bpy.data.images.load(str(texture_path), check_existing=True)
+    texture_node.image = texture_image
+
+    links = mat.node_tree.links
+    links.new(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+    output_node = nodes.new(type="ShaderNodeOutputMaterial")
+    links.new(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+
 
 def update_uv_tiling(self, context):
     obj = self
@@ -42,5 +103,12 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
             if obj.type != 'MESH':
                 continue
             update_uv_tiling(obj, context)
-
         return {"FINISHED"}
+
+
+bpy.types.Object.texture_name = bpy.props.EnumProperty(
+    name="Texture",
+    description="Texture used by this polygon",
+    items=TEXTURE_ENUM_ITEMS,
+    update=update_texture_name
+)

@@ -3,6 +3,7 @@ import bpy
 
 from src.integrations.blender.utils import get_used_bound_numbers, next_available_bound_number
 
+
 def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
     polygons = [obj for obj in context.scene.objects if obj.name.startswith("P")]
     if not sort or not polygons:
