@@ -1,7 +1,7 @@
 import re
 import bpy
 
-from src.integrations.blender.utils import get_used_bound_numbers, next_available_bound_number
+from src.integrations.blender.utils import get_used_bound_numbers, next_available_bound_number, assign_map_editor_properties
 
 
 def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
@@ -103,10 +103,6 @@ class OBJECT_OT_CreatePolygon(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context: bpy.types.Context) -> set:
-        from src.integrations.blender.utils import (
-            get_used_bound_numbers, next_available_bound_number, assign_map_editor_properties
-        )
-
         used = get_used_bound_numbers(context.scene)
         bound_num = next_available_bound_number(used)
 
@@ -117,4 +113,42 @@ class OBJECT_OT_CreatePolygon(bpy.types.Operator):
         assign_map_editor_properties(obj)
 
         self.report({"INFO"}, f"Created P{bound_num}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_DuplicatePolygon(bpy.types.Operator):
+    bl_idname = "object.duplicate_polygon"
+    bl_label = "Duplicate Polygon"
+    bl_description = "Duplicate the selected polygon with a unique bound number and all properties copied"
+    bl_options = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return (
+            context.object is not None
+            and context.object.type == "MESH"
+            and context.object.name.startswith("P")
+        )
+
+    def execute(self, context: bpy.types.Context) -> set:
+  
+
+        source = context.object
+
+        used = get_used_bound_numbers(context.scene)
+        new_num = next_available_bound_number(used)
+
+        # Duplicate via Blender op — this preserves mesh geometry and materials
+        bpy.ops.object.duplicate(linked=False)
+        new_obj = context.object  # duplicate sets itself as active
+
+        new_obj.name = f"P{new_num}"
+
+        # Overwrite properties from source to ensure they're in sync
+        assign_map_editor_properties(new_obj, source=source)
+
+        # Copy hud_color_index explicitly since assign_map_editor_properties uses raw custom props
+        new_obj.hud_color_index = source.hud_color_index
+
+        self.report({"INFO"}, f"Duplicated {source.name} → P{new_num}")
         return {"FINISHED"}

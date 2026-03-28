@@ -134,11 +134,12 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         row = layout.row(align=True)
         row.operator("object.auto_rename_children", text="Normalize", icon='SORTALPHA')
         row.operator("object.rename_sequential", text="Sequential", icon='LINENUMBERS_ON')
-        layout.operator("object.fix_polygon_names", text="Fix Names (.001)", icon='ERROR')  # NEW
+        layout.operator("object.fix_polygon_names", text="Fix Names (.001)", icon='ERROR')
 
         layout.separator()
-        layout.label(text="Create", icon='ADD')                                              # NEW
-        layout.operator("object.create_polygon", text="New Polygon", icon='MESH_PLANE')     # NEW
+        layout.label(text="Create", icon='ADD')
+        layout.operator("object.create_polygon", text="New Polygon", icon='MESH_PLANE')
+        layout.operator("object.duplicate_polygon", text="Duplicate Polygon", icon='DUPLICATE')
 
         layout.separator()
         layout.label(text="Mesh", icon='MESH_DATA')

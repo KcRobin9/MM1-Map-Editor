@@ -7,7 +7,7 @@ from src.integrations.blender.modeling.uv_mapping import OBJECT_OT_UpdateUVMappi
 from src.integrations.blender.operators.custom_properties import OBJECT_OT_AssignCustomProperties
 from src.integrations.blender.operators.export_polygons import OBJECT_OT_ExportPolygons
 from src.integrations.blender.operators.process_extrude import OBJECT_OT_ProcessPostExtrude
-from src.integrations.blender.operators.rename_polygons import (OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential, OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon)
+from src.integrations.blender.operators.rename_polygons import (OBJECT_OT_DuplicatePolygon, OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential, OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon)
 from src.integrations.blender.operators.waypoints import (
     CREATE_SINGLE_WAYPOINT_OT_operator,
     EXPORT_ALL_WAYPOINTS_OT_operator,
@@ -48,6 +48,7 @@ OPERATOR_CLASSES = [
     OBJECT_OT_RenameSequential,
     OBJECT_OT_FixPolygonNames,
     OBJECT_OT_CreatePolygon,
+    OBJECT_OT_DuplicatePolygon,
 ]
 
 WAYPOINT_CLASSES = [
