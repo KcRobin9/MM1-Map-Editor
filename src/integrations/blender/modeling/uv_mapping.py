@@ -3,6 +3,10 @@ import math
 
 from src.constants.textures import Texture
 
+from pathlib import Path
+from src.constants.file_formats import FileType
+
+
 _texture_folder = None
 
 
@@ -29,38 +33,73 @@ def update_texture_name(self, context) -> None:
     if not _texture_folder or not self.texture_name:
         return
 
-    from pathlib import Path
-    from src.constants.file_formats import FileType
+    def apply_texture(obj) -> None:
+        texture_path = Path(str(_texture_folder)) / f"{obj.texture_name}{FileType.DIRECTDRAW_SURFACE}"
+        if not texture_path.exists():
+            return
 
-    texture_path = Path(str(_texture_folder)) / f"{self.texture_name}{FileType.DIRECTDRAW_SURFACE}"
-    if not texture_path.exists():
-        return
+        obj.data.materials.clear()
 
-    self.data.materials.clear()
+        material_name = obj.texture_name
+        if material_name in bpy.data.materials:
+            mat = bpy.data.materials[material_name]
+        else:
+            mat = bpy.data.materials.new(name=material_name)
 
-    material_name = self.texture_name
-    if material_name in bpy.data.materials:
-        mat = bpy.data.materials[material_name]
-    else:
-        mat = bpy.data.materials.new(name=material_name)
+        obj.data.materials.append(mat)
+        obj.active_material = mat
+        mat.use_nodes = True
 
-    self.data.materials.append(mat)
-    self.active_material = mat
-    mat.use_nodes = True
+        nodes = mat.node_tree.nodes
+        for node in nodes:
+            nodes.remove(node)
 
-    nodes = mat.node_tree.nodes
-    for node in nodes:
-        nodes.remove(node)
+        diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
+        texture_node = nodes.new(type="ShaderNodeTexImage")
+        texture_image = bpy.data.images.load(str(texture_path), check_existing=True)
+        texture_node.image = texture_image
 
-    diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
-    texture_node = nodes.new(type="ShaderNodeTexImage")
-    texture_image = bpy.data.images.load(str(texture_path), check_existing=True)
-    texture_node.image = texture_image
+        links = mat.node_tree.links
+        links.new(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+        output_node = nodes.new(type="ShaderNodeOutputMaterial")
+        links.new(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
 
-    links = mat.node_tree.links
-    links.new(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
-    output_node = nodes.new(type="ShaderNodeOutputMaterial")
-    links.new(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+    # Always apply to self first (the active object whose dropdown was changed)
+    apply_texture(self)
+
+    # Then apply the same texture to other selected meshes
+    selected_meshes = [
+        obj for obj in context.selected_objects
+        if obj.type == 'MESH' and obj != self
+    ]
+    for obj in selected_meshes:
+        # Directly apply self's chosen texture to each other selected object
+        texture_path = Path(str(_texture_folder)) / f"{self.texture_name}{FileType.DIRECTDRAW_SURFACE}"
+        if texture_path.exists():
+            obj.data.materials.clear()
+            material_name = self.texture_name
+
+            if material_name in bpy.data.materials:
+                mat = bpy.data.materials[material_name]
+            else:
+                mat = bpy.data.materials.new(name=material_name)
+
+            obj.data.materials.append(mat)
+            obj.active_material = mat
+            mat.use_nodes = True
+            nodes = obj.data.materials[0].node_tree.nodes
+
+            for node in nodes:
+                nodes.remove(node)
+
+            diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
+            texture_node = nodes.new(type="ShaderNodeTexImage")
+            texture_image = bpy.data.images.load(str(texture_path), check_existing=True)
+            texture_node.image = texture_image
+            links = obj.data.materials[0].node_tree.links
+            links.new(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+            output_node = nodes.new(type="ShaderNodeOutputMaterial")
+            links.new(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
 
 
 def update_uv_tiling(self, context) -> None:
