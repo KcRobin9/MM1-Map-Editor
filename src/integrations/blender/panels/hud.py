@@ -1,45 +1,83 @@
 import bpy
+from typing import NamedTuple
 
 from src.constants.color import Color
 
 
-HUD_IMPORT = [
-    (Color.ROAD, "Road", "", "", 1),
-    (Color.GRASS, "Grass", "", "", 2),
-    (Color.WATER, "Water", "", "", 3),
-    (Color.SNOW, "Snow", "", "", 4),
-    (Color.WOOD, "Wood", "", "", 5),
-    (Color.ORANGE, "Orange", "", "", 6),
-    (Color.RED_LIGHT, "Light Red", "", "", 7),
-    (Color.RED_DARK, "Dark Red", "", "", 8),
-    (Color.YELLOW_LIGHT, "Light Yellow", "", "", 9)
+class HudEntry(NamedTuple):
+    color: str
+    label: str
+
+
+HUD_IMPORT: list[HudEntry] = [
+    HudEntry(Color.ROAD,        "Road"),
+    HudEntry(Color.GRASS,       "Grass"),
+    HudEntry(Color.WATER,       "Water"),
+    HudEntry(Color.SNOW,        "Snow"),
+    HudEntry(Color.WOOD,        "Wood"),
+    HudEntry(Color.ORANGE,      "Orange"),
+    HudEntry(Color.RED_LIGHT,   "Light Red"),
+    HudEntry(Color.RED_DARK,    "Dark Red"),
+    HudEntry(Color.YELLOW_LIGHT,"Light Yellow"),
 ]
 
-HUD_EXPORT = {
-    # '#414441': "Color.ROAD",
-    '#7b5931': "Color.WOOD",
-    '#cdcecd': "Color.SNOW",
-    '#5d8096': "Color.WATER",
-    '#396d18': "Color.GRASS",
-    '#af0000': "Color.RED_DARK",
-    '#ffa500': "Color.ORANGE",
-    '#ff7f7f': "Color.RED_LIGHT",
-    '#ffffe0': "Color.YELLOW_LIGHT"
+HUD_EXPORT: dict[str, str] = {
+    # Color.ROAD:         "Color.ROAD",
+    Color.WOOD:         "Color.WOOD",
+    Color.SNOW:         "Color.SNOW",
+    Color.WATER:        "Color.WATER",
+    Color.GRASS:        "Color.GRASS",
+    Color.RED_DARK:     "Color.RED_DARK",
+    Color.ORANGE:       "Color.ORANGE",
+    Color.RED_LIGHT:    "Color.RED_LIGHT",
+    Color.YELLOW_LIGHT: "Color.YELLOW_LIGHT",
 }
 
 
-def set_hud_checkbox(color, obj):
-    for i, (color_value, _, _, _, _) in enumerate(HUD_IMPORT):
-        if color_value == color:
-            obj.hud_colors[i] = True
-            break
+def set_hud_color(color: str, obj: bpy.types.Object) -> None:
+    for i, entry in enumerate(HUD_IMPORT):
+        if entry.color == color:
+            obj.hud_color_index = i
+            return
 
+
+def hud_color_index_update(self, context) -> None:
+    new_state = [False] * len(HUD_IMPORT)
+    if 0 <= self.hud_color_index < len(HUD_IMPORT):
+        new_state[self.hud_color_index] = True
+    self.hud_colors = new_state
+
+
+def hud_colors_update(self, context) -> None:
+    current = self.hud_color_index
+    true_indices = [i for i in range(len(HUD_IMPORT)) if self.hud_colors[i]]
+
+    if not true_indices:
+        # User toggled the active one off — force it back on
+        new_state = [False] * len(HUD_IMPORT)
+        new_state[current] = True
+        self.hud_colors = new_state
+        return
+
+    # If a different button was pressed, promote it to the active index.
+    # hud_color_index_update will then sync hud_colors cleanly.
+    newly_selected = next((i for i in true_indices if i != current), None)
+    if newly_selected is not None:
+        self.hud_color_index = newly_selected
+
+
+bpy.types.Object.hud_color_index = bpy.props.IntProperty(
+    name="HUD Color Index",
+    default=0,
+    update=hud_color_index_update
+)
 
 bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
-    name = "HUD Colors",
-    description = "Select the color of the HUD",
-    size = 9, 
-    default = (False, False, False, False, False, False, False, False, False)
+    name="HUD Colors",
+    description="Select the color of the HUD",
+    size=len(HUD_IMPORT),
+    default=(False,) * len(HUD_IMPORT),
+    update=hud_colors_update
 )
 
 
@@ -50,20 +88,20 @@ class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
     bl_region_type = 'WINDOW'
     bl_context = "object"
     bl_options = {'DEFAULT_CLOSED'}
-    
-    def draw(self, context):
+
+    def draw(self, context) -> None:
         layout = self.layout
         obj = context.active_object
-        
-        if obj:
-            row = layout.row(align = True)
-            col = row.column(align = True)
-            half_length = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
-            
-            for i, (_, name, _, _, _) in enumerate(HUD_IMPORT):
-                if i == half_length:
-                    col = row.column(align = True)
-                
-                col.prop(obj, "hud_colors", index = i, text = name, toggle = True)
-        else:
-            layout.label(text = "No active object")
+
+        if not obj:
+            layout.label(text="No active object")
+            return
+
+        half = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
+        row = layout.row(align=True)
+        col = row.column(align=True)
+
+        for i, entry in enumerate(HUD_IMPORT):
+            if i == half:
+                col = row.column(align=True)
+            col.prop(obj, "hud_colors", index=i, text=entry.label, toggle=True)

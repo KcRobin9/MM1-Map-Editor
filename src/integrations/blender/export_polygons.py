@@ -36,7 +36,6 @@ def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, boo
         "cell_type": obj["cell_type"],
         "always_visible": obj["always_visible"], 
         "sort_vertices": obj["sort_vertices"],
-        "hud_color": obj["hud_color"],
     }
     
     return extracted_polygon_data
@@ -80,24 +79,16 @@ def format_vertices(obj: bpy.types.Object) -> str:
 def gather_optional_variables(poly_data: Dict[str, Union[int, str, bool, list]], obj: bpy.types.Object) -> str:
     optional_vars = []
     
-    cell_type = CELL_EXPORT.get(str(poly_data["cell_type"]), None)
-    material_index = MATERIAL_EXPORT.get(str(poly_data["material_index"]), None)
-    hud_color = HUD_EXPORT.get(next((HUD_IMPORT[index][0] for index, checked in enumerate(obj.hud_colors) if checked), None), None)
+    cell_type      = CELL_EXPORT.get(str(poly_data["cell_type"]))
+    material_index = MATERIAL_EXPORT.get(str(poly_data["material_index"]))
+    hud_color      = HUD_EXPORT.get(HUD_IMPORT[obj.hud_color_index].color)
         
-    if cell_type:
-        optional_vars.append(f"cell_type = {cell_type}")
-    
-    if material_index:
-        optional_vars.append(f"material_index = {material_index}")
-    
-    if hud_color:
-        optional_vars.append(f"hud_color = {hud_color}")
+    if cell_type:      optional_vars.append(f"cell_type = {cell_type}")
+    if material_index: optional_vars.append(f"material_index = {material_index}")
+    if hud_color:      optional_vars.append(f"hud_color = {hud_color}")
 
-    if poly_data["sort_vertices"]:
-        optional_vars.append("sort_vertices = True")
-        
-    if not poly_data["always_visible"]:
-        optional_vars.append("always_visible = False")
+    if poly_data["sort_vertices"]:      optional_vars.append("sort_vertices = True")
+    if not poly_data["always_visible"]: optional_vars.append("always_visible = False")
         
     return ",\n\t".join(optional_vars) + ("," if optional_vars else "")
 

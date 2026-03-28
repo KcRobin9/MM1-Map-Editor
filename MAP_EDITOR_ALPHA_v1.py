@@ -2628,7 +2628,8 @@ import bpy
 from src.core.geometry.main import transform_coordinate_system
 
 from src.integrations.blender.modeling.uv_mapping import update_uv_tiling
-from src.integrations.blender.panels.hud import set_hud_checkbox
+from src.integrations.blender.panels.hud import set_hud_color
+
 
 
 def load_textures(input_folder: Path, load_all_textures: bool) -> None:
@@ -2749,7 +2750,7 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
     obj["cell_type"] = str(polygon_data["cell_type"])
     obj["material_index"] = str(polygon_data["material_index"])
 
-    set_hud_checkbox(polygon_data["hud_color"], obj)
+    set_hud_color(polygon_data["hud_color"], obj)
 
     for vertex in transformed_vertices:
         vertex_item = obj.vertex_coords.add()
@@ -2759,7 +2760,7 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
     mesh.from_pydata(transformed_vertices, edges, faces)
     mesh.update()
 
-    custom_properties = ["sort_vertices", "cell_type", "hud_color", "material_index", "always_visible"]
+    custom_properties = ["sort_vertices", "cell_type", "material_index", "always_visible"]
 
     for custom_prop in custom_properties:
         if custom_prop in polygon_data:

@@ -1,8 +1,6 @@
 import bpy
 
-from src.integrations.blender.panels.cells import CELL_IMPORT
 from src.integrations.blender.panels.hud import HUD_IMPORT
-from src.integrations.blender.panels.materials import MATERIAL_IMPORT
 
 
 class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
@@ -97,21 +95,21 @@ class VIEW3D_PT_MapEditorHUD(bpy.types.Panel):
     bl_parent_id = "VIEW3D_PT_map_editor"
     bl_options = {'DEFAULT_CLOSED'}
 
-    def draw(self, context):
+    def draw(self, context) -> None:
         layout = self.layout
         obj = context.active_object
 
         if not obj or obj.type != 'MESH':
             return
 
+        half = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
         row = layout.row(align=True)
         col_left = row.column(align=True)
         col_right = row.column(align=True)
-        half = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
 
-        for i, (_, name, _, _, _) in enumerate(HUD_IMPORT):
+        for i, entry in enumerate(HUD_IMPORT):
             col = col_left if i < half else col_right
-            col.prop(obj, "hud_colors", index=i, text=name, toggle=True)
+            col.prop(obj, "hud_colors", index=i, text=entry.label, toggle=True)
 
 
 class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
