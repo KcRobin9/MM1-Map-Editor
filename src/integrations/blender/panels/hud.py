@@ -10,15 +10,15 @@ class HudEntry(NamedTuple):
 
 
 HUD_IMPORT: list[HudEntry] = [
-    HudEntry(Color.ROAD,        "Road"),
-    HudEntry(Color.GRASS,       "Grass"),
-    HudEntry(Color.WATER,       "Water"),
-    HudEntry(Color.SNOW,        "Snow"),
-    HudEntry(Color.WOOD,        "Wood"),
-    HudEntry(Color.ORANGE,      "Orange"),
-    HudEntry(Color.RED_LIGHT,   "Light Red"),
-    HudEntry(Color.RED_DARK,    "Dark Red"),
-    HudEntry(Color.YELLOW_LIGHT,"Light Yellow"),
+    HudEntry(Color.ROAD,         "Road"),
+    HudEntry(Color.GRASS,        "Grass"),
+    HudEntry(Color.WATER,        "Water"),
+    HudEntry(Color.SNOW,         "Snow"),
+    HudEntry(Color.WOOD,         "Wood"),
+    HudEntry(Color.ORANGE,       "Orange"),
+    HudEntry(Color.RED_LIGHT,    "Light Red"),
+    HudEntry(Color.RED_DARK,     "Dark Red"),
+    HudEntry(Color.YELLOW_LIGHT, "Light Yellow"),
 ]
 
 HUD_EXPORT: dict[str, str] = {
@@ -53,32 +53,14 @@ def hud_colors_update(self, context) -> None:
     true_indices = [i for i in range(len(HUD_IMPORT)) if self.hud_colors[i]]
 
     if not true_indices:
-        # User toggled the active one off — force it back on
         new_state = [False] * len(HUD_IMPORT)
         new_state[current] = True
         self.hud_colors = new_state
         return
 
-    # If a different button was pressed, promote it to the active index.
-    # hud_color_index_update will then sync hud_colors cleanly.
     newly_selected = next((i for i in true_indices if i != current), None)
     if newly_selected is not None:
         self.hud_color_index = newly_selected
-
-
-bpy.types.Object.hud_color_index = bpy.props.IntProperty(
-    name="HUD Color Index",
-    default=0,
-    update=hud_color_index_update
-)
-
-bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
-    name="HUD Colors",
-    description="Select the color of the HUD",
-    size=len(HUD_IMPORT),
-    default=(False,) * len(HUD_IMPORT),
-    update=hud_colors_update
-)
 
 
 class OBJECT_PT_HUDColorPanel(bpy.types.Panel):

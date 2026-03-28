@@ -6,7 +6,7 @@ from src.constants.textures import Texture
 _texture_folder = None
 
 
-def set_texture_folder(folder):
+def set_texture_folder(folder) -> None:
     global _texture_folder
     _texture_folder = folder
 
@@ -25,7 +25,7 @@ def _build_texture_items():
 TEXTURE_ENUM_ITEMS = _build_texture_items()
 
 
-def update_texture_name(self, context):
+def update_texture_name(self, context) -> None:
     if not _texture_folder or not self.texture_name:
         return
 
@@ -63,7 +63,7 @@ def update_texture_name(self, context):
     links.new(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
 
 
-def update_uv_tiling(self, context):
+def update_uv_tiling(self, context) -> None:
     obj = self
     uv_layer = obj.data.uv_layers.active
     if not uv_layer:
@@ -104,11 +104,3 @@ class OBJECT_OT_UpdateUVMapping(bpy.types.Operator):
                 continue
             update_uv_tiling(obj, context)
         return {"FINISHED"}
-
-
-bpy.types.Object.texture_name = bpy.props.EnumProperty(
-    name="Texture",
-    description="Texture used by this polygon",
-    items=TEXTURE_ENUM_ITEMS,
-    update=update_texture_name
-)

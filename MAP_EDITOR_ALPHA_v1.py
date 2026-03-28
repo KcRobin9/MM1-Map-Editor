@@ -2611,6 +2611,15 @@ if duplicate_props:
 start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game)
 
 # Blender
+from src.integrations.blender.inits import (
+    unregister_all,
+    initialize_blender_panels,
+    initialize_blender_operators,
+    initialize_blender_waypoint_editor
+)
+
+unregister_all()  # Clean slate before re-registering
+
 setup_blender(load_target_model)
 
 initialize_blender_panels()
@@ -2629,7 +2638,6 @@ from src.core.geometry.main import transform_coordinate_system
 
 from src.integrations.blender.modeling.uv_mapping import update_uv_tiling
 from src.integrations.blender.panels.hud import set_hud_color
-
 
 
 def load_textures(input_folder: Path, load_all_textures: bool) -> None:
