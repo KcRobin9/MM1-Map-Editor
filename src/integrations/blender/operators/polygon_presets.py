@@ -24,15 +24,73 @@ class PolySpec(NamedTuple):
 
 
 PRESETS: dict[str, List[PolySpec]] = {
+
     "ROAD_SIDEWALK": [
         PolySpec(width=20.0, length=20.0, offset_x=0.0,   offset_y=0.0, texture=Texture.ROAD_2_LANE, tile_x=2.0, tile_y=2.0, angle_degrees=90.0),
         PolySpec(width=5.0,  length=20.0, offset_x=-12.5, offset_y=0.0, texture=Texture.SIDEWALK,    tile_x=4.0, tile_y=1.0, angle_degrees=-90.0),
         PolySpec(width=5.0,  length=20.0, offset_x=12.5,  offset_y=0.0, texture=Texture.SIDEWALK,    tile_x=4.0, tile_y=1.0, angle_degrees=90.0),
     ],
+    "BOULEVARD_SIDEWALK": [
+        PolySpec(width=30.0, length=20.0, offset_x=0.0,   offset_y=0.0, texture=Texture.ROAD_3_LANE, tile_x=2.0, tile_y=2.0, angle_degrees=90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=-17.5, offset_y=0.0, texture=Texture.SIDEWALK,    tile_x=4.0, tile_y=1.0, angle_degrees=-90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=17.5,  offset_y=0.0, texture=Texture.SIDEWALK,    tile_x=4.0, tile_y=1.0, angle_degrees=90.0),
+    ],
+    "ALLEY": [
+        PolySpec(width=8.0, length=20.0, offset_x=0.0, offset_y=0.0, texture=Texture.ROAD_1_LANE, tile_x=2.0, tile_y=2.0, angle_degrees=90.0),
+    ],
+    "INTERSECTION_T": [
+        PolySpec(width=20.0, length=20.0, offset_x=0.0,  offset_y=0.0,   texture=Texture.ROAD_2_LANE,  tile_x=2.0, tile_y=2.0, angle_degrees=90.0),
+        PolySpec(width=20.0, length=20.0, offset_x=0.0,  offset_y=-20.0, texture=Texture.INTERSECTION, tile_x=2.0, tile_y=2.0, angle_degrees=0.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=-12.5, offset_y=0.0,  texture=Texture.SIDEWALK,     tile_x=4.0, tile_y=1.0, angle_degrees=-90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=12.5,  offset_y=0.0,  texture=Texture.SIDEWALK,     tile_x=4.0, tile_y=1.0, angle_degrees=90.0),
+    ],
+    "INTERSECTION_4WAY": [
+        PolySpec(width=20.0, length=20.0, offset_x=0.0,  offset_y=0.0,  texture=Texture.INTERSECTION, tile_x=2.0, tile_y=2.0, angle_degrees=0.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=-12.5, offset_y=0.0, texture=Texture.SIDEWALK,     tile_x=4.0, tile_y=1.0, angle_degrees=-90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=12.5,  offset_y=0.0, texture=Texture.SIDEWALK,     tile_x=4.0, tile_y=1.0, angle_degrees=90.0),
+        PolySpec(width=20.0, length=5.0, offset_x=0.0,  offset_y=-12.5, texture=Texture.SIDEWALK,     tile_x=1.0, tile_y=4.0, angle_degrees=0.0),
+        PolySpec(width=20.0, length=5.0, offset_x=0.0,  offset_y=12.5,  texture=Texture.SIDEWALK,     tile_x=1.0, tile_y=4.0, angle_degrees=0.0),
+        # Corner pieces
+        PolySpec(width=5.0,  length=5.0, offset_x=-12.5, offset_y=-12.5, texture=Texture.SIDEWALK,   tile_x=2.0, tile_y=2.0, angle_degrees=0.0),
+        PolySpec(width=5.0,  length=5.0, offset_x=12.5,  offset_y=-12.5, texture=Texture.SIDEWALK,   tile_x=2.0, tile_y=2.0, angle_degrees=0.0),
+        PolySpec(width=5.0,  length=5.0, offset_x=-12.5, offset_y=12.5,  texture=Texture.SIDEWALK,   tile_x=2.0, tile_y=2.0, angle_degrees=0.0),
+        PolySpec(width=5.0,  length=5.0, offset_x=12.5,  offset_y=12.5,  texture=Texture.SIDEWALK,   tile_x=2.0, tile_y=2.0, angle_degrees=0.0),
+    ],
+    "ROAD_ZEBRA_CROSSING": [
+        PolySpec(width=20.0, length=8.0,  offset_x=0.0, offset_y=-14.0, texture=Texture.ROAD_2_LANE,     tile_x=2.0, tile_y=1.0, angle_degrees=90.0),
+        PolySpec(width=20.0, length=4.0,  offset_x=0.0, offset_y=0.0,   texture=Texture.ZEBRA_CROSSING,  tile_x=2.0, tile_y=1.0, angle_degrees=0.0),
+        PolySpec(width=20.0, length=8.0,  offset_x=0.0, offset_y=14.0,  texture=Texture.ROAD_2_LANE,     tile_x=2.0, tile_y=1.0, angle_degrees=90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=-12.5, offset_y=0.0, texture=Texture.SIDEWALK,        tile_x=4.0, tile_y=1.0, angle_degrees=-90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=12.5,  offset_y=0.0, texture=Texture.SIDEWALK,        tile_x=4.0, tile_y=1.0, angle_degrees=90.0),
+    ],
+    "FREEWAY": [
+        PolySpec(width=40.0, length=20.0, offset_x=0.0, offset_y=0.0, texture=Texture.FREEWAY, tile_x=2.0, tile_y=4.0, angle_degrees=90.0),
+    ],
+    "GRASS_PATCH": [
+        PolySpec(width=20.0, length=20.0, offset_x=0.0, offset_y=0.0, texture=Texture.GRASS, material_index=Material.GRASS, hud_color=Color.GRASS, tile_x=4.0, tile_y=4.0, angle_degrees=0.0),
+    ],
+    "WATER_SURFACE": [
+        PolySpec(width=40.0, length=40.0, offset_x=0.0, offset_y=0.0, texture=Texture.WATER, material_index=Material.WATER, hud_color=Color.WATER, tile_x=4.0, tile_y=4.0, angle_degrees=0.0),
+    ],
+    "SNOW_ROAD": [
+        PolySpec(width=20.0, length=20.0, offset_x=0.0,   offset_y=0.0, texture=Texture.ROAD_2_LANE,    tile_x=2.0, tile_y=2.0, angle_degrees=90.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=-12.5, offset_y=0.0, texture=Texture.SNOW,           tile_x=4.0, tile_y=2.0, angle_degrees=0.0),
+        PolySpec(width=5.0,  length=20.0, offset_x=12.5,  offset_y=0.0, texture=Texture.SNOW,           tile_x=4.0, tile_y=2.0, angle_degrees=0.0),
+    ],
+
 }
 
 PRESET_ITEMS = [
-    ("ROAD_SIDEWALK", "Road + Sidewalk (both sides)", "20x20 road with 5x20 sidewalks on each side"),
+    ("ROAD_SIDEWALK",      "Road + Sidewalk",           "2-lane road with sidewalks on both sides"),
+    ("BOULEVARD_SIDEWALK", "Boulevard + Sidewalk",      "Wide 3-lane road with sidewalks"),
+    ("ALLEY",              "Alley",                     "Narrow 1-lane road, no sidewalks"),
+    ("INTERSECTION_T",     "T-Intersection",            "T-shaped road junction"),
+    ("INTERSECTION_4WAY",  "4-Way Intersection",        "Full crossroads with corner sidewalk pieces"),
+    ("ROAD_ZEBRA_CROSSING","Road + Zebra Crossing",     "Road split by a pedestrian crossing"),
+    ("FREEWAY",            "Freeway",                   "Wide freeway section, no sidewalks"),
+    ("GRASS_PATCH",        "Grass Patch",               "Open grassy area"),
+    ("WATER_SURFACE",      "Water Surface",             "Large flat water polygon"),
+    ("SNOW_ROAD",          "Snow Road",                 "Road with snow banks on the sides"),
 ]
 
 
