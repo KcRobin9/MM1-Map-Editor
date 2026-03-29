@@ -4,15 +4,15 @@ from src.integrations.blender.panels.hud import HUD_IMPORT
 
 
 class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
-    bl_label = "Polygon"
-    bl_idname = "VIEW3D_PT_map_editor"
-    bl_space_type = 'VIEW_3D'
+    bl_label    = "Polygon"
+    bl_idname   = "VIEW3D_PT_map_editor"
+    bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = "Map Editor"
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj    = context.active_object
 
         if not obj or obj.type != 'MESH':
             layout.label(text="Select a polygon", icon='INFO')
@@ -22,16 +22,16 @@ class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
 
 
 class VIEW3D_PT_MapEditorUV(bpy.types.Panel):
-    bl_label = "UV Mapping"
-    bl_idname = "VIEW3D_PT_map_editor_uv"
-    bl_space_type = 'VIEW_3D'
+    bl_label      = "UV Mapping"
+    bl_idname     = "VIEW3D_PT_map_editor_uv"
+    bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Map Editor"
-    bl_parent_id = "VIEW3D_PT_map_editor"
+    bl_category   = "Map Editor"
+    bl_parent_id  = "VIEW3D_PT_map_editor"
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj    = context.active_object
 
         if not obj or obj.type != 'MESH':
             return
@@ -40,71 +40,71 @@ class VIEW3D_PT_MapEditorUV(bpy.types.Panel):
         layout.separator()
 
         col = layout.column(align=True)
-        col.prop(obj, "tile_x", text="Tile X")
-        col.prop(obj, "tile_y", text="Tile Y")
-        col.prop(obj, "angle_degrees", text="Rotation (°)")
+        col.prop(obj, "tile_x",         text="Tile X")
+        col.prop(obj, "tile_y",         text="Tile Y")
+        col.prop(obj, "angle_degrees",  text="Rotation (°)")
         layout.operator("object.update_uv_mapping", text="Reapply UV", icon='UV')
 
 
 class VIEW3D_PT_MapEditorCell(bpy.types.Panel):
-    bl_label = "Cell & Material"
-    bl_idname = "VIEW3D_PT_map_editor_cell"
-    bl_space_type = 'VIEW_3D'
+    bl_label      = "Cell & Material"
+    bl_idname     = "VIEW3D_PT_map_editor_cell"
+    bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Map Editor"
-    bl_parent_id = "VIEW3D_PT_map_editor"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_category   = "Map Editor"
+    bl_parent_id  = "VIEW3D_PT_map_editor"
+    bl_options    = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj    = context.active_object
 
         if not obj or obj.type != 'MESH':
             return
 
-        layout.prop(obj, "cell_type", text="Cell Type")
+        layout.prop(obj, "cell_type",      text="Cell Type")
         layout.prop(obj, "material_index", text="Material")
 
 
 class VIEW3D_PT_MapEditorOptions(bpy.types.Panel):
-    bl_label = "Options"
-    bl_idname = "VIEW3D_PT_map_editor_options"
-    bl_space_type = 'VIEW_3D'
+    bl_label      = "Options"
+    bl_idname     = "VIEW3D_PT_map_editor_options"
+    bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Map Editor"
-    bl_parent_id = "VIEW3D_PT_map_editor"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_category   = "Map Editor"
+    bl_parent_id  = "VIEW3D_PT_map_editor"
+    bl_options    = {'DEFAULT_CLOSED'}
 
     def draw(self, context):
         layout = self.layout
-        obj = context.active_object
+        obj    = context.active_object
 
         if not obj or obj.type != 'MESH':
             return
 
         layout.prop(obj, "always_visible", text="Always Visible")
-        layout.prop(obj, "sort_vertices", text="Sort Vertices")
+        layout.prop(obj, "sort_vertices",  text="Sort Vertices")
 
 
 class VIEW3D_PT_MapEditorHUD(bpy.types.Panel):
-    bl_label = "HUD Color"
-    bl_idname = "VIEW3D_PT_map_editor_hud"
-    bl_space_type = 'VIEW_3D'
+    bl_label      = "HUD Color"
+    bl_idname     = "VIEW3D_PT_map_editor_hud"
+    bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Map Editor"
-    bl_parent_id = "VIEW3D_PT_map_editor"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_category   = "Map Editor"
+    bl_parent_id  = "VIEW3D_PT_map_editor"
+    bl_options    = {'DEFAULT_CLOSED'}
 
     def draw(self, context) -> None:
         layout = self.layout
-        obj = context.active_object
+        obj    = context.active_object
 
         if not obj or obj.type != 'MESH':
             return
 
-        half = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
-        row = layout.row(align=True)
-        col_left = row.column(align=True)
+        half     = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
+        row      = layout.row(align=True)
+        col_left  = row.column(align=True)
         col_right = row.column(align=True)
 
         for i, entry in enumerate(HUD_IMPORT):
@@ -113,40 +113,51 @@ class VIEW3D_PT_MapEditorHUD(bpy.types.Panel):
 
 
 class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
-    bl_label = "Tools"
-    bl_idname = "VIEW3D_PT_map_editor_tools"
-    bl_space_type = 'VIEW_3D'
+    bl_label      = "Tools"
+    bl_idname     = "VIEW3D_PT_map_editor_tools"
+    bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Map Editor"
+    bl_category   = "Map Editor"
 
     def draw(self, context):
         layout = self.layout
 
         layout.label(text="Export", icon='EXPORT')
         row = layout.row(align=True)
-        op = row.operator("object.export_polygons", text="Selected", icon='RESTRICT_SELECT_OFF')
+        op  = row.operator("object.export_polygons", text="Selected", icon='RESTRICT_SELECT_OFF')
         op.select_all = False
-        op = row.operator("object.export_polygons", text="All", icon='WORLD')
+        op  = row.operator("object.export_polygons", text="All", icon='WORLD')
         op.select_all = True
 
         layout.separator()
         layout.label(text="Naming", icon='FONT_DATA')
         row = layout.row(align=True)
-        row.operator("object.auto_rename_children", text="Normalize", icon='SORTALPHA')
-        row.operator("object.rename_sequential", text="Sequential", icon='LINENUMBERS_ON')
+        row.operator("object.auto_rename_children", text="Normalize",  icon='SORTALPHA')
+        row.operator("object.rename_sequential",    text="Sequential", icon='LINENUMBERS_ON')
         layout.operator("object.fix_polygon_names", text="Fix Names (.001)", icon='ERROR')
 
         layout.separator()
         layout.label(text="Create", icon='ADD')
-        layout.operator("object.create_polygon", text="New Polygon", icon='MESH_PLANE')
-        layout.operator("object.duplicate_polygon", text="Duplicate Polygon", icon='DUPLICATE')
+        col = layout.column(align=True)
+        col.prop(context.scene, "polygon_create_shape", text="Shape")
+        row = col.row(align=True)
+        row.prop(context.scene, "polygon_create_width",  text="W")
+        row.prop(context.scene, "polygon_create_length", text="L")
+        row = layout.row(align=True)
+        row.operator("object.create_polygon",    text="New Polygon", icon='MESH_PLANE')
+        row.operator("object.duplicate_polygon", text="Duplicate",   icon='DUPLICATE')
+
+        layout.separator()
+        layout.label(text="Presets", icon='PRESET')
+        layout.prop(context.scene, "polygon_preset", text="")
+        layout.operator("object.spawn_polygon_preset", text="Spawn Preset", icon='IMPORT')
 
         layout.separator()
         layout.label(text="Mesh", icon='MESH_DATA')
         row = layout.row(align=True)
-        op = row.operator("object.process_post_extrude", text="Split", icon='MOD_EDGESPLIT')
+        op  = row.operator("object.process_post_extrude", text="Split",     icon='MOD_EDGESPLIT')
         op.triangulate = False
-        op = row.operator("object.process_post_extrude", text="Split+Tri", icon='MOD_TRIANGULATE')
+        op  = row.operator("object.process_post_extrude", text="Split+Tri", icon='MOD_TRIANGULATE')
         op.triangulate = True
 
         layout.separator()

@@ -7,7 +7,12 @@ from src.integrations.blender.modeling.uv_mapping import OBJECT_OT_UpdateUVMappi
 from src.integrations.blender.operators.custom_properties import OBJECT_OT_AssignCustomProperties
 from src.integrations.blender.operators.export_polygons import OBJECT_OT_ExportPolygons
 from src.integrations.blender.operators.process_extrude import OBJECT_OT_ProcessPostExtrude
-from src.integrations.blender.operators.rename_polygons import (OBJECT_OT_DuplicatePolygon, OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential, OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon)
+from src.integrations.blender.operators.rename_polygons import (
+    OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential,
+    OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon, OBJECT_OT_DuplicatePolygon
+)
+from src.integrations.blender.operators.polygon_presets import OBJECT_OT_SpawnPreset, PRESET_ITEMS
+
 from src.integrations.blender.operators.waypoints import (
     CREATE_SINGLE_WAYPOINT_OT_operator,
     EXPORT_ALL_WAYPOINTS_OT_operator,
@@ -49,6 +54,7 @@ OPERATOR_CLASSES = [
     OBJECT_OT_FixPolygonNames,
     OBJECT_OT_CreatePolygon,
     OBJECT_OT_DuplicatePolygon,
+    OBJECT_OT_SpawnPreset,
 ]
 
 WAYPOINT_CLASSES = [
@@ -68,6 +74,13 @@ OBJECT_PROPERTIES = [
     "vertex_coords", "hud_color_index", "hud_colors",
     "tile_x", "tile_y", "angle_degrees", "texture_name",
     "cell_type", "material_index", "always_visible", "sort_vertices",
+]
+
+SCENE_PROPERTIES = [
+    "polygon_create_width",
+    "polygon_create_length",
+    "polygon_create_shape",
+    "polygon_preset",
 ]
 
 
@@ -121,6 +134,25 @@ def register_object_properties() -> None:
     )
 
 
+def register_scene_properties() -> None:
+    bpy.types.Scene.polygon_create_width = bpy.props.FloatProperty(
+        name="Width", default=15.0, min=0.1, soft_max=200.0
+    )
+    bpy.types.Scene.polygon_create_length = bpy.props.FloatProperty(
+        name="Length", default=15.0, min=0.1, soft_max=200.0
+    )
+    bpy.types.Scene.polygon_create_shape = bpy.props.EnumProperty(
+        name="Shape",
+        items=[('QUAD', 'Quad', ''), ('TRI', 'Triangle', '')],
+        default='QUAD'
+    )
+    bpy.types.Scene.polygon_preset = bpy.props.EnumProperty(
+        name="Preset",
+        items=PRESET_ITEMS,
+        default="ROAD_SIDEWALK"
+    )
+
+
 def _safe_register(cls) -> None:
     try:
         bpy.utils.register_class(cls)
@@ -140,7 +172,8 @@ def initialize_blender_panels() -> None:
     if not is_process_running(Executable.BLENDER):
         return
 
-    register_object_properties()  # Must come before any class registration
+    register_object_properties()
+    register_scene_properties()
 
     _safe_register(VertexGroup)
     bpy.types.Object.vertex_coords = bpy.props.CollectionProperty(type=VertexGroup)
@@ -176,5 +209,12 @@ def unregister_all() -> None:
         if hasattr(bpy.types.Object, prop):
             try:
                 delattr(bpy.types.Object, prop)
+            except AttributeError:
+                pass
+
+    for prop in SCENE_PROPERTIES:
+        if hasattr(bpy.types.Scene, prop):
+            try:
+                delattr(bpy.types.Scene, prop)
             except AttributeError:
                 pass
