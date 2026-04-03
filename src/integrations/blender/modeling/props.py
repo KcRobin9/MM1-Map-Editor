@@ -350,7 +350,7 @@ def _place_vehicle_instance(
         _add_child(light_mesh)
 
 
-_PROPS_COLLECTION = "MM1_Props"
+_PROPS_COLLECTION = "Props"
 
 
 def _get_or_create_collection(name: str) -> "bpy.types.Collection":
@@ -488,7 +488,7 @@ def place_props_in_scene(
     print(f"Props placed in scene: {placed} (skipped: {skipped})")
 
 
-_BULK_BMS_COLLECTION = "MM1_City"
+_BULK_BMS_COLLECTION = "City BMS"
 
 
 def place_bulk_bms_in_scene(

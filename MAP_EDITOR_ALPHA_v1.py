@@ -2828,7 +2828,7 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
     if has_p200:
         _show_blender_error(
             "A polygon with bound_number = 200 was found.\n"
-            "bound_number 200 is reserved (CELL_TYPE_SWITCH) and cannot be used.\n"
+            "bound_number 200 is reserved and cannot be used.\n"
             "Change it to a different value and re-run."
         )
         return

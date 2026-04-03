@@ -7,7 +7,26 @@ from src.constants.color import Color
 from src.game.waypoints.constants import Rotation, Width
 
 from src.integrations.blender.waypoints.helpers import update_waypoint_colors
-from src.integrations.blender.waypoints.constants import POLE_HEIGHT, POLE_DIAMETER, FLAG_HEIGHT, FLAG_HEIGHT_OFFSET  
+from src.integrations.blender.waypoints.constants import POLE_HEIGHT, POLE_DIAMETER, FLAG_HEIGHT, FLAG_HEIGHT_OFFSET
+
+
+_WP_COLLECTION = "Waypoints"
+
+
+def _get_or_create_wp_collection() -> bpy.types.Collection:
+    col = bpy.data.collections.get(_WP_COLLECTION)
+    if col is None:
+        col = bpy.data.collections.new(_WP_COLLECTION)
+        bpy.context.scene.collection.children.link(col)
+    return col
+
+
+def _move_to_wp_collection(obj: bpy.types.Object) -> None:
+    """Move obj out of any current collection and into MM1_Waypoints."""
+    target = _get_or_create_wp_collection()
+    for col in list(obj.users_collection):
+        col.objects.unlink(obj)
+    target.objects.link(obj)
 
 
 def create_waypoint_material(name: str, color: str) -> bpy.types.Material:
@@ -48,10 +67,11 @@ def create_gold_bar(location: Tuple[float, float, float], scale: float = 1.0) ->
     gold = bpy.context.object
     gold.scale *= scale  
     
-    gold_material = create_waypoint_material("GoldMaterial", Color.YELLOW)  
+    gold_material = create_waypoint_material("GoldMaterial", Color.YELLOW)
     gold.data.materials.append(gold_material)
     gold.name = "Gold_Default"
-    
+    _move_to_wp_collection(gold)
+
     return gold
 
   
@@ -96,6 +116,7 @@ def create_waypoint(x: Optional[float] = None, y: Optional[float] = None, z: Opt
     if x is None or y is None or z is None:
         bpy.context.scene.cursor.location = cursor_location
         
-    update_waypoint_colors() 
+    update_waypoint_colors()
+    _move_to_wp_collection(waypoint)
 
     return waypoint

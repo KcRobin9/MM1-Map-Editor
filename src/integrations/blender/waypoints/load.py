@@ -19,8 +19,23 @@ from src.integrations.blender.waypoints.create import create_waypoint, create_go
 from src.core.geometry.main import transform_coordinate_system
 
 
-def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:    
-    return f"WP_{RACE_TYPE_INITIALS[race_type]}{race_number}_{wp_idx}"
+_RACE_TYPE_SHORT = {
+    "BLITZ":      "BLZ",
+    "CIRCUIT":    "CIR",
+    "RACE":       "CHK",   # CHECKPOINT keys are stored as RACE_N
+    # Legacy / CSV-parsed values
+    "B":  "BLZ",
+    "C":  "CIR",
+    "R":  "CHK",
+    "BLZ": "BLZ",
+    "CIR": "CIR",
+    "CHK": "CHK",
+}
+
+
+def get_waypoint_name(race_type: str, race_number: int, wp_idx: int) -> str:
+    short = _RACE_TYPE_SHORT.get(race_type.upper(), race_type.upper())
+    return f"WP_{short}_{race_number}-{wp_idx}"
 
 
 def calculate_waypoint_rotation(x1: float, z1: float, x2: float, z2: float) -> float:

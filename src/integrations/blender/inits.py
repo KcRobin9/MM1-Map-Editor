@@ -17,16 +17,7 @@ from src.integrations.blender.operators.ai_streets import (
     INTERSECTION_TYPE_ITEMS, STOP_LIGHT_NAME_ITEMS,
     st_intersection_update
 )
-from src.integrations.blender.operators.waypoints import (
-    CREATE_SINGLE_WAYPOINT_OT_operator,
-    EXPORT_ALL_WAYPOINTS_OT_operator,
-    EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator,
-    EXPORT_SELECTED_WAYPOINTS_OT_operator,
-    EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator,
-    LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator,
-    LOAD_WAYPOINTS_FROM_CSV_OT_operator,
-    LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator
-)
+from src.integrations.blender.operators.waypoints import WAYPOINT_CLASSES
 
 from src.integrations.blender.panels.cells import OBJECT_PT_CellTypePanel, CELL_IMPORT
 from src.integrations.blender.panels.hud import OBJECT_PT_HUDColorPanel, HUD_IMPORT, hud_color_index_update, hud_colors_update
@@ -36,6 +27,8 @@ from src.integrations.blender.panels.vertex import OBJECT_PT_VertexCoordinates, 
 from src.integrations.blender.panels.uv import OBJECT_PT_UVMappingPanel
 from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
+from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLASSES
+from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
 
 
@@ -48,6 +41,7 @@ PANEL_CLASSES = [
     OBJECT_PT_UVMappingPanel,
     *SIDEBAR_CLASSES,
     *STREET_EDITOR_CLASSES,
+    *WAYPOINT_EDITOR_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -62,17 +56,6 @@ OPERATOR_CLASSES = [
     OBJECT_OT_DuplicatePolygon,
     OBJECT_OT_SpawnPreset,
     *AI_STREET_CLASSES,
-]
-
-WAYPOINT_CLASSES = [
-    CREATE_SINGLE_WAYPOINT_OT_operator,
-    LOAD_WAYPOINTS_FROM_CSV_OT_operator,
-    LOAD_WAYPOINTS_FROM_RACE_DATA_OT_operator,
-    LOAD_CNR_WAYPOINTS_FROM_CSV_OT_operator,
-    EXPORT_SELECTED_WAYPOINTS_OT_operator,
-    EXPORT_SELECTED_WAYPOINTS_WITH_BRACKETS_OT_operator,
-    EXPORT_ALL_WAYPOINTS_OT_operator,
-    EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -96,6 +79,16 @@ SCENE_PROPERTIES = [
     "polygon_create_length",
     "polygon_create_shape",
     "polygon_preset",
+    # Waypoint Editor
+    "wp_race_type",
+    "wp_race_index_enum",
+    "wp_create_type",
+    "wp_export_brackets",
+    "wp_create_x",
+    "wp_create_y",
+    "wp_create_z",
+    "wp_show_paths",
+    "wp_insert_index",
 ]
 
 
@@ -220,6 +213,59 @@ def register_scene_properties() -> None:
         default="ROAD_SIDEWALK"
     )
 
+    # ── Waypoint Editor scene properties ─────────────────────────────────────
+    from src.USER.races.races import race_data as _race_data
+
+    def _available_race_items(self, context):
+        from src.integrations.blender.panels.waypoint_sidebar import _available_race_items
+        return _available_race_items(context.scene.wp_race_type)
+
+    bpy.types.Scene.wp_race_type = bpy.props.EnumProperty(
+        name="Race Type",
+        description="Type of race to load waypoints for",
+        items=[
+            ("BLITZ",      "Blitz",      "Timed blitz race (max 11 waypoints)"),
+            ("CIRCUIT",    "Circuit",    "Circuit / lap race"),
+            ("CHECKPOINT", "Checkpoint", "Checkpoint race (stored as RACE_N)"),
+        ],
+        default="BLITZ",
+    )
+    bpy.types.Scene.wp_race_index_enum = bpy.props.EnumProperty(
+        name="Race",
+        description="Which race to load waypoints for — only shows races defined in races.py",
+        items=_available_race_items,
+    )
+    bpy.types.Scene.wp_create_type = bpy.props.EnumProperty(
+        name="Create Type",
+        description="What kind of object to create at the 3D cursor",
+        items=[
+            ("WAYPOINT", "Waypoint",       "Race waypoint (WP_...)"),
+            ("BANK",     "CnR Bank",       "Cops & Robbers bank / blue team hideout (CR_Bank...)"),
+            ("GOLD",     "CnR Gold",       "Cops & Robbers gold position (CR_Gold...)"),
+            ("ROBBER",   "CnR Robber",     "Cops & Robbers robber / red team hideout (CR_Robber...)"),
+        ],
+        default="WAYPOINT",
+    )
+    bpy.types.Scene.wp_export_brackets = bpy.props.BoolProperty(
+        name="Add Brackets",
+        description="Wrap each exported waypoint line in [ ] for direct paste into races.py",
+        default=False,
+    )
+    bpy.types.Scene.wp_create_x = bpy.props.FloatProperty(name="X", default=0.0)
+    bpy.types.Scene.wp_create_y = bpy.props.FloatProperty(name="Y", default=0.0)
+    bpy.types.Scene.wp_create_z = bpy.props.FloatProperty(name="Z", default=0.0)
+    bpy.types.Scene.wp_show_paths = bpy.props.BoolProperty(
+        name="Show Path Lines",
+        description="Draw lines between consecutive waypoints in the 3D viewport",
+        default=True,
+    )
+    bpy.types.Scene.wp_insert_index = bpy.props.IntProperty(
+        name="Insert at Index",
+        description="Insert new waypoint at this index (-1 = append at end)",
+        default=-1,
+        min=-1,
+    )
+
 
 def _safe_register(cls) -> None:
     try:
@@ -244,6 +290,11 @@ def initialize_blender_panels() -> None:
     register_street_properties()
     register_scene_properties()
 
+    # Rename the default master collection from "Collection" to "Polygons"
+    scene_col = bpy.context.scene.collection
+    if scene_col.name == "Collection":
+        scene_col.name = "Polygons"
+
     _safe_register(VertexGroup)
     bpy.types.Object.vertex_coords = bpy.props.CollectionProperty(type=VertexGroup)
 
@@ -266,10 +317,14 @@ def initialize_blender_waypoint_editor() -> None:
     for cls in WAYPOINT_CLASSES:
         _safe_register(cls)
 
+    register_draw_handler()
+
 
 def unregister_all() -> None:
     if not is_process_running(Executable.BLENDER):
         return
+
+    unregister_draw_handler()
 
     for cls in reversed(ALL_CLASSES):
         _safe_unregister(cls)
