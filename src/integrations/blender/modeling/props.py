@@ -1,0 +1,467 @@
+import bpy
+import math
+import mathutils
+import random
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+from src.core.vector.vector_3 import Vector3
+from src.core.geometry.main import transform_coordinate_system
+from src.constants.constants import HUGE
+from src.constants.folder import Folder
+
+from src.integrations.blender.modeling.meshes import (
+    read_bms,
+    build_blender_mesh,
+    _apply_materials_to_mesh,
+)
+
+
+# Anything above this threshold in all three components is the "undefined" sentinel
+_HUGE_SENTINEL = HUGE * 0.5
+
+
+# ── Coordinate helpers ────────────────────────────────────────────────────────
+
+def _to_blender_location(game_offset: tuple) -> Tuple[float, float, float]:
+    return transform_coordinate_system(Vector3(*game_offset), game_to_blender=True)
+
+
+def _to_blender_rotation_z(angle: Optional[float], face: Optional[tuple]) -> float:
+    """
+    Convert a game angle (degrees) or face vector to a Blender Z-axis rotation
+    (radians).
+
+    Game angle convention:
+        0° → pointing +X (East).  North = ~0° because face ≈ (HUGE, 0, 0).
+        The face vector (cos θ, 0, sin θ) in game space maps to
+        (cos θ, −sin θ, 0) in Blender XY, giving Z-rotation = −θ.
+
+    Face vector (fx, fy, fz) in game space → Blender XY direction (fx, −fz)
+        → Z-rotation = atan2(−fz, fx).
+    """
+    if angle is not None:
+        return -math.radians(angle)
+
+    if face is not None:
+        fx, _fy, fz = face
+        if abs(fx) > _HUGE_SENTINEL and abs(fz) > _HUGE_SENTINEL:
+            return 0.0  # undefined sentinel — no meaningful rotation
+        return math.atan2(-fz, fx)
+
+    return 0.0
+
+
+# ── Prop instance expansion ───────────────────────────────────────────────────
+
+def _load_dimensions_cache() -> Dict[str, Vector3]:
+    """Load the pre-computed prop dimensions used to resolve Axis-based separators."""
+    dim_file = Folder.Resources.Editor.Props / "prop_dimensions.txt"
+    if not dim_file.exists():
+        return {}
+
+    cache: Dict[str, Vector3] = {}
+    with open(dim_file, "r") as f:
+        for line in f:
+            parts = line.split()
+            if len(parts) == 4:
+                prop_name, x, y, z = parts
+                cache[prop_name] = Vector3(float(x), float(y), float(z))
+    return cache
+
+
+def _resolve_separator(sep, prop_name: str, dims_cache: Dict[str, Vector3]) -> float:
+    """Resolve an Axis-based or numeric separator to a float distance."""
+    if isinstance(sep, (int, float)):
+        return float(sep)
+    if hasattr(sep, "resolve"):
+        return sep.resolve(dims_cache.get(prop_name, Vector3(1, 1, 1)))
+    return 10.0
+
+
+def expand_prop_instances(
+    prop_list: list,
+    random_props: list,
+    dims_cache: Optional[Dict[str, Vector3]] = None,
+) -> List[dict]:
+    """
+    Expand prop_list and random_props into a flat list of single-placement dicts.
+
+    Mirrors BangerEditor.add_multiple() and BangerEditor.place_randomly() exactly
+    so that Blender placement matches what the binary prop file contains.
+
+    Each returned dict has:
+        name   : str
+        offset : tuple (game coords)
+        face   : tuple | None
+        angle  : float | None
+    """
+    if dims_cache is None:
+        dims_cache = _load_dimensions_cache()
+
+    instances: List[dict] = []
+
+    # ── Fixed props ──────────────────────────────────────────────────────────
+    for prop in prop_list:
+        name = prop["name"]
+        offset = Vector3(*prop["offset"])
+        end = Vector3(*prop["end"]) if "end" in prop else None
+        angle = prop.get("angle", None)
+        face = prop.get("face", None)
+
+        if face is None and angle is not None:
+            rad = math.radians(angle)
+            face = (HUGE * math.cos(rad), 0.0, HUGE * math.sin(rad))
+        elif face is None:
+            face = (HUGE, HUGE, HUGE)
+
+        if end is not None:
+            diagonal  = end - offset
+            direction = diagonal.Normalize()
+            sep       = _resolve_separator(prop.get("separator", 10.0), name, dims_cache)
+            count     = int(diagonal.Mag() / sep)
+
+            # When the user gave no explicit angle or face, align props along
+            # the line of travel.  Without this, face stays as the (HUGE,HUGE,HUGE)
+            # sentinel and _to_blender_rotation_z returns 0 (no rotation).
+            if prop.get("face") is None and angle is None:
+                face = (direction.x * HUGE, direction.y * HUGE, direction.z * HUGE)
+
+            for i in range(count):
+                pos = offset + direction * (i * sep)
+                instances.append({"name": name, "offset": pos.to_tuple(), "face": face, "angle": angle})
+        else:
+            instances.append({"name": name, "offset": offset.to_tuple(), "face": face, "angle": angle})
+
+    # ── Random props ─────────────────────────────────────────────────────────
+    for config in random_props:
+        names = config.get("name", [])
+        if isinstance(names, str):
+            names = [names]
+        count = config.get("count", None)
+        if count is not None and len(names) == 1:
+            names = names * count
+
+        num_props = config.get("num_props", 1)
+        seed = config["seed"]
+        (x_min, y_min, z_min), (x_max, y_max, z_max) = config["area"]
+
+        cfg_angle = config.get("angle", None)
+        cfg_face = config.get("face", None)
+
+        random.seed(seed)
+        for name in names:
+            for _ in range(num_props):
+                x = random.uniform(x_min, x_max)
+                z = random.uniform(z_min, z_max)
+                y = y_min if y_min == y_max else random.uniform(y_min, y_max)
+
+                if cfg_face is not None:
+                    face = cfg_face
+                elif cfg_angle is not None:
+                    rad = math.radians(cfg_angle)
+                    face = (HUGE * math.cos(rad), 0.0, HUGE * math.sin(rad))
+                else:
+                    face = (
+                        random.uniform(-HUGE, HUGE),
+                        random.uniform(-HUGE, HUGE),
+                        random.uniform(-HUGE, HUGE),
+                    )
+
+                instances.append({
+                    "name": name,
+                    "offset": (x, y, z),
+                    "face": face,
+                    "angle": cfg_angle,
+                })
+
+    return instances
+
+
+# ── BMS file resolver ─────────────────────────────────────────────────────────
+
+def _resolve_bms_file(prop_name: str, bms_root: Path) -> Optional[Path]:
+    """
+    Locate the primary BMS file for a prop inside the BMS subfolder tree.
+
+    Folder layout:   bms_root / <PROP_NAME_UPPER> / <filename>.BMS
+
+    File selection rules:
+        • All vehicles (vp* / va*) → BODY_H.BMS, fallback BODY_M.BMS, then H.BMS.
+          BODY_H contains only the car body, giving clean per-panel textures.
+          H.BMS is the combined full-LOD mesh (body + all four wheels); its wheel
+          texture dominates visually, so it is used only as a last resort.
+        • All other props → H.BMS
+
+    Returns None when the folder does not exist or no matching BMS file is found.
+    """
+    prop_folder = bms_root / prop_name.upper()
+    if not prop_folder.is_dir():
+        return None
+
+    if prop_name.lower().startswith(("va", "vp")):
+        # Vehicle — prefer body-only mesh for clean texture visualization
+        for filename in ("BODY_H.BMS", "BODY_M.BMS", "H.BMS"):
+            candidate = prop_folder / filename
+            if candidate.exists():
+                return candidate
+        return None
+
+    # Regular props
+    h_bms = prop_folder / "H.BMS"
+    return h_bms if h_bms.exists() else None
+
+
+# ── Scene placement ───────────────────────────────────────────────────────────
+
+def _bms_to_bl_offset(mesh: bpy.types.Mesh) -> Tuple[float, float, float]:
+    """Convert a mesh's stored game-space mesh_offset to Blender-space XYZ."""
+    ox, oy, oz = mesh.get("mesh_offset", [0.0, 0.0, 0.0])
+    return (-ox, oz, oy)
+
+
+def _load_bms_mesh(
+    bms_file: Path,
+    name: str,
+    texture_folder: Optional[Path],
+) -> Optional[bpy.types.Mesh]:
+    """Read one BMS file, build the Blender mesh, and apply materials. Returns None on error."""
+    try:
+        bms_data = read_bms(bms_file)
+        mesh = build_blender_mesh(name, bms_data)
+        if texture_folder and bms_data["texture_names"]:
+            _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+        return mesh
+    except Exception as exc:
+        print(f"  Could not load {bms_file.name}: {exc}")
+        return None
+
+
+def _load_vehicle_parts(
+    prop_name: str,
+    prop_folder: Path,
+    texture_folder: Optional[Path],
+    load_wheels: bool,
+    load_lights: bool,
+    load_shadow: bool,
+) -> dict:
+    """
+    Load every requested BMS component for a vehicle prop.
+
+    Returns a dict:
+        body    : bpy.types.Mesh | None
+        wheels  : List[bpy.types.Mesh]   (each carries mesh_offset for placement)
+        lights  : List[bpy.types.Mesh]
+        shadow  : bpy.types.Mesh | None
+    """
+    parts: dict = {"body": None, "wheels": [], "extras": [], "lights": [], "shadow": None}
+
+    # ── Body ─────────────────────────────────────────────────────────────────
+    for candidate in ("BODY_H.BMS", "BODY_M.BMS", "H.BMS"):
+        f = prop_folder / candidate
+        if f.exists():
+            parts["body"] = _load_bms_mesh(f, prop_name, texture_folder)
+            break
+
+    # ── Wheels (WHL0_H .. WHL9_H) ────────────────────────────────────────────
+    if load_wheels:
+        for i in range(10):
+            f = prop_folder / f"WHL{i}_H.BMS"
+            if not f.exists():
+                break
+            mesh = _load_bms_mesh(f, f"{prop_name}.WHL{i}", texture_folder)
+            if mesh is not None:
+                parts["wheels"].append(mesh)
+
+    # ── Fenders and other named sub-parts (FNDR0_H, FNDR1_H, ...) ────────────
+    # Some vehicles (e.g. VPPANOZ/Roadster) have detachable fender meshes that
+    # are separate from BODY_H.BMS and must be loaded alongside the body.
+    for i in range(10):
+        f = prop_folder / f"FNDR{i}_H.BMS"
+        if not f.exists():
+            break
+        mesh = _load_bms_mesh(f, f"{prop_name}.FNDR{i}", texture_folder)
+        if mesh is not None:
+            parts["extras"].append(mesh)
+
+    # ── Lights ───────────────────────────────────────────────────────────────
+    if load_lights:
+        for candidate in ("HLIGHT_H.BMS", "HLIGHT.BMS", "TLIGHT.BMS", "RLIGHT.BMS"):
+            f = prop_folder / candidate
+            if f.exists():
+                mesh = _load_bms_mesh(f, f"{prop_name}.{f.stem}", texture_folder)
+                if mesh is not None:
+                    parts["lights"].append(mesh)
+
+    # ── Shadow ───────────────────────────────────────────────────────────────
+    if load_shadow:
+        f = prop_folder / "SHADOW_H.BMS"
+        if f.exists():
+            parts["shadow"] = _load_bms_mesh(f, f"{prop_name}.SHADOW", texture_folder)
+
+    return parts
+
+
+def _place_vehicle_instance(
+    prop_name: str,
+    parts: dict,
+    game_loc: Tuple[float, float, float],
+    z_rot: float,
+) -> None:
+    """
+    Place a full vehicle (body + optional wheels / lights / shadow) in the scene.
+
+    The body object is placed at game_loc.  Wheels, fenders, and other sub-parts
+    are parented to the body with their BMS mesh_offset as the LOCAL position.
+
+    Parenting note: setting child.parent = body_obj in Blender Python causes
+    Blender to set matrix_parent_inverse = body_obj.matrix_world.inverted() so
+    that the child's visual position doesn't move.  We want pure local-space
+    parenting, so we reset matrix_parent_inverse to identity after each parent
+    assignment and then set the local location explicitly.
+    """
+    body_mesh = parts["body"]
+    if body_mesh is None:
+        return
+
+    # Body — placed at world position
+    body_obj = bpy.data.objects.new(prop_name, body_mesh)
+    bpy.context.collection.objects.link(body_obj)
+    bl_body_off = _bms_to_bl_offset(body_mesh)
+    body_obj.location = (
+        game_loc[0] + bl_body_off[0],
+        game_loc[1] + bl_body_off[1],
+        game_loc[2] + bl_body_off[2],
+    )
+    body_obj.rotation_euler = (0.0, 0.0, z_rot)
+
+    def _add_child(mesh: bpy.types.Mesh) -> None:
+        child = bpy.data.objects.new(mesh.name, mesh)
+        bpy.context.collection.objects.link(child)
+        child.parent = body_obj
+        # Reset the parent-inverse matrix so child.location is pure local space
+        # (relative to the body origin), not compensated to keep world position.
+        child.matrix_parent_inverse = mathutils.Matrix.Identity(4)
+        child.location = _bms_to_bl_offset(mesh)
+
+    for whl_mesh in parts["wheels"]:
+        _add_child(whl_mesh)
+    for extra_mesh in parts["extras"]:
+        _add_child(extra_mesh)
+    for light_mesh in parts["lights"]:
+        _add_child(light_mesh)
+    if parts["shadow"] is not None:
+        _add_child(parts["shadow"])
+
+
+def place_props_in_scene(
+    prop_list: list,
+    random_props: list,
+    bms_folder: Path,
+    texture_folder: Optional[Path] = None,
+    car_wheels: bool = True,
+    car_lights: bool = False,
+    car_shadow: bool = False,
+) -> None:
+    """
+    Build prop meshes from BMS files and place instances directly in the scene.
+
+    For regular props (TP*) a single H.BMS mesh is placed per instance.
+    For vehicle props (VP* / VA*) the body mesh is placed together with
+    optional wheels, lights, and a shadow — all parented to the body object.
+
+    Args:
+        prop_list      : Fixed prop list from USER/props/props.py.
+        random_props   : Random prop configs from USER/props/props.py.
+        bms_folder     : Root folder containing per-prop BMS subfolders.
+        texture_folder : Folder containing .DDS textures (optional).
+        car_wheels     : Load WHL0–N_H.BMS and parent to body.
+        car_lights     : Load HLIGHT/TLIGHT/RLIGHT meshes and parent to body.
+        car_shadow     : Load SHADOW_H.BMS and parent to body.
+    """
+    dims_cache = _load_dimensions_cache()
+    instances = expand_prop_instances(prop_list, random_props, dims_cache)
+
+    if not instances:
+        return
+
+    unique_names = list(dict.fromkeys(inst["name"] for inst in instances))
+
+    # mesh_cache : prop_name → Mesh (regular props)
+    # veh_cache  : prop_name → parts dict (vehicle props)
+    mesh_cache: Dict[str, Optional[bpy.types.Mesh]] = {}
+    veh_cache:  Dict[str, Optional[dict]]            = {}
+
+    print("Building prop meshes...")
+    for prop_name in unique_names:
+        prop_folder = bms_folder / prop_name.upper()
+        is_vehicle  = prop_name.lower().startswith(("va", "vp"))
+
+        if is_vehicle:
+            if not prop_folder.is_dir():
+                print(f"  No BMS folder for '{prop_name}', skipping")
+                veh_cache[prop_name] = None
+                continue
+            parts = _load_vehicle_parts(
+                prop_name, prop_folder, texture_folder,
+                load_wheels=car_wheels,
+                load_lights=car_lights,
+                load_shadow=car_shadow,
+            )
+            if parts["body"] is None:
+                print(f"  No body BMS for '{prop_name}', skipping")
+                veh_cache[prop_name] = None
+            else:
+                whl_count   = len(parts["wheels"])
+                extra_count = len(parts["extras"])
+                extra_str   = f" + {extra_count} extras" if extra_count else ""
+                print(f"  {prop_name}: body + {whl_count} wheels{extra_str}")
+                veh_cache[prop_name] = parts
+        else:
+            bms_file = _resolve_bms_file(prop_name, bms_folder)
+            if bms_file is None:
+                print(f"  No BMS found for '{prop_name}', skipping")
+                mesh_cache[prop_name] = None
+                continue
+            bms_data = read_bms(bms_file)
+            mesh = build_blender_mesh(prop_name, bms_data)
+            if texture_folder and bms_data["texture_names"]:
+                _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+            mesh_cache[prop_name] = mesh
+            print(f"  {prop_name}: {bms_data['num_surfaces']} faces, "
+                  f"{len(bms_data['texture_names'])} textures")
+
+    # ── Place every instance ──────────────────────────────────────────────────
+    placed = 0
+    skipped = 0
+
+    for inst in instances:
+        prop_name  = inst["name"]
+        game_loc   = _to_blender_location(inst["offset"])
+        z_rot      = _to_blender_rotation_z(inst.get("angle"), inst.get("face"))
+        is_vehicle = prop_name.lower().startswith(("va", "vp"))
+
+        if is_vehicle:
+            parts = veh_cache.get(prop_name)
+            if parts is None:
+                skipped += 1
+                continue
+            _place_vehicle_instance(prop_name, parts, game_loc, z_rot)
+            placed += 1
+        else:
+            mesh = mesh_cache.get(prop_name)
+            if mesh is None:
+                skipped += 1
+                continue
+            obj = bpy.data.objects.new(prop_name, mesh)
+            bpy.context.collection.objects.link(obj)
+            bl_off = _bms_to_bl_offset(mesh)
+            obj.location = (
+                game_loc[0] + bl_off[0],
+                game_loc[1] + bl_off[1],
+                game_loc[2] + bl_off[2],
+            )
+            obj.rotation_euler = (0.0, 0.0, z_rot)
+            placed += 1
+
+    print(f"Props placed in scene: {placed} (skipped: {skipped})")

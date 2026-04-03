@@ -68,6 +68,7 @@ class Folder:
         class Editor:
             Root        = _RESOURCES / "editor"
             AI          = _RESOURCES / "editor" / "AI"
+            BMS         = _RESOURCES / "editor" / "BMS"
             Bounds      = _RESOURCES / "editor" / "BOUNDS"
             DLP         = _RESOURCES / "editor" / "DLP"
             Facades     = _RESOURCES / "editor" / "FACADES"

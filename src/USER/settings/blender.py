@@ -8,7 +8,16 @@ load_all_textures = False        # Change to "True" if you want to load all text
                                 # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
 # AI streets
-visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender 
+visualize_ai_paths = False      # Change to "True" if you want to visualize the AI streets in the Blender
+
+# Props
+visualize_props = True          # Set True to place props in the Blender scene
+prop_bms_folder = Folder.Resources.Editor.BMS   # Root folder containing per-prop BMS subfolders
+
+# Car prop detail options (VP* / VA* vehicles)
+prop_car_wheels  = True         # Set True to load and place individual wheel meshes (WHL0–3_H.BMS)
+prop_car_lights  = True        # Set True to also load headlight / tail-light / rear-light meshes
+prop_car_shadow  = True        # Set True to also load the shadow quad mesh
 
 # Waypoints
 input_waypoint_file = Folder.Resources.Editor.Race / "RACE2WAYPOINTS.CSV"

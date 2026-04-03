@@ -12,7 +12,11 @@ from src.integrations.blender.operators.rename_polygons import (
     OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon, OBJECT_OT_DuplicatePolygon
 )
 from src.integrations.blender.operators.polygon_presets import OBJECT_OT_SpawnPreset, PRESET_ITEMS
-
+from src.integrations.blender.operators.ai_streets import (
+    AI_STREET_CLASSES,
+    INTERSECTION_TYPE_ITEMS, STOP_LIGHT_NAME_ITEMS,
+    st_intersection_update
+)
 from src.integrations.blender.operators.waypoints import (
     CREATE_SINGLE_WAYPOINT_OT_operator,
     EXPORT_ALL_WAYPOINTS_OT_operator,
@@ -31,6 +35,7 @@ from src.integrations.blender.panels.misc import OBJECT_PT_PolygonMiscOptionsPan
 from src.integrations.blender.panels.vertex import OBJECT_PT_VertexCoordinates, VertexGroup
 from src.integrations.blender.panels.uv import OBJECT_PT_UVMappingPanel
 from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
+from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
 
 
@@ -42,6 +47,7 @@ PANEL_CLASSES = [
     OBJECT_PT_VertexCoordinates,
     OBJECT_PT_UVMappingPanel,
     *SIDEBAR_CLASSES,
+    *STREET_EDITOR_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -55,6 +61,7 @@ OPERATOR_CLASSES = [
     OBJECT_OT_CreatePolygon,
     OBJECT_OT_DuplicatePolygon,
     OBJECT_OT_SpawnPreset,
+    *AI_STREET_CLASSES,
 ]
 
 WAYPOINT_CLASSES = [
@@ -74,6 +81,14 @@ OBJECT_PROPERTIES = [
     "vertex_coords", "hud_color_index", "hud_colors",
     "tile_x", "tile_y", "angle_degrees", "texture_name",
     "cell_type", "material_index", "always_visible", "sort_vertices",
+    # Street properties
+    "st_intersection_0", "st_intersection_1",
+    "st_stop_light_name_0", "st_stop_light_name_1",
+    "st_traffic_blocked_0", "st_traffic_blocked_1",
+    "st_ped_blocked_0", "st_ped_blocked_1",
+    "st_road_divided", "st_alley",
+    "st_sl_pos_0_offset", "st_sl_pos_0_dir",
+    "st_sl_pos_1_offset", "st_sl_pos_1_dir",
 ]
 
 SCENE_PROPERTIES = [
@@ -134,6 +149,59 @@ def register_object_properties() -> None:
     )
 
 
+def register_street_properties() -> None:
+    bpy.types.Object.st_intersection_0 = bpy.props.EnumProperty(
+        name="Intersection Type (Start)",
+        items=INTERSECTION_TYPE_ITEMS,
+        default="3",  # IntersectionType.CONTINUE
+        update=st_intersection_update
+    )
+    bpy.types.Object.st_intersection_1 = bpy.props.EnumProperty(
+        name="Intersection Type (End)",
+        items=INTERSECTION_TYPE_ITEMS,
+        default="3",
+        update=st_intersection_update
+    )
+    bpy.types.Object.st_stop_light_name_0 = bpy.props.EnumProperty(
+        name="Stop Light (Start)",
+        items=STOP_LIGHT_NAME_ITEMS,
+    )
+    bpy.types.Object.st_stop_light_name_1 = bpy.props.EnumProperty(
+        name="Stop Light (End)",
+        items=STOP_LIGHT_NAME_ITEMS,
+    )
+    bpy.types.Object.st_traffic_blocked_0 = bpy.props.BoolProperty(
+        name="Traffic Blocked (Start)", default=False
+    )
+    bpy.types.Object.st_traffic_blocked_1 = bpy.props.BoolProperty(
+        name="Traffic Blocked (End)", default=False
+    )
+    bpy.types.Object.st_ped_blocked_0 = bpy.props.BoolProperty(
+        name="Ped Blocked (Start)", default=False
+    )
+    bpy.types.Object.st_ped_blocked_1 = bpy.props.BoolProperty(
+        name="Ped Blocked (End)", default=False
+    )
+    bpy.types.Object.st_road_divided = bpy.props.BoolProperty(
+        name="Road Divided", default=False
+    )
+    bpy.types.Object.st_alley = bpy.props.BoolProperty(
+        name="Alley", default=False
+    )
+    bpy.types.Object.st_sl_pos_0_offset = bpy.props.FloatVectorProperty(
+        name="SL 0 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ'
+    )
+    bpy.types.Object.st_sl_pos_0_dir = bpy.props.FloatVectorProperty(
+        name="SL 0 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ'
+    )
+    bpy.types.Object.st_sl_pos_1_offset = bpy.props.FloatVectorProperty(
+        name="SL 1 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ'
+    )
+    bpy.types.Object.st_sl_pos_1_dir = bpy.props.FloatVectorProperty(
+        name="SL 1 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ'
+    )
+
+
 def register_scene_properties() -> None:
     bpy.types.Scene.polygon_create_width = bpy.props.FloatProperty(
         name="Width", default=15.0, min=0.1, soft_max=200.0
@@ -173,6 +241,7 @@ def initialize_blender_panels() -> None:
         return
 
     register_object_properties()
+    register_street_properties()
     register_scene_properties()
 
     _safe_register(VertexGroup)

@@ -91,6 +91,7 @@ from src.integrations.blender.setup import setup_blender
 from src.integrations.blender.inits import initialize_blender_operators, initialize_blender_panels, initialize_blender_waypoint_editor
 from src.integrations.blender.keybindings import set_blender_keybinding
 from src.integrations.blender.modeling.ai_paths import process_and_visualize_paths
+from src.integrations.blender.modeling.props import place_props_in_scene
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
@@ -139,7 +140,7 @@ from src.USER.settings.debug import (
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
 )
 
-from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths
+from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights, prop_car_shadow
 
 from src.USER.facades import facade_list
 from src.USER.ai_streets import street_list
@@ -2828,6 +2829,15 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
 
 create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
 process_and_visualize_paths(Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
+
+if visualize_props and is_process_running(Executable.BLENDER):
+    place_props_in_scene(
+        prop_list, random_props, prop_bms_folder,
+        texture_folder=Folder.Resources.Editor.Textures,
+        car_wheels=prop_car_wheels,
+        car_lights=prop_car_lights,
+        car_shadow=prop_car_shadow,
+    )
 
 ###################################################################################################################   
 ################################################################################################################### 
