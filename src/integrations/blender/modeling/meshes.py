@@ -290,7 +290,6 @@ def _build_emission_material(texture_name: str, texture_path: Path):
     mat = bpy.data.materials.new(name=texture_name)
     mat.use_nodes     = True
     mat.blend_method  = "BLEND"   # alpha transparency
-    mat.shadow_method = "NONE"    # no shadow casting
 
     nodes = mat.node_tree.nodes
     for node in nodes:

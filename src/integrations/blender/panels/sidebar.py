@@ -122,6 +122,26 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
+        # ── Map validation status ─────────────────────────────────────────────
+        scene_meshes = [obj for obj in context.scene.objects if obj.type == "MESH"]
+        scene_names  = {obj.name for obj in scene_meshes}
+        has_p1   = "P1"  in scene_names
+        has_p200 = "P200" in scene_names
+
+        box = layout.box()
+        box.label(text="Map Status", icon='INFO')
+        row = box.row()
+        if has_p1:
+            row.label(text="P1 present", icon='SEQUENCE_COLOR_04')   # green square
+        else:
+            row.alert = True
+            row.label(text="P1 missing!", icon='ERROR')
+        if has_p200:
+            row = box.row()
+            row.alert = True
+            row.label(text="P200 reserved — rename it!", icon='ERROR')
+
+        layout.separator()
         layout.label(text="Export", icon='EXPORT')
         row = layout.row(align=True)
         op  = row.operator("object.export_polygons", text="Selected", icon='RESTRICT_SELECT_OFF')
@@ -134,7 +154,7 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         row = layout.row(align=True)
         row.operator("object.auto_rename_children", text="Normalize",  icon='SORTALPHA')
         row.operator("object.rename_sequential",    text="Sequential", icon='LINENUMBERS_ON')
-        layout.operator("object.fix_polygon_names", text="Fix Names (.001)", icon='ERROR')
+        layout.operator("object.fix_polygon_names", text="Fix Poly Names", icon='ERROR')
 
         layout.separator()
         layout.label(text="Create", icon='ADD')

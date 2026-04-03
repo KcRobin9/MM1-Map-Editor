@@ -14,33 +14,99 @@ from src.integrations.blender.utils import has_invalid_polygon_names
 from src.misc.main import open_with_notepad_plus
 
 
+import re as _re
+
+
+def _popup_error(context: bpy.types.Context, title: str, lines: list) -> None:
+    """Show a multi-line error popup in Blender's UI."""
+    def draw(self, _ctx):
+        for line in lines:
+            self.layout.label(text=line)
+    context.window_manager.popup_menu(draw, title=title, icon='ERROR')
+
+
+def _bound_number_from_name(name: str):
+    """Return the integer bound number from a polygon name like 'P67', or None."""
+    m = _re.match(r"^P(\d+)$", name)
+    return int(m.group(1)) if m else None
+
+
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     bl_idname = "object.export_polygons"
     bl_label = "Export Blender Polygons"
-    
+
     select_all: bpy.props.BoolProperty(default = True)
 
-    def execute(self, context: bpy.types.Context) -> Set[set]:                            
+    def execute(self, context: bpy.types.Context) -> Set[set]:
         export_file = Folder.Blender.Polygons / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
-                            
+
         # Select Mesh Objects based on the "select_all" property
         if self.select_all:
             mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
         else:
             mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
-            
+
         if not mesh_objects:
             self.report({"WARNING"}, "No mesh objects found for export.")
             return {"CANCELLED"}
-        
 
+        if self.select_all:
+            # ── Full-scene export: strict validation ──────────────────────────
+            invalid = has_invalid_polygon_names(context.scene)
+            if invalid:
+                _popup_error(context, "Cannot Export — Invalid Names", [
+                    "Some polygons have duplicate (.001-style) names:",
+                    ", ".join(invalid),
+                    "",
+                    "Use 'Fix Poly Names' in the Map Editor panel to resolve.",
+                ])
+                return {"CANCELLED"}
 
-        #! NEW — block export if any names are invalid
-        invalid = has_invalid_polygon_names(context.scene)
-        if invalid:
-            names = ", ".join(invalid)
-            self.report({"ERROR"}, f"Cannot export — invalid names found: {names}. Use 'Fix Names' in the Map Editor panel.")
-            return {"CANCELLED"}
+            names_in_scene = {obj.name for obj in mesh_objects}
+
+            if "P1" not in names_in_scene:
+                _popup_error(context, "Cannot Export — P1 Missing", [
+                    "No 'P1' polygon found in the scene.",
+                    "Every map must have at least one polygon",
+                    "with bound_number = 1 (named 'P1').",
+                    "",
+                    "Use 'Fix Poly Names' to assign P1 automatically.",
+                ])
+                return {"CANCELLED"}
+
+            if "P200" in names_in_scene:
+                _popup_error(context, "Cannot Export — P200 Reserved", [
+                    "P200' is a reserved bound_number.",
+                    "Rename it to a value between 1–199 or 201–32766.",
+                    "",
+                    "Use 'Fix Poly Names' to fix this automatically.",
+                ])
+                return {"CANCELLED"}
+
+        else:
+            # ── Selected export: only validate the polygons being exported ────
+            for obj in mesh_objects:
+                num = _bound_number_from_name(obj.name)
+                if num is None:
+                    _popup_error(context, "Cannot Export — Invalid Name", [
+                        f"'{obj.name}' is not a valid polygon name.",
+                        "Polygon names must be P followed by a number (e.g. P67).",
+                    ])
+                    return {"CANCELLED"}
+                if num <= 0:
+                    _popup_error(context, "Cannot Export — Invalid Bound Number", [
+                        f"'{obj.name}' has bound_number = {num}.",
+                        "Bound numbers must be greater than 0.",
+                    ])
+                    return {"CANCELLED"}
+                if num == 200:
+                    _popup_error(context, "Cannot Export — P200 Reserved", [
+                        "'P200' is a reserved bound_number (CELL_TYPE_SWITCH).",
+                        "Rename it to a value between 1–199 or 201–32766.",
+                        "",
+                        "Use 'Fix Poly Names' to fix this automatically.",
+                    ])
+                    return {"CANCELLED"}
 
 
 

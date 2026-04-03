@@ -68,23 +68,23 @@ class OBJECT_OT_RenameSequential(bpy.types.Operator):
 
 class OBJECT_OT_FixPolygonNames(bpy.types.Operator):
     bl_idname      = "object.fix_polygon_names"
-    bl_label       = "Fix Polygon Names"
-    bl_description = "Rename polygons with invalid .001-style names to valid unused bound numbers"
+    bl_label       = "Fix Poly Names"
+    bl_description = (
+        "Fix all polygon naming issues: renames .001-style duplicates to valid "
+        "bound numbers, renames P200 (reserved) to a safe number, and ensures "
+        "P1 exists by renaming the first polygon to P1 if it is missing"
+    )
     bl_options     = {"REGISTER", "UNDO"}
 
     def execute(self, context: bpy.types.Context) -> set:
         used    = get_used_bound_numbers(context.scene)
         renamed = []
 
+        # ── Step 1: fix .001-style duplicate names ────────────────────────────
         invalid_objects = [
             obj for obj in context.scene.objects
             if obj.type == "MESH" and obj.name.startswith("P") and "." in obj.name
         ]
-
-        if not invalid_objects:
-            self.report({"INFO"}, "No invalid names found.")
-            return {"FINISHED"}
-
         for obj in invalid_objects:
             old_name = obj.name
             new_num  = next_available_bound_number(used)
@@ -92,7 +92,33 @@ class OBJECT_OT_FixPolygonNames(bpy.types.Operator):
             obj.name = f"P{new_num}"
             renamed.append(f"{old_name} → P{new_num}")
 
-        self.report({"INFO"}, f"Renamed {len(renamed)}: " + ", ".join(renamed))
+        # ── Step 2: fix reserved P200 ─────────────────────────────────────────
+        p200 = context.scene.objects.get("P200")
+        if p200 and p200.type == "MESH":
+            used.discard(200)
+            new_num = next_available_bound_number(used)
+            used.add(new_num)
+            p200.name = f"P{new_num}"
+            renamed.append(f"P200 (reserved) → P{new_num}")
+
+        # ── Step 3: ensure P1 exists ──────────────────────────────────────────
+        if "P1" not in context.scene.objects:
+            mesh_polys = [
+                obj for obj in context.scene.objects
+                if obj.type == "MESH" and obj.name.startswith("P")
+            ]
+            if mesh_polys:
+                candidate = mesh_polys[0]
+                old_name  = candidate.name
+                used.discard(1)
+                candidate.name = "P1"
+                renamed.append(f"{old_name} → P1 (required)")
+
+        if not renamed:
+            self.report({"INFO"}, "No issues found — all polygon names are valid.")
+            return {"FINISHED"}
+
+        self.report({"INFO"}, f"Fixed {len(renamed)}: " + ", ".join(renamed))
         return {"FINISHED"}
 
 
