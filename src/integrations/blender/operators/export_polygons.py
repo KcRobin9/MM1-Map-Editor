@@ -1,3 +1,4 @@
+import re
 import bpy
 import time
 import pyautogui
@@ -14,9 +15,6 @@ from src.integrations.blender.utils import has_invalid_polygon_names
 from src.misc.main import open_with_notepad_plus
 
 
-import re as _re
-
-
 def _popup_error(context: bpy.types.Context, title: str, lines: list) -> None:
     """Show a multi-line error popup in Blender's UI."""
     def draw(self, _ctx):
@@ -26,8 +24,7 @@ def _popup_error(context: bpy.types.Context, title: str, lines: list) -> None:
 
 
 def _bound_number_from_name(name: str):
-    """Return the integer bound number from a polygon name like 'P67', or None."""
-    m = _re.match(r"^P(\d+)$", name)
+    m = re.match(r"^P(\d+)$", name)
     return int(m.group(1)) if m else None
 
 
@@ -51,14 +48,12 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             return {"CANCELLED"}
 
         if self.select_all:
-            # ── Full-scene export: strict validation ──────────────────────────
             invalid = has_invalid_polygon_names(context.scene)
             if invalid:
                 _popup_error(context, "Cannot Export — Invalid Names", [
                     "Some polygons have duplicate (.001-style) names:",
                     ", ".join(invalid),
-                    "",
-                    "Use 'Fix Poly Names' in the Map Editor panel to resolve.",
+                    "\nUse 'Fix Poly Names' in the Map Editor panel to resolve.",
                 ])
                 return {"CANCELLED"}
 
@@ -68,8 +63,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
                 _popup_error(context, "Cannot Export — P1 Missing", [
                     "No 'P1' polygon found in the scene.",
                     "Every map must have at least one polygon",
-                    "with bound_number = 1 (named 'P1').",
-                    "",
+                    "with bound_number = 1 (named 'P1').\n",
                     "Use 'Fix Poly Names' to assign P1 automatically.",
                 ])
                 return {"CANCELLED"}
@@ -77,8 +71,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             if "P200" in names_in_scene:
                 _popup_error(context, "Cannot Export — P200 Reserved", [
                     "P200' is a reserved bound_number.",
-                    "Rename it to a value between 1–199 or 201–32766.",
-                    "",
+                    "Rename it to a value between 1–199 or 201–32766.\n",
                     "Use 'Fix Poly Names' to fix this automatically.",
                 ])
                 return {"CANCELLED"}
@@ -101,13 +94,11 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
                     return {"CANCELLED"}
                 if num == 200:
                     _popup_error(context, "Cannot Export — P200 Reserved", [
-                        "'P200' is a reserved bound_number (CELL_TYPE_SWITCH).",
-                        "Rename it to a value between 1–199 or 201–32766.",
-                        "",
+                        "'P200' is a reserved bound_number.",
+                        "Rename it to a value between 1–199 or 201–32766.\n",
                         "Use 'Fix Poly Names' to fix this automatically.",
                     ])
                     return {"CANCELLED"}
-
 
 
         # Set the first mesh object as the active object and apply transformations (to get Global coordinates)
