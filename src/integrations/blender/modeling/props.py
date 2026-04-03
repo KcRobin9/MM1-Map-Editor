@@ -33,20 +33,24 @@ def _to_blender_rotation_z(angle: Optional[float], face: Optional[tuple]) -> flo
     (radians).
 
     Game angle convention:
-        0° → pointing +X (East).  North = ~0° because face ≈ (HUGE, 0, 0).
-        The face vector (cos θ, 0, sin θ) in game space maps to
-        (cos θ, −sin θ, 0) in Blender XY, giving Z-rotation = −θ.
+        0° → pointing +X (East).
+        The face vector (cos θ, 0, sin θ) in game space maps to Blender
+        direction (-cos θ, sin θ, 0).  Starting from the mesh's default
+        -X orientation, rotating by -θ aligns it with that direction.
 
-    Face vector (fx, fy, fz) in game space → Blender XY direction (fx, −fz)
-        → Z-rotation = atan2(−fz, fx).
+    The undefined sentinel (HUGE, HUGE, HUGE) is identified by its non-zero
+    Y component — all real direction vectors have fy = 0.
     """
     if angle is not None:
         return -math.radians(angle)
 
     if face is not None:
-        fx, _fy, fz = face
-        if abs(fx) > _HUGE_SENTINEL and abs(fz) > _HUGE_SENTINEL:
-            return 0.0  # undefined sentinel — no meaningful rotation
+        fx, fy, fz = face
+        # The undefined sentinel is exactly (HUGE, HUGE, HUGE) — all three
+        # components large and positive.  Random face vectors can have large Y,
+        # so checking fy alone is unreliable; require all three.
+        if fx > _HUGE_SENTINEL and fy > _HUGE_SENTINEL and fz > _HUGE_SENTINEL:
+            return 0.0
         return math.atan2(-fz, fx)
 
     return 0.0
@@ -243,18 +247,17 @@ def _load_vehicle_parts(
     texture_folder: Optional[Path],
     load_wheels: bool,
     load_lights: bool,
-    load_shadow: bool,
 ) -> dict:
     """
     Load every requested BMS component for a vehicle prop.
 
     Returns a dict:
-        body    : bpy.types.Mesh | None
-        wheels  : List[bpy.types.Mesh]   (each carries mesh_offset for placement)
-        lights  : List[bpy.types.Mesh]
-        shadow  : bpy.types.Mesh | None
+        body   : bpy.types.Mesh | None
+        wheels : List[bpy.types.Mesh]   (each carries mesh_offset for placement)
+        extras : List[bpy.types.Mesh]   (fenders, etc.)
+        lights : List[bpy.types.Mesh]
     """
-    parts: dict = {"body": None, "wheels": [], "extras": [], "lights": [], "shadow": None}
+    parts: dict = {"body": None, "wheels": [], "extras": [], "lights": []}
 
     # ── Body ─────────────────────────────────────────────────────────────────
     for candidate in ("BODY_H.BMS", "BODY_M.BMS", "H.BMS"):
@@ -293,12 +296,6 @@ def _load_vehicle_parts(
                 if mesh is not None:
                     parts["lights"].append(mesh)
 
-    # ── Shadow ───────────────────────────────────────────────────────────────
-    if load_shadow:
-        f = prop_folder / "SHADOW_H.BMS"
-        if f.exists():
-            parts["shadow"] = _load_bms_mesh(f, f"{prop_name}.SHADOW", texture_folder)
-
     return parts
 
 
@@ -307,9 +304,10 @@ def _place_vehicle_instance(
     parts: dict,
     game_loc: Tuple[float, float, float],
     z_rot: float,
+    collection: "bpy.types.Collection",
 ) -> None:
     """
-    Place a full vehicle (body + optional wheels / lights / shadow) in the scene.
+    Place a full vehicle (body + optional wheels / lights) in the scene.
 
     The body object is placed at game_loc.  Wheels, fenders, and other sub-parts
     are parented to the body with their BMS mesh_offset as the LOCAL position.
@@ -326,7 +324,7 @@ def _place_vehicle_instance(
 
     # Body — placed at world position
     body_obj = bpy.data.objects.new(prop_name, body_mesh)
-    bpy.context.collection.objects.link(body_obj)
+    collection.objects.link(body_obj)
     bl_body_off = _bms_to_bl_offset(body_mesh)
     body_obj.location = (
         game_loc[0] + bl_body_off[0],
@@ -337,7 +335,7 @@ def _place_vehicle_instance(
 
     def _add_child(mesh: bpy.types.Mesh) -> None:
         child = bpy.data.objects.new(mesh.name, mesh)
-        bpy.context.collection.objects.link(child)
+        collection.objects.link(child)
         child.parent = body_obj
         # Reset the parent-inverse matrix so child.location is pure local space
         # (relative to the body origin), not compensated to keep world position.
@@ -350,8 +348,27 @@ def _place_vehicle_instance(
         _add_child(extra_mesh)
     for light_mesh in parts["lights"]:
         _add_child(light_mesh)
-    if parts["shadow"] is not None:
-        _add_child(parts["shadow"])
+
+
+_PROPS_COLLECTION = "MM1_Props"
+
+
+def _get_or_create_collection(name: str) -> "bpy.types.Collection":
+    """Return the named collection, creating it and linking to the scene if needed."""
+    if name in bpy.data.collections:
+        return bpy.data.collections[name]
+    col = bpy.data.collections.new(name)
+    bpy.context.scene.collection.children.link(col)
+    return col
+
+
+def _clear_collection(col: "bpy.types.Collection") -> None:
+    """Remove all objects (and their mesh data) from a collection."""
+    for obj in list(col.objects):
+        mesh = obj.data if obj.type == "MESH" else None
+        bpy.data.objects.remove(obj, do_unlink=True)
+        if mesh is not None and mesh.users == 0:
+            bpy.data.meshes.remove(mesh)
 
 
 def place_props_in_scene(
@@ -361,14 +378,16 @@ def place_props_in_scene(
     texture_folder: Optional[Path] = None,
     car_wheels: bool = True,
     car_lights: bool = False,
-    car_shadow: bool = False,
 ) -> None:
     """
     Build prop meshes from BMS files and place instances directly in the scene.
 
+    All objects are placed into the "MM1_Props" collection which is cleared
+    at the start of every run, preventing duplicates on re-runs.
+
     For regular props (TP*) a single H.BMS mesh is placed per instance.
     For vehicle props (VP* / VA*) the body mesh is placed together with
-    optional wheels, lights, and a shadow — all parented to the body object.
+    optional wheels and lights — all parented to the body object.
 
     Args:
         prop_list      : Fixed prop list from USER/props/props.py.
@@ -377,8 +396,11 @@ def place_props_in_scene(
         texture_folder : Folder containing .DDS textures (optional).
         car_wheels     : Load WHL0–N_H.BMS and parent to body.
         car_lights     : Load HLIGHT/TLIGHT/RLIGHT meshes and parent to body.
-        car_shadow     : Load SHADOW_H.BMS and parent to body.
     """
+    # Clear previous run's objects so re-running never doubles up props
+    props_col = _get_or_create_collection(_PROPS_COLLECTION)
+    _clear_collection(props_col)
+
     dims_cache = _load_dimensions_cache()
     instances = expand_prop_instances(prop_list, random_props, dims_cache)
 
@@ -406,7 +428,6 @@ def place_props_in_scene(
                 prop_name, prop_folder, texture_folder,
                 load_wheels=car_wheels,
                 load_lights=car_lights,
-                load_shadow=car_shadow,
             )
             if parts["body"] is None:
                 print(f"  No body BMS for '{prop_name}', skipping")
@@ -446,7 +467,7 @@ def place_props_in_scene(
             if parts is None:
                 skipped += 1
                 continue
-            _place_vehicle_instance(prop_name, parts, game_loc, z_rot)
+            _place_vehicle_instance(prop_name, parts, game_loc, z_rot, props_col)
             placed += 1
         else:
             mesh = mesh_cache.get(prop_name)
@@ -454,7 +475,7 @@ def place_props_in_scene(
                 skipped += 1
                 continue
             obj = bpy.data.objects.new(prop_name, mesh)
-            bpy.context.collection.objects.link(obj)
+            props_col.objects.link(obj)
             bl_off = _bms_to_bl_offset(mesh)
             obj.location = (
                 game_loc[0] + bl_off[0],
@@ -465,3 +486,61 @@ def place_props_in_scene(
             placed += 1
 
     print(f"Props placed in scene: {placed} (skipped: {skipped})")
+
+
+_BULK_BMS_COLLECTION = "MM1_City"
+
+
+def place_bulk_bms_in_scene(
+    bms_folders: List[Path],
+    texture_folder: Optional[Path] = None,
+) -> None:
+    """
+    Bulk-import every *_H.BMS file found directly inside each folder in
+    bms_folders and place the resulting meshes into the "MM1_City" collection.
+
+    City BMS files (e.g. CULL1000_H.BMS) store their world position via the
+    mesh_offset field in the BMS header, so each mesh is placed at that offset
+    with no additional transform.  Non-H BMS variants (_M, _L, _VL) are skipped.
+
+    The collection is cleared at the start of every run to prevent duplicates.
+
+    Args:
+        bms_folders    : List of flat folders, each containing *_H.BMS files.
+        texture_folder : Folder containing .DDS textures (optional).
+    """
+    city_col = _get_or_create_collection(_BULK_BMS_COLLECTION)
+    _clear_collection(city_col)
+
+    total_loaded = 0
+    total_skipped = 0
+
+    for folder in bms_folders:
+        folder = Path(folder)
+        if not folder.is_dir():
+            print(f"  Bulk BMS folder not found, skipping: {folder}")
+            continue
+
+        h_files = sorted(folder.glob("*_H.BMS"))
+        print(f"  Bulk loading {len(h_files)} H.BMS files from {folder.name}...")
+
+        for bms_file in h_files:
+            name = bms_file.stem  # e.g. "CULL1000_H"
+            try:
+                bms_data = read_bms(bms_file)
+                mesh = build_blender_mesh(name, bms_data)
+                if texture_folder and bms_data["texture_names"]:
+                    _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+
+                obj = bpy.data.objects.new(name, mesh)
+                city_col.objects.link(obj)
+
+                # City blocks encode their world position in mesh_offset
+                obj.location = _bms_to_bl_offset(mesh)
+
+                total_loaded += 1
+            except Exception as exc:
+                print(f"    Could not load {bms_file.name}: {exc}")
+                total_skipped += 1
+
+    print(f"Bulk BMS: {total_loaded} meshes placed, {total_skipped} skipped")

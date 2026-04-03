@@ -1,3 +1,4 @@
+from pathlib import Path
 from src.constants.folder import Folder
 
 load_target_model = False               # Set True to load an external model instead of the test city
@@ -16,8 +17,14 @@ prop_bms_folder = Folder.Resources.Editor.BMS   # Root folder containing per-pro
 
 # Car prop detail options (VP* / VA* vehicles)
 prop_car_wheels  = True         # Set True to load and place individual wheel meshes (WHL0–3_H.BMS)
-prop_car_lights  = True        # Set True to also load headlight / tail-light / rear-light meshes
-prop_car_shadow  = True        # Set True to also load the shadow quad mesh
+prop_car_lights  = True         # Set True to also load headlight / tail-light / rear-light meshes
+
+# Bulk city BMS import
+# Set to a list of folders, each containing *_H.BMS files directly (not in subfolders).
+# Example: bulk_bms_folders = [Path("TEST_BMS_CITY/CHICAGOCITY"), Path("TEST_BMS_CITY/CHICAGOLM")]
+# Set to [] or None to disable.
+# bulk_bms_folders = [Path("TEST_BMS_CITY/all")]  # single folder; use a list for multiple
+bulk_bms_folders = []  # No bulk import by default; set to a list of folders to enable
 
 # Waypoints
 input_waypoint_file = Folder.Resources.Editor.Race / "RACE2WAYPOINTS.CSV"

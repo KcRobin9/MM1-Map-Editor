@@ -91,7 +91,7 @@ from src.integrations.blender.setup import setup_blender
 from src.integrations.blender.inits import initialize_blender_operators, initialize_blender_panels, initialize_blender_waypoint_editor
 from src.integrations.blender.keybindings import set_blender_keybinding
 from src.integrations.blender.modeling.ai_paths import process_and_visualize_paths
-from src.integrations.blender.modeling.props import place_props_in_scene
+from src.integrations.blender.modeling.props import place_props_in_scene, place_bulk_bms_in_scene
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
@@ -140,7 +140,7 @@ from src.USER.settings.debug import (
     debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
 )
 
-from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights, prop_car_shadow
+from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights, bulk_bms_folders
 
 from src.USER.facades import facade_list
 from src.USER.ai_streets import street_list
@@ -2797,11 +2797,40 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
     return obj
 
 
+def _show_blender_error(message: str, title: str = "MM1 Map Editor — Error") -> None:
+    """Display a popup message box in Blender's UI."""
+    lines = [ln.strip() for ln in message.strip().splitlines() if ln.strip()]
+    def draw(self, _context):
+        for line in lines:
+            self.layout.label(text=line)
+    bpy.context.window_manager.popup_menu(draw, title=title, icon="ERROR")
+
+
 def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_target_model: bool) -> None:
     if not is_process_running(Executable.BLENDER):
         return
 
     if load_target_model:
+        return
+
+    # ── Validate polygons before building meshes ──────────────────────────────
+    has_p1  = any(p["bound_number"] == 1 for p in polygons_data)
+    has_p200 = any(p["bound_number"] == 200 for p in polygons_data)
+
+    if not has_p1:
+        _show_blender_error(
+            "No polygon with bound_number = 1 found.\n"
+            "Every map must contain at least one polygon with bound_number = 1.\n"
+            "Add it to your polygon list in MAP_EDITOR_ALPHA_v1.py and re-run."
+        )
+        return
+
+    if has_p200:
+        _show_blender_error(
+            "A polygon with bound_number = 200 was found.\n"
+            "bound_number 200 is reserved (CELL_TYPE_SWITCH) and cannot be used.\n"
+            "Change it to a different value and re-run."
+        )
         return
 
     from src.integrations.blender.modeling.uv_mapping import set_texture_folder
@@ -2831,12 +2860,19 @@ create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_
 process_and_visualize_paths(Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 if visualize_props and is_process_running(Executable.BLENDER):
+    # random_props have already been expanded into prop_list by place_randomly()
+    # above, so pass an empty list to avoid placing every random prop twice.
     place_props_in_scene(
-        prop_list, random_props, prop_bms_folder,
+        prop_list, [], prop_bms_folder,
         texture_folder=Folder.Resources.Editor.Textures,
         car_wheels=prop_car_wheels,
         car_lights=prop_car_lights,
-        car_shadow=prop_car_shadow,
+    )
+
+if bulk_bms_folders and is_process_running(Executable.BLENDER):
+    place_bulk_bms_in_scene(
+        bulk_bms_folders,
+        texture_folder=Folder.Resources.Editor.Textures,
     )
 
 ###################################################################################################################   
