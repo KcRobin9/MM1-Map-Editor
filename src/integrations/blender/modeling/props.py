@@ -1,9 +1,10 @@
 import bpy
+import json
 import math
 import mathutils
 import random
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.core.vector.vector_3 import Vector3
 from src.core.geometry.main import transform_coordinate_system
@@ -19,6 +20,36 @@ from src.integrations.blender.modeling.meshes import (
 
 # Anything above this threshold in all three components is the "undefined" sentinel
 _HUGE_SENTINEL = HUGE * 0.5
+
+
+# ── Prop metadata serialization ───────────────────────────────────────────────
+
+def _serialize_prop_config(config: dict) -> str:
+    """Serialize a prop config dict to a JSON string for storage on Blender objects.
+
+    Handles AxisRef objects (separator values) which are not JSON-serializable.
+    All other values (tuples of numbers, strings, lists) are serializable as-is.
+    """
+    serializable: dict = {}
+    for k, v in config.items():
+        if hasattr(v, "axis") and hasattr(v, "resolve"):  # AxisRef
+            serializable[k] = {"__type__": "axis", "axis": v.axis, "offset": float(v.offset)}
+        elif isinstance(v, tuple):
+            # tuples → lists for JSON; works for (x,y,z) offsets and nested area tuples
+            def _tuple_to_list(t: Any) -> Any:
+                if isinstance(t, tuple):
+                    return [_tuple_to_list(i) for i in t]
+                return t
+            serializable[k] = _tuple_to_list(v)
+        elif isinstance(v, list):
+            def _list_clean(lst: Any) -> Any:
+                if isinstance(lst, (list, tuple)):
+                    return [_list_clean(i) for i in lst]
+                return lst
+            serializable[k] = _list_clean(v)
+        else:
+            serializable[k] = v
+    return json.dumps(serializable)
 
 
 # ── Coordinate helpers ────────────────────────────────────────────────────────
@@ -95,10 +126,13 @@ def expand_prop_instances(
     so that Blender placement matches what the binary prop file contains.
 
     Each returned dict has:
-        name   : str
-        offset : tuple (game coords)
-        face   : tuple | None
-        angle  : float | None
+        name           : str
+        offset         : tuple (game coords)
+        face           : tuple | None
+        angle          : float | None
+        mm_group_id    : str  (e.g. "fixed_0", "random_1")
+        mm_group_type  : str  ("fixed" | "random")
+        mm_config_json : str  (JSON-serialized original config dict)
     """
     if dims_cache is None:
         dims_cache = _load_dimensions_cache()
@@ -106,12 +140,15 @@ def expand_prop_instances(
     instances: List[dict] = []
 
     # ── Fixed props ──────────────────────────────────────────────────────────
-    for prop in prop_list:
-        name = prop["name"]
+    for prop_idx, prop in enumerate(prop_list):
+        name   = prop["name"]
         offset = Vector3(*prop["offset"])
-        end = Vector3(*prop["end"]) if "end" in prop else None
-        angle = prop.get("angle", None)
-        face = prop.get("face", None)
+        end    = Vector3(*prop["end"]) if "end" in prop else None
+        angle  = prop.get("angle", None)
+        face   = prop.get("face", None)
+
+        group_id     = f"fixed_{prop_idx}"
+        config_json  = _serialize_prop_config(prop)
 
         if face is None and angle is not None:
             rad = math.radians(angle)
@@ -133,12 +170,18 @@ def expand_prop_instances(
 
             for i in range(count):
                 pos = offset + direction * (i * sep)
-                instances.append({"name": name, "offset": pos.to_tuple(), "face": face, "angle": angle})
+                instances.append({
+                    "name": name, "offset": pos.to_tuple(), "face": face, "angle": angle,
+                    "mm_group_id": group_id, "mm_group_type": "fixed", "mm_config_json": config_json,
+                })
         else:
-            instances.append({"name": name, "offset": offset.to_tuple(), "face": face, "angle": angle})
+            instances.append({
+                "name": name, "offset": offset.to_tuple(), "face": face, "angle": angle,
+                "mm_group_id": group_id, "mm_group_type": "fixed", "mm_config_json": config_json,
+            })
 
     # ── Random props ─────────────────────────────────────────────────────────
-    for config in random_props:
+    for rand_idx, config in enumerate(random_props):
         names = config.get("name", [])
         if isinstance(names, str):
             names = [names]
@@ -151,7 +194,10 @@ def expand_prop_instances(
         (x_min, y_min, z_min), (x_max, y_max, z_max) = config["area"]
 
         cfg_angle = config.get("angle", None)
-        cfg_face = config.get("face", None)
+        cfg_face  = config.get("face", None)
+
+        group_id    = f"random_{rand_idx}"
+        config_json = _serialize_prop_config(config)
 
         random.seed(seed)
         for name in names:
@@ -177,6 +223,9 @@ def expand_prop_instances(
                     "offset": (x, y, z),
                     "face": face,
                     "angle": cfg_angle,
+                    "mm_group_id": group_id,
+                    "mm_group_type": "random",
+                    "mm_config_json": config_json,
                 })
 
     return instances
@@ -305,22 +354,19 @@ def _place_vehicle_instance(
     game_loc: Tuple[float, float, float],
     z_rot: float,
     collection: "bpy.types.Collection",
-) -> None:
-    """
-    Place a full vehicle (body + optional wheels / lights) in the scene.
+) -> "Optional[bpy.types.Object]":
+    """Place a full vehicle (body + optional wheels / lights) in the scene.
 
-    The body object is placed at game_loc.  Wheels, fenders, and other sub-parts
-    are parented to the body with their BMS mesh_offset as the LOCAL position.
+    Returns the body object so callers can tag it with metadata, or None if
+    the body mesh is missing.
 
-    Parenting note: setting child.parent = body_obj in Blender Python causes
-    Blender to set matrix_parent_inverse = body_obj.matrix_world.inverted() so
-    that the child's visual position doesn't move.  We want pure local-space
-    parenting, so we reset matrix_parent_inverse to identity after each parent
-    assignment and then set the local location explicitly.
+    Wheels, fenders, and other sub-parts are parented to the body with their
+    BMS mesh_offset as the LOCAL position.  matrix_parent_inverse is reset to
+    identity after each parent assignment so child.location is pure local space.
     """
     body_mesh = parts["body"]
     if body_mesh is None:
-        return
+        return None
 
     # Body — placed at world position
     body_obj = bpy.data.objects.new(prop_name, body_mesh)
@@ -348,6 +394,8 @@ def _place_vehicle_instance(
         _add_child(extra_mesh)
     for light_mesh in parts["lights"]:
         _add_child(light_mesh)
+
+    return body_obj
 
 
 _PROPS_COLLECTION = "Props"
@@ -462,12 +510,21 @@ def place_props_in_scene(
         z_rot      = _to_blender_rotation_z(inst.get("angle"), inst.get("face"))
         is_vehicle = prop_name.lower().startswith(("va", "vp"))
 
+        # Metadata for the Prop Editor panel
+        group_id    = inst.get("mm_group_id", "")
+        group_type  = inst.get("mm_group_type", "fixed")
+        config_json = inst.get("mm_config_json", "{}")
+
         if is_vehicle:
             parts = veh_cache.get(prop_name)
             if parts is None:
                 skipped += 1
                 continue
-            _place_vehicle_instance(prop_name, parts, game_loc, z_rot, props_col)
+            body_obj = _place_vehicle_instance(prop_name, parts, game_loc, z_rot, props_col)
+            if body_obj is not None:
+                body_obj["mm_prop_group_id"]    = group_id
+                body_obj["mm_prop_type"]         = group_type
+                body_obj["mm_prop_config_json"]  = config_json
             placed += 1
         else:
             mesh = mesh_cache.get(prop_name)
@@ -483,6 +540,10 @@ def place_props_in_scene(
                 game_loc[2] + bl_off[2],
             )
             obj.rotation_euler = (0.0, 0.0, z_rot)
+            # Tag with Prop Editor metadata
+            obj["mm_prop_group_id"]   = group_id
+            obj["mm_prop_type"]       = group_type
+            obj["mm_prop_config_json"] = config_json
             placed += 1
 
     print(f"Props placed in scene: {placed} (skipped: {skipped})")

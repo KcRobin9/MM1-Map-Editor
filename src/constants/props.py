@@ -121,40 +121,7 @@ class Prop:
     MALL_DOOR_B             = "dpmalldoorb"         #  8.84 × 3.5  (variant B)
     MALL_DOOR_C             = "dpmalldoorc"         #  8.84 × 3.5  (variant C)
 
-    # ── Windows — DP01 series (thin flat glass panels, breakable) ─────────────
-    # Depth is ~0.1. A/B face the z-axis; C/D face the x-axis; E is a corner; F/G are narrow.
-    WINDOW_A                = "dp01wina"            # 0.1 × 3.0 × 7.0   (z-facing)
-    WINDOW_B                = "dp01winb"            # 0.1 × 3.0 × 7.0   (z-facing, variant)
-    WINDOW_C                = "dp01winc"            # 7.0 × 3.0 × 0.1   (x-facing)
-    WINDOW_D                = "dp01wind"            # 7.0 × 3.0 × 0.1   (x-facing, variant)
-    WINDOW_CORNER           = "dp01wine"            # 3.0 × 3.0 × 3.0   (corner piece)
-    WINDOW_NARROW_X         = "dp01winf"            # 2.96 × 3.0 × 0.1  (narrow x-facing)
-    WINDOW_NARROW_Z         = "dp01wing"            # 0.1 × 3.0 × 2.98  (narrow z-facing)
-
-    # ── Windows — DP02 series (large decorative bay windows, no break parts) ──
-    WINDOW_BAY_A            = "dp02wina"            #  6.3 × 6.8  × 11.4
-    WINDOW_BAY_B            = "dp02winb"            #  5.2 × 7.0  ×  9.4
-    WINDOW_BAY_C            = "dp02winc"            #  6.9 × 7.0  ×  5.9
-    WINDOW_BAY_D            = "dp02wind"            #  6.5 × 6.1  ×  5.6
-    WINDOW_BAY_E            = "dp02wine"            #  7.6 × 5.3  ×  6.5
-
-    # ── Windows — DP03 series (arched decorative, breakable) ─────────────────
-    WINDOW_ARCH_A           = "dp03wina"            # 5.3 × 3.9 × 0.1   (flat x-facing arch)
-    WINDOW_ARCH_B           = "dp03winb"            # 6.0 × 4.4 × 0.1   (flat x-facing arch, wider)
-    WINDOW_ARCH_C           = "dp03winc"            # 1.1 × 4.6 × 7.2   (z-facing)
-    WINDOW_ARCH_D           = "dp03wind"            # 1.2 × 4.6 × 7.8   (z-facing, variant)
-    WINDOW_ARCH_E           = "dp03wine"            # 3.6 × 4.6 × 3.9   (corner)
-
-    # ── Windows — DP04 series (smaller decorative, breakable) ────────────────
-    WINDOW_SMALL_A          = "dp04wina"            # 2.2 × 4.2 × 4.2
-    WINDOW_SMALL_B          = "dp04winb"            # 2.3 × 4.2 × 4.4
-    WINDOW_SMALL_C          = "dp04winc"            # 3.5 × 4.2 × 3.8
-    WINDOW_SMALL_D          = "dp04wind"            # 6.1 × 4.1 × 1.4
-    WINDOW_SMALL_E          = "dp04wine"            # 5.7 × 3.8 × 1.3
-
     # ── Walls (flat breakable panels) ─────────────────────────────────────────
-    WALL                    = "dp24walla"           # 5.4 × 3.8 × 0.4
-    WALL_B                  = "dp24wallb"           # 5.0 × 3.8 × 0.4
     WALL_TALL               = "dp31walla"           # 8.9 × 4.3 × 0.2
     WALL_TALL_B             = "dp31wallb"           # 8.0 × 4.3 × 0.2
     WALL_WIDE               = "dp32wall"            # 4.7 × 4.8 × 0.4

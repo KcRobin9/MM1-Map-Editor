@@ -78,6 +78,7 @@ PRESETS: dict[str, List[PolySpec]] = {
         PolySpec(width=5.0,  length=20.0, offset_x=12.5,  offset_y=0.0, texture=Texture.SNOW,           tile_x=4.0, tile_y=2.0, angle_degrees=0.0),
     ],
 
+
 }
 
 PRESET_ITEMS = [
@@ -92,6 +93,64 @@ PRESET_ITEMS = [
     ("WATER_SURFACE",      "Water Surface",             "Large flat water polygon"),
     ("SNOW_ROAD",          "Snow Road",                 "Road with snow banks on the sides"),
 ]
+
+
+class OBJECT_OT_SpawnHeart(bpy.types.Operator):
+    bl_idname      = "object.spawn_heart"
+    bl_label       = "♥ Spawn Heart"
+    bl_description = "Spawn a smooth heart shape (24 triangles) at the 3D cursor"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    def execute(self, context: bpy.types.Context) -> set:
+        import math
+        from src.integrations.blender.modeling.uv_mapping import _texture_folder
+
+        N     = 24    # triangles / perimeter samples
+        scale = 1.5   # ~48 units wide — good game scale
+
+        # Parametric heart curve — tip points down
+        perimeter = []
+        for i in range(N):
+            t = 2 * math.pi * i / N
+            x =  16 * math.sin(t) ** 3
+            y = -(13 * math.cos(t) - 5 * math.cos(2 * t)
+                  - 2 * math.cos(3 * t) - math.cos(4 * t))
+            perimeter.append((x * scale, y * scale, 0.0))
+
+        cx = sum(p[0] for p in perimeter) / N
+        cy = sum(p[1] for p in perimeter) / N
+
+        verts = [(cx, cy, 0.0)] + perimeter
+        faces = [(0, i + 1, (i + 1) % N + 1) for i in range(N)]
+
+        mesh = bpy.data.meshes.new("Heart")
+        mesh.from_pydata(verts, [], faces)
+        mesh.update()
+
+        obj = bpy.data.objects.new("Heart", mesh)
+        bpy.context.collection.objects.link(obj)
+        obj.location = context.scene.cursor.location.copy()
+
+        if not obj.data.uv_layers:
+            obj.data.uv_layers.new(name="UVMap")
+
+        assign_map_editor_properties(obj)
+        used = get_used_bound_numbers(context.scene)
+        num  = next_available_bound_number(used)
+        obj.name              = f"P{num}"
+        obj["material_index"] = str(Material.GRASS)
+        obj["cell_type"]      = str(0)
+        obj.tile_x            = 4.0
+        obj.tile_y            = 4.0
+
+        _apply_material(obj, Texture.GRASS, _texture_folder)
+
+        bpy.ops.object.select_all(action="DESELECT")
+        obj.select_set(True)
+        context.view_layer.objects.active = obj
+
+        self.report({"INFO"}, f"Spawned heart ({N} tris) as P{num}")
+        return {"FINISHED"}
 
 
 def _apply_material(obj: bpy.types.Object, texture: str, texture_folder) -> None:

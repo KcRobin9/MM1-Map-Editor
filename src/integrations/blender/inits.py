@@ -28,6 +28,8 @@ from src.integrations.blender.panels.uv import OBJECT_PT_UVMappingPanel
 from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
 from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLASSES
+from src.integrations.blender.panels.prop_sidebar import PROP_EDITOR_PANEL_CLASSES
+from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, _update_prop_form
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
 
@@ -42,6 +44,7 @@ PANEL_CLASSES = [
     *SIDEBAR_CLASSES,
     *STREET_EDITOR_CLASSES,
     *WAYPOINT_EDITOR_CLASSES,
+    *PROP_EDITOR_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -56,6 +59,7 @@ OPERATOR_CLASSES = [
     OBJECT_OT_DuplicatePolygon,
     OBJECT_OT_SpawnPreset,
     *AI_STREET_CLASSES,
+    *PROP_EDITOR_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -89,6 +93,27 @@ SCENE_PROPERTIES = [
     "wp_create_z",
     "wp_show_paths",
     "wp_insert_index",
+    # Prop Editor
+    "pe_active_group_id",
+    "pe_active_group_type",
+    "pe_prop_name",
+    "pe_offset_x",
+    "pe_offset_y",
+    "pe_offset_z",
+    "pe_has_end",
+    "pe_end_x",
+    "pe_end_y",
+    "pe_end_z",
+    "pe_has_angle",
+    "pe_angle",
+    "pe_area_x1",
+    "pe_area_y1",
+    "pe_area_z1",
+    "pe_area_x2",
+    "pe_area_y2",
+    "pe_area_z2",
+    "pe_seed",
+    "pe_rand_count",
 ]
 
 
@@ -264,6 +289,62 @@ def register_scene_properties() -> None:
         description="Insert new waypoint at this index (-1 = append at end)",
         default=-1,
         min=-1,
+    )
+
+    # ── Prop Editor scene properties ──────────────────────────────────────────
+    bpy.types.Scene.pe_active_group_id = bpy.props.StringProperty(
+        name="Active Prop Group ID",
+        description="Internal: which prop group is being edited",
+        default="",
+    )
+    bpy.types.Scene.pe_active_group_type = bpy.props.StringProperty(
+        name="Active Prop Group Type",
+        description="Internal: 'fixed' or 'random'",
+        default="fixed",
+    )
+    # Prop name dropdown
+    bpy.types.Scene.pe_prop_name = bpy.props.EnumProperty(
+        name="Prop",
+        description="Select prop type",
+        items=PROP_NAME_ITEMS,
+        update=_update_prop_form,
+    )
+    # Fixed prop offset (game coords)
+    bpy.types.Scene.pe_offset_x = bpy.props.FloatProperty(name="X", default=0.0, update=_update_prop_form)
+    bpy.types.Scene.pe_offset_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height", update=_update_prop_form)
+    bpy.types.Scene.pe_offset_z = bpy.props.FloatProperty(name="Z", default=0.0, update=_update_prop_form)
+    # Fixed prop end (row props)
+    bpy.types.Scene.pe_has_end = bpy.props.BoolProperty(
+        name="Has End", description="Enable to make this a row of props", default=False,
+        update=_update_prop_form,
+    )
+    bpy.types.Scene.pe_end_x = bpy.props.FloatProperty(name="X", default=0.0, update=_update_prop_form)
+    bpy.types.Scene.pe_end_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height", update=_update_prop_form)
+    bpy.types.Scene.pe_end_z = bpy.props.FloatProperty(name="Z", default=0.0, update=_update_prop_form)
+    # Fixed prop angle
+    bpy.types.Scene.pe_has_angle = bpy.props.BoolProperty(
+        name="Has Angle", description="Enable to set a facing direction", default=False,
+        update=_update_prop_form,
+    )
+    bpy.types.Scene.pe_angle = bpy.props.FloatProperty(
+        name="Angle", default=0.0, description="Facing angle in degrees (0=East, 90=North)",
+        update=_update_prop_form,
+    )
+    # Random prop area
+    bpy.types.Scene.pe_area_x1 = bpy.props.FloatProperty(name="X", default=0.0, update=_update_prop_form)
+    bpy.types.Scene.pe_area_y1 = bpy.props.FloatProperty(name="Y", default=0.0, update=_update_prop_form)
+    bpy.types.Scene.pe_area_z1 = bpy.props.FloatProperty(name="Z", default=0.0, update=_update_prop_form)
+    bpy.types.Scene.pe_area_x2 = bpy.props.FloatProperty(name="X", default=100.0, update=_update_prop_form)
+    bpy.types.Scene.pe_area_y2 = bpy.props.FloatProperty(name="Y", default=0.0, update=_update_prop_form)
+    bpy.types.Scene.pe_area_z2 = bpy.props.FloatProperty(name="Z", default=100.0, update=_update_prop_form)
+    # Random prop seed / count
+    bpy.types.Scene.pe_seed = bpy.props.IntProperty(
+        name="Seed", default=0, min=0, description="Random seed for placement",
+        update=_update_prop_form,
+    )
+    bpy.types.Scene.pe_rand_count = bpy.props.IntProperty(
+        name="Count", default=1, min=1, description="Number of props to place (count / num_props)",
+        update=_update_prop_form,
     )
 
 

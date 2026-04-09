@@ -17,7 +17,7 @@ prop_bms_folder = Folder.Resources.Editor.BMS   # Root folder containing per-pro
 
 # Car prop detail options (VP* / VA* vehicles)
 prop_car_wheels  = True         # Set True to load and place individual wheel meshes (WHL0–3_H.BMS)
-prop_car_lights  = True         # Set True to also load headlight / tail-light / rear-light meshes
+prop_car_lights  = False         # Set True to also load headlight / tail-light / rear-light meshes
 
 # Bulk city BMS import
 # Set to a list of folders, each containing *_H.BMS files directly (not in subfolders).
