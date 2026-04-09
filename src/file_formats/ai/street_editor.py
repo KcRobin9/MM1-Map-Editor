@@ -38,7 +38,7 @@ class aiStreetEditor:
         default_values = {
             "intersection_types": [IntersectionType.CONTINUE, IntersectionType.CONTINUE],
             "stop_light_positions": [(0.0, 0.0, 0.0)] * 4,
-            "stop_light_names": [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_SINGLE],
+            "stop_light_names": [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_SINGLE],
             "traffic_blocked": [NO, NO],
             "ped_blocked": [NO, NO],
             "road_divided": NO,

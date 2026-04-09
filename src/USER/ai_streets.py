@@ -10,8 +10,8 @@ Intersection Type, defaults to: {IntersectionType.CONTINUE}
 (possbile types:
 {IntersectionType.STOP}, {IntersectionType.STOP_LIGHT}, {IntersectionType.YIELD}, {IntersectionType.CONTINUE})
 
-Stop Light Name, defaults to: {Prop.STOP_LIGHT_SINGLE}
-(possbile names: {Prop.STOP_SIGN}, {Prop.STOP_LIGHT_SINGLE}, {Prop.STOP_LIGHT_DUAL})
+Stop Light Name, defaults to: {Prop.TRAFFIC_LIGHT_SINGLE}
+(possbile names: {Prop.SIGN_STOP}, {Prop.TRAFFIC_LIGHT_SINGLE}, {Prop.TRAFFIC_LIGHT_DUAL})
 
 Stop Light Positions, defaults to: {(0, 0, 0)}
 
@@ -106,7 +106,7 @@ street_example = {
         ],
     },
     "intersection_types": [IntersectionType.STOP_LIGHT, IntersectionType.STOP_LIGHT],
-    "stop_light_names": [Prop.STOP_LIGHT_DUAL, Prop.STOP_LIGHT_DUAL],
+    "stop_light_names": [Prop.TRAFFIC_LIGHT_DUAL, Prop.TRAFFIC_LIGHT_DUAL],
     "stop_light_positions": [
         (10.0, 0.0, -20.0),        # Offset 1
         (10.01, 0.0, -20.0),       # Direction 1

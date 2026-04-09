@@ -25,9 +25,9 @@ INTERSECTION_TYPE_ITEMS = [
 ]
 
 STOP_LIGHT_NAME_ITEMS = [
-    (Prop.STOP_SIGN,         "Stop Sign",          ""),
-    (Prop.STOP_LIGHT_SINGLE, "Stop Light (Single)", ""),
-    (Prop.STOP_LIGHT_DUAL,   "Stop Light (Dual)",  ""),
+    (Prop.SIGN_STOP,            "Stop Sign",          ""),
+    (Prop.TRAFFIC_LIGHT_SINGLE, "Stop Light (Single)", ""),
+    (Prop.TRAFFIC_LIGHT_DUAL,   "Stop Light (Dual)",  ""),
 ]
 
 INTERSECTION_TYPE_TO_CONST = {
@@ -38,9 +38,9 @@ INTERSECTION_TYPE_TO_CONST = {
 }
 
 STOP_LIGHT_TO_CONST = {
-    Prop.STOP_SIGN:         "Prop.STOP_SIGN",
-    Prop.STOP_LIGHT_SINGLE: "Prop.STOP_LIGHT_SINGLE",
-    Prop.STOP_LIGHT_DUAL:   "Prop.STOP_LIGHT_DUAL",
+    Prop.SIGN_STOP:         "Prop.SIGN_STOP",
+    Prop.TRAFFIC_LIGHT_SINGLE: "Prop.TRAFFIC_LIGHT_SINGLE",
+    Prop.TRAFFIC_LIGHT_DUAL:   "Prop.TRAFFIC_LIGHT_DUAL",
 }
 
 # Color per intersection type — applied to curve material
