@@ -103,7 +103,6 @@ SCENE_PROPERTIES = [
     "pe_end_x",
     "pe_end_y",
     "pe_end_z",
-    "pe_has_angle",
     "pe_angle",
     "pe_area_x1",
     "pe_area_y1",
@@ -113,6 +112,25 @@ SCENE_PROPERTIES = [
     "pe_area_z2",
     "pe_seed",
     "pe_rand_count",
+    # Create Prop form
+    "pc_prop_type",
+    "pc_prop_name",
+    "pc_offset_x",
+    "pc_offset_y",
+    "pc_offset_z",
+    "pc_has_end",
+    "pc_end_x",
+    "pc_end_y",
+    "pc_end_z",
+    "pc_angle",
+    "pc_area_x1",
+    "pc_area_y1",
+    "pc_area_z1",
+    "pc_area_x2",
+    "pc_area_y2",
+    "pc_area_z2",
+    "pc_seed",
+    "pc_rand_count",
 ]
 
 
@@ -315,10 +333,6 @@ def register_scene_properties() -> None:
     bpy.types.Scene.pe_end_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height", update=_update_prop_form)
     bpy.types.Scene.pe_end_z = bpy.props.FloatProperty(name="Z", default=0.0, update=_update_prop_form)
     # Fixed prop angle
-    bpy.types.Scene.pe_has_angle = bpy.props.BoolProperty(
-        name="Has Angle", description="Enable to set a facing direction", default=False,
-        update=_update_prop_form,
-    )
     bpy.types.Scene.pe_angle = bpy.props.FloatProperty(
         name="Angle", default=0.0, description="Facing angle in degrees (0=East, 90=North)",
         update=_update_prop_form,
@@ -338,6 +352,46 @@ def register_scene_properties() -> None:
     bpy.types.Scene.pe_rand_count = bpy.props.IntProperty(
         name="Count", default=1, min=1, description="Number of props to place (count / num_props)",
         update=_update_prop_form,
+    )
+
+    # ── Create Prop form scene properties ─────────────────────────────────────
+    bpy.types.Scene.pc_prop_type = bpy.props.EnumProperty(
+        name="Type",
+        description="Type of prop group to create",
+        items=[
+            ("fixed",  "Fixed",  "Single or row prop at a fixed position"),
+            ("random", "Random", "Randomly distributed props in an area"),
+        ],
+        default="fixed",
+    )
+    bpy.types.Scene.pc_prop_name = bpy.props.EnumProperty(
+        name="Prop",
+        description="Select prop type",
+        items=PROP_NAME_ITEMS,
+    )
+    bpy.types.Scene.pc_offset_x = bpy.props.FloatProperty(name="X", default=0.0)
+    bpy.types.Scene.pc_offset_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height")
+    bpy.types.Scene.pc_offset_z = bpy.props.FloatProperty(name="Z", default=0.0)
+    bpy.types.Scene.pc_has_end = bpy.props.BoolProperty(
+        name="Has End", description="Enable to make this a row of props", default=False,
+    )
+    bpy.types.Scene.pc_end_x = bpy.props.FloatProperty(name="X", default=0.0)
+    bpy.types.Scene.pc_end_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height")
+    bpy.types.Scene.pc_end_z = bpy.props.FloatProperty(name="Z", default=0.0)
+    bpy.types.Scene.pc_angle = bpy.props.FloatProperty(
+        name="Angle", default=0.01, description="Facing angle in degrees (0.01=North)",
+    )
+    bpy.types.Scene.pc_area_x1 = bpy.props.FloatProperty(name="X", default=0.0)
+    bpy.types.Scene.pc_area_y1 = bpy.props.FloatProperty(name="Y", default=0.0)
+    bpy.types.Scene.pc_area_z1 = bpy.props.FloatProperty(name="Z", default=0.0)
+    bpy.types.Scene.pc_area_x2 = bpy.props.FloatProperty(name="X", default=100.0)
+    bpy.types.Scene.pc_area_y2 = bpy.props.FloatProperty(name="Y", default=0.0)
+    bpy.types.Scene.pc_area_z2 = bpy.props.FloatProperty(name="Z", default=100.0)
+    bpy.types.Scene.pc_seed = bpy.props.IntProperty(
+        name="Seed", default=0, min=0, description="Random seed for placement",
+    )
+    bpy.types.Scene.pc_rand_count = bpy.props.IntProperty(
+        name="Count", default=1, min=1, description="Number of props to place",
     )
 
 

@@ -117,9 +117,9 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
 
         # ── Prop name dropdown ────────────────────────────────────────────────
         box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Prop:", icon="MESH_DATA")
-        col.prop(scene, "pe_prop_name", text="")
+        row = box.row(align=True)
+        row.label(text="Prop:", icon="MESH_DATA")
+        row.prop(scene, "pe_prop_name", text="")
 
         layout.separator()
 
@@ -132,7 +132,7 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
         # ── Offset ────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="Offset (game coords):", icon="TRANSFORM_ORIGINS")
+        col.label(text="Offset:", icon="TRANSFORM_ORIGINS")
         row = col.row(align=True)
         row.prop(scene, "pe_offset_x", text="X")
         row.prop(scene, "pe_offset_y", text="Y")
@@ -141,7 +141,7 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
         # ── End ───────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
-        col.prop(scene, "pe_has_end", text="Row Prop (has End)")
+        col.prop(scene, "pe_has_end", text="Row Prop (Offset + End)")
         if scene.pe_has_end:
             col.separator()
             col.label(text="End (game coords):", icon="CURVE_PATH")
@@ -153,10 +153,7 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
         # ── Angle ─────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
-        col.prop(scene, "pe_has_angle", text="Has Angle")
-        if scene.pe_has_angle:
-            col.prop(scene, "pe_angle", text="Angle (degrees)")
-            col.label(text=f"  {rotation_label(scene.pe_angle)}", icon="DRIVER_ROTATIONAL_DIFFERENCE")
+        col.prop(scene, "pe_angle", text="Angle (degrees)")
 
     def _draw_random_form(self, layout, scene):
         # ── Area ──────────────────────────────────────────────────────────────
@@ -222,19 +219,115 @@ class VIEW3D_PT_PropEditorTools(bpy.types.Panel):
         col.label(text=f"{n_objs} prop objects in 'Props' collection", icon=icon)
         col.label(text=f"{n_fixed} fixed  /  {n_random} random group(s)")
 
-        # ── Group list ────────────────────────────────────────────────────────
-        if groups:
-            layout.separator()
-            layout.label(text="Prop Groups", icon="LINENUMBERS_ON")
-            box = layout.box()
-            col = box.column(align=True)
 
-            for gid, (ptype, cfg) in sorted(groups.items()):
-                name_val = cfg.get("name", "?")
-                n_inst   = sum(1 for o in get_prop_objects() if o.get("mm_prop_group_id") == gid)
-                icon     = "PARTICLE_POINT" if ptype == "random" else "OBJECT_DATA"
-                label    = f"{gid}  ({n_inst}×)  {_friendly_name_display(name_val)}"
-                col.label(text=label, icon=icon)
+# ── Panel: Prop Groups (collapsible sub-panel) ────────────────────────────────
+
+class VIEW3D_PT_PropEditorGroups(bpy.types.Panel):
+    bl_label       = "Prop Groups"
+    bl_idname      = "VIEW3D_PT_prop_editor_groups"
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category    = _PANEL_CATEGORY
+    bl_parent_id   = "VIEW3D_PT_prop_editor_tools"
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+        groups = get_unique_groups()
+
+        if not groups:
+            layout.label(text="No prop groups in scene", icon="INFO")
+            return
+
+        box = layout.box()
+        col = box.column(align=True)
+
+        for gid, (ptype, cfg) in sorted(groups.items()):
+            name_val = cfg.get("name", "?")
+            n_inst   = sum(1 for o in get_prop_objects() if o.get("mm_prop_group_id") == gid)
+            icon     = "PARTICLE_POINT" if ptype == "random" else "OBJECT_DATA"
+            label    = f"{gid}  ({n_inst}×)  {_friendly_name_display(name_val)}"
+            col.label(text=label, icon=icon)
+
+
+# ── Panel: Create Prop ────────────────────────────────────────────────────────
+
+class VIEW3D_PT_PropEditorCreate(bpy.types.Panel):
+    bl_label       = "Create Prop"
+    bl_idname      = "VIEW3D_PT_prop_editor_create"
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category    = _PANEL_CATEGORY
+
+    def draw(self, context):
+        layout = self.layout
+        scene  = context.scene
+
+        # ── Type selector ─────────────────────────────────────────────────────
+        box = layout.box()
+        box.prop(scene, "pc_prop_type", expand=True)
+
+        layout.separator()
+
+        # ── Prop name ─────────────────────────────────────────────────────────
+        box = layout.box()
+        row = box.row(align=True)
+        row.label(text="Prop:", icon="MESH_DATA")
+        row.prop(scene, "pc_prop_name", text="")
+
+        layout.separator()
+
+        if scene.pc_prop_type == "fixed":
+            self._draw_fixed(layout, scene)
+        else:
+            self._draw_random(layout, scene)
+
+        layout.separator()
+        layout.operator("props.create_prop_group", text="Create Prop", icon="ADD")
+
+    def _draw_fixed(self, layout, scene):
+        box = layout.box()
+        col = box.column(align=True)
+        col.label(text="Offset:", icon="TRANSFORM_ORIGINS")
+        row = col.row(align=True)
+        row.prop(scene, "pc_offset_x", text="X")
+        row.prop(scene, "pc_offset_y", text="Y")
+        row.prop(scene, "pc_offset_z", text="Z")
+
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(scene, "pc_has_end", text="Row Prop (Offset + End)")
+        if scene.pc_has_end:
+            col.separator()
+            col.label(text="End:", icon="CURVE_PATH")
+            row = col.row(align=True)
+            row.prop(scene, "pc_end_x", text="X")
+            row.prop(scene, "pc_end_y", text="Y")
+            row.prop(scene, "pc_end_z", text="Z")
+
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(scene, "pc_angle", text="Angle (degrees)")
+
+    def _draw_random(self, layout, scene):
+        box = layout.box()
+        col = box.column(align=True)
+        col.label(text="Area Min:", icon="WORLD")
+        row = col.row(align=True)
+        row.prop(scene, "pc_area_x1", text="X")
+        row.prop(scene, "pc_area_y1", text="Y")
+        row.prop(scene, "pc_area_z1", text="Z")
+        col.separator()
+        col.label(text="Area Max:", icon="WORLD")
+        row = col.row(align=True)
+        row.prop(scene, "pc_area_x2", text="X")
+        row.prop(scene, "pc_area_y2", text="Y")
+        row.prop(scene, "pc_area_z2", text="Z")
+
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(scene, "pc_seed",       text="Seed")
+        col.prop(scene, "pc_rand_count", text="Count")
 
 
 # ── Registration ──────────────────────────────────────────────────────────────
@@ -243,4 +336,6 @@ PROP_EDITOR_PANEL_CLASSES = [
     VIEW3D_PT_PropEditorPanel,
     VIEW3D_PT_PropEditorForm,
     VIEW3D_PT_PropEditorTools,
+    VIEW3D_PT_PropEditorGroups,
+    VIEW3D_PT_PropEditorCreate,
 ]

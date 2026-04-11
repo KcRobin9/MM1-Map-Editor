@@ -430,10 +430,7 @@ def _apply_prop_changes(scene) -> None:
             elif "end" in cfg:
                 del cfg["end"]
 
-            if scene.pe_has_angle:
-                cfg["angle"] = round(scene.pe_angle, 2)
-            elif "angle" in cfg:
-                del cfg["angle"]
+            cfg["angle"] = round(scene.pe_angle, 2)
 
             new_name = scene.pe_prop_name
             if new_name:
@@ -581,13 +578,7 @@ class PROPS_OT_LoadIntoForm(bpy.types.Operator):
                     scene.pe_end_y = scene.pe_offset_y
                     scene.pe_end_z = scene.pe_offset_z
 
-                angle = cfg.get("angle")
-                if angle is not None:
-                    scene.pe_has_angle = True
-                    scene.pe_angle     = float(angle)
-                else:
-                    scene.pe_has_angle = False
-                    scene.pe_angle     = 0.0
+                scene.pe_angle = float(cfg.get("angle", 0.0))
 
             elif ptype == "random":
                 area = cfg.get("area", [[0, 0, 0], [0, 0, 0]])
@@ -664,10 +655,67 @@ class PROPS_OT_ExportGroupCode(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class PROPS_OT_CreatePropGroup(bpy.types.Operator):
+    """Create a new prop group from the Create Prop form and place it in the scene"""
+    bl_idname = "props.create_prop_group"
+    bl_label  = "Create Prop"
+
+    def execute(self, context):
+        scene = context.scene
+        ptype = scene.pc_prop_type
+
+        if ptype == "fixed":
+            cfg: dict = {
+                "name":   scene.pc_prop_name,
+                "offset": (round(scene.pc_offset_x, 2), round(scene.pc_offset_y, 2), round(scene.pc_offset_z, 2)),
+                "angle":  round(scene.pc_angle, 2),
+            }
+            if scene.pc_has_end:
+                cfg["end"] = (round(scene.pc_end_x, 2), round(scene.pc_end_y, 2), round(scene.pc_end_z, 2))
+        else:
+            cfg = {
+                "name":  scene.pc_prop_name,
+                "seed":  scene.pc_seed,
+                "count": scene.pc_rand_count,
+                "area":  [
+                    (round(scene.pc_area_x1, 2), round(scene.pc_area_y1, 2), round(scene.pc_area_z1, 2)),
+                    (round(scene.pc_area_x2, 2), round(scene.pc_area_y2, 2), round(scene.pc_area_z2, 2)),
+                ],
+            }
+
+        groups = get_unique_groups()
+        prop_list_raw, random_props_raw = _rebuild_lists(groups)
+
+        if ptype == "fixed":
+            prop_list_raw.append(cfg)
+        else:
+            random_props_raw.append(cfg)
+
+        try:
+            from src.USER.settings.blender import prop_bms_folder, prop_car_wheels, prop_car_lights
+            place_props_in_scene(
+                prop_list_raw, random_props_raw,
+                prop_bms_folder,
+                texture_folder=Folder.Resources.Editor.Textures,
+                car_wheels=prop_car_wheels,
+                car_lights=prop_car_lights,
+            )
+            friendly = prop_name_to_friendly(scene.pc_prop_name)
+            self.report({"INFO"}, f"Created {ptype} prop '{friendly}'")
+        except Exception as exc:
+            import traceback
+            print(traceback.format_exc())
+            self.report({"ERROR"}, f"Failed to create prop: {exc}")
+            return {"CANCELLED"}
+
+        return {"FINISHED"}
+
+
 PROP_EDITOR_CLASSES = [
     PROPS_OT_ReloadProps,
     PROPS_OT_SelectGroup,
     PROPS_OT_LoadIntoForm,
     PROPS_OT_ExportCode,
     PROPS_OT_ExportGroupCode,
+    PROPS_OT_CreatePropGroup,
 ]
