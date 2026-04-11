@@ -1,7 +1,5 @@
 import bpy
 
-from src.integrations.blender.panels.hud import HUD_IMPORT
-
 
 class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
     bl_label    = "Polygon"
@@ -46,7 +44,7 @@ class VIEW3D_PT_MapEditorUV(bpy.types.Panel):
 
 
 class VIEW3D_PT_MapEditorCell(bpy.types.Panel):
-    bl_label      = "Cell & Material"
+    bl_label      = "Cell & Material & HUD Color"
     bl_idname     = "VIEW3D_PT_map_editor_cell"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
@@ -63,6 +61,7 @@ class VIEW3D_PT_MapEditorCell(bpy.types.Panel):
 
         layout.prop(obj, "cell_type",      text="Cell Type")
         layout.prop(obj, "material_index", text="Material")
+        layout.prop(obj, "hud_color",      text="HUD")
 
 
 class VIEW3D_PT_MapEditorOptions(bpy.types.Panel):
@@ -84,31 +83,6 @@ class VIEW3D_PT_MapEditorOptions(bpy.types.Panel):
         layout.prop(obj, "always_visible", text="Always Visible")
         layout.prop(obj, "sort_vertices",  text="Sort Vertices")
 
-
-class VIEW3D_PT_MapEditorHUD(bpy.types.Panel):
-    bl_label      = "HUD Color"
-    bl_idname     = "VIEW3D_PT_map_editor_hud"
-    bl_space_type  = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category   = "Map Editor"
-    bl_parent_id  = "VIEW3D_PT_map_editor"
-    bl_options    = {'DEFAULT_CLOSED'}
-
-    def draw(self, context) -> None:
-        layout = self.layout
-        obj    = context.active_object
-
-        if not obj or obj.type != 'MESH':
-            return
-
-        half     = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
-        row      = layout.row(align=True)
-        col_left  = row.column(align=True)
-        col_right = row.column(align=True)
-
-        for i, entry in enumerate(HUD_IMPORT):
-            col = col_left if i < half else col_right
-            col.prop(obj, "hud_colors", index=i, text=entry.label, toggle=True)
 
 
 class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
@@ -188,6 +162,5 @@ SIDEBAR_CLASSES = [
     VIEW3D_PT_MapEditorUV,
     VIEW3D_PT_MapEditorCell,
     VIEW3D_PT_MapEditorOptions,
-    VIEW3D_PT_MapEditorHUD,
     VIEW3D_PT_MapEditorTools,
 ]

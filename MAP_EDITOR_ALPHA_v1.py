@@ -1225,7 +1225,7 @@ save_mesh(
 # Diagonal Grass Road 
 create_polygon(
     bound_number = 863,
-	hud_color = Material.GRASS,
+	hud_color = Color.GRASS,
     vertex_coordinates = [
         (-50.0, 0.0, 110.0),
 		(-50.0, 0.0, 140.0),

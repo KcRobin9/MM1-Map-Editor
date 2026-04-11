@@ -20,7 +20,7 @@ from src.integrations.blender.operators.ai_streets import (
 from src.integrations.blender.operators.waypoints import WAYPOINT_CLASSES
 
 from src.integrations.blender.panels.cells import OBJECT_PT_CellTypePanel, CELL_IMPORT
-from src.integrations.blender.panels.hud import OBJECT_PT_HUDColorPanel, HUD_IMPORT, hud_color_index_update, hud_colors_update
+from src.integrations.blender.panels.hud import OBJECT_PT_HUDColorPanel, HUD_COLOR_ITEMS, HUD_IMPORT
 from src.integrations.blender.panels.materials import OBJECT_PT_MaterialTypePanel, MATERIAL_IMPORT
 from src.integrations.blender.panels.misc import OBJECT_PT_PolygonMiscOptionsPanel
 from src.integrations.blender.panels.vertex import OBJECT_PT_VertexCoordinates, VertexGroup
@@ -65,7 +65,7 @@ OPERATOR_CLASSES = [
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
 
 OBJECT_PROPERTIES = [
-    "vertex_coords", "hud_color_index", "hud_colors",
+    "vertex_coords", "hud_color",
     "tile_x", "tile_y", "angle_degrees", "texture_name",
     "cell_type", "material_index", "always_visible", "sort_vertices",
     # Street properties
@@ -118,17 +118,11 @@ SCENE_PROPERTIES = [
 
 
 def register_object_properties() -> None:
-    bpy.types.Object.hud_color_index = bpy.props.IntProperty(
-        name="HUD Color Index",
-        default=0,
-        update=hud_color_index_update
-    )
-    bpy.types.Object.hud_colors = bpy.props.BoolVectorProperty(
-        name="HUD Colors",
-        description="Select the color of the HUD",
-        size=len(HUD_IMPORT),
-        default=(False,) * len(HUD_IMPORT),
-        update=hud_colors_update
+    bpy.types.Object.hud_color = bpy.props.EnumProperty(
+        name="HUD",
+        description="HUD minimap color for this polygon",
+        items=HUD_COLOR_ITEMS,
+        default=HUD_COLOR_ITEMS[0][0],
     )
     bpy.types.Object.tile_x = bpy.props.FloatProperty(
         name="Tile X", default=2.0, update=update_uv_tiling

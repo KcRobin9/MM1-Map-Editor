@@ -21,6 +21,12 @@ HUD_IMPORT: list[HudEntry] = [
     HudEntry(Color.YELLOW_LIGHT, "Light Yellow"),
 ]
 
+# Enum items for the HUD color dropdown (identifier = hex color string)
+HUD_COLOR_ITEMS = [
+    (entry.color, entry.label, "")
+    for entry in HUD_IMPORT
+]
+
 HUD_EXPORT: dict[str, str] = {
     # Color.ROAD:         "Color.ROAD",
     Color.WOOD:         "Color.WOOD",
@@ -34,56 +40,29 @@ HUD_EXPORT: dict[str, str] = {
 }
 
 
-def set_hud_color(color: str, obj: bpy.types.Object) -> None:
-    for i, entry in enumerate(HUD_IMPORT):
-        if entry.color == color:
-            obj.hud_color_index = i
-            return
-
-
-def hud_color_index_update(self, context) -> None:
-    new_state = [False] * len(HUD_IMPORT)
-    if 0 <= self.hud_color_index < len(HUD_IMPORT):
-        new_state[self.hud_color_index] = True
-    self.hud_colors = new_state
-
-
-def hud_colors_update(self, context) -> None:
-    current = self.hud_color_index
-    true_indices = [i for i in range(len(HUD_IMPORT)) if self.hud_colors[i]]
-
-    if not true_indices:
-        new_state = [False] * len(HUD_IMPORT)
-        new_state[current] = True
-        self.hud_colors = new_state
+def set_hud_color(color, obj: bpy.types.Object) -> None:
+    """Set the hud_color enum on obj. Silently ignores None, ints, or unrecognised values."""
+    if not isinstance(color, str):
         return
+    valid = {item[0] for item in HUD_COLOR_ITEMS}
+    if color in valid:
+        obj.hud_color = color
 
-    newly_selected = next((i for i in true_indices if i != current), None)
-    if newly_selected is not None:
-        self.hud_color_index = newly_selected
 
-
+# Legacy panel kept only so existing registrations don't break at import time.
+# The actual HUD UI lives inside VIEW3D_PT_MapEditorCell in sidebar.py.
 class OBJECT_PT_HUDColorPanel(bpy.types.Panel):
-    bl_label = "HUD Type"
-    bl_idname = "OBJECT_PT_hud_type"
-    bl_space_type = 'PROPERTIES'
+    bl_label       = "HUD Type"
+    bl_idname      = "OBJECT_PT_hud_type"
+    bl_space_type  = 'PROPERTIES'
     bl_region_type = 'WINDOW'
-    bl_context = "object"
-    bl_options = {'DEFAULT_CLOSED'}
+    bl_context     = "object"
+    bl_options     = {'DEFAULT_CLOSED'}
 
     def draw(self, context) -> None:
         layout = self.layout
-        obj = context.active_object
-
+        obj    = context.active_object
         if not obj:
             layout.label(text="No active object")
             return
-
-        half = len(HUD_IMPORT) // 2 + len(HUD_IMPORT) % 2
-        row = layout.row(align=True)
-        col = row.column(align=True)
-
-        for i, entry in enumerate(HUD_IMPORT):
-            if i == half:
-                col = row.column(align=True)
-            col.prop(obj, "hud_colors", index=i, text=entry.label, toggle=True)
+        layout.prop(obj, "hud_color", text="HUD")

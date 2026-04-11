@@ -193,7 +193,7 @@ class OBJECT_OT_DuplicatePolygon(bpy.types.Operator):
         new_obj.name = f"P{new_num}"
 
         assign_map_editor_properties(new_obj, source=source)
-        new_obj.hud_color_index = source.hud_color_index
+        new_obj.hud_color = source.hud_color
 
         self.report({"INFO"}, f"Duplicated {source.name} → P{new_num}")
         return {"FINISHED"}

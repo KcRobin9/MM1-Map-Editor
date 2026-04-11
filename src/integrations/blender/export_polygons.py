@@ -7,7 +7,7 @@ from src.constants.textures import TEXTURE_EXPORT, Texture
 from src.core.geometry.main import transform_coordinate_system 
 
 from src.integrations.blender.panels.cells import CELL_EXPORT
-from src.integrations.blender.panels.hud import HUD_EXPORT, HUD_IMPORT
+from src.integrations.blender.panels.hud import HUD_EXPORT
 from src.integrations.blender.panels.materials import MATERIAL_EXPORT, MATERIAL_IMPORT
 
 
@@ -81,7 +81,7 @@ def gather_optional_variables(poly_data: Dict[str, Union[int, str, bool, list]],
     
     cell_type      = CELL_EXPORT.get(str(poly_data["cell_type"]))
     material_index = MATERIAL_EXPORT.get(str(poly_data["material_index"]))
-    hud_color      = HUD_EXPORT.get(HUD_IMPORT[obj.hud_color_index].color)
+    hud_color      = HUD_EXPORT.get(obj.hud_color)
         
     if cell_type:      optional_vars.append(f"cell_type = {cell_type}")
     if material_index: optional_vars.append(f"material_index = {material_index}")
