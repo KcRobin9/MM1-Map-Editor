@@ -4,8 +4,11 @@ import json
 from src.integrations.blender.operators.props import (
     is_prop_obj, get_prop_objects, get_unique_groups,
     rotation_label, separator_label, prop_name_to_const, prop_name_to_friendly,
-    blender_to_game,
+    blender_to_game, load_form_from_obj,
 )
+
+# Track the last-loaded group so we only refresh the form when selection changes
+_last_loaded_group_id: str = ""
 
 _PANEL_CATEGORY = "Prop Editor"
 
@@ -23,6 +26,9 @@ def _get_active_prop_config(obj):
         cfg = json.loads(raw)
     except Exception:
         cfg = {}
+    # Infer type from config keys when the tag is missing or wrong
+    if ptype != "random" and "area" in cfg:
+        ptype = "random"
     return gid, ptype, cfg
 
 
@@ -70,6 +76,21 @@ class VIEW3D_PT_PropEditorPanel(bpy.types.Panel):
         gid, ptype, cfg = _get_active_prop_config(obj)
         instance_count  = _count_group_instances(gid)
 
+        # Auto-populate the Edit form whenever the selected prop changes.
+        # Must be deferred via a timer — draw() is a read-only context in Blender.
+        global _last_loaded_group_id
+        if gid != _last_loaded_group_id:
+            _last_loaded_group_id = gid
+            scene_name = context.scene.name
+            obj_name   = obj.name
+            def _deferred_load():
+                import bpy as _bpy
+                scene = _bpy.data.scenes.get(scene_name)
+                ob    = _bpy.data.objects.get(obj_name)
+                if scene and ob:
+                    load_form_from_obj(scene, ob)
+            bpy.app.timers.register(_deferred_load, first_interval=0.0)
+
         # ── Group summary ─────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
@@ -99,7 +120,6 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category   = _PANEL_CATEGORY
-    bl_options    = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         layout = self.layout
@@ -138,22 +158,22 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
         row.prop(scene, "pe_offset_y", text="Y")
         row.prop(scene, "pe_offset_z", text="Z")
 
+        # ── Angle ─────────────────────────────────────────────────────────────
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(scene, "pe_angle", text="Angle (degrees)")
+
         # ── End ───────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
         col.prop(scene, "pe_has_end", text="Row Prop (Offset + End)")
         if scene.pe_has_end:
             col.separator()
-            col.label(text="End (game coords):", icon="CURVE_PATH")
+            col.label(text="End:", icon="CURVE_PATH")
             row = col.row(align=True)
             row.prop(scene, "pe_end_x", text="X")
             row.prop(scene, "pe_end_y", text="Y")
             row.prop(scene, "pe_end_z", text="Z")
-
-        # ── Angle ─────────────────────────────────────────────────────────────
-        box = layout.box()
-        col = box.column(align=True)
-        col.prop(scene, "pe_angle", text="Angle (degrees)")
 
     def _draw_random_form(self, layout, scene):
         # ── Area ──────────────────────────────────────────────────────────────
@@ -203,22 +223,6 @@ class VIEW3D_PT_PropEditorTools(bpy.types.Panel):
         col.operator("props.export_code",       text="Export All Groups",   icon="WORLD")
         col.operator("props.export_group_code", text="Export Active Group", icon="RESTRICT_SELECT_OFF")
 
-        layout.separator()
-
-        # ── Props collection info ─────────────────────────────────────────────
-        layout.label(text="Scene", icon="SCENE_DATA")
-        box = layout.box()
-        col = box.column(align=True)
-
-        n_objs = len(get_prop_objects())
-        groups = get_unique_groups()
-        n_fixed  = sum(1 for t, _ in groups.values() if t == "fixed")
-        n_random = sum(1 for t, _ in groups.values() if t == "random")
-
-        icon = "SEQUENCE_COLOR_04" if n_objs else "SEQUENCE_COLOR_01"
-        col.label(text=f"{n_objs} prop objects in 'Props' collection", icon=icon)
-        col.label(text=f"{n_fixed} fixed  /  {n_random} random group(s)")
-
 
 # ── Panel: Prop Groups (collapsible sub-panel) ────────────────────────────────
 
@@ -228,7 +232,6 @@ class VIEW3D_PT_PropEditorGroups(bpy.types.Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "UI"
     bl_category    = _PANEL_CATEGORY
-    bl_parent_id   = "VIEW3D_PT_prop_editor_tools"
     bl_options     = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
@@ -296,6 +299,10 @@ class VIEW3D_PT_PropEditorCreate(bpy.types.Panel):
 
         box = layout.box()
         col = box.column(align=True)
+        col.prop(scene, "pc_angle", text="Angle (degrees)")
+
+        box = layout.box()
+        col = box.column(align=True)
         col.prop(scene, "pc_has_end", text="Row Prop (Offset + End)")
         if scene.pc_has_end:
             col.separator()
@@ -304,10 +311,6 @@ class VIEW3D_PT_PropEditorCreate(bpy.types.Panel):
             row.prop(scene, "pc_end_x", text="X")
             row.prop(scene, "pc_end_y", text="Y")
             row.prop(scene, "pc_end_z", text="Z")
-
-        box = layout.box()
-        col = box.column(align=True)
-        col.prop(scene, "pc_angle", text="Angle (degrees)")
 
     def _draw_random(self, layout, scene):
         box = layout.box()
@@ -335,7 +338,7 @@ class VIEW3D_PT_PropEditorCreate(bpy.types.Panel):
 PROP_EDITOR_PANEL_CLASSES = [
     VIEW3D_PT_PropEditorPanel,
     VIEW3D_PT_PropEditorForm,
+    VIEW3D_PT_PropEditorCreate,
     VIEW3D_PT_PropEditorTools,
     VIEW3D_PT_PropEditorGroups,
-    VIEW3D_PT_PropEditorCreate,
 ]

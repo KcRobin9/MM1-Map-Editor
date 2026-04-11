@@ -2488,6 +2488,7 @@ TextureSheet.write_tweaked(
 )
                     
 prop_editor = BangerEditor()
+_fixed_prop_list = list(prop_list)  # snapshot before random props are expanded into prop_list
 for prop in random_props:
     prop_list.extend(prop_editor.place_randomly(prop))
 prop_editor.process_all(prop_list, set_props)
@@ -2860,10 +2861,8 @@ create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_
 process_and_visualize_paths(Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 if visualize_props and is_process_running(Executable.BLENDER):
-    # random_props have already been expanded into prop_list by place_randomly()
-    # above, so pass an empty list to avoid placing every random prop twice.
     place_props_in_scene(
-        prop_list, [], prop_bms_folder,
+        _fixed_prop_list, random_props, prop_bms_folder,
         texture_folder=Folder.Resources.Editor.Textures,
         car_wheels=prop_car_wheels,
         car_lights=prop_car_lights,

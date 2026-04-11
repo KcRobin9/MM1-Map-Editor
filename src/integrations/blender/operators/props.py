@@ -151,6 +151,8 @@ def get_unique_groups() -> Dict[str, Tuple[str, dict]]:
             try:
                 cfg   = json.loads(obj.get("mm_prop_config_json", "{}"))
                 ptype = obj.get("mm_prop_type", "fixed")
+                if ptype != "random" and "area" in cfg:
+                    ptype = "random"
                 groups[gid] = (ptype, cfg)
             except Exception:
                 pass
@@ -528,6 +530,68 @@ class PROPS_OT_SelectGroup(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def load_form_from_obj(scene, obj) -> bool:
+    """
+    Populate the Edit Prop Group form from a prop object's stored config.
+    Returns True on success.  Safe to call from draw() — guarded by _APPLYING.
+    """
+    global _APPLYING
+    if not is_prop_obj(obj):
+        return False
+    try:
+        cfg   = json.loads(obj.get("mm_prop_config_json", "{}"))
+        ptype = obj.get("mm_prop_type", "fixed")
+        # Infer type from config keys when the tag is missing or wrong
+        if ptype != "random" and "area" in cfg:
+            ptype = "random"
+    except Exception:
+        return False
+
+    _APPLYING = True
+    try:
+        scene.pe_active_group_id   = obj.get("mm_prop_group_id", "")
+        scene.pe_active_group_type = ptype
+
+        raw_name = cfg.get("name", "")
+        if isinstance(raw_name, str) and raw_name in _GAME_TO_CONST:
+            scene.pe_prop_name = raw_name
+
+        if ptype == "fixed":
+            offset = cfg.get("offset", [0.0, 0.0, 0.0])
+            scene.pe_offset_x = float(offset[0])
+            scene.pe_offset_y = float(offset[1])
+            scene.pe_offset_z = float(offset[2])
+
+            if "end" in cfg:
+                scene.pe_has_end = True
+                end = cfg["end"]
+                scene.pe_end_x = float(end[0])
+                scene.pe_end_y = float(end[1])
+                scene.pe_end_z = float(end[2])
+            else:
+                scene.pe_has_end = False
+                scene.pe_end_x = scene.pe_offset_x
+                scene.pe_end_y = scene.pe_offset_y
+                scene.pe_end_z = scene.pe_offset_z
+
+            scene.pe_angle = float(cfg.get("angle", 0.0))
+
+        elif ptype == "random":
+            area = cfg.get("area", [[0, 0, 0], [0, 0, 0]])
+            scene.pe_area_x1 = float(area[0][0])
+            scene.pe_area_y1 = float(area[0][1])
+            scene.pe_area_z1 = float(area[0][2])
+            scene.pe_area_x2 = float(area[1][0])
+            scene.pe_area_y2 = float(area[1][1])
+            scene.pe_area_z2 = float(area[1][2])
+            scene.pe_seed       = int(cfg.get("seed", 0))
+            scene.pe_rand_count = int(cfg.get("count", cfg.get("num_props", 1)))
+    finally:
+        _APPLYING = False
+
+    return True
+
+
 class PROPS_OT_LoadIntoForm(bpy.types.Operator):
     """Populate the edit form from the active prop's stored config"""
     bl_idname = "props.load_into_form"
@@ -539,61 +603,11 @@ class PROPS_OT_LoadIntoForm(bpy.types.Operator):
             self.report({"WARNING"}, "Active object is not a tagged prop")
             return {"CANCELLED"}
 
-        try:
-            cfg   = json.loads(obj.get("mm_prop_config_json", "{}"))
-            ptype = obj.get("mm_prop_type", "fixed")
-        except Exception:
+        if not load_form_from_obj(context.scene, obj):
             self.report({"ERROR"}, "Could not parse prop config")
             return {"CANCELLED"}
 
-        scene = context.scene
-
-        # Guard against triggering _apply_prop_changes while we load
-        global _APPLYING
-        _APPLYING = True
-        try:
-            scene.pe_active_group_id   = obj.get("mm_prop_group_id", "")
-            scene.pe_active_group_type = ptype
-
-            # Prop name (single-name entries only for the dropdown)
-            raw_name = cfg.get("name", "")
-            if isinstance(raw_name, str) and raw_name in _GAME_TO_CONST:
-                scene.pe_prop_name = raw_name
-
-            if ptype == "fixed":
-                offset = cfg.get("offset", [0.0, 0.0, 0.0])
-                scene.pe_offset_x = float(offset[0])
-                scene.pe_offset_y = float(offset[1])
-                scene.pe_offset_z = float(offset[2])
-
-                if "end" in cfg:
-                    scene.pe_has_end = True
-                    end = cfg["end"]
-                    scene.pe_end_x = float(end[0])
-                    scene.pe_end_y = float(end[1])
-                    scene.pe_end_z = float(end[2])
-                else:
-                    scene.pe_has_end = False
-                    scene.pe_end_x = scene.pe_offset_x
-                    scene.pe_end_y = scene.pe_offset_y
-                    scene.pe_end_z = scene.pe_offset_z
-
-                scene.pe_angle = float(cfg.get("angle", 0.0))
-
-            elif ptype == "random":
-                area = cfg.get("area", [[0, 0, 0], [0, 0, 0]])
-                scene.pe_area_x1 = float(area[0][0])
-                scene.pe_area_y1 = float(area[0][1])
-                scene.pe_area_z1 = float(area[0][2])
-                scene.pe_area_x2 = float(area[1][0])
-                scene.pe_area_y2 = float(area[1][1])
-                scene.pe_area_z2 = float(area[1][2])
-                scene.pe_seed       = int(cfg.get("seed", 0))
-                scene.pe_rand_count = int(cfg.get("count", cfg.get("num_props", 1)))
-        finally:
-            _APPLYING = False
-
-        self.report({"INFO"}, f"Editing '{scene.pe_active_group_id}'")
+        self.report({"INFO"}, f"Editing '{context.scene.pe_active_group_id}'")
         return {"FINISHED"}
 
 
