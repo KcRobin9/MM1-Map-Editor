@@ -95,17 +95,17 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        # ── Map validation status ─────────────────────────────────────────────
+        # ── 1) Map Status ─────────────────────────────────────────────────────
         scene_meshes = [obj for obj in context.scene.objects if obj.type == "MESH"]
         scene_names  = {obj.name for obj in scene_meshes}
         has_p1   = "P1"  in scene_names
         has_p200 = "P200" in scene_names
 
+        layout.label(text="Map Status", icon='INFO')
         box = layout.box()
-        box.label(text="Map Status", icon='INFO')
         row = box.row()
         if has_p1:
-            row.label(text="P1 present", icon='SEQUENCE_COLOR_04')   # green square
+            row.label(text="P1 present", icon='SEQUENCE_COLOR_04')
         else:
             row.alert = True
             row.label(text="P1 missing!", icon='ERROR')
@@ -114,20 +114,7 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
             row.alert = True
             row.label(text="P200 reserved — rename it!", icon='ERROR')
 
-        layout.separator()
-        layout.label(text="Export", icon='EXPORT')
-        row = layout.row(align=True)
-        op  = row.operator("object.export_polygons", text="Selected", icon='RESTRICT_SELECT_OFF')
-        op.select_all = False
-        op  = row.operator("object.export_polygons", text="All", icon='WORLD')
-        op.select_all = True
-
-        layout.separator()
-        layout.label(text="Naming", icon='FONT_DATA')
-        row = layout.row(align=True)
-        row.operator("object.rename_sequential",    text="Sequential",     icon='LINENUMBERS_ON')
-        row.operator("object.fix_polygon_names",    text="Fix Poly Names", icon='ERROR')
-
+        # ── 2) Create ─────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Create", icon='ADD')
         col = layout.column(align=True)
@@ -139,11 +126,12 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         row.operator("object.create_polygon",    text="New Polygon", icon='MESH_PLANE')
         row.operator("object.duplicate_polygon", text="Duplicate",   icon='DUPLICATE')
 
+        # ── 3) Presets ────────────────────────────────────────────────────────
         layout.separator()
-        layout.label(text="Presets", icon='PRESET')
-        layout.prop(context.scene, "polygon_preset", text="")
-        layout.operator("object.spawn_polygon_preset", text="Spawn Preset", icon='IMPORT')
+        layout.prop(context.scene, "polygon_preset", text="Preset")
+        layout.operator("object.spawn_polygon_preset", text="Create Preset", icon='IMPORT')
 
+        # ── 4) Mesh ───────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Mesh", icon='MESH_DATA')
         row = layout.row(align=True)
@@ -151,9 +139,23 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         op.triangulate = False
         op  = row.operator("object.process_post_extrude", text="Split+Tri", icon='MOD_TRIANGULATE')
         op.triangulate = True
-
-        layout.separator()
         layout.operator("object.assign_custom_properties", text="Assign Defaults", icon='PROPERTIES')
+
+        # ── 5) Naming ─────────────────────────────────────────────────────────
+        layout.separator()
+        layout.label(text="Naming", icon='FONT_DATA')
+        row = layout.row(align=True)
+        row.operator("object.rename_sequential",  text="Sequential",     icon='LINENUMBERS_ON')
+        row.operator("object.fix_polygon_names",  text="Fix Poly Names", icon='ERROR')
+
+        # ── 6) Export ─────────────────────────────────────────────────────────
+        layout.separator()
+        layout.label(text="Export", icon='EXPORT')
+        row = layout.row(align=True)
+        op  = row.operator("object.export_polygons", text="Selected", icon='RESTRICT_SELECT_OFF')
+        op.select_all = False
+        op  = row.operator("object.export_polygons", text="All", icon='WORLD')
+        op.select_all = True
 
 
 SIDEBAR_CLASSES = [
