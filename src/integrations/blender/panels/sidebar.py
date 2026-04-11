@@ -125,9 +125,8 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         layout.separator()
         layout.label(text="Naming", icon='FONT_DATA')
         row = layout.row(align=True)
-        row.operator("object.auto_rename_children", text="Normalize",  icon='SORTALPHA')
-        row.operator("object.rename_sequential",    text="Sequential", icon='LINENUMBERS_ON')
-        layout.operator("object.fix_polygon_names", text="Fix Poly Names", icon='ERROR')
+        row.operator("object.rename_sequential",    text="Sequential",     icon='LINENUMBERS_ON')
+        row.operator("object.fix_polygon_names",    text="Fix Poly Names", icon='ERROR')
 
         layout.separator()
         layout.label(text="Create", icon='ADD')

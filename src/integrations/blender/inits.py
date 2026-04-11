@@ -8,7 +8,7 @@ from src.integrations.blender.operators.custom_properties import OBJECT_OT_Assig
 from src.integrations.blender.operators.export_polygons import OBJECT_OT_ExportPolygons
 from src.integrations.blender.operators.process_extrude import OBJECT_OT_ProcessPostExtrude
 from src.integrations.blender.operators.rename_polygons import (
-    OBJECT_OT_RenameChildren, OBJECT_OT_RenameSequential,
+    OBJECT_OT_RenameSequential,
     OBJECT_OT_FixPolygonNames, OBJECT_OT_CreatePolygon, OBJECT_OT_DuplicatePolygon
 )
 from src.integrations.blender.operators.polygon_presets import OBJECT_OT_SpawnPreset, PRESET_ITEMS
@@ -52,7 +52,6 @@ OPERATOR_CLASSES = [
     OBJECT_OT_ExportPolygons,
     OBJECT_OT_AssignCustomProperties,
     OBJECT_OT_ProcessPostExtrude,
-    OBJECT_OT_RenameChildren,
     OBJECT_OT_RenameSequential,
     OBJECT_OT_FixPolygonNames,
     OBJECT_OT_CreatePolygon,

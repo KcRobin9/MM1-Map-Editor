@@ -11,40 +11,14 @@ def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
     return sorted(polygons, key=lambda x: int(re.search(r"P(\d+)", x.name).group(1)))
 
 
-def normalize_polygon_names(polygons: list) -> int:
-    valid_count = 0
-    for obj in polygons:
-        match = re.search(r"P(\d+)", obj.name)
-        if match:
-            number = match.group(1)
-            obj.name = f"P{number}"
-            valid_count += 1
-    return valid_count
-
-
 def rename_sequential(polygons: list) -> int:
-    for i, obj in enumerate(polygons, 1):
-        obj.name = f"P{i}"
+    counter = 1
+    for obj in polygons:
+        if counter == 200:
+            counter += 1
+        obj.name = f"P{counter}"
+        counter += 1
     return len(polygons)
-
-
-class OBJECT_OT_RenameChildren(bpy.types.Operator):
-    bl_idname = "object.auto_rename_children"
-    bl_label  = "Auto Rename Children Objects"
-
-    def execute(self, context: bpy.types.Context) -> set:
-        try:
-            polygons = get_polygon_objects(context, sort=False)
-            if not polygons:
-                self.report({"WARNING"}, "No polygon objects found")
-                return {"CANCELLED"}
-
-            count = normalize_polygon_names(polygons)
-            self.report({"INFO"}, f"Normalized {count} polygon names (preserving order)")
-            return {"FINISHED"}
-        except Exception as e:
-            self.report({"ERROR"}, f"Error normalizing names: {str(e)}")
-            return {"CANCELLED"}
 
 
 class OBJECT_OT_RenameSequential(bpy.types.Operator):
@@ -70,9 +44,9 @@ class OBJECT_OT_FixPolygonNames(bpy.types.Operator):
     bl_idname      = "object.fix_polygon_names"
     bl_label       = "Fix Poly Names"
     bl_description = (
-        "Fix all polygon naming issues: renames .001-style duplicates to valid "
-        "bound numbers, renames P200 (reserved) to a safe number, and ensures "
-        "P1 exists by renaming the first polygon to P1 if it is missing"
+        "Fix all polygon naming issues: strips .001-style suffixes (recovering "
+        "the original number where possible), renames P200 (reserved) to a safe "
+        "number, and ensures P1 exists"
     )
     bl_options     = {"REGISTER", "UNDO"}
 
@@ -80,14 +54,25 @@ class OBJECT_OT_FixPolygonNames(bpy.types.Operator):
         used    = get_used_bound_numbers(context.scene)
         renamed = []
 
-        # ── Step 1: fix .001-style duplicate names ────────────────────────────
+        # ── Step 1: fix .001-style suffix names ───────────────────────────────
+        # First pass: collect objects that need fixing (have a dot in the name).
         invalid_objects = [
             obj for obj in context.scene.objects
             if obj.type == "MESH" and obj.name.startswith("P") and "." in obj.name
         ]
         for obj in invalid_objects:
             old_name = obj.name
-            new_num  = next_available_bound_number(used)
+            match = re.match(r"P(\d+)\.", obj.name)
+            if match:
+                original_num = int(match.group(1))
+                if original_num not in used and original_num != 200:
+                    # Recover the original number — no conflict
+                    used.add(original_num)
+                    obj.name = f"P{original_num}"
+                    renamed.append(f"{old_name} → P{original_num} (restored)")
+                    continue
+            # Fallback: original number taken or unrecognised — assign a fresh one
+            new_num = next_available_bound_number(used)
             used.add(new_num)
             obj.name = f"P{new_num}"
             renamed.append(f"{old_name} → P{new_num}")
