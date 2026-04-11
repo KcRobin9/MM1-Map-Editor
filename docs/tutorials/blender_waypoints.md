@@ -59,6 +59,8 @@ This makes it easy to verify that your sequence is correct. You should always se
 
 ---
 
+*UPDATE*: the sections below needs to be updated. Recently a `Waypoint Editor` panel has been implemented which is more user friendly, there you also find dedicated buttons for e.g. `load waypoints from racedata`
+
 ## Loading Waypoints from Race Data
 
 **`Shift + R`** - Loads waypoints from the `race_data` dictionary (if available) in your script.
@@ -162,9 +164,6 @@ The exporter automatically handles the coordinate system conversion (Blender to 
 | Keybinding | Action | Configuration |
 |---|---|---|
 | `Shift + Y` | Create a single waypoint at cursor | |
-| `Shift + C` | Load waypoints from CSV | `input_waypoint_file` in `src/USER/settings/blender.py` |
-| `Shift + R` | Load waypoints from race data | `waypoint_type_input` + `waypoint_number_input` in `src/USER/settings/blender.py` |
-| `Alt + O` | Load Cops and Robbers waypoints from CSV | `input_cnr_waypoint_file` in `src/USER/settings/blender.py` |
 | `Shift + W` | Export selected waypoints | |
 | `Ctrl + W` | Export selected waypoints with brackets | |
 | `Ctrl + Shift + W` | Export all waypoints | |

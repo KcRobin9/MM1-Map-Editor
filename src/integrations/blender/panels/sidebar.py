@@ -43,7 +43,6 @@ class VIEW3D_PT_MapEditorUV(bpy.types.Panel):
         col.prop(obj, "tile_x",         text="Tile X")
         col.prop(obj, "tile_y",         text="Tile Y")
         col.prop(obj, "angle_degrees",  text="Rotation (°)")
-        layout.operator("object.update_uv_mapping", text="Reapply UV", icon='UV')
 
 
 class VIEW3D_PT_MapEditorCell(bpy.types.Panel):

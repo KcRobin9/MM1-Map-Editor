@@ -25,13 +25,3 @@ prop_car_lights  = False         # Set True to also load headlight / tail-light 
 # Set to [] or None to disable.
 # bulk_bms_folders = [Path("TEST_BMS_CITY/all")]  # single folder; use a list for multiple
 bulk_bms_folders = []  # No bulk import by default; set to a list of folders to enable
-
-# Waypoints
-input_waypoint_file = Folder.Resources.Editor.Race / "RACE2WAYPOINTS.CSV"
-
-# Cops & Robbers Waypoints
-input_cnr_waypoint_file = Folder.Resources.Editor.Race / "COPSWAYPOINTS.CSV"
-
-# Waypoints from the Editor ("race_data")
-waypoint_number_input = "0"
-waypoint_type_input = "RACE"
