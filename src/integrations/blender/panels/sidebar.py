@@ -2,7 +2,7 @@ import bpy
 
 
 class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
-    bl_label    = "Polygon"
+    bl_label    = "Polygons"
     bl_idname   = "VIEW3D_PT_map_editor"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'

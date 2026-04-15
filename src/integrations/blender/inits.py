@@ -131,6 +131,9 @@ SCENE_PROPERTIES = [
     "pc_area_z2",
     "pc_seed",
     "pc_rand_count",
+    # Street Editor
+    "st_sl_pos_expanded",
+    "st_vertex_index",
 ]
 
 
@@ -199,23 +202,24 @@ def register_street_properties() -> None:
         name="Stop Light (End)",
         items=STOP_LIGHT_NAME_ITEMS,
     )
-    bpy.types.Object.st_traffic_blocked_0 = bpy.props.BoolProperty(
-        name="Traffic Blocked (Start)", default=False
+    _YES_NO_ITEMS = [("YES", "Yes", ""), ("NO", "No", "")]
+    bpy.types.Object.st_traffic_blocked_0 = bpy.props.EnumProperty(
+        name="Traffic Blocked (Start)", items=_YES_NO_ITEMS, default="NO"
     )
-    bpy.types.Object.st_traffic_blocked_1 = bpy.props.BoolProperty(
-        name="Traffic Blocked (End)", default=False
+    bpy.types.Object.st_traffic_blocked_1 = bpy.props.EnumProperty(
+        name="Traffic Blocked (End)", items=_YES_NO_ITEMS, default="NO"
     )
-    bpy.types.Object.st_ped_blocked_0 = bpy.props.BoolProperty(
-        name="Ped Blocked (Start)", default=False
+    bpy.types.Object.st_ped_blocked_0 = bpy.props.EnumProperty(
+        name="Ped Blocked (Start)", items=_YES_NO_ITEMS, default="NO"
     )
-    bpy.types.Object.st_ped_blocked_1 = bpy.props.BoolProperty(
-        name="Ped Blocked (End)", default=False
+    bpy.types.Object.st_ped_blocked_1 = bpy.props.EnumProperty(
+        name="Ped Blocked (End)", items=_YES_NO_ITEMS, default="NO"
     )
-    bpy.types.Object.st_road_divided = bpy.props.BoolProperty(
-        name="Road Divided", default=False
+    bpy.types.Object.st_road_divided = bpy.props.EnumProperty(
+        name="Road Divided", items=_YES_NO_ITEMS, default="NO"
     )
-    bpy.types.Object.st_alley = bpy.props.BoolProperty(
-        name="Alley", default=False
+    bpy.types.Object.st_alley = bpy.props.EnumProperty(
+        name="Alley", items=_YES_NO_ITEMS, default="NO"
     )
     bpy.types.Object.st_sl_pos_0_offset = bpy.props.FloatVectorProperty(
         name="SL 0 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ'
@@ -392,6 +396,19 @@ def register_scene_properties() -> None:
     )
     bpy.types.Scene.pc_rand_count = bpy.props.IntProperty(
         name="Count", default=1, min=1, description="Number of props to place",
+    )
+
+    # ── Street Editor scene properties ────────────────────────────────────────
+    bpy.types.Scene.st_sl_pos_expanded = bpy.props.BoolProperty(
+        name="Stop Light Position",
+        description="Expand stop light position fields",
+        default=False,
+    )
+    bpy.types.Scene.st_vertex_index = bpy.props.IntProperty(
+        name="Active Vertex",
+        description="Index of the active vertex for insert / delete / move operations",
+        default=0,
+        min=0,
     )
 
 

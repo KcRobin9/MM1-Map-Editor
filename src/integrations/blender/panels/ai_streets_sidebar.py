@@ -1,6 +1,8 @@
 import bpy
 from pyparsing import col
-from src.integrations.blender.operators.ai_streets import get_all_streets, is_street, ST_PREFIX
+from src.integrations.blender.operators.ai_streets import (
+    get_all_streets, get_street_vertices, get_street_vertex_count, is_street, ST_PREFIX,
+)
 
 
 class VIEW3D_PT_StreetEditorPanel(bpy.types.Panel):
@@ -16,18 +18,73 @@ class VIEW3D_PT_StreetEditorPanel(bpy.types.Panel):
 
         if not is_street(obj):
             layout.label(text="Select a street curve", icon='INFO')
-            layout.label(text=f"(curves named {ST_PREFIX}...)")
             return
 
         street_name = obj.name[len(ST_PREFIX):]
         layout.label(text=street_name, icon='CURVE_DATA')
 
-        if obj.data.splines:
-            num_verts = len(obj.data.splines[0].points)
-            layout.label(text=f"{num_verts} vertices", icon='VERTEXSEL')
+        n = get_street_vertex_count(obj)
+        layout.label(text=f"{n} vertices  ·  {max(0, n - 1)} segments", icon='VERTEXSEL')
 
         layout.separator()
-        layout.label(text="Press Tab to edit vertices", icon='INFO')
+        layout.label(text="Shift+RMB to place 3D Cursor", icon='INFO')
+
+
+class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
+    bl_label       = "Vertex Editor"
+    bl_idname      = "VIEW3D_PT_street_vertex_editor"
+    bl_space_type  = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category    = "Street Editor"
+    bl_parent_id   = "VIEW3D_PT_street_editor"
+
+    def draw(self, context):
+        layout = self.layout
+        obj    = context.active_object
+
+        if not is_street(obj):
+            return
+
+        verts = get_street_vertices(obj)
+        n     = len(verts)
+        if n == 0:
+            layout.label(text="No vertices", icon='ERROR')
+            return
+
+        # Clamp active index for display
+        idx = max(0, min(context.scene.st_vertex_index, n - 1))
+        v   = verts[idx]
+
+        # ── Active vertex info ────────────────────────────────────────────────
+        box = layout.box()
+        col = box.column(align=True)
+        row = col.row(align=True)
+        row.prop(context.scene, "st_vertex_index", text="Active V")
+        row.label(text=f"/ {n - 1}")
+        col.label(text=f"({v.x:.2f},  {v.y:.2f},  {v.z:.2f})")
+
+        # ── Extend (append to start / end) ────────────────────────────────────
+        layout.separator()
+        layout.label(text="Extend Street  (cursor):", icon='CURVE_DATA')
+        row = layout.row(align=True)
+        op = row.operator("object.append_street_vertex", text="+ Start", icon='TRIA_LEFT')
+        op.to_end = False
+        op = row.operator("object.append_street_vertex", text="+ End",   icon='TRIA_RIGHT')
+        op.to_end = True
+
+        # ── Insert between vertices ───────────────────────────────────────────
+        layout.separator()
+        layout.label(text=f"Insert after V{idx}  (between V{idx} → V{min(idx + 1, n - 1)}):", icon='ADD')
+        row = layout.row(align=True)
+        row.operator("object.insert_street_vertex",          text="At Cursor",  icon='CURSOR')
+        row.operator("object.insert_street_vertex_midpoint", text="Midpoint",   icon='SNAP_MIDPOINT')
+
+        # ── Edit / delete active ──────────────────────────────────────────────
+        layout.separator()
+        layout.label(text=f"Edit V{idx}:", icon='VERTEXSEL')
+        row = layout.row(align=True)
+        row.operator("object.move_street_vertex_to_cursor", text="Move to Cursor", icon='CURSOR')
+        row.operator("object.delete_street_vertex",         text="Delete",         icon='X')
 
 
 class VIEW3D_PT_StreetEditorIntersections(bpy.types.Panel):
@@ -57,9 +114,18 @@ class VIEW3D_PT_StreetEditorIntersections(bpy.types.Panel):
         col.prop(obj, "st_intersection_1",    text="Type")
         col.prop(obj, "st_stop_light_name_1", text="Light")
 
-        col.label(text="Stop Light Position:")
-        col.prop(obj, "st_sl_pos_0_offset", text="Offset")
-        col.prop(obj, "st_sl_pos_0_dir",    text="Direction")
+        layout.separator()
+        row = layout.row()
+        row.prop(
+            context.scene, "st_sl_pos_expanded",
+            icon="TRIA_DOWN" if context.scene.st_sl_pos_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False,
+        )
+        row.label(text="Stop Light Position:")
+        if context.scene.st_sl_pos_expanded:
+            col2 = layout.column(align=True)
+            col2.prop(obj, "st_sl_pos_0_offset", text="Offset")
+            col2.prop(obj, "st_sl_pos_0_dir",    text="Direction")
 
 
 class VIEW3D_PT_StreetEditorProperties(bpy.types.Panel):
@@ -79,22 +145,30 @@ class VIEW3D_PT_StreetEditorProperties(bpy.types.Panel):
             return
 
         col = layout.column(align=True)
-        col.label(text="Traffic Blocked:")
-        row = col.row(align=True)
-        row.prop(obj, "st_traffic_blocked_0", text="Start", toggle=True)
-        row.prop(obj, "st_traffic_blocked_1", text="End",   toggle=True)
+        split = col.split(factor=0.55)
+        split.label(text="Traffic Blocked (Start):")
+        split.prop(obj, "st_traffic_blocked_0", text="")
+        split = col.split(factor=0.55)
+        split.label(text="Traffic Blocked (End):")
+        split.prop(obj, "st_traffic_blocked_1", text="")
 
         layout.separator()
         col = layout.column(align=True)
-        col.label(text="Ped Blocked:")
-        row = col.row(align=True)
-        row.prop(obj, "st_ped_blocked_0", text="Start", toggle=True)
-        row.prop(obj, "st_ped_blocked_1", text="End",   toggle=True)
+        split = col.split(factor=0.55)
+        split.label(text="Ped Blocked (Start):")
+        split.prop(obj, "st_ped_blocked_0", text="")
+        split = col.split(factor=0.55)
+        split.label(text="Ped Blocked (End):")
+        split.prop(obj, "st_ped_blocked_1", text="")
 
         layout.separator()
         col = layout.column(align=True)
-        col.prop(obj, "st_road_divided", text="Road Divided", toggle=True)
-        col.prop(obj, "st_alley",        text="Alley",        toggle=True)
+        split = col.split(factor=0.55)
+        split.label(text="Road Divided:")
+        split.prop(obj, "st_road_divided", text="")
+        split = col.split(factor=0.55)
+        split.label(text="Alley:")
+        split.prop(obj, "st_alley", text="")
 
 
 class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
@@ -109,15 +183,6 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
         streets = get_all_streets()
 
         layout.label(text=f"Streets in scene: {len(streets)}", icon='CURVE_DATA')
-
-        # Color legend
-        box = layout.box()
-        box.label(text="Color legend:", icon='COLOR')
-        col = box.column(align=True)
-        col.label(text="🔵  Continue")
-        col.label(text="🟡  Stop Light")
-        col.label(text="🟠  Yield")
-        col.label(text="🔴  Stop")
 
         layout.separator()
         layout.label(text="Create", icon='ADD')
@@ -137,12 +202,11 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
         op = row.operator("object.export_ai_streets", text="All",      icon='WORLD')
         op.export_all = True
 
-        layout.separator()
-        layout.operator("object.refresh_street_colors", text="Refresh Colors", icon='COLOR')
 
 
 STREET_EDITOR_CLASSES = [
     VIEW3D_PT_StreetEditorPanel,
+    VIEW3D_PT_StreetVertexEditor,
     VIEW3D_PT_StreetEditorIntersections,
     VIEW3D_PT_StreetEditorProperties,
     VIEW3D_PT_StreetEditorTools,

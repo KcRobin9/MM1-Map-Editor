@@ -52,6 +52,17 @@ INTERSECTION_COLORS = {
 }
 
 
+_AI_STREETS_COLLECTION = "AI Streets"
+
+
+def _get_or_create_ai_streets_collection() -> bpy.types.Collection:
+    if _AI_STREETS_COLLECTION in bpy.data.collections:
+        return bpy.data.collections[_AI_STREETS_COLLECTION]
+    col = bpy.data.collections.new(_AI_STREETS_COLLECTION)
+    bpy.context.scene.collection.children.link(col)
+    return col
+
+
 def get_all_streets() -> List[bpy.types.Object]:
     return [obj for obj in bpy.data.objects
             if obj.type == 'CURVE' and obj.name.startswith(ST_PREFIX)]
@@ -139,7 +150,7 @@ def _build_curve_object(name: str, points, context) -> bpy.types.Object:
         spline.points[1].co = (p1[0], p1[1], p1[2], 1.0)
 
     obj = bpy.data.objects.new(name, curve_data)
-    context.collection.objects.link(obj)
+    _get_or_create_ai_streets_collection().objects.link(obj)
     return obj
 
 
@@ -147,14 +158,14 @@ def _build_curve_object(name: str, points, context) -> bpy.types.Object:
 def _set_street_defaults(obj: bpy.types.Object) -> None:
     obj.st_intersection_0    = str(IntersectionType.CONTINUE)
     obj.st_intersection_1    = str(IntersectionType.CONTINUE)
-    obj.st_stop_light_name_0 = Prop.STOP_LIGHT_SINGLE
-    obj.st_stop_light_name_1 = Prop.STOP_LIGHT_SINGLE
-    obj.st_traffic_blocked_0 = False
-    obj.st_traffic_blocked_1 = False
-    obj.st_ped_blocked_0     = False
-    obj.st_ped_blocked_1     = False
-    obj.st_road_divided      = False
-    obj.st_alley             = False
+    obj.st_stop_light_name_0 = Prop.TRAFFIC_LIGHT_SINGLE
+    obj.st_stop_light_name_1 = Prop.TRAFFIC_LIGHT_SINGLE
+    obj.st_traffic_blocked_0 = "NO"
+    obj.st_traffic_blocked_1 = "NO"
+    obj.st_ped_blocked_0     = "NO"
+    obj.st_ped_blocked_1     = "NO"
+    obj.st_road_divided      = "NO"
+    obj.st_alley             = "NO"
 
 
 class OBJECT_OT_CreateAIStreet(bpy.types.Operator):
@@ -241,7 +252,7 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
             obj = _build_curve_object(f"{ST_PREFIX}{street_name}", blender_verts, context)
 
             itypes    = data.get("intersection_types",  [IntersectionType.CONTINUE, IntersectionType.CONTINUE])
-            sl_names  = data.get("stop_light_names",    [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_SINGLE])
+            sl_names  = data.get("stop_light_names",    [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL])
             t_blocked = data.get("traffic_blocked",     [NO, NO])
             p_blocked = data.get("ped_blocked",         [NO, NO])
 
@@ -249,12 +260,12 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
             obj.st_intersection_1    = str(itypes[1])
             obj.st_stop_light_name_0 = sl_names[0]
             obj.st_stop_light_name_1 = sl_names[1]
-            obj.st_traffic_blocked_0 = (t_blocked[0] == YES)
-            obj.st_traffic_blocked_1 = (t_blocked[1] == YES)
-            obj.st_ped_blocked_0     = (p_blocked[0] == YES)
-            obj.st_ped_blocked_1     = (p_blocked[1] == YES)
-            obj.st_road_divided      = (data.get("road_divided", NO) == YES)
-            obj.st_alley             = (data.get("alley",        NO) == YES)
+            obj.st_traffic_blocked_0 = "YES" if t_blocked[0] == YES else "NO"
+            obj.st_traffic_blocked_1 = "YES" if t_blocked[1] == YES else "NO"
+            obj.st_ped_blocked_0     = "YES" if p_blocked[0] == YES else "NO"
+            obj.st_ped_blocked_1     = "YES" if p_blocked[1] == YES else "NO"
+            obj.st_road_divided      = "YES" if data.get("road_divided", NO) == YES else "NO"
+            obj.st_alley             = "YES" if data.get("alley",        NO) == YES else "NO"
 
             apply_street_color(obj)
             created += 1
@@ -310,12 +321,12 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
                     itype_1  = obj.st_intersection_1
                     sl_0     = obj.st_stop_light_name_0
                     sl_1     = obj.st_stop_light_name_1
-                    tb_0     = YES if obj.st_traffic_blocked_0 else NO
-                    tb_1     = YES if obj.st_traffic_blocked_1 else NO
-                    pb_0     = YES if obj.st_ped_blocked_0     else NO
-                    pb_1     = YES if obj.st_ped_blocked_1     else NO
-                    divided  = YES if obj.st_road_divided      else NO
-                    alley    = YES if obj.st_alley             else NO
+                    tb_0     = YES if obj.st_traffic_blocked_0 == "YES" else NO
+                    tb_1     = YES if obj.st_traffic_blocked_1 == "YES" else NO
+                    pb_0     = YES if obj.st_ped_blocked_0     == "YES" else NO
+                    pb_1     = YES if obj.st_ped_blocked_1     == "YES" else NO
+                    divided  = YES if obj.st_road_divided      == "YES" else NO
+                    alley    = YES if obj.st_alley             == "YES" else NO
 
                     itype_0_str = INTERSECTION_TYPE_TO_CONST.get(itype_0, itype_0)
                     itype_1_str = INTERSECTION_TYPE_TO_CONST.get(itype_1, itype_1)
@@ -326,7 +337,7 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
                     optional_lines = []
                     if itype_0 != str(IntersectionType.CONTINUE) or itype_1 != str(IntersectionType.CONTINUE):
                         optional_lines.append(f'    "intersection_types": [{itype_0_str}, {itype_1_str}],')
-                    if sl_0 != Prop.STOP_LIGHT_SINGLE or sl_1 != Prop.STOP_LIGHT_SINGLE:
+                    if sl_0 != Prop.TRAFFIC_LIGHT_SINGLE or sl_1 != Prop.TRAFFIC_LIGHT_SINGLE:
                         optional_lines.append(f'    "stop_light_names": [{sl_0_str}, {sl_1_str}],')
 
                     sl_pos = [
@@ -341,13 +352,13 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
                         )
                         optional_lines.append(f'    "stop_light_positions": [\n        {pos_str}\n    ],')
 
-                    if obj.st_traffic_blocked_0 or obj.st_traffic_blocked_1:
+                    if obj.st_traffic_blocked_0 == "YES" or obj.st_traffic_blocked_1 == "YES":
                         optional_lines.append(f'    "traffic_blocked": [{tb_0}, {tb_1}],')
-                    if obj.st_ped_blocked_0 or obj.st_ped_blocked_1:
+                    if obj.st_ped_blocked_0 == "YES" or obj.st_ped_blocked_1 == "YES":
                         optional_lines.append(f'    "ped_blocked": [{pb_0}, {pb_1}],')
-                    if obj.st_road_divided:
+                    if obj.st_road_divided == "YES":
                         optional_lines.append(f'    "road_divided": {divided},')
-                    if obj.st_alley:
+                    if obj.st_alley == "YES":
                         optional_lines.append(f'    "alley": {alley},')
 
                     optional_str = ("\n" + "\n".join(optional_lines)) if optional_lines else ""
@@ -373,6 +384,148 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def _rebuild_street_from_verts(obj: bpy.types.Object, world_verts: List[Vector]) -> None:
+    """Rebuild a street's curve data from a list of world-space Vector positions."""
+    mat_inv = obj.matrix_world.inverted()
+    curve   = obj.data
+    curve.splines.clear()
+    for i in range(len(world_verts) - 1):
+        spline = curve.splines.new('POLY')
+        spline.points.add(1)
+        p0 = mat_inv @ world_verts[i]
+        p1 = mat_inv @ world_verts[i + 1]
+        spline.points[0].co = (p0.x, p0.y, p0.z, 1.0)
+        spline.points[1].co = (p1.x, p1.y, p1.z, 1.0)
+    apply_street_color(obj)
+
+
+def get_street_vertex_count(obj: bpy.types.Object) -> int:
+    """Return the logical vertex count (number of splines + 1)."""
+    n = len(obj.data.splines)
+    return n + 1 if n > 0 else 0
+
+
+class OBJECT_OT_AppendStreetVertex(bpy.types.Operator):
+    bl_idname      = "object.append_street_vertex"
+    bl_label       = "Append Vertex"
+    bl_description = "Add a new vertex at the 3D cursor to the start or end of the street"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    to_end: bpy.props.BoolProperty(default=True)
+
+    @classmethod
+    def poll(cls, context):
+        return is_street(context.active_object)
+
+    def execute(self, context):
+        obj    = context.active_object
+        verts  = get_street_vertices(obj)
+        cursor = context.scene.cursor.location.copy()
+
+        if self.to_end:
+            verts.append(cursor)
+            context.scene.st_vertex_index = len(verts) - 1
+        else:
+            verts.insert(0, cursor)
+            context.scene.st_vertex_index = 0
+
+        _rebuild_street_from_verts(obj, verts)
+        self.report({"INFO"}, f"Vertex {'appended to end' if self.to_end else 'prepended to start'}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_InsertStreetVertex(bpy.types.Operator):
+    bl_idname      = "object.insert_street_vertex"
+    bl_label       = "Insert After Active (Cursor)"
+    bl_description = "Insert a new vertex at the 3D cursor after the active vertex index"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and get_street_vertex_count(obj) >= 2
+
+    def execute(self, context):
+        obj   = context.active_object
+        verts = get_street_vertices(obj)
+        idx   = max(0, min(context.scene.st_vertex_index, len(verts) - 2))
+        cursor = context.scene.cursor.location.copy()
+
+        verts.insert(idx + 1, cursor)
+        _rebuild_street_from_verts(obj, verts)
+        context.scene.st_vertex_index = idx + 1
+        self.report({"INFO"}, f"Inserted vertex after index {idx}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_InsertStreetVertexMidpoint(bpy.types.Operator):
+    bl_idname      = "object.insert_street_vertex_midpoint"
+    bl_label       = "Insert Midpoint"
+    bl_description = "Insert a new vertex at the midpoint between the active vertex and the next"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and get_street_vertex_count(obj) >= 2
+
+    def execute(self, context):
+        obj   = context.active_object
+        verts = get_street_vertices(obj)
+        idx   = max(0, min(context.scene.st_vertex_index, len(verts) - 2))
+        mid   = (verts[idx] + verts[idx + 1]) / 2.0
+
+        verts.insert(idx + 1, mid)
+        _rebuild_street_from_verts(obj, verts)
+        context.scene.st_vertex_index = idx + 1
+        self.report({"INFO"}, f"Inserted midpoint between {idx} and {idx + 1}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_DeleteStreetVertex(bpy.types.Operator):
+    bl_idname      = "object.delete_street_vertex"
+    bl_label       = "Delete Active Vertex"
+    bl_description = "Delete the active vertex from the street (minimum 2 vertices required)"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and get_street_vertex_count(obj) > 2
+
+    def execute(self, context):
+        obj   = context.active_object
+        verts = get_street_vertices(obj)
+        idx   = max(0, min(context.scene.st_vertex_index, len(verts) - 1))
+
+        verts.pop(idx)
+        _rebuild_street_from_verts(obj, verts)
+        context.scene.st_vertex_index = min(idx, len(verts) - 1)
+        self.report({"INFO"}, f"Deleted vertex {idx}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_MoveStreetVertexToCursor(bpy.types.Operator):
+    bl_idname      = "object.move_street_vertex_to_cursor"
+    bl_label       = "Move Active to Cursor"
+    bl_description = "Move the active vertex to the 3D cursor position"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_street(context.active_object)
+
+    def execute(self, context):
+        obj    = context.active_object
+        verts  = get_street_vertices(obj)
+        idx    = max(0, min(context.scene.st_vertex_index, len(verts) - 1))
+        verts[idx] = context.scene.cursor.location.copy()
+
+        _rebuild_street_from_verts(obj, verts)
+        self.report({"INFO"}, f"Moved vertex {idx} to cursor")
+        return {"FINISHED"}
+
+
 def st_intersection_update(self, context) -> None:
     pass  # Color is now segment-based, not intersection-type-based
 
@@ -395,5 +548,9 @@ AI_STREET_CLASSES = [
     OBJECT_OT_DuplicateAIStreet,
     OBJECT_OT_LoadAIStreetsFromData,
     OBJECT_OT_ExportAIStreets,
-    OBJECT_OT_RefreshStreetColors,
+    OBJECT_OT_AppendStreetVertex,
+    OBJECT_OT_InsertStreetVertex,
+    OBJECT_OT_InsertStreetVertexMidpoint,
+    OBJECT_OT_DeleteStreetVertex,
+    OBJECT_OT_MoveStreetVertexToCursor,
 ]

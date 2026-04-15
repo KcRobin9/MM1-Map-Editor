@@ -7,7 +7,7 @@ from src.core.vector.vector_3 import Vector3
 class aiIntersection:
     def load(self, f: BinaryIO) -> None:
         self.id, = read_unpack(f, '<H')
-        self.position = Vector3.read(f, '<')
+        self.position = Vector3.read(f)
 
         num_sinks, = read_unpack(f, '<H')
         self.sinks = read_unpack(f, f'<{num_sinks}I')
