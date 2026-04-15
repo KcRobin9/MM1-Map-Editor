@@ -17,6 +17,9 @@ from src.integrations.blender.operators.ai_streets import (
     INTERSECTION_TYPE_ITEMS, STOP_LIGHT_NAME_ITEMS,
     st_intersection_update
 )
+from src.integrations.blender.operators.ai_street_presets import (
+    STREET_PRESET_CLASSES, ST_PRESET_ITEMS,
+)
 from src.integrations.blender.operators.waypoints import WAYPOINT_CLASSES
 
 from src.integrations.blender.panels.cells import OBJECT_PT_CellTypePanel, CELL_IMPORT
@@ -58,6 +61,7 @@ OPERATOR_CLASSES = [
     OBJECT_OT_DuplicatePolygon,
     OBJECT_OT_SpawnPreset,
     *AI_STREET_CLASSES,
+    *STREET_PRESET_CLASSES,
     *PROP_EDITOR_CLASSES,
 ]
 
@@ -131,9 +135,17 @@ SCENE_PROPERTIES = [
     "pc_area_z2",
     "pc_seed",
     "pc_rand_count",
-    # Street Editor
+    # Street Editor — vertex tools
     "st_sl_pos_expanded",
     "st_vertex_index",
+    "st_extend_length",
+    "st_extend_angle",
+    # Street Editor — presets
+    "st_street_preset",
+    "st_preset_length",
+    "st_preset_lane_width",
+    "st_preset_turn_radius",
+    "st_preset_curve_points",
 ]
 
 
@@ -409,6 +421,43 @@ def register_scene_properties() -> None:
         description="Index of the active vertex for insert / delete / move operations",
         default=0,
         min=0,
+    )
+    bpy.types.Scene.st_extend_length = bpy.props.FloatProperty(
+        name="Extend Length",
+        description="Distance to extend when using directional extend",
+        default=10.0, min=0.1, soft_max=200.0,
+    )
+    bpy.types.Scene.st_extend_angle = bpy.props.FloatProperty(
+        name="Angle Offset",
+        description="Rotation applied to the extension direction (degrees). 0 = same angle.",
+        default=0.0, soft_min=-180.0, soft_max=180.0,
+    )
+    # ── Street Presets scene properties ───────────────────────────────────────
+    bpy.types.Scene.st_street_preset = bpy.props.EnumProperty(
+        name="Street Preset",
+        description="AI street preset to spawn",
+        items=ST_PRESET_ITEMS,
+        default="SINGLE",
+    )
+    bpy.types.Scene.st_preset_length = bpy.props.FloatProperty(
+        name="Preset Length",
+        description="Length of each arm / straight segment in the preset",
+        default=40.0, min=5.0, soft_max=500.0,
+    )
+    bpy.types.Scene.st_preset_lane_width = bpy.props.FloatProperty(
+        name="Lane Width",
+        description="Width of each lane (used for multi-lane presets)",
+        default=5.0, min=1.0, soft_max=20.0,
+    )
+    bpy.types.Scene.st_preset_turn_radius = bpy.props.FloatProperty(
+        name="Turn Radius",
+        description="Radius of curved presets (roundabout ring, 90° curves, etc.)",
+        default=20.0, min=3.0, soft_max=200.0,
+    )
+    bpy.types.Scene.st_preset_curve_points = bpy.props.IntProperty(
+        name="Curve Points",
+        description="Number of vertices used to approximate curves",
+        default=7, min=3, max=32,
     )
 
 

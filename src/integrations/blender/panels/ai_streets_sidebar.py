@@ -51,7 +51,6 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
             layout.label(text="No vertices", icon='ERROR')
             return
 
-        # Clamp active index for display
         idx = max(0, min(context.scene.st_vertex_index, n - 1))
         v   = verts[idx]
 
@@ -62,19 +61,36 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
         row.prop(context.scene, "st_vertex_index", text="Active V")
         row.label(text=f"/ {n - 1}")
         col.label(text=f"({v.x:.2f},  {v.y:.2f},  {v.z:.2f})")
+        col.operator("object.cursor_to_street_vertex", text="Cursor → Active Vertex", icon='CURSOR')
 
-        # ── Extend (append to start / end) ────────────────────────────────────
+        # ── Extend at cursor ──────────────────────────────────────────────────
         layout.separator()
-        layout.label(text="Extend Street  (cursor):", icon='CURVE_DATA')
+        layout.label(text="Extend Street  (at cursor):", icon='CURVE_DATA')
         row = layout.row(align=True)
         op = row.operator("object.append_street_vertex", text="+ Start", icon='TRIA_LEFT')
         op.to_end = False
         op = row.operator("object.append_street_vertex", text="+ End",   icon='TRIA_RIGHT')
         op.to_end = True
 
+        # ── Extend at angle ───────────────────────────────────────────────────
+        layout.separator()
+        layout.label(text="Extend Street  (by direction):", icon='DRIVER_ROTATIONAL_DIFFERENCE')
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(context.scene, "st_extend_length", text="Length")
+        col.prop(context.scene, "st_extend_angle",  text="Angle offset (°)")
+        row = col.row(align=True)
+        op = row.operator("object.extend_street_angle", text="← Start", icon='TRIA_LEFT')
+        op.to_end       = False
+        op.angle_offset = context.scene.st_extend_angle
+        op = row.operator("object.extend_street_angle", text="End →",   icon='TRIA_RIGHT')
+        op.to_end       = True
+        op.angle_offset = context.scene.st_extend_angle
+
         # ── Insert between vertices ───────────────────────────────────────────
         layout.separator()
-        layout.label(text=f"Insert after V{idx}  (between V{idx} → V{min(idx + 1, n - 1)}):", icon='ADD')
+        next_idx = min(idx + 1, n - 1)
+        layout.label(text=f"Insert after V{idx}  →  V{next_idx}:", icon='ADD')
         row = layout.row(align=True)
         row.operator("object.insert_street_vertex",          text="At Cursor",  icon='CURSOR')
         row.operator("object.insert_street_vertex_midpoint", text="Midpoint",   icon='SNAP_MIDPOINT')
@@ -184,16 +200,32 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
 
         layout.label(text=f"Streets in scene: {len(streets)}", icon='CURVE_DATA')
 
+        # ── Create ────────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Create", icon='ADD')
         row = layout.row(align=True)
         row.operator("object.create_ai_street",    text="New Street",  icon='CURVE_DATA')
         row.operator("object.duplicate_ai_street", text="Duplicate",   icon='DUPLICATE')
 
+        # ── Presets ───────────────────────────────────────────────────────────
+        layout.separator()
+        layout.label(text="Presets", icon='PRESET')
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(context.scene, "st_street_preset",       text="Preset")
+        col.prop(context.scene, "st_preset_length",       text="Length")
+        col.prop(context.scene, "st_preset_lane_width",   text="Lane Width")
+        col.prop(context.scene, "st_preset_turn_radius",  text="Turn Radius")
+        col.prop(context.scene, "st_preset_curve_points", text="Curve Points")
+        layout.operator("object.spawn_street_preset", text="Spawn Preset", icon='IMPORT')
+
+        # ── Load ──────────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Load", icon='IMPORT')
         layout.operator("object.load_ai_streets_from_data", text="Load from ai_streets.py", icon='FILE_SCRIPT')
+        layout.operator("object.delete_all_streets",        text="Delete All Streets",      icon='TRASH')
 
+        # ── Export ────────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Export", icon='EXPORT')
         row = layout.row(align=True)
@@ -201,7 +233,6 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
         op.export_all = False
         op = row.operator("object.export_ai_streets", text="All",      icon='WORLD')
         op.export_all = True
-
 
 
 STREET_EDITOR_CLASSES = [

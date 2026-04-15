@@ -526,6 +526,98 @@ class OBJECT_OT_MoveStreetVertexToCursor(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class OBJECT_OT_ExtendStreetAngle(bpy.types.Operator):
+    bl_idname      = "object.extend_street_angle"
+    bl_label       = "Extend by Direction"
+    bl_description = "Extend the street by a fixed length, optionally rotating the direction"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    to_end:       bpy.props.BoolProperty(default=True)
+    angle_offset: bpy.props.FloatProperty(default=0.0)   # degrees
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and get_street_vertex_count(obj) >= 2
+
+    def execute(self, context):
+        import math
+        obj    = context.active_object
+        verts  = get_street_vertices(obj)
+        length = context.scene.st_extend_length
+
+        if self.to_end:
+            direction = (verts[-1] - verts[-2]).normalized()
+            base      = verts[-1]
+        else:
+            direction = (verts[0] - verts[1]).normalized()
+            base      = verts[0]
+
+        if self.angle_offset != 0.0:
+            a     = math.radians(self.angle_offset)
+            cos_a = math.cos(a)
+            sin_a = math.sin(a)
+            direction = Vector((
+                direction.x * cos_a - direction.y * sin_a,
+                direction.x * sin_a + direction.y * cos_a,
+                direction.z,
+            ))
+
+        new_vert = base + direction * length
+
+        if self.to_end:
+            verts.append(new_vert)
+            context.scene.st_vertex_index = len(verts) - 1
+        else:
+            verts.insert(0, new_vert)
+            context.scene.st_vertex_index = 0
+
+        _rebuild_street_from_verts(obj, verts)
+        angle_label = f" (+{self.angle_offset:.0f}°)" if self.angle_offset != 0.0 else ""
+        self.report({"INFO"}, f"Extended {'end' if self.to_end else 'start'} by {length:.1f}{angle_label}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_CursorToStreetVertex(bpy.types.Operator):
+    bl_idname      = "object.cursor_to_street_vertex"
+    bl_label       = "Cursor to Active Vertex"
+    bl_description = "Snap the 3D cursor to the active vertex position"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_street(context.active_object)
+
+    def execute(self, context):
+        obj   = context.active_object
+        verts = get_street_vertices(obj)
+        idx   = max(0, min(context.scene.st_vertex_index, len(verts) - 1))
+        context.scene.cursor.location = verts[idx].copy()
+        self.report({"INFO"}, f"Cursor → V{idx}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_DeleteAllStreets(bpy.types.Operator):
+    bl_idname      = "object.delete_all_streets"
+    bl_label       = "Delete All Streets"
+    bl_description = "Delete every AI street object in the scene"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        streets = get_all_streets()
+        n = len(streets)
+        for obj in streets:
+            data = obj.data
+            bpy.data.objects.remove(obj, do_unlink=True)
+            if data.users == 0:
+                bpy.data.curves.remove(data)
+        self.report({"INFO"}, f"Deleted {n} street(s)")
+        return {"FINISHED"}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_confirm(self, event)
+
+
 def st_intersection_update(self, context) -> None:
     pass  # Color is now segment-based, not intersection-type-based
 
@@ -553,4 +645,7 @@ AI_STREET_CLASSES = [
     OBJECT_OT_InsertStreetVertexMidpoint,
     OBJECT_OT_DeleteStreetVertex,
     OBJECT_OT_MoveStreetVertexToCursor,
+    OBJECT_OT_ExtendStreetAngle,
+    OBJECT_OT_CursorToStreetVertex,
+    OBJECT_OT_DeleteAllStreets,
 ]

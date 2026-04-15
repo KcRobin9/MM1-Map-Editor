@@ -7,7 +7,8 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
-_draw_handler = None
+_draw_handler        = None
+_draw_handler_street = None
 
 
 def _draw_waypoint_paths() -> None:
@@ -88,16 +89,76 @@ def _draw_waypoint_paths() -> None:
             gpu.state.blend_set("NONE")
 
 
+def _draw_active_street_vertex() -> None:
+    """Draw a purple crosshair on the currently active street vertex."""
+    try:
+        ctx = bpy.context
+        obj = ctx.active_object
+        if not (obj and obj.type == 'CURVE' and obj.name.startswith('ST_')):
+            return
+        if not obj.data.splines:
+            return
+
+        # Rebuild vertex list inline to avoid circular imports
+        verts = []
+        for i, sp in enumerate(obj.data.splines):
+            if i == 0:
+                verts.append(obj.matrix_world @ Vector(sp.points[0].co[:3]))
+            verts.append(obj.matrix_world @ Vector(sp.points[1].co[:3]))
+
+        if not verts:
+            return
+
+        n   = len(verts)
+        idx = max(0, min(ctx.scene.st_vertex_index, n - 1))
+        v   = verts[idx]
+
+        shader = gpu.shader.from_builtin("UNIFORM_COLOR")
+        shader.bind()
+        gpu.state.blend_set("ALPHA")
+
+        # Filled dot
+        batch_pt = batch_for_shader(shader, 'POINTS', {"pos": [(v.x, v.y, v.z)]})
+        gpu.state.point_size_set(16.0)
+        shader.uniform_float("color", (0.65, 0.0, 1.0, 1.0))   # vivid purple
+        batch_pt.draw(shader)
+
+        # Crosshair lines
+        S = 3.0
+        cross = [
+            (v.x - S, v.y,     v.z), (v.x + S, v.y,     v.z),
+            (v.x,     v.y - S, v.z), (v.x,     v.y + S, v.z),
+        ]
+        batch_ln = batch_for_shader(shader, 'LINES', {"pos": cross})
+        gpu.state.line_width_set(2.5)
+        shader.uniform_float("color", (0.65, 0.0, 1.0, 0.75))
+        batch_ln.draw(shader)
+
+        gpu.state.blend_set("NONE")
+        gpu.state.point_size_set(1.0)
+        gpu.state.line_width_set(1.0)
+
+    except Exception:
+        pass
+
+
 def register_draw_handler() -> None:
-    global _draw_handler
+    global _draw_handler, _draw_handler_street
     if _draw_handler is None:
         _draw_handler = bpy.types.SpaceView3D.draw_handler_add(
             _draw_waypoint_paths, (), "WINDOW", "POST_VIEW"
         )
+    if _draw_handler_street is None:
+        _draw_handler_street = bpy.types.SpaceView3D.draw_handler_add(
+            _draw_active_street_vertex, (), "WINDOW", "POST_VIEW"
+        )
 
 
 def unregister_draw_handler() -> None:
-    global _draw_handler
+    global _draw_handler, _draw_handler_street
     if _draw_handler is not None:
         bpy.types.SpaceView3D.draw_handler_remove(_draw_handler, "WINDOW")
         _draw_handler = None
+    if _draw_handler_street is not None:
+        bpy.types.SpaceView3D.draw_handler_remove(_draw_handler_street, "WINDOW")
+        _draw_handler_street = None
