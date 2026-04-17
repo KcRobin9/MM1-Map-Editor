@@ -151,6 +151,50 @@ def _draw_street_overlays() -> None:
                 shader.uniform_float("color", (1.0, 1.0, 1.0, 0.7))
                 batch.draw(shader)
 
+        # ── Group start/end markers (green = start, orange = end) ───────────
+        obj = ctx.active_object
+        if obj and obj.type == 'CURVE' and obj.name.startswith('ST_'):
+            gname = getattr(obj, "st_group_name", "")
+            if gname:
+                grp_streets = [
+                    o for o in bpy.data.objects
+                    if o.type == 'CURVE' and o.name.startswith('ST_')
+                    and getattr(o, "st_group_name", "") == gname
+                ]
+                S = 2.5   # marker arm length (world units)
+                start_lines, end_lines = [], []
+                start_dots,  end_dots  = [], []
+                for st in grp_streets:
+                    if not st.data.splines:
+                        continue
+                    splines = st.data.splines
+                    v_start = st.matrix_world @ Vector(splines[0].points[0].co[:3])
+                    v_end   = st.matrix_world @ Vector(splines[-1].points[1].co[:3])
+                    for v, lines, dots in ((v_start, start_lines, start_dots),
+                                           (v_end,   end_lines,   end_dots)):
+                        lines += [v - cam_right * S, v + cam_right * S,
+                                  v - cam_up    * S, v + cam_up    * S]
+                        dots.append(v)
+
+                if start_lines:
+                    b = batch_for_shader(shader, 'LINES', {"pos": start_lines})
+                    gpu.state.line_width_set(2.5)
+                    shader.uniform_float("color", (0.1, 0.9, 0.2, 1.0))   # green = start
+                    b.draw(shader)
+                    b = batch_for_shader(shader, 'POINTS', {"pos": start_dots})
+                    gpu.state.point_size_set(10.0)
+                    shader.uniform_float("color", (0.1, 0.9, 0.2, 1.0))
+                    b.draw(shader)
+                if end_lines:
+                    b = batch_for_shader(shader, 'LINES', {"pos": end_lines})
+                    gpu.state.line_width_set(2.5)
+                    shader.uniform_float("color", (1.0, 0.45, 0.0, 1.0))  # orange = end
+                    b.draw(shader)
+                    b = batch_for_shader(shader, 'POINTS', {"pos": end_dots})
+                    gpu.state.point_size_set(10.0)
+                    shader.uniform_float("color", (1.0, 0.45, 0.0, 1.0))
+                    b.draw(shader)
+
         # ── Active vertex marker — shown for every lane in the group ─────────
         obj = ctx.active_object
         if obj and obj.type == 'CURVE' and obj.name.startswith('ST_') and obj.data.splines:
