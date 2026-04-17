@@ -2,11 +2,11 @@ import bpy
 import math
 from typing import NamedTuple, List
 
-from mathutils import Vector
 from src.game.races.constants_2 import IntersectionType
 from src.integrations.blender.operators.ai_streets import (
     ST_PREFIX,
     _build_curve_object,
+    _get_or_create_ai_streets_collection,
     _set_street_defaults,
     apply_street_color,
     _next_street_name,
@@ -25,7 +25,28 @@ class StreetSpec(NamedTuple):
     traffic_blocked_1: str = "NO"
 
 
-# ── Arc helper ────────────────────────────────────────────────────────────────
+class PresetParams(NamedTuple):
+    """
+    Unified parameter set forwarded to every preset builder.
+
+    length      — total road / arm length
+    split       — vertex spacing (0 = use n_curve for curves, 2 verts for straights)
+    lanes       — number of parallel lanes
+    sep         — centre-to-centre distance between lanes
+    radius      — arc radius for curved presets
+    n_curve     — vertex count on arcs when split = 0
+    lane_width  — arm offset used by fixed-topology junction presets
+    """
+    length:     float
+    split:      float
+    lanes:      int
+    sep:        float
+    radius:     float
+    n_curve:    int
+    lane_width: float
+
+
+# ── Low-level geometry helpers ────────────────────────────────────────────────
 
 def _arc(cx: float, cy: float, radius: float,
          start_deg: float, end_deg: float, n_pts: int, z: float = 0.0) -> List:
@@ -37,257 +58,352 @@ def _arc(cx: float, cy: float, radius: float,
     return pts
 
 
+def _lane_offsets(lanes: int, sep: float) -> List[float]:
+    """Return X offsets for `lanes` parallel tracks centred on 0."""
+    if lanes <= 1:
+        return [0.0]
+    return [(-(lanes - 1) / 2.0 + i) * sep for i in range(lanes)]
+
+
+def _n_linear(length: float, split: float) -> int:
+    if split > 0:
+        return max(2, math.ceil(length / split) + 1)
+    return 2
+
+
+def _n_arc(radius: float, angle_deg: float, split: float, n_default: int) -> int:
+    if split > 0:
+        arc_len = abs(math.radians(angle_deg)) * max(0.01, abs(radius))
+        return max(2, math.ceil(arc_len / split) + 1)
+    return n_default
+
+
+def _straight_pts(length: float, split: float, x_off: float = 0.0) -> List:
+    n = _n_linear(length, split)
+    return [(x_off, length * i / max(1, n - 1), 0.0) for i in range(n)]
+
+
+def _arc_pts(cx: float, cy: float, radius: float,
+             start_deg: float, end_deg: float,
+             angle_deg: float, split: float, n_default: int) -> List:
+    n = _n_arc(radius, angle_deg, split, n_default)
+    return _arc(cx, cy, radius, start_deg, end_deg, n)
+
+
 # ── Preset builders ───────────────────────────────────────────────────────────
-# All coords are in Blender space, relative to cursor.
-# L = arm length, W = lane width, R = turn radius, N = curve points.
-
-def _single_straight(L, W, R, N):
-    return [StreetSpec([(0, 0, 0), (0, L, 0)])]
 
 
-def _two_lane_road(L, W, R, N):
-    hw = W / 2
+# ── Custom / general-purpose ──────────────────────────────────────────────────
+
+def _preset_custom(p: PresetParams):
+    """
+    Fully parametric: straight when radius=0, 90° right-hand curve when radius>0.
+    Respects all lane / split / separator params.
+    """
+    offsets = _lane_offsets(p.lanes, p.sep)
+    if p.radius <= 0:
+        return [StreetSpec(_straight_pts(p.length, p.split, off)) for off in offsets]
     return [
-        StreetSpec([(-hw, 0, 0), (-hw, L, 0)]),   # left lane  → forward
-        StreetSpec([(hw, L, 0),  (hw, 0, 0)]),     # right lane ← backward
+        StreetSpec(_arc_pts(p.radius, 0, max(0.1, p.radius + off),
+                            180, 90, 90, p.split, p.n_curve))
+        for off in offsets
     ]
 
 
-def _four_lane_road(L, W, R, N):
-    specs = []
-    for x in (-3*W/2, -W/2):                       # two left lanes → forward
-        specs.append(StreetSpec([(x, 0, 0), (x, L, 0)]))
-    for x in (W/2, 3*W/2):                         # two right lanes ← backward
-        specs.append(StreetSpec([(x, L, 0), (x, 0, 0)]))
+# ── Straight roads ────────────────────────────────────────────────────────────
+
+def _preset_single_straight(p: PresetParams):
+    """Single centre-line road. Useful as a simple AI path anchor."""
+    return [StreetSpec(_straight_pts(p.length, p.split))]
+
+
+def _preset_road_opposing(p: PresetParams):
+    """
+    N lanes split into two opposing directions (first half forward, second half backward).
+    Uses sep for lane spacing.  Works for 2, 4, 6 … lanes.
+    """
+    offsets = _lane_offsets(p.lanes, p.sep)
+    half    = max(1, len(offsets) // 2)
+    n       = _n_linear(p.length, p.split)
+    ys      = [p.length * i / max(1, n - 1) for i in range(n)]
+    specs   = []
+    for i, off in enumerate(offsets):
+        pts = [(off, y, 0.0) for y in (list(reversed(ys)) if i >= half else ys)]
+        specs.append(StreetSpec(pts))
     return specs
 
 
-def _oneway_3lane(L, W, R, N):
-    return [
-        StreetSpec([(-W,  0, 0), (-W,  L, 0)]),
-        StreetSpec([(0,   0, 0), (0,   L, 0)]),
-        StreetSpec([(W,   0, 0), (W,   L, 0)]),
-    ]
-
-
-def _highway_divided(L, W, R, N):
-    """4-lane divided highway — road_divided flag set on all lanes."""
-    specs = []
-    for x in (-3*W/2, -W/2):
-        specs.append(StreetSpec([(x, 0, 0), (x, L, 0)], road_divided="YES"))
-    for x in (W/2, 3*W/2):
-        specs.append(StreetSpec([(x, L, 0), (x, 0, 0)], road_divided="YES"))
+def _preset_highway_divided(p: PresetParams):
+    """Opposing lanes with road_divided=YES — for highways and dual-carriageways."""
+    offsets = _lane_offsets(p.lanes, p.sep)
+    half    = max(1, len(offsets) // 2)
+    n       = _n_linear(p.length, p.split)
+    ys      = [p.length * i / max(1, n - 1) for i in range(n)]
+    specs   = []
+    for i, off in enumerate(offsets):
+        pts = [(off, y, 0.0) for y in (list(reversed(ys)) if i >= half else ys)]
+        specs.append(StreetSpec(pts, road_divided="YES"))
     return specs
 
 
-def _alley(L, W, R, N):
-    return [StreetSpec([(0, 0, 0), (0, L, 0)], alley="YES")]
+def _preset_alley(p: PresetParams):
+    """Single narrow passage with alley flag."""
+    return [StreetSpec(_straight_pts(p.length, p.split), alley="YES")]
 
 
-def _dead_end(L, W, R, N):
+def _preset_dead_end(p: PresetParams):
+    """Dead end / cul-de-sac — STOP intersections at both ends."""
     return [StreetSpec(
-        [(0, 0, 0), (0, L, 0)],
+        _straight_pts(p.length, p.split),
         intersection_0=str(IntersectionType.STOP),
         intersection_1=str(IntersectionType.STOP),
     )]
 
 
-def _t_junction(L, W, R, N):
-    """Three arms: North, East, West — meeting at cursor."""
+def _preset_oneway(p: PresetParams):
+    """N parallel lanes all travelling the same direction (one-way street)."""
+    return [StreetSpec(_straight_pts(p.length, p.split, off))
+            for off in _lane_offsets(p.lanes, p.sep)]
+
+
+# ── Junctions (topology-fixed — lanes/split intentionally ignored) ────────────
+
+def _preset_t_junction(p: PresetParams):
+    """Simple 3-arm T: forward (N), right (E), left (W)."""
+    L = p.length
     return [
-        StreetSpec([(0,  0, 0), (0,  L, 0)]),    # North
-        StreetSpec([(0,  0, 0), (L,  0, 0)]),    # East
-        StreetSpec([(-L, 0, 0), (0,  0, 0)]),    # West → center
+        StreetSpec([(0,  0, 0), (0,  L, 0)]),
+        StreetSpec([(0,  0, 0), (L,  0, 0)]),
+        StreetSpec([(-L, 0, 0), (0,  0, 0)]),
     ]
 
 
-def _four_way(L, W, R, N):
-    """Four arms N / S / E / W meeting at cursor."""
+def _preset_t_junction_2lane(p: PresetParams):
+    """T-junction with two opposing lanes per arm (uses lane_width for arm spacing)."""
+    L, hw = p.length, p.lane_width / 2
     return [
-        StreetSpec([(0,  0, 0), (0,  L, 0)]),   # North
-        StreetSpec([(0, -L, 0), (0,  0, 0)]),   # South → center
-        StreetSpec([(0,  0, 0), (L,  0, 0)]),   # East
-        StreetSpec([(-L, 0, 0), (0,  0, 0)]),   # West → center
+        StreetSpec([(-hw, 0, 0), (-hw, L, 0)]),
+        StreetSpec([(hw,  L, 0), (hw,  0, 0)]),
+        StreetSpec([(0,  hw, 0), (L,   hw, 0)]),
+        StreetSpec([(L, -hw, 0), (0,  -hw, 0)]),
+        StreetSpec([(-L, -hw, 0), (0, -hw, 0)]),
+        StreetSpec([(0,   hw, 0), (-L, hw, 0)]),
     ]
 
 
-def _y_junction(L, W, R, N):
-    """Three arms at 120° angles (Y shape, north branch pointing up)."""
-    specs = []
-    for deg in (90, 210, 330):
-        a = math.radians(deg)
-        specs.append(StreetSpec([(0, 0, 0), (math.cos(a)*L, math.sin(a)*L, 0)]))
-    return specs
-
-
-def _six_way(L, W, R, N):
-    """Six arms at 60° (star / asterisk pattern)."""
-    specs = []
-    for i in range(6):
-        a = math.radians(90 + i * 60)
-        specs.append(StreetSpec([(0, 0, 0), (math.cos(a)*L, math.sin(a)*L, 0)]))
-    return specs
-
-
-def _diagonal_cross(L, W, R, N):
-    """Four arms at 45° diagonals (× shape)."""
-    specs = []
-    for deg in (45, 135, 225, 315):
-        a = math.radians(deg)
-        specs.append(StreetSpec([(0, 0, 0), (math.cos(a)*L, math.sin(a)*L, 0)]))
-    return specs
-
-
-def _curve_90_right(L, W, R, N):
-    """Single lane curving 90° to the right (north → east)."""
-    # Arc centre (R, 0), starts at 180° (west of centre = origin), ends at 90° (north of centre)
-    return [StreetSpec(_arc(R, 0, R, 180, 90, N))]
-
-
-def _curve_90_left(L, W, R, N):
-    """Single lane curving 90° to the left (north → west)."""
-    # Arc centre (-R, 0), starts at 0°, ends at 90°
-    return [StreetSpec(_arc(-R, 0, R, 0, 90, N))]
-
-
-def _curve_45_right(L, W, R, N):
-    """Single lane curving 45° to the right."""
-    pts = _arc(R, 0, R, 180, 135, max(3, (N + 1) // 2))
-    return [StreetSpec(pts)]
-
-
-def _two_lane_curve_90(L, W, R, N):
-    """Two parallel lanes both making a 90° right curve."""
-    left_pts  = _arc(R, 0, R - W/2, 180,  90, N)   # inner (tighter)
-    right_pts = _arc(R, 0, R + W/2,  90, 180, N)   # outer, reversed direction
+def _preset_four_way(p: PresetParams):
+    """4-way cross: N, S, E, W arms from cursor."""
+    L = p.length
     return [
-        StreetSpec(left_pts),
-        StreetSpec(right_pts),
+        StreetSpec([(0,  0, 0), (0,  L, 0)]),
+        StreetSpec([(0, -L, 0), (0,  0, 0)]),
+        StreetSpec([(0,  0, 0), (L,  0, 0)]),
+        StreetSpec([(-L, 0, 0), (0,  0, 0)]),
     ]
 
 
-def _s_curve(L, W, R, N):
-    """Single lane making an S-shape (right then left curve)."""
-    half = max(3, (N + 1) // 2)
-    # First arc: right turn.  Centre (R, 0), 180° → 90°.  Ends at (R, R).
-    pts1 = _arc(R, 0,    R, 180,  90, half)
-    # Second arc: left turn.  Centre (R, 2R), 270° → 360°.  Starts at (R, R).
-    pts2 = _arc(R, 2*R,  R, 270, 360, half)[1:]   # skip duplicate join point
-    return [StreetSpec(pts1 + list(pts2))]
+def _preset_four_way_2lane(p: PresetParams):
+    """4-way with two opposing lanes per arm."""
+    L, hw = p.length, p.lane_width / 2
+    return [
+        StreetSpec([(-hw, -L, 0), (-hw, L, 0)]),
+        StreetSpec([(hw,   L, 0), (hw, -L, 0)]),
+        StreetSpec([(-L,  hw, 0), (L,   hw, 0)]),
+        StreetSpec([(L,  -hw, 0), (-L, -hw, 0)]),
+    ]
 
 
-def _hairpin(L, W, R, N):
-    """180° hairpin turn — goes north, curves back south."""
-    return [StreetSpec(_arc(R, 0, R, 180, 0, N))]
+def _preset_y_junction(p: PresetParams):
+    """Y-junction: 3 arms at 120° angles."""
+    L = p.length
+    return [
+        StreetSpec([(0, 0, 0), (math.cos(math.radians(a)) * L,
+                                math.sin(math.radians(a)) * L, 0)])
+        for a in (90, 210, 330)
+    ]
 
 
-def _roundabout(L, W, R, N):
-    """Circular ring road + 4 entry/exit arms (N/E/S/W)."""
+def _preset_six_way(p: PresetParams):
+    """6-arm star at 60° intervals."""
+    L = p.length
+    return [
+        StreetSpec([(0, 0, 0), (math.cos(math.radians(90 + i * 60)) * L,
+                                math.sin(math.radians(90 + i * 60)) * L, 0)])
+        for i in range(6)
+    ]
+
+
+def _preset_diagonal_cross(p: PresetParams):
+    """4 arms at 45° diagonals."""
+    L = p.length
+    return [
+        StreetSpec([(0, 0, 0), (math.cos(math.radians(d)) * L,
+                                math.sin(math.radians(d)) * L, 0)])
+        for d in (45, 135, 225, 315)
+    ]
+
+
+# ── Curves (respect lanes, sep, split, radius, n_curve) ───────────────────────
+
+def _preset_curve_90_right(p: PresetParams):
+    """N→E (90° right). Multi-lane: each lane gets its own arc radius."""
+    R = max(5.0, p.radius)
+    return [
+        StreetSpec(_arc_pts(R, 0, max(0.1, R + off), 180, 90, 90, p.split, p.n_curve))
+        for off in _lane_offsets(p.lanes, p.sep)
+    ]
+
+
+def _preset_curve_90_left(p: PresetParams):
+    """N→W (90° left)."""
+    R = max(5.0, p.radius)
+    return [
+        StreetSpec(_arc_pts(-R, 0, max(0.1, R + off), 0, 90, 90, p.split, p.n_curve))
+        for off in _lane_offsets(p.lanes, p.sep)
+    ]
+
+
+def _preset_curve_45_right(p: PresetParams):
+    """45° right-hand curve."""
+    R = max(5.0, p.radius)
+    half = max(3, p.n_curve // 2 + 1)
+    return [
+        StreetSpec(_arc_pts(R, 0, max(0.1, R + off), 180, 135, 45, p.split, half))
+        for off in _lane_offsets(p.lanes, p.sep)
+    ]
+
+
+def _preset_curve_180(p: PresetParams):
+    """180° U-turn / hairpin."""
+    R = max(5.0, p.radius)
+    return [
+        StreetSpec(_arc_pts(R, 0, max(0.1, R + off), 180, 0, 180, p.split, p.n_curve))
+        for off in _lane_offsets(p.lanes, p.sep)
+    ]
+
+
+def _preset_s_curve(p: PresetParams):
+    """Right-then-left S-bend."""
+    R    = max(5.0, p.radius)
+    half = max(3, p.n_curve // 2 + 1)
     specs = []
+    for off in _lane_offsets(p.lanes, p.sep):
+        r    = max(0.1, R + off)
+        pts1 = _arc_pts(R, 0,    r, 180,  90, 90, p.split, half)
+        pts2 = _arc_pts(R, 2*R,  r, 270, 360, 90, p.split, half)[1:]
+        specs.append(StreetSpec(pts1 + list(pts2)))
+    return specs
 
-    # Ring: closed circle approximated with 12 vertices
-    n_ring = max(8, N + 4)
+
+def _preset_roundabout(p: PresetParams):
+    """Circular ring road with 4 entry/exit arms."""
+    R, L   = max(5.0, p.radius), p.length
+    n_ring = max(8, p.n_curve + 4)
     ring_pts = [
         (R * math.cos(math.radians(360 * i / n_ring)),
-         R * math.sin(math.radians(360 * i / n_ring)),
-         0.0)
-        for i in range(n_ring + 1)   # +1 closes the loop
+         R * math.sin(math.radians(360 * i / n_ring)), 0.0)
+        for i in range(n_ring + 1)
     ]
-    specs.append(StreetSpec(ring_pts))
-
-    # 4 entry arms
-    arm = L * 0.4
-    for deg in (90, 0, 270, 180):   # N, E, S, W
+    specs = [StreetSpec(ring_pts)]
+    arm = max(L * 0.4, 10.0)
+    for deg in (90, 0, 270, 180):
         a  = math.radians(deg)
-        ex, ey = R * math.cos(a),       R * math.sin(a)
+        ex, ey = R * math.cos(a),         R * math.sin(a)
         ox, oy = (R + arm) * math.cos(a), (R + arm) * math.sin(a)
         specs.append(StreetSpec([(ox, oy, 0), (ex, ey, 0)]))
-
     return specs
 
 
-def _t_junction_2lane(L, W, R, N):
-    """T-junction with 2 lanes per arm (6 streets total)."""
-    hw = W / 2
-    specs = []
-    # North arm (2 lanes)
-    specs.append(StreetSpec([(-hw, 0, 0), (-hw, L, 0)]))
-    specs.append(StreetSpec([(hw,  L, 0), (hw,  0, 0)]))
-    # East arm
-    specs.append(StreetSpec([(0,  hw, 0), (L,  hw, 0)]))
-    specs.append(StreetSpec([(L, -hw, 0), (0, -hw, 0)]))
-    # West arm
-    specs.append(StreetSpec([(-L, -hw, 0), (0, -hw, 0)]))
-    specs.append(StreetSpec([(0,   hw, 0), (-L, hw, 0)]))
-    return specs
-
-
-def _four_way_2lane(L, W, R, N):
-    """4-way junction with 2 lanes per arm (8 streets total)."""
-    hw = W / 2
-    specs = []
-    # N/S axis
-    specs.append(StreetSpec([(-hw, -L, 0), (-hw, L, 0)]))
-    specs.append(StreetSpec([(hw,   L, 0), (hw, -L, 0)]))
-    # E/W axis
-    specs.append(StreetSpec([(-L, hw, 0), (L,  hw, 0)]))
-    specs.append(StreetSpec([(L, -hw, 0), (-L, -hw, 0)]))
-    return specs
-
-
-# ── Registry ──────────────────────────────────────────────────────────────────
+# ── Preset registry ───────────────────────────────────────────────────────────
 
 _BUILDERS = {
-    "SINGLE":         _single_straight,
-    "2_LANE":         _two_lane_road,
-    "4_LANE":         _four_lane_road,
-    "ONEWAY_3":       _oneway_3lane,
-    "HIGHWAY":        _highway_divided,
-    "ALLEY":          _alley,
-    "DEAD_END":       _dead_end,
-    "T_JUNCTION":     _t_junction,
-    "T_JUNC_2L":      _t_junction_2lane,
-    "4_WAY":          _four_way,
-    "4_WAY_2L":       _four_way_2lane,
-    "Y_JUNCTION":     _y_junction,
-    "6_WAY":          _six_way,
-    "DIAGONAL_X":     _diagonal_cross,
-    "CURVE_90R":      _curve_90_right,
-    "CURVE_90L":      _curve_90_left,
-    "CURVE_45R":      _curve_45_right,
-    "2LANE_CURVE90":  _two_lane_curve_90,
-    "S_CURVE":        _s_curve,
-    "HAIRPIN":        _hairpin,
-    "ROUNDABOUT":     _roundabout,
+    # ── General
+    "CUSTOM":         _preset_custom,
+    # ── Straight roads
+    "SINGLE":         _preset_single_straight,
+    "OPPOSING":       _preset_road_opposing,
+    "ONEWAY":         _preset_oneway,
+    "HIGHWAY":        _preset_highway_divided,
+    "ALLEY":          _preset_alley,
+    "DEAD_END":       _preset_dead_end,
+    # ── Junctions
+    "T_JUNCTION":     _preset_t_junction,
+    "T_JUNC_2L":      _preset_t_junction_2lane,
+    "FOUR_WAY":       _preset_four_way,
+    "FOUR_WAY_2L":    _preset_four_way_2lane,
+    "Y_JUNCTION":     _preset_y_junction,
+    "SIX_WAY":        _preset_six_way,
+    "DIAGONAL_X":     _preset_diagonal_cross,
+    # ── Curves
+    "CURVE_90R":      _preset_curve_90_right,
+    "CURVE_90L":      _preset_curve_90_left,
+    "CURVE_45R":      _preset_curve_45_right,
+    "CURVE_180":      _preset_curve_180,
+    "S_CURVE":        _preset_s_curve,
+    # ── Complex
+    "ROUNDABOUT":     _preset_roundabout,
 }
 
 ST_PRESET_ITEMS = [
+    # ── General ───────────────────────────────────────────────────────────────
+    ("CUSTOM",      "★ Custom",                    "Straight (radius=0) or curved (radius>0) — all params apply"),
     # ── Straight ──────────────────────────────────────────────────────────────
-    ("SINGLE",        "Single Street",         "One straight street, 2 vertices"),
-    ("2_LANE",        "2-Lane Road",           "Two parallel streets, opposing directions"),
-    ("4_LANE",        "4-Lane Road",           "Four parallel streets (2 each direction)"),
-    ("ONEWAY_3",      "One-Way 3-Lane",        "Three lanes all in the same direction"),
-    ("HIGHWAY",       "Highway (Divided)",     "4 lanes, road_divided flag set on all"),
-    ("ALLEY",         "Alley",                 "Single narrow street, alley flag set"),
-    ("DEAD_END",      "Dead End / Cul-de-sac", "Street with Stop intersection at both ends"),
+    ("SINGLE",      "Single Lane",                  "One centre-line AI path"),
+    ("OPPOSING",    "Opposing Lanes",               "N lanes split into two opposing directions"),
+    ("ONEWAY",      "One-Way (N lanes)",             "N parallel lanes all going the same direction"),
+    ("HIGHWAY",     "Highway (Divided)",             "Opposing lanes with road_divided flag"),
+    ("ALLEY",       "Alley",                         "Single-lane narrow passage, alley flag set"),
+    ("DEAD_END",    "Dead End",                      "Single lane, STOP intersections at both ends"),
     # ── Junctions ─────────────────────────────────────────────────────────────
-    ("T_JUNCTION",    "T-Junction",            "3 arms: N, E, W from cursor"),
-    ("T_JUNC_2L",     "T-Junction (2-lane)",   "T-junction with 2 lanes per arm (6 streets)"),
-    ("4_WAY",         "4-Way Junction",        "4 arms N/S/E/W from cursor"),
-    ("4_WAY_2L",      "4-Way Junction (2-lane)","4-way with 2 lanes per arm (8 streets)"),
-    ("Y_JUNCTION",    "Y-Junction",            "3 arms at 120° angles"),
-    ("6_WAY",         "6-Way Star",            "6 arms at 60° angles"),
-    ("DIAGONAL_X",    "Diagonal Cross (×)",    "4 arms at 45° diagonals"),
+    ("T_JUNCTION",  "T-Junction",                   "3 arms: N, E, W from cursor"),
+    ("T_JUNC_2L",   "T-Junction (2-lane)",           "T with two opposing lanes per arm"),
+    ("FOUR_WAY",    "4-Way Junction",               "4 arms: N/S/E/W from cursor"),
+    ("FOUR_WAY_2L", "4-Way Junction (2-lane)",       "4-way with two opposing lanes per arm"),
+    ("Y_JUNCTION",  "Y-Junction",                   "3 arms at 120°"),
+    ("SIX_WAY",     "6-Way Star",                   "6 arms at 60° intervals"),
+    ("DIAGONAL_X",  "Diagonal Cross (×)",           "4 arms at 45° diagonals"),
     # ── Curves ────────────────────────────────────────────────────────────────
-    ("CURVE_90R",     "Curve 90° Right",       "Single street curving 90° right (N→E)"),
-    ("CURVE_90L",     "Curve 90° Left",        "Single street curving 90° left (N→W)"),
-    ("CURVE_45R",     "Curve 45° Right",       "Single street curving 45° right"),
-    ("2LANE_CURVE90", "2-Lane Curve 90°",      "Two parallel lanes both turning 90° right"),
-    ("S_CURVE",       "S-Curve",               "Street curving right then left"),
-    ("HAIRPIN",       "Hairpin (180°)",        "Street that U-turns back on itself"),
+    ("CURVE_90R",   "Curve 90° Right",              "N→E; lanes, sep, radius, split all apply"),
+    ("CURVE_90L",   "Curve 90° Left",               "N→W; lanes, sep, radius, split all apply"),
+    ("CURVE_45R",   "Curve 45° Right",              "Shallow right; lanes + split + radius"),
+    ("CURVE_180",   "Curve 180° (U-turn)",          "Full hairpin; lanes + split + radius"),
+    ("S_CURVE",     "S-Curve",                      "Right-then-left bend; lanes + split + radius"),
     # ── Complex ───────────────────────────────────────────────────────────────
-    ("ROUNDABOUT",    "Roundabout",            "Circular ring road with 4 entry/exit arms"),
+    ("ROUNDABOUT",  "Roundabout",                   "Circular ring + 4 entry/exit arms"),
 ]
+
+
+# ── Helpers ───────────────────────────────────────────────────────────────────
+
+def _get_or_create_preset_subcollection(key: str) -> bpy.types.Collection:
+    """Create a numbered child collection inside 'AI Streets' for one spawn batch."""
+    parent = _get_or_create_ai_streets_collection()
+    i = 1
+    while True:
+        name = f"{key}_{i:03d}"
+        if name not in bpy.data.collections:
+            break
+        i += 1
+    col = bpy.data.collections.new(name)
+    parent.children.link(col)
+    return col
+
+
+def _apply_converge(specs: list, start: bool, end: bool) -> list:
+    """Pin all lane endpoints to the centre lane's start and/or end point."""
+    if not specs or (not start and not end):
+        return specs
+    ci = len(specs) // 2
+    cv = list(specs[ci].vertices)
+    out = []
+    for spec in specs:
+        verts = list(spec.vertices)
+        if start:
+            verts[0]  = cv[0]
+        if end:
+            verts[-1] = cv[-1]
+        out.append(spec._replace(vertices=verts))
+    return out
 
 
 # ── Operator ──────────────────────────────────────────────────────────────────
@@ -307,29 +423,46 @@ class OBJECT_OT_SpawnStreetPreset(bpy.types.Operator):
             self.report({"ERROR"}, f"Unknown street preset: {key}")
             return {"CANCELLED"}
 
-        L = scene.st_preset_length
-        W = scene.st_preset_lane_width
-        R = scene.st_preset_turn_radius
-        N = scene.st_preset_curve_points
+        params = PresetParams(
+            length     = scene.st_preset_length,
+            split      = scene.st_preset_length_split,
+            lanes      = scene.st_preset_lanes,
+            sep        = scene.st_preset_lane_separator,
+            radius     = scene.st_preset_turn_radius,
+            n_curve    = scene.st_preset_curve_points,
+            lane_width = scene.st_preset_lane_width,
+        )
 
-        specs   = builder(L, W, R, N)
+        specs = builder(params)
+
+        # Converge endpoints to centre lane
+        specs = _apply_converge(
+            specs,
+            start = scene.st_preset_converge_start,
+            end   = scene.st_preset_converge_end,
+        )
+
+        # Sub-collection groups this spawn batch in the Outliner
+        sub_col    = _get_or_create_preset_subcollection(key)
+        grouped    = scene.st_preset_grouped
+        group_name = sub_col.name if grouped else ""
+
         cursor  = context.scene.cursor.location
         created = []
 
         for spec in specs:
+            if len(spec.vertices) < 2:
+                continue
             name = _next_street_name(scene)
-            # Offset each vertex by cursor position
             world_pts = [
                 (cursor.x + v[0], cursor.y + v[1], cursor.z + v[2])
                 for v in spec.vertices
             ]
-            if len(world_pts) < 2:
-                continue
-
-            obj = _build_curve_object(f"{ST_PREFIX}{name}", world_pts, context)
+            obj = _build_curve_object(f"{ST_PREFIX}{name}", world_pts, context,
+                                      collection=sub_col)
             _set_street_defaults(obj)
 
-            # Apply per-spec overrides
+            obj.st_group_name        = group_name
             obj.st_intersection_0    = spec.intersection_0
             obj.st_intersection_1    = spec.intersection_1
             obj.st_road_divided      = spec.road_divided
@@ -346,7 +479,8 @@ class OBJECT_OT_SpawnStreetPreset(bpy.types.Operator):
         if created:
             context.view_layer.objects.active = created[0]
 
-        self.report({"INFO"}, f"Spawned {len(created)} street(s) from preset '{key}'")
+        label = f"grouped as '{group_name}'" if grouped else f"{len(created)} street(s)"
+        self.report({"INFO"}, f"Spawned {len(created)} street(s) → '{sub_col.name}' ({label})")
         return {"FINISHED"}
 
 

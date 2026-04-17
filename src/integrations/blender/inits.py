@@ -72,6 +72,7 @@ OBJECT_PROPERTIES = [
     "tile_x", "tile_y", "angle_degrees", "texture_name",
     "cell_type", "material_index", "always_visible", "sort_vertices",
     # Street properties
+    "st_group_name",
     "st_intersection_0", "st_intersection_1",
     "st_stop_light_name_0", "st_stop_light_name_1",
     "st_traffic_blocked_0", "st_traffic_blocked_1",
@@ -137,6 +138,7 @@ SCENE_PROPERTIES = [
     "pc_rand_count",
     # Street Editor — vertex tools
     "st_sl_pos_expanded",
+    "st_show_arrows",
     "st_vertex_index",
     "st_extend_length",
     "st_extend_angle",
@@ -146,6 +148,12 @@ SCENE_PROPERTIES = [
     "st_preset_lane_width",
     "st_preset_turn_radius",
     "st_preset_curve_points",
+    "st_preset_length_split",
+    "st_preset_lanes",
+    "st_preset_lane_separator",
+    "st_preset_grouped",
+    "st_preset_converge_start",
+    "st_preset_converge_end",
 ]
 
 
@@ -194,6 +202,11 @@ def register_object_properties() -> None:
 
 
 def register_street_properties() -> None:
+    bpy.types.Object.st_group_name = bpy.props.StringProperty(
+        name="Group Name",
+        description="If set, this street exports together with others sharing this name (multi-lane format)",
+        default="",
+    )
     bpy.types.Object.st_intersection_0 = bpy.props.EnumProperty(
         name="Intersection Type (Start)",
         items=INTERSECTION_TYPE_ITEMS,
@@ -416,6 +429,11 @@ def register_scene_properties() -> None:
         description="Expand stop light position fields",
         default=False,
     )
+    bpy.types.Scene.st_show_arrows = bpy.props.BoolProperty(
+        name="Show Direction Arrows",
+        description="Show travel-direction chevrons on all streets in the 3D viewport",
+        default=True,
+    )
     bpy.types.Scene.st_vertex_index = bpy.props.IntProperty(
         name="Active Vertex",
         description="Index of the active vertex for insert / delete / move operations",
@@ -437,27 +455,57 @@ def register_scene_properties() -> None:
         name="Street Preset",
         description="AI street preset to spawn",
         items=ST_PRESET_ITEMS,
-        default="SINGLE",
+        default="CUSTOM",
     )
     bpy.types.Scene.st_preset_length = bpy.props.FloatProperty(
         name="Preset Length",
-        description="Length of each arm / straight segment in the preset",
-        default=40.0, min=5.0, soft_max=500.0,
+        description="Total length of the road or arm",
+        default=80.0, min=5.0, soft_max=500.0,
     )
     bpy.types.Scene.st_preset_lane_width = bpy.props.FloatProperty(
         name="Lane Width",
-        description="Width of each lane (used for multi-lane presets)",
+        description="Width used by fixed topology presets (T/X junctions)",
         default=5.0, min=1.0, soft_max=20.0,
     )
     bpy.types.Scene.st_preset_turn_radius = bpy.props.FloatProperty(
         name="Turn Radius",
-        description="Radius of curved presets (roundabout ring, 90° curves, etc.)",
-        default=20.0, min=3.0, soft_max=200.0,
+        description="Arc radius for curved presets (0 = straight)",
+        default=0.0, min=0.0, soft_max=200.0,
     )
     bpy.types.Scene.st_preset_curve_points = bpy.props.IntProperty(
-        name="Curve Points",
-        description="Number of vertices used to approximate curves",
+        name="Vertex Count",
+        description="Vertices on a curve when Split Length = 0",
         default=7, min=3, max=32,
+    )
+    bpy.types.Scene.st_preset_length_split = bpy.props.FloatProperty(
+        name="Split Length",
+        description="Vertex spacing along the road (0 = use Vertex Count for curves)",
+        default=10.0, min=0.0, soft_max=50.0,
+    )
+    bpy.types.Scene.st_preset_lanes = bpy.props.IntProperty(
+        name="Lanes",
+        description="Number of parallel lane streets to generate",
+        default=3, min=1, max=8,
+    )
+    bpy.types.Scene.st_preset_lane_separator = bpy.props.FloatProperty(
+        name="Lane Separator",
+        description="Center-to-center distance between parallel lanes",
+        default=5.0, min=0.5, soft_max=30.0,
+    )
+    bpy.types.Scene.st_preset_grouped = bpy.props.BoolProperty(
+        name="Grouped Street",
+        description="Export all lanes as one multi-lane street dict (lanes format) instead of separate streets",
+        default=False,
+    )
+    bpy.types.Scene.st_preset_converge_start = bpy.props.BoolProperty(
+        name="Converge Start",
+        description="Pin all lane start-points to the centre lane's start point",
+        default=False,
+    )
+    bpy.types.Scene.st_preset_converge_end = bpy.props.BoolProperty(
+        name="Converge End",
+        description="Pin all lane end-points to the centre lane's end point",
+        default=False,
     )
 
 

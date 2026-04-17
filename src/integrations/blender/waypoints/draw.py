@@ -1,5 +1,6 @@
 """
-Draw waypoint path lines and CnR markers in the 3D viewport.
+Draw waypoint path lines, CnR markers, street direction arrows, and the
+active vertex highlight in the 3D viewport.
 Registered via draw_handler_add on Blender startup (inits.py).
 """
 import bpy
@@ -7,18 +8,18 @@ import gpu
 from gpu_extras.batch import batch_for_shader
 from mathutils import Vector
 
-_draw_handler        = None
-_draw_handler_street = None
+_draw_handler        = None   # POST_VIEW  — waypoint/CnR lines
+_draw_handler_street = None   # POST_VIEW  — street arrows + vertex marker
 
+
+# ── Waypoint / CnR path lines (POST_VIEW, world-space coordinates) ────────────
 
 def _draw_waypoint_paths() -> None:
-    # Respect the user's toggle
     try:
         if not bpy.context.scene.wp_show_paths:
             return
     except AttributeError:
-        pass  # property not yet registered — draw anyway
-    # Gather WP_ objects sorted by name (which encodes race + index)
+        pass
     wps = sorted(
         (o for o in bpy.data.objects if o.name.startswith("WP_")),
         key=lambda o: o.name,
@@ -27,11 +28,9 @@ def _draw_waypoint_paths() -> None:
 
     # ── Race waypoint lines ───────────────────────────────────────────────────
     if len(wps) >= 2:
-        # Group by race key (everything before the last '-N' index)
         from collections import defaultdict
         groups: dict = defaultdict(list)
         for obj in wps:
-            # Name format: WP_BLZ_0-3  → key = WP_BLZ_0
             parts = obj.name.rsplit("-", 1)
             key   = parts[0] if len(parts) == 2 and parts[1].isdigit() else obj.name
             try:
@@ -53,11 +52,11 @@ def _draw_waypoint_paths() -> None:
             gpu.state.line_width_set(2.0)
             gpu.state.blend_set("ALPHA")
             shader.bind()
-            shader.uniform_float("color", (1.0, 0.85, 0.0, 0.85))  # yellow
+            shader.uniform_float("color", (1.0, 0.85, 0.0, 0.85))
             batch.draw(shader)
             gpu.state.blend_set("NONE")
 
-    # ── CnR connection lines (Bank→Gold→Robber per set) ───────────────────────
+    # ── CnR connection lines ──────────────────────────────────────────────────
     if cnr:
         from collections import defaultdict
         sets: dict = defaultdict(dict)
@@ -84,63 +83,114 @@ def _draw_waypoint_paths() -> None:
             gpu.state.line_width_set(1.5)
             gpu.state.blend_set("ALPHA")
             shader.bind()
-            shader.uniform_float("color", (0.4, 0.8, 1.0, 0.7))  # light blue
+            shader.uniform_float("color", (0.4, 0.8, 1.0, 0.7))
             batch.draw(shader)
             gpu.state.blend_set("NONE")
 
 
-def _draw_active_street_vertex() -> None:
-    """Draw a purple crosshair on the currently active street vertex."""
+# ── Street direction arrows + active vertex (POST_VIEW, world-space) ──────────
+#
+# Both elements use absolute world-unit sizes so they remain constant
+# regardless of viewport zoom level.
+
+def _draw_street_overlays() -> None:
     try:
         ctx = bpy.context
-        obj = ctx.active_object
-        if not (obj and obj.type == 'CURVE' and obj.name.startswith('ST_')):
-            return
-        if not obj.data.splines:
+        if ctx.region is None or ctx.region_data is None:
             return
 
-        # Rebuild vertex list inline to avoid circular imports
-        verts = []
-        for i, sp in enumerate(obj.data.splines):
-            if i == 0:
-                verts.append(obj.matrix_world @ Vector(sp.points[0].co[:3]))
-            verts.append(obj.matrix_world @ Vector(sp.points[1].co[:3]))
+        rv3d = ctx.region_data
 
-        if not verts:
-            return
-
-        n   = len(verts)
-        idx = max(0, min(ctx.scene.st_vertex_index, n - 1))
-        v   = verts[idx]
+        # Screen-aligned unit vectors in world space — used for the crosshair
+        # so it always faces the camera while staying world-unit sized.
+        view_inv  = rv3d.view_matrix.inverted()
+        cam_right = Vector(view_inv.col[0][:3]).normalized()
+        cam_up    = Vector(view_inv.col[1][:3]).normalized()
 
         shader = gpu.shader.from_builtin("UNIFORM_COLOR")
         shader.bind()
         gpu.state.blend_set("ALPHA")
 
-        # Filled dot
-        batch_pt = batch_for_shader(shader, 'POINTS', {"pos": [(v.x, v.y, v.z)]})
-        gpu.state.point_size_set(16.0)
-        shader.uniform_float("color", (0.65, 0.0, 1.0, 1.0))   # vivid purple
-        batch_pt.draw(shader)
+        # ── Direction arrows ──────────────────────────────────────────────────
+        try:
+            show_arrows = ctx.scene.st_show_arrows
+        except AttributeError:
+            show_arrows = True
 
-        # Crosshair lines
-        S = 3.0
-        cross = [
-            (v.x - S, v.y,     v.z), (v.x + S, v.y,     v.z),
-            (v.x,     v.y - S, v.z), (v.x,     v.y + S, v.z),
-        ]
-        batch_ln = batch_for_shader(shader, 'LINES', {"pos": cross})
-        gpu.state.line_width_set(2.5)
-        shader.uniform_float("color", (0.65, 0.0, 1.0, 0.75))
-        batch_ln.draw(shader)
+        if show_arrows:
+            S    = 2.0                      # chevron arm length (world units)
+            Z_UP = Vector((0.0, 0.0, 1.0))
+            all_arrow_lines = []
+
+            for obj in bpy.data.objects:
+                if obj.type != 'CURVE' or not obj.name.startswith('ST_'):
+                    continue
+                for sp in obj.data.splines:
+                    p0 = obj.matrix_world @ Vector(sp.points[0].co[:3])
+                    p1 = obj.matrix_world @ Vector(sp.points[1].co[:3])
+                    seg     = p1 - p0
+                    seg_len = seg.length
+                    if seg_len < 0.01:
+                        continue
+                    fwd  = seg / seg_len
+                    perp = fwd.cross(Z_UP)
+                    if perp.length_squared < 0.001:
+                        perp = fwd.cross(Vector((0.0, 1.0, 0.0)))
+                    perp = perp.normalized()
+
+                    # Chevron tip at 70 % along the segment
+                    mid  = p0 + 0.70 * seg
+                    tip  = mid + fwd  * S
+                    left = mid - fwd  * S + perp * S
+                    rig  = mid - fwd  * S - perp * S
+                    all_arrow_lines += [tip, left, tip, rig]
+
+            if all_arrow_lines:
+                batch = batch_for_shader(shader, 'LINES', {"pos": all_arrow_lines})
+                gpu.state.line_width_set(2.0)
+                shader.uniform_float("color", (1.0, 1.0, 1.0, 0.7))
+                batch.draw(shader)
+
+        # ── Active vertex marker ──────────────────────────────────────────────
+        obj = ctx.active_object
+        if obj and obj.type == 'CURVE' and obj.name.startswith('ST_') and obj.data.splines:
+
+            verts = []
+            for i, sp in enumerate(obj.data.splines):
+                if i == 0:
+                    verts.append(obj.matrix_world @ Vector(sp.points[0].co[:3]))
+                verts.append(obj.matrix_world @ Vector(sp.points[1].co[:3]))
+
+            if verts:
+                n   = len(verts)
+                idx = max(0, min(ctx.scene.st_vertex_index, n - 1))
+                v   = verts[idx]
+                C   = 2.0   # crosshair arm length (world units)
+
+                # Screen-facing cross so it reads cleanly from any view angle
+                cross = [
+                    v - cam_right * C, v + cam_right * C,
+                    v - cam_up    * C, v + cam_up    * C,
+                ]
+                batch_c = batch_for_shader(shader, 'LINES', {"pos": cross})
+                gpu.state.line_width_set(2.5)
+                shader.uniform_float("color", (0.65, 0.0, 1.0, 1.0))
+                batch_c.draw(shader)
+
+                batch_d = batch_for_shader(shader, 'POINTS', {"pos": [v]})
+                gpu.state.point_size_set(8.0)
+                shader.uniform_float("color", (0.65, 0.0, 1.0, 1.0))
+                batch_d.draw(shader)
 
         gpu.state.blend_set("NONE")
-        gpu.state.point_size_set(1.0)
         gpu.state.line_width_set(1.0)
+        gpu.state.point_size_set(1.0)
 
     except Exception:
         pass
 
+
+# ── Registration ──────────────────────────────────────────────────────────────
 
 def register_draw_handler() -> None:
     global _draw_handler, _draw_handler_street
@@ -150,7 +200,7 @@ def register_draw_handler() -> None:
         )
     if _draw_handler_street is None:
         _draw_handler_street = bpy.types.SpaceView3D.draw_handler_add(
-            _draw_active_street_vertex, (), "WINDOW", "POST_VIEW"
+            _draw_street_overlays, (), "WINDOW", "POST_VIEW"   # world-space sizes
         )
 
 

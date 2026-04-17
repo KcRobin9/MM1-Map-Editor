@@ -102,6 +102,10 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
         row.operator("object.move_street_vertex_to_cursor", text="Move to Cursor", icon='CURSOR')
         row.operator("object.delete_street_vertex",         text="Delete",         icon='X')
 
+        # ── Street direction ──────────────────────────────────────────────────
+        layout.separator()
+        layout.operator("object.reverse_street_direction", text="Reverse Direction", icon='ARROW_LEFTRIGHT')
+
 
 class VIEW3D_PT_StreetEditorIntersections(bpy.types.Panel):
     bl_label       = "Intersections"
@@ -200,6 +204,10 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
 
         layout.label(text=f"Streets in scene: {len(streets)}", icon='CURVE_DATA')
 
+        # ── Overlays ──────────────────────────────────────────────────────────
+        layout.separator()
+        layout.prop(context.scene, "st_show_arrows", text="Show Direction Arrows", icon='DRIVER_ROTATIONAL_DIFFERENCE', toggle=True)
+
         # ── Create ────────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Create", icon='ADD')
@@ -212,11 +220,35 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
         layout.label(text="Presets", icon='PRESET')
         box = layout.box()
         col = box.column(align=True)
-        col.prop(context.scene, "st_street_preset",       text="Preset")
-        col.prop(context.scene, "st_preset_length",       text="Length")
-        col.prop(context.scene, "st_preset_lane_width",   text="Lane Width")
-        col.prop(context.scene, "st_preset_turn_radius",  text="Turn Radius")
-        col.prop(context.scene, "st_preset_curve_points", text="Curve Points")
+        col.prop(context.scene, "st_street_preset",         text="Preset")
+
+        # ── Geometry ──────────────────────────────────────────────────────────
+        col.separator()
+        col.label(text="Geometry:")
+        col.prop(context.scene, "st_preset_length",         text="Tot. Length")
+        col.prop(context.scene, "st_preset_length_split",   text="Split Length")
+        col.prop(context.scene, "st_preset_turn_radius",    text="Turn Radius")
+        # Vertex Count is only active when Split Length = 0
+        vcount_row = col.row()
+        vcount_row.active = (context.scene.st_preset_length_split == 0.0)
+        vcount_row.prop(context.scene, "st_preset_curve_points", text="Vertex Count")
+
+        # ── Lanes ─────────────────────────────────────────────────────────────
+        col.separator()
+        col.label(text="Lanes:")
+        col.prop(context.scene, "st_preset_lanes",          text="Count")
+        col.prop(context.scene, "st_preset_lane_separator", text="Separator")
+
+        # ── Options (disabled when Lanes = 1) ─────────────────────────────────
+        col.separator()
+        col.label(text="Lane Options:")
+        multi = context.scene.st_preset_lanes > 1
+        col.prop(context.scene, "st_preset_grouped", text="Grouped Street (multi-lane export)", toggle=True)
+        r2 = col.row(align=True)
+        r2.active = multi
+        r2.prop(context.scene, "st_preset_converge_start", text="Converge Start", toggle=True)
+        r2.prop(context.scene, "st_preset_converge_end",   text="Converge End",   toggle=True)
+
         layout.operator("object.spawn_street_preset", text="Spawn Preset", icon='IMPORT')
 
         # ── Load ──────────────────────────────────────────────────────────────

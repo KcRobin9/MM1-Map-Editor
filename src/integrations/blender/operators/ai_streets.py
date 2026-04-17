@@ -135,7 +135,8 @@ def _next_street_name(scene) -> str:
     return f"street_{i}"
 
 
-def _build_curve_object(name: str, points, context) -> bpy.types.Object:
+def _build_curve_object(name: str, points, context,
+                        collection: bpy.types.Collection = None) -> bpy.types.Object:
     curve_data = bpy.data.curves.new(name, type='CURVE')
     curve_data.dimensions = '3D'
     curve_data.resolution_u = 1
@@ -150,7 +151,8 @@ def _build_curve_object(name: str, points, context) -> bpy.types.Object:
         spline.points[1].co = (p1[0], p1[1], p1[2], 1.0)
 
     obj = bpy.data.objects.new(name, curve_data)
-    _get_or_create_ai_streets_collection().objects.link(obj)
+    target = collection if collection is not None else _get_or_create_ai_streets_collection()
+    target.objects.link(obj)
     return obj
 
 
@@ -166,6 +168,7 @@ def _set_street_defaults(obj: bpy.types.Object) -> None:
     obj.st_ped_blocked_1     = "NO"
     obj.st_road_divided      = "NO"
     obj.st_alley             = "NO"
+    obj.st_group_name        = ""
 
 
 class OBJECT_OT_CreateAIStreet(bpy.types.Operator):
@@ -299,73 +302,92 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
                 f.write("from src.constants.constants import YES, NO\n")
                 f.write("from src.game.races.constants_2 import IntersectionType\n\n\n")
 
-                street_names = []
+                # Separate grouped (multi-lane) streets from solo streets
+                from collections import OrderedDict
+                groups: dict = OrderedDict()
+                solo  : list = []
                 for obj in streets:
+                    gname = obj.st_group_name
+                    if gname:
+                        groups.setdefault(gname, []).append(obj)
+                    else:
+                        solo.append(obj)
+
+                def _optional_lines(obj) -> list:
+                    itype_0 = obj.st_intersection_0
+                    itype_1 = obj.st_intersection_1
+                    sl_0    = obj.st_stop_light_name_0
+                    sl_1    = obj.st_stop_light_name_1
+                    tb_0    = YES if obj.st_traffic_blocked_0 == "YES" else NO
+                    tb_1    = YES if obj.st_traffic_blocked_1 == "YES" else NO
+                    pb_0    = YES if obj.st_ped_blocked_0     == "YES" else NO
+                    pb_1    = YES if obj.st_ped_blocked_1     == "YES" else NO
+                    divided = YES if obj.st_road_divided      == "YES" else NO
+                    alley   = YES if obj.st_alley             == "YES" else NO
+                    i0s = INTERSECTION_TYPE_TO_CONST.get(itype_0, itype_0)
+                    i1s = INTERSECTION_TYPE_TO_CONST.get(itype_1, itype_1)
+                    s0s = STOP_LIGHT_TO_CONST.get(sl_0, f'"{sl_0}"')
+                    s1s = STOP_LIGHT_TO_CONST.get(sl_1, f'"{sl_1}"')
+                    lines = []
+                    if itype_0 != str(IntersectionType.CONTINUE) or itype_1 != str(IntersectionType.CONTINUE):
+                        lines.append(f'    "intersection_types": [{i0s}, {i1s}],')
+                    if sl_0 != Prop.TRAFFIC_LIGHT_SINGLE or sl_1 != Prop.TRAFFIC_LIGHT_SINGLE:
+                        lines.append(f'    "stop_light_names": [{s0s}, {s1s}],')
+                    sl_pos = [
+                        tuple(obj.st_sl_pos_0_offset), tuple(obj.st_sl_pos_0_dir),
+                        tuple(obj.st_sl_pos_1_offset), tuple(obj.st_sl_pos_1_dir),
+                    ]
+                    if any(v != (0.0, 0.0, 0.0) for v in sl_pos):
+                        pos_str = ",\n        ".join(f"({p[0]:.2f}, {p[1]:.2f}, {p[2]:.2f})" for p in sl_pos)
+                        lines.append(f'    "stop_light_positions": [\n        {pos_str}\n    ],')
+                    if obj.st_traffic_blocked_0 == "YES" or obj.st_traffic_blocked_1 == "YES":
+                        lines.append(f'    "traffic_blocked": [{tb_0}, {tb_1}],')
+                    if obj.st_ped_blocked_0 == "YES" or obj.st_ped_blocked_1 == "YES":
+                        lines.append(f'    "ped_blocked": [{pb_0}, {pb_1}],')
+                    if obj.st_road_divided == "YES":
+                        lines.append(f'    "road_divided": {divided},')
+                    if obj.st_alley == "YES":
+                        lines.append(f'    "alley": {alley},')
+                    return lines
+
+                def _game_verts_str(obj, indent="        ") -> str:
+                    verts = get_street_vertices(obj)
+                    gv    = [transform_coordinate_system(v, blender_to_game=True) for v in verts]
+                    return f",\n{indent}".join(f"({v[0]:.2f}, {v[1]:.2f}, {v[2]:.2f})" for v in gv)
+
+                street_names = []
+
+                # ── Solo streets (single vertex list) ─────────────────────────
+                for obj in solo:
                     street_name = obj.name[len(ST_PREFIX):]
                     street_names.append(street_name)
-
                     verts = get_street_vertices(obj)
                     if not verts:
                         continue
-
-                    game_verts = [
-                        transform_coordinate_system(v, blender_to_game=True)
-                        for v in verts
-                    ]
-
-                    verts_str = ",\n        ".join(
-                        f"({v[0]:.2f}, {v[1]:.2f}, {v[2]:.2f})" for v in game_verts
-                    )
-
-                    itype_0  = obj.st_intersection_0
-                    itype_1  = obj.st_intersection_1
-                    sl_0     = obj.st_stop_light_name_0
-                    sl_1     = obj.st_stop_light_name_1
-                    tb_0     = YES if obj.st_traffic_blocked_0 == "YES" else NO
-                    tb_1     = YES if obj.st_traffic_blocked_1 == "YES" else NO
-                    pb_0     = YES if obj.st_ped_blocked_0     == "YES" else NO
-                    pb_1     = YES if obj.st_ped_blocked_1     == "YES" else NO
-                    divided  = YES if obj.st_road_divided      == "YES" else NO
-                    alley    = YES if obj.st_alley             == "YES" else NO
-
-                    itype_0_str = INTERSECTION_TYPE_TO_CONST.get(itype_0, itype_0)
-                    itype_1_str = INTERSECTION_TYPE_TO_CONST.get(itype_1, itype_1)
-                    sl_0_str    = STOP_LIGHT_TO_CONST.get(sl_0, f'"{sl_0}"')
-                    sl_1_str    = STOP_LIGHT_TO_CONST.get(sl_1, f'"{sl_1}"')
-
-                    # Only write optional fields if they differ from defaults
-                    optional_lines = []
-                    if itype_0 != str(IntersectionType.CONTINUE) or itype_1 != str(IntersectionType.CONTINUE):
-                        optional_lines.append(f'    "intersection_types": [{itype_0_str}, {itype_1_str}],')
-                    if sl_0 != Prop.TRAFFIC_LIGHT_SINGLE or sl_1 != Prop.TRAFFIC_LIGHT_SINGLE:
-                        optional_lines.append(f'    "stop_light_names": [{sl_0_str}, {sl_1_str}],')
-
-                    sl_pos = [
-                        tuple(obj.st_sl_pos_0_offset),
-                        tuple(obj.st_sl_pos_0_dir),
-                        tuple(obj.st_sl_pos_1_offset),
-                        tuple(obj.st_sl_pos_1_dir),
-                    ]
-                    if any(v != (0.0, 0.0, 0.0) for v in sl_pos):
-                        pos_str = ",\n        ".join(
-                            f"({p[0]:.2f}, {p[1]:.2f}, {p[2]:.2f})" for p in sl_pos
-                        )
-                        optional_lines.append(f'    "stop_light_positions": [\n        {pos_str}\n    ],')
-
-                    if obj.st_traffic_blocked_0 == "YES" or obj.st_traffic_blocked_1 == "YES":
-                        optional_lines.append(f'    "traffic_blocked": [{tb_0}, {tb_1}],')
-                    if obj.st_ped_blocked_0 == "YES" or obj.st_ped_blocked_1 == "YES":
-                        optional_lines.append(f'    "ped_blocked": [{pb_0}, {pb_1}],')
-                    if obj.st_road_divided == "YES":
-                        optional_lines.append(f'    "road_divided": {divided},')
-                    if obj.st_alley == "YES":
-                        optional_lines.append(f'    "alley": {alley},')
-
-                    optional_str = ("\n" + "\n".join(optional_lines)) if optional_lines else ""
-
+                    verts_str    = _game_verts_str(obj)
+                    opt          = _optional_lines(obj)
+                    optional_str = ("\n" + "\n".join(opt)) if opt else ""
                     f.write(f"{street_name} = {{\n")
                     f.write(f'    "street_name": "{street_name}",\n')
                     f.write(f'    "vertices": [\n        {verts_str}\n    ],{optional_str}\n}}\n\n')
+
+                # ── Grouped streets (multi-lane format) ───────────────────────
+                for gname, lane_objs in groups.items():
+                    var_name = gname.replace(" ", "_").replace("-", "_")
+                    street_names.append(var_name)
+                    ref_obj = lane_objs[0]   # use first lane for street-level properties
+
+                    f.write(f"{var_name} = {{\n")
+                    f.write(f'    "street_name": "{var_name}",\n')
+                    f.write(f'    "lanes": {{\n')
+                    for i, lane_obj in enumerate(lane_objs):
+                        verts_str = _game_verts_str(lane_obj, indent="            ")
+                        f.write(f'        "lane_{i + 1}": [\n            {verts_str}\n        ],\n')
+                    f.write(f'    }},\n')
+                    opt = _optional_lines(ref_obj)
+                    for line in opt:
+                        f.write(f'{line}\n')
+                    f.write(f'}}\n\n')
 
                 names_str = ", ".join(street_names)
                 f.write(f"\nstreet_list = [{names_str}]\n")
@@ -526,6 +548,25 @@ class OBJECT_OT_MoveStreetVertexToCursor(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class OBJECT_OT_ReverseStreetDirection(bpy.types.Operator):
+    bl_idname      = "object.reverse_street_direction"
+    bl_label       = "Reverse Street Direction"
+    bl_description = "Reverse the vertex order so start and end are swapped"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        return is_street(context.active_object)
+
+    def execute(self, context):
+        obj   = context.active_object
+        verts = get_street_vertices(obj)
+        verts.reverse()
+        _rebuild_street_from_verts(obj, verts)
+        self.report({"INFO"}, f"Reversed direction of {obj.name}")
+        return {"FINISHED"}
+
+
 class OBJECT_OT_ExtendStreetAngle(bpy.types.Operator):
     bl_idname      = "object.extend_street_angle"
     bl_label       = "Extend by Direction"
@@ -645,6 +686,7 @@ AI_STREET_CLASSES = [
     OBJECT_OT_InsertStreetVertexMidpoint,
     OBJECT_OT_DeleteStreetVertex,
     OBJECT_OT_MoveStreetVertexToCursor,
+    OBJECT_OT_ReverseStreetDirection,
     OBJECT_OT_ExtendStreetAngle,
     OBJECT_OT_CursorToStreetVertex,
     OBJECT_OT_DeleteAllStreets,
