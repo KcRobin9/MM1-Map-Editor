@@ -601,8 +601,16 @@ class OBJECT_OT_ExtendStreetAngle(bpy.types.Operator):
             direction = Vector((
                 direction.x * cos_a - direction.y * sin_a,
                 direction.x * sin_a + direction.y * cos_a,
-                direction.z,
+                0.0,
             ))
+
+        # Apply elevation: tilt direction out of XY plane
+        elev = context.scene.st_extend_elevation
+        if elev != 0.0:
+            e     = math.radians(elev)
+            cos_e = math.cos(e)
+            sin_e = math.sin(e)
+            direction = Vector((direction.x * cos_e, direction.y * cos_e, sin_e))
 
         new_vert = base + direction * length
 
@@ -614,8 +622,9 @@ class OBJECT_OT_ExtendStreetAngle(bpy.types.Operator):
             context.scene.st_vertex_index = 0
 
         _rebuild_street_from_verts(obj, verts)
-        angle_label = f" (+{self.angle_offset:.0f}°)" if self.angle_offset != 0.0 else ""
-        self.report({"INFO"}, f"Extended {'end' if self.to_end else 'start'} by {length:.1f}{angle_label}")
+        angle_label = f" ({self.angle_offset:+.0f}°)" if self.angle_offset != 0.0 else ""
+        elev_label  = f" elev {elev:+.0f}°"           if elev != 0.0            else ""
+        self.report({"INFO"}, f"Extended {'end' if self.to_end else 'start'} by {length:.1f}{angle_label}{elev_label}")
         return {"FINISHED"}
 
 
@@ -662,6 +671,183 @@ class OBJECT_OT_DeleteAllStreets(bpy.types.Operator):
 def st_intersection_update(self, context) -> None:
     pass  # Color is now segment-based, not intersection-type-based
 
+
+# ── Group helpers ──────────────────────────────────────────────────────────────
+
+def _get_group_streets(obj: bpy.types.Object) -> List[bpy.types.Object]:
+    """Return all streets sharing obj's group name, sorted by object name."""
+    gname = getattr(obj, "st_group_name", "") if obj else ""
+    if not gname:
+        return []
+    return sorted(
+        [o for o in bpy.data.objects if is_street(o) and o.st_group_name == gname],
+        key=lambda o: o.name,
+    )
+
+
+def _rotate_z(v: Vector, deg: float) -> Vector:
+    import math
+    a = math.radians(deg)
+    c, s = math.cos(a), math.sin(a)
+    return Vector((c * v.x - s * v.y, s * v.x + c * v.y, v.z))
+
+
+# ── Group operators ────────────────────────────────────────────────────────────
+
+class OBJECT_OT_SelectStreetGroup(bpy.types.Operator):
+    bl_idname      = "object.select_street_group"
+    bl_label       = "Select Group"
+    bl_description = "Select all streets in the same group as the active street"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and bool(getattr(obj, "st_group_name", ""))
+
+    def execute(self, context):
+        lanes = _get_group_streets(context.active_object)
+        bpy.ops.object.select_all(action='DESELECT')
+        for o in lanes:
+            o.select_set(True)
+        if lanes:
+            context.view_layer.objects.active = lanes[0]
+        self.report({"INFO"}, f"Selected {len(lanes)} streets in group")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_ExtendStreetGroupAngle(bpy.types.Operator):
+    """
+    Extend all lanes in a group by the same direction and length.
+    Direction comes from the CENTER lane's endpoint segment so every lane
+    extends in parallel — the separator is preserved automatically.
+    """
+    bl_idname      = "object.extend_street_group_angle"
+    bl_label       = "Extend Group by Direction"
+    bl_description = "Extend every lane in the group by the same direction (centre lane drives the angle)"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    to_end:       bpy.props.BoolProperty(default=True)
+    angle_offset: bpy.props.FloatProperty(default=0.0)
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and bool(getattr(obj, "st_group_name", ""))
+
+    def execute(self, context):
+        lanes  = _get_group_streets(context.active_object)
+        length = context.scene.st_extend_length
+
+        # Centre lane drives the shared direction
+        centre  = lanes[len(lanes) // 2]
+        c_verts = get_street_vertices(centre)
+        if self.to_end:
+            raw_dir = (c_verts[-1] - c_verts[-2]).normalized()
+            c_tip   = c_verts[-1]
+        else:
+            raw_dir = (c_verts[0] - c_verts[1]).normalized()
+            c_tip   = c_verts[0]
+
+        direction = _rotate_z(raw_dir, self.angle_offset)
+
+        # Apply elevation: tilt direction out of XY plane.
+        # Perpendicular must be computed BEFORE adding Z so it stays horizontal.
+        elev = context.scene.st_extend_elevation
+        if elev != 0.0:
+            import math as _math
+            e     = _math.radians(elev)
+            cos_e = _math.cos(e)
+            sin_e = _math.sin(e)
+            direction = Vector((direction.x * cos_e, direction.y * cos_e, sin_e))
+
+        # Perpendicular to new travel direction (horizontal only) — places lane offsets
+        new_perp = Vector((-direction.y, direction.x, 0.0)).normalized()
+
+        # New tip for the centre lane
+        c_new_tip = c_tip + direction * length
+
+        # Lane offsets derived from the CONFIGURED separator so changing the
+        # value in the UI immediately affects the next extension.
+        n       = len(lanes)
+        sep     = context.scene.st_preset_lane_separator
+        offsets = [(-(n - 1) / 2.0 + i) * sep for i in range(n)]
+
+        for i, street in enumerate(lanes):
+            verts  = get_street_vertices(street)
+            new_pt = c_new_tip + new_perp * offsets[i]
+
+            if self.to_end:
+                verts.append(new_pt)
+                context.scene.st_vertex_index = len(verts) - 1
+            else:
+                verts.insert(0, new_pt)
+                context.scene.st_vertex_index = 0
+            _rebuild_street_from_verts(street, verts)
+
+        label = f" (+{self.angle_offset:.0f}°)" if self.angle_offset != 0.0 else ""
+        self.report({"INFO"}, f"Extended {len(lanes)}-lane group {'end' if self.to_end else 'start'} by {length:.1f}{label}")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_AppendStreetGroupVertex(bpy.types.Operator):
+    """
+    Extend all lanes in a group toward the 3D cursor while keeping each lane's
+    perpendicular offset from the centre lane constant.
+
+    The cursor defines where the CENTRE lane's new endpoint goes.
+    All other lanes get new endpoints offset perpendicular to the extension
+    direction by their current distance from the centre lane.
+    """
+    bl_idname      = "object.append_street_group_vertex"
+    bl_label       = "Extend Group at Cursor"
+    bl_description = "Extend every lane toward the cursor, maintaining lane separator"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    to_end: bpy.props.BoolProperty(default=True)
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and bool(getattr(obj, "st_group_name", ""))
+
+    def execute(self, context):
+        lanes  = _get_group_streets(context.active_object)
+        cursor = context.scene.cursor.location.copy()
+
+        centre  = lanes[len(lanes) // 2]
+        c_verts = get_street_vertices(centre)
+        c_tip   = c_verts[-1] if self.to_end else c_verts[0]
+
+        # Extension direction: cursor → centre tip
+        ext = cursor - c_tip
+        ext_len = ext.length
+        if ext_len < 0.001:
+            self.report({"WARNING"}, "Cursor is too close to the centre lane endpoint")
+            return {"CANCELLED"}
+        fwd  = ext / ext_len
+        perp = Vector((-fwd.y, fwd.x, 0.0)).normalized()
+
+        # Use configured separator so changing the value takes effect immediately
+        n       = len(lanes)
+        sep     = context.scene.st_preset_lane_separator
+        offsets = [(-(n - 1) / 2.0 + i) * sep for i in range(n)]
+
+        for i, street in enumerate(lanes):
+            verts  = get_street_vertices(street)
+            new_pt = cursor + perp * offsets[i]
+
+            if self.to_end:
+                verts.append(new_pt)
+                context.scene.st_vertex_index = len(verts) - 1
+            else:
+                verts.insert(0, new_pt)
+                context.scene.st_vertex_index = 0
+            _rebuild_street_from_verts(street, verts)
+
+        self.report({"INFO"}, f"Extended {len(lanes)}-lane group {'end' if self.to_end else 'start'} to cursor")
+        return {"FINISHED"}
+
 class OBJECT_OT_RefreshStreetColors(bpy.types.Operator):
     bl_idname      = "object.refresh_street_colors"
     bl_label       = "Refresh Colors"
@@ -673,6 +859,61 @@ class OBJECT_OT_RefreshStreetColors(bpy.types.Operator):
         for obj in streets:
             apply_street_color(obj)
         self.report({"INFO"}, f"Refreshed {len(streets)} street(s)")
+        return {"FINISHED"}
+
+
+class OBJECT_OT_InsertStreetGroupVertex(bpy.types.Operator):
+    """
+    Insert a vertex into every lane of a group at the same logical position.
+
+    at_cursor=True  — cursor defines where the CENTRE lane's new vertex goes;
+                      other lanes are offset perpendicular by the configured separator.
+    at_cursor=False — each lane independently takes the midpoint between its own
+                      V[idx] and V[idx+1] (no cursor needed).
+    """
+    bl_idname      = "object.insert_street_group_vertex"
+    bl_label       = "Insert Group Vertex"
+    bl_description = "Insert a vertex in every lane of the group at the active vertex position"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    at_cursor: bpy.props.BoolProperty(default=True)
+
+    @classmethod
+    def poll(cls, context):
+        obj = context.active_object
+        return is_street(obj) and bool(getattr(obj, "st_group_name", ""))
+
+    def execute(self, context):
+        lanes  = _get_group_streets(context.active_object)
+        idx    = context.scene.st_vertex_index
+        n      = len(lanes)
+        sep    = context.scene.st_preset_lane_separator
+        offsets = [(-(n - 1) / 2.0 + i) * sep for i in range(n)]
+
+        if self.at_cursor:
+            cursor  = context.scene.cursor.location.copy()
+            # Determine perpendicular from the centre lane's segment at idx
+            centre  = lanes[n // 2]
+            c_verts = get_street_vertices(centre)
+            c_idx   = max(0, min(idx, len(c_verts) - 2))
+            seg_dir = (c_verts[c_idx + 1] - c_verts[c_idx]).normalized()
+            perp    = Vector((-seg_dir.y, seg_dir.x, 0.0)).normalized()
+
+        for i, street in enumerate(lanes):
+            verts   = get_street_vertices(street)
+            ins_idx = max(0, min(idx, len(verts) - 2))
+
+            if self.at_cursor:
+                new_pt = cursor + perp * offsets[i]
+            else:
+                new_pt = (verts[ins_idx] + verts[ins_idx + 1]) * 0.5
+
+            verts.insert(ins_idx + 1, new_pt)
+            _rebuild_street_from_verts(street, verts)
+
+        context.scene.st_vertex_index = idx + 1
+        mode = "cursor" if self.at_cursor else "midpoint"
+        self.report({"INFO"}, f"Inserted {mode} vertex after V{idx} in {n} lanes")
         return {"FINISHED"}
 
 
@@ -690,4 +931,8 @@ AI_STREET_CLASSES = [
     OBJECT_OT_ExtendStreetAngle,
     OBJECT_OT_CursorToStreetVertex,
     OBJECT_OT_DeleteAllStreets,
+    OBJECT_OT_SelectStreetGroup,
+    OBJECT_OT_ExtendStreetGroupAngle,
+    OBJECT_OT_AppendStreetGroupVertex,
+    OBJECT_OT_InsertStreetGroupVertex,
 ]

@@ -151,33 +151,52 @@ def _draw_street_overlays() -> None:
                 shader.uniform_float("color", (1.0, 1.0, 1.0, 0.7))
                 batch.draw(shader)
 
-        # ── Active vertex marker ──────────────────────────────────────────────
+        # ── Active vertex marker — shown for every lane in the group ─────────
         obj = ctx.active_object
         if obj and obj.type == 'CURVE' and obj.name.startswith('ST_') and obj.data.splines:
 
-            verts = []
-            for i, sp in enumerate(obj.data.splines):
-                if i == 0:
-                    verts.append(obj.matrix_world @ Vector(sp.points[0].co[:3]))
-                verts.append(obj.matrix_world @ Vector(sp.points[1].co[:3]))
+            # Collect streets to mark: whole group or just the active object
+            gname = getattr(obj, "st_group_name", "")
+            if gname:
+                mark_streets = [
+                    o for o in bpy.data.objects
+                    if o.type == 'CURVE' and o.name.startswith('ST_')
+                    and getattr(o, "st_group_name", "") == gname
+                ]
+            else:
+                mark_streets = [obj]
 
-            if verts:
-                n   = len(verts)
-                idx = max(0, min(ctx.scene.st_vertex_index, n - 1))
-                v   = verts[idx]
-                C   = 2.0   # crosshair arm length (world units)
+            C   = 2.0   # crosshair arm length (world units)
+            idx = ctx.scene.st_vertex_index
 
-                # Screen-facing cross so it reads cleanly from any view angle
-                cross = [
+            all_cross_lines = []
+            all_dots        = []
+
+            for street in mark_streets:
+                if not street.data.splines:
+                    continue
+                verts = []
+                for i, sp in enumerate(street.data.splines):
+                    if i == 0:
+                        verts.append(street.matrix_world @ Vector(sp.points[0].co[:3]))
+                    verts.append(street.matrix_world @ Vector(sp.points[1].co[:3]))
+                if not verts:
+                    continue
+                v = verts[max(0, min(idx, len(verts) - 1))]
+                all_cross_lines += [
                     v - cam_right * C, v + cam_right * C,
                     v - cam_up    * C, v + cam_up    * C,
                 ]
-                batch_c = batch_for_shader(shader, 'LINES', {"pos": cross})
+                all_dots.append(v)
+
+            if all_cross_lines:
+                batch_c = batch_for_shader(shader, 'LINES', {"pos": all_cross_lines})
                 gpu.state.line_width_set(2.5)
                 shader.uniform_float("color", (0.65, 0.0, 1.0, 1.0))
                 batch_c.draw(shader)
 
-                batch_d = batch_for_shader(shader, 'POINTS', {"pos": [v]})
+            if all_dots:
+                batch_d = batch_for_shader(shader, 'POINTS', {"pos": all_dots})
                 gpu.state.point_size_set(8.0)
                 shader.uniform_float("color", (0.65, 0.0, 1.0, 1.0))
                 batch_d.draw(shader)

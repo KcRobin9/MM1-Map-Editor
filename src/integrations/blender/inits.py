@@ -142,6 +142,7 @@ SCENE_PROPERTIES = [
     "st_vertex_index",
     "st_extend_length",
     "st_extend_angle",
+    "st_extend_elevation",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -447,8 +448,13 @@ def register_scene_properties() -> None:
     )
     bpy.types.Scene.st_extend_angle = bpy.props.FloatProperty(
         name="Angle Offset",
-        description="Rotation applied to the extension direction (degrees). 0 = same angle.",
+        description="Horizontal rotation applied to the extension direction (degrees). 0 = same angle.",
         default=0.0, soft_min=-180.0, soft_max=180.0,
+    )
+    bpy.types.Scene.st_extend_elevation = bpy.props.FloatProperty(
+        name="Elevation",
+        description="Vertical tilt of the extension (degrees). + = uphill, - = downhill, 0 = flat.",
+        default=0.0, soft_min=-89.0, soft_max=89.0,
     )
     # ── Street Presets scene properties ───────────────────────────────────────
     bpy.types.Scene.st_street_preset = bpy.props.EnumProperty(

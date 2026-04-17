@@ -2,6 +2,7 @@ import bpy
 from pyparsing import col
 from src.integrations.blender.operators.ai_streets import (
     get_all_streets, get_street_vertices, get_street_vertex_count, is_street, ST_PREFIX,
+    _get_group_streets,
 )
 
 
@@ -77,8 +78,9 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
         layout.label(text="Extend Street  (by direction):", icon='DRIVER_ROTATIONAL_DIFFERENCE')
         box = layout.box()
         col = box.column(align=True)
-        col.prop(context.scene, "st_extend_length", text="Length")
-        col.prop(context.scene, "st_extend_angle",  text="Angle offset (°)")
+        col.prop(context.scene, "st_extend_length",    text="Length")
+        col.prop(context.scene, "st_extend_angle",     text="Angle (°)")
+        col.prop(context.scene, "st_extend_elevation", text="Elevation (°)")
         row = col.row(align=True)
         op = row.operator("object.extend_street_angle", text="← Start", icon='TRIA_LEFT')
         op.to_end       = False
@@ -105,6 +107,50 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
         # ── Street direction ──────────────────────────────────────────────────
         layout.separator()
         layout.operator("object.reverse_street_direction", text="Reverse Direction", icon='ARROW_LEFTRIGHT')
+
+        # ── Group Operations (only shown when street belongs to a group) ──────
+        group_lanes = _get_group_streets(obj)
+        if len(group_lanes) >= 2:
+            layout.separator()
+            box = layout.box()
+            col = box.column(align=True)
+            col.label(text=f"Group: {obj.st_group_name}  ({len(group_lanes)} lanes)", icon='LINKED')
+            col.operator("object.select_street_group", text="Select All Lanes", icon='RESTRICT_SELECT_OFF')
+
+            # Shared separator + index for all group operations
+            col.separator()
+            col.prop(context.scene, "st_preset_lane_separator", text="Separator")
+            col.prop(context.scene, "st_vertex_index",          text="Active V")
+
+            col.separator()
+            col.label(text="Extend Group  (at cursor):", icon='CURSOR')
+            row = col.row(align=True)
+            op = row.operator("object.append_street_group_vertex", text="← Start", icon='TRIA_LEFT')
+            op.to_end = False
+            op = row.operator("object.append_street_group_vertex", text="End →",   icon='TRIA_RIGHT')
+            op.to_end = True
+
+            col.separator()
+            col.label(text="Extend Group  (by direction):", icon='DRIVER_ROTATIONAL_DIFFERENCE')
+            col.prop(context.scene, "st_extend_length",    text="Length")
+            col.prop(context.scene, "st_extend_angle",     text="Angle (°)")
+            col.prop(context.scene, "st_extend_elevation", text="Elevation (°)")
+            row = col.row(align=True)
+            op = row.operator("object.extend_street_group_angle", text="← Start", icon='TRIA_LEFT')
+            op.to_end       = False
+            op.angle_offset = context.scene.st_extend_angle
+            op = row.operator("object.extend_street_group_angle", text="End →",   icon='TRIA_RIGHT')
+            op.to_end       = True
+            op.angle_offset = context.scene.st_extend_angle
+
+            col.separator()
+            next_idx = min(idx + 1, len(get_street_vertices(obj)) - 1)
+            col.label(text=f"Insert Group after V{idx}  →  V{next_idx}:", icon='ADD')
+            row = col.row(align=True)
+            op = row.operator("object.insert_street_group_vertex", text="At Cursor", icon='CURSOR')
+            op.at_cursor = True
+            op = row.operator("object.insert_street_group_vertex", text="Midpoint",  icon='SNAP_MIDPOINT')
+            op.at_cursor = False
 
 
 class VIEW3D_PT_StreetEditorIntersections(bpy.types.Panel):
