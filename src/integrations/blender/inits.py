@@ -143,6 +143,7 @@ SCENE_PROPERTIES = [
     "st_extend_length",
     "st_extend_angle",
     "st_extend_elevation",
+    "st_snap_to_terrain",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -453,8 +454,13 @@ def register_scene_properties() -> None:
     )
     bpy.types.Scene.st_extend_elevation = bpy.props.FloatProperty(
         name="Elevation",
-        description="Vertical tilt of the extension (degrees). + = uphill, - = downhill, 0 = flat.",
+        description="Vertical tilt of the extension (degrees). + = uphill, - = downhill, 0 = flat. Ignored when Snap to Terrain is on.",
         default=0.0, soft_min=-89.0, soft_max=89.0,
+    )
+    bpy.types.Scene.st_snap_to_terrain = bpy.props.BoolProperty(
+        name="Snap to Terrain",
+        description="After placing a new vertex, raycast downward and snap its Z to the mesh surface below. Overrides the Elevation setting.",
+        default=False,
     )
     # ── Street Presets scene properties ───────────────────────────────────────
     bpy.types.Scene.st_street_preset = bpy.props.EnumProperty(

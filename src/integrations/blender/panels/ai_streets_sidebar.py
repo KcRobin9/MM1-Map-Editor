@@ -85,9 +85,14 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
         layout.label(text="Extend Settings:", icon='DRIVER_ROTATIONAL_DIFFERENCE')
         box = layout.box()
         col = box.column(align=True)
-        col.prop(context.scene, "st_extend_length",    text="Length")
-        col.prop(context.scene, "st_extend_angle",     text="Angle (°)")
-        col.prop(context.scene, "st_extend_elevation", text="Elevation (°)")
+        col.prop(context.scene, "st_extend_length", text="Length")
+        col.prop(context.scene, "st_extend_angle",  text="Angle (°)")
+        snap = context.scene.st_snap_to_terrain
+        elev_row = col.row()
+        elev_row.active = not snap
+        elev_row.prop(context.scene, "st_extend_elevation", text="Elevation (°)")
+        col.prop(context.scene, "st_snap_to_terrain",
+                 text="Snap to Terrain", icon='SNAP_FACE', toggle=True)
 
         # ── Extend — label and operators adapt to single vs group ─────────────
         layout.separator()

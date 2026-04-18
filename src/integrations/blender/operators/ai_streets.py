@@ -406,6 +406,112 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def _sample_terrain_z(x: float, y: float, context) -> float | None:
+    """
+    Raycast straight down from (x, y, 10000) and return the Z of the first
+    mesh surface hit.  ST_ curve objects are CURVE type so they are never hit.
+    Returns None when nothing is below.
+    """
+    try:
+        depsgraph = context.evaluated_depsgraph_get()
+        hit, loc, _norm, _idx, _obj, _mat = context.scene.ray_cast(
+            depsgraph, Vector((x, y, 10000.0)), Vector((0.0, 0.0, -1.0))
+        )
+        return loc.z if hit else None
+    except Exception:
+        return None
+
+
+def _apply_terrain_snap(pt: Vector, context) -> Vector:
+    """Return pt with Z replaced by terrain height if snap is enabled."""
+    if not context.scene.st_snap_to_terrain:
+        return pt
+    z = _sample_terrain_z(pt.x, pt.y, context)
+    return Vector((pt.x, pt.y, z)) if z is not None else pt
+
+
+def _terrain_follow_points(base: Vector, horiz_dir: Vector, length: float,
+                           context, sample_step: float = 1.0) -> List[Vector]:
+    """
+    Sample terrain along (base + horiz_dir * t) for t in (0, length].
+    Returns a list of world-space Vectors (NOT including base).
+
+    When terrain snap is off: single endpoint, no terrain sampling.
+    When on: inserts extra vertices wherever the slope changes significantly
+    so that short bumps (smaller than `length`) are captured.
+    """
+    if not context.scene.st_snap_to_terrain:
+        return [base + horiz_dir * length]
+
+    steps = max(2, int(length / sample_step) + 1)
+    ts    = [i * length / (steps - 1) for i in range(steps)]
+
+    # Sample terrain Z at each t; fall back to base.z if nothing hit
+    pts = []
+    for t in ts:
+        xy = base + horiz_dir * t
+        z  = _sample_terrain_z(xy.x, xy.y, context)
+        pts.append(Vector((xy.x, xy.y, z if z is not None else base.z)))
+
+    # Compute slope (dz per horizontal unit) for each interval
+    slopes = []
+    for i in range(len(pts) - 1):
+        dh = (pts[i + 1] - pts[i])
+        dh.z = 0.0
+        horiz_dist = dh.length
+        dz = pts[i + 1].z - pts[i].z
+        slopes.append(dz / horiz_dist if horiz_dist > 1e-4 else 0.0)
+
+    # Collect indices where the slope changes by more than ~3°
+    MIN_SLOPE_DELTA = 0.05   # ≈ 3°
+    result_indices  = set()
+    prev_slope      = slopes[0]
+    for i in range(1, len(slopes)):
+        if abs(slopes[i] - prev_slope) > MIN_SLOPE_DELTA:
+            result_indices.add(i)   # vertex at start of new slope segment
+            prev_slope = slopes[i]
+    result_indices.add(len(pts) - 1)   # always include the endpoint
+
+    return [pts[i] for i in sorted(result_indices)]
+
+
+def _terrain_follow_ts(base: Vector, horiz_dir: Vector, length: float,
+                       context, sample_step: float = 1.0) -> List[float]:
+    """
+    Like _terrain_follow_points but returns normalised t values (0..1) instead
+    of absolute Vectors.  Used by group extend so each lane can apply its own
+    perpendicular offset while sharing the same inflection timing.
+    Returns [1.0] when snap is off.
+    """
+    if not context.scene.st_snap_to_terrain:
+        return [1.0]
+
+    steps = max(2, int(length / sample_step) + 1)
+    ts    = [i / (steps - 1) for i in range(steps)]   # normalised 0..1
+
+    z_vals = []
+    for t in ts:
+        xy = base + horiz_dir * (t * length)
+        z  = _sample_terrain_z(xy.x, xy.y, context)
+        z_vals.append(z if z is not None else base.z)
+
+    MIN_SLOPE_DELTA = 0.05
+    slopes = []
+    for i in range(len(ts) - 1):
+        dt       = (ts[i + 1] - ts[i]) * length
+        dz       = z_vals[i + 1] - z_vals[i]
+        slopes.append(dz / dt if dt > 1e-4 else 0.0)
+
+    inflection_ts = []
+    prev_slope    = slopes[0]
+    for i in range(1, len(slopes)):
+        if abs(slopes[i] - prev_slope) > MIN_SLOPE_DELTA:
+            inflection_ts.append(ts[i])
+            prev_slope = slopes[i]
+    inflection_ts.append(1.0)
+    return inflection_ts
+
+
 def _rebuild_street_from_verts(obj: bpy.types.Object, world_verts: List[Vector]) -> None:
     """Rebuild a street's curve data from a list of world-space Vector positions."""
     mat_inv = obj.matrix_world.inverted()
@@ -588,43 +694,54 @@ class OBJECT_OT_ExtendStreetAngle(bpy.types.Operator):
         length = context.scene.st_extend_length
 
         if self.to_end:
-            direction = (verts[-1] - verts[-2]).normalized()
-            base      = verts[-1]
+            raw_dir = (verts[-1] - verts[-2]).normalized()
+            base    = verts[-1]
         else:
-            direction = (verts[0] - verts[1]).normalized()
-            base      = verts[0]
+            raw_dir = (verts[0] - verts[1]).normalized()
+            base    = verts[0]
 
+        # Horizontal direction with angle rotation
+        horiz_dir = raw_dir
         if self.angle_offset != 0.0:
             a     = math.radians(self.angle_offset)
             cos_a = math.cos(a)
             sin_a = math.sin(a)
-            direction = Vector((
-                direction.x * cos_a - direction.y * sin_a,
-                direction.x * sin_a + direction.y * cos_a,
+            horiz_dir = Vector((
+                horiz_dir.x * cos_a - horiz_dir.y * sin_a,
+                horiz_dir.x * sin_a + horiz_dir.y * cos_a,
                 0.0,
-            ))
+            )).normalized()
 
-        # Apply elevation: tilt direction out of XY plane
-        elev = context.scene.st_extend_elevation
-        if elev != 0.0:
-            e     = math.radians(elev)
-            cos_e = math.cos(e)
-            sin_e = math.sin(e)
-            direction = Vector((direction.x * cos_e, direction.y * cos_e, sin_e))
+        snap = context.scene.st_snap_to_terrain
+        if snap:
+            # Multi-vertex terrain following — elevation param ignored when snap is on
+            new_verts = _terrain_follow_points(base, horiz_dir, length, context)
+        else:
+            # Single vertex with optional elevation tilt
+            direction = horiz_dir
+            elev = context.scene.st_extend_elevation
+            if elev != 0.0:
+                e     = math.radians(elev)
+                cos_e = math.cos(e)
+                sin_e = math.sin(e)
+                direction = Vector((direction.x * cos_e, direction.y * cos_e, sin_e))
+            new_verts = [base + direction * length]
 
-        new_vert = base + direction * length
-
+        added = len(new_verts)
         if self.to_end:
-            verts.append(new_vert)
+            verts.extend(new_verts)
             context.scene.st_vertex_index = len(verts) - 1
         else:
-            verts.insert(0, new_vert)
+            for nv in reversed(new_verts):
+                verts.insert(0, nv)
             context.scene.st_vertex_index = 0
 
         _rebuild_street_from_verts(obj, verts)
         angle_label = f" ({self.angle_offset:+.0f}°)" if self.angle_offset != 0.0 else ""
-        elev_label  = f" elev {elev:+.0f}°"           if elev != 0.0            else ""
-        self.report({"INFO"}, f"Extended {'end' if self.to_end else 'start'} by {length:.1f}{angle_label}{elev_label}")
+        snap_label  = f" [terrain, {added}v]"         if snap                      else ""
+        elev        = context.scene.st_extend_elevation
+        elev_label  = f" elev {elev:+.0f}°"           if (elev != 0.0 and not snap) else ""
+        self.report({"INFO"}, f"Extended {'end' if self.to_end else 'start'} by {length:.1f}{angle_label}{elev_label}{snap_label}")
         return {"FINISHED"}
 
 
@@ -736,6 +853,7 @@ class OBJECT_OT_ExtendStreetGroupAngle(bpy.types.Operator):
         return is_street(obj) and bool(getattr(obj, "st_group_name", ""))
 
     def execute(self, context):
+        import math as _math
         lanes  = _get_group_streets(context.active_object)
         length = context.scene.st_extend_length
 
@@ -749,44 +867,65 @@ class OBJECT_OT_ExtendStreetGroupAngle(bpy.types.Operator):
             raw_dir = (c_verts[0] - c_verts[1]).normalized()
             c_tip   = c_verts[0]
 
-        direction = _rotate_z(raw_dir, self.angle_offset)
+        # Horizontal direction after angle rotation
+        horiz_dir = _rotate_z(raw_dir, self.angle_offset)
 
-        # Apply elevation: tilt direction out of XY plane.
-        # Perpendicular must be computed BEFORE adding Z so it stays horizontal.
-        elev = context.scene.st_extend_elevation
-        if elev != 0.0:
-            import math as _math
-            e     = _math.radians(elev)
-            cos_e = _math.cos(e)
-            sin_e = _math.sin(e)
-            direction = Vector((direction.x * cos_e, direction.y * cos_e, sin_e))
-
-        # Perpendicular to new travel direction (horizontal only) — places lane offsets
-        new_perp = Vector((-direction.y, direction.x, 0.0)).normalized()
-
-        # New tip for the centre lane
-        c_new_tip = c_tip + direction * length
-
-        # Lane offsets derived from the CONFIGURED separator so changing the
-        # value in the UI immediately affects the next extension.
+        snap = context.scene.st_snap_to_terrain
         n       = len(lanes)
         sep     = context.scene.st_preset_lane_separator
         offsets = [(-(n - 1) / 2.0 + i) * sep for i in range(n)]
 
-        for i, street in enumerate(lanes):
-            verts  = get_street_vertices(street)
-            new_pt = c_new_tip + new_perp * offsets[i]
+        if snap:
+            # Sample terrain along centre lane, collect inflection t values (0..1)
+            inflection_ts = _terrain_follow_ts(c_tip, horiz_dir, length, context)
+            # Perpendicular stays horizontal
+            new_perp = Vector((-horiz_dir.y, horiz_dir.x, 0.0)).normalized()
 
-            if self.to_end:
-                verts.append(new_pt)
-                context.scene.st_vertex_index = len(verts) - 1
-            else:
-                verts.insert(0, new_pt)
-                context.scene.st_vertex_index = 0
-            _rebuild_street_from_verts(street, verts)
+            for i, street in enumerate(lanes):
+                verts = get_street_vertices(street)
+                lane_tip = c_tip + new_perp * offsets[i]
+                new_pts = []
+                for t in inflection_ts:
+                    xy  = lane_tip + horiz_dir * (t * length)
+                    z   = _sample_terrain_z(xy.x, xy.y, context)
+                    new_pts.append(Vector((xy.x, xy.y, z if z is not None else lane_tip.z)))
+                if self.to_end:
+                    verts.extend(new_pts)
+                    context.scene.st_vertex_index = len(verts) - 1
+                else:
+                    for nv in reversed(new_pts):
+                        verts.insert(0, nv)
+                    context.scene.st_vertex_index = 0
+                _rebuild_street_from_verts(street, verts)
+            added = len(inflection_ts)
+        else:
+            # Single vertex with optional elevation tilt
+            direction = horiz_dir
+            elev = context.scene.st_extend_elevation
+            if elev != 0.0:
+                e     = _math.radians(elev)
+                cos_e = _math.cos(e)
+                sin_e = _math.sin(e)
+                direction = Vector((direction.x * cos_e, direction.y * cos_e, sin_e))
 
-        label = f" (+{self.angle_offset:.0f}°)" if self.angle_offset != 0.0 else ""
-        self.report({"INFO"}, f"Extended {len(lanes)}-lane group {'end' if self.to_end else 'start'} by {length:.1f}{label}")
+            new_perp  = Vector((-direction.y, direction.x, 0.0)).normalized()
+            c_new_tip = c_tip + direction * length
+
+            for i, street in enumerate(lanes):
+                verts  = get_street_vertices(street)
+                new_pt = c_new_tip + new_perp * offsets[i]
+                if self.to_end:
+                    verts.append(new_pt)
+                    context.scene.st_vertex_index = len(verts) - 1
+                else:
+                    verts.insert(0, new_pt)
+                    context.scene.st_vertex_index = 0
+                _rebuild_street_from_verts(street, verts)
+            added = 1
+
+        label      = f" (+{self.angle_offset:.0f}°)" if self.angle_offset != 0.0 else ""
+        snap_label = f" [terrain, {added}v]"          if snap                      else ""
+        self.report({"INFO"}, f"Extended {n}-lane group {'end' if self.to_end else 'start'} by {length:.1f}{label}{snap_label}")
         return {"FINISHED"}
 
 
@@ -835,7 +974,7 @@ class OBJECT_OT_AppendStreetGroupVertex(bpy.types.Operator):
 
         for i, street in enumerate(lanes):
             verts  = get_street_vertices(street)
-            new_pt = cursor + perp * offsets[i]
+            new_pt = _apply_terrain_snap(cursor + perp * offsets[i], context)
 
             if self.to_end:
                 verts.append(new_pt)
@@ -845,7 +984,8 @@ class OBJECT_OT_AppendStreetGroupVertex(bpy.types.Operator):
                 context.scene.st_vertex_index = 0
             _rebuild_street_from_verts(street, verts)
 
-        self.report({"INFO"}, f"Extended {len(lanes)}-lane group {'end' if self.to_end else 'start'} to cursor")
+        snap_label = " [terrain]" if context.scene.st_snap_to_terrain else ""
+        self.report({"INFO"}, f"Extended {len(lanes)}-lane group {'end' if self.to_end else 'start'} to cursor{snap_label}")
         return {"FINISHED"}
 
 class OBJECT_OT_RefreshStreetColors(bpy.types.Operator):
