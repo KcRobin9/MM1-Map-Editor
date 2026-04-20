@@ -89,21 +89,23 @@ def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:
 
 
 def open_with_notepad_plus(input_file: Path) -> None:
-    notepad_plus_exe = shutil.which(Executable.NOTEPAD_PLUS_PLUS)  
-    
+    notepad_plus_exe = shutil.which(Executable.NOTEPAD_PLUS_PLUS)
     if notepad_plus_exe:
         subprocess.Popen([notepad_plus_exe, input_file])
         print("Opening file with Notepad++ from PATH.")
         return
 
     for path in NOTEPAD_PLUS_PATHS:
-        subprocess.Popen([path, input_file])
-        print(f"Opening file with Notepad++ from hardcoded path: {path}")
+        if os.path.isfile(path):
+            subprocess.Popen([path, input_file])
+            print(f"Opening file with Notepad++ from: {path}")
+            return
+
+    notepad_exe = shutil.which(Executable.NOTEPAD_REGULAR)
+    if notepad_exe:
+        subprocess.Popen([notepad_exe, input_file])
+        print("Notepad++ not found, opening file with Classic Notepad.")
         return
 
-    try:
-        subprocess.Popen([Executable.NOTEPAD, input_file])
-        print("Notepad++ not found, opening file with Classic Notepad.")
-    except FileNotFoundError:
-        print("Neither Notepad++ nor Classic Notepad found. Unable to open file.")
-        raise
+    print("Neither Notepad++ nor Classic Notepad found. Unable to open file.")
+    raise FileNotFoundError("No suitable text editor found.")
