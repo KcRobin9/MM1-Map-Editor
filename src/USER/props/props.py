@@ -18,16 +18,8 @@ bridge_orange_buildling = {
     "name": Prop.BRIDGE_SLIM
 }
 
-# Race specific props
-trash_boxes = {
-    "offset": (0, 0.0, 0),
-    "angle": Rotation.NORTH, 
-    "name": Prop.TRASH_BOXES,
-    "race": [RaceModeNum.CIRCUIT_0, RaceModeNum.CIRCUIT_1]  # Also possible: RaceModeNum.CIRCUIT_ALL
-}
-
 # Put the non-randomized props here
-prop_list = [trailer_set, bridge_orange_buildling, trash_boxes]
+prop_list = [trailer_set, bridge_orange_buildling]
 
 
 #TODO: also support RaceMode and RaceModeNum here

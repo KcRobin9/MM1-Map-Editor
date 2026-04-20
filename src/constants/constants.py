@@ -14,6 +14,7 @@ CURRENT_TIME_FORMATTED = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
     
 #TODO: find a better location for this
 NOTEPAD_PLUS_PATHS = [
-    r"C:\Program Files\Notepad++\notepad++.exe", 
-    r"C:\Program Files (x86)\Notepad++\notepad++.exe"
-    ]
+    rf"{drive}:\{folder}\Notepad++\notepad++.exe"
+    for drive in "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    for folder in ["Program Files", "Program Files (x86)"]
+]
