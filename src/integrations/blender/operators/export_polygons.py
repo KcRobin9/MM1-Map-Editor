@@ -39,9 +39,9 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
 
         # Select Mesh Objects based on the "select_all" property
         if self.select_all:
-            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH"]
+            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and obj.name.startswith("P")]
         else:
-            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH"]
+            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH" and obj.name.startswith("P")]
 
         if not mesh_objects:
             self.report({"WARNING"}, "No mesh objects found for export.")
