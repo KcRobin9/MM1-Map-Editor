@@ -251,19 +251,12 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
                 street_name = data.get("street_name", f"street_{created + 1}")
 
                 if "vertices" in data:
-                    raw_verts = data["vertices"]
+                    lanes_dict = {"lane_1": data["vertices"]}
                 elif "lanes" in data:
-                    raw_verts = list(data["lanes"].values())[0]
+                    lanes_dict = data["lanes"]
                 else:
                     self.report({"WARNING"}, f"Skipped '{street_name}' — no vertices or lanes found")
                     continue
-
-                blender_verts = [
-                    transform_coordinate_system(Vector(v), game_to_blender=True)
-                    for v in raw_verts
-                ]
-
-                obj = _build_curve_object(f"{ST_PREFIX}{street_name}", blender_verts, context)
 
                 itypes    = data.get("intersection_types",  [IntersectionType.CONTINUE, IntersectionType.CONTINUE])
                 sl_names  = data.get("stop_light_names",    [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL])
@@ -271,26 +264,46 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
                 p_blocked = data.get("ped_blocked",         [NO, NO])
                 sl_pos    = data.get("stop_light_positions", [])
 
-                # Store sl_pos on the object FIRST so update callbacks read correct values later
-                if len(sl_pos) >= 2:
-                    obj.st_sl_pos_0_offset = sl_pos[0]
-                    obj.st_sl_pos_0_dir    = sl_pos[1]
-                if len(sl_pos) >= 4:
-                    obj.st_sl_pos_1_offset = sl_pos[2]
-                    obj.st_sl_pos_1_dir    = sl_pos[3]
+                is_grouped = len(lanes_dict) > 1
+                lane_items = list(lanes_dict.items())
 
-                obj.st_intersection_0    = str(itypes[0])
-                obj.st_intersection_1    = str(itypes[1])
-                obj.st_stop_light_name_0 = sl_names[0]
-                obj.st_stop_light_name_1 = sl_names[1]
-                obj.st_traffic_blocked_0 = "YES" if t_blocked[0] == YES else "NO"
-                obj.st_traffic_blocked_1 = "YES" if t_blocked[1] == YES else "NO"
-                obj.st_ped_blocked_0     = "YES" if p_blocked[0] == YES else "NO"
-                obj.st_ped_blocked_1     = "YES" if p_blocked[1] == YES else "NO"
-                obj.st_road_divided      = "YES" if data.get("road_divided", NO) == YES else "NO"
-                obj.st_alley             = "YES" if data.get("alley",        NO) == YES else "NO"
+                for lane_idx, (lane_key, raw_verts) in enumerate(lane_items):
+                    blender_verts = [
+                        transform_coordinate_system(Vector(v), game_to_blender=True)
+                        for v in raw_verts
+                    ]
 
-                apply_street_color(obj)
+                    if is_grouped:
+                        obj_name = f"{ST_PREFIX}{street_name}_{lane_key}"
+                    else:
+                        obj_name = f"{ST_PREFIX}{street_name}"
+
+                    obj = _build_curve_object(obj_name, blender_verts, context)
+
+                    # Store sl_pos on the object FIRST so update callbacks read correct values later
+                    if len(sl_pos) >= 2:
+                        obj.st_sl_pos_0_offset = sl_pos[0]
+                        obj.st_sl_pos_0_dir    = sl_pos[1]
+                    if len(sl_pos) >= 4:
+                        obj.st_sl_pos_1_offset = sl_pos[2]
+                        obj.st_sl_pos_1_dir    = sl_pos[3]
+
+                    obj.st_intersection_0    = str(itypes[0])
+                    obj.st_intersection_1    = str(itypes[1])
+                    obj.st_stop_light_name_0 = sl_names[0]
+                    obj.st_stop_light_name_1 = sl_names[1]
+                    obj.st_traffic_blocked_0 = "YES" if t_blocked[0] == YES else "NO"
+                    obj.st_traffic_blocked_1 = "YES" if t_blocked[1] == YES else "NO"
+                    obj.st_ped_blocked_0     = "YES" if p_blocked[0] == YES else "NO"
+                    obj.st_ped_blocked_1     = "YES" if p_blocked[1] == YES else "NO"
+                    obj.st_road_divided      = "YES" if data.get("road_divided", NO) == YES else "NO"
+                    obj.st_alley             = "YES" if data.get("alley",        NO) == YES else "NO"
+
+                    if is_grouped:
+                        obj.st_group_name = street_name
+
+                    apply_street_color(obj)
+
                 created += 1
 
                 # Collect traffic light props for endpoints that have a light set
