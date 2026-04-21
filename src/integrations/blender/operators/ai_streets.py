@@ -397,16 +397,20 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
                     i1s = INTERSECTION_TYPE_TO_CONST.get(itype_1, itype_1)
                     s0s = STOP_LIGHT_TO_CONST.get(sl_0, f'"{sl_0}"')
                     s1s = STOP_LIGHT_TO_CONST.get(sl_1, f'"{sl_1}"')
-                    lines = []
-                    if itype_0 != str(IntersectionType.CONTINUE) or itype_1 != str(IntersectionType.CONTINUE):
-                        lines.append(f'    "intersection_types": [{i0s}, {i1s}],')
-                    if sl_0 != Prop.TRAFFIC_LIGHT_SINGLE or sl_1 != Prop.TRAFFIC_LIGHT_SINGLE:
-                        lines.append(f'    "stop_light_names": [{s0s}, {s1s}],')
                     sl_pos = [
                         tuple(obj.st_sl_pos_0_offset), tuple(obj.st_sl_pos_0_dir),
                         tuple(obj.st_sl_pos_1_offset), tuple(obj.st_sl_pos_1_dir),
                     ]
-                    if any(v != (0.0, 0.0, 0.0) for v in sl_pos):
+                    # Stop lights are considered "set" only when a position has a meaningful value
+                    sl_active = any(
+                        any(abs(c) > 0.05 for c in v) for v in sl_pos
+                    )
+                    lines = []
+                    if itype_0 != str(IntersectionType.CONTINUE) or itype_1 != str(IntersectionType.CONTINUE):
+                        lines.append(f'    "intersection_types": [{i0s}, {i1s}],')
+                    if sl_active:
+                        if sl_0 != Prop.TRAFFIC_LIGHT_SINGLE or sl_1 != Prop.TRAFFIC_LIGHT_SINGLE:
+                            lines.append(f'    "stop_light_names": [{s0s}, {s1s}],')
                         pos_str = ",\n        ".join(f"({p[0]:.2f}, {p[1]:.2f}, {p[2]:.2f})" for p in sl_pos)
                         lines.append(f'    "stop_light_positions": [\n        {pos_str}\n    ],')
                     if obj.st_traffic_blocked_0 == "YES" or obj.st_traffic_blocked_1 == "YES":

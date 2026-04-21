@@ -472,6 +472,7 @@ def register_scene_properties() -> None:
         description="Index of the active vertex for insert / delete / move operations",
         default=0,
         min=0,
+        update=_clamp_st_vertex_index,
     )
     bpy.types.Scene.st_extend_length = bpy.props.FloatProperty(
         name="Extend Length",
@@ -682,6 +683,15 @@ def _safe_unregister(cls) -> None:
         bpy.utils.unregister_class(cls)
     except RuntimeError:
         pass
+
+
+def _clamp_st_vertex_index(self, context):
+    from src.integrations.blender.operators.ai_streets import get_street_vertex_count
+    obj = context.active_object
+    if obj and obj.type == 'CURVE':
+        n = get_street_vertex_count(obj)
+        if n > 0 and self.st_vertex_index > n - 1:
+            self.st_vertex_index = n - 1
 
 
 def _prefill_car_editor_paths() -> None:
