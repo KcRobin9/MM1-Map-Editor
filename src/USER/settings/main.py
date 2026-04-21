@@ -26,10 +26,11 @@ minimap_outline_color = None    # Change the outline of the minimap shapes to an
 # AI
 set_ai_streets = True           # Change to "True" if you want AI streets
 set_reverse_ai_streets = False  # Change to "True" if you want to add reverse AI streets
-set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker" 
+set_lars_race_maker = False     # Change to "True" if you want to create "Lars Race Maker"
 
 # Car Start Position in Cruise (if no polygon has the option "base = True")
-cruise_start_position = (40.0, 30.0, -40.0)
+set_cruise_start = False         # Change to "False" to skip generating the cruise_start.road file and its entry in the .map file
+cruise_start_position = (0.0, 10.0, 0.0)
 
 # Texture Randomization
 randomize_textures = False      # Change to "True" if you want to randomize all textures in your Map

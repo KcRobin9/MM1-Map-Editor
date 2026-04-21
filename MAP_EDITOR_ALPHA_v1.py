@@ -119,7 +119,7 @@ from src.USER.settings.main import (
     set_bridges, set_props, set_facades, set_physics, set_animations, set_texture_sheet, set_music,
     set_minimap, minimap_outline_color,
     set_ai_streets, set_reverse_ai_streets,
-    set_lars_race_maker, 
+    set_lars_race_maker, set_cruise_start,
     cruise_start_position,
     randomize_textures, random_textures,
     disable_progress_bar
@@ -2400,7 +2400,8 @@ cruise_start = {
     ]
 }     
 
-street_list = street_list + [cruise_start]
+if set_cruise_start:
+    street_list = street_list + [cruise_start]
 
 ###################################################################################################################
 #! ======================= CALL FUNCTIONS ======================= !#
