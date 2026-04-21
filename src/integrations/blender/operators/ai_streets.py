@@ -25,9 +25,10 @@ INTERSECTION_TYPE_ITEMS = [
 ]
 
 STOP_LIGHT_NAME_ITEMS = [
-    (Prop.SIGN_STOP,            "Stop Sign",          ""),
+    ("NONE",                    "Not set",             ""),
+    (Prop.SIGN_STOP,            "Stop Sign",           ""),
     (Prop.TRAFFIC_LIGHT_SINGLE, "Stop Light (Single)", ""),
-    (Prop.TRAFFIC_LIGHT_DUAL,   "Stop Light (Dual)",  ""),
+    (Prop.TRAFFIC_LIGHT_DUAL,   "Stop Light (Dual)",   ""),
 ]
 
 INTERSECTION_TYPE_TO_CONST = {
@@ -51,6 +52,10 @@ INTERSECTION_COLORS = {
     str(IntersectionType.STOP_LIGHT): (1.0, 1.0, 0.0, 1.0),  # Yellow
 }
 
+
+# When True, st_tl_update / st_intersection_update skip BMS placement.
+# Set during batch load so we can rebuild all TLs once at the end instead of once per property assignment.
+_tl_update_suppressed: bool = False
 
 _AI_STREETS_COLLECTION = "AI Streets"
 
@@ -229,6 +234,8 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
     bl_options     = {"REGISTER", "UNDO"}
 
     def execute(self, context: bpy.types.Context) -> set:
+        global _tl_update_suppressed
+
         try:
             from src.USER.ai_streets import street_list
         except ImportError as e:
@@ -236,44 +243,93 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
             return {"CANCELLED"}
 
         created = 0
-        for data in street_list:
-            street_name = data.get("street_name", f"street_{created + 1}")
+        traffic_lights = []  # collected across all streets for one batch placement
 
-            if "vertices" in data:
-                raw_verts = data["vertices"]
-            elif "lanes" in data:
-                raw_verts = list(data["lanes"].values())[0]
-            else:
-                self.report({"WARNING"}, f"Skipped '{street_name}' — no vertices or lanes found")
-                continue
+        _tl_update_suppressed = True
+        try:
+            for data in street_list:
+                street_name = data.get("street_name", f"street_{created + 1}")
 
-            blender_verts = [
-                transform_coordinate_system(Vector(v), game_to_blender=True)
-                for v in raw_verts
-            ]
+                if "vertices" in data:
+                    raw_verts = data["vertices"]
+                elif "lanes" in data:
+                    raw_verts = list(data["lanes"].values())[0]
+                else:
+                    self.report({"WARNING"}, f"Skipped '{street_name}' — no vertices or lanes found")
+                    continue
 
-            obj = _build_curve_object(f"{ST_PREFIX}{street_name}", blender_verts, context)
+                blender_verts = [
+                    transform_coordinate_system(Vector(v), game_to_blender=True)
+                    for v in raw_verts
+                ]
 
-            itypes    = data.get("intersection_types",  [IntersectionType.CONTINUE, IntersectionType.CONTINUE])
-            sl_names  = data.get("stop_light_names",    [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL])
-            t_blocked = data.get("traffic_blocked",     [NO, NO])
-            p_blocked = data.get("ped_blocked",         [NO, NO])
+                obj = _build_curve_object(f"{ST_PREFIX}{street_name}", blender_verts, context)
 
-            obj.st_intersection_0    = str(itypes[0])
-            obj.st_intersection_1    = str(itypes[1])
-            obj.st_stop_light_name_0 = sl_names[0]
-            obj.st_stop_light_name_1 = sl_names[1]
-            obj.st_traffic_blocked_0 = "YES" if t_blocked[0] == YES else "NO"
-            obj.st_traffic_blocked_1 = "YES" if t_blocked[1] == YES else "NO"
-            obj.st_ped_blocked_0     = "YES" if p_blocked[0] == YES else "NO"
-            obj.st_ped_blocked_1     = "YES" if p_blocked[1] == YES else "NO"
-            obj.st_road_divided      = "YES" if data.get("road_divided", NO) == YES else "NO"
-            obj.st_alley             = "YES" if data.get("alley",        NO) == YES else "NO"
+                itypes    = data.get("intersection_types",  [IntersectionType.CONTINUE, IntersectionType.CONTINUE])
+                sl_names  = data.get("stop_light_names",    [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL])
+                t_blocked = data.get("traffic_blocked",     [NO, NO])
+                p_blocked = data.get("ped_blocked",         [NO, NO])
+                sl_pos    = data.get("stop_light_positions", [])
 
-            apply_street_color(obj)
-            created += 1
+                # Store sl_pos on the object FIRST so update callbacks read correct values later
+                if len(sl_pos) >= 2:
+                    obj.st_sl_pos_0_offset = sl_pos[0]
+                    obj.st_sl_pos_0_dir    = sl_pos[1]
+                if len(sl_pos) >= 4:
+                    obj.st_sl_pos_1_offset = sl_pos[2]
+                    obj.st_sl_pos_1_dir    = sl_pos[3]
 
-        self.report({"INFO"}, f"Loaded {created} street(s) from ai_streets.py")
+                obj.st_intersection_0    = str(itypes[0])
+                obj.st_intersection_1    = str(itypes[1])
+                obj.st_stop_light_name_0 = sl_names[0]
+                obj.st_stop_light_name_1 = sl_names[1]
+                obj.st_traffic_blocked_0 = "YES" if t_blocked[0] == YES else "NO"
+                obj.st_traffic_blocked_1 = "YES" if t_blocked[1] == YES else "NO"
+                obj.st_ped_blocked_0     = "YES" if p_blocked[0] == YES else "NO"
+                obj.st_ped_blocked_1     = "YES" if p_blocked[1] == YES else "NO"
+                obj.st_road_divided      = "YES" if data.get("road_divided", NO) == YES else "NO"
+                obj.st_alley             = "YES" if data.get("alley",        NO) == YES else "NO"
+
+                apply_street_color(obj)
+                created += 1
+
+                # Collect traffic light props for endpoints that have a light set
+                for endpoint_idx in range(2):
+                    pos_base = endpoint_idx * 2
+                    if len(sl_pos) < pos_base + 2:
+                        continue
+                    offset = sl_pos[pos_base]
+                    dir_pt = sl_pos[pos_base + 1]
+                    face   = (dir_pt[0] - offset[0], dir_pt[1] - offset[1], dir_pt[2] - offset[2])
+                    name   = sl_names[endpoint_idx] if endpoint_idx < len(sl_names) else Prop.TRAFFIC_LIGHT_SINGLE
+                    if name == "NONE":
+                        continue
+                    traffic_lights.append({
+                        "name":   name,
+                        "offset": offset,
+                        "face":   face,
+                        "tl_key": f"{street_name}_{endpoint_idx}",
+                    })
+        finally:
+            _tl_update_suppressed = False
+
+        # Spawn all traffic light models in one pass
+        tl_placed = 0
+        if traffic_lights:
+            try:
+                from src.USER.settings.blender import prop_bms_folder
+                from src.integrations.blender.modeling.props import place_traffic_lights_in_scene
+                from src.constants.folder import Folder
+                tl_placed = place_traffic_lights_in_scene(
+                    traffic_lights,
+                    Path(prop_bms_folder),
+                    texture_folder=Folder.Resources.Editor.Textures,
+                )
+            except Exception as e:
+                self.report({"WARNING"}, f"Traffic lights could not be placed: {e}")
+
+        tl_msg = f", {tl_placed} traffic light(s)" if traffic_lights else ""
+        self.report({"INFO"}, f"Loaded {created} street(s){tl_msg} from ai_streets.py")
         return {"FINISHED"}
 
 
@@ -785,8 +841,56 @@ class OBJECT_OT_DeleteAllStreets(bpy.types.Operator):
         return context.window_manager.invoke_confirm(self, event)
 
 
+def _get_street_tl_lights(obj: bpy.types.Object) -> tuple:
+    """Return (street_name, lights_list) from an street object's current properties."""
+    street_name = obj.name[len(ST_PREFIX):]
+    sl_pos = [
+        tuple(obj.st_sl_pos_0_offset), tuple(obj.st_sl_pos_0_dir),
+        tuple(obj.st_sl_pos_1_offset), tuple(obj.st_sl_pos_1_dir),
+    ]
+    lights = []
+    for endpoint_idx in range(2):
+        pos_base = endpoint_idx * 2
+        offset   = sl_pos[pos_base]
+        dir_pt   = sl_pos[pos_base + 1]
+        face     = (dir_pt[0] - offset[0], dir_pt[1] - offset[1], dir_pt[2] - offset[2])
+        name     = getattr(obj, f"st_stop_light_name_{endpoint_idx}", Prop.TRAFFIC_LIGHT_SINGLE)
+        if name == "NONE":
+            continue
+        lights.append({
+            "name":   name,
+            "offset": offset,
+            "face":   face,
+            "tl_key": f"{street_name}_{endpoint_idx}",
+        })
+    return street_name, lights
+
+
+def _rebuild_street_tl(obj: bpy.types.Object) -> None:
+    """Refresh the traffic light props in the scene for one street object."""
+    try:
+        from src.USER.settings.blender import prop_bms_folder
+        from src.integrations.blender.modeling.props import refresh_one_street_traffic_lights
+        from src.constants.folder import Folder
+        street_name, lights = _get_street_tl_lights(obj)
+        refresh_one_street_traffic_lights(
+            street_name, lights,
+            Path(prop_bms_folder),
+            texture_folder=Folder.Resources.Editor.Textures,
+        )
+    except Exception as e:
+        print(f"[TL] Could not refresh traffic lights for {obj.name}: {e}")
+
+
 def st_intersection_update(self, context) -> None:
-    pass  # Color is now segment-based, not intersection-type-based
+    if not _tl_update_suppressed and is_street(self):
+        _rebuild_street_tl(self)
+
+
+def st_tl_update(self, context) -> None:
+    """Update callback for stop-light name and position properties."""
+    if not _tl_update_suppressed and is_street(self):
+        _rebuild_street_tl(self)
 
 
 # ── Group helpers ──────────────────────────────────────────────────────────────

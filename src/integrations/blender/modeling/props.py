@@ -549,6 +549,103 @@ def place_props_in_scene(
     print(f"Props placed in scene: {placed} (skipped: {skipped})")
 
 
+_TRAFFIC_LIGHTS_COLLECTION = "Traffic Lights"
+
+# Persistent mesh cache — built once per Blender session, reused on every refresh
+_tl_mesh_cache: Dict[str, Optional[bpy.types.Mesh]] = {}
+
+
+def _get_tl_mesh(
+    prop_name: str,
+    bms_folder: Path,
+    texture_folder: Optional[Path],
+) -> Optional[bpy.types.Mesh]:
+    """Return a cached BMS mesh for a traffic-light prop, loading it on first use."""
+    if prop_name not in _tl_mesh_cache:
+        bms_file = _resolve_bms_file(prop_name, bms_folder)
+        if bms_file is None:
+            print(f"  Traffic light: no BMS for '{prop_name}', skipping")
+            _tl_mesh_cache[prop_name] = None
+        else:
+            _tl_mesh_cache[prop_name] = _load_bms_mesh(bms_file, prop_name, texture_folder)
+    return _tl_mesh_cache[prop_name]
+
+
+def _place_tl_object(
+    tl_key: str,
+    prop_name: str,
+    light: dict,
+    bms_folder: Path,
+    texture_folder: Optional[Path],
+    col: "bpy.types.Collection",
+) -> bool:
+    mesh = _get_tl_mesh(prop_name, bms_folder, texture_folder)
+    if mesh is None:
+        return False
+    bl_loc = _to_blender_location(light["offset"])
+    z_rot  = _to_blender_rotation_z(None, light["face"])
+    bl_off = _bms_to_bl_offset(mesh)
+    obj = bpy.data.objects.new(f"TL_{tl_key}", mesh)
+    col.objects.link(obj)
+    obj.location = (bl_loc[0] + bl_off[0], bl_loc[1] + bl_off[1], bl_loc[2] + bl_off[2])
+    obj.rotation_euler = (0.0, 0.0, z_rot)
+    return True
+
+
+def place_traffic_lights_in_scene(
+    lights: List[dict],
+    bms_folder: Path,
+    texture_folder: Optional[Path] = None,
+) -> int:
+    """
+    Spawn all traffic light props into the "Traffic Lights" collection.
+
+    Each entry in `lights` must have:
+        name   : str   — prop name (e.g. Prop.TRAFFIC_LIGHT_SINGLE)
+        offset : tuple — game-space (x, y, z) position
+        face   : tuple — game-space direction vector (dx, dy, dz); may be (0,0,0)
+        tl_key : str   — unique key used to name the object as TL_{tl_key}
+
+    The collection is cleared on every call to avoid duplicates on re-load.
+    Returns the number of objects placed.
+    """
+    col = _get_or_create_collection(_TRAFFIC_LIGHTS_COLLECTION)
+    _clear_collection(col)
+
+    placed = 0
+    for light in lights:
+        prop_name = light["name"]
+        tl_key    = light.get("tl_key", prop_name)
+        if _place_tl_object(tl_key, prop_name, light, bms_folder, texture_folder, col):
+            placed += 1
+    return placed
+
+
+def refresh_one_street_traffic_lights(
+    street_name: str,
+    lights: List[dict],
+    bms_folder: Path,
+    texture_folder: Optional[Path] = None,
+) -> None:
+    """
+    Remove and re-place traffic light objects for a single street.
+
+    Objects are identified by the naming prefix `TL_{street_name}_`.
+    Only those objects are touched; the rest of the "Traffic Lights"
+    collection is left unchanged.
+    """
+    col    = _get_or_create_collection(_TRAFFIC_LIGHTS_COLLECTION)
+    prefix = f"TL_{street_name}_"
+    for obj in list(col.objects):
+        if obj.name.startswith(prefix):
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+    for light in lights:
+        prop_name = light["name"]
+        tl_key    = light.get("tl_key", prop_name)
+        _place_tl_object(tl_key, prop_name, light, bms_folder, texture_folder, col)
+
+
 _BULK_BMS_COLLECTION = "City BMS"
 
 

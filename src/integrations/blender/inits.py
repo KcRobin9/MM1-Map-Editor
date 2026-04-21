@@ -15,7 +15,7 @@ from src.integrations.blender.operators.polygon_presets import OBJECT_OT_SpawnPr
 from src.integrations.blender.operators.ai_streets import (
     AI_STREET_CLASSES,
     INTERSECTION_TYPE_ITEMS, STOP_LIGHT_NAME_ITEMS,
-    st_intersection_update
+    st_intersection_update, st_tl_update,
 )
 from src.integrations.blender.operators.ai_street_presets import (
     STREET_PRESET_CLASSES, ST_PRESET_ITEMS,
@@ -33,6 +33,8 @@ from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLA
 from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLASSES
 from src.integrations.blender.panels.prop_sidebar import PROP_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, _update_prop_form
+from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_CLASSES
+from src.integrations.blender.operators.car_editor import CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
 
@@ -48,6 +50,7 @@ PANEL_CLASSES = [
     *STREET_EDITOR_CLASSES,
     *WAYPOINT_EDITOR_CLASSES,
     *PROP_EDITOR_PANEL_CLASSES,
+    *CAR_EDITOR_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -63,6 +66,7 @@ OPERATOR_CLASSES = [
     *AI_STREET_CLASSES,
     *STREET_PRESET_CLASSES,
     *PROP_EDITOR_CLASSES,
+    *CAR_EDITOR_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -144,6 +148,23 @@ SCENE_PROPERTIES = [
     "st_extend_angle",
     "st_extend_elevation",
     "st_snap_to_terrain",
+    # Car Editor
+    "ce_car_folder",
+    "ce_texture_folder",
+    "ce_load_lights",
+    "ce_auto_reload",
+    "ce_assign_slot",
+    "ce_face_tile_x",
+    "ce_face_tile_y",
+    "ce_face_rotation",
+    "ce_add_shape",
+    "ce_add_size",
+    "ce_new_tex_name",
+    "ce_active_face_index",
+    "ce_face_texture",
+    "ce_uv_updating",
+    "ce_add_to_city",
+    "ce_last_export_dir",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -224,10 +245,12 @@ def register_street_properties() -> None:
     bpy.types.Object.st_stop_light_name_0 = bpy.props.EnumProperty(
         name="Stop Light (Start)",
         items=STOP_LIGHT_NAME_ITEMS,
+        update=st_tl_update,
     )
     bpy.types.Object.st_stop_light_name_1 = bpy.props.EnumProperty(
         name="Stop Light (End)",
         items=STOP_LIGHT_NAME_ITEMS,
+        update=st_tl_update,
     )
     _YES_NO_ITEMS = [("YES", "Yes", ""), ("NO", "No", "")]
     bpy.types.Object.st_traffic_blocked_0 = bpy.props.EnumProperty(
@@ -249,16 +272,20 @@ def register_street_properties() -> None:
         name="Alley", items=_YES_NO_ITEMS, default="NO"
     )
     bpy.types.Object.st_sl_pos_0_offset = bpy.props.FloatVectorProperty(
-        name="SL 0 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ'
+        name="SL 0 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ',
+        update=st_tl_update,
     )
     bpy.types.Object.st_sl_pos_0_dir = bpy.props.FloatVectorProperty(
-        name="SL 0 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ'
+        name="SL 0 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ',
+        update=st_tl_update,
     )
     bpy.types.Object.st_sl_pos_1_offset = bpy.props.FloatVectorProperty(
-        name="SL 1 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ'
+        name="SL 1 Offset", size=3, default=(0.0, 0.0, 0.0), subtype='XYZ',
+        update=st_tl_update,
     )
     bpy.types.Object.st_sl_pos_1_dir = bpy.props.FloatVectorProperty(
-        name="SL 1 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ'
+        name="SL 1 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ',
+        update=st_tl_update,
     )
 
 
@@ -520,6 +547,85 @@ def register_scene_properties() -> None:
         default=False,
     )
 
+    # ── Car Editor scene properties ───────────────────────────────────────────
+    bpy.types.Scene.ce_car_folder = bpy.props.StringProperty(
+        name="Car Folder",
+        description="Path to the vehicle BMS folder (e.g. CAR_FILES_TEST/VPFORD)",
+        default="",
+        subtype="DIR_PATH",
+    )
+    bpy.types.Scene.ce_texture_folder = bpy.props.StringProperty(
+        name="Texture Folder",
+        description="Folder containing .DDS textures for the car",
+        default="",
+        subtype="DIR_PATH",
+    )
+    bpy.types.Scene.ce_load_lights = bpy.props.BoolProperty(
+        name="Load Lights",
+        description="Also load headlight / taillight BMS files when loading a car",
+        default=False,
+    )
+    bpy.types.Scene.ce_auto_reload = bpy.props.BoolProperty(
+        name="Auto-Reload After Export",
+        description="Automatically reimport the exported BMS files after exporting",
+        default=False,
+    )
+    bpy.types.Scene.ce_assign_slot = bpy.props.IntProperty(
+        name="Texture Slot",
+        description="Material slot index to assign to selected faces",
+        default=0,
+        min=0,
+    )
+    bpy.types.Scene.ce_face_tile_x = bpy.props.FloatProperty(
+        name="Tile X", default=1.0, min=0.001, soft_max=32.0,
+        description="UV tiling scale on X axis for selected faces",
+        update=update_ce_face_uv,
+    )
+    bpy.types.Scene.ce_face_tile_y = bpy.props.FloatProperty(
+        name="Tile Y", default=1.0, min=0.001, soft_max=32.0,
+        description="UV tiling scale on Y axis for selected faces",
+        update=update_ce_face_uv,
+    )
+    bpy.types.Scene.ce_face_rotation = bpy.props.FloatProperty(
+        name="Rotation", default=0.0, soft_min=-360.0, soft_max=360.0,
+        description="UV rotation in degrees for selected faces",
+        update=update_ce_face_uv,
+    )
+    bpy.types.Scene.ce_add_shape = bpy.props.EnumProperty(
+        name="Shape",
+        items=[("QUAD", "Quad", ""), ("TRI", "Triangle", "")],
+        default="QUAD",
+    )
+    bpy.types.Scene.ce_add_size = bpy.props.FloatProperty(
+        name="Size", default=0.3, min=0.001, soft_max=10.0,
+        description="Side length of the new face",
+    )
+    bpy.types.Scene.ce_active_face_index = bpy.props.IntProperty(
+        name="Active Face Index", default=0, min=0,
+    )
+    bpy.types.Scene.ce_uv_updating = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.ce_add_to_city = bpy.props.BoolProperty(
+        name="Add to City",
+        description="Also write exported BMS files to SHOP/BMS/<car_name>/ for in-game use",
+        default=False,
+    )
+    bpy.types.Scene.ce_last_export_dir = bpy.props.StringProperty(
+        name="Last Export Dir",
+        description="Path of the most recent timestamped export folder (used by Reload)",
+        default="",
+    )
+    bpy.types.Scene.ce_face_texture = bpy.props.EnumProperty(
+        name="Texture",
+        description="Texture to assign to selected faces on the active car part",
+        items=TEXTURE_ENUM_ITEMS,
+        update=update_ce_face_texture,
+    )
+    bpy.types.Scene.ce_new_tex_name = bpy.props.StringProperty(
+        name="Texture Name",
+        description="DDS texture name (without extension) to add as a new material slot",
+        default="",
+    )
+
 
 def _safe_register(cls) -> None:
     try:
@@ -536,6 +642,15 @@ def _safe_unregister(cls) -> None:
         pass
 
 
+def _prefill_car_editor_paths() -> None:
+    """Set Car Editor defaults on first load."""
+    from src.constants.folder import Folder
+    scene = bpy.context.scene
+    scene.ce_texture_folder = str(Folder.Resources.Editor.Textures)
+    if not scene.ce_car_folder:
+        scene.ce_car_folder = str(Folder.Resources.Editor.BMS)
+
+
 def initialize_blender_panels() -> None:
     if not is_process_running(Executable.BLENDER):
         return
@@ -543,6 +658,7 @@ def initialize_blender_panels() -> None:
     register_object_properties()
     register_street_properties()
     register_scene_properties()
+    _prefill_car_editor_paths()
 
     # Rename the default master collection from "Collection" to "Polygons"
     scene_col = bpy.context.scene.collection

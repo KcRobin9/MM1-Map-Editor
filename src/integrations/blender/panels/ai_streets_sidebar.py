@@ -165,30 +165,26 @@ class VIEW3D_PT_StreetEditorIntersections(bpy.types.Panel):
         if not is_street(obj):
             return
 
-        col = layout.column(align=True)
-        col.label(text="Start:")
-        col.prop(obj, "st_intersection_0",    text="Type")
-        col.prop(obj, "st_stop_light_name_0", text="Light")
+        _ENDPOINTS = [
+            ("Start", "st_intersection_0", "st_stop_light_name_0", "st_sl_pos_0_offset", "st_sl_pos_0_dir"),
+            ("End",   "st_intersection_1", "st_stop_light_name_1", "st_sl_pos_1_offset", "st_sl_pos_1_dir"),
+        ]
 
-        layout.separator()
+        for i, (label, itype_prop, name_prop, offset_prop, dir_prop) in enumerate(_ENDPOINTS):
+            if i > 0:
+                layout.separator()
+            col = layout.column(align=True)
+            col.label(text=f"{label}:")
+            col.prop(obj, itype_prop, text="Type")
 
-        col = layout.column(align=True)
-        col.label(text="End:")
-        col.prop(obj, "st_intersection_1",    text="Type")
-        col.prop(obj, "st_stop_light_name_1", text="Light")
+            current_name = getattr(obj, name_prop, "NONE")
 
-        layout.separator()
-        row = layout.row()
-        row.prop(
-            context.scene, "st_sl_pos_expanded",
-            icon="TRIA_DOWN" if context.scene.st_sl_pos_expanded else "TRIA_RIGHT",
-            icon_only=True, emboss=False,
-        )
-        row.label(text="Stop Light Position:")
-        if context.scene.st_sl_pos_expanded:
-            col2 = layout.column(align=True)
-            col2.prop(obj, "st_sl_pos_0_offset", text="Offset")
-            col2.prop(obj, "st_sl_pos_0_dir",    text="Direction")
+            col.prop(obj, name_prop, text="Light")
+
+            pos_col = col.column(align=True)
+            pos_col.active = current_name != "NONE"
+            pos_col.prop(obj, offset_prop, text="Offset")
+            pos_col.prop(obj, dir_prop,    text="Direction")
 
 
 class VIEW3D_PT_StreetEditorProperties(bpy.types.Panel):
