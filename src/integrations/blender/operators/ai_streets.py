@@ -406,10 +406,16 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
                         lines.append(f'    "alley": {alley},')
                     return lines
 
+                def _fmt(c: float) -> str:
+                    s = f"{c:.2f}"
+                    return "0.00" if s == "-0.00" else s
+
                 def _game_verts_str(obj, indent="        ") -> str:
                     verts = get_street_vertices(obj)
                     gv    = [transform_coordinate_system(v, blender_to_game=True) for v in verts]
-                    return f",\n{indent}".join(f"({v[0]:.2f}, {v[1]:.2f}, {v[2]:.2f})" for v in gv)
+                    return f",\n{indent}".join(
+                        f"({_fmt(v[0])}, {_fmt(v[1])}, {_fmt(v[2])})" for v in gv
+                    )
 
                 street_names = []
 

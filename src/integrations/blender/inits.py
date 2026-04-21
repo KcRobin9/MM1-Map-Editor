@@ -177,6 +177,10 @@ SCENE_PROPERTIES = [
     "st_preset_grouped",
     "st_preset_converge_start",
     "st_preset_converge_end",
+    "st_preset_direction",
+    "st_poly_from",
+    "st_poly_to",
+    "st_poly_info_expanded",
 ]
 
 
@@ -534,7 +538,7 @@ def register_scene_properties() -> None:
     bpy.types.Scene.st_preset_grouped = bpy.props.BoolProperty(
         name="Grouped Street",
         description="Export all lanes as one multi-lane street dict (lanes format) instead of separate streets",
-        default=False,
+        default=True,
     )
     bpy.types.Scene.st_preset_converge_start = bpy.props.BoolProperty(
         name="Converge Start",
@@ -545,6 +549,44 @@ def register_scene_properties() -> None:
         name="Converge End",
         description="Pin all lane end-points to the centre lane's end point",
         default=False,
+    )
+    import re as _re
+
+    def _natural_key(name):
+        return [int(p) if p.isdigit() else p.lower()
+                for p in _re.split(r'(\d+)', name)]
+
+    def _poly_search(self, context, edit_text):
+        names = [o.name for o in bpy.data.objects
+                 if o.type == 'MESH' and o.name.startswith("P")]
+        names.sort(key=_natural_key)
+        lo = edit_text.lower()
+        return [n for n in names if lo in n.lower()]
+
+    bpy.types.Scene.st_poly_from = bpy.props.StringProperty(
+        name="Start Polygon",
+        description="Intersection polygon where the street begins (V0 = face centre)",
+        default="",
+        search=_poly_search,
+    )
+    bpy.types.Scene.st_poly_to = bpy.props.StringProperty(
+        name="End Polygon",
+        description="Intersection polygon where the street ends (last vertex = face centre)",
+        default="",
+        search=_poly_search,
+    )
+    bpy.types.Scene.st_poly_info_expanded = bpy.props.BoolProperty(
+        name="Show Info",
+        description="Show explanation for the From Polygons feature",
+        default=False,
+    )
+    bpy.types.Scene.st_preset_direction = bpy.props.FloatProperty(
+        name="Direction",
+        description="Spawn direction in degrees: 0=North (+Y), 90=East (+X), -90=West, 180=South",
+        default=0.0,
+        soft_min=-180.0,
+        soft_max=180.0,
+        step=100,
     )
 
     # ── Car Editor scene properties ───────────────────────────────────────────

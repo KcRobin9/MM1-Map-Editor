@@ -2,6 +2,7 @@ import bpy
 import math
 from typing import NamedTuple, List
 
+from mathutils import Vector
 from src.game.races.constants_2 import IntersectionType
 from src.integrations.blender.operators.ai_streets import (
     ST_PREFIX,
@@ -10,6 +11,7 @@ from src.integrations.blender.operators.ai_streets import (
     _set_street_defaults,
     apply_street_color,
     _next_street_name,
+    _apply_terrain_snap,
 )
 
 
@@ -448,6 +450,16 @@ class OBJECT_OT_SpawnStreetPreset(bpy.types.Operator):
         group_name = sub_col.name if grouped else ""
 
         cursor  = context.scene.cursor.location
+        # Clockwise rotation so 0°=north(+Y), 90°=east(+X), -90°=west, 180°=south
+        dir_rad = math.radians(scene.st_preset_direction)
+        cos_d   = math.cos(dir_rad)
+        sin_d   = math.sin(dir_rad)
+
+        def _rotate_pt(v):
+            rx = v[0] * cos_d + v[1] * sin_d
+            ry = -v[0] * sin_d + v[1] * cos_d
+            return (rx, ry, v[2])
+
         created = []
 
         for spec in specs:
@@ -455,8 +467,8 @@ class OBJECT_OT_SpawnStreetPreset(bpy.types.Operator):
                 continue
             name = _next_street_name(scene)
             world_pts = [
-                (cursor.x + v[0], cursor.y + v[1], cursor.z + v[2])
-                for v in spec.vertices
+                (cursor.x + rv[0], cursor.y + rv[1], cursor.z + rv[2])
+                for rv in (_rotate_pt(v) for v in spec.vertices)
             ]
             obj = _build_curve_object(f"{ST_PREFIX}{name}", world_pts, context,
                                       collection=sub_col)
@@ -484,6 +496,155 @@ class OBJECT_OT_SpawnStreetPreset(bpy.types.Operator):
         return {"FINISHED"}
 
 
+# ── Polygon-to-polygon street spawner ─────────────────────────────────────────
+
+def _mesh_face_center(obj: bpy.types.Object) -> Vector:
+    """World-space centroid of the first polygon face (or object origin if no faces)."""
+    mw   = obj.matrix_world
+    mesh = obj.data
+    if not mesh.polygons:
+        return Vector(mw.translation)
+    face  = mesh.polygons[0]
+    verts = [mw @ mesh.vertices[vi].co for vi in face.vertices]
+    return sum(verts, Vector((0.0, 0.0, 0.0))) / len(verts)
+
+
+def _mesh_face_exit_edge(obj: bpy.types.Object, toward: Vector) -> Vector:
+    """
+    World-space midpoint of the face edge that faces most toward `toward`.
+    Used to find where the road exits / enters an intersection polygon.
+    """
+    mw   = obj.matrix_world
+    mesh = obj.data
+    if not mesh.polygons:
+        return Vector(mw.translation)
+    face   = mesh.polygons[0]
+    center = _mesh_face_center(obj)
+    dirn   = (toward - center).normalized()
+    verts  = [mw @ mesh.vertices[vi].co for vi in face.vertices]
+    n      = len(verts)
+    best_dot, best_mid = -999.0, verts[0]
+    for i in range(n):
+        mid = (verts[i] + verts[(i + 1) % n]) * 0.5
+        d   = (mid - center).normalized().dot(dirn)
+        if d > best_dot:
+            best_dot = d
+            best_mid = mid
+    return best_mid
+
+
+class OBJECT_OT_SpawnStreetBetweenPolys(bpy.types.Operator):
+    """
+    Build an AI street whose first two vertices lie inside the start polygon
+    and last two vertices lie inside the end polygon.  Everything in between
+    follows the straight road, split by st_preset_length_split.
+
+    Vertex layout per lane:
+        V0          — centre of start polygon  (all lanes share this)
+        V1          — exit-edge midpoint of start polygon + perp offset
+        V2…Vn-2    — road interior, split by Split Length, + perp offset
+        Vn-1        — entry-edge midpoint of end polygon + perp offset
+        Vn          — centre of end polygon   (all lanes share this)
+    """
+    bl_idname      = "object.spawn_street_between_polys"
+    bl_label       = "Spawn Street Between Polygons"
+    bl_description = "Generate an AI street connecting two named polygon objects"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    def execute(self, context: bpy.types.Context) -> set:
+        scene = context.scene
+        name_from = scene.st_poly_from.strip()
+        name_to   = scene.st_poly_to.strip()
+
+        obj_from = bpy.data.objects.get(name_from)
+        obj_to   = bpy.data.objects.get(name_to)
+
+        missing = [n for n, o in ((name_from, obj_from), (name_to, obj_to)) if o is None]
+        if missing:
+            self.report({"ERROR"}, f"Polygon object(s) not found: {', '.join(missing)}")
+            return {"CANCELLED"}
+
+        c_from = _mesh_face_center(obj_from)
+        c_to   = _mesh_face_center(obj_to)
+
+        # Road direction derived from polygon CENTRES — not exit edges — so the
+        # centre-line is perfectly straight and carries no lateral drift from
+        # the polygon geometry.
+        c_vec    = c_to - c_from
+        c_len    = c_vec.length
+        if c_len < 0.01:
+            self.report({"ERROR"}, "Polygons are too close together or coincident")
+            return {"CANCELLED"}
+        road_dir = c_vec / c_len
+        perp     = Vector((-road_dir.y, road_dir.x, 0.0)).normalized()
+
+        # Project e_from / e_to onto the clean centre-line axis so they share
+        # the exact same lateral position as the polygon centres (eliminates
+        # sub-centimetre drift caused by exit-edge geometry).
+        e_from_raw = _mesh_face_exit_edge(obj_from, c_to)
+        e_to_raw   = _mesh_face_exit_edge(obj_to,   c_from)
+        t_from     = (e_from_raw - c_from).dot(road_dir)
+        t_to       = (e_to_raw   - c_from).dot(road_dir)
+        e_from     = c_from + road_dir * t_from
+        e_to       = c_from + road_dir * t_to
+
+        road_len = max(0.0, t_to - t_from)
+
+        # Intermediate road vertices (between the two exit-edge midpoints)
+        split = scene.st_preset_length_split
+        if split > 0.01 and road_len > split:
+            n_steps  = max(0, math.ceil(road_len / split) - 1)
+            road_pts = [e_from + road_dir * split * (i + 1) for i in range(n_steps)]
+        else:
+            road_pts = []
+
+        # Centre-line vertex list: start-centre, start-edge, ...road..., end-edge, end-centre
+        centre_line = [c_from, e_from] + road_pts + [e_to, c_to]
+
+        lanes   = scene.st_preset_lanes
+        sep     = scene.st_preset_lane_separator
+        grouped = scene.st_preset_grouped
+        offsets = _lane_offsets(lanes, sep)
+
+        sub_col    = _get_or_create_preset_subcollection("POLY")
+        group_name = sub_col.name if grouped else ""
+
+        created = []
+        last_idx = len(centre_line) - 1
+        for off in offsets:
+            lane_verts = []
+            for j, v in enumerate(centre_line):
+                # Only the polygon centres (V0 and Vlast) converge — all other
+                # vertices keep the lane offset so the spread extends into the
+                # intersection quad and tapers to the centre point inside it.
+                if j == 0 or j == last_idx:
+                    pt = v.copy()
+                else:
+                    pt = v + perp * off
+                lane_verts.append(_apply_terrain_snap(pt, context))
+
+            name = _next_street_name(scene)
+            obj  = _build_curve_object(f"{ST_PREFIX}{name}", lane_verts, context,
+                                       collection=sub_col)
+            _set_street_defaults(obj)
+            obj.st_group_name = group_name
+            apply_street_color(obj)
+            created.append(obj)
+
+        bpy.ops.object.select_all(action='DESELECT')
+        for obj in created:
+            obj.select_set(True)
+        if created:
+            context.view_layer.objects.active = created[0]
+
+        road_m = road_len
+        self.report({"INFO"},
+            f"Spawned {len(created)} lane(s) · {len(centre_line)} vertices · road {road_m:.1f} units"
+        )
+        return {"FINISHED"}
+
+
 STREET_PRESET_CLASSES = [
     OBJECT_OT_SpawnStreetPreset,
+    OBJECT_OT_SpawnStreetBetweenPolys,
 ]

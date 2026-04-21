@@ -257,12 +257,49 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
         row.operator("object.create_ai_street",    text="New Street", icon='CURVE_DATA')
         row.operator("object.duplicate_ai_street", text="Duplicate",  icon='DUPLICATE')
 
+        # ── From Polygons ─────────────────────────────────────────────────────
+        layout.separator()
+        layout.label(text="From Polygons", icon='MESH_DATA')
+        box = layout.box()
+        col = box.column(align=True)
+
+        # Expandable info block
+        row = col.row()
+        row.prop(
+            context.scene, "st_poly_info_expanded",
+            icon="TRIA_DOWN" if context.scene.st_poly_info_expanded else "TRIA_RIGHT",
+            icon_only=True, emboss=False,
+        )
+        row.label(text="How it works", icon='INFO')
+        if context.scene.st_poly_info_expanded:
+            info = col.box().column(align=True)
+            info.scale_y = 0.75
+            info.label(text="Pick two intersection quads (P…).")
+            info.label(text="V0  = centre of Start poly")
+            info.label(text="V1  = exit edge facing End poly")
+            info.label(text="V2…= road, split by Split Length")
+            info.label(text="Vn  = entry edge of End poly")
+            info.label(text="Vn+1= centre of End poly")
+            info.label(text="Lanes/Sep/Grouped apply here.")
+            info.label(text="Tot.Length, Direction, Converge")
+            info.label(text="are NOT used — auto-computed.")
+
+        col.separator()
+        col.prop(context.scene, "st_poly_from", text="Start Poly")
+        col.prop(context.scene, "st_poly_to",   text="End Poly")
+        col.separator()
+        col.operator("object.spawn_street_between_polys",
+                     text="Spawn Between Polygons", icon='DRIVER_DISTANCE')
+
         # ── Presets ───────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Presets", icon='PRESET')
         box = layout.box()
         col = box.column(align=True)
         col.prop(context.scene, "st_street_preset", text="Preset")
+
+        col.separator()
+        col.prop(context.scene, "st_preset_direction", text="Direction (°)")
 
         col.separator()
         col.label(text="Geometry:")
