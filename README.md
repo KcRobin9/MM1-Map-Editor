@@ -44,7 +44,8 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 ## Credits
 * [0x1F9F1](https://github.com/0x1F9F1) - Instrumental help, including [Open1560](https://github.com/0x1F9F1/Open1560) features and coding Q & A
 * [Dading](https://www.youtube.com/@dading5962) - Alpha tester, contributor, creator of [Miniville](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Miniville/)
-* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, contributor, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger%20Isle)
+* [fatiyesman](https://github.com/fatiyesman) - Alpha tester, contributor, creator of [Treehugger Isle](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Treehugger_Isle)
+* [GTR !!!](https://www.youtube.com/@gtr_/featured) - Alpha tester, contributor, creator of [Hell Cage](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/Hell_Cage) and [The Square of Death](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/examples/finished_maps/The_Square_of_Death)
 * [AstrixTube](https://www.youtube.com/@astrixtube/) - Alpha tester, Prop Editing Expansions/Improvements inspired from his Standalone Prop Editor
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
 * [Rodrighazzo](https://www.youtube.com/@Rodrighazzo/videos) - Alpha tester, experimenting with the original 3D Studio Max R2.5 dev plugin
