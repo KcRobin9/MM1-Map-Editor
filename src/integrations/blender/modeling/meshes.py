@@ -134,14 +134,17 @@ def build_blender_mesh(prop_name: str, bms_data: dict) -> bpy.types.Mesh:
     """
     Convert parsed BMS data into a Blender Mesh data-block using bmesh.
 
-    Closely follows import_bms_object() from the Angel Studios Blender Addon
-    (Dummiesman).  Key additions over the previous version:
+    Vertices map 1-to-1 to BMS points (unique 3D positions).  Per-loop data
+    (UV, vertex colour, packed normal index) is stored on face loops so that
+    a round-trip export can reconstruct the original adjunct table exactly.
 
-    • face.material_index is set per face from texture_indices[], mapping each
-      polygon to the correct material slot (matching the reference formula:
-      slot = 0 if texture_index == 0 else texture_index - 1).
-    • One material slot placeholder is added to the mesh per texture name so
-      that apply_all_prop_materials() can fill them in order later.
+    Custom mesh properties written:
+      bms_flags   – original BMS flags byte (used by bms_writer on export)
+      mesh_offset – BMS mesh_offset (x, y, z) in game space
+      texture_names – list of texture name strings
+
+    Custom loop attribute written (when NORMALS flag is set):
+      bms_ni  – per-loop packed normal index (INT, corner domain)
     """
     points          = bms_data["points"]
     tex_coords      = bms_data["tex_coords"]
@@ -157,22 +160,15 @@ def build_blender_mesh(prop_name: str, bms_data: dict) -> bpy.types.Mesh:
     me = bpy.data.meshes.new(prop_name)
     bm = bmesh.new()
     bm.from_mesh(me)
+
     uv_layer    = bm.loops.layers.uv.new()
     color_layer = bm.loops.layers.color.new("Col") if vert_colors else None
+    # Per-loop packed normal index — survives bm.to_mesh() as a corner INT attribute.
+    ni_layer    = bm.loops.layers.int.new("bms_ni") if (flags & 2) else None
 
-    # ── Build deduplicated vertex list ────────────────────────────────────────
-    vertex_map: dict = {}
-    bm_verts: list   = []
-
-    for adj_idx in range(bms_data["num_adjuncts"]):
-        pos    = points[vertex_indices[adj_idx]]
-        normal = normal_indices[adj_idx] if (flags & 2) else None
-        key    = _vert_key(pos, normal)
-
-        if key not in vertex_map:
-            vertex_map[key] = len(bm_verts)
-            bm_verts.append(bm.verts.new(_to_blender_pos(pos)))
-
+    # ── One Blender vertex per BMS point (1-to-1 mapping) ────────────────────
+    for pos in points:
+        bm.verts.new(_to_blender_pos(pos))
     bm.verts.ensure_lookup_table()
 
     # ── Build faces ───────────────────────────────────────────────────────────
@@ -181,30 +177,33 @@ def build_blender_mesh(prop_name: str, bms_data: dict) -> bpy.types.Mesh:
         side_count = 4 if surface_indices[base + 3] > 0 else 3
         adj_list   = surface_indices[base : base + side_count]
 
-        face_verts = []
-        for adj_idx in adj_list:
-            pos    = points[vertex_indices[adj_idx]]
-            normal = normal_indices[adj_idx] if (flags & 2) else None
-            key    = _vert_key(pos, normal)
-            face_verts.append(bm_verts[vertex_map[key]])
+        # BMS vertex index for each corner of this face
+        pt_indices = [vertex_indices[adj] for adj in adj_list]
+
+        # Skip degenerate faces (same Blender vertex appears twice)
+        if len(set(pt_indices)) < side_count:
+            continue
+
+        face_verts = [bm.verts[vi] for vi in pt_indices]
 
         try:
             face = bm.faces.new(face_verts)
 
-            for xx in range(side_count):
-                loop = face.loops[xx]
+            for xx, loop in enumerate(face.loops):
                 adj_idx = adj_list[xx]
                 if flags & 1:
                     loop[uv_layer].uv = _to_blender_uv(tex_coords[adj_idx])
                 if color_layer is not None:
                     loop[color_layer] = vert_colors[adj_idx]
+                if ni_layer is not None:
+                    loop[ni_layer] = normal_indices[adj_idx]
 
             tex_idx = texture_indices[surf_idx]
             face.material_index = 0 if tex_idx == 0 else tex_idx - 1
 
             face.smooth = True
         except Exception:
-            pass  # skip degenerate / duplicate-vertex faces
+            pass  # skip truly degenerate faces
 
     for _ in texture_names:
         me.materials.append(None)
@@ -213,8 +212,8 @@ def build_blender_mesh(prop_name: str, bms_data: dict) -> bpy.types.Mesh:
     bm.to_mesh(me)
     bm.free()
 
-    # Store metadata so it survives the .blend round-trip and is available
-    # to place_props_in_scene when creating per-instance objects.
+    # ── Persist metadata for export round-trip ────────────────────────────────
+    me["bms_flags"]     = flags
     me["texture_names"] = texture_names
     me["mesh_offset"]   = list(bms_data.get("mesh_offset", (0.0, 0.0, 0.0)))
 

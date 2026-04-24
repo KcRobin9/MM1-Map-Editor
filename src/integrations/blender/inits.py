@@ -37,6 +37,8 @@ from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_
 from src.integrations.blender.operators.car_editor import CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
+from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
+from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
 
 
 PANEL_CLASSES = [
@@ -51,6 +53,7 @@ PANEL_CLASSES = [
     *WAYPOINT_EDITOR_CLASSES,
     *PROP_EDITOR_PANEL_CLASSES,
     *CAR_EDITOR_PANEL_CLASSES,
+    *ROAD_BUILDER_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -67,6 +70,7 @@ OPERATOR_CLASSES = [
     *STREET_PRESET_CLASSES,
     *PROP_EDITOR_CLASSES,
     *CAR_EDITOR_CLASSES,
+    *ROAD_BUILDER_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -75,6 +79,12 @@ OBJECT_PROPERTIES = [
     "vertex_coords", "hud_color",
     "tile_x", "tile_y", "angle_degrees", "texture_name",
     "cell_type", "material_index", "always_visible", "sort_vertices",
+    # Road Builder spine properties
+    "rs_lane_count", "rs_lane_width",
+    "rs_curb_width", "rs_curb_height",
+    "rs_sidewalk_width", "rs_sidewalk_height",
+    "rs_banking_auto", "rs_banking_max_deg",
+    "rs_road_tile_x", "rs_road_tile_y",
     # Street properties
     "st_group_name",
     "st_intersection_0", "st_intersection_1",
@@ -165,6 +175,8 @@ SCENE_PROPERTIES = [
     "ce_uv_updating",
     "ce_add_to_city",
     "ce_last_export_dir",
+    "ce_show_damage",
+    "ce_paint_variant",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -181,6 +193,9 @@ SCENE_PROPERTIES = [
     "st_poly_from",
     "st_poly_to",
     "st_poly_info_expanded",
+    # Road Builder scene properties
+    "rd_extend_length", "rd_extend_angle", "rd_extend_elevation",
+    "rd_snap_to_terrain", "rd_road_type",
 ]
 
 
@@ -290,6 +305,46 @@ def register_street_properties() -> None:
     bpy.types.Object.st_sl_pos_1_dir = bpy.props.FloatVectorProperty(
         name="SL 1 Direction", size=3, default=(0.01, 0.0, 0.0), subtype='XYZ',
         update=st_tl_update,
+    )
+
+
+def register_road_builder_properties() -> None:
+    bpy.types.Object.rs_lane_count = bpy.props.IntProperty(
+        name="Lanes", default=2, min=1, max=6,
+        description="Number of lanes in this road",
+    )
+    bpy.types.Object.rs_lane_width = bpy.props.FloatProperty(
+        name="Lane Width", default=4.0, min=1.0, soft_max=20.0,
+    )
+    bpy.types.Object.rs_curb_width = bpy.props.FloatProperty(
+        name="Curb Width", default=0.8, min=0.0, soft_max=5.0,
+        description="Width of the raised curb strip (0 = no curb)",
+    )
+    bpy.types.Object.rs_curb_height = bpy.props.FloatProperty(
+        name="Curb Height", default=0.15, min=0.0, soft_max=2.0,
+    )
+    bpy.types.Object.rs_sidewalk_width = bpy.props.FloatProperty(
+        name="Sidewalk Width", default=2.5, min=0.0, soft_max=20.0,
+        description="Width of the sidewalk / shoulder (0 = none)",
+    )
+    bpy.types.Object.rs_sidewalk_height = bpy.props.FloatProperty(
+        name="Sidewalk Height", default=0.15, min=0.0, soft_max=2.0,
+    )
+    bpy.types.Object.rs_banking_auto = bpy.props.BoolProperty(
+        name="Auto Banking",
+        description="Automatically tilt cross-section on curves",
+        default=False,
+    )
+    bpy.types.Object.rs_banking_max_deg = bpy.props.FloatProperty(
+        name="Max Banking",
+        description="Maximum banking angle at a 90° turn",
+        default=15.0, min=0.0, soft_max=45.0,
+    )
+    bpy.types.Object.rs_road_tile_x = bpy.props.FloatProperty(
+        name="Road Tile X", default=2.0, min=0.1, soft_max=10.0,
+    )
+    bpy.types.Object.rs_road_tile_y = bpy.props.FloatProperty(
+        name="Road Tile Y", default=2.0, min=0.1, soft_max=10.0,
     )
 
 
@@ -590,6 +645,33 @@ def register_scene_properties() -> None:
         step=100,
     )
 
+    # ── Road Builder scene properties ─────────────────────────────────────────
+    bpy.types.Scene.rd_extend_length = bpy.props.FloatProperty(
+        name="Length", default=10.0, min=0.1, soft_max=200.0,
+        description="Distance to extend the road spine per step",
+    )
+    bpy.types.Scene.rd_extend_angle = bpy.props.FloatProperty(
+        name="Turn Angle",
+        description="Horizontal turn angle in degrees (0=straight, +90=right, -90=left)",
+        default=0.0, soft_min=-180.0, soft_max=180.0, step=100,
+    )
+    bpy.types.Scene.rd_extend_elevation = bpy.props.FloatProperty(
+        name="Slope",
+        description="Vertical slope angle in degrees (+up, -down). Disabled when Snap to Terrain is on.",
+        default=0.0, soft_min=-89.0, soft_max=89.0, step=50,
+    )
+    bpy.types.Scene.rd_snap_to_terrain = bpy.props.BoolProperty(
+        name="Snap to Terrain",
+        description="Raycast spine endpoint(s) down onto scene geometry",
+        default=False,
+    )
+    bpy.types.Scene.rd_road_type = bpy.props.EnumProperty(
+        name="Road Type",
+        description="Quick preset for cross-section dimensions",
+        items=ROAD_TYPE_ITEMS,
+        default="ROAD_2L",
+    )
+
     # ── Car Editor scene properties ───────────────────────────────────────────
     bpy.types.Scene.ce_car_folder = bpy.props.StringProperty(
         name="Car Folder",
@@ -668,6 +750,16 @@ def register_scene_properties() -> None:
         description="DDS texture name (without extension) to add as a new material slot",
         default="",
     )
+    bpy.types.Scene.ce_show_damage = bpy.props.BoolProperty(
+        name="Damage View",
+        description="Currently showing damage (_DMG) texture variants",
+        default=False,
+    )
+    bpy.types.Scene.ce_paint_variant = bpy.props.StringProperty(
+        name="Paint Variant",
+        description="Current paint variant prefix (e.g. VPBULLET, VPBULLETBLUE)",
+        default="",
+    )
 
 
 def _safe_register(cls) -> None:
@@ -709,6 +801,7 @@ def initialize_blender_panels() -> None:
 
     register_object_properties()
     register_street_properties()
+    register_road_builder_properties()
     register_scene_properties()
     _prefill_car_editor_paths()
 
