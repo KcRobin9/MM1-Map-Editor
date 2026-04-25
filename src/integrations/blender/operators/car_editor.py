@@ -43,15 +43,22 @@ def _car_paint_texture_names(body_mesh) -> list:
 
 def _detect_paint_prefix(body_mesh) -> str:
     """
-    Return the shared prefix of all non-generic, non-DMG textures on the body mesh.
-    E.g. 'VPBULLET' or 'VPPANOZYELLOW'.  Returns '' when no consistent prefix exists.
+    Return the colour-variant prefix for this car's body textures.
+    E.g. 'VPPANOZGREEN', 'VPF350BLUE'.  Returns '' when detection fails.
+
+    Uses the most-common prefix among non-generic, non-DMG textures so that
+    shared base textures like VPF350_BD (prefix 'VPF350') don't pollute the
+    result when the majority of textures use e.g. 'VPF350BLUE'.
     """
+    from collections import Counter
     specific = [t for t in _car_paint_texture_names(body_mesh)
                 if not t.upper().endswith("_DMG")]
     if not specific:
         return ""
-    prefix_set = {t.split("_")[0] for t in specific}
-    return next(iter(prefix_set)) if len(prefix_set) == 1 else ""
+    counts = Counter(t.split("_")[0] for t in specific)
+    prefix, freq = counts.most_common(1)[0]
+    # Require the most-common prefix to cover at least half the specific textures.
+    return prefix if freq * 2 >= len(specific) else ""
 
 
 def _find_paint_variants(body_mesh, tex_folder: Path, current_prefix: str) -> list:
@@ -59,17 +66,31 @@ def _find_paint_variants(body_mesh, tex_folder: Path, current_prefix: str) -> li
     Return a sorted list of all paint-variant prefixes available in tex_folder
     for this car, e.g. ['VPBULLET', 'VPBULLETBLUE', 'VPBULLETRED', 'VPBULLETWHITE'].
     Returns [] when only one variant exists or detection fails.
+
+    Works by trying progressively shorter base prefixes (from the full
+    current_prefix down to 4 chars) and returning the set of variants that
+    yields the most complete matches.  This handles both:
+      - Strategy A: current_prefix IS the base (e.g. VPBULLET has siblings
+        VPBULLETBLUE, VPBULLETRED …).
+      - Strategy B: current_prefix contains a colour suffix (e.g. VPPANOZGREEN
+        → base VPPANOZ has siblings VPPANOZBLUE, VPPANOZMAGENTA, VPPANOZRED).
     """
     if not current_prefix:
         return []
 
-    specific = [t for t in _car_paint_texture_names(body_mesh)
-                if not t.upper().endswith("_DMG")]
-    if not specific:
+    cp = current_prefix.upper()
+
+    # Only use textures whose prefix matches current_prefix to derive required
+    # suffixes.  This excludes shared base textures like VPF350_BD (prefix
+    # "VPF350") when the variant prefix is "VPF350BLUE".
+    variant_specific = [
+        t for t in _car_paint_texture_names(body_mesh)
+        if not t.upper().endswith("_DMG") and t.upper().split("_")[0] == cp
+    ]
+    if not variant_specific:
         return []
 
-    # Suffixes the variant must provide, e.g. {'_FT', '_SD', '_BKLFT', ...}
-    suffixes = frozenset("_" + "_".join(t.split("_")[1:]) for t in specific)
+    suffixes = frozenset("_" + "_".join(t.split("_")[1:]) for t in variant_specific)
 
     try:
         existing = {p.stem.upper() for p in tex_folder.iterdir()
@@ -77,44 +98,25 @@ def _find_paint_variants(body_mesh, tex_folder: Path, current_prefix: str) -> li
     except OSError:
         return []
 
-    cp = current_prefix.upper()
-
-    # Strategy A: current prefix IS the base (e.g. VPBULLET).
-    #   Siblings exist with LONGER prefixes (VPBULLETBLUE, VPBULLETRED …).
-    # Strategy B: current prefix contains a colour suffix (e.g. VPPANOZYELLOW).
-    #   The base is a shorter common prefix (VPPANOZ), and siblings share it.
-
-    def _has_siblings(base: str) -> bool:
-        return any(
-            s.split("_")[0].startswith(base) and s.split("_")[0] != cp
-            for s in existing if "_" in s
+    # Try every base length from len(cp) down to 4.
+    # Keep the result with the most valid variants found at any length.
+    best: list = []
+    for length in range(len(cp), 3, -1):
+        base = cp[:length]
+        cand_prefixes = {
+            s.split("_")[0]
+            for s in existing
+            if "_" in s and s.split("_")[0].startswith(base)
+        }
+        valid = sorted(
+            p for p in cand_prefixes
+            if all((p + s) in existing for s in suffixes)
         )
+        if len(valid) > len(best):
+            best = valid
 
-    # Try A first: current_prefix itself as base
-    base = cp if _has_siblings(cp) else None
-
-    # Try B: progressively shorten until we find a base with siblings
-    if base is None:
-        for length in range(len(cp) - 1, 3, -1):
-            candidate = cp[:length]
-            if _has_siblings(candidate):
-                base = candidate
-                break
-
-    if base is None:
-        return []
-
-    # Collect all variant prefixes that start with base and supply ALL required suffixes
-    candidate_prefixes = {
         s.split("_")[0]
-        for s in existing
-        if "_" in s and s.split("_")[0].startswith(base)
-    }
-    valid = sorted(
-        p for p in candidate_prefixes
-        if all((p + s.upper()) in existing for s in suffixes)
-    )
-    return valid if len(valid) > 1 else []
+    return best if len(best) > 1 else []
 
 
 def _find_paint_variants_cached(car_name: str, body_mesh,
@@ -317,6 +319,115 @@ def update_ce_face_texture(self, context) -> None:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+def _pack_car_ar(car_name: str) -> bool:
+    """
+    Pack only the BMS files for car_name into !!!!!{car_name}.ar and copy it
+    to the MidtownMadness folder.  Returns True on success.
+
+    Uses mkar.exe directly (no run.bat) with a Python-generated shiplist so
+    only the car's SHOP/BMS/{car_name}/ files are included — the city .ar
+    created by the full map editor run is left untouched.
+
+    The !!!!!-prefix makes the file sort after !!!!!mm1revisited.ar on
+    Windows (V > m case-insensitively), so the game loads it last and the
+    updated car meshes override any copy in the city archive.
+    """
+    import subprocess
+
+    shop_folder  = Folder.Shop.Root
+    mm1_folder   = Folder.MidtownMadness.Root
+    angel_folder = Folder.Angel
+    mkar_exe     = angel_folder / "mkar.exe"
+
+    if not mkar_exe.exists():
+        print(f"[Car Editor] mkar.exe not found at {mkar_exe}")
+        return False
+
+    car_bms_dir = Folder.Shop.Meshes / car_name
+    if not car_bms_dir.is_dir():
+        print(f"[Car Editor] Car BMS folder not found: {car_bms_dir}")
+        return False
+
+    bms_files = sorted(car_bms_dir.iterdir())
+    if not bms_files:
+        print(f"[Car Editor] No BMS files found in {car_bms_dir}")
+        return False
+
+    ar_name = f"!!!!!{car_name}.ar"
+    ar_out  = mm1_folder / ar_name
+
+    # Write the shiplist into SHOP so ./BMS/... paths resolve from SHOP,
+    # matching how run.bat's `find . -type f` output works.
+    ar_rel       = f"../{mm1_folder.name}/{ar_name}"
+    shiplist_abs = shop_folder / f"shiplist.{car_name}"
+
+    bms_rel = Folder.Shop.Meshes.relative_to(shop_folder).as_posix()
+
+    # mkar strips the longest common path prefix from all shiplist entries.
+    # If all files share ./BMS/VPCADDIE/ mkar strips it and stores flat names.
+    # Adding a dummy file in a different directory forces the common prefix to
+    # collapse to just "./" so full paths like BMS/VPCADDIE/BODY_H.BMS are kept.
+    dummy_abs = shop_folder / f"_car_dummy_{car_name}.tmp"
+    dummy_abs.write_bytes(b"")
+
+    lines = [f"./{bms_rel}/{car_name}/{f.name}" for f in bms_files]
+    lines.append(f"./{dummy_abs.name}")
+    shiplist_abs.write_bytes(("\n".join(lines) + "\n").encode("ascii"))
+
+    print(f"[Car Editor] Packing {len(bms_files)} files → {ar_name} …")
+    result = subprocess.run(
+        [str(mkar_exe), ar_rel, f"./shiplist.{car_name}"],
+        cwd=str(shop_folder),
+        capture_output=True,
+        text=True,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+    if result.stdout:
+        print(f"[Car Editor] mkar stdout: {result.stdout.strip()}")
+    if result.stderr:
+        print(f"[Car Editor] mkar stderr: {result.stderr.strip()}")
+
+    for tmp in (shiplist_abs, dummy_abs):
+        try:
+            tmp.unlink()
+        except OSError:
+            pass
+
+    if result.returncode != 0:
+        print(f"[Car Editor] mkar.exe exited with code {result.returncode}")
+        return False
+
+    print(f"[Car Editor] Created {ar_out}")
+    return True
+
+
+def _pack_and_launch_game(car_name: str) -> None:
+    """
+    Pack a car-only .ar (!!!!!{car_name}.ar) then launch the game.
+    Skips all city-building — the city .ar from the last map editor run is reused.
+    """
+    import subprocess
+    from src.helpers.main import is_process_running
+    from src.constants.misc import Executable
+
+    exe = Folder.MidtownMadness.Root / Executable.MIDTOWN_MADNESS
+
+    if is_process_running(Executable.MIDTOWN_MADNESS):
+        print("[Car Editor] Game already running — skipping launch.")
+        return
+
+    if not _pack_car_ar(car_name):
+        print("[Car Editor] Pack failed — game will not be launched.")
+        return
+
+    if not exe.exists():
+        print(f"[Car Editor] Executable not found: {exe}")
+        return
+
+    print(f"[Car Editor] Launching {Executable.MIDTOWN_MADNESS} …")
+    subprocess.Popen([str(exe)], cwd=str(Folder.MidtownMadness.Root))
+
+
 def is_car_obj(obj) -> bool:
     return obj is not None and obj.get(_CAR_TAG) is not None
 
@@ -391,8 +502,9 @@ class CAR_OT_LoadCar(bpy.types.Operator):
     directory: bpy.props.StringProperty(subtype="DIR_PATH", default="")
 
     def invoke(self, context, event):
-        # Always open the BMS root so the user picks a car subfolder fresh each time.
-        self.directory = str(Folder.Resources.Editor.BMS) + "/"
+        # Open MESHES/CARS so the user picks a car subfolder directly.
+        meshes_cars = Folder.Resources.Editor.Meshes / "CARS"
+        self.directory = str(meshes_cars) + "/"
         context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
@@ -642,6 +754,13 @@ class CAR_OT_ExportCar(bpy.types.Operator):
 
         if scene.ce_auto_reload and not errors:
             bpy.ops.car.reload_car("EXEC_DEFAULT")
+
+        if scene.ce_start_game and not errors:
+            if not scene.ce_add_to_city:
+                self.report({"WARNING"},
+                    "Start Game requires 'Add to City' so the BMS is in SHOP before packing.")
+            else:
+                _pack_and_launch_game(car_name)
 
         return {"FINISHED"}
 
@@ -1222,6 +1341,28 @@ class CAR_OT_RenumberWheels(bpy.types.Operator):
         return {"FINISHED"}
 
 
+# ── Operator: Open Export Folder in Explorer ──────────────────────────────────
+
+class CAR_OT_OpenExportFolder(bpy.types.Operator):
+    bl_idname      = "car.open_export_folder"
+    bl_label       = "Open Export Folder"
+    bl_description = "Open the last export folder in Windows Explorer"
+
+    def execute(self, context):
+        import subprocess
+        last_dir = context.scene.ce_last_export_dir.strip()
+        if not last_dir:
+            self.report({"WARNING"}, "No export folder yet.")
+            return {"CANCELLED"}
+        from pathlib import Path
+        p = Path(last_dir)
+        if not p.exists():
+            self.report({"WARNING"}, f"Folder not found: {p}")
+            return {"CANCELLED"}
+        subprocess.Popen(["explorer", str(p)])
+        return {"FINISHED"}
+
+
 # ── Registration list ─────────────────────────────────────────────────────────
 
 CAR_EDITOR_CLASSES = [
@@ -1240,4 +1381,5 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_AddWheel,
     CAR_OT_RemoveWheel,
     CAR_OT_RenumberWheels,
+    CAR_OT_OpenExportFolder,
 ]

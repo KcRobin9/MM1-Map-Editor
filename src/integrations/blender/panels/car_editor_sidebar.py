@@ -113,7 +113,7 @@ class VIEW3D_PT_CarEditorTools(bpy.types.Panel):
         sub.enabled = False
         body_slug = get_car_body()
         car_slug  = body_slug["mm_car_name"] if body_slug else "..."
-        sub.label(text=f"resources/editor/BMS/{car_slug}", icon="FILE_FOLDER")
+        sub.label(text=f"resources/editor/MESHES/CARS/{car_slug}", icon="FILE_FOLDER")
 
         layout.separator(factor=0.8)
 
@@ -184,23 +184,37 @@ class VIEW3D_PT_CarEditorTools(bpy.types.Panel):
 
         layout.separator(factor=0.8)
 
-        # ── Export / Reload ───────────────────────────────────────────────────
+        # ── Export / Launch ───────────────────────────────────────────────────
         has_car      = bool(get_car_objects())
         has_last_exp = bool(scene.ce_last_export_dir.strip())
 
         col = layout.column(align=True)
+
+        # Main export button — label changes when "Start Game" is armed
         row = col.row(align=True)
         row.enabled = has_car
-        row.operator("car.export_car",  text="Export to BMS",   icon="FILE_TICK")
+        if scene.ce_start_game:
+            row.operator("car.export_car", text="Export BMS + Start Game", icon="PLAY")
+        else:
+            row.operator("car.export_car", text="Export to BMS", icon="FILE_TICK")
+
+        # Start Game toggle inline with Reload (disabled when Add to City is off)
         row2 = col.row(align=True)
-        row2.enabled = has_last_exp
-        row2.operator("car.reload_car", text="Reload Exported", icon="FILE_REFRESH")
+        row2.enabled = has_car and scene.ce_add_to_city
+        row2.prop(scene, "ce_start_game", text="", icon="PLAY", toggle=True)
+        sub2 = row2.row()
+        sub2.enabled = has_last_exp
+        sub2.operator("car.reload_car", text="Reload Exported", icon="FILE_REFRESH")
 
         if has_last_exp:
             from pathlib import Path as _P
+            exp_path = _P(scene.ce_last_export_dir)
             sub = col.row()
             sub.enabled = False
-            sub.label(text=_P(scene.ce_last_export_dir).name, icon="TIME")
+            sub.label(text=exp_path.name, icon="TIME")
+            # "Open folder" shortcut
+            op_row = col.row(align=True)
+            op_row.operator("car.open_export_folder", text="Open in Explorer", icon="FILE_FOLDER")
 
 
 # ── Helpers for face info ─────────────────────────────────────────────────────

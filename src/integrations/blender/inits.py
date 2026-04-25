@@ -174,6 +174,7 @@ SCENE_PROPERTIES = [
     "ce_face_texture",
     "ce_uv_updating",
     "ce_add_to_city",
+    "ce_start_game",
     "ce_last_export_dir",
     "ce_show_damage",
     "ce_paint_variant",
@@ -732,6 +733,11 @@ def register_scene_properties() -> None:
     bpy.types.Scene.ce_add_to_city = bpy.props.BoolProperty(
         name="Add to City",
         description="Also write exported BMS files to SHOP/BMS/<car_name>/ for in-game use",
+        default=True,
+    )
+    bpy.types.Scene.ce_start_game = bpy.props.BoolProperty(
+        name="Launch Game After Export",
+        description="Start Open1560.exe after a successful export (only if game is not already running)",
         default=False,
     )
     bpy.types.Scene.ce_last_export_dir = bpy.props.StringProperty(
