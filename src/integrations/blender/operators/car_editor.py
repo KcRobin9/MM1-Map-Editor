@@ -115,7 +115,6 @@ def _find_paint_variants(body_mesh, tex_folder: Path, current_prefix: str) -> li
         if len(valid) > len(best):
             best = valid
 
-        s.split("_")[0]
     return best if len(best) > 1 else []
 
 
