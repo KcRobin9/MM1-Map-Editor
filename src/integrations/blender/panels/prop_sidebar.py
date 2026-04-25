@@ -212,7 +212,9 @@ class VIEW3D_PT_PropEditorTools(bpy.types.Panel):
 
         # ── Load / Reload ─────────────────────────────────────────────────────
         layout.label(text="Load", icon="IMPORT")
-        layout.operator("props.reload", text="Reload from props.py", icon="FILE_REFRESH")
+        row = layout.row(align=True)
+        row.operator("props.reload", text="Reload from props.py", icon="FILE_REFRESH")
+        row.operator("props.clear",  text="Clear",                icon="X")
 
         layout.separator()
 

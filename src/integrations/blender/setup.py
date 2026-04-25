@@ -54,13 +54,18 @@ def enable_developer_extras() -> None:
     prefs = bpy.context.preferences
     view = prefs.view
 
+    changed = False
     if not view.show_developer_ui:
         view.show_developer_ui = True
+        changed = True
+    if view.show_splash:
+        view.show_splash = False
+        changed = True
+
+    if changed:
         bpy.ops.wm.save_userpref()
 
-        print("Developer Extras enabled")
-    else:
-        print("Developer Extras already enabled")
+    print("Developer Extras enabled, splash disabled")
 
 
 def enable_vertex_snapping() -> None:

@@ -233,34 +233,54 @@ def expand_prop_instances(
 
 # ── BMS file resolver ─────────────────────────────────────────────────────────
 
+def _find_prop_folder(prop_name: str, bms_root: Path) -> Optional[Path]:
+    """
+    Locate the subfolder for a prop inside bms_root.
+
+    Searches bms_root directly, then each immediate subdirectory (e.g. CARS,
+    PROPS, MISC), so the layout can be either flat or categorized.
+    """
+    name_upper = prop_name.upper()
+    # Direct child first
+    direct = bms_root / name_upper
+    if direct.is_dir():
+        return direct
+    # Search one level of subdirectories
+    if bms_root.is_dir():
+        for sub in bms_root.iterdir():
+            if sub.is_dir():
+                candidate = sub / name_upper
+                if candidate.is_dir():
+                    return candidate
+    return None
+
+
 def _resolve_bms_file(prop_name: str, bms_root: Path) -> Optional[Path]:
     """
     Locate the primary BMS file for a prop inside the BMS subfolder tree.
 
-    Folder layout:   bms_root / <PROP_NAME_UPPER> / <filename>.BMS
+    Folder layout:   bms_root[/CATEGORY] / <PROP_NAME_UPPER> / <filename>.BMS
+
+    Searches bms_root directly and then any immediate subdirectory (CARS,
+    PROPS, MISC, etc.) so a categorized or flat layout both work.
 
     File selection rules:
         • All vehicles (vp* / va*) → BODY_H.BMS, fallback BODY_M.BMS, then H.BMS.
-          BODY_H contains only the car body, giving clean per-panel textures.
-          H.BMS is the combined full-LOD mesh (body + all four wheels); its wheel
-          texture dominates visually, so it is used only as a last resort.
         • All other props → H.BMS
 
-    Returns None when the folder does not exist or no matching BMS file is found.
+    Returns None when no folder or matching BMS file is found.
     """
-    prop_folder = bms_root / prop_name.upper()
-    if not prop_folder.is_dir():
+    prop_folder = _find_prop_folder(prop_name, bms_root)
+    if prop_folder is None:
         return None
 
     if prop_name.lower().startswith(("va", "vp")):
-        # Vehicle — prefer body-only mesh for clean texture visualization
         for filename in ("BODY_H.BMS", "BODY_M.BMS", "H.BMS"):
             candidate = prop_folder / filename
             if candidate.exists():
                 return candidate
         return None
 
-    # Regular props
     h_bms = prop_folder / "H.BMS"
     return h_bms if h_bms.exists() else None
 
@@ -464,11 +484,11 @@ def place_props_in_scene(
 
     print("Building prop meshes...")
     for prop_name in unique_names:
-        prop_folder = bms_folder / prop_name.upper()
+        prop_folder = _find_prop_folder(prop_name, bms_folder)
         is_vehicle  = prop_name.lower().startswith(("va", "vp"))
 
         if is_vehicle:
-            if not prop_folder.is_dir():
+            if prop_folder is None:
                 print(f"  No BMS folder for '{prop_name}', skipping")
                 veh_cache[prop_name] = None
                 continue

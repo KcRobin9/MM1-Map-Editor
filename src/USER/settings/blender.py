@@ -13,7 +13,7 @@ visualize_ai_paths = False      # Change to "True" if you want to visualize the 
 
 # Props
 visualize_props = True          # Set True to place props in the Blender scene
-prop_bms_folder = Folder.Resources.Editor.BMS   # Root folder containing per-prop BMS subfolders
+prop_bms_folder = Folder.Resources.Editor.Meshes   # Root folder; subfolders CARS/PROPS/MISC are searched automatically
 
 # Car prop detail options (VP* / VA* vehicles)
 prop_car_wheels  = True         # Set True to load and place individual wheel meshes (WHL0–3_H.BMS)

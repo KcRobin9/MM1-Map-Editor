@@ -4,7 +4,7 @@ import importlib
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from src.integrations.blender.modeling.props import place_props_in_scene
+from src.integrations.blender.modeling.props import place_props_in_scene, _find_prop_folder
 from src.constants.file_formats import AxisRef
 from src.constants.folder import Folder
 
@@ -358,21 +358,20 @@ def _do_place(scene_name: str) -> None:
             name = prop_cfg.get("name", "")
             if not name:
                 continue
-            is_vehicle = name.lower().startswith(("va", "vp"))
+            is_vehicle  = name.lower().startswith(("va", "vp"))
+            found_folder = _find_prop_folder(name, Path(prop_bms_folder))
             if is_vehicle:
-                veh_folder = Path(prop_bms_folder) / name.upper()
-                found = any(
-                    (veh_folder / f).exists()
+                found = found_folder is not None and any(
+                    (found_folder / f).exists()
                     for f in ("BODY_H.BMS", "BODY_M.BMS", "H.BMS")
                 )
             else:
-                prop_folder = Path(prop_bms_folder) / name.upper()
-                found = (prop_folder / "H.BMS").exists()
+                found = found_folder is not None and (found_folder / "H.BMS").exists()
 
             if not found:
                 missing_bms.append(name)
                 print(f"[Prop Editor] WARNING: No BMS found for '{name}' "
-                      f"(expected {Path(prop_bms_folder) / name.upper()})")
+                      f"(searched under {Path(prop_bms_folder)})")
 
         if missing_bms:
             print(f"[Prop Editor] Aborting re-place — missing BMS for: {missing_bms}")
@@ -504,6 +503,19 @@ class PROPS_OT_ReloadProps(bpy.types.Operator):
         )
 
         self.report({"INFO"}, f"Loaded {len(_mod.prop_list)} fixed + {len(_mod.random_props)} random prop groups")
+        return {"FINISHED"}
+
+
+class PROPS_OT_ClearProps(bpy.types.Operator):
+    """Remove all props from the scene without reloading"""
+    bl_idname = "props.clear"
+    bl_label  = "Clear Props"
+
+    def execute(self, context):
+        from src.integrations.blender.modeling.props import _get_or_create_collection, _clear_collection, _PROPS_COLLECTION
+        col = _get_or_create_collection(_PROPS_COLLECTION)
+        _clear_collection(col)
+        self.report({"INFO"}, "Props cleared")
         return {"FINISHED"}
 
 
@@ -727,6 +739,7 @@ class PROPS_OT_CreatePropGroup(bpy.types.Operator):
 
 PROP_EDITOR_CLASSES = [
     PROPS_OT_ReloadProps,
+    PROPS_OT_ClearProps,
     PROPS_OT_SelectGroup,
     PROPS_OT_LoadIntoForm,
     PROPS_OT_ExportCode,
