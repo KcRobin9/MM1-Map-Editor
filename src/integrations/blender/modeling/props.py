@@ -16,6 +16,7 @@ from src.integrations.blender.modeling.meshes import (
     build_blender_mesh,
     _apply_materials_to_mesh,
 )
+from src.constants.props_orientation import PROP_ORIENTATION_OFFSET
 
 
 # Anything above this threshold in all three components is the "undefined" sentinel
@@ -151,7 +152,8 @@ def expand_prop_instances(
         config_json  = _serialize_prop_config(prop)
 
         if face is None and angle is not None:
-            rad = math.radians(angle)
+            effective = angle + PROP_ORIENTATION_OFFSET.get(name, 0)
+            rad = math.radians(effective)
             face = (HUGE * math.cos(rad), 0.0, HUGE * math.sin(rad))
         elif face is None:
             face = (HUGE, HUGE, HUGE)
@@ -209,7 +211,8 @@ def expand_prop_instances(
                 if cfg_face is not None:
                     face = cfg_face
                 elif cfg_angle is not None:
-                    rad = math.radians(cfg_angle)
+                    effective = cfg_angle + PROP_ORIENTATION_OFFSET.get(name, 0)
+                    rad = math.radians(effective)
                     face = (HUGE * math.cos(rad), 0.0, HUGE * math.sin(rad))
                 else:
                     face = (
@@ -527,7 +530,9 @@ def place_props_in_scene(
     for inst in instances:
         prop_name  = inst["name"]
         game_loc   = _to_blender_location(inst["offset"])
-        z_rot      = _to_blender_rotation_z(inst.get("angle"), inst.get("face"))
+        # Use the face vector (which has any per-prop orientation offset baked in)
+        # so that the Blender display matches the game's effective facing direction.
+        z_rot      = _to_blender_rotation_z(None, inst.get("face"))
         is_vehicle = prop_name.lower().startswith(("va", "vp"))
 
         # Metadata for the Prop Editor panel

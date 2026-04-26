@@ -1105,438 +1105,463 @@ def user_notes():
 #! ==============================TEST_CITY============================== #*
 #! ==============================MAIN AREA============================== #*
 
-# Colored Checkpoints
+
 create_polygon(
     bound_number = 99,
     vertex_coordinates = [
         (-25.0, 0.0, 85.0),
-        (25.0, 0.0, 85.0),
-        (25.0, 0.0, 70.0),
-        (-25.0, 0.0, 70.0)])
+		(25.0, 0.0, 85.0),
+		(25.0, 0.0, 70.0),
+		(-25.0, 0.0, 70.0)])
 
 save_mesh(
     texture_name = [Texture.CHECKPOINT],
-    tex_coords = compute_uv(bound_number = 99, tile_x = 5, tile_y = 1, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 99, tile_x = 5.00, tile_y = 1.00, angle_degrees = 0.00))
 
-# Road with Buildings
+
+
 create_polygon(
     bound_number = 201,
     vertex_coordinates = [
         (-50.0, 0.0, 70.0),
-        (50.0, 0.0, 70.0),
-        (50.0, 0.0, -70.0),
-        (-50.0, 0.0, -70.0)])
+		(50.0, 0.0, 70.0),
+		(50.0, 0.0, -70.0),
+		(-50.0, 0.0, -70.0)])
 
 save_mesh(
-    texture_name = [Texture.ROAD_3_LANE], normals = [40, 2, 50, 1],
-    tex_coords = compute_uv(bound_number = 201, tile_x = 10, tile_y = 10, angle_degrees = 45))
+    texture_name = [Texture.ROAD_3_LANE],
+    tex_coords = compute_uv(bound_number = 201, tile_x = 10.00, tile_y = 10.00, angle_degrees = 45.00))
 
-# Grass Area 
+
+
 create_polygon(
-	bound_number = 861,
+    bound_number = 861,
 	material_index = Material.GRASS,
-	vertex_coordinates = [
+	hud_color = Color.GRASS,
+    vertex_coordinates = [
         (-50.0, 0.0, -70.0),
 		(10.0, 0.0, -70.0),
-        (10.0, 0.0, -130.0),
-		(-50.0, 0.0, -130.0)],
-        hud_color = Color.GRASS)
+		(10.0, 0.0, -130.0),
+		(-50.0, 0.0, -130.0)])
 
 save_mesh(
-    texture_name = [Texture.GRASS_BASEBALL], 
-    tex_coords = compute_uv(bound_number = 861, tile_x = 7, tile_y = 7, angle_degrees = 90))
+    texture_name = [Texture.GRASS_BASEBALL],
+    tex_coords = compute_uv(bound_number = 861, tile_x = 7.00, tile_y = 7.00, angle_degrees = 90.00))
 
-# Brown Grass Area
+
+
 create_polygon(
-	bound_number = 202,
+    bound_number = 202,
 	material_index = Material.GRASS,
-	vertex_coordinates = [
-		(10.0, 0.0, -70.0),
-        (50.0, 0.0, -70.0),
+	hud_color = Color.GRASS,
+    vertex_coordinates = [
+        (10.0, 0.0, -70.0),
+		(50.0, 0.0, -70.0),
 		(50.0, 0.0, -130.0),
-        (10.0, 0.0, -130.0)],
-        hud_color = Color.GRASS)
+		(10.0, 0.0, -130.0)])
 
 save_mesh(
-    texture_name = [Texture.GRASS_WINTER], 
-    tex_coords = compute_uv(bound_number = 202, tile_x = 5, tile_y = 5, angle_degrees = 90))
+    texture_name = [Texture.GRASS_WINTER],
+    tex_coords = compute_uv(bound_number = 202, tile_x = 5.00, tile_y = 5.00, angle_degrees = 90.00))
 
-# Snow Area
+
+
 create_polygon(
-	bound_number = 1,
-    cell_type = Room.NO_SKIDS,
-    material_index = Material.NO_FRICTION,
-	vertex_coordinates = [
-		(-50.0, 0.0, -140.0),
+    bound_number = 1,
+	cell_type = Room.NO_SKIDS,
+	material_index = Material.NO_FRICTION,
+	hud_color = Color.SNOW,
+    vertex_coordinates = [
+        (-50.0, 0.0, -140.0),
 		(50.0, 0.0, -140.0),
 		(50.0, 0.0, -210.0),
-		(-50.0, 0.0, -210.0)],
-         hud_color = Color.SNOW)
+		(-50.0, 0.0, -210.0)])
 
 save_mesh(
-    texture_name = [Texture.SNOW], 
-    tex_coords = compute_uv(bound_number = 1, tile_x = 10, tile_y = 10, angle_degrees = 90))
+    texture_name = [Texture.SNOW],
+    tex_coords = compute_uv(bound_number = 1, tile_x = 10.00, tile_y = 10.00, angle_degrees = 90.00))
 
-# Barricade (Car) Area
+
+
 create_polygon(
-	bound_number = 862,
-    cell_type = Room.TUNNEL,
-	vertex_coordinates = [
-		(50.0, 0.0, -70.0),
+    bound_number = 862,
+	cell_type = Room.TUNNEL,
+	hud_color = Color.RED_DARK,
+    vertex_coordinates = [
+        (50.0, 0.0, -70.0),
 		(140.0, 0.0, -70.0),
 		(140.0, 0.0, -140.0),
-		(50.0, 0.0, -140.0)],
-        hud_color = Color.RED_DARK)
+		(50.0, 0.0, -140.0)])
 
 save_mesh(
-    texture_name = [Texture.BARRICADE_RED_BLACK], 
-    tex_coords = compute_uv(bound_number = 862, tile_x = 50, tile_y = 50, angle_degrees = 0))
+    texture_name = [Texture.BARRICADE_RED_BLACK],
+    tex_coords = compute_uv(bound_number = 862, tile_x = 50.00, tile_y = 50.00, angle_degrees = 0.00))
 
-# Wood (Tree) Area
+
+
 create_polygon(
-	bound_number = 203,
-	vertex_coordinates = [
-		(50.0, 0.0, 70.0),
+    bound_number = 203,
+	hud_color = Color.WOOD,
+    vertex_coordinates = [
+        (50.0, 0.0, 70.0),
 		(140.0, 0.0, 70.0),
 		(140.0, 0.0, -70.0),
-		(50.0, 0.0, -70.0)],
-        hud_color = Color.WOOD)
+		(50.0, 0.0, -70.0)])
 
 save_mesh(
-    texture_name = [Texture.WOOD], 
-    tex_coords = compute_uv(bound_number = 203, tile_x = 10, tile_y = 10, angle_degrees = 90))
+    texture_name = [Texture.WOOD],
+    tex_coords = compute_uv(bound_number = 203, tile_x = 10.00, tile_y = 10.00, angle_degrees = 90.00))
 
-# Water (Sailboat) Area
+
+
 create_polygon(
-	bound_number = 2,
-    cell_type = Room.DRIFT,
+    bound_number = 2,
+	cell_type = Room.DRIFT,
 	material_index = Material.WATER,
-	vertex_coordinates = [
-		(50.0, 0.0, -140.0),
+	hud_color = Color.WATER,
+    vertex_coordinates = [
+        (50.0, 0.0, -140.0),
 		(140.0, 0.0, -140.0),
 		(140.0, 0.0, -210.0),
-		(50.0, 0.0, -210.0)],
-        hud_color = Color.WATER)
+		(50.0, 0.0, -210.0)])
 
 save_mesh(
-    texture_name = [Texture.WATER_WINTER], 
-    tex_coords = compute_uv(bound_number = 2, tile_x = 10, tile_y = 10, angle_degrees = 0))
+    texture_name = [Texture.WATER_WINTER],
+    tex_coords = compute_uv(bound_number = 2, tile_x = 10.00, tile_y = 10.00, angle_degrees = 0.00))
 
-# Diagonal Grass Road 
+
+
 create_polygon(
     bound_number = 863,
 	hud_color = Color.GRASS,
     vertex_coordinates = [
         (-50.0, 0.0, 110.0),
 		(-50.0, 0.0, 140.0),
-		(140.0, 0.0, 70.0),
-		(93.01, 0.0, 70.0)])
+		(140.0, 0.0, 139.71),
+		(139.94, 0.0, 110.11)])
 
 save_mesh(
     texture_name = [Texture.GRASS_BASEBALL],
-    tex_coords = compute_uv(bound_number = 863, tile_x = 10.0, tile_y = 10.0, angle_degrees = 90.0))
+    tex_coords = compute_uv(bound_number = 863, tile_x = 10.00, tile_y = 10.00, angle_degrees = 90.00))
 
-# Triangle Brick I 
+
+
 create_polygon(
     bound_number = 204,
-    cell_type = Room.NO_SKIDS,
+	cell_type = Room.NO_SKIDS,
+	hud_color = Color.YELLOW_LIGHT,
     vertex_coordinates = [
         (-130.0, 15.0, 70.0),
-        (-50.0, 0.0, 70.0),
-        (-50.0, 0.0, 0.0)],
-        hud_color = Color.YELLOW_LIGHT)
+		(-50.0, 0.0, 70.0),
+		(-50.0, 0.0, 0.0)])
 
 save_mesh(
     texture_name = [Texture.BRICKS_MALL],
-    tex_coords = compute_uv(bound_number = 204, tile_x = 10, tile_y = 10, angle_degrees = 90))
+    tex_coords = compute_uv(bound_number = 204, tile_x = 10.00, tile_y = 10.00, angle_degrees = 90.00))
 
-# Triangle Brick II
+
+
 create_polygon(
     bound_number = 205,
-    cell_type = Room.NO_SKIDS,
+	cell_type = Room.NO_SKIDS,
+	hud_color = Color.YELLOW_LIGHT,
     vertex_coordinates = [
         (-50.0, 0.0, 140.0),
-        (-130.0, 15.0, 70.0),
-        (-50.0, 0.0, 70.0)],
-        hud_color = Color.YELLOW_LIGHT)
+		(-50.0, 0.0, 70.0),
+		(-130.0, 15.0, 70.0)])
 
 save_mesh(
     texture_name = [Texture.BRICKS_MALL],
-    tex_coords = compute_uv(bound_number = 205, tile_x = 10, tile_y = 10, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 205, tile_x = 10.00, tile_y = 10.00, angle_degrees = 0.00))
 
-# Huge Orange Hill 
+
+
 create_polygon(
-	bound_number = 3,
-    cell_type = Room.DRIFT,
-	vertex_coordinates = [
-		(-50.0, 0.0, -210.0),
+    bound_number = 3,
+	cell_type = Room.DRIFT,
+	hud_color = Color.ORANGE,
+    vertex_coordinates = [
+        (-50.0, 0.0, -210.0),
 		(50.0, 0.0, -210.0),
 		(50.0, 300.0, -1000.0),
-		(-50.0, 300.0, -1000.0)],
-        hud_color = Color.ORANGE)
+		(-50.0, 300.0, -1000.0)])
 
 save_mesh(
-    texture_name = [Texture.LAVA], 
-    tex_coords = compute_uv(bound_number = 3, tile_x = 10, tile_y = 100, angle_degrees = 90))
+    texture_name = [Texture.LAVA],
+    tex_coords = compute_uv(bound_number = 3, tile_x = 10.00, tile_y = 100.00, angle_degrees = 90.00))
 
 
-#! ============================== ORANGE BUILDING ============================== #*
-# South Wall
+
 create_polygon(
     bound_number = 4,
-    always_visible = False,
+	always_visible = False,
     vertex_coordinates = [
         (-10.0, 0.0, -50.0),
-        (10.0, 0.0, -50.0),
-        (10.0, 30.0, -50.11),
-        (-10.0, 30.0, -50.11)])
-
-save_mesh(
-    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
-    tex_coords = compute_uv(bound_number = 4, tile_x = 1, tile_y = 1, angle_degrees = 0))
-
-# North Wall
-create_polygon(
-    bound_number = 5,
-    always_visible = False,
-    vertex_coordinates = [
-        (-10.0, 0.0, -70.00),
-        (-10.0, 30.0, -70.0),
-        (10.0, 30.0, -70.0),
-        (10.0, 0.0, -70.00)])
-
-save_mesh(
-    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
-    tex_coords = compute_uv(bound_number = 5, tile_x = 1, tile_y = 1, angle_degrees = 0))
-
-# West Wall
-create_polygon(
-    bound_number = 6,
-    always_visible = False,
-    vertex_coordinates = [
-        (-9.99, 30.0, -50.0),
-        (-9.99, 30.0, -70.0),
-        (-10.0, 0.0, -70.0),
-        (-10.0, 0.0, -50.0)])
-
-save_mesh(
-    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
-    tex_coords = compute_uv(bound_number = 6, tile_x = 1, tile_y = 1, angle_degrees = 0))
-
-# East Wall
-create_polygon(
-    bound_number = 7,
-    always_visible = False,
-    vertex_coordinates = [
-        (10.0, 0.0, -70.0),
-        (9.9, 30.0, -70.0),
-        (9.9, 30.0, -50.0),
-        (10.0, 0.0, -50.0)])
-
-save_mesh(
-    texture_name = [Texture.SNOW],  # Not applicable since we are overlaying a Facade on the sides of the building
-    tex_coords = compute_uv(bound_number = 7, tile_x = 1, tile_y = 1, angle_degrees = 0))
-
-# Rooftop
-create_polygon(
-    bound_number = 900,
-    cell_type = Room.NO_SKIDS,
-    material_index = Material.NO_FRICTION,
-    vertex_coordinates = [
-        (10.0, 30.0, -70.0),
-        (-10.0, 30.0, -70.0),
-        (-10.0, 30.0, -50.0),
-        (10.0, 30.0, -50.0)])
+		(10.0, 0.0, -50.0),
+		(10.0, 30.0, -50.11),
+		(-10.0, 30.0, -50.11)])
 
 save_mesh(
     texture_name = [Texture.SNOW],
-    tex_coords = compute_uv(bound_number = 900, tile_x = 1, tile_y = 1, angle_degrees = 0))
+    tex_coords = compute_uv(bound_number = 4, tile_x = 1.00, tile_y = 1.00, angle_degrees = 0.00))
 
 
-#! ============================== BRIDGES ============================== #*
-# Bridge I East
+
 create_polygon(
-	bound_number = 250,
-	vertex_coordinates = [
-		(-82.6, 0.0, -80.0),
+    bound_number = 5,
+	always_visible = False,
+    vertex_coordinates = [
+        (-10.0, 0.0, -70.0),
+		(-10.0, 30.0, -70.0),
+		(10.0, 30.0, -70.0),
+		(10.0, 0.0, -70.0)])
+
+save_mesh(
+    texture_name = [Texture.SNOW],
+    tex_coords = compute_uv(bound_number = 5, tile_x = 1.00, tile_y = 1.00, angle_degrees = 0.00))
+
+
+
+create_polygon(
+    bound_number = 6,
+	always_visible = False,
+    vertex_coordinates = [
+        (-9.99, 30.0, -50.0),
+		(-9.99, 30.0, -70.0),
+		(-10.0, 0.0, -70.0),
+		(-10.0, 0.0, -50.0)])
+
+save_mesh(
+    texture_name = [Texture.SNOW],
+    tex_coords = compute_uv(bound_number = 6, tile_x = 1.00, tile_y = 1.00, angle_degrees = 0.00))
+
+
+
+create_polygon(
+    bound_number = 7,
+	always_visible = False,
+    vertex_coordinates = [
+        (10.0, 0.0, -70.0),
+		(9.90, 30.0, -70.0),
+		(9.90, 30.0, -50.0),
+		(10.0, 0.0, -50.0)])
+
+save_mesh(
+    texture_name = [Texture.SNOW],
+    tex_coords = compute_uv(bound_number = 7, tile_x = 1.00, tile_y = 1.00, angle_degrees = 0.00))
+
+
+
+create_polygon(
+    bound_number = 900,
+	cell_type = Room.NO_SKIDS,
+	material_index = Material.NO_FRICTION,
+    vertex_coordinates = [
+        (10.0, 30.0, -70.0),
+		(-10.0, 30.0, -70.0),
+		(-10.0, 30.0, -50.0),
+		(10.0, 30.0, -50.0)])
+
+save_mesh(
+    texture_name = [Texture.SNOW],
+    tex_coords = compute_uv(bound_number = 900, tile_x = 1.00, tile_y = 1.00, angle_degrees = 0.00))
+
+
+
+create_polygon(
+    bound_number = 250,
+    vertex_coordinates = [
+        (-82.60, 0.0, -80.0),
 		(-50.0, 0.0, -80.0),
 		(-50.0, 0.0, -120.0),
-		(-82.6, 0.0, -120.0)])
-save_mesh(
-    texture_name = [Texture.INTERSECTION], 
-    tex_coords = compute_uv(bound_number = 250, tile_x = 5, tile_y = 5, angle_degrees = 0))
+		(-82.60, 0.0, -120.0)])
 
-# Road split
+save_mesh(
+    texture_name = [Texture.INTERSECTION],
+    tex_coords = compute_uv(bound_number = 250, tile_x = 5.00, tile_y = 5.00, angle_degrees = 0.00))
+
+
+
 create_polygon(
-	bound_number = 925,
-	vertex_coordinates = [
-		(-90.0, 14.75, -80.0),
+    bound_number = 925,
+    vertex_coordinates = [
+        (-90.0, 14.75, -80.0),
 		(-79.0, 14.75, -80.0),
 		(-79.0, 14.75, -120.0),
 		(-90.0, 14.75, -120.0)])
 
 save_mesh(
-    texture_name = [Texture.INTERSECTION], 
-    tex_coords = compute_uv(bound_number = 925, tile_x = 5, tile_y = 5, angle_degrees = 90))
+    texture_name = [Texture.INTERSECTION],
+    tex_coords = compute_uv(bound_number = 925, tile_x = 5.00, tile_y = 5.00, angle_degrees = 90.00))
 
-# Bridge II West
+
+
 create_polygon(
-	bound_number = 251,
-	vertex_coordinates = [
-		(-119.01, 0.0, -80.0),
+    bound_number = 251,
+    vertex_coordinates = [
+        (-119.01, 0.0, -80.0),
 		(-90.0, 0.0, -80.0),
 		(-90.0, 0.0, -120.0),
 		(-119.01, 0.0, -120.0)])
 
 save_mesh(
-    texture_name = [Texture.GRASS], 
-    tex_coords = compute_uv(bound_number = 251, tile_x = 5, tile_y = 5, angle_degrees = 0))
+    texture_name = [Texture.GRASS],
+    tex_coords = compute_uv(bound_number = 251, tile_x = 5.00, tile_y = 5.00, angle_degrees = 0.00))
 
-# Road West of Bridge
+
+
 create_polygon(
-	bound_number = 252,
-	vertex_coordinates = [
+    bound_number = 252,
+    vertex_coordinates = [
         (-160.0, 0.0, -80.0),
-		(-119.1, 0.0, -80.0),
-        (-119.1, 0.0, -120.0),
+		(-119.10, 0.0, -80.0),
+		(-119.10, 0.0, -120.0),
 		(-160.0, 0.0, -120.0)])
 
 save_mesh(
-    texture_name = [Texture.ROAD_3_LANE], 
-    tex_coords = compute_uv(bound_number = 252, tile_x = 5, tile_y = 3, angle_degrees = 0))
+    texture_name = [Texture.ROAD_3_LANE],
+    tex_coords = compute_uv(bound_number = 252, tile_x = 5.00, tile_y = 3.00, angle_degrees = 0.00))
 
-# Intersection West of Bridge
+
+
 create_polygon(
-	bound_number = 950,
-	vertex_coordinates = [
+    bound_number = 950,
+    vertex_coordinates = [
         (-200.0, 0.0, -80.0),
 		(-160.0, 0.0, -80.0),
-        (-160.0, 0.0, -120.0),
+		(-160.0, 0.0, -120.0),
 		(-200.0, 0.0, -120.0)])
 
 save_mesh(
-    texture_name = [Texture.INTERSECTION], 
-    tex_coords = compute_uv(bound_number = 950, tile_x = 5, tile_y = 5, angle_degrees = 90))
+    texture_name = [Texture.INTERSECTION],
+    tex_coords = compute_uv(bound_number = 950, tile_x = 5.00, tile_y = 5.00, angle_degrees = 90.00))
 
 
-#! ============================== ELEVATED AREA ============================== #*
-# Road connected to Bridge Prop
+
 create_polygon(
-	bound_number = 501,
-    base = False,
-	vertex_coordinates = [
-		(20.0, 30.0, 0.0),
-        (50.0, 30.0, 0.0),
-        (50.0, 12.0, -69.9),
-        (20.0, 12.0, -69.9)])
-
-save_mesh(
-    texture_name = [Texture.ROAD_3_LANE], 
-    tex_coords = compute_uv(bound_number = 501, tile_x = 3, tile_y = 2, angle_degrees = 90))
-
-# Bricks Intersection
-create_polygon(
-	bound_number = 1100,
-	vertex_coordinates = [
-		(20.0, 30.0, 40.0),
-        (50.0, 30.0, 40.0),
-        (50.0, 30.0, 0.0),
-        (20.0, 30.0, 0.0)])
-
-save_mesh(
-    texture_name = [Texture.BRICKS_GREY], 
-    tex_coords = compute_uv(bound_number = 1100, tile_x = 10, tile_y = 10, angle_degrees = 0))
-
-# Red Bus Color
-create_polygon(
-	bound_number = 502,
-	vertex_coordinates = [
-		(-10.0, 30.0, 40.0),
-        (20.0, 30.0, 40.0),
+    bound_number = 501,
+    vertex_coordinates = [
         (20.0, 30.0, 0.0),
-        (-10.0, 30.0, 0.0)])
+		(50.0, 30.0, 0.0),
+		(50.0, 12.0, -69.90),
+		(20.0, 12.0, -69.90)])
 
 save_mesh(
-    texture_name = [Texture.BUS_RED_TOP], 
-    tex_coords = compute_uv(bound_number = 502, tile_x = 4, tile_y = 3, angle_degrees = 0))
+    texture_name = [Texture.ROAD_3_LANE],
+    tex_coords = compute_uv(bound_number = 501, tile_x = 3.00, tile_y = 2.00, angle_degrees = 90.00))
+
+
 
 create_polygon(
-	bound_number = 503,
-	vertex_coordinates = [
-		(-10.0, 30.0, 0.0),
-        (10.0, 30.0, 0.0),
-        (10.0, 30.0, -50.0),
-        (-10.0, 30.0, -50.0)])
+    bound_number = 1100,
+    vertex_coordinates = [
+        (20.0, 30.0, 40.0),
+		(50.0, 30.0, 40.0),
+		(50.0, 30.0, 0.0),
+		(20.0, 30.0, 0.0)])
 
 save_mesh(
-    texture_name = [Texture.GLASS], 
-    tex_coords = compute_uv(bound_number = 503, tile_x = 5, tile_y = 12, angle_degrees = 0))
+    texture_name = [Texture.BRICKS_GREY],
+    tex_coords = compute_uv(bound_number = 1100, tile_x = 10.00, tile_y = 10.00, angle_degrees = 0.00))
 
 
-#! ============================== SPEEDBUMPS ============================== #*
-# Speed Bump South
+
 create_polygon(
-	bound_number = 206,
-	vertex_coordinates = [ 
-     (50.00,0.00,-130.00), 
-     (50.00,3.00,-135.00), 
-     (-50.00,3.00,-135.00), 
-     (-50.00,0.00,-130.00)],
-    hud_color = Color.RED_LIGHT)
+    bound_number = 502,
+    vertex_coordinates = [
+        (-10.0, 30.0, 40.0),
+		(20.0, 30.0, 40.0),
+		(20.0, 30.0, 0.0),
+		(-10.0, 30.0, 0.0)])
 
 save_mesh(
-    texture_name = [Texture.STOP_SIGN], 
-    tex_coords = compute_uv(bound_number = 206, tile_x = 15, tile_y = 1, angle_degrees = 90))
+    texture_name = [Texture.BUS_RED_TOP],
+    tex_coords = compute_uv(bound_number = 502, tile_x = 4.00, tile_y = 3.00, angle_degrees = 0.00))
 
-# Speed Bump North
+
+
 create_polygon(
-	bound_number = 207,
-	vertex_coordinates = [
+    bound_number = 503,
+    vertex_coordinates = [
+        (-10.0, 30.0, 0.0),
+		(10.0, 30.0, 0.0),
+		(10.0, 30.0, -50.0),
+		(-10.0, 30.0, -50.0)])
+
+save_mesh(
+    texture_name = [Texture.GLASS],
+    tex_coords = compute_uv(bound_number = 503, tile_x = 5.00, tile_y = 12.00, angle_degrees = 0.00))
+
+
+
+create_polygon(
+    bound_number = 206,
+	hud_color = Color.RED_LIGHT,
+    vertex_coordinates = [
+        (50.0, 0.0, -130.0),
+		(50.0, 3.0, -135.0),
 		(-50.0, 3.0, -135.0),
+		(-50.0, 0.0, -130.0)])
+
+save_mesh(
+    texture_name = [Texture.STOP_SIGN],
+    tex_coords = compute_uv(bound_number = 206, tile_x = 15.00, tile_y = 1.00, angle_degrees = 90.00))
+
+
+
+create_polygon(
+    bound_number = 207,
+	hud_color = Color.RED_LIGHT,
+    vertex_coordinates = [
+        (-50.0, 3.0, -135.0),
 		(50.0, 3.0, -135.0),
 		(50.0, 0.0, -140.0),
-		(-50.0, 0.0, -140.0)],
-         hud_color = Color.RED_LIGHT)
+		(-50.0, 0.0, -140.0)])
 
 save_mesh(
-    texture_name = [Texture.STOP_SIGN], 
-    tex_coords = compute_uv(bound_number = 207, tile_x = 1, tile_y = 10, angle_degrees = 0))
+    texture_name = [Texture.STOP_SIGN],
+    tex_coords = compute_uv(bound_number = 207, tile_x = 1.00, tile_y = 10.00, angle_degrees = 0.00))
 
-# Triangle Side I
+
+
 create_polygon(
-	bound_number = 208,
-	vertex_coordinates = [
-		(-50.0, 0.0, -140.0),
+    bound_number = 208,
+    vertex_coordinates = [
+        (-50.0, 0.0, -140.0),
 		(-50.01, 0.0, -130.0),
 		(-50.0, 3.0, -135.0)])
 
 save_mesh(
-    texture_name = [Texture.STOP_SIGN], 
-    tex_coords = compute_uv(bound_number = 208, tile_x = 30, tile_y = 30, angle_degrees = 90))
+    texture_name = [Texture.STOP_SIGN],
+    tex_coords = compute_uv(bound_number = 208, tile_x = 30.00, tile_y = 30.00, angle_degrees = 90.00))
 
-# Triangle Side II
+
+
 create_polygon(
-	bound_number = 209,
-	vertex_coordinates = [
-		(50.0, 0.0, -140.0),
-		(50.01, 0.0, -130.0),
-		(50.0, 3.0, -135.0)])
+    bound_number = 209,
+    vertex_coordinates = [
+        (50.0, 0.0, -140.0),
+		(50.0, 3.0, -135.0),
+		(50.01, 0.0, -130.0)])
 
 save_mesh(
-    texture_name = [Texture.STOP_SIGN], 
-    tex_coords = compute_uv(bound_number = 209, tile_x = 30, tile_y = 30, angle_degrees = 90))
+    texture_name = [Texture.STOP_SIGN],
+    tex_coords = compute_uv(bound_number = 209, tile_x = 30.00, tile_y = 30.00, angle_degrees = 90.00))
 
 
-#! ============================== CURVED FREEWAY ============================== #* 
+
 create_polygon(
-	bound_number = 2220,
-	vertex_coordinates = [
-		(-160.0, -0.00, -120.0),
-		(-200.0, -0.00, -120.0),
-		(-160.0, -3.0, -160.0)])
+    bound_number = 2220,
+    vertex_coordinates = [
+        (-160.0, -0.0, -120.0),
+		(-160.0, -3.0, -160.0),
+		(-200.0, -0.0, -120.0)])
 
-save_mesh(texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2220, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+save_mesh(
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2220, tile_x = 3.00, tile_y = 3.00, angle_degrees = 0.00))
+
+
 
 create_polygon(
     bound_number = 2221,
@@ -1549,120 +1574,150 @@ save_mesh(
     texture_name = [Texture.FREEWAY],
     tex_coords = compute_uv(bound_number = 2221, tile_x = 3.00, tile_y = 4.00, angle_degrees = -45.00))
 
+
+
 create_polygon(
-	bound_number = 2222,
-	vertex_coordinates = [
-		(-160.0, -3.0, -160.0),
-		(-156.59, -6.00, -204.88),
+    bound_number = 2222,
+    vertex_coordinates = [
+        (-160.0, -3.0, -160.0),
+		(-156.59, -6.0, -204.88),
 		(-200.0, -3.0, -160.0)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2222, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2222, tile_x = 3.00, tile_y = 3.00, angle_degrees = 0.00))
+
+
 
 create_polygon(
-	bound_number = 2223,
-	vertex_coordinates = [
-		(-156.59, -6.00, -204.88),
-		(-200.0, -3.0, -160.0),
-		(-191.82, -6.00, -223.82)])
+    bound_number = 2223,
+    vertex_coordinates = [
+        (-156.59, -6.0, -204.88),
+		(-191.82, -6.0, -223.82),
+		(-200.0, -3.0, -160.0)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2223, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2223, tile_x = 3.00, tile_y = 3.00, angle_degrees = 90.00))
+
+
 
 create_polygon(
-	bound_number = 2224,
-	vertex_coordinates = [
-		(-156.59, -6.00, -204.88),
-		(-140.06, -9.00, -229.75),
-		(-191.82, -6.00, -223.82)])
+    bound_number = 2224,
+    vertex_coordinates = [
+        (-156.59, -6.0, -204.88),
+		(-140.06, -9.0, -229.75),
+		(-191.82, -6.0, -223.82)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2224, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2224, tile_x = 3.00, tile_y = 3.00, angle_degrees = 0.00))
+
+
 
 create_polygon(
-	bound_number = 2225,
-	vertex_coordinates = [
-		(-140.06, -9.00, -229.75),
-		(-191.82, -6.00, -223.82),
-		(-165.59, -9.00, -260.54)])
+    bound_number = 2225,
+    vertex_coordinates = [
+        (-140.06, -9.0, -229.75),
+		(-165.59, -9.0, -260.54),
+		(-191.82, -6.0, -223.82)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2225, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2225, tile_x = 3.00, tile_y = 3.00, angle_degrees = 90.00))
+
+
 
 create_polygon(
-	bound_number = 2226,
-	vertex_coordinates = [
-		(-140.06, -9.00, -229.75),
-		(-117.58, -12.00, -247.47),
-		(-165.59, -9.00, -260.54)])
+    bound_number = 2226,
+    vertex_coordinates = [
+        (-140.06, -9.0, -229.75),
+		(-117.58, -12.0, -247.47),
+		(-165.59, -9.0, -260.54)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2226, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2226, tile_x = 3.00, tile_y = 3.00, angle_degrees = 0.00))
+
+
 
 create_polygon(
-	bound_number = 2227,
-	vertex_coordinates = [
-		(-117.58, -12.00, -247.47),
-		(-165.59, -9.00, -260.54),
-		(-127.21, -12.00, -286.30)])
+    bound_number = 2227,
+    vertex_coordinates = [
+        (-117.58, -12.0, -247.47),
+		(-127.21, -12.0, -286.30),
+		(-165.59, -9.0, -260.54)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2227, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2227, tile_x = 3.00, tile_y = 3.00, angle_degrees = 90.00))
+
+
 
 create_polygon(
-	bound_number = 2228,
-	vertex_coordinates = [
-		(-117.58, -12.00, -247.47),
-		(-90.0, -15.00, -254.51),
-		(-127.21, -12.00, -286.30)])
+    bound_number = 2228,
+    vertex_coordinates = [
+        (-117.58, -12.0, -247.47),
+		(-90.0, -15.0, -254.51),
+		(-127.21, -12.0, -286.30)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2228, tile_x = 3.0, tile_y = 3.0, angle_degrees = 0))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2228, tile_x = 3.00, tile_y = 3.00, angle_degrees = 0.00))
+
+
 
 create_polygon(
-	bound_number = 2229,
-	vertex_coordinates = [
-		(-90.0, -15.00, -254.51),
-		(-127.21, -12.00, -286.30),
-		(-90.0, -15.00, -294.48)])
+    bound_number = 2229,
+    vertex_coordinates = [
+        (-90.0, -15.0, -254.51),
+		(-90.0, -15.0, -294.48),
+		(-127.21, -12.0, -286.30)])
 
 save_mesh(
-	texture_name = [Texture.FREEWAY],
-	tex_coords = compute_uv(bound_number = 2229, tile_x = 3.0, tile_y = 3.0, angle_degrees = 90))
+    texture_name = [Texture.FREEWAY],
+    tex_coords = compute_uv(bound_number = 2229, tile_x = 3.00, tile_y = 3.00, angle_degrees = 90.00))
 
-# Intersection
+
+
 create_polygon(
-	bound_number = 924,
-	vertex_coordinates = [
-        (-90.0, -15.00, -254.51),
-        (-79.0, -15.00, -254.51),
-        (-79.0, -15.00, -294.48),
-        (-90.0, -15.00, -294.48)])
+    bound_number = 924,
+    vertex_coordinates = [
+        (-90.0, -15.0, -254.51),
+		(-79.0, -15.0, -254.51),
+		(-79.0, -15.0, -294.48),
+		(-90.0, -15.0, -294.48)])
 
 save_mesh(
-	texture_name = [Texture.INTERSECTION],
-	tex_coords = compute_uv(bound_number = 924, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
+    texture_name = [Texture.INTERSECTION],
+    tex_coords = compute_uv(bound_number = 924, tile_x = 5.00, tile_y = 5.00, angle_degrees = 0.00))
 
-# Hill
+
+
 create_polygon(
-	bound_number = 923,
-	vertex_coordinates = [
-		(-79.0, -15.00, -254.51),
-		(-90.0, -15.00, -254.51),
-        (-90.0, 14.75, -120.0),
-		(-79.0, 14.75, -120.0)],
-	hud_color = Color.YELLOW_LIGHT)
+    bound_number = 923,
+	hud_color = Color.YELLOW_LIGHT,
+    vertex_coordinates = [
+        (-79.0, -15.0, -254.51),
+		(-90.0, -15.0, -254.51),
+		(-90.0, 14.75, -120.0),
+		(-79.0, 14.75, -120.0)])
 
 save_mesh(
-	texture_name = [Texture.ZEBRA_CROSSING],
-	tex_coords = compute_uv(bound_number = 923, tile_x = 5.0, tile_y = 5.0, angle_degrees = 0))
+    texture_name = [Texture.ZEBRA_CROSSING],
+    tex_coords = compute_uv(bound_number = 923, tile_x = 5.00, tile_y = 5.00, angle_degrees = 0.00))
+
+create_polygon(
+    bound_number = 211,
+    vertex_coordinates = [
+        (-55.64, 0.0, 413.24),
+		(256.85, 0.0, 414.13),
+		(264.48, 0.0, 135.52),
+		(-49.88, 0.0, 140.40)])
+
+save_mesh(
+    texture_name = [Texture.BRICKS_GREY],
+    tex_coords = compute_uv(bound_number = 211, tile_x = 50.00, tile_y = 50.00, angle_degrees = 0.00))
 
 ################################################################################################################               
 ################################################################################################################             
