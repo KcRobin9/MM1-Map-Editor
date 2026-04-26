@@ -290,10 +290,22 @@ def _resolve_bms_file(prop_name: str, bms_root: Path) -> Optional[Path]:
 
 # ── Scene placement ───────────────────────────────────────────────────────────
 
-def _bms_to_bl_offset(mesh: bpy.types.Mesh) -> Tuple[float, float, float]:
-    """Convert a mesh's stored game-space mesh_offset to Blender-space XYZ."""
+def _bms_to_bl_offset(mesh: bpy.types.Mesh, z_rot: float = 0.0) -> Tuple[float, float, float]:
+    """
+    Convert a mesh's BMS-space mesh_offset to Blender-space XYZ, then rotate
+    by the prop's Blender Z-rotation so the local offset tracks the prop's facing.
+
+    BMS files use a negated-X convention: BMS(ox,oy,oz) → blender(-ox, oz, oy).
+    When z_rot=0 (default, used by city blocks) the rotation is identity so this
+    is backward-compatible with the original formula.
+    """
     ox, oy, oz = mesh.get("mesh_offset", [0.0, 0.0, 0.0])
-    return (-ox, oz, oy)
+    bx, by, bz = -ox, oz, oy  # BMS → Blender (preserves city-block behaviour)
+    # Rotate the XY components by the prop's Z rotation
+    cos_r, sin_r = math.cos(z_rot), math.sin(z_rot)
+    rx = bx * cos_r - by * sin_r
+    ry = bx * sin_r + by * cos_r
+    return (rx, ry, bz)
 
 
 def _load_bms_mesh(
@@ -394,7 +406,7 @@ def _place_vehicle_instance(
     # Body — placed at world position
     body_obj = bpy.data.objects.new(prop_name, body_mesh)
     collection.objects.link(body_obj)
-    bl_body_off = _bms_to_bl_offset(body_mesh)
+    bl_body_off = _bms_to_bl_offset(body_mesh, z_rot)
     body_obj.location = (
         game_loc[0] + bl_body_off[0],
         game_loc[1] + bl_body_off[1],
@@ -558,7 +570,7 @@ def place_props_in_scene(
                 continue
             obj = bpy.data.objects.new(prop_name, mesh)
             props_col.objects.link(obj)
-            bl_off = _bms_to_bl_offset(mesh)
+            bl_off = _bms_to_bl_offset(mesh, z_rot)
             obj.location = (
                 game_loc[0] + bl_off[0],
                 game_loc[1] + bl_off[1],
@@ -609,7 +621,7 @@ def _place_tl_object(
         return False
     bl_loc = _to_blender_location(light["offset"])
     z_rot  = _to_blender_rotation_z(None, light["face"])
-    bl_off = _bms_to_bl_offset(mesh)
+    bl_off = _bms_to_bl_offset(mesh, z_rot)
     obj = bpy.data.objects.new(f"TL_{tl_key}", mesh)
     col.objects.link(obj)
     obj.location = (bl_loc[0] + bl_off[0], bl_loc[1] + bl_off[1], bl_loc[2] + bl_off[2])
