@@ -97,6 +97,7 @@ OBJECT_PROPERTIES = [
 ]
 
 SCENE_PROPERTIES = [
+    "replace_in_script",
     "polygon_create_width",
     "polygon_create_length",
     "polygon_create_shape",
@@ -350,6 +351,11 @@ def register_road_builder_properties() -> None:
 
 
 def register_scene_properties() -> None:
+    bpy.types.Scene.replace_in_script = bpy.props.BoolProperty(
+        name="Replace in Script",
+        description="When exporting all polygons, also replace the create_polygon / save_mesh section in MAP_EDITOR_ALPHA_v1.py",
+        default=False,
+    )
     bpy.types.Scene.polygon_create_width = bpy.props.FloatProperty(
         name="Width", default=15.0, min=0.1, soft_max=200.0
     )

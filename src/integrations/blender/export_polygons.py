@@ -107,8 +107,7 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
     if optional_variables_str:
         optional_variables_str = f"\n\t{optional_variables_str}"
 
-    template = f"""
-create_polygon(
+    template = f"""create_polygon(
     bound_number = {poly_data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
         {formatted_vertices}])

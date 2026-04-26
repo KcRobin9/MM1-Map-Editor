@@ -2,6 +2,7 @@ import re
 import bpy
 import time
 import pyautogui
+from pathlib import Path
 from typing import Set
 
 from src.constants.constants import CURRENT_TIME_FORMATTED
@@ -13,6 +14,38 @@ from src.integrations.blender.export_polygons import export_formatted_polygons
 from src.integrations.blender.utils import has_invalid_polygon_names
 
 from src.misc.main import open_with_notepad_plus
+
+
+_START_MARKER        = "#! ==============================START MAP POLYGONS============================== #*"
+_START_MARKER_LEGACY = "#! ==============================MAIN AREA============================== #*"
+_END_MARKER          = "#! ==============================END MAP POLYGONS============================== #*"
+_END_MARKER_LEGACY   = "#! ======================= CELLS ======================= !#"
+
+
+def _replace_polygons_in_script(new_content: str) -> None:
+    script_path: Path = Folder.BASE / "MAP_EDITOR_ALPHA_v1.py"
+    text = script_path.read_text(encoding="utf-8")
+
+    start_idx = text.find(_START_MARKER)
+    if start_idx == -1:
+        start_idx = text.find(_START_MARKER_LEGACY)
+
+    end_idx = text.find(_END_MARKER)
+    if end_idx == -1:
+        end_idx = text.find(_END_MARKER_LEGACY)
+
+    if start_idx == -1 or end_idx == -1:
+        raise ValueError(
+            f"Searched: {script_path} (exists={script_path.exists()}) | "
+            f"start={'found' if start_idx != -1 else 'NOT FOUND'} | "
+            f"end={'found' if end_idx != -1 else 'NOT FOUND'}"
+        )
+
+    from datetime import datetime
+    timestamp   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    after_start = text.index("\n", start_idx) + 1  # keep the start marker line
+    new_text    = text[:after_start] + f"# Last exported: {timestamp}\n\n" + new_content + "\n" + text[end_idx:]
+    script_path.write_text(new_text, encoding="utf-8")
 
 
 def _popup_error(context: bpy.types.Context, title: str, lines: list) -> None:
@@ -33,6 +66,13 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     bl_label = "Export Blender Polygons"
 
     select_all: bpy.props.BoolProperty(default = True)
+
+    @property
+    def _replace_in_script(self) -> bool:
+        try:
+            return bpy.context.scene.replace_in_script
+        except AttributeError:
+            return False
 
     def execute(self, context: bpy.types.Context) -> Set[set]:
         export_file = Folder.Blender.Polygons / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
@@ -105,23 +145,34 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         context.view_layer.objects.active = mesh_objects[0]
         bpy.ops.object.transform_apply(location = True, rotation = True, scale = True)
     
+        polygon_blocks = []
         try:
             with open(export_file, "w") as f:
                 for obj in mesh_objects:
-                    export_script = export_formatted_polygons(obj) 
-                    f.write(export_script + "\n\n")
-                    
-            # Open the file with Notepad++ and simulate copy to clipboard
-            open_with_notepad_plus(export_file)                                
-            time.sleep(1.0)  # Give Notepad++ time to load the file
-            pyautogui.hotkey(Key.CTRL, Key.A)
-            pyautogui.hotkey(Key.CTRL, Key.A)
-            
-            self.report({"INFO"}, f"Saved data to {export_file}")
+                    export_script = export_formatted_polygons(obj)
+                    f.write(export_script + "\n")
+                    polygon_blocks.append(export_script)
+
+            # Replace polygons inside MAP_EDITOR_ALPHA_v1.py when the toggle is on (Export All only)
+            if self.select_all and self._replace_in_script:
+                combined = "\n\n".join(polygon_blocks)
+                try:
+                    _replace_polygons_in_script(combined)
+                    self.report({"INFO"}, f"Polygons replaced in MAP_EDITOR_ALPHA_v1.py and saved to {export_file}")
+                except Exception as e:
+                    self.report({"WARNING"}, f"Exported to file, but script replace failed: {e}")
+            else:
+                # Open the file with Notepad++ and simulate copy to clipboard
+                open_with_notepad_plus(export_file)
+                time.sleep(1.0)  # Give Notepad++ time to load the file
+                pyautogui.hotkey(Key.CTRL, Key.A)
+                pyautogui.hotkey(Key.CTRL, Key.A)
+                self.report({"INFO"}, f"Saved data to {export_file}")
+
             bpy.ops.object.select_all(action = "DESELECT")
-            
+
         except Exception as e:
             self.report({"ERROR"}, f"Failed to export polygons: {str(e)}")
             return {"CANCELLED"}
-        
+
         return {"FINISHED"}

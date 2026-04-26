@@ -151,6 +151,7 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         # ── 6) Export ─────────────────────────────────────────────────────────
         layout.separator()
         layout.label(text="Export", icon='EXPORT')
+        layout.prop(context.scene, "replace_in_script", text="Replace in Script (Export All)")
         row = layout.row(align=True)
         op  = row.operator("object.export_polygons", text="Selected", icon='RESTRICT_SELECT_OFF')
         op.select_all = False
