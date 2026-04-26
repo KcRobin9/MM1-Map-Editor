@@ -73,7 +73,7 @@ def _to_blender_rotation_z(angle: Optional[float], face: Optional[tuple]) -> flo
     Y component — all real direction vectors have fy = 0.
     """
     if angle is not None:
-        return -math.radians(angle)
+        return math.pi - math.radians(angle)
 
     if face is not None:
         fx, fy, fz = face
@@ -82,7 +82,7 @@ def _to_blender_rotation_z(angle: Optional[float], face: Optional[tuple]) -> flo
         # so checking fy alone is unreliable; require all three.
         if fx > _HUGE_SENTINEL and fy > _HUGE_SENTINEL and fz > _HUGE_SENTINEL:
             return 0.0
-        return math.atan2(-fz, fx)
+        return math.atan2(-fz, fx) + math.pi
 
     return 0.0
 
