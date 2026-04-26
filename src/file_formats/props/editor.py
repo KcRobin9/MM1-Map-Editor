@@ -12,6 +12,7 @@ from src.constants.constants import PROP_CAN_COLLIDE_FLAG, HUGE
 from src.constants.folder import Folder
 from src.constants.misc import Encoding, Default
 from src.constants.file_formats import FileType, AxisRef
+from src.constants.props_orientation import PROP_ORIENTATION_OFFSET
 
 from src.file_formats.props.props import Bangers
 from src.io.binary import write_pack
@@ -155,15 +156,16 @@ class BangerEditor:
             offset = Vector3(*prop['offset']) 
             end = Vector3(*prop['end']) if 'end' in prop else None
 
+            name = prop['name']
+
             if 'face' in prop:
                 face = Vector3(*prop['face'])
             elif 'angle' in prop:
-                angle_rad = math.radians(prop['angle'])
+                effective = prop['angle'] + PROP_ORIENTATION_OFFSET.get(name, 0)
+                angle_rad = math.radians(effective)
                 face = Vector3(HUGE * math.cos(angle_rad), 0.0, HUGE * math.sin(angle_rad))
             else:
                 face = Vector3(HUGE, HUGE, HUGE)
-
-            name = prop['name']
             
             if end is not None:
                 diagonal = end - offset

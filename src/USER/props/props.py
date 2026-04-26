@@ -118,7 +118,7 @@ bridge_orange_buildling = {
     "name": Prop.BRIDGE_SLIM
 }
 
-prop_list = [prop_examples, trailer_set, bridge_orange_buildling]
+prop_list = prop_examples + [trailer_set, bridge_orange_buildling]
 
 # ────────────────────────────────────────────────────────────────────────────────
 
