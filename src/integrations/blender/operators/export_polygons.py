@@ -44,7 +44,15 @@ def _replace_polygons_in_script(new_content: str) -> None:
     from datetime import datetime
     timestamp   = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     after_start = text.index("\n", start_idx) + 1  # keep the start marker line
-    new_text    = text[:after_start] + f"# Last exported: {timestamp}\n\n" + new_content + "\n" + text[end_idx:]
+
+    # Back up the existing polygon block before overwriting
+    old_block = text[after_start:end_idx].strip()
+    if old_block:
+        backup_file = Folder.Blender.Polygons / f"MAP_EDITOR_ALPHA_v1_BACKUP_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+        backup_file.parent.mkdir(parents=True, exist_ok=True)
+        backup_file.write_text(old_block, encoding="utf-8")
+
+    new_text = text[:after_start] + f"# Last exported: {timestamp}\n\n" + new_content + "\n" + text[end_idx:]
     script_path.write_text(new_text, encoding="utf-8")
 
 
