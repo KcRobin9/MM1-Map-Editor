@@ -3,13 +3,13 @@ from src.constants.vehicles import PlayerCar
 from src.constants.file_formats import Axis
 from src.game.waypoints.constants import Rotation
 
-prop_list = [
+
+prop_examples = [
 
     # ── Bridges (30 / 40 / 6 wide; 33 deep) ──────────────────────────────────
-    {"name": Prop.BRIDGE_SLIM,              "offset": (  0, 0, 180), "angle": Rotation.NORTH},
-    {"name": Prop.BRIDGE_WIDE,              "offset": ( 55, 0, 180), "angle": Rotation.NORTH},
-    {"name": Prop.BRIDGE_BUILDING,          "offset": (107, 0, 160), "angle": Rotation.NORTH},
-
+    {"name": Prop.BRIDGE_SLIM,              "offset": (  0, 4, 180), "angle": Rotation.NORTH},
+    {"name": Prop.BRIDGE_WIDE,              "offset": ( 55, 4, 180), "angle": Rotation.NORTH}, # y = 4+ to make level with the road
+    {"name": Prop.BRIDGE_BUILDING,          "offset": (107, 5, 160), "angle": Rotation.NORTH}, # y = 5+ to make level with the road
     # ── El Train structures (50 / 11 / 16 wide; 1–3 deep) ────────────────────
     {"name": Prop.ELTRAIN,                  "offset": (140, 0, 160), "angle": Rotation.NORTH},
     {"name": Prop.ELTRAIN_SUPPORT_SLIM,     "offset": (180, 0, 160), "angle": Rotation.NORTH},
@@ -24,8 +24,8 @@ prop_list = [
     {"name": Prop.WALL_CONSTRUCTION_B,      "offset": ( 78, 0, 205), "angle": Rotation.NORTH},
     {"name": Prop.WALL_CONSTRUCTION_C,      "offset": ( 96, 0, 205), "angle": Rotation.NORTH},
     # Plane (no collision mesh; placed last with room to spare)
-    {"name": Prop.PLANE_LARGE,              "offset": (120, 0, 300), "angle": Rotation.NORTH},
-    {"name": Prop.CRANE,                    "offset": (120, 0, 205), "angle": Rotation.NORTH},
+    {"name": Prop.PLANE_LARGE,              "offset": (120, 6, 300), "angle": Rotation.NORTH}, # y = 6+ to make level with the road
+    {"name": Prop.CRANE,                    "offset": (120, 3, 205), "angle": Rotation.NORTH}, # y = 3+ to make level with the road
 
     # ── Crossgates (0.1 wide × 13 deep after 90°; base: 1 × 1) ──────────────
     {"name": Prop.CROSSGATE,                "offset": (  0, 0, 235), "angle": Rotation.NORTH},
@@ -104,9 +104,6 @@ prop_list = [
 
 ]
 
-random_props = []
-
-
 # ── Original props ────────────────────────────────────────────────────────────
 trailer_set = {
     "offset": (60, 0.0, 70),
@@ -121,7 +118,9 @@ bridge_orange_buildling = {
     "name": Prop.BRIDGE_SLIM
 }
 
-prop_list += [trailer_set, bridge_orange_buildling]
+prop_list = [prop_examples, trailer_set, bridge_orange_buildling]
+
+# ────────────────────────────────────────────────────────────────────────────────
 
 random_trees = {
     "name": Prop.TREE_SLIM,
@@ -149,3 +148,5 @@ random_cars = {
 }
 
 random_props = [random_trees, random_sailboats, random_cars]
+
+# ────────────────────────────────────────────────────────────────────────────────
