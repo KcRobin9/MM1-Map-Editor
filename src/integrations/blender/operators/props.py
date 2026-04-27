@@ -1,12 +1,15 @@
 import bpy
 import json
 import importlib
+import math
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from src.integrations.blender.modeling.props import place_props_in_scene, _find_prop_folder
 from src.constants.file_formats import AxisRef
 from src.constants.folder import Folder
+from src.constants.constants import HUGE
+from src.constants.props_orientation import PROP_ORIENTATION_OFFSET
 
 _PROPS_COLLECTION = "Props"
 
@@ -737,6 +740,85 @@ class PROPS_OT_CreatePropGroup(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def _face_to_angle(
+    fx: float, fy: float, fz: float,
+    prop_name: str,
+    ox: float = 0.0, oz: float = 0.0,
+) -> float:
+    """Convert a BNG face value back to a user-facing angle in degrees.
+
+    Handles two storage formats:
+    - Our format:   face = direction × HUGE  (|fx| or |fz| very large)
+    - Original game format: face is a world-space point; direction = face - offset
+
+    In both cases we compute direction = face - offset, then extract the XZ angle.
+    For our HUGE-scaled format the offset terms are negligible so the result is
+    identical to treating face as the direction directly.
+    """
+    # Undefined-face sentinel written by our code: face == (HUGE, HUGE, HUGE)
+    if fx > HUGE * 0.5 and fy > HUGE * 0.5 and fz > HUGE * 0.5:
+        return 0.01  # default to NORTH
+
+    # direction = face - offset  (works for both game and our format)
+    dx = fx - ox
+    dz = fz - oz
+    effective_deg = math.degrees(math.atan2(dz, dx))
+    user_angle    = effective_deg - PROP_ORIENTATION_OFFSET.get(prop_name, 0)
+    return round(user_angle, 2)
+
+
+class PROPS_OT_LoadExternal(bpy.types.Operator):
+    """Load props from an external .BNG file and place them in the scene"""
+    bl_idname = "props.load_external"
+    bl_label  = "Load External BNG"
+
+    filepath:    bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob: bpy.props.StringProperty(default="*.bng;*.BNG", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    def execute(self, context):
+        from src.file_formats.props.props import Bangers
+        from src.USER.settings.blender import prop_bms_folder, prop_car_wheels, prop_car_lights
+
+        path = Path(self.filepath)
+        if not path.exists():
+            self.report({"ERROR"}, f"File not found: {path}")
+            return {"CANCELLED"}
+
+        with open(path, "rb") as f:
+            bangers = Bangers.read_all(f)
+
+        # Convert each banger's face vector back to a user-facing angle so the
+        # existing expand_prop_instances pipeline (orientation offset, face
+        # computation, Blender rotation) handles everything correctly — and the
+        # props appear with user-friendly angles in the inspector/export.
+        prop_list = []
+        for b in bangers:
+            name  = b.name.rstrip("\x00")
+            angle = _face_to_angle(b.face.x, b.face.y, b.face.z, name,
+                                   ox=b.offset.x, oz=b.offset.z)
+            prop_list.append({
+                "name":   name,
+                "offset": (b.offset.x, b.offset.y, b.offset.z),
+                "angle":  angle,
+            })
+
+        place_props_in_scene(
+            prop_list,
+            [],
+            prop_bms_folder,
+            texture_folder=Folder.Resources.Editor.Textures,
+            car_wheels=prop_car_wheels,
+            car_lights=prop_car_lights,
+        )
+
+        self.report({"INFO"}, f"Loaded {len(prop_list)} props from {path.name}")
+        return {"FINISHED"}
+
+
 PROP_EDITOR_CLASSES = [
     PROPS_OT_ReloadProps,
     PROPS_OT_ClearProps,
@@ -745,4 +827,5 @@ PROP_EDITOR_CLASSES = [
     PROPS_OT_ExportCode,
     PROPS_OT_ExportGroupCode,
     PROPS_OT_CreatePropGroup,
+    PROPS_OT_LoadExternal,
 ]

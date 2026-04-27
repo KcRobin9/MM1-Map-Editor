@@ -215,6 +215,7 @@ class VIEW3D_PT_PropEditorTools(bpy.types.Panel):
         row = layout.row(align=True)
         row.operator("props.reload", text="Reload from props.py", icon="FILE_REFRESH")
         row.operator("props.clear",  text="Clear",                icon="X")
+        layout.operator("props.load_external", text="Load External", icon="FILEBROWSER")
 
         layout.separator()
 
