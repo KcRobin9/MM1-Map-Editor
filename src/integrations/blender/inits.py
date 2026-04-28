@@ -32,7 +32,7 @@ from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
 from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLASSES
 from src.integrations.blender.panels.prop_sidebar import PROP_EDITOR_PANEL_CLASSES
-from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, _update_prop_form
+from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, PROP_NAME_ITEMS_FROM, PROP_NAME_ITEMS_TO, _update_prop_form
 from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.car_editor import CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
@@ -132,6 +132,9 @@ SCENE_PROPERTIES = [
     "pe_area_z2",
     "pe_seed",
     "pe_rand_count",
+    # Replace Prop Type tool
+    "pr_from_name",
+    "pr_to_name",
     # Create Prop form
     "pc_prop_type",
     "pc_prop_name",
@@ -476,6 +479,18 @@ def register_scene_properties() -> None:
     bpy.types.Scene.pe_rand_count = bpy.props.IntProperty(
         name="Count", default=1, min=1, description="Number of props to place (count / num_props)",
         update=_update_prop_form,
+    )
+    # Replace Prop Type tool
+    bpy.types.Scene.pr_from_name = bpy.props.EnumProperty(
+        name="From",
+        description="Prop type to replace. ALL matches every type in the scene.",
+        items=PROP_NAME_ITEMS_FROM,
+        default="__ALL__",
+    )
+    bpy.types.Scene.pr_to_name = bpy.props.EnumProperty(
+        name="To",
+        description="New prop type. RANDOM picks a different random type for each group.",
+        items=PROP_NAME_ITEMS_TO,
     )
 
     # ── Create Prop form scene properties ─────────────────────────────────────

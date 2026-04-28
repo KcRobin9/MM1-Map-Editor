@@ -46,6 +46,10 @@ def _build_prop_name_items() -> List[Tuple[str, str, str]]:
 
 PROP_NAME_ITEMS: List[Tuple[str, str, str]] = _build_prop_name_items()
 
+# Variants used by the Replace tool's dropdowns
+PROP_NAME_ITEMS_FROM = [("__ALL__", "ALL", "Replace every prop type in the scene")] + PROP_NAME_ITEMS
+PROP_NAME_ITEMS_TO   = PROP_NAME_ITEMS + [("__RANDOM__", "RANDOM", "Assign a random prop type to each matched group")]
+
 # Fast reverse lookup: game_id → const string (e.g. "tpdrawbridge04" → "Prop.BRIDGE_SLIM")
 _GAME_TO_CONST: Dict[str, str] = {item[0]: item[2] for item in PROP_NAME_ITEMS}
 # game_id → friendly label
@@ -819,6 +823,169 @@ class PROPS_OT_LoadExternal(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class PROPS_OT_ReplacePropType(bpy.types.Operator):
+    """Replace scene props by type. From=ALL matches everything; To=RANDOM picks a random type per group."""
+    bl_idname = "props.replace_prop_type"
+    bl_label  = "Replace Prop Type"
+
+    def execute(self, context):
+        import random as _random
+
+        scene     = context.scene
+        from_name = scene.pr_from_name  # game id or "__ALL__"
+        to_name   = scene.pr_to_name    # game id or "__RANDOM__"
+
+        all_game_ids = [item[0] for item in PROP_NAME_ITEMS]  # excludes sentinels
+
+        if from_name != "__ALL__" and to_name != "__RANDOM__" and from_name == to_name:
+            self.report({"WARNING"}, "From and To are the same — nothing to do")
+            return {"CANCELLED"}
+
+        groups = get_unique_groups()
+        matched_groups = 0
+
+        for gid, (ptype, cfg) in groups.items():
+            name_val = cfg.get("name")
+
+            # Decide whether this group matches the From filter
+            if from_name == "__ALL__":
+                matches = True
+            elif isinstance(name_val, str):
+                matches = (name_val == from_name)
+            elif isinstance(name_val, list):
+                matches = any(n == from_name for n in name_val)
+            else:
+                matches = False
+
+            if not matches:
+                continue
+
+            # Decide the replacement name
+            if to_name == "__RANDOM__":
+                replacement = _random.choice(all_game_ids)
+            else:
+                replacement = to_name
+
+            # Apply — preserve list structure for random groups
+            if isinstance(name_val, list):
+                if from_name == "__ALL__":
+                    if to_name == "__RANDOM__":
+                        cfg["name"] = [_random.choice(all_game_ids) for _ in name_val]
+                    else:
+                        cfg["name"] = [replacement] * len(name_val)
+                else:
+                    if to_name == "__RANDOM__":
+                        cfg["name"] = [_random.choice(all_game_ids) if n == from_name else n for n in name_val]
+                    else:
+                        cfg["name"] = [replacement if n == from_name else n for n in name_val]
+            else:
+                cfg["name"] = replacement
+
+            matched_groups += 1
+            new_json = _serialize_config(cfg)
+            for obj in get_prop_objects():
+                if obj.get("mm_prop_group_id") == gid:
+                    obj["mm_prop_config_json"] = new_json
+
+        if not matched_groups:
+            label = "ALL" if from_name == "__ALL__" else prop_name_to_friendly(from_name)
+            self.report({"WARNING"}, f"No props matching '{label}' found in scene")
+            return {"CANCELLED"}
+
+        # Re-place so new BMS meshes are loaded
+        try:
+            from src.USER.settings.blender import prop_bms_folder, prop_car_wheels, prop_car_lights
+            updated_groups = get_unique_groups()
+            prop_list, random_props = _rebuild_lists(updated_groups)
+            place_props_in_scene(
+                prop_list, random_props,
+                prop_bms_folder,
+                texture_folder=Folder.Resources.Editor.Textures,
+                car_wheels=prop_car_wheels,
+                car_lights=prop_car_lights,
+            )
+        except Exception as exc:
+            import traceback
+            print(traceback.format_exc())
+            self.report({"ERROR"}, f"Replace succeeded but re-place failed: {exc}")
+            return {"CANCELLED"}
+
+        from_label = "ALL" if from_name == "__ALL__" else prop_name_to_friendly(from_name)
+        to_label   = "RANDOM" if to_name == "__RANDOM__" else prop_name_to_friendly(to_name)
+        self.report({"INFO"}, f"Replaced '{from_label}' → '{to_label}' in {matched_groups} group(s)")
+        return {"FINISHED"}
+
+
+class PROPS_OT_DeleteGroup(bpy.types.Operator):
+    """Remove all scene objects belonging to the active prop group"""
+    bl_idname = "props.delete_group"
+    bl_label  = "Delete Group"
+
+    def execute(self, context):
+        obj = context.active_object
+        if not is_prop_obj(obj):
+            self.report({"WARNING"}, "Active object is not a tagged prop")
+            return {"CANCELLED"}
+
+        gid = obj.get("mm_prop_group_id")
+        to_remove = [o for o in get_prop_objects() if o.get("mm_prop_group_id") == gid]
+        for o in to_remove:
+            bpy.data.objects.remove(o, do_unlink=True)
+
+        self.report({"INFO"}, f"Deleted {len(to_remove)} object(s) in group '{gid}'")
+        return {"FINISHED"}
+
+
+class PROPS_OT_SaveBNG(bpy.types.Operator):
+    """Write all scene prop groups to a binary .BNG file"""
+    bl_idname = "props.save_bng"
+    bl_label  = "Save BNG"
+
+    filepath:    bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob: bpy.props.StringProperty(default="*.bng;*.BNG", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        if not self.filepath:
+            self.filepath = "props.bng"
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    def execute(self, context):
+        from src.file_formats.props.props import Bangers
+        from src.integrations.blender.modeling.props import expand_prop_instances
+        from src.constants.constants import PROP_CAN_COLLIDE_FLAG
+        from src.core.vector.vector_3 import Vector3
+
+        groups = get_unique_groups()
+        if not groups:
+            self.report({"WARNING"}, "No prop groups in scene — load or create props first")
+            return {"CANCELLED"}
+
+        prop_list, random_props = _rebuild_lists(groups)
+        instances = expand_prop_instances(prop_list, random_props)
+
+        bangers = []
+        for inst in instances:
+            ox, oy, oz = inst["offset"]
+            face = inst.get("face") or (HUGE, HUGE, HUGE)
+            fx, fy, fz = face
+            name = inst["name"]
+            if not name.endswith("\x00"):
+                name += "\x00"
+            bangers.append(Bangers(
+                0, PROP_CAN_COLLIDE_FLAG,
+                Vector3(ox, oy, oz),
+                Vector3(fx, fy, fz),
+                name,
+            ))
+
+        path = Path(self.filepath)
+        Bangers.write_all(path, bangers, debug_props=False)
+
+        self.report({"INFO"}, f"Saved {len(bangers)} props to {path.name}")
+        return {"FINISHED"}
+
+
 PROP_EDITOR_CLASSES = [
     PROPS_OT_ReloadProps,
     PROPS_OT_ClearProps,
@@ -828,4 +995,7 @@ PROP_EDITOR_CLASSES = [
     PROPS_OT_ExportGroupCode,
     PROPS_OT_CreatePropGroup,
     PROPS_OT_LoadExternal,
+    PROPS_OT_ReplacePropType,
+    PROPS_OT_DeleteGroup,
+    PROPS_OT_SaveBNG,
 ]

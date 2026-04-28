@@ -109,7 +109,9 @@ class VIEW3D_PT_PropEditorPanel(bpy.types.Panel):
         row = layout.row(align=True)
         row.operator("props.select_group", text="Select Group", icon="RESTRICT_SELECT_OFF")
         row.operator("props.load_into_form", text="Edit",       icon="GREASEPENCIL")
-        layout.operator("props.export_group_code", text="Copy Group as Code", icon="COPYDOWN")
+        row = layout.row(align=True)
+        row.operator("props.export_group_code", text="Copy as Code", icon="COPYDOWN")
+        row.operator("props.delete_group",      text="Delete",       icon="TRASH")
 
 
 # ── Panel: Edit Form ──────────────────────────────────────────────────────────
@@ -219,12 +221,25 @@ class VIEW3D_PT_PropEditorTools(bpy.types.Panel):
 
         layout.separator()
 
+        # ── Replace Prop Type ─────────────────────────────────────────────────
+        layout.label(text="Replace", icon="FILE_REFRESH")
+        box = layout.box()
+        col = box.column(align=True)
+        col.prop(context.scene, "pr_from_name", text="From")
+        col.prop(context.scene, "pr_to_name",   text="To")
+        col.separator()
+        col.operator("props.replace_prop_type", text="Replace All Matching", icon="ARROW_LEFTRIGHT")
+
+        layout.separator()
+
         # ── Export ────────────────────────────────────────────────────────────
         layout.label(text="Export", icon="EXPORT")
         box = layout.box()
         col = box.column(align=True)
-        col.operator("props.export_code",       text="Export All Groups",   icon="WORLD")
-        col.operator("props.export_group_code", text="Export Active Group", icon="RESTRICT_SELECT_OFF")
+        col.operator("props.export_code",       text="Export All as Code",    icon="WORLD")
+        col.operator("props.export_group_code", text="Export Active as Code", icon="RESTRICT_SELECT_OFF")
+        col.separator()
+        col.operator("props.save_bng",          text="Save BNG File",         icon="FILE")
 
 
 # ── Panel: Prop Groups (collapsible sub-panel) ────────────────────────────────
@@ -245,15 +260,26 @@ class VIEW3D_PT_PropEditorGroups(bpy.types.Panel):
             layout.label(text="No prop groups in scene", icon="INFO")
             return
 
-        box = layout.box()
-        col = box.column(align=True)
+        # ── Statistics summary ────────────────────────────────────────────────
+        all_objs = get_prop_objects()
+        type_counts: dict = {}
+        for o in all_objs:
+            try:
+                cfg = json.loads(o.get("mm_prop_config_json", "{}"))
+                name_val = cfg.get("name", o.name)
+            except Exception:
+                name_val = o.name
+            label = _friendly_name_display(name_val)
+            type_counts[label] = type_counts.get(label, 0) + 1
 
-        for gid, (ptype, cfg) in sorted(groups.items()):
-            name_val = cfg.get("name", "?")
-            n_inst   = sum(1 for o in get_prop_objects() if o.get("mm_prop_group_id") == gid)
-            icon     = "PARTICLE_POINT" if ptype == "random" else "OBJECT_DATA"
-            label    = f"{gid}  ({n_inst}×)  {_friendly_name_display(name_val)}"
-            col.label(text=label, icon=icon)
+        stats_box = layout.box()
+        stats_col = stats_box.column(align=True)
+        stats_col.label(text=f"{len(all_objs)} instances  ·  {len(groups)} groups  ·  {len(type_counts)} types", icon="INFO")
+        for label, cnt in sorted(type_counts.items(), key=lambda x: -x[1])[:8]:
+            stats_col.label(text=f"  {cnt}×  {label}")
+        if len(type_counts) > 8:
+            stats_col.label(text=f"  … and {len(type_counts) - 8} more types")
+
 
 
 # ── Panel: Create Prop ────────────────────────────────────────────────────────

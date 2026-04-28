@@ -60,7 +60,6 @@ from src.file_formats.ai.street_editor import aiStreetEditor
 
 from src.file_formats.props.props import Bangers
 from src.file_formats.props.editor import BangerEditor, edit_and_copy_bangerdata_to_shop
-from src.file_formats.props.subtract import subtract_props_from_file
 
 from src.file_formats.facades.facades import Facades
 from src.file_formats.facades.editor import FacadeEditor
@@ -159,20 +158,7 @@ from src.USER.misc.dlp import dlp_groups, dlp_patches, dlp_vertices
 from src.USER.props.properties import prop_properties
 
 from src.USER.props.props import prop_list, random_props  # 'Set' props could be a better name? I.e. create from scratch
-from src.USER.props.edit import edit_props, props_to_edit, edit_tolerance, edit_require_confirmation, edit_input_props_file, edit_output_props_file
-from src.USER.props.replace import replace_props, props_to_replace, replace_tolerance, replace_require_confirmation, replace_input_props_file, replace_output_props_file
-from src.USER.props.duplicate import duplicate_props, props_to_duplicate, duplicate_tolerance, duplicate_input_props_file, duplicate_output_props_file
 from src.USER.props.append import append_props, props_to_append, append_input_props_file, append_output_props_file
-
-from src.USER.props.subtract import (
-    subtract_props,
-    props_to_subtract,
-    ranges_to_subtract,
-    subtract_tolerance,
-    subtract_require_confirmation,
-    subtract_input_props_file,
-    subtract_output_props_file
-)
 
 ################################################################################################################               
 ################################################################################################################
@@ -2572,17 +2558,6 @@ print(COLOR_DIVIDER)
 
 post_editor_cleanup(Folder.Build, Folder.Shop.Root, delete_shop)
 
-if subtract_props:
-    shutil.copy(subtract_input_props_file, subtract_output_props_file) 
-    subtract_props_from_file(
-        input_file=subtract_input_props_file,
-        output_file=subtract_output_props_file,
-        exact_rules=props_to_subtract,
-        range_rules=ranges_to_subtract,
-        tolerance=subtract_tolerance,
-        require_confirmation=subtract_require_confirmation
-    )
-
 if append_props:
     shutil.copy(append_input_props_file, append_output_props_file)
     editor.append_to_file(
@@ -2590,38 +2565,6 @@ if append_props:
         props_to_append,
         append_output_props_file,
         append_props
-    )
-
-if edit_props:
-    shutil.copy(edit_input_props_file, edit_output_props_file)
-    from src.file_formats.props.edit import edit_props_in_file
-    edit_props_in_file(
-        input_file=edit_input_props_file,
-        output_file=edit_output_props_file,
-        edit_rules=props_to_edit,
-        tolerance=edit_tolerance,
-        require_confirmation=edit_require_confirmation
-    )
-
-if replace_props:
-    shutil.copy(replace_input_props_file, replace_output_props_file)
-    from src.file_formats.props.replace import replace_props_in_file
-    replace_props_in_file(
-        input_file=replace_input_props_file,
-        output_file=replace_output_props_file,
-        replace_rules=props_to_replace,
-        tolerance=replace_tolerance,
-        require_confirmation=replace_require_confirmation
-    )
-
-if duplicate_props:
-    shutil.copy(duplicate_input_props_file, duplicate_output_props_file)
-    from src.file_formats.props.copy import duplicate_props_in_file
-    duplicate_props_in_file(
-        input_file=duplicate_input_props_file,
-        output_file=duplicate_output_props_file,
-        duplicate_rules=props_to_duplicate,
-        tolerance=duplicate_tolerance
     )
 
 start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game)
