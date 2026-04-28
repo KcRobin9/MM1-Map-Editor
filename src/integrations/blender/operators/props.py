@@ -780,6 +780,7 @@ class PROPS_OT_LoadExternal(bpy.types.Operator):
     filter_glob: bpy.props.StringProperty(default="*.bng;*.BNG", options={"HIDDEN"})
 
     def invoke(self, context, event):
+        self.filepath = str(Folder.BASE) + "/"
         context.window_manager.fileselect_add(self)
         return {"RUNNING_MODAL"}
 
