@@ -39,6 +39,8 @@ from src.integrations.blender.waypoints.draw import register_draw_handler, unreg
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
 from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
 from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
+from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FACADE_NAME_ITEMS, FACADE_FLAGS_ITEMS, _update_facade_form
+from src.integrations.blender.panels.facade_editor_sidebar import FACADE_EDITOR_PANEL_CLASSES
 
 
 PANEL_CLASSES = [
@@ -54,6 +56,7 @@ PANEL_CLASSES = [
     *PROP_EDITOR_PANEL_CLASSES,
     *CAR_EDITOR_PANEL_CLASSES,
     *ROAD_BUILDER_PANEL_CLASSES,
+    *FACADE_EDITOR_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -71,6 +74,7 @@ OPERATOR_CLASSES = [
     *PROP_EDITOR_CLASSES,
     *CAR_EDITOR_CLASSES,
     *ROAD_BUILDER_CLASSES,
+    *FACADE_EDITOR_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -201,6 +205,27 @@ SCENE_PROPERTIES = [
     # Road Builder scene properties
     "rd_extend_length", "rd_extend_angle", "rd_extend_elevation",
     "rd_snap_to_terrain", "rd_road_type",
+    # Facade Editor — edit form
+    "fe_active_group_id",
+    "fe_facade_name",
+    "fe_flags",
+    "fe_offset_x", "fe_offset_y", "fe_offset_z",
+    "fe_end_x",    "fe_end_y",    "fe_end_z",
+    "fe_axis",
+    "fe_separator",
+    "fe_sides_x",  "fe_sides_y",  "fe_sides_z",
+    "fe_scale_auto",
+    "fe_scale",
+    # Facade Editor — create form
+    "fc_facade_name",
+    "fc_flags",
+    "fc_offset_x", "fc_offset_y", "fc_offset_z",
+    "fc_end_x",    "fc_end_y",    "fc_end_z",
+    "fc_axis",
+    "fc_separator",
+    "fc_sides_x",  "fc_sides_y",  "fc_sides_z",
+    "fc_scale_auto",
+    "fc_scale",
 ]
 
 
@@ -786,6 +811,77 @@ def register_scene_properties() -> None:
         name="Paint Variant",
         description="Current paint variant prefix (e.g. VPBULLET, VPBULLETBLUE)",
         default="",
+    )
+
+    # ── Facade Editor — edit form ─────────────────────────────────────────────
+    bpy.types.Scene.fe_active_group_id = bpy.props.StringProperty(
+        name="Active Facade Group", default="",
+    )
+    bpy.types.Scene.fe_facade_name = bpy.props.EnumProperty(
+        name="Facade",
+        description="Facade mesh name",
+        items=FACADE_NAME_ITEMS,
+        update=_update_facade_form,
+    )
+    bpy.types.Scene.fe_flags = bpy.props.EnumProperty(
+        name="Flags",
+        description="FCD rendering flags",
+        items=FACADE_FLAGS_ITEMS,
+        update=_update_facade_form,
+    )
+    _fkw = dict(precision=2, update=_update_facade_form)
+    bpy.types.Scene.fe_offset_x = bpy.props.FloatProperty(name="Offset X", **_fkw)
+    bpy.types.Scene.fe_offset_y = bpy.props.FloatProperty(name="Offset Y", **_fkw)
+    bpy.types.Scene.fe_offset_z = bpy.props.FloatProperty(name="Offset Z", **_fkw)
+    bpy.types.Scene.fe_end_x    = bpy.props.FloatProperty(name="End X",    **_fkw)
+    bpy.types.Scene.fe_end_y    = bpy.props.FloatProperty(name="End Y",    **_fkw)
+    bpy.types.Scene.fe_end_z    = bpy.props.FloatProperty(name="End Z",    **_fkw)
+    bpy.types.Scene.fe_axis = bpy.props.EnumProperty(
+        name="Axis",
+        items=[("x", "X", ""), ("y", "Y", ""), ("z", "Z", "")],
+        default="x",
+        update=_update_facade_form,
+    )
+    bpy.types.Scene.fe_separator = bpy.props.FloatProperty(
+        name="Separator", default=10.0, min=0.01, precision=3, update=_update_facade_form,
+    )
+    bpy.types.Scene.fe_sides_x = bpy.props.FloatProperty(name="Sides L", default=0.0, precision=2, update=_update_facade_form)
+    bpy.types.Scene.fe_sides_y = bpy.props.FloatProperty(name="Sides R", default=0.0, precision=2, update=_update_facade_form)
+    bpy.types.Scene.fe_sides_z = bpy.props.FloatProperty(name="Sides D", default=0.0, precision=2, update=_update_facade_form)
+    bpy.types.Scene.fe_scale_auto = bpy.props.BoolProperty(
+        name="Auto Scale", default=True, update=_update_facade_form,
+    )
+    bpy.types.Scene.fe_scale = bpy.props.FloatProperty(
+        name="Scale", default=1.0, min=0.001, precision=3, update=_update_facade_form,
+    )
+
+    # ── Facade Editor — create form ───────────────────────────────────────────
+    bpy.types.Scene.fc_facade_name = bpy.props.EnumProperty(
+        name="Facade", items=FACADE_NAME_ITEMS,
+    )
+    bpy.types.Scene.fc_flags = bpy.props.EnumProperty(
+        name="Flags", items=FACADE_FLAGS_ITEMS,
+    )
+    bpy.types.Scene.fc_offset_x = bpy.props.FloatProperty(name="Offset X", precision=2)
+    bpy.types.Scene.fc_offset_y = bpy.props.FloatProperty(name="Offset Y", precision=2)
+    bpy.types.Scene.fc_offset_z = bpy.props.FloatProperty(name="Offset Z", precision=2)
+    bpy.types.Scene.fc_end_x    = bpy.props.FloatProperty(name="End X",    precision=2)
+    bpy.types.Scene.fc_end_y    = bpy.props.FloatProperty(name="End Y",    precision=2)
+    bpy.types.Scene.fc_end_z    = bpy.props.FloatProperty(name="End Z",    precision=2)
+    bpy.types.Scene.fc_axis = bpy.props.EnumProperty(
+        name="Axis",
+        items=[("x", "X", ""), ("y", "Y", ""), ("z", "Z", "")],
+        default="x",
+    )
+    bpy.types.Scene.fc_separator = bpy.props.FloatProperty(
+        name="Separator", default=10.0, min=0.01, precision=3,
+    )
+    bpy.types.Scene.fc_sides_x   = bpy.props.FloatProperty(name="Sides L", default=0.0, precision=2)
+    bpy.types.Scene.fc_sides_y   = bpy.props.FloatProperty(name="Sides R", default=0.0, precision=2)
+    bpy.types.Scene.fc_sides_z   = bpy.props.FloatProperty(name="Sides D", default=0.0, precision=2)
+    bpy.types.Scene.fc_scale_auto = bpy.props.BoolProperty(name="Auto Scale", default=True)
+    bpy.types.Scene.fc_scale      = bpy.props.FloatProperty(
+        name="Scale", default=1.0, min=0.001, precision=3,
     )
 
 
