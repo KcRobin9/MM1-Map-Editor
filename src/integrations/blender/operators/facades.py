@@ -211,18 +211,88 @@ def _game_to_blender(gx: float, gy: float, gz: float) -> Tuple[float, float, flo
     return (gx, -gz, gy)
 
 
-def _facade_rotation_z(ox: float, oz: float, fx: float, fz: float) -> float:
-    """Blender Z rotation (radians) that orients a facade panel from offset toward face.
-
-    BMS meshes default to facing -X in Blender space (same as prop meshes).
-    Props use atan2(-fz, fx) + pi for their face vector — we apply the same
-    logic to the start→end direction vector so facades face consistently.
+def _facade_matrix_to_blender(
+    start: Tuple[float, float, float],
+    end:   Tuple[float, float, float],
+    scale: float,
+) -> "mathutils.Matrix":
     """
-    dx = fx - ox
-    dz = fz - oz
-    if dx == 0.0 and dz == 0.0:
-        return 0.0
-    return math.atan2(-dz, dx) + math.pi
+    Port of MatrixFromPoints() from the game binary, converted to a Blender matrix_world.
+
+    The game builds a 3×4 transform where:
+      m0 = normalised(end-start) * (dist/scale)  — forward axis, scaled to fit panel gap
+      m1 = world_up = (0,1,0)                    — up axis
+      m2 = cross(m1, m0_normalised)              — right axis (unit length)
+      m3 = start, with Y clamped to min(start.y, end.y)
+
+    scale = nominal mesh width (from "FCD scales.txt" or fcd.scale).
+    The length_factor = dist/scale stretches or squishes the mesh along its forward axis
+    so it exactly spans the gap between start and end.
+
+    Game → Blender: (gx, gy, gz) → (gx, -gz, gy).
+    BMS meshes face -X in Blender, so game-forward maps onto Blender -X.
+    """
+    import mathutils
+
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    dz = end[2] - start[2]
+
+    dist = (dx * dx + dy * dy + dz * dz) ** 0.5
+    if dist == 0.0 or scale == 0.0:
+        # Degenerate: no direction — return identity at start
+        loc = mathutils.Vector((start[0], -start[2], start[1]))
+        mat = mathutils.Matrix.Identity(4)
+        mat.translation = loc
+        return mat
+
+    inv = 1.0 / dist
+    length_factor = dist / scale
+
+    # Normalised forward in game space
+    nx, ny, nz = dx * inv, dy * inv, dz * inv
+
+    # right = cross(world_up=(0,1,0), forward_normalised)
+    # = (1*nz - 0*ny,  0*nx - 0*nz,  0*ny - 1*nx) = (nz, 0, -nx)
+    rx, ry, rz = nz, 0.0, -nx
+
+    # Game-space column vectors (matching C++ m0 scaled, m1=up, m2=right):
+    #   forward_g = (nx, ny, nz) * length_factor   — the stretched axis
+    #   up_g      = (0, 1, 0)
+    #   right_g   = (rx, ry, rz)
+
+    # Convert each to Blender space: (gx,gy,gz) → (gx, -gz, gy)
+    def g2b(gx, gy, gz):
+        return (gx, -gz, gy)
+
+    fwd_b = g2b(nx * length_factor, ny * length_factor, nz * length_factor)
+    up_b  = g2b(0.0, 1.0, 0.0)   # → (0, 0, 1)
+    rgt_b = g2b(rx, ry, rz)
+
+    # BMS meshes have their geometry along local -X, so we need:
+    #   local +X maps to  -fwd_b  (into the facade face, which the game drives forward)
+    #   local +Y maps to  -rgt_b  (game right becomes Blender -Y because of axis flip)
+    #   local +Z maps to   up_b   (= Blender Z)
+    # Build matrix column by column (Blender Matrix rows = rows of the matrix):
+    col_x = (-fwd_b[0], -fwd_b[1], -fwd_b[2])
+    col_y = (-rgt_b[0], -rgt_b[1], -rgt_b[2])
+    col_z = ( up_b[0],   up_b[1],   up_b[2])
+
+    mat3 = mathutils.Matrix((
+        (col_x[0], col_y[0], col_z[0]),
+        (col_x[1], col_y[1], col_z[1]),
+        (col_x[2], col_y[2], col_z[2]),
+    ))
+
+    # Position: game clamps to min Y (height), matching C++ `if m3.y > end.y: m3.y = end.y`
+    px, py, pz = start[0], start[1], start[2]
+    if start[1] > end[1]:
+        py = end[1]
+    loc = mathutils.Vector(g2b(px, py, pz))
+
+    mat4 = mat3.to_4x4()
+    mat4.translation = loc
+    return mat4
 
 
 # ── Scene placement ───────────────────────────────────────────────────────────
@@ -241,6 +311,10 @@ def place_facades_in_scene(facade_cfgs: list, texture_folder=None) -> None:
     col = _get_or_create_collection(_FACADES_COLLECTION)
     _clear_collection(col)
 
+    placed       = 0
+    missing      = 0
+    missing_names: set = set()
+
     for grp_idx, cfg in enumerate(facade_cfgs):
         gid    = f"facade_{grp_idx}"
         name   = cfg.get('name', 'unknown')
@@ -248,7 +322,8 @@ def place_facades_in_scene(facade_cfgs: list, texture_folder=None) -> None:
         sides  = cfg.get('sides', [0.0, 0.0, 0.0])
         sides_l, sides_r, sides_d = (float(v) for v in sides)
         flags  = int(cfg.get('flags', 0))
-        face_vec = cfg.get('face_vec')  # present for FCD records; None for editor groups
+        face_vec  = cfg.get('face_vec')   # present for FCD records; None for editor groups
+        fcd_scale = float(cfg.get('scale', 1.0))
 
         mesh_folder = (_MESHES_FACADES / name.upper()) if (_MESHES_FACADES / name.upper()).is_dir() else None
 
@@ -268,23 +343,16 @@ def place_facades_in_scene(facade_cfgs: list, texture_folder=None) -> None:
             parent_obj.empty_display_size  = 1.0
             col.objects.link(parent_obj)
 
-            bx, by, bz = _game_to_blender(*game_start)
-            parent_obj.location = (bx, by, bz)
-
             if face_vec is not None:
-                # FCD record: face_vec is the end world-position of this panel.
-                # Direction = face_vec - offset; atan2(-dz, dx) gives the correct
-                # Blender Z rotation under the (-x, z, y) vertex convention.
-                ox, _, oz = cfg['offset']
-                fx, _, fz = face_vec
-                rot_z = _facade_rotation_z(ox, oz, fx, fz)
+                # FCD record: offset is panel start, face_vec is panel end.
+                g_start = tuple(cfg['offset'])
+                g_end   = tuple(face_vec)
             else:
-                # Editor group: panel direction from start→end.
-                rot_z = _facade_rotation_z(
-                    game_start[0], game_start[2],
-                    game_end[0],   game_end[2],
-                )
-            parent_obj.rotation_euler = (0.0, 0.0, rot_z)
+                g_start = game_start
+                g_end   = game_end
+
+            mat = _facade_matrix_to_blender(g_start, g_end, fcd_scale)
+            parent_obj.matrix_world = mat
 
             parent_obj[_FACADE_TAG]       = gid
             parent_obj[_FACADE_CFG_TAG]   = json.dumps(cfg)
@@ -292,7 +360,13 @@ def place_facades_in_scene(facade_cfgs: list, texture_folder=None) -> None:
             parent_obj["mm_facade_panel"] = pnl_idx
 
             if mesh_folder is None:
+                if name not in missing_names:
+                    print(f"  [Facade Editor] No BMS folder for '{name}'")
+                    missing_names.add(name)
+                missing += 1
                 continue
+
+            placed += 1
 
             # ── Main facade mesh (FACADE_H / H) ───────────────────────────
             main_bms = _find_bms_variant(mesh_folder, _BMS_VARIANTS)
@@ -332,6 +406,8 @@ def place_facades_in_scene(facade_cfgs: list, texture_folder=None) -> None:
                     mesh = _load_bms_part(back_bms, f"{panel_name}_BACK", texture_folder)
                     if mesh:
                         _add_child_obj(mesh, f"{panel_name}_BACK", "BACK", parent_obj, col)
+
+    print(f"Facades placed in scene: {placed} (missing BMS: {missing})")
 
 
 # ── Code generation ───────────────────────────────────────────────────────────
