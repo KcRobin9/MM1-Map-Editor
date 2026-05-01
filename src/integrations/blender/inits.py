@@ -41,6 +41,8 @@ from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES
 from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
 from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FACADE_NAME_ITEMS, FACADE_FLAGS_ITEMS, _update_facade_form
 from src.integrations.blender.panels.facade_editor_sidebar import FACADE_EDITOR_PANEL_CLASSES
+from src.integrations.blender.operators.city_loader import CITY_LOADER_CLASSES
+from src.integrations.blender.panels.city_loader_sidebar import CITY_LOADER_PANEL_CLASSES
 
 
 PANEL_CLASSES = [
@@ -57,6 +59,7 @@ PANEL_CLASSES = [
     *CAR_EDITOR_PANEL_CLASSES,
     *ROAD_BUILDER_PANEL_CLASSES,
     *FACADE_EDITOR_PANEL_CLASSES,
+    *CITY_LOADER_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -75,6 +78,7 @@ OPERATOR_CLASSES = [
     *CAR_EDITOR_CLASSES,
     *ROAD_BUILDER_CLASSES,
     *FACADE_EDITOR_CLASSES,
+    *CITY_LOADER_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -216,6 +220,12 @@ SCENE_PROPERTIES = [
     "fe_sides_x",  "fe_sides_y",  "fe_sides_z",
     "fe_scale_auto",
     "fe_scale",
+    # City Loader
+    "cl_city_folder",
+    "cl_load_fcd",
+    "cl_load_bng",
+    "cl_load_meshes",
+    "cl_texture_folder",
     # Facade Editor — create form
     "fc_facade_name",
     "fc_flags",
@@ -853,6 +863,35 @@ def register_scene_properties() -> None:
     )
     bpy.types.Scene.fe_scale = bpy.props.FloatProperty(
         name="Scale", default=1.0, min=0.001, precision=3, update=_update_facade_form,
+    )
+
+    # ── City Loader scene properties ─────────────────────────────────────────
+    bpy.types.Scene.cl_city_folder = bpy.props.StringProperty(
+        name="City Folder",
+        description="Path to the city root folder (e.g. resources/city_files/RACETRACK_7)",
+        default="",
+        subtype="DIR_PATH",
+    )
+    bpy.types.Scene.cl_load_fcd = bpy.props.BoolProperty(
+        name="Load FCD",
+        description="Load and visualise the .FCD facades file",
+        default=True,
+    )
+    bpy.types.Scene.cl_load_bng = bpy.props.BoolProperty(
+        name="Load BNG",
+        description="Load and place the .BNG props/bangers file",
+        default=True,
+    )
+    bpy.types.Scene.cl_load_meshes = bpy.props.BoolProperty(
+        name="Load Meshes",
+        description="Load all CULL*.BMS files from the MESHES/ subfolder",
+        default=True,
+    )
+    bpy.types.Scene.cl_texture_folder = bpy.props.StringProperty(
+        name="Texture Folder",
+        description="Texture folder used when loading city meshes (leave blank for default editor textures)",
+        default="",
+        subtype="DIR_PATH",
     )
 
     # ── Facade Editor — create form ───────────────────────────────────────────
