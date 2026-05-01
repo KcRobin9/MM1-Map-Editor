@@ -12,57 +12,112 @@ All loading delegates to the existing facade / prop operators and
 the shared BMS mesh utilities so no parsing is duplicated.
 """
 import bpy
+import bmesh
 from pathlib import Path
 from typing import List
 
 from src.constants.folder import Folder
 
-_CITY_MESHES_COLLECTION = "City Meshes"
-
-
-# ── Collection helpers (mirrors facades.py pattern) ──────────────────────────
-
-def _get_or_create_collection(name: str) -> bpy.types.Collection:
-    if name in bpy.data.collections:
-        return bpy.data.collections[name]
-    col = bpy.data.collections.new(name)
-    bpy.context.scene.collection.children.link(col)
-    return col
-
-
-def _clear_collection(col: bpy.types.Collection) -> None:
-    for obj in list(col.objects):
-        bpy.data.objects.remove(obj, do_unlink=True)
-
 
 # ── City mesh loader ──────────────────────────────────────────────────────────
 
-def _load_city_meshes(mesh_dirs: List[Path], texture_folder: Path, col: bpy.types.Collection) -> int:
-    """Load all CULL*.BMS files from mesh_dirs into col. Returns count loaded."""
-    from src.integrations.blender.modeling.meshes import read_bms, build_blender_mesh, _apply_materials_to_mesh
-    import mathutils
+def _build_city_mesh(name: str, bms_data: dict) -> bpy.types.Mesh:
+    """
+    Like build_blender_mesh but uses (x, -z, y) vertex convention to match
+    props/facades rather than the BMS (-x, z, y) convention.
+    """
+    points          = bms_data["points"]
+    tex_coords      = bms_data["tex_coords"]
+    vert_colors     = bms_data.get("vert_colors", [])
+    normal_indices  = bms_data["normal_indices"]
+    vertex_indices  = bms_data["vertex_indices"]
+    surface_indices = bms_data["surface_indices"]
+    texture_indices = bms_data["texture_indices"]
+    num_surfaces    = bms_data["num_surfaces"]
+    flags           = bms_data["flags"]
+    texture_names   = bms_data.get("texture_names", [])
+
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    bm.from_mesh(me)
+
+    uv_layer    = bm.loops.layers.uv.new()
+    color_layer = bm.loops.layers.color.new("Col") if vert_colors else None
+    ni_layer    = bm.loops.layers.int.new("bms_ni") if (flags & 2) else None
+
+    # (x, -z, y) — same convention as props/facades world positions
+    for px, py, pz in points:
+        bm.verts.new((px, -pz, py))
+    bm.verts.ensure_lookup_table()
+
+    for surf_idx in range(num_surfaces):
+        base       = surf_idx * 4
+        side_count = 4 if surface_indices[base + 3] > 0 else 3
+        adj_list   = surface_indices[base : base + side_count]
+        pt_indices = [vertex_indices[adj] for adj in adj_list]
+        if len(set(pt_indices)) < side_count:
+            continue
+        try:
+            face = bm.faces.new([bm.verts[vi] for vi in pt_indices])
+            for xx, loop in enumerate(face.loops):
+                adj_idx = adj_list[xx]
+                if flags & 1:
+                    loop[uv_layer].uv = (tex_coords[adj_idx][0], 1.0 - tex_coords[adj_idx][1])
+                if color_layer is not None:
+                    loop[color_layer] = vert_colors[adj_idx]
+                if ni_layer is not None:
+                    loop[ni_layer] = normal_indices[adj_idx]
+            face.material_index = 0 if texture_indices[surf_idx] == 0 else texture_indices[surf_idx] - 1
+            face.smooth = True
+        except Exception:
+            pass
+
+    for _ in texture_names:
+        me.materials.append(None)
+
+    bm.normal_update()
+    bm.to_mesh(me)
+    bm.free()
+
+    me["bms_flags"]     = flags
+    me["texture_names"] = texture_names
+    me["mesh_offset"]   = list(bms_data.get("mesh_offset", (0.0, 0.0, 0.0)))
+    return me
+
+
+def _load_city_meshes(mesh_dirs: List[Path], texture_folder: Path) -> int:
+    from src.integrations.blender.modeling.meshes import read_bms
+    from src.integrations.blender.modeling.meshes import _apply_materials_to_mesh
+
+    col_name = "City Meshes"
+    if col_name not in bpy.data.collections:
+        col = bpy.data.collections.new(col_name)
+        bpy.context.scene.collection.children.link(col)
+    else:
+        col = bpy.data.collections[col_name]
+        for obj in list(col.objects):
+            bpy.data.objects.remove(obj, do_unlink=True)
+        for child in list(col.children):
+            for obj in list(child.objects):
+                bpy.data.objects.remove(obj, do_unlink=True)
+            bpy.data.collections.remove(child)
 
     loaded = 0
     for mesh_dir in mesh_dirs:
         if not mesh_dir.is_dir():
             continue
-        sub_col_name = f"City Meshes — {mesh_dir.name}"
-        if sub_col_name in bpy.data.collections:
-            sub_col = bpy.data.collections[sub_col_name]
-        else:
-            sub_col = bpy.data.collections.new(sub_col_name)
-            col.children.link(sub_col)
+        sub_name = f"City Meshes — {mesh_dir.name}"
+        sub_col = bpy.data.collections.new(sub_name)
+        col.children.link(sub_col)
 
         for bms_file in sorted(mesh_dir.glob("*.BMS")):
             try:
                 bms_data = read_bms(bms_file)
-                mesh = build_blender_mesh(bms_file.stem, bms_data)
+                mesh = _build_city_mesh(bms_file.stem, bms_data)
                 if bms_data.get("texture_names"):
                     _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
-                ox, oy, oz = bms_data.get("mesh_offset", [0.0, 0.0, 0.0])
                 obj = bpy.data.objects.new(bms_file.stem, mesh)
                 sub_col.objects.link(obj)
-                obj.location = (-ox, oz, oy)
                 loaded += 1
             except Exception as exc:
                 print(f"[City Loader] BMS load failed ({bms_file.name}): {exc}")
@@ -102,30 +157,22 @@ class CITY_OT_Load(bpy.types.Operator):
             self.report({"ERROR"}, f"City folder not found: {folder}")
             return {"CANCELLED"}
 
-        # Derive city name from folder name (e.g. RACETRACK_7 → RACETRACK7)
-        folder_name = folder.name.upper()
-        # Try to find the base name by looking for .FCD or .BNG files
         fcd_files = list(folder.glob("*.FCD")) + list(folder.glob("*.fcd"))
         bng_files = list(folder.glob("*.BNG")) + list(folder.glob("*.bng"))
 
-        city_name = None
         if fcd_files:
             city_name = fcd_files[0].stem.upper()
         elif bng_files:
             city_name = bng_files[0].stem.upper()
         else:
-            # Fall back to stripping underscores from folder name
-            city_name = folder_name.replace("_", "")
+            city_name = folder.name.upper().replace("_", "")
 
         loaded_parts = []
         errors = []
 
         # ── FCD ───────────────────────────────────────────────────────────────
         if scene.cl_load_fcd:
-            fcd_path = None
-            for p in fcd_files:
-                fcd_path = p
-                break
+            fcd_path = fcd_files[0] if fcd_files else None
             if fcd_path and fcd_path.exists():
                 try:
                     bpy.ops.facades.load_external(filepath=str(fcd_path))
@@ -137,10 +184,7 @@ class CITY_OT_Load(bpy.types.Operator):
 
         # ── BNG ───────────────────────────────────────────────────────────────
         if scene.cl_load_bng:
-            bng_path = None
-            for p in bng_files:
-                bng_path = p
-                break
+            bng_path = bng_files[0] if bng_files else None
             if bng_path and bng_path.exists():
                 try:
                     bpy.ops.props.load_external(filepath=str(bng_path))
@@ -153,39 +197,20 @@ class CITY_OT_Load(bpy.types.Operator):
         # ── City meshes ───────────────────────────────────────────────────────
         if scene.cl_load_meshes:
             meshes_root = folder / "MESHES"
-            # Collect all subdirectories under MESHES (CITY, LM, or any subfolder)
-            if meshes_root.is_dir():
-                mesh_dirs = [d for d in meshes_root.iterdir() if d.is_dir()]
-            else:
-                mesh_dirs = []
+            mesh_dirs = [d for d in meshes_root.iterdir() if d.is_dir()] if meshes_root.is_dir() else []
 
             if mesh_dirs:
                 tex_folder = Path(scene.cl_texture_folder) if scene.cl_texture_folder else Folder.Resources.Editor.Textures
-                # Clear existing city meshes before reloading
-                if _CITY_MESHES_COLLECTION in bpy.data.collections:
-                    parent_col = bpy.data.collections[_CITY_MESHES_COLLECTION]
-                    # Remove all sub-collections and their objects
-                    for child in list(parent_col.children):
-                        for obj in list(child.objects):
-                            bpy.data.objects.remove(obj, do_unlink=True)
-                        bpy.data.collections.remove(child)
-                    _clear_collection(parent_col)
-
-                col = _get_or_create_collection(_CITY_MESHES_COLLECTION)
-                n = _load_city_meshes(mesh_dirs, tex_folder, col)
+                n = _load_city_meshes(mesh_dirs, tex_folder)
                 loaded_parts.append(f"Meshes ({n} BMS)")
             else:
                 errors.append(f"Meshes: no MESHES subfolders found in {folder.name}")
 
         # ── Report ────────────────────────────────────────────────────────────
-        msg_parts = []
+        for e in errors:
+            self.report({"WARNING"}, e)
         if loaded_parts:
-            msg_parts.append("Loaded: " + ", ".join(loaded_parts))
-        if errors:
-            for e in errors:
-                self.report({"WARNING"}, e)
-        if msg_parts:
-            self.report({"INFO"}, f"[{city_name}] " + " | ".join(msg_parts))
+            self.report({"INFO"}, f"[{city_name}] Loaded: " + ", ".join(loaded_parts))
         elif not errors:
             self.report({"WARNING"}, "Nothing selected to load")
 
@@ -198,17 +223,20 @@ class CITY_OT_ClearMeshes(bpy.types.Operator):
     bl_label  = "Clear City Meshes"
 
     def execute(self, context):
-        removed = 0
-        if _CITY_MESHES_COLLECTION in bpy.data.collections:
-            parent_col = bpy.data.collections[_CITY_MESHES_COLLECTION]
-            for child in list(parent_col.children):
+        col = bpy.data.collections.get("City Meshes")
+        if col:
+            removed = 0
+            for child in list(col.children):
                 removed += len(list(child.objects))
                 for obj in list(child.objects):
                     bpy.data.objects.remove(obj, do_unlink=True)
                 bpy.data.collections.remove(child)
-            removed += len(list(parent_col.objects))
-            _clear_collection(parent_col)
-        self.report({"INFO"}, f"Removed {removed} city mesh object(s)")
+            for obj in list(col.objects):
+                bpy.data.objects.remove(obj, do_unlink=True)
+                removed += 1
+            self.report({"INFO"}, f"Removed {removed} city mesh object(s)")
+        else:
+            self.report({"INFO"}, "No city meshes to clear")
         return {"FINISHED"}
 
 

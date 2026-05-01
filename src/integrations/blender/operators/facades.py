@@ -207,18 +207,22 @@ def _add_child_obj(mesh, name: str, tag: str, parent_obj, col):
 
 
 def _game_to_blender(gx: float, gy: float, gz: float) -> Tuple[float, float, float]:
-    """Game (x, height, z) → Blender (-x, z, height) — matches Angel Studios BMS vertex convention."""
-    return (-gx, gz, gy)
+    """Game (x, height, z) → Blender (x, -z, height) — matches transform_coordinate_system(game_to_blender)."""
+    return (gx, -gz, gy)
 
 
 def _facade_rotation_z(ox: float, oz: float, fx: float, fz: float) -> float:
-    """Blender Z rotation (radians) that orients a facade panel from offset toward face."""
+    """Blender Z rotation (radians) that orients a facade panel from offset toward face.
+
+    BMS meshes default to facing -X in Blender space (same as prop meshes).
+    Props use atan2(-fz, fx) + pi for their face vector — we apply the same
+    logic to the start→end direction vector so facades face consistently.
+    """
     dx = fx - ox
     dz = fz - oz
     if dx == 0.0 and dz == 0.0:
         return 0.0
-    # In Blender's XY plane (which is game XZ): atan2(dy_bl, dx_bl) = atan2(-dz_game, dx_game)
-    return math.atan2(-dz, dx)
+    return math.atan2(-dz, dx) + math.pi
 
 
 # ── Scene placement ───────────────────────────────────────────────────────────
