@@ -284,8 +284,11 @@ def _resolve_bms_file(prop_name: str, bms_root: Path) -> Optional[Path]:
                 return candidate
         return None
 
-    h_bms = prop_folder / "H.BMS"
-    return h_bms if h_bms.exists() else None
+    for filename in ("H.BMS", "M.BMS", "L.BMS"):
+        candidate = prop_folder / filename
+        if candidate.exists():
+            return candidate
+    return None
 
 
 # ── Scene placement ───────────────────────────────────────────────────────────
@@ -497,6 +500,8 @@ def place_props_in_scene(
     mesh_cache: Dict[str, Optional[bpy.types.Mesh]] = {}
     veh_cache:  Dict[str, Optional[dict]]            = {}
 
+    skipped_names: List[str] = []
+
     print("Building prop meshes...")
     for prop_name in unique_names:
         prop_folder = _find_prop_folder(prop_name, bms_folder)
@@ -505,6 +510,7 @@ def place_props_in_scene(
         if is_vehicle:
             if prop_folder is None:
                 print(f"  No BMS folder for '{prop_name}', skipping")
+                skipped_names.append(prop_name)
                 veh_cache[prop_name] = None
                 continue
             parts = _load_vehicle_parts(
@@ -514,6 +520,7 @@ def place_props_in_scene(
             )
             if parts["body"] is None:
                 print(f"  No body BMS for '{prop_name}', skipping")
+                skipped_names.append(prop_name)
                 veh_cache[prop_name] = None
             else:
                 whl_count   = len(parts["wheels"])
@@ -524,7 +531,7 @@ def place_props_in_scene(
         else:
             bms_file = _resolve_bms_file(prop_name, bms_folder)
             if bms_file is None:
-                print(f"  No BMS found for '{prop_name}', skipping")
+                skipped_names.append(prop_name)
                 mesh_cache[prop_name] = None
                 continue
             bms_data = read_bms(bms_file)
@@ -583,7 +590,11 @@ def place_props_in_scene(
             obj["mm_prop_config_json"] = config_json
             placed += 1
 
+    print("---")
     print(f"Props placed in scene: {placed} (skipped: {skipped})")
+    for name in skipped_names:
+        print(f"  No BMS found for '{name}'")
+    print("---")
 
 
 _TRAFFIC_LIGHTS_COLLECTION = "Traffic Lights"
