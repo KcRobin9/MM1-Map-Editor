@@ -82,11 +82,31 @@ class Facades:
                 out_f.write(repr(facade))
         print(f"Processed {input_file.name} to {output_file.name}")
         
+    @staticmethod
+    def _flags_str(flags: int) -> str:
+        bit_names = {
+            0x001: "FRONT",
+            0x002: "BRIGHT",
+            0x004: "DT_BLDG",
+            0x008: "LEFT",
+            0x010: "RIGHT",
+            0x020: "ROOF",
+            0x040: "LEFT_B",
+            0x080: "RIGHT_B",
+            0x200: "DT_FRONT_STREET",
+            0x400: "BACK",
+        }
+        active = [name for bit, name in sorted(bit_names.items()) if flags & bit]
+        unknown = flags & ~0x6FF
+        if unknown:
+            active.append(f"UNKNOWN(0x{unknown:03X})")
+        return f"{flags} ({' | '.join(active) if active else 'NONE'})"
+
     def __repr__(self):
         return f"""
 FACADE
     Room: {self.room}
-    Flags: {self.flags}
+    Flags: {self._flags_str(self.flags)}
     Offset: {self.offset}
     Face: {self.face}
     Sides: {self.sides}

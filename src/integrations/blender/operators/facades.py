@@ -151,7 +151,7 @@ def _panel_positions(cfg: dict) -> List[Tuple[tuple, tuple]]:
 
 _MESHES_FACADES = Folder.Resources.Editor.MeshesFacades
 
-_BMS_VARIANTS = ("FACADE_H.BMS", "H.BMS", "FACADE_M.BMS", "M.BMS")
+_BMS_VARIANTS = ("FACADE_H.BMS", "BLDG_H.BMS", "H.BMS", "FACADE_M.BMS", "M.BMS", "FACADE_L.BMS")
 
 # Side-part filenames to try in order
 _LEFT_VARIANTS  = ("LEFT.BMS",)
