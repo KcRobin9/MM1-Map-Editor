@@ -94,21 +94,6 @@ def _parse_wp_index(name: str) -> int:
         return 0
 
 
-def _next_cnr_set_number() -> int:
-    """Return the next CnR set number based on existing CR_ objects."""
-    existing = [o.name for o in bpy.data.objects if o.name.startswith("CR_")]
-    max_num = 0
-    for name in existing:
-        for role in ("Bank", "Gold", "Robber"):
-            if role in name:
-                num_str = name.replace(f"CR_{role}", "")
-                try:
-                    max_num = max(max_num, int(num_str))
-                except ValueError:
-                    pass
-    return max_num + 1
-
-
 def _next_incomplete_set_number(role: str) -> int:
     """
     For Gold/Robber: find the lowest set that is missing this role.

@@ -20,11 +20,6 @@ def read_bms_debug(bms_file: Path) -> dict:
         f_pos[0] += n
         return data
 
-    def skip(n, label=""):
-        if label:
-            print(f"  [skip {n} bytes @ 0x{f_pos[0]:04X}  — {label}]")
-        f_pos[0] += n
-
     magic = struct.unpack("<L", read(4))[0]
     print(f"magic          = 0x{magic:08X}  (expected 0x4D534833 = 'HSM3'{'  OK' if magic == 0x4D534833 else '  MISMATCH!'})")
 

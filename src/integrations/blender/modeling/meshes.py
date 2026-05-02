@@ -111,12 +111,6 @@ def read_bms(bms_file: Path) -> dict:
 
 
 # ── Blender mesh builder ──────────────────────────────────────────────────────
-
-def _vert_key(pos: tuple, normal: Optional[int]) -> str:
-    """Deduplication key: same position + same normal = same Blender vertex."""
-    return str(pos) if normal is None else f"{pos}|{normal}"
-
-
 def _to_blender_pos(pos: tuple) -> tuple:
     """
     Convert a game-space (x, y, z) position to Blender space.
@@ -355,59 +349,3 @@ def apply_prop_material(
     texture_folder: Path,
 ) -> None:
     apply_all_prop_materials(obj, [texture_name], texture_folder)
-
-
-# ── Asset builder ─────────────────────────────────────────────────────────────
-
-def build_prop_blend(
-    prop_name: str,
-    bms_folder: Path,
-    output_folder: Path,
-    texture_folder: Optional[Path] = None,
-) -> Optional[bpy.types.Mesh]:
-    """
-    Read a BMS file, create a Blender mesh, save a standalone .blend asset,
-    and return the Mesh data-block.  Returns None when the BMS file is absent.
-    """
-    bms_file = bms_folder / f"{prop_name}{FileType.MESH}"
-    if not bms_file.exists():
-        print(f"BMS not found, skipping prop asset: {bms_file}")
-        return None
-
-    bms_data = read_bms(bms_file)
-    mesh     = build_blender_mesh(prop_name, bms_data)
-
-    temp_obj = bpy.data.objects.new(prop_name, mesh)
-    # Apply the mesh's local origin offset stored in the BMS header
-    ox, oy, oz = bms_data["mesh_offset"]
-    temp_obj.location = _to_blender_pos((ox, oy, oz))
-
-    bpy.context.collection.objects.link(temp_obj)
-
-    if texture_folder and bms_data["texture_names"]:
-        apply_all_prop_materials(temp_obj, bms_data["texture_names"], texture_folder)
-
-    output_folder.mkdir(parents=True, exist_ok=True)
-    blend_path = output_folder / f"{prop_name}.blend"
-    bpy.data.libraries.write(str(blend_path), {temp_obj}, fake_user=False, compress=False)
-
-    bpy.context.collection.objects.unlink(temp_obj)
-    bpy.data.objects.remove(temp_obj, do_unlink=False)
-
-    print(f"Saved prop asset: {blend_path.name}")
-    return mesh
-
-
-def build_all_prop_blends(
-    prop_names: List[str],
-    bms_folder: Path,
-    output_folder: Path,
-    texture_folder: Optional[Path] = None,
-    rebuild: bool = False,
-) -> None:
-    """Build .blend assets for every unique prop name in the list."""
-    for prop_name in prop_names:
-        blend_path = output_folder / f"{prop_name}.blend"
-        if not rebuild and blend_path.exists():
-            continue
-        build_prop_blend(prop_name, bms_folder, output_folder, texture_folder)

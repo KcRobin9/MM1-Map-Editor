@@ -160,17 +160,6 @@ _TOP_VARIANTS   = ("TOP_H.BMS", "TOP.BMS")
 _BACK_VARIANTS  = ("BACK.BMS",)
 
 
-def _find_facade_bms(name: str) -> Path | None:
-    folder = _MESHES_FACADES / name.upper()
-    if not folder.is_dir():
-        return None
-    for variant in _BMS_VARIANTS:
-        p = folder / variant
-        if p.exists():
-            return p
-    return None
-
-
 def _find_bms_variant(folder: Path, variants) -> Path | None:
     for v in variants:
         p = folder / v
@@ -204,11 +193,6 @@ def _add_child_obj(mesh, name: str, tag: str, parent_obj, col):
     obj.location = mesh.get("_bl_offset", (0.0, 0.0, 0.0))
     obj[_FACADE_TAG] = tag
     return obj
-
-
-def _game_to_blender(gx: float, gy: float, gz: float) -> Tuple[float, float, float]:
-    """Game (x, height, z) → Blender (x, -z, height) — matches transform_coordinate_system(game_to_blender)."""
-    return (gx, -gz, gy)
 
 
 def _facade_matrix_to_blender(
