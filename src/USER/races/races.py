@@ -5,10 +5,6 @@ from src.constants.vehicles import PlayerCar, TrafficCar
 from src.constants.time_weather import TimeOfDay, Weather
 
 
-# Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint
-# Blitzes can have a total of 11 waypoints (including the start position), the number of waypoints for Circuits and Checkpoints is unlimited
-# The max number of laps in Circuit races is 10
-
 # Race Names
 blitz_race_names = ["Chaotic Tower"]
 circuit_race_names = ["Circuit Race 1", "Circuit Race 2"]

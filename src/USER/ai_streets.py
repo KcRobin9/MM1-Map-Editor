@@ -4,23 +4,6 @@ from src.constants.constants import YES, NO
 from src.game.races.constants_2 import IntersectionType
 
 
-f"""
-The following variables are OPTIONAL:
-Intersection Type, defaults to: {IntersectionType.CONTINUE}
-(possbile types:
-{IntersectionType.STOP}, {IntersectionType.STOP_LIGHT}, {IntersectionType.YIELD}, {IntersectionType.CONTINUE})
-
-Stop Light Name, defaults to: {Prop.TRAFFIC_LIGHT_SINGLE}
-(possbile names: {Prop.SIGN_STOP}, {Prop.TRAFFIC_LIGHT_SINGLE}, {Prop.TRAFFIC_LIGHT_DUAL})
-
-Stop Light Positions, defaults to: {(0, 0, 0)}
-
-Traffic Blocked, Ped Blocked, Road Divided, and Alley, all default to: {NO}
-(possbile values: {YES}, {NO})
-
-# Stop Lights will only show if the Intersection Type is {IntersectionType.STOP_LIGHT}
-"""
-
 main_west = {
     "street_name": "main_west",
     "vertices": [

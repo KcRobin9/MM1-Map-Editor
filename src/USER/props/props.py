@@ -4,8 +4,9 @@ from src.constants.file_formats import Axis
 from src.game.waypoints.constants import Rotation
 
 
+# ── Showcase props ───────────────────────────────────────────────────────────
 prop_examples = [
-
+    
     # ── Bridges (30 / 40 / 6 wide; 33 deep) ──────────────────────────────────
     {"name": Prop.BRIDGE_SLIM,              "offset": (  0, 4, 180), "angle": Rotation.NORTH},
     {"name": Prop.BRIDGE_WIDE,              "offset": ( 55, 4, 180), "angle": Rotation.NORTH}, # y = 4+ to make level with the road
@@ -104,7 +105,7 @@ prop_examples = [
 
 ]
 
-# ── Original props ────────────────────────────────────────────────────────────
+# ── Original Test Map props ────────────────────────────────────────────────────────────
 trailer_set = {
     "offset": (60, 0.0, 70),
     "end": (60, 0.0, -50),

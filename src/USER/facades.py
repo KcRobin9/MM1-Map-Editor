@@ -1,17 +1,6 @@
 from src.constants.facades import Facade, FcdFlags
 
 
-#* NOTES:
-#* Separator: (max_x - min_x) / separator(value) = number of facades
-#* Sides: omitted by default, but can be set (relates to lighting, but behavior is not clear)
-#* Scale: enlarges or shrinks non-fixed facades
-
-#* All information about Facades (including pictures) can be found in: 
-# ... / docs / visual_reference / facades   
-
-# Flags (if applicable, consult the documentation for more info)
-
-    
 orange_building_one = {
 	"flags": FcdFlags.FRONT,
 	"offset": (-10.0, 0.0, -50.0),

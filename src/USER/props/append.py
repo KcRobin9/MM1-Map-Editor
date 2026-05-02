@@ -8,7 +8,7 @@ from src.constants.modes import NetworkMode, RaceMode
 
 # Append Props
 append_props = False            # Change to "True" if you want to append props
-append_input_props_file = Folder.Resources.Editor.Props / "CHICAGO.BNG"  
+append_input_props_file = Folder.Resources.Editor.Props / "CHICAGO.BNG"  #TODO: this file currently does not exist
 append_output_props_file = Folder.Resources.User.Props / "CHICAGO_APPENDED.BNG"  
 
 # Put the Props that should be Appended to an existing BNG file here
