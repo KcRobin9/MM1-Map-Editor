@@ -1,10 +1,8 @@
-import struct
-import bmesh
-import bpy
 from pathlib import Path
 from typing import List, Optional
 
-from src.constants.file_formats import FileType
+from src.constants.file_formats import FileType, MeshFlags, Magic
+from src.io.binary import read_unpack, read_binary_name
 
 
 # ── BMS file reader ───────────────────────────────────────────────────────────
@@ -13,17 +11,15 @@ def read_bms(bms_file: Path) -> dict:
     """
     Parse a BMS (Binary Mesh Set) file.
 
-    Field order and flag handling mirror the reference Angel Studios Blender
-    Addon (import_bms.py by Dummiesman), which is the authoritative source
-    for this format.
-
     Returned keys:
         points          – List[tuple(x,y,z)]  raw vertex positions (game space)
         mesh_offset     – tuple(x,y,z)        local origin offset stored in file
+        radius          – tuple(x,y,z)        bounding half-extents or bsphere
         tex_coords      – List[tuple(u,v)]    per-adjunct UVs (empty if no flag)
+        vert_colors     – List[tuple(r,g,b,a)] per-adjunct colours 0-1 (empty if no flag)
         normal_indices  – List[int]           per-adjunct packed normals (empty if no flag)
         vertex_indices  – List[int]           adjunct → point index mapping
-        texture_indices – List[int]           surface → texture/material index
+        texture_indices – List[int]           surface → texture/material index (1-based)
         surface_indices – List[int]           flat adjunct-index array (4 per surface)
         texture_names   – List[str]           DDS texture names (no extension)
         num_adjuncts    – int
@@ -31,72 +27,44 @@ def read_bms(bms_file: Path) -> dict:
         flags           – int
     """
     with open(bms_file, "rb") as f:
-        magic = struct.unpack("<L", f.read(4))[0]
+        magic, = read_unpack(f, '<L')
         if magic != 0x4D534833:
             raise ValueError(f"Not a BMS file: {bms_file}")
 
-        mesh_offset = struct.unpack("<fff", f.read(12))
+        mesh_offset                                      = read_unpack(f, '<3f')
+        num_points, num_adjuncts, num_surfaces, num_indices = read_unpack(f, '<4I')
+        radius                                           = read_unpack(f, '<3f')
+        num_textures, flags                              = read_unpack(f, '<2B')
+        f.read(6)  # 2-byte padding + 4-byte cache_size
 
-        num_points, num_adjuncts, num_surfaces, num_indices = struct.unpack("<LLLL", f.read(16))
+        texture_names = [read_binary_name(f, 32, padding=16) for _ in range(num_textures)]
 
-        f.seek(12, 1)  # skip radius (3 × float)
+        points = [read_unpack(f, '<3f') for _ in range(num_points)]
 
-        num_textures = struct.unpack("<B", f.read(1))[0]
-        flags        = struct.unpack("<B", f.read(1))[0]
-
-        f.seek(6, 1)   # skip 2-byte padding + 4-byte cache_size
-
-        # ── Texture names (32-byte name + 16-byte padding each) ──────────────
-        texture_names: List[str] = []
-        for _ in range(num_textures):
-            raw = bytearray(f.read(32))
-            null_pos = raw.find(b"\x00")
-            name = raw[:null_pos].decode("ascii") if null_pos != -1 else raw.decode("ascii")
-            texture_names.append(name)
-            f.seek(16, 1)
-
-        # ── Vertex positions ──────────────────────────────────────────────────
-        points = [struct.unpack("<fff", f.read(12)) for _ in range(num_points)]
-
-        # Large meshes have 8 extra sentinel bounding-box vertices appended
         if num_points >= 16:
-            f.seek(12 * 8, 1)
+            f.read(12 * 8)  # skip 8 AABB corner sentinel vertices
 
-        # ── Per-adjunct data (all conditional on flags) ───────────────────────
-        normal_indices: List[int] = []
-        if flags & 2:  # NORMALS
-            normal_indices = list(struct.unpack(f"{num_adjuncts}B", f.read(num_adjuncts)))
+        normal_indices = list(read_unpack(f, f'{num_adjuncts}B'))   if (flags & MeshFlags.NORMALS)   else []
+        tex_coords     = [read_unpack(f, '<2f') for _ in range(num_adjuncts)] if (flags & MeshFlags.TEXCOORDS) else []
 
-        tex_coords: List[tuple] = []
-        if flags & 1:  # TEXCOORDS
-            tex_coords = [struct.unpack("<ff", f.read(8)) for _ in range(num_adjuncts)]
-
-        # COLORS — 4 bytes per adjunct (BGRA uint8).  Read instead of skip so
-        # build_blender_mesh() can write a vertex-color layer.  This is the
-        # only way tire faces on wheels show as black rubber rather than
-        # showing the metallic rim texture (the game multiplies tex × vcolor).
         vert_colors: List[tuple] = []
-        if flags & 4:
+        if flags & MeshFlags.COLORS:
             for _ in range(num_adjuncts):
-                b, g, r, a = struct.unpack("4B", f.read(4))
+                b, g, r, a = read_unpack(f, '4B')
                 vert_colors.append((r / 255.0, g / 255.0, b / 255.0, a / 255.0))
 
-        # ── Adjunct → point mapping (always present) ─────────────────────────
-        vertex_indices = list(struct.unpack(f"{num_adjuncts}H", f.read(num_adjuncts * 2)))
+        vertex_indices  = list(read_unpack(f, f'{num_adjuncts}H'))
 
-        # ── Planes (conditional) ─────────────────────────────────────────────
-        if flags & 16:  # PLANES — 4 floats per surface, skip
-            f.seek(16 * num_surfaces, 1)
+        if flags & MeshFlags.PLANES:
+            f.read(16 * num_surfaces)  # skip BSP plane equations (Vector4 per surface)
 
-        # ── Per-surface texture/material index ────────────────────────────────
-        texture_indices = list(struct.unpack(f"<{num_surfaces}B", f.read(num_surfaces)))
-
-        # ── Flat adjunct-index array (4 slots per surface; 4th is 0 for tris) ─
-        surface_indices = list(struct.unpack(f"{num_indices}H", f.read(num_indices * 2)))
+        texture_indices = list(read_unpack(f, f'<{num_surfaces}B'))
+        surface_indices = list(read_unpack(f, f'{num_indices}H'))
 
     return {
         "points":          points,
         "mesh_offset":     mesh_offset,
+        "radius":          radius,
         "num_adjuncts":    num_adjuncts,
         "num_surfaces":    num_surfaces,
         "tex_coords":      tex_coords,
@@ -124,7 +92,9 @@ def _to_blender_uv(uv: tuple) -> tuple:
     return (uv[0], 1.0 - uv[1])
 
 
-def build_blender_mesh(prop_name: str, bms_data: dict) -> bpy.types.Mesh:
+def build_blender_mesh(prop_name: str, bms_data: dict):
+    import bpy
+    import bmesh
     """
     Convert parsed BMS data into a Blender Mesh data-block using bmesh.
 
@@ -215,6 +185,7 @@ def build_blender_mesh(prop_name: str, bms_data: dict) -> bpy.types.Mesh:
 
 
 def _build_material(texture_name: str, texture_folder: Path):
+    import bpy
     """
     Return a Principled BSDF material for texture_name.
 
@@ -273,6 +244,7 @@ def _build_material(texture_name: str, texture_folder: Path):
 
 
 def _build_emission_material(texture_name: str, texture_path: Path):
+    import bpy
     """
     Transparent additive-style emission material for headlight / FX meshes.
 
@@ -314,7 +286,7 @@ def _build_emission_material(texture_name: str, texture_path: Path):
 
 
 def _apply_materials_to_mesh(
-    mesh: bpy.types.Mesh,
+    mesh: object,
     texture_names: List[str],
     texture_folder: Path,
 ) -> None:
@@ -333,7 +305,7 @@ def _apply_materials_to_mesh(
 
 
 def apply_all_prop_materials(
-    obj: bpy.types.Object,
+    obj: object,
     texture_names: List[str],
     texture_folder: Path,
 ) -> None:
@@ -344,7 +316,7 @@ def apply_all_prop_materials(
 # Keep the old single-texture name available so call sites that haven't been
 # updated yet still work (proxies to slot 0 only).
 def apply_prop_material(
-    obj: bpy.types.Object,
+    obj: object,
     texture_name: str,
     texture_folder: Path,
 ) -> None:

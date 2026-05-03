@@ -105,7 +105,7 @@ from src.ui.progress_bar.constants import COLOR_DIVIDER
 
 # Constants imports
 from src.constants.constants import * 
-from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, agiMeshSet, PlaneEdgesWinding, Magic, FileType
+from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, MeshFlags, PlaneEdgesWinding, Magic, FileType
 from src.constants.textures import Texture
 from src.constants.folder import Folder
 from src.constants.misc import Shape, Encoding, Executable, Default, Threshold
@@ -547,7 +547,8 @@ class Meshes:
                  radius: float, radius_sqr: float, bounding_box_radius: float,
                  texture_count: int, flags: int, cache_size: int,
                  texture_names: List[str], vertices: List[Vector3],
-                 normals: List[int], tex_coords: List[float], enclosed_shape: List[int],
+                 normals: List[int], tex_coords: List[float], vert_colors: List[int],
+                 planes: List[float], enclosed_shape: List[int],
                  surface_sides: List[int], indices_sides: List[List[int]]) -> None:
 
         self.magic = magic
@@ -564,8 +565,10 @@ class Meshes:
         self.texture_names = texture_names
         self.vertices = vertices
         self.normals = normals
-        self.tex_coords = tex_coords  
-        self.enclosed_shape = enclosed_shape  
+        self.tex_coords = tex_coords
+        self.vert_colors = vert_colors
+        self.planes = planes
+        self.enclosed_shape = enclosed_shape
         self.surface_sides = surface_sides
         self.indices_sides = indices_sides
         
@@ -576,65 +579,78 @@ class Meshes:
             vertex_count, adjunct_count, surface_count, indices_count = read_unpack(f, '<4I')
             radius, radius_sqr, bounding_box_radius = read_unpack(f, '<3f')
             texture_count, flags = read_unpack(f, '<2B')
-            
+
             f.read(2)  # Padding
             cache_size, = read_unpack(f, '<I')
-                                      
+
             texture_names = [read_binary_name(f, 32, Encoding.ASCII, 16) for _ in range(texture_count)]
-            
+
             if vertex_count < Threshold.MESH_VERTEX_COUNT:
                 vertices = Vector3.readn(f, vertex_count)
             else:
                 vertices = Vector3.readn(f, vertex_count + 8)
-                                        
-            normals = list(read_unpack(f, f"{adjunct_count}B"))
-            tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f"))
+
+            normals = list(read_unpack(f, f"{adjunct_count}B")) if (flags & MeshFlags.NORMALS) else []
+            tex_coords = list(read_unpack(f, f"{adjunct_count * 2}f")) if (flags & MeshFlags.TEXCOORDS) else []
+            vert_colors = list(read_unpack(f, f"{adjunct_count * 4}B")) if (flags & MeshFlags.COLORS) else []
+
             enclosed_shape = list(read_unpack(f, f"{adjunct_count}H"))
+
+            # 4 floats (Vector4) per surface — BSP plane equations
+            planes = list(read_unpack(f, f"<{surface_count * 4}f")) if (flags & MeshFlags.PLANES) else []
+
             surface_sides = list(read_unpack(f, f"{surface_count}B"))
-            
+
             indices_per_surface = indices_count // surface_count
             indices_sides = [list(read_unpack(f, f"<{indices_per_surface}H")) for _ in range(surface_count)]
-            
+
         return cls(
-            magic, vertex_count, adjunct_count, surface_count, indices_count, 
-            radius, radius_sqr, bounding_box_radius, 
-            texture_count, flags, cache_size, texture_names, vertices, 
-            normals, tex_coords, enclosed_shape, surface_sides, indices_sides
+            magic, vertex_count, adjunct_count, surface_count, indices_count,
+            radius, radius_sqr, bounding_box_radius,
+            texture_count, flags, cache_size, texture_names, vertices,
+            normals, tex_coords, vert_colors, planes, enclosed_shape, surface_sides, indices_sides
             )
                     
-    def write(self, output_file: Path) -> None: 
+    def write(self, output_file: Path) -> None:
         self.calculate_cache_size()
-               
+
         with open(output_file, "wb") as f:
-            write_binary_name(f, self.magic, 16) 
+            write_binary_name(f, self.magic, 16)
             write_pack(f, '<4I', self.vertex_count, self.adjunct_count, self.surface_count, self.indices_count)
             write_pack(f, '<3f', self.radius, self.radius_sqr, self.bounding_box_radius)
             write_pack(f, '<2B', self.texture_count, self.flags)
-            
+
             f.write(b'\0' * 2)  # Padding
             write_pack(f, '<I', self.cache_size)
-            
+
             for texture_name in self.texture_names:
-                write_binary_name(f, texture_name, length = 32, padding = 16) 
-                            
+                write_binary_name(f, texture_name, length = 32, padding = 16)
+
             for vertex in self.vertices:
                 vertex.write(f)
 
             if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
                 for _ in range(8):
                     Default.VECTOR_3.write(f)
-                                                                        
-            write_pack(f, f"{self.adjunct_count}B", *self.normals)
-                        
-            # Ensure Tex Coords is not larger than (Adjunct Count * 2)
-            if len(self.tex_coords) > self.adjunct_count * 2:
-                self.tex_coords = self.tex_coords[:self.adjunct_count * 2] 
-                
-            write_pack(f, f"{self.adjunct_count * 2}f", *self.tex_coords)
+
+            if self.flags & MeshFlags.NORMALS:
+                write_pack(f, f"{self.adjunct_count}B", *self.normals)
+
+            if self.flags & MeshFlags.TEXCOORDS:
+                tex_coords = self.tex_coords[:self.adjunct_count * 2]
+                write_pack(f, f"{self.adjunct_count * 2}f", *tex_coords)
+
+            if self.flags & MeshFlags.COLORS:
+                write_pack(f, f"{self.adjunct_count * 4}B", *self.vert_colors)
+
             write_pack(f, f"{self.adjunct_count}H", *self.enclosed_shape)
+
+            if self.flags & MeshFlags.PLANES:
+                write_pack(f, f"<{self.surface_count * 4}f", *self.planes)
+
             write_pack(f, f"{self.surface_count}B", *self.surface_sides)
 
-            # Each polygon requires four vertex indices (add the value 0 as the 4th index in case of a triangle)
+            # Each polygon requires four vertex indices (add 0 as the 4th index for triangles)
             for indices_side in self.indices_sides:
                 while len(indices_side) == Shape.TRIANGLE:
                     indices_side.append(0)
@@ -652,18 +668,18 @@ class Meshes:
         if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
             self.cache_size += self.align_size(8 * Vector3.binary_size())
 
-        if self.flags & agiMeshSet.NORMALS:
+        if self.flags & MeshFlags.NORMALS:
             self.cache_size += self.align_size(self.adjunct_count * calc_size('B'))
 
-        if self.flags & agiMeshSet.TEXCOORDS:
+        if self.flags & MeshFlags.TEXCOORDS:
             self.cache_size += self.align_size(self.adjunct_count * Vector2.binary_size())
 
-        if self.flags & agiMeshSet.COLORS:
+        if self.flags & MeshFlags.COLORS:
             self.cache_size += self.align_size(self.adjunct_count * calc_size('I'))
 
         self.cache_size += self.align_size(self.adjunct_count * calc_size('H'))
 
-        if self.flags & agiMeshSet.PLANES:
+        if self.flags & MeshFlags.PLANES:
             self.cache_size += self.align_size(self.surface_count * Vector4.binary_size())
 
         self.cache_size += self.align_size(self.indices_count * calc_size('H'))
@@ -740,6 +756,7 @@ MESH
     Vertices: {self.vertices}\n
     Normals: {self.normals}\n
     UVs: {', '.join(f'{coord:.2f}' for coord in self.tex_coords)}\n
+    Vertex Colors: {self.vert_colors}\n
     Enclosed Shape: {self.enclosed_shape}\n
     Surface Sides: {self.surface_sides}\n
     Indices Sides: {self.indices_sides}\n
@@ -826,7 +843,7 @@ def initialize_mesh(
     texture_name: List[str], normals: List[int] = None, tex_coords: List[float] = None) -> Meshes:
     
     magic = Magic.MESH    
-    flags = agiMeshSet.TEXCOORDS_AND_NORMALS
+    flags = MeshFlags.TEXCOORDS_AND_NORMALS
     cache_size = 0
        
     shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys] 
@@ -851,10 +868,10 @@ def initialize_mesh(
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
     return Meshes(
-        magic, vertex_count, adjunct_count, surface_count, indices_count, 
-        radius, radiussq, bounding_box_radius, 
+        magic, vertex_count, adjunct_count, surface_count, indices_count,
+        radius, radiussq, bounding_box_radius,
         texture_count, flags, cache_size,
-        texture_name, coordinates, normals, tex_coords, 
+        texture_name, coordinates, normals, tex_coords, [], [],
         enclosed_shape, texture_indices, indices_sides
         )
 

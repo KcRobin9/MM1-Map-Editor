@@ -37,23 +37,23 @@ class LevelOfDetail:
     UNKNOWN_4 = 0x100  # H2
     
     
-class agiMeshSet:
+class MeshFlags:
     TEXCOORDS = 0x1
     NORMALS = 0x2
     COLORS = 0x4
     OFFSET = 0x8
     PLANES = 0x10
-    
+
     TEXCOORDS_AND_NORMALS = TEXCOORDS | NORMALS
     TEXCOORDS_AND_COLORS = TEXCOORDS | COLORS
     NORMALS_AND_COLORS = NORMALS | COLORS
     OFFSET_AND_PLANES = OFFSET | PLANES
     TEXCOORDS_AND_OFFSET = TEXCOORDS | OFFSET
     NORMALS_AND_PLANES = NORMALS | PLANES
-    
     FENDERS = TEXCOORDS | NORMALS | OFFSET | PLANES  # Used for Fenders (Panoz Roadster)
-    
     ALL_FEATURES = TEXCOORDS | NORMALS | COLORS | OFFSET | PLANES
+
+agiMeshSet = MeshFlags  # backward-compat alias for WIP scripts
 
     
 class PlaneEdgesWinding:
