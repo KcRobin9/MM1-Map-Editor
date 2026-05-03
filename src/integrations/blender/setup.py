@@ -8,6 +8,7 @@ from src.USER.settings.blender import target_blend_file
 from src.helpers.main import is_process_running
 from src.constants.misc import Executable
 from src.integrations.blender.handlers import initialize_depsgraph_update_handler
+from src.integrations.blender.operators.lighting import load_sky_mesh
 
 
 DEFAULT_OBJECTS = {"Camera", "Cube", "Light"}
@@ -25,6 +26,7 @@ def setup_blender(load_target_model: bool) -> None:
     if load_target_model:
         load_model()
 
+    load_sky_mesh()
     print("Blender setup complete")
 
 

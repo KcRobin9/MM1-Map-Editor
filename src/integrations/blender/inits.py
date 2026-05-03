@@ -43,6 +43,8 @@ from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FA
 from src.integrations.blender.panels.facade_editor_sidebar import FACADE_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.city_loader import CITY_LOADER_CLASSES
 from src.integrations.blender.panels.city_loader_sidebar import CITY_LOADER_PANEL_CLASSES
+from src.integrations.blender.operators.lighting import LIGHTING_EDITOR_CLASSES, TIME_ITEMS, WEATHER_ITEMS, _update_lighting
+from src.integrations.blender.panels.lighting_sidebar import LIGHTING_EDITOR_PANEL_CLASSES
 
 
 PANEL_CLASSES = [
@@ -60,6 +62,7 @@ PANEL_CLASSES = [
     *ROAD_BUILDER_PANEL_CLASSES,
     *FACADE_EDITOR_PANEL_CLASSES,
     *CITY_LOADER_PANEL_CLASSES,
+    *LIGHTING_EDITOR_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -79,6 +82,7 @@ OPERATOR_CLASSES = [
     *ROAD_BUILDER_CLASSES,
     *FACADE_EDITOR_CLASSES,
     *CITY_LOADER_CLASSES,
+    *LIGHTING_EDITOR_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -226,6 +230,9 @@ SCENE_PROPERTIES = [
     "cl_load_bng",
     "cl_load_meshes",
     "cl_texture_folder",
+    # Lighting Editor
+    "lt_time_of_day",
+    "lt_weather",
     # Facade Editor — create form
     "fc_facade_name",
     "fc_flags",
@@ -921,6 +928,22 @@ def register_scene_properties() -> None:
     bpy.types.Scene.fc_scale_auto = bpy.props.BoolProperty(name="Auto Scale", default=True)
     bpy.types.Scene.fc_scale      = bpy.props.FloatProperty(
         name="Scale", default=1.0, min=0.001, precision=3,
+    )
+
+    # ── Lighting Editor scene properties ─────────────────────────────────────
+    bpy.types.Scene.lt_time_of_day = bpy.props.EnumProperty(
+        name="Time of Day",
+        description="MM1 time of day for lighting preview",
+        items=TIME_ITEMS,
+        default="1",
+        update=_update_lighting,
+    )
+    bpy.types.Scene.lt_weather = bpy.props.EnumProperty(
+        name="Weather",
+        description="MM1 weather condition for lighting preview",
+        items=WEATHER_ITEMS,
+        default="0",
+        update=_update_lighting,
     )
 
 
