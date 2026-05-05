@@ -924,7 +924,7 @@ def check_bound_numbers(polys: List[Polygon]) -> None:
         """
         raise ValueError(error_message)
 
-    
+
 def check_shape_type(vertex_coordinates: Optional[List[Vector3]]) -> None:
     if vertex_coordinates is None:
         error_message = """
@@ -2848,5 +2848,11 @@ if bulk_bms_folders and is_process_running(Executable.BLENDER):
         texture_folder=Folder.Resources.Editor.Textures,
     )
 
-###################################################################################################################   
+# Rebuild the "Current" texture list now that polygons, props, and bulk meshes
+# are all loaded — so every material in the scene is reflected.
+if is_process_running(Executable.BLENDER):
+    from src.integrations.blender.modeling.uv_mapping import refresh_current_textures
+    refresh_current_textures()
+
+###################################################################################################################
 ################################################################################################################### 

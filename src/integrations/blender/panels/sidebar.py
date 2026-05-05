@@ -34,6 +34,10 @@ class VIEW3D_PT_MapEditorUV(bpy.types.Panel):
         if not obj or obj.type != 'MESH':
             return
 
+        row = layout.row(align=True)
+        row.prop(context.scene, "texture_category", text="")
+        if context.scene.texture_category == "CURRENT":
+            row.operator("object.refresh_current_textures", text="", icon="FILE_REFRESH")
         layout.prop(obj, "texture_name", text="Texture")
         layout.separator()
 

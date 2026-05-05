@@ -1,0 +1,1828 @@
+Raw Name                                           Friendly Name
+------------------------------------------------------------------------------------------
+01_DOOR                                            Building 01 Door
+01_DOOR_N                                          Building 01 Door (Night)
+01_WIN                                             Building 01 Window
+01_WIN_N                                           Building 01 Window (Night)
+02_DOOR                                            Building 02 Door
+02_DOOR_N                                          Building 02 Door (Night)
+02_WIN                                             Building 02 Window
+02_WIN_N                                           Building 02 Window (Night)
+03_DOOR                                            Building 03 Door
+03_DOOR_N                                          Building 03 Door (Night)
+03_WIN                                             Building 03 Window
+03_WIN_02                                          Building 03 Window #2
+03_WIN_02_N                                        Building 03 Window #2 (Night)
+03_WIN_N                                           Building 03 Window (Night)
+05_DOOR                                            Building 05 Door
+05_DOOR_N                                          Building 05 Door (Night)
+05_WIN                                             Building 05 Window
+05_WIN_N                                           Building 05 Window (Night)
+06_WIN                                             Building 06 Window
+06_WIN_02                                          Building 06 Window #2
+06_WIN_02_N                                        Building 06 Window #2 (Night)
+06_WIN_N                                           Building 06 Window (Night)
+07_BRICK                                           Building 07 Brick
+07_BRICK_N                                         Building 07 Brick (Night)
+07_DOOR                                            Building 07 Door
+07_DOOR_N                                          Building 07 Door (Night)
+07_WALL                                            Building 07 Wall
+07_WALL_N                                          Building 07 Wall (Night)
+07_WIN                                             Building 07 Window
+07_WIN_N                                           Building 07 Window (Night)
+08_WIN                                             Building 08 Window
+08_WIN_N                                           Building 08 Window (Night)
+10_DOOR                                            Building 10 Door
+10_DOOR_N                                          Building 10 Door (Night)
+10_WIN                                             Building 10 Window
+10_WIN_N                                           Building 10 Window (Night)
+11_DOOR                                            Building 11 Door
+11_DOOR_N                                          Building 11 Door (Night)
+11_WIN                                             Building 11 Window
+11_WIN_N                                           Building 11 Window (Night)
+12_WIN                                             Building 12 Window
+12_WIN_N                                           Building 12 Window (Night)
+13_WIN                                             Building 13 Window
+13_WIN_N                                           Building 13 Window (Night)
+14_WIN                                             Building 14 Window
+14_WIN_02                                          Building 14 Window #2
+14_WIN_02_N                                        Building 14 Window #2 (Night)
+14_WIN_03                                          Building 14 Window #3
+14_WIN_03_N                                        Building 14 Window #3 (Night)
+14_WIN_04                                          Building 14 Window #4
+14_WIN_04_N                                        Building 14 Window #4 (Night)
+14_WIN_N                                           Building 14 Window (Night)
+15_CLOCK                                           Building 15 Clock
+15_CLOCK_N                                         Building 15 Clock (Night)
+15_DOOR                                            Building 15 Door
+15_DOOR_N                                          Building 15 Door (Night)
+15_TRIM                                            Building 15 Trim
+15_TRIM_N                                          Building 15 Trim (Night)
+15_WIN                                             Building 15 Window
+15_WIN_N                                           Building 15 Window (Night)
+17_BIRCK                                           Building 17 Brick
+17_BIRCK_N                                         Building 17 Brick (Night)
+17_DOOR                                            Building 17 Door
+17_DOOR_N                                          Building 17 Door (Night)
+17_TRIM                                            Building 17 Trim
+17_TRIM_02                                         Building 17 Trim #2
+17_TRIM_02_N                                       Building 17 Trim #2 (Night)
+17_TRIM_N                                          Building 17 Trim (Night)
+17_WIN                                             Building 17 Window
+17_WIN_N                                           Building 17 Window (Night)
+18_WIN                                             Building 18 Window
+18_WIN_02                                          Building 18 Window #2
+18_WIN_02_N                                        Building 18 Window #2 (Night)
+18_WIN_N                                           Building 18 Window (Night)
+19_WIN                                             Building 19 Window
+19_WIN_N                                           Building 19 Window (Night)
+23_CLOCK                                           Building 23 Clock
+23_CLOCK_N                                         Building 23 Clock (Night)
+23_WIN                                             Building 23 Window
+23_WIN_02                                          Building 23 Window #2
+23_WIN_02_N                                        Building 23 Window #2 (Night)
+23_WIN_03                                          Building 23 Window #3
+23_WIN_03_N                                        Building 23 Window #3 (Night)
+23_WIN_N                                           Building 23 Window (Night)
+24_GRASS                                           Building 24 Grass
+24_GRASS_N                                         Building 24 Grass (Night)
+24_GRID                                            Building 24 Grid
+24_GRIDWORK                                        Building 24 Gridwork
+24_GRIDWORK_N                                      Building 24 Gridwork (Night)
+24_GRID_N                                          Building 24 Grid (Night)
+24_MEDIABOX                                        Building 24 Media Box
+24_MEDIABOX_N                                      Building 24 Media Box (Night)
+24_OLD_SIGN                                        Building 24 Old Sign
+24_OLD_SIGN_N                                      Building 24 Old Sign (Night)
+24_SIGN_ON                                         Building 24 Sign On
+24_SIGN_ON_N                                       Building 24 Sign On (Night)
+24_WIN                                             Building 24 Window
+24_WIN_02                                          Building 24 Window #2
+24_WIN_02_N                                        Building 24 Window #2 (Night)
+24_WIN_03                                          Building 24 Window #3
+24_WIN_03_N                                        Building 24 Window #3 (Night)
+24_WIN_N                                           Building 24 Window (Night)
+25_WIN                                             Building 25 Window
+25_WIN_02                                          Building 25 Window #2
+25_WIN_02_N                                        Building 25 Window #2 (Night)
+25_WIN_N                                           Building 25 Window (Night)
+26_SIDE                                            Building 26 Side
+26_SIDE_N                                          Building 26 Side (Night)
+27_DOOR                                            Building 27 Door
+27_DOOR_02                                         Building 27 Door #2
+27_DOOR_02_N                                       Building 27 Door #2 (Night)
+27_DOOR_N                                          Building 27 Door (Night)
+27_WIN                                             Building 27 Window
+27_WIN_N                                           Building 27 Window (Night)
+28_DOOR                                            Building 28 Door
+28_DOOR_N                                          Building 28 Door (Night)
+28_WIN                                             Building 28 Window
+28_WIN_02                                          Building 28 Window #2
+28_WIN_02_N                                        Building 28 Window #2 (Night)
+28_WIN_N                                           Building 28 Window (Night)
+31_BRICK                                           Building 31 Brick
+31_BRICK_N                                         Building 31 Brick (Night)
+31_WIN                                             Building 31 Window
+31_WIN_02                                          Building 31 Window #2
+31_WIN_02_N                                        Building 31 Window #2 (Night)
+31_WIN_N                                           Building 31 Window (Night)
+33_BRICK                                           Building 33 Brick
+33_BRICK_N                                         Building 33 Brick (Night)
+33_DOOR_BIG                                        Building 33 Door Big
+33_DOOR_BIG_N                                      Building 33 Door Big (Night)
+33_GRID                                            Building 33 Grid
+33_GRID_N                                          Building 33 Grid (Night)
+33_TRIM                                            Building 33 Trim
+33_TRIM_N                                          Building 33 Trim (Night)
+33_WIN                                             Building 33 Window
+33_WIN_03                                          Building 33 Window #3
+33_WIN_03_N                                        Building 33 Window #3 (Night)
+33_WIN_04                                          Building 33 Window #4
+33_WIN_04_N                                        Building 33 Window #4 (Night)
+33_WIN_N                                           Building 33 Window (Night)
+34_BRICK                                           Building 34 Brick
+34_BRICK_N                                         Building 34 Brick (Night)
+36_WATER                                           Building 36 Water
+36_WATER_N                                         Building 36 Water (Night)
+37_END                                             Building 37 End
+37_END_N                                           Building 37 End (Night)
+37_INSIDE                                          Building 37 Inside
+37_INSIDE_N                                        Building 37 Inside (Night)
+37_TOP                                             Building 37 Top
+37_TOP_N                                           Building 37 Top (Night)
+37_WIN                                             Building 37 Window
+37_WIN_N                                           Building 37 Window (Night)
+37_WIN_TOP                                         Building 37 Window Top
+37_WIN_TOP_N                                       Building 37 Window Top (Night)
+38_WIN                                             Building 38 Window
+38_WIN_N                                           Building 38 Window (Night)
+40_WIN                                             Building 40 Window
+40_WIN_02                                          Building 40 Window #2
+40_WIN_02_N                                        Building 40 Window #2 (Night)
+40_WIN_N                                           Building 40 Window (Night)
+41_DOOR                                            Building 41 Door
+41_DOOR_N                                          Building 41 Door (Night)
+41_WIN                                             Building 41 Window
+41_WIN_N                                           Building 41 Window (Night)
+42_BNR                                             Building 42 Banner
+42_BNR_N                                           Building 42 Banner (Night)
+42_BRICK                                           Building 42 Brick
+42_BRICK_N                                         Building 42 Brick (Night)
+42_DOOR                                            Building 42 Door
+42_DOOR_N                                          Building 42 Door (Night)
+42_WALL                                            Building 42 Wall
+42_WALL_N                                          Building 42 Wall (Night)
+42_WIN                                             Building 42 Window
+42_WIN_02                                          Building 42 Window #2
+42_WIN_02_N                                        Building 42 Window #2 (Night)
+42_WIN_N                                           Building 42 Window (Night)
+43_WIN_02                                          Building 43 Window #2
+43_WIN_02_N                                        Building 43 Window #2 (Night)
+44_BRICK                                           Building 44 Brick
+44_BRICK_N                                         Building 44 Brick (Night)
+44_DOOR                                            Building 44 Door
+44_DOOR_N                                          Building 44 Door (Night)
+44_WIN                                             Building 44 Window
+44_WIN_N                                           Building 44 Window (Night)
+46_WIN                                             Building 46 Window
+46_WIN_N                                           Building 46 Window (Night)
+48_DOOR                                            Building 48 Door
+48_DOOR_N                                          Building 48 Door (Night)
+BGSKY                                              Background Sky
+CARBOTTOM                                          Car Bottom
+CHECK04                                            Checkpoint #4
+CHECK_POINT_02                                     Checkpoint #2
+CT_AWNING                                          Chinatown Awning
+CT_AWNING_N                                        Chinatown Awning (Night)
+CT_BANNER                                          Chinatown Banner
+CT_BANNER02                                        Chinatown Banner02 2
+CT_BANNER02_N                                      Chinatown Banner02 2 (Night)
+CT_BANNER03                                        Chinatown Banner03 3
+CT_BANNER03_N                                      Chinatown Banner03 3 (Night)
+CT_BANNER_N                                        Chinatown Banner (Night)
+CT_DUCK                                            Chinatown Duck
+CT_DUCK_N                                          Chinatown Duck (Night)
+CT_FIRE_01                                         Chinatown Fire #1
+CT_FIRE_01_N                                       Chinatown Fire #1 (Night)
+CT_FIRE_02                                         Chinatown Fire #2
+CT_FIRE_02_N                                       Chinatown Fire #2 (Night)
+CT_FIRE_03                                         Chinatown Fire #3
+CT_FIRE_03_N                                       Chinatown Fire #3 (Night)
+CT_FOOD_BRICK                                      Chinatown Food Shop Brick
+CT_FOOD_BRICK_N                                    Chinatown Food Shop Brick (Night)
+CT_FOOD_DOOR_01                                    Chinatown Food Shop Door #1
+CT_FOOD_DOOR_01_N                                  Chinatown Food Shop Door #1 (Night)
+CT_FOOD_WIN_01                                     Chinatown Food Shop Window #1
+CT_FOOD_WIN_01_N                                   Chinatown Food Shop Window #1 (Night)
+CT_HOUSE02_BRICK                                   Chinatown House 2 Brick
+CT_HOUSE02_BRICK_N                                 Chinatown House 2 Brick (Night)
+CT_HOUSE02_DOOR_01                                 Chinatown House 2 Door #1
+CT_HOUSE02_DOOR_01_N                               Chinatown House 2 Door #1 (Night)
+CT_HOUSE02_WIN_01                                  Chinatown House 2 Window #1
+CT_HOUSE02_WIN_01_N                                Chinatown House 2 Window #1 (Night)
+CT_HOUSE02_WIN_02                                  Chinatown House 2 Window #2
+CT_HOUSE02_WIN_02_N                                Chinatown House 2 Window #2 (Night)
+CT_HOUSE03_BRICK                                   Chinatown House 3 Brick
+CT_HOUSE03_BRICK_N                                 Chinatown House 3 Brick (Night)
+CT_HOUSE03_DOOR_01                                 Chinatown House 3 Door #1
+CT_HOUSE03_DOOR_01_N                               Chinatown House 3 Door #1 (Night)
+CT_HOUSE03_WIN_01                                  Chinatown House 3 Window #1
+CT_HOUSE03_WIN_01_N                                Chinatown House 3 Window #1 (Night)
+CT_HOUSE03_WIN_02                                  Chinatown House 3 Window #2
+CT_HOUSE03_WIN_02_N                                Chinatown House 3 Window #2 (Night)
+CT_HOUSE_BRICK                                     Chinatown House Brick
+CT_HOUSE_BRICK_N                                   Chinatown House Brick (Night)
+CT_HOUSE_DOOR_01                                   Chinatown House Door #1
+CT_HOUSE_DOOR_01_N                                 Chinatown House Door #1 (Night)
+CT_HOUSE_TRIM                                      Chinatown House Trim
+CT_HOUSE_TRIM_N                                    Chinatown House Trim (Night)
+CT_HOUSE_WIN_01                                    Chinatown House Window #1
+CT_HOUSE_WIN_01_N                                  Chinatown House Window #1 (Night)
+CT_LIQR_BRICK                                      Chinatown Liquor Store Brick
+CT_LIQR_BRICK_N                                    Chinatown Liquor Store Brick (Night)
+CT_LIQR_DOOR_01                                    Chinatown Liquor Store Door #1
+CT_LIQR_DOOR_01_N                                  Chinatown Liquor Store Door #1 (Night)
+CT_LIQR_SIGN                                       Chinatown Liquor Store Sign
+CT_LIQR_SIGN_N                                     Chinatown Liquor Store Sign (Night)
+CT_LIQR_WIN_01                                     Chinatown Liquor Store Window #1
+CT_LIQR_WIN_01_N                                   Chinatown Liquor Store Window #1 (Night)
+CT_MOTEL_BRICK                                     Chinatown Motel Brick
+CT_MOTEL_BRICK_N                                   Chinatown Motel Brick (Night)
+CT_MOTEL_DOOR_01                                   Chinatown Motel Door #1
+CT_MOTEL_DOOR_01_N                                 Chinatown Motel Door #1 (Night)
+CT_MOTEL_SIGN                                      Chinatown Motel Sign
+CT_MOTEL_SIGN_N                                    Chinatown Motel Sign (Night)
+CT_MOTEL_WIN_01                                    Chinatown Motel Window #1
+CT_MOTEL_WIN_01_N                                  Chinatown Motel Window #1 (Night)
+CT_MOTEL_WIN_02                                    Chinatown Motel Window #2
+CT_MOTEL_WIN_02_N                                  Chinatown Motel Window #2 (Night)
+CT_NEON_01                                         Chinatown Neon #1
+CT_NEON_01_N                                       Chinatown Neon #1 (Night)
+CT_NEON_02                                         Chinatown Neon #2
+CT_NEON_02_N                                       Chinatown Neon #2 (Night)
+CT_NEON_03                                         Chinatown Neon #3
+CT_NEON_03_N                                       Chinatown Neon #3 (Night)
+CT_O_BRICK                                         Chinatown Office Brick
+CT_O_BRICK_N                                       Chinatown Office Brick (Night)
+CT_O_DOOR_01                                       Chinatown Office Door #1
+CT_O_DOOR_01_N                                     Chinatown Office Door #1 (Night)
+CT_O_DOOR_02                                       Chinatown Office Door #2
+CT_O_DOOR_02_N                                     Chinatown Office Door #2 (Night)
+CT_O_DOOR_03                                       Chinatown Office Door #3
+CT_O_DOOR_03_N                                     Chinatown Office Door #3 (Night)
+CT_O_INDENT                                        Chinatown Office Indent
+CT_O_INDENT_N                                      Chinatown Office Indent (Night)
+CT_O_WIN03                                         Chinatown Office Win03
+CT_O_WIN03_N                                       Chinatown Office Win03 (Night)
+CT_O_WIN_01                                        Chinatown Office Window #1
+CT_O_WIN_01_N                                      Chinatown Office Window #1 (Night)
+CT_O_WIN_02                                        Chinatown Office Window #2
+CT_O_WIN_02_N                                      Chinatown Office Window #2 (Night)
+CT_O_WIN_04                                        Chinatown Office Window #4
+CT_O_WIN_04_N                                      Chinatown Office Window #4 (Night)
+CT_R_BRICK                                         Chinatown Residential Brick
+CT_R_BRICK_N                                       Chinatown Residential Brick (Night)
+CT_R_DOOR_01                                       Chinatown Residential Door #1
+CT_R_DOOR_01_N                                     Chinatown Residential Door #1 (Night)
+CT_R_WIN_01                                        Chinatown Residential Window #1
+CT_R_WIN_01_N                                      Chinatown Residential Window #1 (Night)
+CT_R_WIN_02                                        Chinatown Residential Window #2
+CT_R_WIN_02_N                                      Chinatown Residential Window #2 (Night)
+CT_R_WIN_03                                        Chinatown Residential Window #3
+CT_R_WIN_03_N                                      Chinatown Residential Window #3 (Night)
+CT_R_WIN_04                                        Chinatown Residential Window #4
+CT_R_WIN_04_N                                      Chinatown Residential Window #4 (Night)
+CT_SHOP07_DOOR_01                                  Chinatown Shop 7 Door #1
+CT_SHOP07_DOOR_01_N                                Chinatown Shop 7 Door #1 (Night)
+CT_SHOP07_WIN_01                                   Chinatown Shop 7 Window #1
+CT_SHOP07_WIN_01_N                                 Chinatown Shop 7 Window #1 (Night)
+CT_SHOP07_WIN_02                                   Chinatown Shop 7 Window #2
+CT_SHOP07_WIN_02_N                                 Chinatown Shop 7 Window #2 (Night)
+CT_SHOP_BRICK                                      Chinatown Shop Brick
+CT_SHOP_BRICK_N                                    Chinatown Shop Brick (Night)
+CT_SHOP_DOOR_01                                    Chinatown Shop Door #1
+CT_SHOP_DOOR_01_N                                  Chinatown Shop Door #1 (Night)
+CT_SHOP_WIN_01                                     Chinatown Shop Window #1
+CT_SHOP_WIN_01_N                                   Chinatown Shop Window #1 (Night)
+CT_SIGNPROP03                                      Chinatown Signprop03 3
+CT_SIGNPROP03_N                                    Chinatown Signprop03 3 (Night)
+CT_SIGNPROP04                                      Chinatown Signprop04 4
+CT_SIGNPROP04_N                                    Chinatown Signprop04 4 (Night)
+CT_SIGN_03                                         Chinatown Sign #3
+CT_SIGN_03_N                                       Chinatown Sign #3 (Night)
+CT_SIGN_04                                         Chinatown Sign #4
+CT_SIGN_04_N                                       Chinatown Sign #4 (Night)
+CT_SIGN_05                                         Chinatown Sign #5
+CT_SIGN_05_N                                       Chinatown Sign #5 (Night)
+CT_SIGN_07                                         Chinatown Sign #7
+CT_SIGN_07_N                                       Chinatown Sign #7 (Night)
+CT_SIGN_08                                         Chinatown Sign #8
+CT_SIGN_08_N                                       Chinatown Sign #8 (Night)
+CT_SIGN_10                                         Chinatown Sign #10
+CT_SIGN_10_N                                       Chinatown Sign #10 (Night)
+CT_TIN                                             Chinatown Tin
+CT_TIN_N                                           Chinatown Tin (Night)
+CT_TRIM                                            Chinatown Trim
+CT_TRIM_N                                          Chinatown Trim (Night)
+CT_WOOD                                            Chinatown Wood Building
+CT_WOOD_DOOR_01                                    Chinatown Wood Building Door #1
+CT_WOOD_DOOR_01_N                                  Chinatown Wood Building Door #1 (Night)
+CT_WOOD_DOOR_02                                    Chinatown Wood Building Door #2
+CT_WOOD_DOOR_02_N                                  Chinatown Wood Building Door #2 (Night)
+CT_WOOD_N                                          Chinatown Wood Building (Night)
+CT_WOOD_WIN_01                                     Chinatown Wood Building Window #1
+CT_WOOD_WIN_01_N                                   Chinatown Wood Building Window #1 (Night)
+CT_WOOD_WIN_02                                     Chinatown Wood Building Window #2
+CT_WOOD_WIN_02_N                                   Chinatown Wood Building Window #2 (Night)
+CT_Y_BRICK                                         Chinatown Yellow Brick Brick
+CT_Y_BRICK_N                                       Chinatown Yellow Brick Brick (Night)
+CT_Y_DOOR_01                                       Chinatown Yellow Brick Door #1
+CT_Y_DOOR_01_N                                     Chinatown Yellow Brick Door #1 (Night)
+CT_Y_DOOR_02                                       Chinatown Yellow Brick Door #2
+CT_Y_DOOR_02_N                                     Chinatown Yellow Brick Door #2 (Night)
+CT_Y_DOOR_03                                       Chinatown Yellow Brick Door #3
+CT_Y_DOOR_03_N                                     Chinatown Yellow Brick Door #3 (Night)
+CT_Y_WIN_01                                        Chinatown Yellow Brick Window #1
+CT_Y_WIN_01_N                                      Chinatown Yellow Brick Window #1 (Night)
+CT_Y_WIN_02                                        Chinatown Yellow Brick Window #2
+CT_Y_WIN_02_N                                      Chinatown Yellow Brick Window #2 (Night)
+CT_Y_WIN_03                                        Chinatown Yellow Brick Window #3
+CT_Y_WIN_03_N                                      Chinatown Yellow Brick Window #3 (Night)
+DT_BLDG01_BRICK                                    Downtown Building 1 Brick
+DT_BLDG01_BRICK_N                                  Downtown Building 1 Brick (Night)
+DT_BLDG01_DOOR_01                                  Downtown Building 1 Door #1
+DT_BLDG01_DOOR_01_N                                Downtown Building 1 Door #1 (Night)
+DT_BLDG01_DOOR_02                                  Downtown Building 1 Door #2
+DT_BLDG01_DOOR_02_N                                Downtown Building 1 Door #2 (Night)
+DT_BLDG01_WIN_01                                   Downtown Building 1 Window #1
+DT_BLDG01_WIN_01_N                                 Downtown Building 1 Window #1 (Night)
+DT_BLDG02_WIN_01                                   Downtown Building 2 Window #1
+DT_BLDG02_WIN_01_N                                 Downtown Building 2 Window #1 (Night)
+DT_BLDG02_WIN_02                                   Downtown Building 2 Window #2
+DT_BLDG02_WIN_02_N                                 Downtown Building 2 Window #2 (Night)
+DT_BLDG03_DOOR_01                                  Downtown Building 3 Door #1
+DT_BLDG03_DOOR_01_N                                Downtown Building 3 Door #1 (Night)
+DT_BLDG03_DOOR_02                                  Downtown Building 3 Door #2
+DT_BLDG03_DOOR_02_N                                Downtown Building 3 Door #2 (Night)
+DT_BLDG03_WIN_01                                   Downtown Building 3 Window #1
+DT_BLDG03_WIN_01_N                                 Downtown Building 3 Window #1 (Night)
+DT_BLDG03_WIN_02                                   Downtown Building 3 Window #2
+DT_BLDG03_WIN_02_N                                 Downtown Building 3 Window #2 (Night)
+DT_BLDG03_WIN_03                                   Downtown Building 3 Window #3
+DT_BLDG03_WIN_03_N                                 Downtown Building 3 Window #3 (Night)
+DT_BLDG04_DOOR_01                                  Downtown Building 4 Door #1
+DT_BLDG04_DOOR_01_N                                Downtown Building 4 Door #1 (Night)
+DT_BLDG04_WIN_01                                   Downtown Building 4 Window #1
+DT_BLDG04_WIN_01_N                                 Downtown Building 4 Window #1 (Night)
+DT_BLDG04_WIN_02                                   Downtown Building 4 Window #2
+DT_BLDG04_WIN_02_N                                 Downtown Building 4 Window #2 (Night)
+DT_BLDG05_WIN_02                                   Downtown Building 5 Window #2
+DT_BLDG05_WIN_02_N                                 Downtown Building 5 Window #2 (Night)
+DT_BLDG06_WIN_01                                   Downtown Building 6 Window #1
+DT_BLDG06_WIN_01_N                                 Downtown Building 6 Window #1 (Night)
+DT_BLDG07_WIN_01                                   Downtown Building 7 Window #1
+DT_BLDG07_WIN_01_N                                 Downtown Building 7 Window #1 (Night)
+DT_BLDG_09_BRICK                                   Downtown Building #9 Brick
+DT_BLDG_09_BRICK_N                                 Downtown Building #9 Brick (Night)
+DT_BLDG_09_WIN_01                                  Downtown Building #9 Window #1
+DT_BLDG_09_WIN_01_N                                Downtown Building #9 Window #1 (Night)
+DT_BLDG_09_WIN_02                                  Downtown Building #9 Window #2
+DT_BLDG_09_WIN_02_N                                Downtown Building #9 Window #2 (Night)
+DT_BNK01_BRICK                                     Downtown Bank 1 Brick
+DT_BNK01_BRICK_N                                   Downtown Bank 1 Brick (Night)
+DT_BNK01_DOOR_01                                   Downtown Bank 1 Door #1
+DT_BNK01_DOOR_01_N                                 Downtown Bank 1 Door #1 (Night)
+DT_BNK01_TRIM                                      Downtown Bank 1 Trim
+DT_BNK01_TRIM_N                                    Downtown Bank 1 Trim (Night)
+DT_BNK01_WIN_01                                    Downtown Bank 1 Window #1
+DT_BNK01_WIN_01_N                                  Downtown Bank 1 Window #1 (Night)
+DT_DOOR_02                                         Downtown Door #2
+DT_DOOR_02_N                                       Downtown Door #2 (Night)
+DT_HOTEL01_BRICK                                   Downtown Hotel 1 Brick
+DT_HOTEL01_BRICK_N                                 Downtown Hotel 1 Brick (Night)
+DT_HOTEL01_DOOR_01                                 Downtown Hotel 1 Door #1
+DT_HOTEL01_DOOR_01_N                               Downtown Hotel 1 Door #1 (Night)
+DT_HOTEL01_WIN_01                                  Downtown Hotel 1 Window #1
+DT_HOTEL01_WIN_01_N                                Downtown Hotel 1 Window #1 (Night)
+DT_HOTEL01_WIN_02                                  Downtown Hotel 1 Window #2
+DT_HOTEL01_WIN_02_N                                Downtown Hotel 1 Window #2 (Night)
+DT_HOTEL02_BRICK                                   Downtown Hotel 2 Brick
+DT_HOTEL02_BRICK_N                                 Downtown Hotel 2 Brick (Night)
+DT_HOTEL02_SIGN                                    Downtown Hotel 2 Sign
+DT_HOTEL02_SIGN_N                                  Downtown Hotel 2 Sign (Night)
+DT_HOTEL02_WIN_02                                  Downtown Hotel 2 Window #2
+DT_HOTEL02_WIN_02_N                                Downtown Hotel 2 Window #2 (Night)
+DT_ROOF                                            Downtown Roof
+DT_ROOF_N                                          Downtown Roof (Night)
+DT_SKY01_BRICK                                     Downtown Skyscraper 1 Brick
+DT_SKY01_BRICK_N                                   Downtown Skyscraper 1 Brick (Night)
+DT_SKY01_DOOR_01                                   Downtown Skyscraper 1 Door #1
+DT_SKY01_DOOR_01_N                                 Downtown Skyscraper 1 Door #1 (Night)
+DT_SKY01_TRIM                                      Downtown Skyscraper 1 Trim
+DT_SKY01_TRIM_N                                    Downtown Skyscraper 1 Trim (Night)
+DT_SKY01_WIN_01                                    Downtown Skyscraper 1 Window #1
+DT_SKY01_WIN_01_N                                  Downtown Skyscraper 1 Window #1 (Night)
+DT_SKY01_WIN_02                                    Downtown Skyscraper 1 Window #2
+DT_SKY01_WIN_02_N                                  Downtown Skyscraper 1 Window #2 (Night)
+DT_SKY02_DOOR_01                                   Downtown Skyscraper 2 Door #1
+DT_SKY02_DOOR_01_N                                 Downtown Skyscraper 2 Door #1 (Night)
+DT_SKY02_WIN_01                                    Downtown Skyscraper 2 Window #1
+DT_SKY02_WIN_01_N                                  Downtown Skyscraper 2 Window #1 (Night)
+DT_SKY02_WIN_02                                    Downtown Skyscraper 2 Window #2
+DT_SKY02_WIN_02_N                                  Downtown Skyscraper 2 Window #2 (Night)
+DT_SKY03_DOOR_01                                   Downtown Skyscraper 3 Door #1
+DT_SKY03_DOOR_01_N                                 Downtown Skyscraper 3 Door #1 (Night)
+DT_SKY04_BRICK                                     Downtown Skyscraper 4 Brick
+DT_SKY04_BRICK_N                                   Downtown Skyscraper 4 Brick (Night)
+DT_SKY04_DOOR_01                                   Downtown Skyscraper 4 Door #1
+DT_SKY04_DOOR_01_N                                 Downtown Skyscraper 4 Door #1 (Night)
+DT_SKY04_WIN_01                                    Downtown Skyscraper 4 Window #1
+DT_SKY04_WIN_01_N                                  Downtown Skyscraper 4 Window #1 (Night)
+DT_SKY05_BRICK                                     Downtown Skyscraper 5 Brick
+DT_SKY05_BRICK_N                                   Downtown Skyscraper 5 Brick (Night)
+DT_SKY05_DOOR_01                                   Downtown Skyscraper 5 Door #1
+DT_SKY05_DOOR_01_N                                 Downtown Skyscraper 5 Door #1 (Night)
+DT_SKY05_WIN_01                                    Downtown Skyscraper 5 Window #1
+DT_SKY05_WIN_01_N                                  Downtown Skyscraper 5 Window #1 (Night)
+DT_UC_CRAN                                         Downtown Under Construction Crane
+DT_UC_DOOR                                         Downtown Under Construction Door
+DT_UC_STRCT                                        Downtown Under Construction Structure
+EXPLOSION                                          Explosion
+FREEWAY2                                           Freeway 2
+FREEWAY2_N                                         Freeway 2 (Night)
+FREEWAY_EXITS                                      Freeway Exits
+FREEWAY_GRID                                       Freeway Grid
+FREEWAY_SIGN                                       Freeway Sign
+FWYLOD3                                            Freeway LOD 3
+FXLTCONE                                           FX Light Cone
+FXLTGLOW                                           FX Light Glow
+FXLTGLOWAMBER                                      FX Light Glow (Amber)
+FXLTGLOWRED                                        FX Light Glow (Red)
+FXPARTICLE02                                       Fxparticle02
+FXPT1                                              Particle Effect 1
+FXPT10                                             Particle Effect 10
+FXPT11                                             Particle Effect 11
+FXPT2                                              Particle Effect 2
+FXPT3                                              Particle Effect 3
+FXPT4                                              Particle Effect 4
+FXPT5                                              Particle Effect 5
+FXPT5_FALL                                         Particle Effect 5 Fall
+FXPT5_WIN                                          Particle Effect 5 Winter
+FXPT6                                              Particle Effect 6
+FXPT7                                              Particle Effect 7
+FXPT8                                              Particle Effect 8
+FXPT9                                              Particle Effect 9
+G_1                                                Generic Marker #1
+G_2                                                Generic Marker #2
+G_3                                                Generic Marker #3
+G_4                                                Generic Marker #4
+G_5                                                Generic Marker #5
+G_6                                                Generic Marker #6
+G_7                                                Generic Marker #7
+G_8                                                Generic Marker #8
+G_D                                                Generic Marker Day
+G_N                                                Generic Marker Night
+G_P                                                Generic Marker Pink
+G_R                                                Generic Marker Red
+H_APT2_BRICK                                       Hills Apartment 2 Brick
+H_APT2_BRICK_N                                     Hills Apartment 2 Brick (Night)
+H_APT2_DOOR_01                                     Hills Apartment 2 Door #1
+H_APT2_DOOR_01_N                                   Hills Apartment 2 Door #1 (Night)
+H_APT2_WIN_01                                      Hills Apartment 2 Window #1
+H_APT2_WIN_01_N                                    Hills Apartment 2 Window #1 (Night)
+H_APT2_WIN_02                                      Hills Apartment 2 Window #2
+H_APT2_WIN_02_N                                    Hills Apartment 2 Window #2 (Night)
+H_APT2_WIN_03                                      Hills Apartment 2 Window #3
+H_APT2_WIN_03_N                                    Hills Apartment 2 Window #3 (Night)
+H_APT_BRICK                                        Hills Apartment Brick
+H_APT_BRICK_N                                      Hills Apartment Brick (Night)
+H_APT_DOOR_01                                      Hills Apartment Door #1
+H_APT_DOOR_01_N                                    Hills Apartment Door #1 (Night)
+H_APT_SIGN                                         Hills Apartment Sign
+H_APT_SIGN_N                                       Hills Apartment Sign (Night)
+H_APT_WIN_01                                       Hills Apartment Window #1
+H_APT_WIN_01_N                                     Hills Apartment Window #1 (Night)
+H_APT_WIN_02                                       Hills Apartment Window #2
+H_APT_WIN_02_N                                     Hills Apartment Window #2 (Night)
+H_APT_WIN_03                                       Hills Apartment Window #3
+H_APT_WIN_03_N                                     Hills Apartment Window #3 (Night)
+H_CONDO_BRICK                                      Hills Condo Brick
+H_CONDO_BRICK_N                                    Hills Condo Brick (Night)
+H_CONDO_DOOR_01                                    Hills Condo Door #1
+H_CONDO_DOOR_01_N                                  Hills Condo Door #1 (Night)
+H_CONDO_SIGN                                       Hills Condo Sign
+H_CONDO_SIGN_N                                     Hills Condo Sign (Night)
+H_CONDO_WIN_01                                     Hills Condo Window #1
+H_CONDO_WIN_01_N                                   Hills Condo Window #1 (Night)
+H_CONDO_WIN_02                                     Hills Condo Window #2
+H_CONDO_WIN_02_N                                   Hills Condo Window #2 (Night)
+H_CONDO_WIN_03                                     Hills Condo Window #3
+H_CONDO_WIN_03_N                                   Hills Condo Window #3 (Night)
+H_DELI_BRICK                                       Hills Deli Brick
+H_DELI_BRICK_N                                     Hills Deli Brick (Night)
+H_DELI_DOOR_01                                     Hills Deli Door #1
+H_DELI_DOOR_01_N                                   Hills Deli Door #1 (Night)
+H_DELI_SIGN                                        Hills Deli Sign
+H_DELI_SIGN_N                                      Hills Deli Sign (Night)
+H_DELI_WIN_01                                      Hills Deli Window #1
+H_DELI_WIN_01_N                                    Hills Deli Window #1 (Night)
+H_GUN_BRICK                                        Hills Gun Shop Brick
+H_GUN_BRICK_N                                      Hills Gun Shop Brick (Night)
+H_GUN_SIGN                                         Hills Gun Shop Sign
+H_GUN_SIGN_N                                       Hills Gun Shop Sign (Night)
+H_GUN_WIN_01                                       Hills Gun Shop Window #1
+H_GUN_WIN_01_N                                     Hills Gun Shop Window #1 (Night)
+H_GUN_WIN_02                                       Hills Gun Shop Window #2
+H_GUN_WIN_02_N                                     Hills Gun Shop Window #2 (Night)
+H_INN_BRICK                                        Hills Inn Brick
+H_INN_BRICK_N                                      Hills Inn Brick (Night)
+H_INN_DOOR_01                                      Hills Inn Door #1
+H_INN_DOOR_01_N                                    Hills Inn Door #1 (Night)
+H_INN_WIN_01                                       Hills Inn Window #1
+H_INN_WIN_01_N                                     Hills Inn Window #1 (Night)
+H_INN_WIN_02                                       Hills Inn Window #2
+H_INN_WIN_02_N                                     Hills Inn Window #2 (Night)
+H_INN_WIN_03                                       Hills Inn Window #3
+H_INN_WIN_03_N                                     Hills Inn Window #3 (Night)
+H_OFFCE_BRICK                                      Hills Office Brick
+H_OFFCE_BRICK_N                                    Hills Office Brick (Night)
+H_OFFCE_WIN_01                                     Hills Office Window #1
+H_OFFCE_WIN_01_N                                   Hills Office Window #1 (Night)
+H_OFFCE_WIN_02                                     Hills Office Window #2
+H_OFFCE_WIN_02_N                                   Hills Office Window #2 (Night)
+H_OFFICE_DOOR                                      Hills Office Door
+H_OFFICE_DOOR_N                                    Hills Office Door (Night)
+H_OFFICE_WIN                                       Hills Office (Winter)
+H_OFFICE_WIN_N                                     Hills Office (Winter, Night)
+H_PIZZA_BRICK                                      Hills Pizza Shop Brick
+H_PIZZA_BRICK_N                                    Hills Pizza Shop Brick (Night)
+H_PIZZA_DOOR_01                                    Hills Pizza Shop Door #1
+H_PIZZA_DOOR_01_N                                  Hills Pizza Shop Door #1 (Night)
+H_PIZZA_SIGN                                       Hills Pizza Shop Sign
+H_PIZZA_SIGN_N                                     Hills Pizza Shop Sign (Night)
+H_PIZZA_WIN_01                                     Hills Pizza Shop Window #1
+H_PIZZA_WIN_01_N                                   Hills Pizza Shop Window #1 (Night)
+H_PIZZA_WIN_02                                     Hills Pizza Shop Window #2
+H_PIZZA_WIN_02_N                                   Hills Pizza Shop Window #2 (Night)
+H_ROOF                                             Hills Roof
+H_ROOF_N                                           Hills Roof (Night)
+H_SHOP2_BRICK                                      Hills Shop 2 Brick
+H_SHOP2_BRICK_N                                    Hills Shop 2 Brick (Night)
+H_SHOP2_DOOR_01                                    Hills Shop 2 Door #1
+H_SHOP2_DOOR_01_N                                  Hills Shop 2 Door #1 (Night)
+H_SHOP2_SIGN                                       Hills Shop 2 Sign
+H_SHOP2_SIGN_N                                     Hills Shop 2 Sign (Night)
+H_SHOP2_WIN_01                                     Hills Shop 2 Window #1
+H_SHOP2_WIN_01_N                                   Hills Shop 2 Window #1 (Night)
+H_SHOP2_WIN_02                                     Hills Shop 2 Window #2
+H_SHOP2_WIN_02_N                                   Hills Shop 2 Window #2 (Night)
+H_SHOP2_WIN_03                                     Hills Shop 2 Window #3
+H_SHOP2_WIN_03_N                                   Hills Shop 2 Window #3 (Night)
+H_SHOP_BRICK                                       Hills Shop Brick
+H_SHOP_BRICK_N                                     Hills Shop Brick (Night)
+H_SHOP_DOOR_01                                     Hills Shop Door #1
+H_SHOP_DOOR_01_N                                   Hills Shop Door #1 (Night)
+H_SHOP_SIGN                                        Hills Shop Sign
+H_SHOP_SIGN_N                                      Hills Shop Sign (Night)
+H_SHOP_WIN_01                                      Hills Shop Window #1
+H_SHOP_WIN_01_N                                    Hills Shop Window #1 (Night)
+H_SHOP_WIN_02                                      Hills Shop Window #2
+H_SHOP_WIN_02_N                                    Hills Shop Window #2 (Night)
+H_STOR_BRICK                                       Hills Store Brick
+H_STOR_BRICK_N                                     Hills Store Brick (Night)
+H_STOR_DOOR_02                                     Hills Store Door #2
+H_STOR_DOOR_02_N                                   Hills Store Door #2 (Night)
+H_STOR_WIN_01                                      Hills Store Window #1
+H_STOR_WIN_01_N                                    Hills Store Window #1 (Night)
+H_STOR_WIN_02                                      Hills Store Window #2
+H_STOR_WIN_02_N                                    Hills Store Window #2 (Night)
+IND_ASPHALT                                        Industrial Asphalt
+IND_ASPHALT_N                                      Industrial Asphalt (Night)
+IND_BRICK                                          Industrial Brick
+IND_BRICKDOOR                                      Industrial Brickdoor
+IND_BRICKDOOR_N                                    Industrial Brickdoor (Night)
+IND_BRICKWIN                                       Industrial Brickwin
+IND_BRICKWIN_N                                     Industrial Brickwin (Night)
+IND_BRICK_N                                        Industrial Brick (Night)
+IND_B_BRICK                                        Industrial Blue Brick
+IND_B_BRICK_N                                      Industrial Blue Brick (Night)
+IND_B_DOOR                                         Industrial Blue Door
+IND_B_DOOR_N                                       Industrial Blue Door (Night)
+IND_B_WIN                                          Industrial Blue (Winter)
+IND_B_WIN_N                                        Industrial Blue (Winter, Night)
+IND_CLUB_SIGN                                      Industrial Club Sign
+IND_CLUB_SIGN_N                                    Industrial Club Sign (Night)
+IND_CONCRETE                                       Industrial Concrete
+IND_CONCRETE_N                                     Industrial Concrete (Night)
+IND_CRETE                                          Industrial Crete
+IND_CRETE_N                                        Industrial Crete (Night)
+IND_DINR_BRICK                                     Industrial Diner Brick
+IND_DINR_BRICK_N                                   Industrial Diner Brick (Night)
+IND_DINR_DOOR_01                                   Industrial Diner Door #1
+IND_DINR_DOOR_01_N                                 Industrial Diner Door #1 (Night)
+IND_DINR_SIGN                                      Industrial Diner Sign
+IND_DINR_SIGN_N                                    Industrial Diner Sign (Night)
+IND_DINR_TARP                                      Industrial Diner Tarp
+IND_DINR_TARP_N                                    Industrial Diner Tarp (Night)
+IND_DINR_WIN_01                                    Industrial Diner Window #1
+IND_DINR_WIN_01_N                                  Industrial Diner Window #1 (Night)
+IND_DOOR_01                                        Industrial Door #1
+IND_DOOR_01_N                                      Industrial Door #1 (Night)
+IND_FACT_BRICK                                     Industrial Factory Brick
+IND_FACT_BRICK_N                                   Industrial Factory Brick (Night)
+IND_FACT_DOOR_01                                   Industrial Factory Door #1
+IND_FACT_DOOR_01_N                                 Industrial Factory Door #1 (Night)
+IND_FACT_WIN_01                                    Industrial Factory Window #1
+IND_FACT_WIN_01_N                                  Industrial Factory Window #1 (Night)
+IND_GRID                                           Industrial Grid
+IND_GRID_N                                         Industrial Grid (Night)
+IND_G_BRICK                                        Industrial Green Brick
+IND_G_BRICK_N                                      Industrial Green Brick (Night)
+IND_G_DOOR_03                                      Industrial Green Door #3
+IND_G_DOOR_03_N                                    Industrial Green Door #3 (Night)
+IND_G_WIN_01                                       Industrial Green Window #1
+IND_G_WIN_01_N                                     Industrial Green Window #1 (Night)
+IND_G_WIN_02                                       Industrial Green Window #2
+IND_G_WIN_02_N                                     Industrial Green Window #2 (Night)
+IND_G_WIN_03                                       Industrial Green Window #3
+IND_G_WIN_03_N                                     Industrial Green Window #3 (Night)
+IND_HOTEL_BRICK                                    Industrial Hotel Brick
+IND_HOTEL_BRICK_N                                  Industrial Hotel Brick (Night)
+IND_HOTEL_DOOR_01                                  Industrial Hotel Door #1
+IND_HOTEL_DOOR_01_N                                Industrial Hotel Door #1 (Night)
+IND_HOTEL_SIGN                                     Industrial Hotel Sign
+IND_HOTEL_SIGN_N                                   Industrial Hotel Sign (Night)
+IND_HOTEL_WIN_02                                   Industrial Hotel Window #2
+IND_HOTEL_WIN_02_N                                 Industrial Hotel Window #2 (Night)
+IND_IBEAM                                          Industrial I-Beam
+IND_ROAD                                           Industrial Road
+IND_ROCK                                           Industrial Rock
+IND_ROCK_N                                         Industrial Rock (Night)
+IND_ROOF                                           Industrial Roof
+IND_ROOF_01                                        Industrial Roof #1
+IND_ROOF_01_N                                      Industrial Roof #1 (Night)
+IND_ROOF_N                                         Industrial Roof (Night)
+IND_RUST                                           Industrial Rust
+IND_RUST_N                                         Industrial Rust (Night)
+IND_SCOTT_DOOR_01                                  Industrial Scott Building Door #1
+IND_SCOTT_DOOR_01_N                                Industrial Scott Building Door #1 (Night)
+IND_SIDE_01                                        Industrial Side Panel
+IND_SIDE_01_N                                      Industrial Side Panel (Night)
+IND_SIDING_BOT                                     Industrial Siding Bottom
+IND_SIGN_01                                        Industrial Sign #1
+IND_SIGN_01_N                                      Industrial Sign #1 (Night)
+IND_SIGN_03                                        Industrial Sign #3
+IND_SIGN_03_N                                      Industrial Sign #3 (Night)
+IND_SIGN_04                                        Industrial Sign #4
+IND_SIGN_04_N                                      Industrial Sign #4 (Night)
+IND_SLIDINGDOOR                                    Industrial Slidingdoor
+IND_SLIDINGDOOR_N                                  Industrial Slidingdoor (Night)
+IND_TIN                                            Industrial Tin
+IND_TIN01                                          Industrial Tin01 1
+IND_TIN01_N                                        Industrial Tin01 1 (Night)
+IND_TIN_DARK                                       Industrial Tin Dark
+IND_TIN_DARK_N                                     Industrial Tin Dark (Night)
+IND_TIN_N                                          Industrial Tin (Night)
+IND_TIRE                                           Industrial Tire
+IND_TRUCK_SIDE                                     Industrial Truck Side
+IND_TRUCK_SIDE_N                                   Industrial Truck Side (Night)
+IND_TRUCK_UNDER                                    Industrial Truck Underside
+IND_VENT                                           Industrial Vent
+IND_VENT03                                         Industrial Vent03 3
+IND_VENT03_N                                       Industrial Vent03 3 (Night)
+IND_VENT_N                                         Industrial Vent (Night)
+IND_WALL                                           Industrial Wall
+IND_WALL_N                                         Industrial Wall (Night)
+IND_WIN_02                                         Industrial Win #2
+IND_WIN_02_N                                       Industrial Win #2 (Night)
+IND_WIN_03                                         Industrial Win #3
+IND_WIN_03_N                                       Industrial Win #3 (Night)
+LMMALL_LOT                                         Lakeshore Mall Lot
+LMMALL_LOT_N                                       Lakeshore Mall Lot (Night)
+L_BOTTOM                                           Landmark Bottom
+L_BOTTOM_N                                         Landmark Bottom (Night)
+L_RIVET                                            Landmark Rivet
+L_RIVET_N                                          Landmark Rivet (Night)
+L_SIDE                                             Landmark Side
+L_SIDE_N                                           Landmark Side (Night)
+MALL1                                              Mall 1
+MALL2                                              Mall 2
+MALL3                                              Mall 3
+MALL4                                              Mall 4
+MALL5                                              Mall 5
+MALL_SIGN                                          Mall Sign
+MALL_SIGN_N                                        Mall Sign (Night)
+MANFACE                                            Man Face
+OPP_ICON                                           Opponent Icon
+OT_APT_BRICK                                       Old Town Apartment Brick
+OT_APT_SIGN                                        Old Town Apartment Sign
+OT_APT_WIN_01                                      Old Town Apartment Window #1
+OT_APT_WIN_01_N                                    Old Town Apartment Window #1 (Night)
+OT_APT_WIN_02                                      Old Town Apartment Window #2
+OT_APT_WIN_02_N                                    Old Town Apartment Window #2 (Night)
+OT_BAR_BRICK                                       Old Town Bar Brick
+OT_BAR_BRICK_N                                     Old Town Bar Brick (Night)
+OT_BAR_DOOR_01                                     Old Town Bar Door #1
+OT_BAR_DOOR_01_N                                   Old Town Bar Door #1 (Night)
+OT_BAR_SIGN_01                                     Old Town Bar Sign #1
+OT_BAR_SIGN_02                                     Old Town Bar Sign #2
+OT_BAR_SIGN_03                                     Old Town Bar Sign #3
+OT_BAR_WIN_01                                      Old Town Bar Window #1
+OT_BAR_WIN_01_N                                    Old Town Bar Window #1 (Night)
+OT_BAR_WIN_02                                      Old Town Bar Window #2
+OT_BAR_WIN_02_N                                    Old Town Bar Window #2 (Night)
+OT_BAR_WIN_03                                      Old Town Bar Window #3
+OT_BAR_WIN_03_N                                    Old Town Bar Window #3 (Night)
+OT_BAR_WIN_04                                      Old Town Bar Window #4
+OT_BAR_WIN_04_N                                    Old Town Bar Window #4 (Night)
+OT_BLDG01_DOOR_01                                  Old Town Building 1 Door #1
+OT_BLDG01_DOOR_01_N                                Old Town Building 1 Door #1 (Night)
+OT_BLDG01_TRIM                                     Old Town Building 1 Trim
+OT_BLDG01_TRIM_N                                   Old Town Building 1 Trim (Night)
+OT_BLDG01_WALL                                     Old Town Building 1 Wall
+OT_BLDG01_WALL_N                                   Old Town Building 1 Wall (Night)
+OT_BLDG01_WIN_01                                   Old Town Building 1 Window #1
+OT_BLDG01_WIN_01_N                                 Old Town Building 1 Window #1 (Night)
+OT_BLDG02_BRICK                                    Old Town Building 2 Brick
+OT_BLDG02_BRICK_N                                  Old Town Building 2 Brick (Night)
+OT_BLDG02_DOOR_01                                  Old Town Building 2 Door #1
+OT_BLDG02_DOOR_01_N                                Old Town Building 2 Door #1 (Night)
+OT_BLDG02_WIN_01                                   Old Town Building 2 Window #1
+OT_BLDG02_WIN_01_N                                 Old Town Building 2 Window #1 (Night)
+OT_BLDG02_WIN_02                                   Old Town Building 2 Window #2
+OT_BLDG02_WIN_02_N                                 Old Town Building 2 Window #2 (Night)
+OT_BNK_ATM                                         Old Town Bank ATM
+OT_BNK_ATM_N                                       Old Town Bank ATM (Night)
+OT_BNK_BRICK_01                                    Old Town Bank Brick #1
+OT_BNK_BRICK_01_N                                  Old Town Bank Brick #1 (Night)
+OT_BNK_DOOR_01                                     Old Town Bank Door #1
+OT_BNK_DOOR_01_N                                   Old Town Bank Door #1 (Night)
+OT_BNK_WIN_01                                      Old Town Bank Window #1
+OT_BNK_WIN_01_N                                    Old Town Bank Window #1 (Night)
+OT_BNK_WIN_02                                      Old Town Bank Window #2
+OT_BNK_WIN_02_N                                    Old Town Bank Window #2 (Night)
+OT_CLUB_BRICK                                      Old Town Club Brick
+OT_CLUB_BRICK_N                                    Old Town Club Brick (Night)
+OT_CLUB_DOOR_01                                    Old Town Club Door #1
+OT_CLUB_DOOR_01_N                                  Old Town Club Door #1 (Night)
+OT_CLUB_SIGN                                       Old Town Club Sign
+OT_CLUB_WIN_01                                     Old Town Club Window #1
+OT_CLUB_WIN_01_N                                   Old Town Club Window #1 (Night)
+OT_CLUB_WIN_02                                     Old Town Club Window #2
+OT_CLUB_WIN_02_N                                   Old Town Club Window #2 (Night)
+OT_CLUB_WIN_03                                     Old Town Club Window #3
+OT_CLUB_WIN_03_N                                   Old Town Club Window #3 (Night)
+OT_HOME01_DOOR_01                                  Old Town Home 1 Door #1
+OT_HOME01_DOOR_01_N                                Old Town Home 1 Door #1 (Night)
+OT_HOME01_TRIM                                     Old Town Home 1 Trim
+OT_HOME01_TRIM_N                                   Old Town Home 1 Trim (Night)
+OT_HOME01_WIN_01                                   Old Town Home 1 Window #1
+OT_HOME01_WIN_01_N                                 Old Town Home 1 Window #1 (Night)
+OT_HOME01_WIN_02                                   Old Town Home 1 Window #2
+OT_HOME01_WIN_02_N                                 Old Town Home 1 Window #2 (Night)
+OT_HOME02_BRICK                                    Old Town Home 2 Brick
+OT_HOME02_BRICK_N                                  Old Town Home 2 Brick (Night)
+OT_HOME02_DOOR_01                                  Old Town Home 2 Door #1
+OT_HOME02_DOOR_01_N                                Old Town Home 2 Door #1 (Night)
+OT_HOME02_WIN_01                                   Old Town Home 2 Window #1
+OT_HOME02_WIN_01_N                                 Old Town Home 2 Window #1 (Night)
+OT_HOME03_BRICK                                    Old Town Home 3 Brick
+OT_HOME03_BRICK_N                                  Old Town Home 3 Brick (Night)
+OT_HOME03_DOOR_01                                  Old Town Home 3 Door #1
+OT_HOME03_DOOR_01_N                                Old Town Home 3 Door #1 (Night)
+OT_HOME03_TARP                                     Old Town Home 3 Tarp
+OT_HOME03_TARP_N                                   Old Town Home 3 Tarp (Night)
+OT_HOME03_WIN_01                                   Old Town Home 3 Window #1
+OT_HOME03_WIN_01_N                                 Old Town Home 3 Window #1 (Night)
+OT_HOME05_DOOR_01                                  Old Town Home 5 Door #1
+OT_HOME05_DOOR_01_N                                Old Town Home 5 Door #1 (Night)
+OT_HOME05_WIN_01                                   Old Town Home 5 Window #1
+OT_HOME05_WIN_01_N                                 Old Town Home 5 Window #1 (Night)
+OT_HOME05_WIN_02                                   Old Town Home 5 Window #2
+OT_HOME05_WIN_02_N                                 Old Town Home 5 Window #2 (Night)
+OT_HOME05_WIN_03                                   Old Town Home 5 Window #3
+OT_HOME05_WIN_03_N                                 Old Town Home 5 Window #3 (Night)
+OT_HOME07_BRICK                                    Old Town Home 7 Brick
+OT_HOME07_BRICK_N                                  Old Town Home 7 Brick (Night)
+OT_HOME07_DOOR_01                                  Old Town Home 7 Door #1
+OT_HOME07_DOOR_01_N                                Old Town Home 7 Door #1 (Night)
+OT_HOME07_TRIM                                     Old Town Home 7 Trim
+OT_HOME07_TRIM_N                                   Old Town Home 7 Trim (Night)
+OT_HOME07_WIN_01                                   Old Town Home 7 Window #1
+OT_HOME07_WIN_01_N                                 Old Town Home 7 Window #1 (Night)
+OT_HOME07_WIN_02                                   Old Town Home 7 Window #2
+OT_HOME07_WIN_02_N                                 Old Town Home 7 Window #2 (Night)
+OT_HOME08_WIN_01                                   Old Town Home 8 Window #1
+OT_HOME08_WIN_01_N                                 Old Town Home 8 Window #1 (Night)
+OT_HOME09_BRICK                                    Old Town Home 9 Brick
+OT_HOME09_BRICK_N                                  Old Town Home 9 Brick (Night)
+OT_HOME10_DOOR_01                                  Old Town Home 10 Door #1
+OT_HOME10_DOOR_01_N                                Old Town Home 10 Door #1 (Night)
+OT_HOME10_TRIM                                     Old Town Home 10 Trim
+OT_HOME10_TRIM_N                                   Old Town Home 10 Trim (Night)
+OT_HOME10_WIN_01                                   Old Town Home 10 Window #1
+OT_HOME10_WIN_01_N                                 Old Town Home 10 Window #1 (Night)
+OT_HOME10_WIN_02                                   Old Town Home 10 Window #2
+OT_HOME10_WIN_02_N                                 Old Town Home 10 Window #2 (Night)
+OT_HOME10_WIN_03                                   Old Town Home 10 Window #3
+OT_HOME10_WIN_03_N                                 Old Town Home 10 Window #3 (Night)
+OT_HOME11_BRICK                                    Old Town Home 11 Brick
+OT_HOME11_BRICK_N                                  Old Town Home 11 Brick (Night)
+OT_HOME11_DOOR_01                                  Old Town Home 11 Door #1
+OT_HOME11_DOOR_01_N                                Old Town Home 11 Door #1 (Night)
+OT_HOME11_WIN_01                                   Old Town Home 11 Window #1
+OT_HOME11_WIN_01_N                                 Old Town Home 11 Window #1 (Night)
+OT_HOME11_WIN_02                                   Old Town Home 11 Window #2
+OT_HOME11_WIN_02_N                                 Old Town Home 11 Window #2 (Night)
+OT_HOME11_WIN_03                                   Old Town Home 11 Window #3
+OT_HOME11_WIN_03_N                                 Old Town Home 11 Window #3 (Night)
+OT_HOTEL_BRICK                                     Old Town Hotel Brick
+OT_HOTEL_BRICK_N                                   Old Town Hotel Brick (Night)
+OT_HOTEL_DOOR_01                                   Old Town Hotel Door #1
+OT_HOTEL_DOOR_01_N                                 Old Town Hotel Door #1 (Night)
+OT_HOTEL_WIN_01                                    Old Town Hotel Window #1
+OT_HOTEL_WIN_01_N                                  Old Town Hotel Window #1 (Night)
+OT_LIGHT                                           Old Town Light
+OT_LIGHTSIGN01                                     Old Town Lightsign01 1
+OT_LIGHTSIGN02                                     Old Town Lightsign02 2
+OT_LIGHTSIGN03                                     Old Town Lightsign03 3
+OT_LIGHT_N                                         Old Town Light (Night)
+OT_LIQUR_BRICK                                     Old Town Liquor Store Brick
+OT_LIQUR_BRICK_N                                   Old Town Liquor Store Brick (Night)
+OT_LIQUR_DOOR_01                                   Old Town Liquor Store Door #1
+OT_LIQUR_DOOR_01_N                                 Old Town Liquor Store Door #1 (Night)
+OT_LIQUR_ONING                                     Old Town Liquor Store Awning
+OT_LIQUR_ONING_N                                   Old Town Liquor Store Awning (Night)
+OT_LIQUR_WIN_01                                    Old Town Liquor Store Window #1
+OT_LIQUR_WIN_01_N                                  Old Town Liquor Store Window #1 (Night)
+OT_LIQUR_WIN_02                                    Old Town Liquor Store Window #2
+OT_LIQUR_WIN_02_N                                  Old Town Liquor Store Window #2 (Night)
+OT_MALL_BRICK                                      Old Town Mall Brick
+OT_MALL_BRICK_N                                    Old Town Mall Brick (Night)
+OT_MALL_WIN                                        Old Town Mall (Winter)
+OT_MALL_WIN_N                                      Old Town Mall (Winter, Night)
+OT_MARKT_BRICK                                     Old Town Market Brick
+OT_MARKT_BRICK_N                                   Old Town Market Brick (Night)
+OT_MARKT_DOOR_01                                   Old Town Market Door #1
+OT_MARKT_DOOR_01_N                                 Old Town Market Door #1 (Night)
+OT_MARKT_SIGN                                      Old Town Market Sign
+OT_MARKT_SIGN_N                                    Old Town Market Sign (Night)
+OT_MARKT_WIN_01                                    Old Town Market Window #1
+OT_MARKT_WIN_01_N                                  Old Town Market Window #1 (Night)
+OT_MARKT_WIN_02                                    Old Town Market Window #2
+OT_MARKT_WIN_02_N                                  Old Town Market Window #2 (Night)
+OT_PAWN                                            Old Town Pawn Shop
+OT_PHONESIDE                                       Old Town Phone Booth Side
+OT_PHONESIDE_N                                     Old Town Phone Booth Side (Night)
+OT_PHONETOP                                        Old Town Phone Booth Top
+OT_PHONETOP_N                                      Old Town Phone Booth Top (Night)
+OT_PIZA_BRICK                                      Old Town Pizza Shop Brick
+OT_PIZA_BRICK_N                                    Old Town Pizza Shop Brick (Night)
+OT_PSTA_BRICK                                      Old Town Pasta Shop Brick
+OT_PSTA_BRICK_N                                    Old Town Pasta Shop Brick (Night)
+OT_PSTA_DOOR_01                                    Old Town Pasta Shop Door #1
+OT_PSTA_DOOR_01_N                                  Old Town Pasta Shop Door #1 (Night)
+OT_PSTA_ONING                                      Old Town Pasta Shop Awning
+OT_PSTA_ONING_N                                    Old Town Pasta Shop Awning (Night)
+OT_PSTA_SIGN                                       Old Town Pasta Shop Sign
+OT_PSTA_WIN_01                                     Old Town Pasta Shop Window #1
+OT_PSTA_WIN_01_N                                   Old Town Pasta Shop Window #1 (Night)
+OT_PSTA_WIN_02                                     Old Town Pasta Shop Window #2
+OT_PSTA_WIN_02_N                                   Old Town Pasta Shop Window #2 (Night)
+OT_PSTA_WOOD                                       Old Town Pasta Shop Wood
+OT_PSTA_WOOD_N                                     Old Town Pasta Shop Wood (Night)
+OT_RAIL                                            Old Town Rail
+OT_ROOF                                            Old Town Roof
+OT_ROOFTRIM                                        Old Town Roof Trim
+OT_ROOFTRIM_N                                      Old Town Roof Trim (Night)
+OT_ROOF_N                                          Old Town Roof (Night)
+OT_SCORBD                                          Old Town Scorbd
+OT_SCORBD_N                                        Old Town Scorbd (Night)
+OT_SHOP03_BRICK                                    Old Town Shop 3 Brick
+OT_SHOP03_BRICK_N                                  Old Town Shop 3 Brick (Night)
+OT_SHOP03_DOOR_01                                  Old Town Shop 3 Door #1
+OT_SHOP03_DOOR_01_N                                Old Town Shop 3 Door #1 (Night)
+OT_SHOP03_TRIM                                     Old Town Shop 3 Trim
+OT_SHOP03_TRIM_N                                   Old Town Shop 3 Trim (Night)
+OT_SHOP03_WIN_01                                   Old Town Shop 3 Window #1
+OT_SHOP03_WIN_01_N                                 Old Town Shop 3 Window #1 (Night)
+OT_SHOP03_WIN_02                                   Old Town Shop 3 Window #2
+OT_SHOP03_WIN_02_N                                 Old Town Shop 3 Window #2 (Night)
+OT_SHOP04_AWNING1                                  Old Town Shop 4 Awning
+OT_SHOP04_AWNING1_N                                Old Town Shop 4 Awning (Night)
+OT_SHOP04_AWNING2                                  Old Town Shop 4 Awning
+OT_SHOP04_AWNING2_N                                Old Town Shop 4 Awning (Night)
+OT_SHOP04_DOOR_01                                  Old Town Shop 4 Door #1
+OT_SHOP04_DOOR_01_N                                Old Town Shop 4 Door #1 (Night)
+OT_SHOP04_TOP                                      Old Town Shop 4 Top
+OT_SHOP04_TOP_N                                    Old Town Shop 4 Top (Night)
+OT_SHOP04_WIN_01                                   Old Town Shop 4 Window #1
+OT_SHOP04_WIN_01_N                                 Old Town Shop 4 Window #1 (Night)
+OT_STAT                                            Old Town Stat
+OT_STAT_N                                          Old Town Stat (Night)
+OT_THETR_BOOTH                                     Old Town Theatre Booth
+OT_THETR_BOOTH_N                                   Old Town Theatre Booth (Night)
+OT_THETR_POSTER_01                                 Old Town Theatre Poster #1
+OT_THETR_POSTER_01_N                               Old Town Theatre Poster #1 (Night)
+OT_THETR_POSTER_02                                 Old Town Theatre Poster #2
+OT_THETR_SIGN_01                                   Old Town Theatre Sign #1
+OT_THETR_SIGN_02                                   Old Town Theatre Sign #2
+PANOZ_DASHL                                        Panoz GTR-1 Dashboard Left
+PANOZ_DASHM                                        Panoz GTR-1 Dashboard Mid
+PANOZ_DASHR                                        Panoz GTR-1 Dashboard Right
+PANOZ_SNEEDLE                                      Panoz GTR-1 Speedometer Needle
+PANOZ_STRWHEEL                                     Panoz GTR-1 Steering Wheel
+PARTICLES                                          Particles
+PEDSTNSHW                                          Pedestrian Shadow
+R1                                                 Road 1
+R1_FALL                                            Road 1 Fall
+R1_FALL_N                                          Road 1 Fall Night
+R1_N                                               Road 1 Night
+R1_NO                                              Road 1 No Markings
+R1_WIN                                             Road 1 Winter
+R1_WIN_N                                           Road 1 Winter Night
+R2                                                 Road 2
+R2C                                                Road 2C
+R2C_FALL                                           Road 2C Fall
+R2C_FALL_N                                         Road 2C Fall Night
+R2C_N                                              Road 2C Night
+R2C_WIN                                            Road 2C Winter
+R2C_WIN_N                                          Road 2C Winter Night
+R2I                                                Road 2I
+R2I_FALL                                           Road 2I Fall
+R2I_FALL_N                                         Road 2I Fall Night
+R2I_N                                              Road 2I Night
+R2I_WIN                                            Road 2I Winter
+R2I_WIN_N                                          Road 2I Winter Night
+R2_FALL                                            Road 2 Fall
+R2_FALL_N                                          Road 2 Fall Night
+R2_N                                               Road 2 Night
+R2_NO                                              Road 2 No Markings
+R2_WIN                                             Road 2 Winter
+R2_WIN_N                                           Road 2 Winter Night
+R4                                                 Road 4
+R4_N                                               Road 4 Night
+R6                                                 Road 6
+R6_FALL                                            Road 6 Fall
+R6_FALL_N                                          Road 6 Fall Night
+R6_N                                               Road 6 Night
+R6_WIN                                             Road 6 Winter
+R6_WIN_N                                           Road 6 Winter Night
+REFL_DC                                            Reflection (Day, Clear)
+REFL_DF                                            Reflection (Day, Fog)
+REFL_DR                                            Reflection (Day, Rain)
+REFL_DS                                            Reflection (Day, Snow)
+REFL_MC                                            Reflection (Morning, Clear)
+REFL_MF                                            Reflection (Morning, Fog)
+REFL_MR                                            Reflection (Morning, Rain)
+REFL_MS                                            Reflection (Morning, Snow)
+REFL_NC                                            Reflection (Night, Clear)
+REFL_NF                                            Reflection (Night, Fog)
+REFL_NR                                            Reflection (Night, Rain)
+REFL_NS                                            Reflection (Night, Snow)
+REFL_SC                                            Reflection (Sunset, Clear)
+REFL_SF                                            Reflection (Sunset, Fog)
+REFL_SR                                            Reflection (Sunset, Rain)
+REFL_SS                                            Reflection (Sunset, Snow)
+RFWY                                               Ramp Freeway
+RFWY_FALL                                          Ramp Freeway (Fall)
+RFWY_FALL_N                                        Ramp Freeway (Fall Night)
+RFWY_N                                             Ramp Freeway (Night)
+RFWY_WIN                                           Ramp Freeway (Winter)
+RFWY_WIN_N                                         Ramp Freeway (Winter Night)
+RINTER                                             Road Intersection
+RINTER_N                                           Road Intersection (Night)
+ROAD                                               Road
+ROAD_N                                             Road (Night)
+RWALK                                              Roadside Walk
+RWALK_N                                            Roadside Walk (Night)
+R_BLDG1_BRICK                                      R Bldg1 Brick
+R_BLDG1_BRICK_N                                    R Bldg1 Brick N
+R_BLDG1_DOOR_01                                    R Bldg1 Door 01
+R_BLDG1_DOOR_01_N                                  R Bldg1 Door 01 N
+R_BLDG1_WIN_01                                     R Bldg1 Win 01
+R_BLDG1_WIN_01_N                                   R Bldg1 Win 01 N
+R_BLDG1_WIN_02                                     R Bldg1 Win 02
+R_BLDG1_WIN_02_N                                   R Bldg1 Win 02 N
+R_BLDG2_DOOR_01                                    R Bldg2 Door 01
+R_BLDG2_DOOR_01_N                                  R Bldg2 Door 01 N
+R_BLDG2_WIN_01                                     R Bldg2 Win 01
+R_BLDG2_WIN_01_N                                   R Bldg2 Win 01 N
+R_BLDG3_DOOR_01                                    R Bldg3 Door 01
+R_BLDG3_DOOR_01_N                                  R Bldg3 Door 01 N
+R_BLDG3_WIN_01                                     R Bldg3 Win 01
+R_BLDG3_WIN_01_N                                   R Bldg3 Win 01 N
+R_BLDG4_DOOR_01                                    R Bldg4 Door 01
+R_BLDG4_DOOR_01_N                                  R Bldg4 Door 01 N
+R_BLDG4_TRIM                                       R Bldg4 Trim
+R_BLDG4_TRIM_N                                     R Bldg4 Trim N
+R_BLDG4_WIN_01                                     R Bldg4 Win 01
+R_BLDG4_WIN_01_N                                   R Bldg4 Win 01 N
+R_BLDG4_WIN_02                                     R Bldg4 Win 02
+R_BLDG4_WIN_02_N                                   R Bldg4 Win 02 N
+R_BLDG5_WIN_02                                     R Bldg5 Win 02
+R_BLDG5_WIN_02_N                                   R Bldg5 Win 02 N
+R_BLDG6_DOOR_01                                    R Bldg6 Door 01
+R_BLDG6_DOOR_01_N                                  R Bldg6 Door 01 N
+R_BLDG6_WIN_01                                     R Bldg6 Win 01
+R_BLDG6_WIN_01_N                                   R Bldg6 Win 01 N
+R_BLDG6_WIN_02                                     R Bldg6 Win 02
+R_BLDG6_WIN_02_N                                   R Bldg6 Win 02 N
+R_BLDG7_DOOR_01                                    R Bldg7 Door 01
+R_BLDG7_DOOR_01_N                                  R Bldg7 Door 01 N
+R_BLDG7_WIN_01                                     R Bldg7 Win 01
+R_BLDG7_WIN_01_N                                   R Bldg7 Win 01 N
+R_BLDG_08_DOOR_01                                  R Bldg 08 Door 01
+R_BLDG_08_DOOR_01_N                                R Bldg 08 Door 01 N
+R_BLDG_08_WIN_01                                   R Bldg 08 Win 01
+R_BLDG_08_WIN_01_N                                 R Bldg 08 Win 01 N
+R_BLDG_08_WIN_02                                   R Bldg 08 Win 02
+R_BLDG_08_WIN_02_N                                 R Bldg 08 Win 02 N
+R_BLDG_08_WIN_03                                   R Bldg 08 Win 03
+R_BLDG_08_WIN_03_N                                 R Bldg 08 Win 03 N
+R_L_SIDE                                           Residential Landmark Side
+R_L_SIDE_N                                         Residential Landmark Side (Night)
+R_L_TRACK                                          Residential Landmark Track
+R_NAVYPIER                                         Navy Pier
+R_WIN_01                                           R Win 01
+R_WIN_01_N                                         R Win 01 N
+R_WIN_02                                           R Win 02
+R_WIN_02_N                                         R Win 02 N
+R_WIN_4                                            R Win 4
+R_WIN_4_N                                          R Win 4 N
+R_WIN_5                                            R Win 5
+R_WIN_5_N                                          R Win 5 N
+R_WIN_6                                            R Win 6
+R_WIN_6_N                                          R Win 6 N
+R_WIN_7                                            R Win 7
+R_WIN_7_N                                          R Win 7 N
+R_WIN_9                                            R Win 9
+R_WIN_9_N                                          R Win 9 N
+SDWLK                                              Sidewalk
+SDWLK2                                             Sidewalk 2
+SDWLK_N                                            Sidewalk (Night)
+SHADMAP_DAY                                        Shadow Map (Day)
+SHADMAP_MORNEVE                                    Shadow Map (Morning/Evening)
+SHADMAP_NITE                                       Shadow Map (Night)
+SHADMAP_RAINSNOW                                   Shadow Map (Rain/Snow)
+SKY_DC                                             Sky (Day, Clear)
+SKY_DF                                             Sky (Day, Fog)
+SKY_DR                                             Sky (Day, Rain)
+SKY_DR_FLASH                                       Sky Lightning Flash (Day, Rain)
+SKY_DS                                             Sky (Day, Snow)
+SKY_MC                                             Sky (Morning, Clear)
+SKY_MF                                             Sky (Morning, Fog)
+SKY_MR                                             Sky (Morning, Rain)
+SKY_MS                                             Sky (Morning, Snow)
+SKY_NC                                             Sky (Night, Clear)
+SKY_NF                                             Sky (Night, Fog)
+SKY_NR                                             Sky (Night, Rain)
+SKY_NS                                             Sky (Night, Snow)
+SKY_SC                                             Sky (Sunset, Clear)
+SKY_SF                                             Sky (Sunset, Fog)
+SKY_SR                                             Sky (Sunset, Rain)
+SKY_SS                                             Sky (Sunset, Snow)
+SNOW                                               Snow
+SNOW_N                                             Snow (Night)
+SUITTIE                                            Suit & Tie
+SUITTIE_N                                          Suit & Tie (Night)
+TIRE_TRACK                                         Tire Track
+TPSBUS                                             Traffic Bus
+TP_LIGHT                                           Traffic Prop Light
+TP_LIGHT_N                                         Traffic Prop Light N
+T_1WAY                                             Town 1Way
+T_2WAY                                             Town 2Way
+T_75                                               Town  #75
+T_APT1_BRICK                                       Town Apt1 Brick
+T_APT1_BRICK_N                                     Town Apt1 Brick (Night)
+T_APT1_DOOR_01                                     Town Apt1 Door #1
+T_APT1_DOOR_01_N                                   Town Apt1 Door #1 (Night)
+T_APT1_WIN_01                                      Town Apt1 Win #1
+T_APT1_WIN_01_N                                    Town Apt1 Win #1 (Night)
+T_APT1_WIN_02                                      Town Apt1 Win #2
+T_APT1_WIN_02_N                                    Town Apt1 Win #2 (Night)
+T_APT2_BRICK                                       Town Apt2 Brick
+T_APT2_BRICK_N                                     Town Apt2 Brick (Night)
+T_APT2_DOOR_01                                     Town Apt2 Door #1
+T_APT2_DOOR_01_N                                   Town Apt2 Door #1 (Night)
+T_APT2_WIN_01                                      Town Apt2 Win #1
+T_APT2_WIN_01_N                                    Town Apt2 Win #1 (Night)
+T_APT2_WIN_02                                      Town Apt2 Win #2
+T_APT2_WIN_02_N                                    Town Apt2 Win #2 (Night)
+T_APT3_BRICK                                       Town Apt3 Brick
+T_APT3_BRICK_N                                     Town Apt3 Brick (Night)
+T_APT3_DOOR_01                                     Town Apt3 Door #1
+T_APT3_DOOR_01_N                                   Town Apt3 Door #1 (Night)
+T_APT3_WIN_02                                      Town Apt3 Win #2
+T_APT3_WIN_02_N                                    Town Apt3 Win #2 (Night)
+T_ASPHALT                                          Town Asphalt
+T_ASPHALTLINES                                     Town Asphalt Lines
+T_ASPHALTLINES_N                                   Town Asphalt Lines (Night)
+T_ASPHALTLINES_NO                                  Town Asphaltlines No
+T_ASPHALTLINES_NO_N                                Town Asphaltlines No (Night)
+T_ASPHALT_N                                        Town Asphalt (Night)
+T_ASPHALT_NO                                       Town Asphalt No
+T_ASPHALT_NO_N                                     Town Asphalt No (Night)
+T_AWNING                                           Town Awning
+T_AWNING_N                                         Town Awning (Night)
+T_BARRICADE                                        Town Barricade
+T_BLACK                                            Town Black
+T_BLACKLINE                                        Town Black Line
+T_BLACKLINE_N                                      Town Black Line (Night)
+T_BLACK_N                                          Town Black (Night)
+T_BOX                                              Town Box
+T_BOX_02                                           Town Box #2
+T_BRN_BRICK                                        Town Brn Brick
+T_BRN_BRICK_N                                      Town Brn Brick (Night)
+T_BRN_WIN_01                                       Town Brn Win #1
+T_BRN_WIN_01_N                                     Town Brn Win #1 (Night)
+T_BRN_WIN_02                                       Town Brn Win #2
+T_BRN_WIN_02_N                                     Town Brn Win #2 (Night)
+T_CARDBORDBOX                                      Town Cardboard Box
+T_CAUTION                                          Town Caution
+T_CD_SIGN                                          Town Cd Sign
+T_CD_SIGN_N                                        Town Cd Sign (Night)
+T_CD_WIN_01                                        Town Cd Win #1
+T_CD_WIN_01_N                                      Town Cd Win #1 (Night)
+T_CLUB_SIGN                                        Town Club Sign
+T_CLUB_SIGN_N                                      Town Club Sign (Night)
+T_CLUB_WIN_01                                      Town Club Win #1
+T_CLUB_WIN_01_N                                    Town Club Win #1 (Night)
+T_CONCRETE01                                       Town Concrete01
+T_CONCRETE01_N                                     Town Concrete01 (Night)
+T_CONCRETE_NO                                      Town Concrete No
+T_CONCRETE_NO_N                                    Town Concrete No (Night)
+T_DEPT_SIGN_01                                     Town Dept Sign #1
+T_DEPT_SIGN_01_N                                   Town Dept Sign #1 (Night)
+T_DIRT                                             Town Dirt
+T_DIRT_N                                           Town Dirt (Night)
+T_DMPSTRFRNT                                       Town Dumpster Front
+T_DO_NOT_ENTER                                     Town Do Not Enter
+T_DRUG_SIGN_01                                     Town Drug Sign #1
+T_DRUG_SIGN_01_N                                   Town Drug Sign #1 (Night)
+T_EXIT                                             Town Exit
+T_FISH                                             Town Fish
+T_FLOOR                                            Town Floor
+T_GLASS                                            Town Glass
+T_GRASS                                            Town Grass
+T_GRASS_FALL                                       Town Grass (Fall)
+T_GRASS_FALL_N                                     Town Grass (Fall, Night)
+T_GRASS_N                                          Town Grass (Night)
+T_GRASS_WIN                                        Town Grass (Winter)
+T_GRASS_WIN_N                                      Town Grass (Winter, Night)
+T_GRAY_BRICK                                       Town Gray Brick
+T_GRAY_BRICK_N                                     Town Gray Brick (Night)
+T_GRAY_DOOR_01                                     Town Gray Door #1
+T_GRAY_DOOR_01_N                                   Town Gray Door #1 (Night)
+T_GRAY_WIN_01                                      Town Gray Win #1
+T_GRAY_WIN_01_N                                    Town Gray Win #1 (Night)
+T_GRAY_WIN_02                                      Town Gray Win #2
+T_GRAY_WIN_02_N                                    Town Gray Win #2 (Night)
+T_GRID                                             Town Grid
+T_GRID_N                                           Town Grid (Night)
+T_JERSEY_RAIL                                      Town Jersey Rail
+T_LIGHT                                            Town Light
+T_LIGHT_N                                          Town Light (Night)
+T_L_ONLY                                           Town L Only
+T_MAIL_BOX                                         Town Mail Box
+T_MAIL_BOX_N                                       Town Mail Box (Night)
+T_METER                                            Town Meter
+T_NEWS                                             Town Newsstand
+T_NO_PARK02                                        Town No Park02
+T_NO_PARK02_N                                      Town No Park02 (Night)
+T_PHONE                                            Town Phone
+T_POLE                                             Town Pole
+T_POLE_N                                           Town Pole (Night)
+T_RAIL                                             Town Rail
+T_RAIL03                                           Town Rail03
+T_RAIL_01                                          Town Rail #1
+T_RAIL_01_N                                        Town Rail #1 (Night)
+T_RAIL_N                                           Town Rail (Night)
+T_RED_BLACK_BARRICADE                              Town Red Black Barricade
+T_ROOF_LIGHT                                       Town Roof Light
+T_RUBLE                                            Town Rubble
+T_RUBLE_N                                          Town Rubble (Night)
+T_RUF_WIN_01                                       Town Ruf Win #1
+T_RUF_WIN_01_N                                     Town Ruf Win #1 (Night)
+T_SHIP                                             Town Ship
+T_SLIDINGDOOR                                      Town Sliding Door
+T_SLIDINGDOOR_N                                    Town Sliding Door (Night)
+T_STEP                                             Town Step
+T_STEP_N                                           Town Step (Night)
+T_STEP_SIDE                                        Town Step Side
+T_STEP_TOP                                         Town Step Top
+T_STOP                                             Town Stop
+T_STOP_BACK                                        Town Stop Back
+T_STOP_LIGHT                                       Town Stop Light
+T_STOR1_BRICK                                      Town Stor1 Brick
+T_STOR1_BRICK_N                                    Town Stor1 Brick (Night)
+T_STOR1_DOOR_01                                    Town Stor1 Door #1
+T_STOR1_DOOR_01_N                                  Town Stor1 Door #1 (Night)
+T_STOR1_WIN_01                                     Town Stor1 Win #1
+T_STOR1_WIN_01_N                                   Town Stor1 Win #1 (Night)
+T_STOR1_WIN_02                                     Town Stor1 Win #2
+T_STOR1_WIN_02_N                                   Town Stor1 Win #2 (Night)
+T_STOR2_BRICK                                      Town Stor2 Brick
+T_STOR2_BRICK_N                                    Town Stor2 Brick (Night)
+T_STOR2_DOOR_01                                    Town Stor2 Door #1
+T_STOR2_DOOR_01_N                                  Town Stor2 Door #1 (Night)
+T_STOR2_WIN_01                                     Town Stor2 Win #1
+T_STOR2_WIN_01_N                                   Town Stor2 Win #1 (Night)
+T_STOR2_WIN_02                                     Town Stor2 Win #2
+T_STOR2_WIN_02_N                                   Town Stor2 Win #2 (Night)
+T_TRASH                                            Town Trash
+T_TRASH_N                                          Town Trash (Night)
+T_TREE_15M                                         Town Tree 15M
+T_TREE_15M_FALL                                    Town Tree 15M (Fall)
+T_TREE_15M_WIN                                     Town Tree 15M (Winter)
+T_TREE_MALL                                        Town Tree Mall
+T_TREE_SPARCE                                      Town Tree Sparce
+T_TREE_SPARCE_FALL                                 Town Tree Sparce (Fall)
+T_TREE_SPARCE_WIN                                  Town Tree Sparce (Winter)
+T_TUN_SW                                           Town Tun Sw
+T_TUN_TOP                                          Town Tun Top
+T_TUN_WALL                                         Town Tun Wall
+T_USFLAG                                           Town US Flag
+T_WALK_ALLEY                                       Town Walk Alley
+T_WALK_ALLEY_FALL                                  Town Walk Alley (Fall)
+T_WALL                                             Town Wall
+T_WALL02                                           Town Wall02
+T_WALL02_N                                         Town Wall02 (Night)
+T_WALL02_WIN                                       Town Wall02 (Winter)
+T_WALL02_WIN_N                                     Town Wall02 (Winter, Night)
+T_WALL_N                                           Town Wall (Night)
+T_WALL_NO                                          Town Wall No
+T_WALL_WIN                                         Town Wall (Winter)
+T_WALL_WIN_N                                       Town Wall (Winter, Night)
+T_WATER                                            Town Water
+T_WATER_LAVA                                       Town Water Lava
+T_WATER_N                                          Town Water (Night)
+T_WATER_WIN                                        Town Water (Winter)
+T_WOOD                                             Town Wood
+T_WOOD_N                                           Town Wood (Night)
+T_WORK1                                            Town Work1
+T_WORK2                                            Town Work2
+T_WRONGWAY                                         Town Wrongway
+VABUS_BK                                           Ambient Bus Back
+VABUS_FT                                           Ambient Bus Front
+VABUS_SD                                           Ambient Bus Side
+VABUS_TP                                           Ambient Bus Top
+VACOMP_WHL                                         Ambient Compact Wheel
+VAHEADLIGHT                                        Ambient Headlight
+VALIMO_WHL                                         Ambient Limo Wheel
+VASIGNALUNIT                                       Ambient Signal Unit
+VASTOPUNIT                                         Ambient Stop Unit
+VASWHL                                             Ambient Small Wheel
+VATAXI_BK                                          Ambient Taxi Back
+VATAXI_SD                                          Ambient Taxi Side
+VPBUGBLUE_BK                                       Beetle (Blue) – Back
+VPBUGBLUE_BK_DMG                                   Beetle (Blue) – Back Damaged
+VPBUGBLUE_BK_VL                                    Beetle (Blue) – Back Vending (Lit)
+VPBUGBLUE_FT                                       Beetle (Blue) – Front
+VPBUGBLUE_FT_DMG                                   Beetle (Blue) – Front Damaged
+VPBUGBLUE_FT_VL                                    Beetle (Blue) – Front Vending (Lit)
+VPBUGBLUE_SD                                       Beetle (Blue) – Side
+VPBUGBLUE_SD_DMG                                   Beetle (Blue) – Side Damaged
+VPBUGBLUE_SD_VL                                    Beetle (Blue) – Side Vending (Lit)
+VPBUGGREY_BK                                       Beetle (Gray) – Back
+VPBUGGREY_BK_DMG                                   Beetle (Gray) – Back Damaged
+VPBUGGREY_BK_VL                                    Beetle (Gray) – Back Vending (Lit)
+VPBUGGREY_FT                                       Beetle (Gray) – Front
+VPBUGGREY_FT_DMG                                   Beetle (Gray) – Front Damaged
+VPBUGGREY_FT_VL                                    Beetle (Gray) – Front Vending (Lit)
+VPBUGGREY_SD                                       Beetle (Gray) – Side
+VPBUGGREY_SD_DMG                                   Beetle (Gray) – Side Damaged
+VPBUGGREY_SD_VL                                    Beetle (Gray) – Side Vending (Lit)
+VPBUGRED_BK                                        Beetle (Red) – Back
+VPBUGRED_BK_DMG                                    Beetle (Red) – Back Damaged
+VPBUGRED_BK_VL                                     Beetle (Red) – Back Vending (Lit)
+VPBUGRED_FT                                        Beetle (Red) – Front
+VPBUGRED_FT_DMG                                    Beetle (Red) – Front Damaged
+VPBUGRED_FT_VL                                     Beetle (Red) – Front Vending (Lit)
+VPBUGRED_SD                                        Beetle (Red) – Side
+VPBUGRED_SD_DMG                                    Beetle (Red) – Side Damaged
+VPBUGRED_SD_VL                                     Beetle (Red) – Side Vending (Lit)
+VPBUGSHDW                                          Beetle Shadow
+VPBUGYELLOW_BK                                     Beetle (Yellow) – Back
+VPBUGYELLOW_BK_DMG                                 Beetle (Yellow) – Back Damaged
+VPBUGYELLOW_BK_VL                                  Beetle (Yellow) – Back Vending (Lit)
+VPBUGYELLOW_FT                                     Beetle (Yellow) – Front
+VPBUGYELLOW_FT_DMG                                 Beetle (Yellow) – Front Damaged
+VPBUGYELLOW_FT_VL                                  Beetle (Yellow) – Front Vending (Lit)
+VPBUGYELLOW_SD                                     Beetle (Yellow) – Side
+VPBUGYELLOW_SD_DMG                                 Beetle (Yellow) – Side Damaged
+VPBUGYELLOW_SD_VL                                  Beetle (Yellow) – Side Vending (Lit)
+VPBUG_WHL                                          Beetle – Wheel
+VPBULLETBLUE_BKLFT                                 Bullet GT (Blue) – Back Left
+VPBULLETBLUE_BKLFT_DMG                             Bullet GT (Blue) – Back Left Damaged
+VPBULLETBLUE_BKRGT                                 Bullet GT (Blue) – Back Right
+VPBULLETBLUE_BKRGT_DMG                             Bullet GT (Blue) – Back Right Damaged
+VPBULLETBLUE_BK_VL                                 Bullet GT (Blue) – Back Vending (Lit)
+VPBULLETBLUE_FT                                    Bullet GT (Blue) – Front
+VPBULLETBLUE_FT_DMG                                Bullet GT (Blue) – Front Damaged
+VPBULLETBLUE_FT_VL                                 Bullet GT (Blue) – Front Vending (Lit)
+VPBULLETBLUE_SD                                    Bullet GT (Blue) – Side
+VPBULLETBLUE_SD_DMG                                Bullet GT (Blue) – Side Damaged
+VPBULLETBLUE_SD_VL                                 Bullet GT (Blue) – Side Vending (Lit)
+VPBULLETBLUE_TPBK                                  Bullet GT (Blue) – Top Back
+VPBULLETBLUE_TPBK_DMG                              Bullet GT (Blue) – Top Back Damaged
+VPBULLETBLUE_TPFT                                  Bullet GT (Blue) – Top Front
+VPBULLETBLUE_TPFT_DMG                              Bullet GT (Blue) – Top Front Damaged
+VPBULLETBLUE_TP_VL                                 Bullet GT (Blue) – Top Vending (Lit)
+VPBULLETRED_BKLFT                                  Bullet GT (Red) – Back Left
+VPBULLETRED_BKLFT_DMG                              Bullet GT (Red) – Back Left Damaged
+VPBULLETRED_BKRGT                                  Bullet GT (Red) – Back Right
+VPBULLETRED_BKRGT_DMG                              Bullet GT (Red) – Back Right Damaged
+VPBULLETRED_BK_VL                                  Bullet GT (Red) – Back Vending (Lit)
+VPBULLETRED_FT                                     Bullet GT (Red) – Front
+VPBULLETRED_FT_DMG                                 Bullet GT (Red) – Front Damaged
+VPBULLETRED_FT_VL                                  Bullet GT (Red) – Front Vending (Lit)
+VPBULLETRED_SD                                     Bullet GT (Red) – Side
+VPBULLETRED_SD_DMG                                 Bullet GT (Red) – Side Damaged
+VPBULLETRED_SD_VL                                  Bullet GT (Red) – Side Vending (Lit)
+VPBULLETRED_TPBK                                   Bullet GT (Red) – Top Back
+VPBULLETRED_TPBK_DMG                               Bullet GT (Red) – Top Back Damaged
+VPBULLETRED_TPFT                                   Bullet GT (Red) – Top Front
+VPBULLETRED_TPFT_DMG                               Bullet GT (Red) – Top Front Damaged
+VPBULLETRED_TP_VL                                  Bullet GT (Red) – Top Vending (Lit)
+VPBULLETWHITE_BKLFT                                Bullet GT (White) – Back Left
+VPBULLETWHITE_BKLFT_DMG                            Bullet GT (White) – Back Left Damaged
+VPBULLETWHITE_BKRGT                                Bullet GT (White) – Back Right
+VPBULLETWHITE_BKRGT_DMG                            Bullet GT (White) – Back Right Damaged
+VPBULLETWHITE_BK_VL                                Bullet GT (White) – Back Vending (Lit)
+VPBULLETWHITE_FT                                   Bullet GT (White) – Front
+VPBULLETWHITE_FT_DMG                               Bullet GT (White) – Front Damaged
+VPBULLETWHITE_FT_VL                                Bullet GT (White) – Front Vending (Lit)
+VPBULLETWHITE_SD                                   Bullet GT (White) – Side
+VPBULLETWHITE_SD_DMG                               Bullet GT (White) – Side Damaged
+VPBULLETWHITE_SD_VL                                Bullet GT (White) – Side Vending (Lit)
+VPBULLETWHITE_TPBK                                 Bullet GT (White) – Top Back
+VPBULLETWHITE_TPBK_DMG                             Bullet GT (White) – Top Back Damaged
+VPBULLETWHITE_TPFT                                 Bullet GT (White) – Top Front
+VPBULLETWHITE_TPFT_DMG                             Bullet GT (White) – Top Front Damaged
+VPBULLETWHITE_TP_VL                                Bullet GT (White) – Top Vending (Lit)
+VPBULLET_BKLFT                                     Bullet GT – Back Left
+VPBULLET_BKLFT_DMG                                 Bullet GT – Back Left Damaged
+VPBULLET_BKRGT                                     Bullet GT – Back Right
+VPBULLET_BKRGT_DMG                                 Bullet GT – Back Right Damaged
+VPBULLET_BK_VL                                     Bullet GT – Back Vending (Lit)
+VPBULLET_DASHL                                     Bullet GT – Dashboard Left
+VPBULLET_DASHM                                     Bullet GT – Dashboard Mid
+VPBULLET_DASHR                                     Bullet GT – Dashboard Right
+VPBULLET_FT                                        Bullet GT – Front
+VPBULLET_FT_DMG                                    Bullet GT – Front Damaged
+VPBULLET_FT_VL                                     Bullet GT – Front Vending (Lit)
+VPBULLET_SD                                        Bullet GT – Side
+VPBULLET_SD_DMG                                    Bullet GT – Side Damaged
+VPBULLET_SD_VL                                     Bullet GT – Side Vending (Lit)
+VPBULLET_SNEEDLE                                   Bullet GT – Speedometer Needle
+VPBULLET_STRWHEEL                                  Bullet GT – Steering Wheel
+VPBULLET_TIRE                                      Bullet GT – Tire Track
+VPBULLET_TPBK                                      Bullet GT – Top Back
+VPBULLET_TPBK_DMG                                  Bullet GT – Top Back Damaged
+VPBULLET_TPFT                                      Bullet GT – Top Front
+VPBULLET_TPFT_DMG                                  Bullet GT – Top Front Damaged
+VPBULLET_TP_VL                                     Bullet GT – Top Vending (Lit)
+VPBUSBLUE_BK                                       Bus (Blue) – Back
+VPBUSBLUE_BK_DMG                                   Bus (Blue) – Back Damaged
+VPBUSBLUE_BK_VL                                    Bus (Blue) – Back Vending (Lit)
+VPBUSBLUE_FT                                       Bus (Blue) – Front
+VPBUSBLUE_FT_DMG                                   Bus (Blue) – Front Damaged
+VPBUSBLUE_FT_VL                                    Bus (Blue) – Front Vending (Lit)
+VPBUSBLUE_SD_BK                                    Bus (Blue) – Side Back
+VPBUSBLUE_SD_BK_DMG                                Bus (Blue) – Side Back Damaged
+VPBUSBLUE_SD_FT                                    Bus (Blue) – Side Front
+VPBUSBLUE_SD_FT_DMG                                Bus (Blue) – Side Front Damaged
+VPBUSBLUE_SD_VL                                    Bus (Blue) – Side Vending (Lit)
+VPBUSBLUE_TP_BK                                    Bus (Blue) – Top Back
+VPBUSBLUE_TP_BK_DMG                                Bus (Blue) – Top Back Damaged
+VPBUSBLUE_TP_FT                                    Bus (Blue) – Top Front
+VPBUSBLUE_TP_FT_DMG                                Bus (Blue) – Top Front Damaged
+VPBUSBLUE_TP_VL                                    Bus (Blue) – Top Vending (Lit)
+VPBUSORANGE_BK                                     Bus (Orange) – Back
+VPBUSORANGE_BK_DMG                                 Bus (Orange) – Back Damaged
+VPBUSORANGE_BK_VL                                  Bus (Orange) – Back Vending (Lit)
+VPBUSORANGE_FT                                     Bus (Orange) – Front
+VPBUSORANGE_FT_DMG                                 Bus (Orange) – Front Damaged
+VPBUSORANGE_FT_VL                                  Bus (Orange) – Front Vending (Lit)
+VPBUSORANGE_SD_BK                                  Bus (Orange) – Side Back
+VPBUSORANGE_SD_BK_DMG                              Bus (Orange) – Side Back Damaged
+VPBUSORANGE_SD_FT                                  Bus (Orange) – Side Front
+VPBUSORANGE_SD_FT_DMG                              Bus (Orange) – Side Front Damaged
+VPBUSORANGE_SD_VL                                  Bus (Orange) – Side Vending (Lit)
+VPBUSORANGE_TP_BK                                  Bus (Orange) – Top Back
+VPBUSORANGE_TP_BK_DMG                              Bus (Orange) – Top Back Damaged
+VPBUSORANGE_TP_FT                                  Bus (Orange) – Top Front
+VPBUSORANGE_TP_FT_DMG                              Bus (Orange) – Top Front Damaged
+VPBUSORANGE_TP_VL                                  Bus (Orange) – Top Vending (Lit)
+VPBUSRED_BK                                        Bus (Red) – Back
+VPBUSRED_BK_DMG                                    Bus (Red) – Back Damaged
+VPBUSRED_BK_VL                                     Bus (Red) – Back Vending (Lit)
+VPBUSRED_FT                                        Bus (Red) – Front
+VPBUSRED_FT_DMG                                    Bus (Red) – Front Damaged
+VPBUSRED_FT_VL                                     Bus (Red) – Front Vending (Lit)
+VPBUSRED_SD_BK                                     Bus (Red) – Side Back
+VPBUSRED_SD_BK_DMG                                 Bus (Red) – Side Back Damaged
+VPBUSRED_SD_FT                                     Bus (Red) – Side Front
+VPBUSRED_SD_FT_DMG                                 Bus (Red) – Side Front Damaged
+VPBUSRED_SD_VL                                     Bus (Red) – Side Vending (Lit)
+VPBUSRED_TP_BK                                     Bus (Red) – Top Back
+VPBUSRED_TP_BK_DMG                                 Bus (Red) – Top Back Damaged
+VPBUSRED_TP_FT                                     Bus (Red) – Top Front
+VPBUSRED_TP_FT_DMG                                 Bus (Red) – Top Front Damaged
+VPBUSRED_TP_VL                                     Bus (Red) – Top Vending (Lit)
+VPBUSWHITE_BK                                      Bus (White) – Back
+VPBUSWHITE_BK_DMG                                  Bus (White) – Back Damaged
+VPBUSWHITE_BK_VL                                   Bus (White) – Back Vending (Lit)
+VPBUSWHITE_FT                                      Bus (White) – Front
+VPBUSWHITE_FT_DMG                                  Bus (White) – Front Damaged
+VPBUSWHITE_FT_VL                                   Bus (White) – Front Vending (Lit)
+VPBUSWHITE_SD_BK                                   Bus (White) – Side Back
+VPBUSWHITE_SD_BK_DMG                               Bus (White) – Side Back Damaged
+VPBUSWHITE_SD_FT                                   Bus (White) – Side Front
+VPBUSWHITE_SD_FT_DMG                               Bus (White) – Side Front Damaged
+VPBUSWHITE_SD_VL                                   Bus (White) – Side Vending (Lit)
+VPBUSWHITE_TP_BK                                   Bus (White) – Top Back
+VPBUSWHITE_TP_BK_DMG                               Bus (White) – Top Back Damaged
+VPBUSWHITE_TP_FT                                   Bus (White) – Top Front
+VPBUSWHITE_TP_FT_DMG                               Bus (White) – Top Front Damaged
+VPBUSWHITE_TP_VL                                   Bus (White) – Top Vending (Lit)
+VPBUS_DASHL                                        Bus – Dashboard Left
+VPBUS_DASHM                                        Bus – Dashboard Mid
+VPBUS_DASHR                                        Bus – Dashboard Right
+VPBUS_NEEDLE                                       Bus – Needle
+VPBUS_STRWHEEL                                     Bus – Steering Wheel
+VPCADDIEBLUE_BK                                    Cadillac (Blue) – Back
+VPCADDIEBLUE_BK_DMG                                Cadillac (Blue) – Back Damaged
+VPCADDIEBLUE_BK_VL                                 Cadillac (Blue) – Back Vending (Lit)
+VPCADDIEBLUE_FT                                    Cadillac (Blue) – Front
+VPCADDIEBLUE_FT_DMG                                Cadillac (Blue) – Front Damaged
+VPCADDIEBLUE_FT_VL                                 Cadillac (Blue) – Front Vending (Lit)
+VPCADDIEBLUE_SD                                    Cadillac (Blue) – Side
+VPCADDIEBLUE_SD_DMG                                Cadillac (Blue) – Side Damaged
+VPCADDIEBLUE_SD_VL                                 Cadillac (Blue) – Side Vending (Lit)
+VPCADDIEBLUE_TP                                    Cadillac (Blue) – Top
+VPCADDIEBLUE_TP_DMG                                Cadillac (Blue) – Top Damaged
+VPCADDIEBLUE_TP_VL                                 Cadillac (Blue) – Top Vending (Lit)
+VPCADDIEGOLD_BK                                    Cadillac (Gold) – Back
+VPCADDIEGOLD_BK_DMG                                Cadillac (Gold) – Back Damaged
+VPCADDIEGOLD_BK_VL                                 Cadillac (Gold) – Back Vending (Lit)
+VPCADDIEGOLD_FT                                    Cadillac (Gold) – Front
+VPCADDIEGOLD_FT_DMG                                Cadillac (Gold) – Front Damaged
+VPCADDIEGOLD_FT_VL                                 Cadillac (Gold) – Front Vending (Lit)
+VPCADDIEGOLD_SD                                    Cadillac (Gold) – Side
+VPCADDIEGOLD_SD_DMG                                Cadillac (Gold) – Side Damaged
+VPCADDIEGOLD_SD_VL                                 Cadillac (Gold) – Side Vending (Lit)
+VPCADDIEGOLD_TP                                    Cadillac (Gold) – Top
+VPCADDIEGOLD_TP_DMG                                Cadillac (Gold) – Top Damaged
+VPCADDIEGOLD_TP_VL                                 Cadillac (Gold) – Top Vending (Lit)
+VPCADDIEGREEN_BK                                   Cadillac (Green) – Back
+VPCADDIEGREEN_BK_DMG                               Cadillac (Green) – Back Damaged
+VPCADDIEGREEN_BK_VL                                Cadillac (Green) – Back Vending (Lit)
+VPCADDIEGREEN_FT                                   Cadillac (Green) – Front
+VPCADDIEGREEN_FT_DMG                               Cadillac (Green) – Front Damaged
+VPCADDIEGREEN_FT_VL                                Cadillac (Green) – Front Vending (Lit)
+VPCADDIEGREEN_SD                                   Cadillac (Green) – Side
+VPCADDIEGREEN_SD_DMG                               Cadillac (Green) – Side Damaged
+VPCADDIEGREEN_SD_VL                                Cadillac (Green) – Side Vending (Lit)
+VPCADDIEGREEN_TP                                   Cadillac (Green) – Top
+VPCADDIEGREEN_TP_DMG                               Cadillac (Green) – Top Damaged
+VPCADDIEGREEN_TP_VL                                Cadillac (Green) – Top Vending (Lit)
+VPCADDIERED_BK                                     Cadillac (Red) – Back
+VPCADDIERED_BK_DMG                                 Cadillac (Red) – Back Damaged
+VPCADDIERED_BK_VL                                  Cadillac (Red) – Back Vending (Lit)
+VPCADDIERED_FT                                     Cadillac (Red) – Front
+VPCADDIERED_FT_DMG                                 Cadillac (Red) – Front Damaged
+VPCADDIERED_FT_VL                                  Cadillac (Red) – Front Vending (Lit)
+VPCADDIERED_SD                                     Cadillac (Red) – Side
+VPCADDIERED_SD_DMG                                 Cadillac (Red) – Side Damaged
+VPCADDIERED_SD_VL                                  Cadillac (Red) – Side Vending (Lit)
+VPCADDIERED_TP                                     Cadillac (Red) – Top
+VPCADDIERED_TP_DMG                                 Cadillac (Red) – Top Damaged
+VPCADDIERED_TP_VL                                  Cadillac (Red) – Top Vending (Lit)
+VPCAD_DASHL                                        Cad – Dashboard Left
+VPCAD_DASHM                                        Cad – Dashboard Mid
+VPCAD_DASHR                                        Cad – Dashboard Right
+VPCAD_DASHWHL                                      Cad – Dashwhl
+VPCAD_DASNEEDLE                                    Cad – Dasneedle
+VPCAD_WHL                                          Cad – Wheel
+VPCOPLIGHTS                                        Police Car Lights
+VPCOP_BK                                           Police Car – Back
+VPCOP_BK_DMG                                       Police Car – Back Damaged
+VPCOP_BK_VL                                        Police Car – Back Vending (Lit)
+VPCOP_DASHL                                        Police Car – Dashboard Left
+VPCOP_DASHM                                        Police Car – Dashboard Mid
+VPCOP_DASHR                                        Police Car – Dashboard Right
+VPCOP_FT                                           Police Car – Front
+VPCOP_FT_DMG                                       Police Car – Front Damaged
+VPCOP_FT_VL                                        Police Car – Front Vending (Lit)
+VPCOP_SDLFT                                        Police Car – Side Left
+VPCOP_SDLFT_DMG                                    Police Car – Side Left Damaged
+VPCOP_SDRGT                                        Police Car – Side Right
+VPCOP_SDRGT_DMG                                    Police Car – Side Right Damaged
+VPCOP_SD_VL                                        Police Car – Side Vending (Lit)
+VPCOP_SNEEDLE                                      Police Car – Speedometer Needle
+VPCOP_STRWHEEL                                     Police Car – Steering Wheel
+VPCOP_TOPLIGHT                                     Police Car Top Light
+VPCOP_TPBK                                         Police Car – Top Back
+VPCOP_TPBK_DMG                                     Police Car – Top Back Damaged
+VPCOP_TPFT                                         Police Car – Top Front
+VPCOP_TPFT_DMG                                     Police Car – Top Front Damaged
+VPCOP_TP_VL                                        Police Car – Top Vending (Lit)
+VPCOP_WHL                                          Police Car – Wheel
+VPF350BLACK_BK                                     Ford F-350 (Black) – Back
+VPF350BLACK_BK_DMG                                 Ford F-350 (Black) – Back Damaged
+VPF350BLACK_BK_VL                                  Ford F-350 (Black) – Back Vending (Lit)
+VPF350BLACK_FT                                     Ford F-350 (Black) – Front
+VPF350BLACK_FT_DMG                                 Ford F-350 (Black) – Front Damaged
+VPF350BLACK_FT_VL                                  Ford F-350 (Black) – Front Vending (Lit)
+VPF350BLACK_SD                                     Ford F-350 (Black) – Side
+VPF350BLACK_SD_DMG                                 Ford F-350 (Black) – Side Damaged
+VPF350BLACK_SD_VL                                  Ford F-350 (Black) – Side Vending (Lit)
+VPF350BLACK_TP                                     Ford F-350 (Black) – Top
+VPF350BLACK_TP_DMG                                 Ford F-350 (Black) – Top Damaged
+VPF350BLACK_TP_VL                                  Ford F-350 (Black) – Top Vending (Lit)
+VPF350BLUE_BK                                      Ford F-350 (Blue) – Back
+VPF350BLUE_BK_DMG                                  Ford F-350 (Blue) – Back Damaged
+VPF350BLUE_BK_VL                                   Ford F-350 (Blue) – Back Vending (Lit)
+VPF350BLUE_FT                                      Ford F-350 (Blue) – Front
+VPF350BLUE_FT_DMG                                  Ford F-350 (Blue) – Front Damaged
+VPF350BLUE_FT_VL                                   Ford F-350 (Blue) – Front Vending (Lit)
+VPF350BLUE_SD                                      Ford F-350 (Blue) – Side
+VPF350BLUE_SD_DMG                                  Ford F-350 (Blue) – Side Damaged
+VPF350BLUE_SD_VL                                   Ford F-350 (Blue) – Side Vending (Lit)
+VPF350BLUE_TP                                      Ford F-350 (Blue) – Top
+VPF350BLUE_TP_DMG                                  Ford F-350 (Blue) – Top Damaged
+VPF350BLUE_TP_VL                                   Ford F-350 (Blue) – Top Vending (Lit)
+VPF350RED_BK                                       Ford F-350 (Red) – Back
+VPF350RED_BK_DMG                                   Ford F-350 (Red) – Back Damaged
+VPF350RED_BK_VL                                    Ford F-350 (Red) – Back Vending (Lit)
+VPF350RED_FT                                       Ford F-350 (Red) – Front
+VPF350RED_FT_DMG                                   Ford F-350 (Red) – Front Damaged
+VPF350RED_FT_VL                                    Ford F-350 (Red) – Front Vending (Lit)
+VPF350RED_SD                                       Ford F-350 (Red) – Side
+VPF350RED_SD_DMG                                   Ford F-350 (Red) – Side Damaged
+VPF350RED_SD_VL                                    Ford F-350 (Red) – Side Vending (Lit)
+VPF350RED_TP                                       Ford F-350 (Red) – Top
+VPF350RED_TP_DMG                                   Ford F-350 (Red) – Top Damaged
+VPF350RED_TP_VL                                    Ford F-350 (Red) – Top Vending (Lit)
+VPF350SHDW                                         Ford F-350 Shadow
+VPF350WHITE_BK                                     Ford F-350 (White) – Back
+VPF350WHITE_BK_DMG                                 Ford F-350 (White) – Back Damaged
+VPF350WHITE_BK_VL                                  Ford F-350 (White) – Back Vending (Lit)
+VPF350WHITE_FT                                     Ford F-350 (White) – Front
+VPF350WHITE_FT_DMG                                 Ford F-350 (White) – Front Damaged
+VPF350WHITE_FT_VL                                  Ford F-350 (White) – Front Vending (Lit)
+VPF350WHITE_SD                                     Ford F-350 (White) – Side
+VPF350WHITE_SD_DMG                                 Ford F-350 (White) – Side Damaged
+VPF350WHITE_SD_VL                                  Ford F-350 (White) – Side Vending (Lit)
+VPF350WHITE_TP                                     Ford F-350 (White) – Top
+VPF350WHITE_TP_DMG                                 Ford F-350 (White) – Top Damaged
+VPF350WHITE_TP_VL                                  Ford F-350 (White) – Top Vending (Lit)
+VPF350_BD                                          Ford F-350 Body
+VPFRD_WHLFT                                        Ford Wheel Front
+VPFSHDW                                            Ford Shadow
+VPFWHL                                             Ford Wheel
+VPMUSTANG99_DASHL                                  Mustang99 – Dashboard Left
+VPMUSTANG99_DASHM                                  Mustang99 – Dashboard Mid
+VPMUSTANG99_DASHR                                  Mustang99 – Dashboard Right
+VPMUSTANG99_SNEEDLE                                Mustang99 – Speedometer Needle
+VPMUSTANG99_STRWHEEL                               Mustang99 – Steering Wheel
+VPMUSTANGGREEN_BK                                  Mustang (Green) – Back
+VPMUSTANGGREEN_BK_DMG                              Mustang (Green) – Back Damaged
+VPMUSTANGGREEN_BK_VL                               Mustang (Green) – Back Vending (Lit)
+VPMUSTANGGREEN_FT                                  Mustang (Green) – Front
+VPMUSTANGGREEN_FT_DMG                              Mustang (Green) – Front Damaged
+VPMUSTANGGREEN_FT_VL                               Mustang (Green) – Front Vending (Lit)
+VPMUSTANGGREEN_SD                                  Mustang (Green) – Side
+VPMUSTANGGREEN_SD_DMG                              Mustang (Green) – Side Damaged
+VPMUSTANGGREEN_SD_VL                               Mustang (Green) – Side Vending (Lit)
+VPMUSTANGGREEN_TPBK                                Mustang (Green) – Top Back
+VPMUSTANGGREEN_TPBK_DMG                            Mustang (Green) – Top Back Damaged
+VPMUSTANGGREEN_TPFT                                Mustang (Green) – Top Front
+VPMUSTANGGREEN_TPFT_DMG                            Mustang (Green) – Top Front Damaged
+VPMUSTANGGREEN_TP_VL                               Mustang (Green) – Top Vending (Lit)
+VPMUSTANGOPAL_BK                                   Mustangopal – Back
+VPMUSTANGOPAL_BK_DMG                               Mustangopal – Back Damaged
+VPMUSTANGOPAL_BK_VL                                Mustangopal – Back Vending (Lit)
+VPMUSTANGOPAL_FT                                   Mustangopal – Front
+VPMUSTANGOPAL_FT_DMG                               Mustangopal – Front Damaged
+VPMUSTANGOPAL_FT_VL                                Mustangopal – Front Vending (Lit)
+VPMUSTANGOPAL_SD                                   Mustangopal – Side
+VPMUSTANGOPAL_SD_DMG                               Mustangopal – Side Damaged
+VPMUSTANGOPAL_SD_VL                                Mustangopal – Side Vending (Lit)
+VPMUSTANGOPAL_TPBK                                 Mustangopal – Top Back
+VPMUSTANGOPAL_TPBK_DMG                             Mustangopal – Top Back Damaged
+VPMUSTANGOPAL_TPFT                                 Mustangopal – Top Front
+VPMUSTANGOPAL_TPFT_DMG                             Mustangopal – Top Front Damaged
+VPMUSTANGOPAL_TP_VL                                Mustangopal – Top Vending (Lit)
+VPMUSTANGRED_BK                                    Mustang (Red) – Back
+VPMUSTANGRED_BK_DMG                                Mustang (Red) – Back Damaged
+VPMUSTANGRED_BK_VL                                 Mustang (Red) – Back Vending (Lit)
+VPMUSTANGRED_FT                                    Mustang (Red) – Front
+VPMUSTANGRED_FT_DMG                                Mustang (Red) – Front Damaged
+VPMUSTANGRED_FT_VL                                 Mustang (Red) – Front Vending (Lit)
+VPMUSTANGRED_SD                                    Mustang (Red) – Side
+VPMUSTANGRED_SD_DMG                                Mustang (Red) – Side Damaged
+VPMUSTANGRED_SD_VL                                 Mustang (Red) – Side Vending (Lit)
+VPMUSTANGRED_TPBK                                  Mustang (Red) – Top Back
+VPMUSTANGRED_TPBK_DMG                              Mustang (Red) – Top Back Damaged
+VPMUSTANGRED_TPFT                                  Mustang (Red) – Top Front
+VPMUSTANGRED_TPFT_DMG                              Mustang (Red) – Top Front Damaged
+VPMUSTANGRED_TP_VL                                 Mustang (Red) – Top Vending (Lit)
+VPMUSTANGYELLOW_BK                                 Mustang (Yellow) – Back
+VPMUSTANGYELLOW_BK_DMG                             Mustang (Yellow) – Back Damaged
+VPMUSTANGYELLOW_BK_VL                              Mustang (Yellow) – Back Vending (Lit)
+VPMUSTANGYELLOW_FT                                 Mustang (Yellow) – Front
+VPMUSTANGYELLOW_FT_DMG                             Mustang (Yellow) – Front Damaged
+VPMUSTANGYELLOW_FT_VL                              Mustang (Yellow) – Front Vending (Lit)
+VPMUSTANGYELLOW_SD                                 Mustang (Yellow) – Side
+VPMUSTANGYELLOW_SD_DMG                             Mustang (Yellow) – Side Damaged
+VPMUSTANGYELLOW_SD_VL                              Mustang (Yellow) – Side Vending (Lit)
+VPMUSTANGYELLOW_TPBK                               Mustang (Yellow) – Top Back
+VPMUSTANGYELLOW_TPBK_DMG                           Mustang (Yellow) – Top Back Damaged
+VPMUSTANGYELLOW_TPFT                               Mustang (Yellow) – Top Front
+VPMUSTANGYELLOW_TPFT_DMG                           Mustang (Yellow) – Top Front Damaged
+VPMUSTANGYELLOW_TP_VL                              Mustang (Yellow) – Top Vending (Lit)
+VPPANOZBLUE_BK                                     Panoz GTR-1 (Blue) – Back
+VPPANOZBLUE_BK_DMG                                 Panoz GTR-1 (Blue) – Back Damaged
+VPPANOZBLUE_BK_VL                                  Panoz GTR-1 (Blue) – Back Vending (Lit)
+VPPANOZBLUE_FNDR                                   Panoz GTR-1 (Blue) – Fndr
+VPPANOZBLUE_FNDR_DMG                               Panoz GTR-1 (Blue) – Fndr Damaged
+VPPANOZBLUE_FT                                     Panoz GTR-1 (Blue) – Front
+VPPANOZBLUE_FT_DMG                                 Panoz GTR-1 (Blue) – Front Damaged
+VPPANOZBLUE_FT_VL                                  Panoz GTR-1 (Blue) – Front Vending (Lit)
+VPPANOZBLUE_SD                                     Panoz GTR-1 (Blue) – Side
+VPPANOZBLUE_SD_DMG                                 Panoz GTR-1 (Blue) – Side Damaged
+VPPANOZBLUE_SD_VL                                  Panoz GTR-1 (Blue) – Side Vending (Lit)
+VPPANOZBLUE_TP                                     Panoz GTR-1 (Blue) – Top
+VPPANOZBLUE_TP_DMG                                 Panoz GTR-1 (Blue) – Top Damaged
+VPPANOZBLUE_TP_VL                                  Panoz GTR-1 (Blue) – Top Vending (Lit)
+VPPANOZGREEN_BK                                    Panoz GTR-1 (Green) – Back
+VPPANOZGREEN_BK_DMG                                Panoz GTR-1 (Green) – Back Damaged
+VPPANOZGREEN_BK_VL                                 Panoz GTR-1 (Green) – Back Vending (Lit)
+VPPANOZGREEN_FNDR                                  Panoz GTR-1 (Green) – Fndr
+VPPANOZGREEN_FNDR_DMG                              Panoz GTR-1 (Green) – Fndr Damaged
+VPPANOZGREEN_FT                                    Panoz GTR-1 (Green) – Front
+VPPANOZGREEN_FT_DMG                                Panoz GTR-1 (Green) – Front Damaged
+VPPANOZGREEN_FT_VL                                 Panoz GTR-1 (Green) – Front Vending (Lit)
+VPPANOZGREEN_SD                                    Panoz GTR-1 (Green) – Side
+VPPANOZGREEN_SD_DMG                                Panoz GTR-1 (Green) – Side Damaged
+VPPANOZGREEN_SD_VL                                 Panoz GTR-1 (Green) – Side Vending (Lit)
+VPPANOZGREEN_TP                                    Panoz GTR-1 (Green) – Top
+VPPANOZGREEN_TP_DMG                                Panoz GTR-1 (Green) – Top Damaged
+VPPANOZGREEN_TP_VL                                 Panoz GTR-1 (Green) – Top Vending (Lit)
+VPPANOZGTPURPLE_BK                                 Panozgtpurple – Back
+VPPANOZGTPURPLE_BK_DMG                             Panozgtpurple – Back Damaged
+VPPANOZGTPURPLE_BK_VL                              Panozgtpurple – Back Vending (Lit)
+VPPANOZGTPURPLE_FT                                 Panozgtpurple – Front
+VPPANOZGTPURPLE_FT_DMG                             Panozgtpurple – Front Damaged
+VPPANOZGTPURPLE_FT_VL                              Panozgtpurple – Front Vending (Lit)
+VPPANOZGTPURPLE_SDLFTA                             Panozgtpurple – Sdlfta
+VPPANOZGTPURPLE_SDLFTA_DMG                         Panozgtpurple – Sdlfta Damaged
+VPPANOZGTPURPLE_SDLFTB                             Panozgtpurple – Sdlftb
+VPPANOZGTPURPLE_SDLFTB_DMG                         Panozgtpurple – Sdlftb Damaged
+VPPANOZGTPURPLE_SDRGTA                             Panozgtpurple – Sdrgta
+VPPANOZGTPURPLE_SDRGTA_DMG                         Panozgtpurple – Sdrgta Damaged
+VPPANOZGTPURPLE_SDRGTB                             Panozgtpurple – Sdrgtb
+VPPANOZGTPURPLE_SDRGTB_DMG                         Panozgtpurple – Sdrgtb Damaged
+VPPANOZGTPURPLE_SD_VL                              Panozgtpurple – Side Vending (Lit)
+VPPANOZGTPURPLE_TP_VL                              Panozgtpurple – Top Vending (Lit)
+VPPANOZGTRED_BK                                    Panozgtred – Back
+VPPANOZGTRED_BK_DMG                                Panozgtred – Back Damaged
+VPPANOZGTRED_BK_VL                                 Panozgtred – Back Vending (Lit)
+VPPANOZGTRED_FT                                    Panozgtred – Front
+VPPANOZGTRED_FT_DMG                                Panozgtred – Front Damaged
+VPPANOZGTRED_FT_VL                                 Panozgtred – Front Vending (Lit)
+VPPANOZGTRED_SDLFTA                                Panozgtred – Sdlfta
+VPPANOZGTRED_SDLFTA_DMG                            Panozgtred – Sdlfta Damaged
+VPPANOZGTRED_SDLFTB                                Panozgtred – Sdlftb
+VPPANOZGTRED_SDLFTB_DMG                            Panozgtred – Sdlftb Damaged
+VPPANOZGTRED_SDRGTA                                Panozgtred – Sdrgta
+VPPANOZGTRED_SDRGTA_DMG                            Panozgtred – Sdrgta Damaged
+VPPANOZGTRED_SDRGTB                                Panozgtred – Sdrgtb
+VPPANOZGTRED_SDRGTB_DMG                            Panozgtred – Sdrgtb Damaged
+VPPANOZGTRED_SD_VL                                 Panozgtred – Side Vending (Lit)
+VPPANOZGTRED_TP_VL                                 Panozgtred – Top Vending (Lit)
+VPPANOZGTWHL                                       Panozgtwhl
+VPPANOZGTYELLOW_BK                                 Panozgtyellow – Back
+VPPANOZGTYELLOW_BK_DMG                             Panozgtyellow – Back Damaged
+VPPANOZGTYELLOW_BK_VL                              Panozgtyellow – Back Vending (Lit)
+VPPANOZGTYELLOW_FT                                 Panozgtyellow – Front
+VPPANOZGTYELLOW_FT_DMG                             Panozgtyellow – Front Damaged
+VPPANOZGTYELLOW_FT_VL                              Panozgtyellow – Front Vending (Lit)
+VPPANOZGTYELLOW_SDLFTA                             Panozgtyellow – Sdlfta
+VPPANOZGTYELLOW_SDLFTA_DMG                         Panozgtyellow – Sdlfta Damaged
+VPPANOZGTYELLOW_SDLFTB                             Panozgtyellow – Sdlftb
+VPPANOZGTYELLOW_SDLFTB_DMG                         Panozgtyellow – Sdlftb Damaged
+VPPANOZGTYELLOW_SDRGTA                             Panozgtyellow – Sdrgta
+VPPANOZGTYELLOW_SDRGTA_DMG                         Panozgtyellow – Sdrgta Damaged
+VPPANOZGTYELLOW_SDRGTB                             Panozgtyellow – Sdrgtb
+VPPANOZGTYELLOW_SDRGTB_DMG                         Panozgtyellow – Sdrgtb Damaged
+VPPANOZGTYELLOW_SD_VL                              Panozgtyellow – Side Vending (Lit)
+VPPANOZGTYELLOW_TP_VL                              Panozgtyellow – Top Vending (Lit)
+VPPANOZGT_BK                                       Panozgt – Back
+VPPANOZGT_BK_DMG                                   Panozgt – Back Damaged
+VPPANOZGT_BK_VL                                    Panozgt – Back Vending (Lit)
+VPPANOZGT_DASHL                                    Panozgt – Dashboard Left
+VPPANOZGT_DASHM                                    Panozgt – Dashboard Mid
+VPPANOZGT_DASHR                                    Panozgt – Dashboard Right
+VPPANOZGT_FT                                       Panozgt – Front
+VPPANOZGT_FT_DMG                                   Panozgt – Front Damaged
+VPPANOZGT_FT_VL                                    Panozgt – Front Vending (Lit)
+VPPANOZGT_NEEDLE                                   Panozgt – Needle
+VPPANOZGT_SDLFTA                                   Panozgt – Sdlfta
+VPPANOZGT_SDLFTA_DMG                               Panozgt – Sdlfta Damaged
+VPPANOZGT_SDLFTB                                   Panozgt – Sdlftb
+VPPANOZGT_SDLFTB_DMG                               Panozgt – Sdlftb Damaged
+VPPANOZGT_SDRGTA                                   Panozgt – Sdrgta
+VPPANOZGT_SDRGTA_DMG                               Panozgt – Sdrgta Damaged
+VPPANOZGT_SDRGTB                                   Panozgt – Sdrgtb
+VPPANOZGT_SDRGTB_DMG                               Panozgt – Sdrgtb Damaged
+VPPANOZGT_SD_VL                                    Panozgt – Side Vending (Lit)
+VPPANOZGT_STRWHEEL                                 Panozgt – Steering Wheel
+VPPANOZGT_TP_VL                                    Panozgt – Top Vending (Lit)
+VPPANOZMAGENTA_BK                                  Panozmagenta – Back
+VPPANOZMAGENTA_BK_DMG                              Panozmagenta – Back Damaged
+VPPANOZMAGENTA_BK_VL                               Panozmagenta – Back Vending (Lit)
+VPPANOZMAGENTA_FNDR                                Panozmagenta – Fndr
+VPPANOZMAGENTA_FNDR_DMG                            Panozmagenta – Fndr Damaged
+VPPANOZMAGENTA_FT                                  Panozmagenta – Front
+VPPANOZMAGENTA_FT_DMG                              Panozmagenta – Front Damaged
+VPPANOZMAGENTA_FT_VL                               Panozmagenta – Front Vending (Lit)
+VPPANOZMAGENTA_SD                                  Panozmagenta – Side
+VPPANOZMAGENTA_SD_DMG                              Panozmagenta – Side Damaged
+VPPANOZMAGENTA_SD_VL                               Panozmagenta – Side Vending (Lit)
+VPPANOZMAGENTA_TP                                  Panozmagenta – Top
+VPPANOZMAGENTA_TP_DMG                              Panozmagenta – Top Damaged
+VPPANOZMAGENTA_TP_VL                               Panozmagenta – Top Vending (Lit)
+VPPANOZRED_BK                                      Panoz GTR-1 (Red) – Back
+VPPANOZRED_BK_DMG                                  Panoz GTR-1 (Red) – Back Damaged
+VPPANOZRED_BK_VL                                   Panoz GTR-1 (Red) – Back Vending (Lit)
+VPPANOZRED_FNDR                                    Panoz GTR-1 (Red) – Fndr
+VPPANOZRED_FNDR_DMG                                Panoz GTR-1 (Red) – Fndr Damaged
+VPPANOZRED_FT                                      Panoz GTR-1 (Red) – Front
+VPPANOZRED_FT_DMG                                  Panoz GTR-1 (Red) – Front Damaged
+VPPANOZRED_FT_VL                                   Panoz GTR-1 (Red) – Front Vending (Lit)
+VPPANOZRED_SD                                      Panoz GTR-1 (Red) – Side
+VPPANOZRED_SD_DMG                                  Panoz GTR-1 (Red) – Side Damaged
+VPPANOZRED_SD_VL                                   Panoz GTR-1 (Red) – Side Vending (Lit)
+VPPANOZRED_TP                                      Panoz GTR-1 (Red) – Top
+VPPANOZRED_TP_DMG                                  Panoz GTR-1 (Red) – Top Damaged
+VPPANOZRED_TP_VL                                   Panoz GTR-1 (Red) – Top Vending (Lit)
+VPPANOZSHDW                                        Panozshdw
+VPSEMIBLUE_BK                                      Semiblue – Back
+VPSEMIBLUE_BK_DMG                                  Semiblue – Back Damaged
+VPSEMIBLUE_BK_VL                                   Semiblue – Back Vending (Lit)
+VPSEMIBLUE_FT                                      Semiblue – Front
+VPSEMIBLUE_FT_DMG                                  Semiblue – Front Damaged
+VPSEMIBLUE_FT_VL                                   Semiblue – Front Vending (Lit)
+VPSEMIBLUE_SD                                      Semiblue – Side
+VPSEMIBLUE_SD_DMG                                  Semiblue – Side Damaged
+VPSEMIBLUE_SD_VL                                   Semiblue – Side Vending (Lit)
+VPSEMIGREY_BK                                      Semigrey – Back
+VPSEMIGREY_BK_DMG                                  Semigrey – Back Damaged
+VPSEMIGREY_BK_VL                                   Semigrey – Back Vending (Lit)
+VPSEMIGREY_FT                                      Semigrey – Front
+VPSEMIGREY_FT_DMG                                  Semigrey – Front Damaged
+VPSEMIGREY_FT_VL                                   Semigrey – Front Vending (Lit)
+VPSEMIGREY_SD                                      Semigrey – Side
+VPSEMIGREY_SD_DMG                                  Semigrey – Side Damaged
+VPSEMIGREY_SD_VL                                   Semigrey – Side Vending (Lit)
+VPSEMIORANGE_BK                                    Semiorange – Back
+VPSEMIORANGE_BK_DMG                                Semiorange – Back Damaged
+VPSEMIORANGE_BK_VL                                 Semiorange – Back Vending (Lit)
+VPSEMIORANGE_FT                                    Semiorange – Front
+VPSEMIORANGE_FT_DMG                                Semiorange – Front Damaged
+VPSEMIORANGE_FT_VL                                 Semiorange – Front Vending (Lit)
+VPSEMIORANGE_SD                                    Semiorange – Side
+VPSEMIORANGE_SD_DMG                                Semiorange – Side Damaged
+VPSEMIORANGE_SD_VL                                 Semiorange – Side Vending (Lit)
+VPSEMIRED_BK                                       Semired – Back
+VPSEMIRED_BK_DMG                                   Semired – Back Damaged
+VPSEMIRED_BK_VL                                    Semired – Back Vending (Lit)
+VPSEMIRED_FT                                       Semired – Front
+VPSEMIRED_FT_DMG                                   Semired – Front Damaged
+VPSEMIRED_FT_VL                                    Semired – Front Vending (Lit)
+VPSEMIRED_SD                                       Semired – Side
+VPSEMIRED_SD_DMG                                   Semired – Side Damaged
+VPSEMIRED_SD_VL                                    Semired – Side Vending (Lit)
+VPSEMI_DASHL                                       Semi – Dashboard Left
+VPSEMI_DASHM                                       Semi – Dashboard Mid
+VPSEMI_DASHR                                       Semi – Dashboard Right
+VPSEMI_SNEEDLE                                     Semi – Speedometer Needle
+VPSEMI_STRWHEEL                                    Semi – Steering Wheel
+VPSEMI_TRAILER_BED                                 Semi – Trailer Bed
+VPSEMI_TRAILER_BED_VL                              Semi – Trailer Bed Vending (Lit)
+VPSEMI_WHLFT                                       Semi – Wheel Front
+VPTRUCK_DASHL                                      Truck – Dashboard Left
+VPTRUCK_DASHM                                      Truck – Dashboard Mid
+VPTRUCK_DASHR                                      Truck – Dashboard Right
+VPTRUCK_NEEDLE                                     Truck – Needle
+VPTRUCK_STRWHEEL                                   Truck – Steering Wheel
+VW_DASHL                                           Vw Dashl
+VW_DASHM                                           Vw Dashm
+VW_DASHR                                           Vw Dashr
+VW_SNEEDLE                                         Vw Sneedle
+VW_STRWHEEL                                        Vw Strwheel
+WOMFACE                                            Womface

@@ -36,7 +36,8 @@ from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_N
 from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.car_editor import CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
-from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling
+from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling, update_texture_category, OBJECT_OT_RefreshCurrentTextures
+from src.integrations.blender.modeling.texture_catalog import CATEGORY_ITEMS
 from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
 from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
 from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FACADE_NAME_ITEMS, FACADE_FLAGS_ITEMS, _update_facade_form
@@ -64,6 +65,7 @@ PANEL_CLASSES = [
 
 OPERATOR_CLASSES = [
     OBJECT_OT_UpdateUVMapping,
+    OBJECT_OT_RefreshCurrentTextures,
     OBJECT_OT_ExportPolygons,
     OBJECT_OT_AssignCustomProperties,
     OBJECT_OT_ProcessPostExtrude,
@@ -105,6 +107,7 @@ OBJECT_PROPERTIES = [
 ]
 
 SCENE_PROPERTIES = [
+    "texture_category",
     "replace_in_script",
     "polygon_create_width",
     "polygon_create_length",
@@ -389,6 +392,13 @@ def register_road_builder_properties() -> None:
 
 
 def register_scene_properties() -> None:
+    bpy.types.Scene.texture_category = bpy.props.EnumProperty(
+        name="Texture List",
+        description="Filter which textures appear in the Texture dropdown",
+        items=CATEGORY_ITEMS,
+        default="CURRENT",
+        update=update_texture_category,
+    )
     bpy.types.Scene.replace_in_script = bpy.props.BoolProperty(
         name="Replace in Script",
         description="When exporting all polygons, also replace the create_polygon / save_mesh section in MAP_EDITOR_ALPHA_v1.py",
