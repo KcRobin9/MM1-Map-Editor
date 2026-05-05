@@ -103,13 +103,14 @@ class Facades:
         return f"{flags} ({' | '.join(active) if active else 'NONE'})"
 
     def __repr__(self):
+        def v(vec): return f"{vec.x:.2f}, {vec.y:.2f}, {vec.z:.2f}"
         return f"""
 FACADE
-    Room: {self.room}
-    Flags: {self._flags_str(self.flags)}
-    Offset: {self.offset}
-    Face: {self.face}
-    Sides: {self.sides}
-    Scale: {self.scale:.2f}
-    Name: {self.name}
+    Room:\t{self.room}
+    Flags:\t{self._flags_str(self.flags)}
+    Offset:\t{v(self.offset)}
+    Face:\t{v(self.face)}
+    Sides:\t{v(self.sides)}
+    Scale:\t{self.scale:.2f}
+    Name:\t{self.name}
     """

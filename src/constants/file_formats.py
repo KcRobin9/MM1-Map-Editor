@@ -181,7 +181,8 @@ class FileType:
     AI_MAP = ".map"
     AI_STREET = ".road"
     AI_INTERSECTION = ".int"
-        
+    AI = ".BAI"
+
     CSV = ".CSV"
     TEXT = ".txt"
     HTML = "html"

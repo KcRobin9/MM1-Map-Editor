@@ -40,9 +40,9 @@ def read_ai(input_file: Path):
         
         # TODO: adjust or remove this (i.e. get the actual object name)
         if path.intersection_type == IntersectionType.STOP:
-            assert path.stop_light_name == Prop.STOP_SIGN  
+            assert path.stop_light_name == Prop.SIGN_STOP
         else:
-            assert path.stop_light_name in [Prop.STOP_LIGHT_SINGLE, Prop.STOP_LIGHT_DUAL]   
+            assert path.stop_light_name in [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL]
 
         sink_isect = path.lane_vertices[0]
         source_isect = path.lane_vertices[path.num_vertexes - 1]
@@ -136,7 +136,7 @@ def validate_and_prepare_ai_paths(streets) -> List[Any]:
                 b = paths[0].boundaries[paths[0].num_vertexes + n - 1]
                 c = paths[0].boundaries[paths[0].num_vertexes + n]
 
-                normal = calc_normal(a, b, c)
+                normal = Vector3.calc_normal(a, b, c)
                 angle = math.degrees(target.Angle(normal))
 
                 if angle > 0.01:

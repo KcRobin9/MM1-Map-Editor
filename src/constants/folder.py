@@ -92,6 +92,8 @@ class Folder:
 
     class Debug:
         Root     = _DEBUG
+        Input    = _DEBUG / "input"
+        Output   = _DEBUG / "output"
         AI       = _DEBUG / "AI"
         Bounds   = _DEBUG / "BOUNDS"
         DLP      = _DEBUG / "DLP"

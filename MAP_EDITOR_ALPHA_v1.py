@@ -53,6 +53,7 @@ from src.core.geometry.planes import ensure_ccw_order, ensure_quad_ccw_order, co
 
 # Debug imports
 from src.debug.main import Debug
+from src.debug.auto import run_auto_debug
 
 # File format imports
 from src.file_formats.ai.read_write import debug_ai
@@ -133,10 +134,7 @@ from src.USER.settings.advanced import (
 
 from src.USER.settings.debug import (
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
-    debug_props_file, debug_props_file_to_csv, debug_facades_file, debug_portals_file, debug_ai_file, debug_lighting_file, debug_physics_file,
-    debug_meshes_file, debug_meshes_folder, debug_bounds_file, debug_bounds_folder, debug_dlp_file, debug_dlp_folder,
-    debug_props_data_file, debug_facades_data_file, debug_portals_data_file, debug_ai_data_file, debug_physics_data_file,
-    debug_meshes_data_file, debug_meshes_data_folder, debug_bounds_data_file, debug_bounds_data_folder, debug_dlp_data_file, debug_dlp_data_folder,
+    auto_debug,
 )
 
 from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights, bulk_bms_folders
@@ -2258,17 +2256,19 @@ class Portals:
         print(f"Processed {input_file.name} to {output_file.name}")
             
     def __repr__(self):
-            return f"""
+        def v(vec): return f"{vec.x:.2f}, {vec.y:.2f}, {vec.z:.2f}"
+        vertex_c_line = f"    Vertex C\t{v(self.vertex_c)}" if self.vertex_c is not None else ""
+        return f"""
 PORTAL
-    Flags: {self.flags}
-    EdgeCount: {self.edge_count}
-    Gap 2: {self.gap_2}
-    Cell 1: {self.cell_1}
-    Cell 2: {self.cell_2}
-    Height: {self.height:.2f}
-    Min: {self._min}
-    Max: {self._max}
-    {'Vertex C ' + str(self.vertex_c) if self.vertex_c is not None else ''}"""
+    Flags:\t\t{self.flags}
+    EdgeCount:\t{self.edge_count}
+    Gap 2:\t\t{self.gap_2}
+    Cell 1:\t\t{self.cell_1}
+    Cell 2:\t\t{self.cell_2}
+    Height:\t\t{self.height:.2f}
+    Min:\t\t{v(self._min)}
+    Max:\t\t{v(self._max)}
+{vertex_c_line}"""
  
 ################################################################################################################               
 ###############################################################################################################
@@ -2484,12 +2484,6 @@ Physics.edit(
     debug_physics
 )
 
-Physics.debug_file(
-    debug_physics_data_file,
-    Folder.Resources.User.Physics / "PHYSICS_DB.txt",
-    debug_physics_file
-)
-
 TextureSheet.append_custom_textures(
     Folder.Resources.Editor.MTL / "GLOBAL.TSH", 
     Folder.Src.User.Textures.Custom, 
@@ -2513,7 +2507,6 @@ prop_editor.process_all(prop_list, set_props)
 lighting_instances = Lighting.read_all(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")  # Read original
 Lighting.write_all(lighting_instances, lighting_configs, Folder.Shop.Tune / "LIGHTING.CSV")  # Tweak and write new file
 Lighting.debug(lighting_instances, Folder.Resources.User.Lighting / "LIGHTING_self.txt", debug_lighting)
-Lighting.debug_file(Folder.Resources.Editor.Lighting / "LIGHTING.CSV", Folder.Resources.User.Lighting / "LIGHTING.txt", debug_lighting_file)
 
 create_extrema(f"{Folder.Shop.Map.City}{FileType.EXTREMA}", hudmap_vertices)
 create_animations(Folder.Shop.Map.City, animations_data, set_animations)   
@@ -2537,26 +2530,8 @@ DLP(
 
 editor = BangerEditor()
 
-# File debuggingd
-Bounds.debug_file(debug_bounds_data_file, Folder.Debug.Bounds / debug_bounds_data_file.with_suffix(FileType.TEXT), debug_bounds_file)
-Meshes.debug_file(debug_meshes_data_file, Folder.Debug.Meshes / debug_meshes_data_file.with_suffix(FileType.TEXT), debug_meshes_file)
-Bangers.debug_file(debug_props_data_file, Folder.Debug.Props / debug_props_data_file.with_suffix(FileType.TEXT), debug_props_file)
-Bangers.debug_file_to_csv(debug_props_data_file, Folder.Debug.Props / debug_props_data_file.with_suffix(FileType.CSV), debug_props_file_to_csv)
-Facades.debug_file(debug_facades_data_file, Folder.Debug.Facades / debug_facades_data_file.with_suffix(FileType.TEXT), debug_facades_file)
-Portals.debug_file(debug_portals_data_file, Folder.Debug.Portals / debug_portals_data_file.with_suffix(FileType.TEXT), debug_portals_file)
-DLP.debug_file(debug_dlp_data_file, Folder.Debug.DLP / debug_dlp_data_file.with_suffix(FileType.TEXT), debug_dlp_file)
-
-# Folder debugging
-Meshes.debug_folder(debug_meshes_data_folder, Folder.Debug.Meshes / "MESH TEXT FILES", debug_meshes_folder) 
-Bounds.debug_folder(debug_bounds_data_folder, Folder.Debug.Bounds / "BND TEXT FILES", debug_bounds_folder)
-DLP.debug_folder(debug_dlp_data_folder, Folder.Debug.DLP / "DLP TEXT FILES", debug_dlp_folder)
-
-debug_ai(
-    debug_ai_data_file, debug_ai_file,
-    Folder.Resources.User.AI / "CHICAGO.map",                                  
-    str(Folder.Resources.User.AI / "Intersection{intersection_id}.int"),
-    str(Folder.Resources.User.AI / "Street{paths}.road")
-    )
+# Auto-debug: drop files into debug/input/ to debug them; output lands in debug/output/run_YYYYMMDD_HHMMSS/
+run_auto_debug(Bounds, Meshes, Portals, auto_debug)
 
 # Finalizing Part
 create_angel_resource_file(Folder.Shop.Root)

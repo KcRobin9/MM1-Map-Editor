@@ -122,17 +122,19 @@ class Physics:
         header = f"PHYSICS (# {idx + 1})" if idx is not None else "PHYSICS"
         name = self.name.rstrip('\x00' + 'Í')
 
+        def v2(vec): return f"{vec.x:.2f}, {vec.y:.2f}"
+        def v3(vec): return f"{vec.x:.2f}, {vec.y:.2f}, {vec.z:.2f}"
         return f"""
 {header}
-    Name: {name}
-    Friction: {self.friction:.2f},
-    Elasticity: {self.elasticity:.2f}
-    Drag: {self.drag:.2f}
-    Bump height: {self.bump_height:.2f}
-    Bump width: {self.bump_width:.2f}
-    Bump depth: {self.bump_depth:.2f}
-    Sink depth: {self.sink_depth:.2f}
-    Type: {self.type}
-    Sound: {self.sound}
-    Velocity: {self.velocity}
-    Ptx color: {self.ptx_color}"""
+    Name:\t\t{name}
+    Friction:\t{self.friction:.2f}
+    Elasticity:\t{self.elasticity:.2f}
+    Drag:\t\t{self.drag:.2f}
+    Bump height:{self.bump_height:.2f}
+    Bump width:\t{self.bump_width:.2f}
+    Bump depth:\t{self.bump_depth:.2f}
+    Sink depth:\t{self.sink_depth:.2f}
+    Type:\t\t{self.type}
+    Sound:\t\t{self.sound}
+    Velocity:\t{v2(self.velocity)}
+    Ptx color:\t{v3(self.ptx_color)}"""

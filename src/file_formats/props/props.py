@@ -107,11 +107,12 @@ class Bangers:
         print(f"Processed {input_file.name} to {output_file.name} in CSV format")
                                     
     def __repr__(self):
+        def v(vec): return f"{vec.x:.2f}, {vec.y:.2f}, {vec.z:.2f}"
         return f"""
 BANGER
-    Room: {self.room}
-    Flags: {self.flags}
-    Start: {self.offset}
-    Face: {self.face}
-    Name: {self.name}
+    Room:\t{self.room}
+    Flags:\t{self.flags}
+    Start:\t{v(self.offset)}
+    Face:\t{v(self.face)}
+    Name:\t{self.name}
     """
