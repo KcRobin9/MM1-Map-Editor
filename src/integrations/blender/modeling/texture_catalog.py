@@ -366,11 +366,12 @@ def make_friendly(name: str) -> str:
 # ── Category definitions ───────────────────────────────────────────────────────
 
 CATEGORY_ITEMS = [
-    ("CURRENT",   "Current",        "Only textures already used in the scene"),
-    ("BUILDINGS", "Buildings",      "District building textures (facades, doors, windows, bricks …)"),
-    ("ROADS",     "Roads & Terrain","Road surfaces, pavement, grass, water, snow …"),
-    ("VEHICLES",  "Vehicles",       "Car and bus textures (VP* / VA*)"),
-    ("EFFECTS",   "Effects & Sky",  "Sky, reflections, particles, explosions, shadow maps …"),
+    ("CURRENT",     "Current",        "Only textures already used in the scene"),
+    ("RECOMMENDED", "Recommended",    "Curated list — edit src/USER/settings/recommended_textures.py"),
+    ("BUILDINGS",   "Buildings",      "District building textures (facades, doors, windows, bricks …)"),
+    ("ROADS",       "Roads & Terrain","Road surfaces, pavement, grass, water, snow …"),
+    ("VEHICLES",    "Vehicles",       "Car and bus textures (VP* / VA*)"),
+    ("EFFECTS",     "Effects & Sky",  "Sky, reflections, particles, explosions, shadow maps …"),
     ("PROPS",     "Props & Signs",  "Street furniture, signs, trees, barriers …"),
     ("ALL",       "All Textures",   "Every texture in the folder (1800+ entries — slow!)"),
 ]
@@ -468,12 +469,37 @@ def categorise(stem: str) -> str:
     return "PROPS"   # catch-all for misc items
 
 
+def build_recommended(texture_folder: Path) -> list[tuple[str, str, str]]:
+    """Build the Recommended list from src/USER/settings/recommended_textures.py.
+
+    Order follows the declaration in that file exactly. Only entries whose DDS
+    file actually exists in *texture_folder* are included.
+    """
+    try:
+        from src.USER.settings.recommended_textures import RECOMMENDED_TEXTURES
+    except ImportError:
+        return []
+
+    seen: set[str] = set()
+    items: list[tuple[str, str, str]] = []
+    for raw in RECOMMENDED_TEXTURES:
+        stem = raw.upper().replace(".DDS", "").replace(".dds", "")
+        if stem in seen:
+            continue
+        seen.add(stem)
+        dds_path = texture_folder / f"{stem}.DDS"
+        if not dds_path.exists():
+            continue
+        items.append((stem, make_friendly(stem), stem))
+    return items
+
+
 def build_catalog(texture_folder: Path) -> dict[str, list[tuple[str, str, str]]]:
     """
     Scan *texture_folder* and return a dict mapping category key → sorted list
     of (identifier, label, description) enum tuples.
     """
-    catalog: dict[str, list] = {key: [] for key, *_ in CATEGORY_ITEMS if key not in ("CURRENT", "ALL")}
+    catalog: dict[str, list] = {key: [] for key, *_ in CATEGORY_ITEMS if key not in ("CURRENT", "ALL", "RECOMMENDED")}
 
     for dds in sorted(texture_folder.glob("*.DDS")):
         stem  = dds.stem
@@ -484,5 +510,7 @@ def build_catalog(texture_folder: Path) -> dict[str, list[tuple[str, str, str]]]
 
     for cat in catalog:
         catalog[cat].sort(key=lambda x: x[1])
+
+    catalog["RECOMMENDED"] = build_recommended(texture_folder)
 
     return catalog

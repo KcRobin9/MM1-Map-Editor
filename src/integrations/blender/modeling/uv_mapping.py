@@ -132,12 +132,13 @@ def _load_category_textures(category: str) -> None:
 
 
 def category_for_texture(stem: str) -> str:
-    """Return the category key that contains *stem*, preferring CURRENT when present."""
+    """Return the category key that contains *stem*, preferring CURRENT then RECOMMENDED."""
     stem = stem.upper()
-    # Check CURRENT first (polygon textures the user is already working with)
     if any(item[0] == stem for item in _current_items):
         return "CURRENT"
-    # Otherwise use the catalog categorisation
+    # Prefer Recommended if the texture is in that curated list
+    if any(item[0] == stem for item in _catalog.get("RECOMMENDED", [])):
+        return "RECOMMENDED"
     return categorise(stem)
 
 
