@@ -346,6 +346,157 @@ class OBJECT_OT_LoadAIStreetsFromData(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class OBJECT_OT_LoadExternalBAI(bpy.types.Operator):
+    bl_idname      = "object.load_external_bai"
+    bl_label       = "Load External BAI"
+    bl_description = "Load AI streets directly from a .BAI binary file and visualize them in Blender"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    filepath:    bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob: bpy.props.StringProperty(default="*.BAI;*.bai", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        from src.constants.folder import Folder
+        self.filepath = str(Folder.BASE) + "/"
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    def execute(self, context):
+        from pathlib import Path
+        from src.file_formats.ai.read_write import read_ai
+        from src.constants.props import Prop
+        from src.game.races.constants_2 import IntersectionType
+
+        bai_path = Path(self.filepath)
+        if not bai_path.exists():
+            self.report({"ERROR"}, f"File not found: {bai_path}")
+            return {"CANCELLED"}
+
+        try:
+            ai_map, streets = read_ai(bai_path)
+        except Exception as e:
+            self.report({"ERROR"}, f"Failed to parse BAI: {e}")
+            return {"CANCELLED"}
+
+        valid_sl = {Prop.SIGN_STOP, Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL}
+
+        def _sl_name(raw: str) -> str:
+            name = raw.rstrip("\x00")
+            return name if name in valid_sl else Prop.TRAFFIC_LIGHT_SINGLE
+
+        def _to_blender(v):
+            return transform_coordinate_system(Vector((v.x, v.y, v.z)), game_to_blender=True)
+
+        def _extract_lanes(path):
+            """Return list of lane vertex lists — only driving lanes, not sidewalks."""
+            N = path.num_vertexes
+            lanes = []
+            for lane_idx in range(path.num_lanes):
+                start = lane_idx * N
+                lanes.append(path.lane_vertices[start : start + N])
+            return lanes
+
+        def _apply_props(obj, path_fwd, path_rev):
+            itype_start = str(path_rev.intersection_type)
+            itype_end   = str(path_fwd.intersection_type)
+            obj.st_intersection_0    = itype_start
+            obj.st_intersection_1    = itype_end
+            obj.st_stop_light_name_0 = _sl_name(path_rev.stop_light_name)
+            obj.st_stop_light_name_1 = _sl_name(path_fwd.stop_light_name)
+            obj.st_traffic_blocked_0 = "YES" if path_rev.blocked else "NO"
+            obj.st_traffic_blocked_1 = "YES" if path_fwd.blocked else "NO"
+            obj.st_ped_blocked_0     = "YES" if path_rev.ped_blocked else "NO"
+            obj.st_ped_blocked_1     = "YES" if path_fwd.ped_blocked else "NO"
+            obj.st_road_divided      = "YES" if path_fwd.divided else "NO"
+            obj.st_alley             = "YES" if path_fwd.alley else "NO"
+            # Stop light positions (game convention: fwd=end/index-1, rev=start/index-0)
+            if len(path_rev.stop_light_pos) >= 2:
+                bp0 = _to_blender(path_rev.stop_light_pos[0])
+                bp1 = _to_blender(path_rev.stop_light_pos[1])
+                obj.st_sl_pos_0_offset = tuple(bp0)
+                obj.st_sl_pos_0_dir    = tuple(bp1)
+            if len(path_fwd.stop_light_pos) >= 2:
+                bp0 = _to_blender(path_fwd.stop_light_pos[0])
+                bp1 = _to_blender(path_fwd.stop_light_pos[1])
+                obj.st_sl_pos_1_offset = tuple(bp0)
+                obj.st_sl_pos_1_dir    = tuple(bp1)
+
+        def _collect_tl(path, street_name, endpoint_idx, out_list):
+            """Append a traffic-light dict if this endpoint has a non-CONTINUE intersection with a real position."""
+            if path.intersection_type == IntersectionType.CONTINUE:
+                return
+            if len(path.stop_light_pos) < 2:
+                return
+            pos0 = path.stop_light_pos[0]
+            pos1 = path.stop_light_pos[1]
+            # Skip if position is all zeros (unset)
+            if pos0.x == 0.0 and pos0.y == 0.0 and pos0.z == 0.0:
+                return
+            name = _sl_name(path.stop_light_name)
+            face = (pos1.x - pos0.x, pos1.y - pos0.y, pos1.z - pos0.z)
+            out_list.append({
+                "name":   name,
+                "offset": (pos0.x, pos0.y, pos0.z),
+                "face":   face,
+                "tl_key": f"{street_name}_{endpoint_idx}",
+            })
+
+        global _tl_update_suppressed
+        _tl_update_suppressed = True
+        created = 0
+        traffic_lights = []
+
+        try:
+            for street_name, (path_fwd, path_rev) in streets:
+                fwd_lanes = _extract_lanes(path_fwd)
+                rev_lanes = _extract_lanes(path_rev)
+                all_lanes = fwd_lanes + rev_lanes
+                total_lanes = len(all_lanes)
+                is_multi = total_lanes > 1
+
+                for lane_idx, raw_verts in enumerate(all_lanes):
+                    blender_verts = [_to_blender(v) for v in raw_verts]
+
+                    if is_multi:
+                        direction = "fwd" if lane_idx < len(fwd_lanes) else "rev"
+                        local_idx = lane_idx if lane_idx < len(fwd_lanes) else lane_idx - len(fwd_lanes)
+                        obj_name = f"{ST_PREFIX}{street_name}_{direction}_lane{local_idx}"
+                    else:
+                        obj_name = f"{ST_PREFIX}{street_name}"
+
+                    obj = _build_curve_object(obj_name, blender_verts, context)
+                    _apply_props(obj, path_fwd, path_rev)
+
+                    if is_multi:
+                        obj.st_group_name = street_name
+
+                    apply_street_color(obj)
+
+                # Collect traffic lights — path_rev = start (index 0), path_fwd = end (index 1)
+                _collect_tl(path_rev, street_name, 0, traffic_lights)
+                _collect_tl(path_fwd, street_name, 1, traffic_lights)
+                created += 1
+        finally:
+            _tl_update_suppressed = False
+
+        tl_placed = 0
+        if traffic_lights:
+            try:
+                from src.USER.settings.blender import prop_bms_folder
+                from src.integrations.blender.modeling.props import place_traffic_lights_in_scene
+                tl_placed = place_traffic_lights_in_scene(
+                    traffic_lights,
+                    Path(prop_bms_folder),
+                    texture_folder=Folder.Resources.Editor.Textures,
+                )
+            except Exception as e:
+                self.report({"WARNING"}, f"Traffic lights could not be placed: {e}")
+
+        tl_msg = f", {tl_placed} traffic light(s)" if tl_placed else ""
+        self.report({"INFO"}, f"Loaded {created} street(s){tl_msg} from {bai_path.name}")
+        return {"FINISHED"}
+
+
 class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
     bl_idname      = "object.export_ai_streets"
     bl_label       = "Export Streets"
@@ -1188,6 +1339,7 @@ AI_STREET_CLASSES = [
     OBJECT_OT_CreateAIStreet,
     OBJECT_OT_DuplicateAIStreet,
     OBJECT_OT_LoadAIStreetsFromData,
+    OBJECT_OT_LoadExternalBAI,
     OBJECT_OT_ExportAIStreets,
     OBJECT_OT_AppendStreetVertex,
     OBJECT_OT_InsertStreetVertex,

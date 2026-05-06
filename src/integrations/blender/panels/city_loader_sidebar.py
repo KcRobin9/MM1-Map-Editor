@@ -47,6 +47,7 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
         col.prop(scene, "cl_load_fcd",    text="Facades  (.FCD)")
         col.prop(scene, "cl_load_bng",    text="Props / Bangers  (.BNG)")
         col.prop(scene, "cl_load_meshes", text="City Meshes  (MESHES/)")
+        col.prop(scene, "cl_load_bai",    text="AI Streets  (.BAI)")
 
         layout.separator()
 
@@ -59,7 +60,7 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
         layout.separator()
 
         # ── Load button ───────────────────────────────────────────────────────
-        any_selected = scene.cl_load_fcd or scene.cl_load_bng or scene.cl_load_meshes
+        any_selected = scene.cl_load_fcd or scene.cl_load_bng or scene.cl_load_meshes or scene.cl_load_bai
         row = layout.row(align=True)
         row.scale_y = 1.6
         row.enabled = bool(folder_path) and any_selected
@@ -80,10 +81,12 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
                 meshes_root = p / "MESHES"
                 mesh_dirs   = [d for d in meshes_root.iterdir() if d.is_dir()] if meshes_root.is_dir() else []
                 bms_count   = sum(len(list(d.glob("*.BMS"))) for d in mesh_dirs)
+                bai_files   = list(p.rglob("*.BAI")) + list(p.rglob("*.bai"))
 
-                _file_row(col, "FCD",    fcd[0].name  if fcd  else None)
-                _file_row(col, "BNG",    bng[0].name  if bng  else None)
+                _file_row(col, "FCD",    fcd[0].name     if fcd      else None)
+                _file_row(col, "BNG",    bng[0].name     if bng      else None)
                 _file_row(col, "MESHES", f"{bms_count} BMS across {len(mesh_dirs)} subfolder(s)" if mesh_dirs else None)
+                _file_row(col, "BAI",    bai_files[0].name if bai_files else None)
 
 
 class VIEW3D_PT_CityLoaderTools(bpy.types.Panel):
@@ -102,6 +105,7 @@ class VIEW3D_PT_CityLoaderTools(bpy.types.Panel):
         col.operator("city_loader.clear_meshes", text="Clear City Meshes", icon="MESH_DATA")
         col.operator("facades.clear",            text="Clear Facades",     icon="MOD_BUILD")
         col.operator("props.clear",              text="Clear Props",       icon="PARTICLES")
+        col.operator("object.delete_all_streets", text="Clear Streets",    icon="CURVE_DATA")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

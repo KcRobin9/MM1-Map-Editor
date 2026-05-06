@@ -85,11 +85,22 @@ def _build_city_mesh(name: str, bms_data: dict) -> bpy.types.Mesh:
     return me
 
 
+def _sub_collection_label(dir_name: str) -> str:
+    """Map a mesh subfolder name (e.g. CHICAGOCITY, CHICAGOLM) to a short label."""
+    upper = dir_name.upper()
+    if upper.endswith("LM"):
+        return "Landmark"
+    if upper.endswith("CITY"):
+        return "City"
+    return dir_name
+
+
+
 def _load_city_meshes(mesh_dirs: List[Path], texture_folder: Path) -> int:
     from src.integrations.blender.modeling.meshes import read_bms
     from src.integrations.blender.modeling.meshes import _apply_materials_to_mesh
 
-    col_name = "City Meshes"
+    col_name = "Meshes"
     if col_name not in bpy.data.collections:
         col = bpy.data.collections.new(col_name)
         bpy.context.scene.collection.children.link(col)
@@ -106,7 +117,7 @@ def _load_city_meshes(mesh_dirs: List[Path], texture_folder: Path) -> int:
     for mesh_dir in mesh_dirs:
         if not mesh_dir.is_dir():
             continue
-        sub_name = f"City Meshes — {mesh_dir.name}"
+        sub_name = _sub_collection_label(mesh_dir.name)
         sub_col = bpy.data.collections.new(sub_name)
         col.children.link(sub_col)
 
@@ -194,6 +205,19 @@ class CITY_OT_Load(bpy.types.Operator):
             else:
                 errors.append(f"BNG: no .BNG file found in {folder.name}")
 
+        # ── BAI (AI streets) ─────────────────────────────────────────────────
+        if scene.cl_load_bai:
+            bai_files = list(folder.rglob("*.BAI")) + list(folder.rglob("*.bai"))
+            bai_path  = bai_files[0] if bai_files else None
+            if bai_path and bai_path.exists():
+                try:
+                    bpy.ops.object.load_external_bai(filepath=str(bai_path))
+                    loaded_parts.append("BAI")
+                except Exception as exc:
+                    errors.append(f"BAI: {exc}")
+            else:
+                errors.append(f"BAI: no .BAI file found under {folder.name}")
+
         # ── City meshes ───────────────────────────────────────────────────────
         if scene.cl_load_meshes:
             meshes_root = folder / "MESHES"
@@ -223,7 +247,7 @@ class CITY_OT_ClearMeshes(bpy.types.Operator):
     bl_label  = "Clear City Meshes"
 
     def execute(self, context):
-        col = bpy.data.collections.get("City Meshes")
+        col = bpy.data.collections.get("Meshes")
         if col:
             removed = 0
             for child in list(col.children):

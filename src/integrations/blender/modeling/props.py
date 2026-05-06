@@ -657,6 +657,10 @@ def place_traffic_lights_in_scene(
     The collection is cleared on every call to avoid duplicates on re-load.
     Returns the number of objects placed.
     """
+    # Flush the mesh cache — cached Mesh datablocks may have been freed if the
+    # scene was reloaded or cleared since the last call.
+    _tl_mesh_cache.clear()
+
     col = _get_or_create_collection(_TRAFFIC_LIGHTS_COLLECTION)
     _clear_collection(col)
 

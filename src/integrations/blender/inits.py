@@ -228,6 +228,7 @@ SCENE_PROPERTIES = [
     "cl_load_fcd",
     "cl_load_bng",
     "cl_load_meshes",
+    "cl_load_bai",
     "cl_texture_folder",
     # Facade Editor — create form
     "fc_facade_name",
@@ -895,6 +896,11 @@ def register_scene_properties() -> None:
     bpy.types.Scene.cl_load_meshes = bpy.props.BoolProperty(
         name="Load Meshes",
         description="Load all CULL*.BMS files from the MESHES/ subfolder",
+        default=True,
+    )
+    bpy.types.Scene.cl_load_bai = bpy.props.BoolProperty(
+        name="Load BAI",
+        description="Load AI streets from the .BAI file in the CITY/ subfolder",
         default=True,
     )
     bpy.types.Scene.cl_texture_folder = bpy.props.StringProperty(
