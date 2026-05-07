@@ -11,7 +11,7 @@ play_game = True                # Change to "True" to start the game after the M
 delete_shop = True              # Change to "True" to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_bridges = False              #! Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
+set_bridges = False             #! Set "Bridges" to "False" when creating your own map to avoid crashes. Bridges should be implemented last
 set_props = True                # Change to "True" if you want PROPS
 set_facades = True              # Change to "True" if you want FACADES
 set_physics = True              # Change to "True" if you want PHYSICS (custom)
@@ -37,7 +37,6 @@ randomize_textures = False      # Change to "True" if you want to randomize all 
 random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LANE, Texture.BRICKS_GREY, Texture.CHECKPOINT]
 
 # Other
-round_vector_values = True
 disable_progress_bar = True    # Change to "True" to see errors, warnings, and print statements in the console output
 
 default_separator = Axis.Longest

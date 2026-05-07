@@ -334,6 +334,8 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
                         text="Load from ai_streets.py", icon='FILE_SCRIPT')
         layout.operator("object.load_external_bai",
                         text="Load External BAI",       icon='FILE')
+        layout.operator("object.load_intermediary_ai_files",
+                        text="Load Intermediary Files (.road)", icon='FILE_TEXT')
         layout.operator("object.delete_all_streets",
                         text="Delete All Streets",      icon='TRASH')
 

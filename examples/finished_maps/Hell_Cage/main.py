@@ -36,7 +36,6 @@ randomize_textures = False      # Change to "True" if you want to randomize all 
 random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LANE, Texture.BRICKS_GREY, Texture.CHECKPOINT]
 
 # Other
-round_vector_values = True
 disable_progress_bar = True    # Change to "True" to see errors, warnings, and print statements in the console output
 
 default_separator = Axis.Longest

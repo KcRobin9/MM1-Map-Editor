@@ -1,5 +1,3 @@
-import textwrap
-
 from src.constants.file_formats import FileType
 from src.constants.props import Prop
 from src.constants.constants import NO
@@ -22,17 +20,14 @@ class aiStreetEditor:
                     
     def process_lanes(self, data):
         if "lanes" in data:
-            self.original_lanes = data["lanes"]
+            original = data["lanes"]
         elif "vertices" in data:
-            self.original_lanes = {"lane_1": data["vertices"]}
+            original = {"lane_1": data["vertices"]}
         else:
             raise ValueError("Street data must have either 'lanes' or 'vertices'")
 
-        # Add reverse lanes if set by the user
-        self.lanes = self.original_lanes.copy()
-        if self.set_reverse_ai_streets:
-            for key, values in self.original_lanes.items():
-                self.lanes[key].extend(values[::-1])
+        # Deep-copy so we never mutate the user's input data
+        self.lanes = {k: list(v) for k, v in original.items()}
                         
     def set_properties(self, data):
         default_values = {
@@ -69,25 +64,31 @@ class aiStreetEditor:
             f.write(self.set_template())
 
     def set_template(self):
-        lane_one = list(self.lanes.keys())[0]  # Assuming all lanes have the same number of vertices
-        num_vertices_per_lane = len(self.original_lanes[lane_one])
-        num_total_vertices = num_vertices_per_lane * len(self.lanes) * (2 if self.set_reverse_ai_streets else 1)
-        
-        vertices = '\n\t\t'.join('\n\t\t'.join(
-            f'{vertex[0]} {vertex[1]} {vertex[2]}' for vertex in vertices) for vertices in self.lanes.values())
-        
-        normals = '\n\t\t'.join(
-            Default.NORMAL for _ in range(num_vertices_per_lane))
-        
-        stop_light_positions = '\n\t'.join(
-            f"""StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}"""
+        lane_one = list(self.lanes.keys())[0]
+        num_vertices = len(self.lanes[lane_one])
+        num_lanes = len(self.lanes)
+        num_lanes_reverse = num_lanes if self.set_reverse_ai_streets else 0
+        # TotalVertexs = fwd lanes + rev lanes (game reads same verts in reverse for rev direction)
+        num_total_vertices = num_vertices * num_lanes * (2 if self.set_reverse_ai_streets else 1)
+
+        indent = "        "  # 8 spaces — inside the [ ] block
+        vertices = f"\n{indent}".join(
+            f"{v[0]} {v[1]} {v[2]}"
+            for lane_verts in self.lanes.values()
+            for v in lane_verts
+        )
+
+        normals = f"\n{indent}".join(
+            Default.NORMAL for _ in range(num_vertices))
+
+        stop_light_positions = "\n    ".join(
+            f"StopLightPos[{i}] {pos[0]} {pos[1]} {pos[2]}"
             for i, pos in enumerate(self.stop_light_positions))
 
-        street_template = f"""
-mmRoadSect :0 {{
-    NumVertexs {num_vertices_per_lane}
-    NumLanes[0] {len(self.lanes)}
-    NumLanes[1] {len(self.lanes) if self.set_reverse_ai_streets else 0}
+        street_template = f"""mmRoadSect :0 {{
+    NumVertexs {num_vertices}
+    NumLanes[0] {num_lanes}
+    NumLanes[1] {num_lanes_reverse}
     NumSidewalks[0] 0
     NumSidewalks[1] 0
     TotalVertexs {num_total_vertices}
@@ -110,6 +111,5 @@ mmRoadSect :0 {{
     ]
     Divided {self.road_divided}
     Alley {self.alley}
-}}
-        """
-        return textwrap.dedent(street_template).strip()
+}}"""
+        return street_template

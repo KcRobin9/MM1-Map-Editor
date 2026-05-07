@@ -90,8 +90,7 @@ from src.helpers.main import calc_size, is_process_running
 from src.integrations.blender.setup import setup_blender
 from src.integrations.blender.inits import initialize_blender_operators, initialize_blender_panels, initialize_blender_waypoint_editor
 from src.integrations.blender.keybindings import set_blender_keybinding
-from src.integrations.blender.modeling.ai_paths import process_and_visualize_paths
-from src.integrations.blender.modeling.props import place_props_in_scene, place_bulk_bms_in_scene
+from src.integrations.blender.modeling.props import place_props_in_scene
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
@@ -137,7 +136,7 @@ from src.USER.settings.debug import (
     auto_debug,
 )
 
-from src.USER.settings.blender import load_target_model, load_all_textures, visualize_ai_paths, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights, bulk_bms_folders
+from src.USER.settings.blender import load_target_model, load_all_textures, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights
 
 from src.USER.facades import facade_list
 from src.USER.ai_streets import street_list
@@ -1712,7 +1711,7 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
     for file in files:
         cell_id = int(re.findall(r'\d+', file.name)[0])
 
-        if file.name.endswith(f"_A2{FileType.MESH_lowercase}"):
+        if file.name.endswith(f"_{LevelOfDetail.DRIFT}{FileType.MESH_lowercase}"):
             meshes_water_drift.add(cell_id)
 
         if file.name.endswith(FileType.MESH_lowercase):
@@ -1849,9 +1848,7 @@ def create_cells(output_file: Path, polys: List[Polygon]) -> None:
 #! ======================= MINIMAP ======================= !#
 
 #TODO: refactor and move later
-def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, 
-                  minimap_outline_color: str, line_width: float, background_color: str) -> None:
-    
+def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, minimap_outline_color: str, line_width: float, background_color: str) -> None:
     if not set_minimap or is_process_running(Executable.BLENDER):
         return
     
@@ -1863,9 +1860,7 @@ def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: boo
     width = int(max_x - min_x)
     height = int(max_z - min_z) 
     
-    def draw_polygon(ax, polygon, minimap_outline_color: str, 
-                    label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
-
+    def draw_polygon(ax, polygon, minimap_outline_color: str, label = None, add_label = False, hud_fill = False, hud_color = None) -> None:
         xs, ys = zip(*[(point[0], point[2]) for point in polygon])
         xs, ys = xs + (xs[0],), ys + (ys[0],)  # The commas after [0] should not be removed
 
@@ -2807,7 +2802,6 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
 ###################################################################################################################
 
 create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
-process_and_visualize_paths(Folder.Shop.Root / "dev" / "CITY" / MAP_FILENAME, f"AI_PATHS{FileType.TEXT}", visualize_ai_paths)
 
 if visualize_props and is_process_running(Executable.BLENDER):
     place_props_in_scene(
@@ -2815,12 +2809,6 @@ if visualize_props and is_process_running(Executable.BLENDER):
         texture_folder=Folder.Resources.Editor.Textures,
         car_wheels=prop_car_wheels,
         car_lights=prop_car_lights,
-    )
-
-if bulk_bms_folders and is_process_running(Executable.BLENDER):
-    place_bulk_bms_in_scene(
-        bulk_bms_folders,
-        texture_folder=Folder.Resources.Editor.Textures,
     )
 
 # Rebuild the "Current" texture list now that polygons, props, and bulk meshes

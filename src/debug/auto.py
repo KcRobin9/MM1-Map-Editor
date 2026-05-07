@@ -126,10 +126,16 @@ def run_auto_debug(Bounds: Any, Meshes: Any, Portals: Any, enabled: bool) -> Non
             processed += 1
 
         except Exception as e:
-            print(f"[auto-debug] ERROR processing {f.name}: {e}")
+            import traceback
+            print(f"[auto-debug] ERROR processing {f.name}: {type(e).__name__}: {e}")
+            traceback.print_exc()
 
-    total = processed + skipped
+    errors = len(files) - processed - skipped
+    total  = processed + skipped + errors
     if total == 0:
         print(f"[auto-debug] No supported files found in {Folder.Debug.Input}")
     else:
-        print(f"[auto-debug] {processed} file(s) processed -> {out_root}")
+        parts = [f"{processed} processed"]
+        if skipped: parts.append(f"{skipped} skipped")
+        if errors:  parts.append(f"{errors} errored")
+        print(f"[auto-debug] {', '.join(parts)} -> {out_root}")

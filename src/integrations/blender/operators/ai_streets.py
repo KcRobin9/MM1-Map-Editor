@@ -497,6 +497,259 @@ class OBJECT_OT_LoadExternalBAI(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class OBJECT_OT_LoadIntermediaryFiles(bpy.types.Operator):
+    bl_idname      = "object.load_intermediary_ai_files"
+    bl_label       = "Load Intermediary AI Files"
+    bl_description = (
+        "Load AI streets from a folder of .road / .int / .map intermediary text files "
+        "(the format written to /dev and read by the game to auto-generate a .BAI)"
+    )
+    bl_options     = {"REGISTER", "UNDO"}
+
+    directory:   bpy.props.StringProperty(subtype="DIR_PATH")
+    filter_glob: bpy.props.StringProperty(default="", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        from src.constants.folder import Folder
+        self.directory = str(Folder.BASE) + "/"
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    # ── .road file parser ─────────────────────────────────────────────────────
+
+    @staticmethod
+    def _parse_road_file(path):
+        """
+        Parse a .road file and return a dict with:
+            num_vertexes, num_lanes_fwd, num_lanes_rev,
+            vertexes (list of (x,y,z) tuples — ALL rows including sidewalks),
+            intersection_type_0, intersection_type_1,
+            stop_light_pos (list of 4 (x,y,z) tuples),
+            stop_light_names (list of 2 str),
+            blocked_0, blocked_1, ped_blocked_0, ped_blocked_1,
+            divided, alley
+        """
+        import re
+        text = path.read_text(encoding="utf-8", errors="replace")
+
+        def _int(key):
+            m = re.search(rf'{re.escape(key)}\s+(\d+)', text)
+            return int(m.group(1)) if m else 0
+
+        def _float(key):
+            m = re.search(rf'{re.escape(key)}\s+([\d\.\-]+)', text)
+            return float(m.group(1)) if m else 0.0
+
+        def _vec3_list(block_key):
+            m = re.search(rf'{re.escape(block_key)}\s*\[([^\]]*)\]', text, re.DOTALL)
+            if not m:
+                return []
+            nums = list(map(float, m.group(1).split()))
+            return [(nums[i], nums[i+1], nums[i+2]) for i in range(0, len(nums) - 2, 3)]
+
+        num_v   = _int("NumVertexs")
+        nl_fwd  = _int("NumLanes[0]")
+        nl_rev  = _int("NumLanes[1]")
+        vertexes = _vec3_list("Vertexs")
+
+        itype_0 = _int("IntersectionType[0]")
+        itype_1 = _int("IntersectionType[1]")
+
+        # StopLightPos[0..3] — four individual vec3 fields
+        sl_pos = []
+        for i in range(4):
+            m = re.search(rf'StopLightPos\[{i}\]\s+([\d\.\-]+)\s+([\d\.\-]+)\s+([\d\.\-]+)', text)
+            sl_pos.append((float(m.group(1)), float(m.group(2)), float(m.group(3))) if m else (0.0, 0.0, 0.0))
+
+        # StopLightName [ "name0" "name1" ]
+        sl_names = ["NONE", "NONE"]
+        m = re.search(r'StopLightName\s*\[([^\]]*)\]', text, re.DOTALL)
+        if m:
+            names = re.findall(r'"([^"]*)"', m.group(1))
+            for i, n in enumerate(names[:2]):
+                sl_names[i] = n.strip()
+
+        return {
+            "num_vertexes":      num_v,
+            "num_lanes_fwd":     nl_fwd,
+            "num_lanes_rev":     nl_rev,
+            "vertexes":          vertexes,
+            "intersection_type_0": itype_0,
+            "intersection_type_1": itype_1,
+            "stop_light_pos":    sl_pos,
+            "stop_light_names":  sl_names,
+            "blocked_0":         _int("Blocked[0]"),
+            "blocked_1":         _int("Blocked[1]"),
+            "ped_blocked_0":     _int("PedBlocked[0]"),
+            "ped_blocked_1":     _int("PedBlocked[1]"),
+            "divided":           _int("Divided"),
+            "alley":             _int("Alley"),
+        }
+
+    # ── .map file parser ──────────────────────────────────────────────────────
+
+    @staticmethod
+    def _read_map_file(map_path):
+        """Return ordered list of street names from a .map file."""
+        import re
+        text = map_path.read_text(encoding="utf-8", errors="replace")
+        m = re.search(r'Street\s*\[([^\]]*)\]', text, re.DOTALL)
+        if not m:
+            return []
+        return [s.strip().strip('"') for s in m.group(1).splitlines() if s.strip().strip('"')]
+
+    # ── execute ───────────────────────────────────────────────────────────────
+
+    def execute(self, context):
+        from pathlib import Path
+        from src.constants.props import Prop
+        from src.game.races.constants_2 import IntersectionType
+        from src.constants.file_formats import FileType
+
+        folder = Path(self.directory)
+        if not folder.is_dir():
+            self.report({"ERROR"}, f"Folder not found: {folder}")
+            return {"CANCELLED"}
+
+        # Resolve street order from .map file; fall back to globbing .road files
+        map_files = list(folder.glob("*.map"))
+        if map_files:
+            street_names = self._read_map_file(map_files[0])
+        else:
+            street_names = [p.stem for p in sorted(folder.glob("*.road"))]
+
+        if not street_names:
+            self.report({"ERROR"}, "No .road files found in the selected folder")
+            return {"CANCELLED"}
+
+        valid_sl = {Prop.SIGN_STOP, Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL}
+
+        def _sl_name(raw):
+            return raw if raw in valid_sl else "NONE"
+
+        def _to_blender(xyz):
+            return transform_coordinate_system(Vector(xyz), game_to_blender=True)
+
+        CONTINUE = IntersectionType.CONTINUE
+
+        global _tl_update_suppressed
+        _tl_update_suppressed = True
+        created = 0
+        missing = 0
+        traffic_lights = []
+
+        try:
+            for street_name in street_names:
+                road_file = folder / f"{street_name}{FileType.AI_STREET}"
+                if not road_file.exists():
+                    missing += 1
+                    continue
+
+                d = self._parse_road_file(road_file)
+                num_v    = d["num_vertexes"]
+                nl_fwd   = d["num_lanes_fwd"]
+                nl_rev   = d["num_lanes_rev"]
+                vertexes = d["vertexes"]
+
+                if num_v == 0 or not vertexes:
+                    missing += 1
+                    continue
+
+                # Extract lane rows: layout matches aiStreet.lane_vertices
+                # [fwd_lane_0 .. fwd_lane_N, rev_lane_0 .. rev_lane_M, sidewalks...]
+                fwd_lanes = [vertexes[i * num_v : (i + 1) * num_v] for i in range(nl_fwd)]
+                rev_lanes = [vertexes[(nl_fwd + i) * num_v : (nl_fwd + i + 1) * num_v] for i in range(nl_rev)]
+                all_lanes = fwd_lanes + rev_lanes
+                total_lanes = len(all_lanes)
+                is_multi = total_lanes > 1
+
+                itype_0 = d["intersection_type_0"]
+                itype_1 = d["intersection_type_1"]
+                sl_pos  = d["stop_light_pos"]    # list of 4 (x,y,z)
+                sl_names = d["stop_light_names"]  # [name_start, name_end]
+
+                for lane_idx, raw_verts in enumerate(all_lanes):
+                    blender_verts = [_to_blender(v) for v in raw_verts]
+
+                    if is_multi:
+                        direction = "fwd" if lane_idx < nl_fwd else "rev"
+                        local_idx = lane_idx if lane_idx < nl_fwd else lane_idx - nl_fwd
+                        obj_name  = f"{ST_PREFIX}{street_name}_{direction}_lane{local_idx}"
+                    else:
+                        obj_name  = f"{ST_PREFIX}{street_name}"
+
+                    obj = _build_curve_object(obj_name, blender_verts, context)
+
+                    # Apply street properties
+                    obj.st_intersection_0    = str(itype_0)
+                    obj.st_intersection_1    = str(itype_1)
+                    obj.st_stop_light_name_0 = _sl_name(sl_names[0])
+                    obj.st_stop_light_name_1 = _sl_name(sl_names[1])
+                    obj.st_traffic_blocked_0 = "YES" if d["blocked_0"]     else "NO"
+                    obj.st_traffic_blocked_1 = "YES" if d["blocked_1"]     else "NO"
+                    obj.st_ped_blocked_0     = "YES" if d["ped_blocked_0"] else "NO"
+                    obj.st_ped_blocked_1     = "YES" if d["ped_blocked_1"] else "NO"
+                    obj.st_road_divided      = "YES" if d["divided"]       else "NO"
+                    obj.st_alley             = "YES" if d["alley"]         else "NO"
+                    # Stop light positions — sl_pos[0,1] = start endpoint, sl_pos[2,3] = end endpoint
+                    if sl_pos[0] != (0.0, 0.0, 0.0):
+                        obj.st_sl_pos_0_offset = tuple(_to_blender(sl_pos[0]))
+                        obj.st_sl_pos_0_dir    = tuple(_to_blender(sl_pos[1]))
+                    if sl_pos[2] != (0.0, 0.0, 0.0):
+                        obj.st_sl_pos_1_offset = tuple(_to_blender(sl_pos[2]))
+                        obj.st_sl_pos_1_dir    = tuple(_to_blender(sl_pos[3]))
+
+                    if is_multi:
+                        obj.st_group_name = street_name
+
+                    apply_street_color(obj)
+
+                # Collect traffic lights
+                for endpoint_idx, (itype, pos_base, name) in enumerate([
+                    (itype_0, 0, sl_names[0]),
+                    (itype_1, 2, sl_names[1]),
+                ]):
+                    if itype == CONTINUE:
+                        continue
+                    pos0 = sl_pos[pos_base]
+                    pos1 = sl_pos[pos_base + 1]
+                    if pos0 == (0.0, 0.0, 0.0):
+                        continue
+                    prop_name = _sl_name(name)
+                    if prop_name == "NONE":
+                        continue
+                    face = (pos1[0] - pos0[0], pos1[1] - pos0[1], pos1[2] - pos0[2])
+                    traffic_lights.append({
+                        "name":   prop_name,
+                        "offset": pos0,
+                        "face":   face,
+                        "tl_key": f"{street_name}_{endpoint_idx}",
+                    })
+
+                created += 1
+        finally:
+            _tl_update_suppressed = False
+
+        tl_placed = 0
+        if traffic_lights:
+            try:
+                from src.USER.settings.blender import prop_bms_folder
+                from src.integrations.blender.modeling.props import place_traffic_lights_in_scene
+                tl_placed = place_traffic_lights_in_scene(
+                    traffic_lights,
+                    Path(prop_bms_folder),
+                    texture_folder=Folder.Resources.Editor.Textures,
+                )
+            except Exception as e:
+                self.report({"WARNING"}, f"Traffic lights could not be placed: {e}")
+
+        tl_msg = f", {tl_placed} traffic light(s)" if tl_placed else ""
+        if missing:
+            self.report({"WARNING"}, f"{missing} .road file(s) not found")
+        self.report({"INFO"}, f"Loaded {created} street(s){tl_msg} from {folder.name}/")
+        return {"FINISHED"}
+
+
 class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
     bl_idname      = "object.export_ai_streets"
     bl_label       = "Export Streets"
@@ -1340,6 +1593,7 @@ AI_STREET_CLASSES = [
     OBJECT_OT_DuplicateAIStreet,
     OBJECT_OT_LoadAIStreetsFromData,
     OBJECT_OT_LoadExternalBAI,
+    OBJECT_OT_LoadIntermediaryFiles,
     OBJECT_OT_ExportAIStreets,
     OBJECT_OT_AppendStreetVertex,
     OBJECT_OT_InsertStreetVertex,

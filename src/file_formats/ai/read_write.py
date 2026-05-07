@@ -13,6 +13,10 @@ from src.constants.props import Prop
 
 #! ############ Code by 0x1F9F1 (Modified) // end ############ !#     
 
+def _warn(msg: str) -> None:
+    print(f"  [BAI warn] {msg}")
+
+
 def read_ai(input_file: Path):
     ai_map = aiMap()
 
@@ -21,59 +25,72 @@ def read_ai(input_file: Path):
 
         here = f.tell()
         f.seek(0, 2)
-        assert here == f.tell()
+        end = f.tell()
+        if here != end:
+            _warn(f"File not fully consumed: {here} of {end} bytes read ({end - here} remaining)")
 
     streets = []
-    
+
     for i, path in enumerate(ai_map.paths):
-        assert i == path.id  # ID matches path index      
-        assert path.id != path.oncoming_path  # A path should not be its own oncoming
-        assert ai_map.paths[path.oncoming_path].oncoming_path == path.id  # A path should be properly linked with its oncoming
-        assert path.num_sidewalks in [0, 1]  # No more than 1 sidewalk per road-side
+        if i != path.id:
+            _warn(f"Path index {i} has id {path.id} — IDs are not sequential")
+        if path.id == path.oncoming_path:
+            _warn(f"Path {path.id} is its own oncoming path")
+        elif ai_map.paths[path.oncoming_path].oncoming_path != path.id:
+            _warn(f"Path {path.id} oncoming link is not symmetric")
+        if path.num_sidewalks not in [0, 1]:
+            _warn(f"Path {path.id} has unexpected num_sidewalks={path.num_sidewalks}")
 
-        assert path.intersection_type in [
-            IntersectionType.STOP, 
-            IntersectionType.STOP_LIGHT, 
-            IntersectionType.YIELD, 
-            IntersectionType.CONTINUE
-            ]  
-        
-        # TODO: adjust or remove this (i.e. get the actual object name)
+        known_itypes = [IntersectionType.STOP, IntersectionType.STOP_LIGHT, IntersectionType.YIELD, IntersectionType.CONTINUE]
+        if path.intersection_type not in known_itypes:
+            _warn(f"Path {path.id} has unknown intersection_type={path.intersection_type}")
+
         if path.intersection_type == IntersectionType.STOP:
-            assert path.stop_light_name == Prop.SIGN_STOP
-        else:
-            assert path.stop_light_name in [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL]
+            if path.stop_light_name != Prop.SIGN_STOP:
+                _warn(f"Path {path.id} is STOP type but stop_light_name='{path.stop_light_name}'")
+        elif path.intersection_type == IntersectionType.STOP_LIGHT:
+            if path.stop_light_name not in [Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL]:
+                _warn(f"Path {path.id} is STOP_LIGHT type but stop_light_name='{path.stop_light_name}'")
 
-        sink_isect = path.lane_vertices[0]
-        source_isect = path.lane_vertices[path.num_vertexes - 1]
+        if path.lane_vertices and path.num_vertexes > 0:
+            sink_isect   = path.lane_vertices[0]
+            source_isect = path.lane_vertices[path.num_vertexes - 1]
+            for lane in range(1, path.num_lanes):
+                base = lane * path.num_vertexes
+                if path.lane_vertices[base] != sink_isect:
+                    _warn(f"Path {path.id} lane {lane} start vertex doesn't match lane 0")
+                if path.lane_vertices[base + path.num_vertexes - 1] != source_isect:
+                    _warn(f"Path {path.id} lane {lane} end vertex doesn't match lane 0")
 
-        for lane in range(1, path.num_lanes):
-            here = lane * path.num_vertexes
-            assert path.lane_vertices[here] == sink_isect
-            assert path.lane_vertices[here + path.num_vertexes - 1] == source_isect
-
-        if path.num_sidewalks == 0:  # Only custom paths should have no sidewalks
-            assert all(v == Vector3(0, 1, 0) for v in path.normals)  # If there are no sidewalks, all normals are straight up
+        if path.num_sidewalks == 0:
+            bad_normals = [v for v in path.normals if v != Vector3(0, 1, 0)]
+            if bad_normals:
+                _warn(f"Path {path.id} has no sidewalks but {len(bad_normals)} non-up normal(s)")
 
         isect_id = path.intersection_ids[0]
-        isect = ai_map.intersections[isect_id]
+        if isect_id < len(ai_map.intersections):
+            isect = ai_map.intersections[isect_id]
+            has_sink = False
+            for isect_path_id in isect.paths:
+                if isect_path_id != path.id:
+                    other = ai_map.paths[isect_path_id]
+                    if other.intersection_ids[0] != isect_id and other.oncoming_path != path.id:
+                        has_sink = True
+                        break
+            if not has_sink:
+                _warn(f"Path {path.id}: no eligible roads to turn onto at intersection {isect_id}")
+        else:
+            _warn(f"Path {path.id} references out-of-range intersection_id {isect_id}")
 
-        has_sink = False
-        for isect_path in isect.paths:
-            if isect_path != path.id:
-                isect_path = ai_map.paths[isect_path]
-                if isect_path.intersection_ids[0] != isect_id and isect_path.oncoming_path != path.id:
-                    has_sink = True
-                    break
-                
-        if not has_sink:
-            print(f"No eligible roads identified to turn onto from road: {path.id}.")
-
-        if path.id < path.oncoming_path:
+        if path.id == path.oncoming_path:
+            # Degenerate BAI: path references itself — treat as an unpaired single path
+            streets.append((f"Street{len(streets)}", (path, path)))
+        elif path.id < path.oncoming_path:
             streets.append((f"Street{len(streets)}", (path, ai_map.paths[path.oncoming_path])))
 
-    assert len(streets) * 2 == len(ai_map.paths)
-    
+    if len(streets) * 2 != len(ai_map.paths) and not any(p[1][0] is p[1][1] for p in streets):
+        _warn(f"Expected {len(ai_map.paths) // 2} street pairs but got {len(streets)} (total paths: {len(ai_map.paths)})")
+
     return ai_map, streets
 
 
@@ -120,40 +137,51 @@ def validate_and_prepare_ai_paths(streets) -> List[Any]:
     prepared_data = []
 
     for _, paths in streets:
-        assert paths[0].num_vertexes == paths[1].num_vertexes
-        assert paths[0].num_sidewalks == paths[1].num_sidewalks
-        assert paths[0].divided == paths[1].divided
-        assert paths[0].alley == paths[1].alley
-        assert paths[0].normals == list(reversed(paths[1].normals))
-        assert paths[0].normals[0] == Vector3(0, 1, 0)
-        assert paths[0].normals[-1] == Vector3(0, 1, 0)
+        self_paired = paths[0] is paths[1]
+
+        if not self_paired:
+            if paths[0].num_vertexes != paths[1].num_vertexes:
+                _warn(f"Path pair {paths[0].id}/{paths[1].id}: num_vertexes mismatch ({paths[0].num_vertexes} vs {paths[1].num_vertexes})")
+            if paths[0].num_sidewalks != paths[1].num_sidewalks:
+                _warn(f"Path pair {paths[0].id}/{paths[1].id}: num_sidewalks mismatch")
+            if paths[0].divided != paths[1].divided:
+                _warn(f"Path pair {paths[0].id}/{paths[1].id}: divided mismatch")
+            if paths[0].alley != paths[1].alley:
+                _warn(f"Path pair {paths[0].id}/{paths[1].id}: alley mismatch")
+            if paths[0].normals != list(reversed(paths[1].normals)):
+                _warn(f"Path pair {paths[0].id}/{paths[1].id}: normals are not reversed mirrors")
+
+        if paths[0].normals:
+            if paths[0].normals[0] != Vector3(0, 1, 0):
+                _warn(f"Path {paths[0].id}: first normal is not up ({paths[0].normals[0]})")
+            if paths[0].normals[-1] != Vector3(0, 1, 0):
+                _warn(f"Path {paths[0].id}: last normal is not up ({paths[0].normals[-1]})")
 
         if paths[0].num_sidewalks != 0:
             for n in range(1, len(paths[0].normals) - 1):
                 target = paths[0].normals[n]
-
                 a = paths[0].lane_vertices[n]
                 b = paths[0].boundaries[paths[0].num_vertexes + n - 1]
                 c = paths[0].boundaries[paths[0].num_vertexes + n]
-
                 normal = Vector3.calc_normal(a, b, c)
                 angle = math.degrees(target.Angle(normal))
-
                 if angle > 0.01:
-                    print(f"Road {paths[0].id} has suspicious normal {n}: Expected {target}, Calculated {normal} ({angle:.2f} degrees error)")
+                    _warn(f"Path {paths[0].id} normal {n}: expected {target}, calculated {normal} ({angle:.2f}° error)")
 
-            for road in range(2):
-                path = paths[road]
+            if not self_paired:
+                for road in range(2):
+                    path = paths[road]
+                    other = paths[road ^ 1]
+                    if path.boundaries[path.num_vertexes:] != list(reversed(other.l_boundaries)):
+                        _warn(f"Path {path.id}: boundaries/l_boundaries mismatch with oncoming path {other.id}")
+                    for i in range(path.num_vertexes):
+                        a = path.lane_vertices[i + (path.num_lanes * path.num_vertexes)]
+                        b = (path.boundaries[i] + path.boundaries[i + path.num_vertexes]) * 0.5
+                        if a.Dist2(b) >= 0.00001:
+                            _warn(f"Path {path.id} vertex {i}: sidewalk midpoint mismatch (dist²={a.Dist2(b):.6f})")
 
-                assert path.boundaries[path.num_vertexes:] == list(reversed(paths[road ^ 1].l_boundaries))
-
-                for i in range(path.num_vertexes):
-                    a = path.lane_vertices[i + (path.num_lanes * path.num_vertexes)]
-                    b = (path.boundaries[i] + path.boundaries[i + path.num_vertexes]) * 0.5
-                    assert a.Dist2(b) < 0.00001
-        
         prepared_data.append(paths)
-    
+
     return prepared_data
 
 
