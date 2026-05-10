@@ -968,11 +968,12 @@ def update_cruise_start_position(vertex_coordinates: List[Vector3]) -> None:
     
     
 def create_polygon(
-    bound_number: int, vertex_coordinates: List[Vector3], 
-    material_index: int = Material.DEFAULT, cell_type: int = Room.DEFAULT, flags: int = None, 
+    bound_number: int, vertex_coordinates: List[Vector3],
+    material_index: int = Material.DEFAULT, cell_type: int = Room.DEFAULT, flags: int = None,
     plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
-    hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color, 
-    always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False) -> None:
+    hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color,
+    always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False,
+    flip: bool = False) -> None:
 
     base_vertex_index = len(vertices)
     check_shape_type(vertex_coordinates)
@@ -981,6 +982,9 @@ def create_polygon(
 
     if sort_vertices:
         vertex_coordinates = sort_coordinates(vertex_coordinates)
+
+    if flip:
+        vertex_coordinates = list(reversed(vertex_coordinates))
 
     polygon_info = {
         "bound_number": bound_number,
@@ -998,7 +1002,8 @@ def create_polygon(
         update_cruise_start_position(vertex_coordinates)
           
     if plane_edges is None:
-        plane_edges = compute_edges(vertex_coordinates) 
+        plane_edges, axis_flag = compute_edges(vertex_coordinates)
+        flags = (flags & 0xFC) | axis_flag  # Sync projection axis bits with actual geometry
         
     # TODO: Refactor
     # Plane Normals
@@ -1054,7 +1059,7 @@ def create_polygon(
         )
     
     polys.append(poly)
-        
+
     # Save HUD data
     hud_fill = hud_color is not None
     hudmap_vertices.append(vertex_coordinates)
@@ -1104,7 +1109,20 @@ def user_notes():
 
 #! ==============================TEST_CITY============================== #*
 #! ==============================MAIN AREA============================== #*
-# Last exported: 2026-04-26 18:49:40
+# Last exported: 2026-05-10 03:27:12
+
+create_polygon(
+    bound_number = 210,
+    vertex_coordinates = [
+        (-42.23, 30.0, 40.0),
+		(-12.23, 30.0, 40.0),
+		(-12.23, 30.0, -0.0),
+		(-42.23, 30.0, -0.0)])
+
+save_mesh(
+    texture_name = ["R2C_FALL_N"],
+    tex_coords = compute_uv(bound_number = 210, tile_x = 4.00, tile_y = 3.00, angle_degrees = 0.00))
+
 
 create_polygon(
     bound_number = 99,
@@ -1244,7 +1262,7 @@ create_polygon(
     vertex_coordinates = [
         (-130.0, 15.0, 70.0),
 		(-50.0, 0.0, 70.0),
-		(-50.0, 0.0, 0.0)])
+		(-50.0, 0.0, -0.0)])
 
 save_mesh(
     texture_name = [Texture.BRICKS_MALL],
@@ -1419,8 +1437,8 @@ save_mesh(
 create_polygon(
     bound_number = 501,
     vertex_coordinates = [
-        (20.0, 30.0, 0.0),
-		(50.0, 30.0, 0.0),
+        (20.0, 30.0, -0.0),
+		(50.0, 30.0, -0.0),
 		(50.0, 12.0, -69.90),
 		(20.0, 12.0, -69.90)])
 
@@ -1434,8 +1452,8 @@ create_polygon(
     vertex_coordinates = [
         (20.0, 30.0, 40.0),
 		(50.0, 30.0, 40.0),
-		(50.0, 30.0, 0.0),
-		(20.0, 30.0, 0.0)])
+		(50.0, 30.0, -0.0),
+		(20.0, 30.0, -0.0)])
 
 save_mesh(
     texture_name = [Texture.BRICKS_GREY],
@@ -1447,8 +1465,8 @@ create_polygon(
     vertex_coordinates = [
         (-10.0, 30.0, 40.0),
 		(20.0, 30.0, 40.0),
-		(20.0, 30.0, 0.0),
-		(-10.0, 30.0, 0.0)])
+		(20.0, 30.0, -0.0),
+		(-10.0, 30.0, -0.0)])
 
 save_mesh(
     texture_name = [Texture.BUS_RED_TOP],
@@ -1456,10 +1474,24 @@ save_mesh(
 
 
 create_polygon(
+    bound_number = 599,
+    flip=True,      # use this wall to test texture/collision side flipping
+    vertex_coordinates = [
+        (-10.0, 30.0, 10.0),
+		(-10.0, 30.0, 40.0),
+		(-10.0, 0.0, 40.0),
+		(-10.0, 0.0, 10.0)])
+
+save_mesh(
+    texture_name = ["13_WIN"],
+    tex_coords = compute_uv(bound_number = 599, tile_x = 10.00, tile_y = 10.00, angle_degrees = 0.00))
+
+
+create_polygon(
     bound_number = 503,
     vertex_coordinates = [
-        (-10.0, 30.0, 0.0),
-		(10.0, 30.0, 0.0),
+        (-10.0, 30.0, -0.0),
+		(10.0, 30.0, -0.0),
 		(10.0, 30.0, -50.0),
 		(-10.0, 30.0, -50.0)])
 
@@ -1523,9 +1555,9 @@ save_mesh(
 create_polygon(
     bound_number = 2220,
     vertex_coordinates = [
-        (-160.0, -0.0, -120.0),
+        (-160.0, 0.0, -120.0),
 		(-160.0, -3.0, -160.0),
-		(-200.0, -0.0, -120.0)])
+		(-200.0, 0.0, -120.0)])
 
 save_mesh(
     texture_name = [Texture.FREEWAY],
@@ -1711,7 +1743,7 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
     for file in files:
         cell_id = int(re.findall(r'\d+', file.name)[0])
 
-        if file.name.endswith(f"_{LevelOfDetail.DRIFT}{FileType.MESH_lowercase}"):
+        if file.name.endswith(f"_A2{FileType.MESH_lowercase}"):
             meshes_water_drift.add(cell_id)
 
         if file.name.endswith(FileType.MESH_lowercase):

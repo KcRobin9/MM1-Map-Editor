@@ -65,12 +65,12 @@ def compute_plane_edgenormals(vertex_1: Vector3, vertex_2: Vector3, vertex_3: Ve
     return plane_normal, plane_distance
 
 
-def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
-    vertices = [np.array([vertex[0], 0, vertex[2]]) for vertex in vertex_coordinates]
-    plane_normal, _ = compute_plane_edgenormals(*vertices[:3]) 
+def compute_edges(vertex_coordinates: List[Vector3]) -> tuple:
+    """Returns (plane_edges, axis_flag) where axis_flag is bits 0-1 of the polygon flags."""
+    vertices = [np.array([v[0], v[1], v[2]]) for v in vertex_coordinates]
+    plane_normal, _ = compute_plane_edgenormals(*vertex_coordinates[:3])
 
-    num_verts = len(vertices)  
-        
+    num_verts = len(vertices)
     plane_edges = []
 
     abs_plane_x = abs(plane_normal[0])
@@ -79,43 +79,54 @@ def compute_edges(vertex_coordinates: List[Vector3]) -> List[Vector3]:
 
     negate = 1.0
 
-    # TODO: Refactor
     if abs_plane_x < abs_plane_y or abs_plane_x < abs_plane_z:
         if abs_plane_y < abs_plane_x or abs_plane_y < abs_plane_z:
+            # Z-dominant: project onto XY plane (Flags & 0x3 = 0x1)
+            axis_flag = 0x1
             if plane_normal[2] < 0.0:
                 negate = -1.0
             for i in range(num_verts):
                 A = vertices[i]
-                B = vertices[(i+1) % num_verts]
-                D = B - A
-                plane_edges.append(np.array([-D[1] * negate, D[0] * negate, -np.dot([-D[1], D[0]], [A[0], A[1]])]))
+                B = vertices[(i + 1) % num_verts]
+                ex = -(B[1] - A[1]) * negate
+                ey =  (B[0] - A[0]) * negate
+                ez = A[0] * ex + A[1] * ey
+                plane_edges.append(np.array([ex, ey, ez]))
         else:
+            # Y-dominant: project onto XZ plane (Flags & 0x3 = 0x2)
+            axis_flag = 0x2
             if plane_normal[1] > 0.0:
                 negate = -1.0
             for i in range(num_verts):
                 A = vertices[i]
-                B = vertices[(i+1) % num_verts]
-                D = B - A
-                plane_edges.append(np.array([-D[2] * negate, D[0] * negate, -np.dot([-D[2], D[0]], [A[0], A[2]])]))
+                B = vertices[(i + 1) % num_verts]
+                ex = -(B[2] - A[2]) * negate
+                ey =  (B[0] - A[0]) * negate
+                ez = A[0] * ex + A[2] * ey
+                plane_edges.append(np.array([ex, ey, ez]))
     else:
+        # X-dominant: project onto YZ plane (Flags & 0x3 = 0x0)
+        axis_flag = 0x0
         if plane_normal[0] < 0.0:
             negate = -1.0
         for i in range(num_verts):
             A = vertices[i]
-            B = vertices[(i+1) % num_verts]
-            D = B - A
-            plane_edges.append(np.array([-D[2] * negate, D[1] * negate, -np.dot([-D[2], D[1]], [A[1], A[2]])]))
+            B = vertices[(i + 1) % num_verts]
+            ex = -(B[2] - A[2]) * negate
+            ey =  (B[1] - A[1]) * negate
+            ez = A[1] * ex + A[2] * ey
+            plane_edges.append(np.array([ex, ey, ez]))
 
-    # Normalize edges
+    # Normalize all three components by the 2D magnitude of (ex, ey)
     for i in range(len(plane_edges)):
-        norm_val = np.linalg.norm(plane_edges[i][:2])  # Only first two components
-        plane_edges[i][:2] /= norm_val
-        plane_edges[i][2] /= norm_val
-        
+        norm_val = np.linalg.norm(plane_edges[i][:2])
+        if norm_val > 1e-9:
+            plane_edges[i] /= norm_val
+
     edges = [Vector3(edge[0], edge[1], edge[2]) for edge in plane_edges]
-    
+
     # All shapes must always have 4 vectors
     if len(vertices) == Shape.TRIANGLE:
         edges.append(Default.VECTOR_3)
     
-    return edges
+    return edges, axis_flag
