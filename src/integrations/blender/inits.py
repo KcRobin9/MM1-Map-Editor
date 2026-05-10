@@ -5,6 +5,7 @@ from src.helpers.main import is_process_running
 from src.integrations.blender.modeling.uv_mapping import OBJECT_OT_UpdateUVMapping
 
 from src.integrations.blender.operators.custom_properties import OBJECT_OT_AssignCustomProperties
+from src.integrations.blender.operators.face_side import OBJECT_OT_ToggleGameSidePreview
 from src.integrations.blender.operators.export_polygons import OBJECT_OT_ExportPolygons
 from src.integrations.blender.operators.process_extrude import OBJECT_OT_ProcessPostExtrude
 from src.integrations.blender.operators.rename_polygons import (
@@ -64,6 +65,7 @@ PANEL_CLASSES = [
 ]
 
 OPERATOR_CLASSES = [
+    OBJECT_OT_ToggleGameSidePreview,
     OBJECT_OT_UpdateUVMapping,
     OBJECT_OT_RefreshCurrentTextures,
     OBJECT_OT_ExportPolygons,

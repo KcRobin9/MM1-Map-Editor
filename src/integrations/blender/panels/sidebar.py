@@ -1,5 +1,7 @@
 import bpy
 
+from src.integrations.blender.operators.face_side import _is_active
+
 
 class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
     bl_label    = "Polygons"
@@ -98,6 +100,18 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
+
+        # ── 0) Game Side Preview ──────────────────────────────────────────────
+        active = _is_active()
+        row = layout.row()
+        row.alert = active
+        row.operator(
+            "object.toggle_game_side_preview",
+            text="Game Side ON (click to disable)" if active else "Game Side Preview",
+            icon='HIDE_OFF' if active else 'HIDE_ON',
+            depress=active,
+        )
+        layout.separator()
 
         # ── 1) Map Status ─────────────────────────────────────────────────────
         scene_meshes = [obj for obj in context.scene.objects if obj.type == "MESH"]
