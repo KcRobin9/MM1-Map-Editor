@@ -14,7 +14,7 @@ from src.integrations.blender.operators.facades import (
     is_facade_obj, get_facade_objects, get_unique_groups,
     facade_name_to_friendly, flags_to_const,
     load_form_from_obj, _panel_positions,
-    FACADE_FLAGS_ITEMS,
+    is_dt_cfg, _resolve_scale, _to_tagged_parent,
 )
 
 _PANEL_CATEGORY = "Facade Editor"
@@ -26,7 +26,6 @@ _last_loaded_group_id: str = ""
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _flags_label(flags_val: int) -> str:
-    """Return a short human label for a flags integer."""
     return flags_to_const(flags_val).replace("FcdFlags.", "")
 
 
@@ -36,6 +35,12 @@ def _count_panels(cfg: dict) -> int:
 
 def _count_group_instances(gid: str) -> int:
     return sum(1 for o in get_facade_objects() if o.get("mm_facade_group_id") == gid)
+
+
+def _draw_xyz_row(layout, scene, prefix: str, field: str, labels=("X", "Y", "Z")):
+    row = layout.row(align=True)
+    for axis_letter, axis in zip(labels, "xyz"):
+        row.prop(scene, f"{prefix}_{field}_{axis}", text=axis_letter)
 
 
 # ── Panel 1: Inspector ────────────────────────────────────────────────────────
@@ -51,7 +56,6 @@ class VIEW3D_PT_FacadeEditorPanel(bpy.types.Panel):
         layout = self.layout
         obj    = context.active_object
 
-        # ── Scene status ──────────────────────────────────────────────────────
         groups      = get_unique_groups()
         n_instances = len(get_facade_objects())
 
@@ -66,16 +70,18 @@ class VIEW3D_PT_FacadeEditorPanel(bpy.types.Panel):
             layout.label(text="Select a facade to inspect", icon="INFO")
             return
 
-        # Resolve to tagged parent if user clicked a child mesh
-        tagged = obj if "mm_facade_group_id" in obj else obj.parent
-        gid = tagged.get("mm_facade_group_id", "") if tagged else ""
+        tagged = _to_tagged_parent(obj)
+        gid    = tagged.get("mm_facade_group_id", "") if tagged else ""
+        if not gid:
+            layout.label(text="Selected object is not part of a facade group", icon="ERROR")
+            return
 
         # Auto-populate edit form when selection changes (deferred timer).
         global _last_loaded_group_id
         if gid != _last_loaded_group_id:
             _last_loaded_group_id = gid
-            scene_name = context.scene.name
-            tagged_name = tagged.name if tagged else obj.name
+            scene_name  = context.scene.name
+            tagged_name = tagged.name
             def _deferred():
                 import bpy as _bpy
                 sc = _bpy.data.scenes.get(scene_name)
@@ -84,38 +90,48 @@ class VIEW3D_PT_FacadeEditorPanel(bpy.types.Panel):
                     load_form_from_obj(sc, ob)
             bpy.app.timers.register(_deferred, first_interval=0.0)
 
-        # ── Group summary ─────────────────────────────────────────────────────
         try:
             import json
-            cfg = json.loads(tagged.get("mm_facade_config_json", "{}") if tagged else "{}")
+            cfg = json.loads(tagged.get("mm_facade_config_json", "{}"))
         except Exception:
             cfg = {}
 
-        name_val       = cfg.get("name", tagged.get("mm_facade_name", "?") if tagged else "?")
+        name_val       = cfg.get("name", tagged.get("mm_facade_name", "?"))
         flags_val      = int(cfg.get("flags", 1))
         n_panels_group = _count_group_instances(gid)
+        dt             = is_dt_cfg(cfg)
 
         box = layout.box()
         col = box.column(align=True)
-        col.label(text=facade_name_to_friendly(name_val), icon="MESH_DATA")
+        title = facade_name_to_friendly(name_val)
+        if dt:
+            title += "  · DT"
+        col.label(text=title, icon="HOME" if dt else "MESH_DATA")
         col.label(text=f"{_flags_label(flags_val)}  ·  {n_panels_group} panel(s)", icon="MOD_LATTICE")
 
         sides = cfg.get("sides", [0.0, 0.0, 0.0])
-        sides_str = f"L={sides[0]:.1f}  R={sides[1]:.1f}  D={sides[2]:.1f}"
+        if dt:
+            sides_str = f"({sides[0]:.1f}, {sides[1]:.1f}, {sides[2]:.1f})  3D point"
+        else:
+            sides_str = f"L={sides[0]:.1f}  R={sides[1]:.1f}  D={sides[2]:.1f}"
         col.label(text=f"Sides: {sides_str}", icon="BLANK1")
 
         scale_auto = cfg.get("scale_auto", True)
-        scale_str  = "auto" if scale_auto else f"{cfg.get('scale', 1.0):.3f}"
+        if scale_auto:
+            scale_str = f"auto = {_resolve_scale(cfg):.2f}"
+        else:
+            scale_str = f"{cfg.get('scale', 1.0):.3f}"
         col.label(text=f"Scale: {scale_str}  ·  Sep: {cfg.get('separator', 10.0):.2f}", icon="BLANK1")
 
-        # ── Action buttons ────────────────────────────────────────────────────
         layout.separator()
         row = layout.row(align=True)
         row.operator("facades.select_group",  text="Select Group", icon="RESTRICT_SELECT_OFF")
         row.operator("facades.load_into_form", text="Edit",        icon="GREASEPENCIL")
         row = layout.row(align=True)
+        row.operator("facades.duplicate_group", text="Duplicate",  icon="DUPLICATE")
+        row.operator("facades.delete_group",    text="Delete",     icon="TRASH")
+        row = layout.row(align=True)
         row.operator("facades.export_group_code", text="Copy as Code", icon="COPYDOWN")
-        row.operator("facades.delete_group",      text="Delete",       icon="TRASH")
 
 
 # ── Panel 2: Edit Form ────────────────────────────────────────────────────────
@@ -136,7 +152,13 @@ class VIEW3D_PT_FacadeEditorForm(bpy.types.Panel):
             layout.label(text="Select a facade and click 'Edit'", icon="INFO")
             return
 
+        groups = get_unique_groups()
+        cfg    = groups.get(group_id, {})
+        dt     = is_dt_cfg(cfg)
+
         layout.label(text=f"Editing: {group_id}", icon="GREASEPENCIL")
+        if dt:
+            layout.label(text="DT building (mmBuildingInstance render path)", icon="HOME")
         layout.separator()
 
         # ── Facade name ───────────────────────────────────────────────────────
@@ -159,48 +181,58 @@ class VIEW3D_PT_FacadeEditorForm(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         col.label(text="Offset (start):", icon="TRANSFORM_ORIGINS")
-        row = col.row(align=True)
-        row.prop(scene, "fe_offset_x", text="X")
-        row.prop(scene, "fe_offset_y", text="Y")
-        row.prop(scene, "fe_offset_z", text="Z")
+        _draw_xyz_row(col, scene, "fe", "offset")
+        op = col.operator("facades.bake_from_cursor", text="Use 3D Cursor", icon="PIVOT_CURSOR")
+        op.target = "offset"; op.form = "edit"
+
         col.separator()
         col.label(text="End:", icon="CURVE_PATH")
-        row = col.row(align=True)
-        row.prop(scene, "fe_end_x", text="X")
-        row.prop(scene, "fe_end_y", text="Y")
-        row.prop(scene, "fe_end_z", text="Z")
+        _draw_xyz_row(col, scene, "fe", "end")
+        op = col.operator("facades.bake_from_cursor", text="Use 3D Cursor", icon="PIVOT_CURSOR")
+        op.target = "end"; op.form = "edit"
 
         layout.separator()
 
-        # ── Axis / Separator ──────────────────────────────────────────────────
-        box = layout.box()
-        col = box.column(align=True)
-        row = col.row(align=True)
-        row.label(text="Axis:", icon="ORIENTATION_GLOBAL")
-        row.prop(scene, "fe_axis", expand=True)
-        col.separator()
-        col.prop(scene, "fe_separator", text="Separator (panel width)")
-
-        layout.separator()
+        # ── Axis / Separator (irrelevant for DT) ─────────────────────────────
+        if not dt:
+            box = layout.box()
+            col = box.column(align=True)
+            row = col.row(align=True)
+            row.label(text="Axis:", icon="ORIENTATION_GLOBAL")
+            row.prop(scene, "fe_axis", expand=True)
+            col.separator()
+            col.prop(scene, "fe_separator", text="Separator (panel width)")
+            layout.separator()
 
         # ── Sides ─────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
-        col.label(text="Sides  (Left, Right, Depth):", icon="MOD_SOLIDIFY")
-        row = col.row(align=True)
-        row.prop(scene, "fe_sides_x", text="L")
-        row.prop(scene, "fe_sides_y", text="R")
-        row.prop(scene, "fe_sides_z", text="D")
+        if dt:
+            col.label(text="Sides  (3D point — third corner):", icon="MOD_BUILD")
+            row = col.row(align=True)
+            row.prop(scene, "fe_sides_x", text="X")
+            row.prop(scene, "fe_sides_y", text="Y")
+            row.prop(scene, "fe_sides_z", text="Z")
+        else:
+            col.label(text="Sides  (Left, Right, Depth):", icon="MOD_SOLIDIFY")
+            row = col.row(align=True)
+            row.prop(scene, "fe_sides_x", text="L")
+            row.prop(scene, "fe_sides_y", text="R")
+            row.prop(scene, "fe_sides_z", text="D")
 
         layout.separator()
 
         # ── Scale ─────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
+        if dt:
+            col.label(text="Scale: not used by DT renderer", icon="INFO")
         col.prop(scene, "fe_scale_auto", text="Auto Scale  (from FCD scales.txt)")
         sub = col.row()
         sub.enabled = not scene.fe_scale_auto
         sub.prop(scene, "fe_scale", text="Manual Scale")
+        if scene.fe_scale_auto and not dt:
+            col.label(text=f"Resolved: {_resolve_scale(cfg):.3f}", icon="DRIVER")
 
 
 # ── Panel 3: Create Facade ────────────────────────────────────────────────────
@@ -211,12 +243,18 @@ class VIEW3D_PT_FacadeEditorCreate(bpy.types.Panel):
     bl_space_type  = "VIEW_3D"
     bl_region_type = "UI"
     bl_category    = _PANEL_CATEGORY
+    bl_options     = {"DEFAULT_CLOSED"}
 
     def draw(self, context):
         layout = self.layout
         scene  = context.scene
 
-        # ── Name ──────────────────────────────────────────────────────────────
+        try:
+            flags_int = int(scene.fc_flags)
+        except (ValueError, TypeError):
+            flags_int = 0
+        creating_dt = bool(flags_int & 0x004)
+
         box = layout.box()
         row = box.row(align=True)
         row.label(text="Facade:", icon="MESH_DATA")
@@ -224,60 +262,64 @@ class VIEW3D_PT_FacadeEditorCreate(bpy.types.Panel):
 
         layout.separator()
 
-        # ── Flags ─────────────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
         col.label(text="Flags:", icon="MOD_LATTICE")
         col.prop(scene, "fc_flags", text="")
+        if creating_dt:
+            col.label(text="DT building (3D footprint mode)", icon="HOME")
 
         layout.separator()
 
-        # ── Offset / End ──────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
         col.label(text="Offset (start):", icon="TRANSFORM_ORIGINS")
-        row = col.row(align=True)
-        row.prop(scene, "fc_offset_x", text="X")
-        row.prop(scene, "fc_offset_y", text="Y")
-        row.prop(scene, "fc_offset_z", text="Z")
+        _draw_xyz_row(col, scene, "fc", "offset")
+        op = col.operator("facades.bake_from_cursor", text="Use 3D Cursor", icon="PIVOT_CURSOR")
+        op.target = "offset"; op.form = "create"
+
         col.separator()
         col.label(text="End:", icon="CURVE_PATH")
-        row = col.row(align=True)
-        row.prop(scene, "fc_end_x", text="X")
-        row.prop(scene, "fc_end_y", text="Y")
-        row.prop(scene, "fc_end_z", text="Z")
+        _draw_xyz_row(col, scene, "fc", "end")
+        op = col.operator("facades.bake_from_cursor", text="Use 3D Cursor", icon="PIVOT_CURSOR")
+        op.target = "end"; op.form = "create"
 
         layout.separator()
 
-        # ── Axis / Separator ──────────────────────────────────────────────────
+        if not creating_dt:
+            box = layout.box()
+            col = box.column(align=True)
+            row = col.row(align=True)
+            row.label(text="Axis:", icon="ORIENTATION_GLOBAL")
+            row.prop(scene, "fc_axis", expand=True)
+            col.separator()
+            col.prop(scene, "fc_separator", text="Separator (panel width)")
+            layout.separator()
+
         box = layout.box()
         col = box.column(align=True)
-        row = col.row(align=True)
-        row.label(text="Axis:", icon="ORIENTATION_GLOBAL")
-        row.prop(scene, "fc_axis", expand=True)
-        col.separator()
-        col.prop(scene, "fc_separator", text="Separator (panel width)")
+        if creating_dt:
+            col.label(text="Sides  (3D point — third corner):", icon="MOD_BUILD")
+            row = col.row(align=True)
+            row.prop(scene, "fc_sides_x", text="X")
+            row.prop(scene, "fc_sides_y", text="Y")
+            row.prop(scene, "fc_sides_z", text="Z")
+        else:
+            col.label(text="Sides  (Left, Right, Depth):", icon="MOD_SOLIDIFY")
+            row = col.row(align=True)
+            row.prop(scene, "fc_sides_x", text="L")
+            row.prop(scene, "fc_sides_y", text="R")
+            row.prop(scene, "fc_sides_z", text="D")
 
         layout.separator()
 
-        # ── Sides ─────────────────────────────────────────────────────────────
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Sides  (Left, Right, Depth):", icon="MOD_SOLIDIFY")
-        row = col.row(align=True)
-        row.prop(scene, "fc_sides_x", text="L")
-        row.prop(scene, "fc_sides_y", text="R")
-        row.prop(scene, "fc_sides_z", text="D")
-
-        layout.separator()
-
-        # ── Scale ─────────────────────────────────────────────────────────────
-        box = layout.box()
-        col = box.column(align=True)
-        col.prop(scene, "fc_scale_auto", text="Auto Scale  (from FCD scales.txt)")
-        sub = col.row()
-        sub.enabled = not scene.fc_scale_auto
-        sub.prop(scene, "fc_scale", text="Manual Scale")
+        if not creating_dt:
+            box = layout.box()
+            col = box.column(align=True)
+            col.prop(scene, "fc_scale_auto", text="Auto Scale  (from FCD scales.txt)")
+            sub = col.row()
+            sub.enabled = not scene.fc_scale_auto
+            sub.prop(scene, "fc_scale", text="Manual Scale")
 
         layout.separator()
         layout.operator("facades.create_group", text="Create Facade", icon="ADD")
@@ -295,7 +337,6 @@ class VIEW3D_PT_FacadeEditorTools(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
 
-        # ── Load / Reload ─────────────────────────────────────────────────────
         layout.label(text="Load", icon="IMPORT")
         row = layout.row(align=True)
         row.operator("facades.reload",        text="Reload from facades.py", icon="FILE_REFRESH")
@@ -304,7 +345,6 @@ class VIEW3D_PT_FacadeEditorTools(bpy.types.Panel):
 
         layout.separator()
 
-        # ── Export ────────────────────────────────────────────────────────────
         layout.label(text="Export", icon="EXPORT")
         box = layout.box()
         col = box.column(align=True)
@@ -332,13 +372,14 @@ class VIEW3D_PT_FacadeEditorGroups(bpy.types.Panel):
             layout.label(text="No facade groups in scene", icon="INFO")
             return
 
-        # ── Summary ───────────────────────────────────────────────────────────
-        all_objs     = get_facade_objects()
         type_counts: dict = {}
         total_panels = 0
+        n_dt = 0
         for gid, cfg in groups.items():
             n = _count_panels(cfg)
             total_panels += n
+            if is_dt_cfg(cfg):
+                n_dt += 1
             label = facade_name_to_friendly(cfg.get("name", "?"))
             type_counts[label] = type_counts.get(label, 0) + n
 
@@ -348,13 +389,13 @@ class VIEW3D_PT_FacadeEditorGroups(bpy.types.Panel):
             text=f"{total_panels} panels  ·  {len(groups)} groups  ·  {len(type_counts)} types",
             icon="INFO",
         )
+        if n_dt:
+            stats_col.label(text=f"  {n_dt} DT-mode group(s)", icon="HOME")
         for label, cnt in sorted(type_counts.items(), key=lambda x: -x[1])[:10]:
             stats_col.label(text=f"  {cnt}×  {label}")
         if len(type_counts) > 10:
             stats_col.label(text=f"  … and {len(type_counts) - 10} more types")
 
-
-# ── Registration ──────────────────────────────────────────────────────────────
 
 FACADE_EDITOR_PANEL_CLASSES = [
     VIEW3D_PT_FacadeEditorPanel,
