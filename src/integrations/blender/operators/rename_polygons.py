@@ -5,7 +5,7 @@ from src.integrations.blender.utils import get_used_bound_numbers, next_availabl
 
 
 def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
-    polygons = [obj for obj in context.scene.objects if obj.name.startswith("P")]
+    polygons = [obj for obj in context.scene.objects if obj.type == "MESH" and obj.name.startswith("P")]
     if not sort or not polygons:
         return polygons
     return sorted(polygons, key=lambda x: int(re.search(r"P(\d+)", x.name).group(1)))
@@ -22,8 +22,10 @@ def rename_sequential(polygons: list) -> int:
 
 
 class OBJECT_OT_RenameSequential(bpy.types.Operator):
-    bl_idname = "object.rename_sequential"
-    bl_label  = "Rename Objects Sequentially"
+    bl_idname      = "object.rename_sequential"
+    bl_label       = "Rename Objects Sequentially"
+    bl_description = "Rename all P-prefixed mesh objects sequentially (P1, P2, … skipping reserved P200)"
+    bl_options     = {"REGISTER", "UNDO"}
 
     def execute(self, context: bpy.types.Context) -> set:
         try:

@@ -70,8 +70,9 @@ def _bound_number_from_name(name: str):
 
 
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):
-    bl_idname = "object.export_polygons"
-    bl_label = "Export Blender Polygons"
+    bl_idname      = "object.export_polygons"
+    bl_label       = "Export Blender Polygons"
+    bl_description = "Export polygon data as Python code and copy it to the clipboard"
 
     select_all: bpy.props.BoolProperty(default = True)
 
@@ -82,7 +83,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         except AttributeError:
             return False
 
-    def execute(self, context: bpy.types.Context) -> Set[set]:
+    def execute(self, context: bpy.types.Context) -> Set[str]:
         export_file = Folder.Blender.Polygons / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
 
         # Select Mesh Objects based on the "select_all" property
@@ -174,7 +175,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
                 open_with_notepad_plus(export_file)
                 time.sleep(1.0)  # Give Notepad++ time to load the file
                 pyautogui.hotkey(Key.CTRL, Key.A)
-                pyautogui.hotkey(Key.CTRL, Key.A)
+                pyautogui.hotkey(Key.CTRL, Key.C)
                 self.report({"INFO"}, f"Saved data to {export_file}")
 
             bpy.ops.object.select_all(action = "DESELECT")

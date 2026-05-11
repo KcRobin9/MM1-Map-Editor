@@ -1,3 +1,4 @@
+import re
 import bpy
 
 from src.constants.misc import Executable
@@ -566,7 +567,7 @@ def register_scene_properties() -> None:
     bpy.types.Scene.pc_end_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height")
     bpy.types.Scene.pc_end_z = bpy.props.FloatProperty(name="Z", default=0.0)
     bpy.types.Scene.pc_angle = bpy.props.FloatProperty(
-        name="Angle", default=0.01, description="Facing angle in degrees (0.01=North)",
+        name="Angle", default=0.01, description="Facing angle in degrees (must be non-zero; 0.01 ≈ North)",
     )
     bpy.types.Scene.pc_area_x1 = bpy.props.FloatProperty(name="X", default=0.0)
     bpy.types.Scene.pc_area_y1 = bpy.props.FloatProperty(name="Y", default=0.0)
@@ -676,11 +677,9 @@ def register_scene_properties() -> None:
         description="Pin all lane end-points to the centre lane's end point",
         default=False,
     )
-    import re as _re
-
     def _natural_key(name):
         return [int(p) if p.isdigit() else p.lower()
-                for p in _re.split(r'(\d+)', name)]
+                for p in re.split(r'(\d+)', name)]
 
     def _poly_search(self, context, edit_text):
         names = [o.name for o in bpy.data.objects
