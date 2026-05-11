@@ -10,7 +10,7 @@ from src.integrations.blender.operators.props import (
 # Track the last-loaded group so we only refresh the form when selection changes
 _last_loaded_group_id: str = ""
 
-_PANEL_CATEGORY = "Prop Editor"
+_PANEL_CATEGORY = "Props"
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────

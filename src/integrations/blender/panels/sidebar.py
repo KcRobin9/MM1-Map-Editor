@@ -8,7 +8,7 @@ class VIEW3D_PT_MapEditorPanel(bpy.types.Panel):
     bl_idname   = "VIEW3D_PT_map_editor"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = "Map Editor"
+    bl_category = "Polygons"
 
     def draw(self, context):
         layout = self.layout

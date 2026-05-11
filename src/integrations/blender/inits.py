@@ -591,7 +591,7 @@ def register_scene_properties() -> None:
     bpy.types.Scene.st_show_arrows = bpy.props.BoolProperty(
         name="Show Direction Arrows",
         description="Show travel-direction chevrons on all streets in the 3D viewport",
-        default=True,
+        default=False,
     )
     bpy.types.Scene.st_vertex_index = bpy.props.IntProperty(
         name="Active Vertex",

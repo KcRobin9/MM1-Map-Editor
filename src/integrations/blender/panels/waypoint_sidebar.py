@@ -88,7 +88,7 @@ class VIEW3D_PT_WaypointEditorPanel(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_waypoint_editor"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Waypoint Editor"
+    bl_category    = "Waypoints"
 
     def draw(self, context):
         layout = self.layout
@@ -206,7 +206,7 @@ class VIEW3D_PT_WaypointEditorTools(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_waypoint_editor_tools"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Waypoint Editor"
+    bl_category    = "Waypoints"
 
     def draw(self, context):
         layout = self.layout

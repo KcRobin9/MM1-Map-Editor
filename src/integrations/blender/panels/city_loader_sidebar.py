@@ -8,7 +8,7 @@ All heavy lifting is delegated to the existing facade / prop operators.
 import bpy
 from pathlib import Path
 
-_PANEL_CATEGORY = "City Loader"
+_PANEL_CATEGORY = "Map Loader"
 
 
 class VIEW3D_PT_CityLoader(bpy.types.Panel):

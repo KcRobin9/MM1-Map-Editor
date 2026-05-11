@@ -17,7 +17,7 @@ from src.integrations.blender.operators.facades import (
     is_dt_cfg, _resolve_scale, _to_tagged_parent,
 )
 
-_PANEL_CATEGORY = "Facade Editor"
+_PANEL_CATEGORY = "Facades"
 
 # Track last-loaded group so we defer form refresh only when selection changes.
 _last_loaded_group_id: str = ""

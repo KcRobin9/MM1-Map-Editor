@@ -10,7 +10,7 @@ class VIEW3D_PT_StreetEditorPanel(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_street_editor"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Street Editor"
+    bl_category    = "AI Paths"
 
     def draw(self, context):
         layout = self.layout
@@ -39,7 +39,7 @@ class VIEW3D_PT_StreetVertexEditor(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_street_vertex_editor"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Street Editor"
+    bl_category    = "AI Paths"
     bl_parent_id   = "VIEW3D_PT_street_editor"
 
     def draw(self, context):
@@ -155,7 +155,7 @@ class VIEW3D_PT_StreetEditorIntersections(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_street_editor_intersections"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Street Editor"
+    bl_category    = "AI Paths"
     bl_parent_id   = "VIEW3D_PT_street_editor"
 
     def draw(self, context):
@@ -192,7 +192,7 @@ class VIEW3D_PT_StreetEditorProperties(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_street_editor_properties"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Street Editor"
+    bl_category    = "AI Paths"
     bl_parent_id   = "VIEW3D_PT_street_editor"
     bl_options     = {'DEFAULT_CLOSED'}
 
@@ -240,7 +240,7 @@ class VIEW3D_PT_StreetEditorTools(bpy.types.Panel):
     bl_idname      = "VIEW3D_PT_street_editor_tools"
     bl_space_type  = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category    = "Street Editor"
+    bl_category    = "AI Paths"
 
     def draw(self, context):
         layout  = self.layout
