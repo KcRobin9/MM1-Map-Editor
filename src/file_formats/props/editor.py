@@ -18,7 +18,8 @@ from src.file_formats.props.props import Bangers
 from src.io.binary import write_pack
 
 from src.USER.settings.main import MAP_FILENAME, default_separator
-from src.USER.settings.debug import debug_props 
+from src.USER.settings.debug import debug_props
+from src.ui.console import ok, sep, detail, item
 
 
 class BangerEditor:
@@ -73,12 +74,10 @@ class BangerEditor:
                 prop_name = prop.name.rstrip('\x00')
                 prop_counts[prop_name] = prop_counts.get(prop_name, 0) + 1
         
+        ok(f"Created props file{sep()}{total_props} prop(s)")
         if prop_counts:
-            breakdown = ", ".join([f"{count}x {name}" for name, count in sorted(prop_counts.items())])
-            print(f"Successfully created props file with {total_props} prop(s)")
-            print(f"---props: {breakdown}")
-        else:
-            print(f"Successfully created props file with {total_props} prop(s)")
+            breakdown = ", ".join(f"{count}x {name}" for name, count in sorted(prop_counts.items()))
+            item(breakdown)
         
         self.print_placement_statistics(user_set_props)
 
@@ -106,11 +105,11 @@ class BangerEditor:
         if race_details:
             unique_races = sorted(set(race_details))
             race_specific_count = len(unique_races)
-            races_str = ", ".join(unique_races)
-            print(f"Prop placement: {total_props} total (manual: {manual_props}x, random: {self.random_props_placed}x, race-specific: {race_specific_count}x)")
-            print(f"---race-specific props for: {races_str}")
+            placement = f"{total_props} total — manual: {manual_props}x, random: {self.random_props_placed}x, race-specific: {race_specific_count}x"
+            detail("Placement", placement)
+            detail("Race-specific", ", ".join(unique_races))
         else:
-            print(f"Prop placement: {total_props} total (manual: {manual_props}x, random: {self.random_props_placed}x, race-specific: 0x")
+            detail("Placement", f"{total_props} total — manual: {manual_props}x, random: {self.random_props_placed}x, race-specific: 0x")
 
     def _format_race_name(self, race_value: str) -> str:
         if race_value == RaceModeNum.CIRCUIT_ALL or race_value == RaceMode.CIRCUIT:
@@ -351,10 +350,9 @@ def edit_and_copy_bangerdata_to_shop(prop_properties: Dict[str, Dict[str, Union[
             write_banger_file(output_folder / banger_file.name, updated_lines)
     
     if prop_properties:
-        prop_names = list(prop_properties.keys())
-        prop_names_str = ", ".join(prop_names)
-        print(f"Successfully modified properties for {len(prop_properties)} prop(s) (props: {prop_names_str})")
-        
+        prop_names_str = ", ".join(prop_properties.keys())
+        ok(f"Modified {len(prop_properties)} prop(s){sep()}{prop_names_str}")
+        _col = max(len(name) for name in prop_properties)
         for prop_name, modifications in prop_properties.items():
-            mod_details = ", ".join([f"{key}={value}" for key, value in modifications.items()])
-            print(f"---{prop_name}: {mod_details}")
+            mod_details = ", ".join(f"{key}={value}" for key, value in modifications.items())
+            detail(prop_name, mod_details, col=_col)

@@ -8,6 +8,7 @@ from src.USER.settings.blender import target_blend_file
 from src.helpers.main import is_process_running
 from src.constants.misc import Executable
 from src.integrations.blender.handlers import initialize_depsgraph_update_handler
+from src.ui.console import ok, item
 
 
 DEFAULT_OBJECTS = {"Camera", "Cube", "Light"}
@@ -21,11 +22,11 @@ def setup_blender(load_target_model: bool) -> None:
     enable_vertex_snapping()
     adjust_3D_view_settings()
     initialize_depsgraph_update_handler()
-    
+
     if load_target_model:
         load_model()
 
-    print("Blender setup complete")
+    ok("Blender setup complete")
 
 
 def delete_default_objects() -> None:
@@ -34,7 +35,7 @@ def delete_default_objects() -> None:
 
     bpy.ops.object.delete()
 
-    print(f"Default objects ({DEFAULT_OBJECTS}) deleted")
+    item(f"Default objects deleted  ({', '.join(sorted(DEFAULT_OBJECTS))})")
 
 
 def load_model() -> None:
@@ -47,7 +48,7 @@ def load_model() -> None:
     for obj in data_to.objects:
         bpy.context.collection.objects.link(obj)
 
-    print(f"Loaded external model: {target_blend_file.name}")
+    item(f"Loaded external model: {target_blend_file.name}")
 
 
 def enable_developer_extras() -> None:
@@ -65,7 +66,7 @@ def enable_developer_extras() -> None:
     if changed:
         bpy.ops.wm.save_userpref()
 
-    print("Developer Extras enabled, splash disabled")
+    item("Developer extras enabled, splash disabled")
 
 
 def enable_vertex_snapping() -> None:
@@ -73,7 +74,7 @@ def enable_vertex_snapping() -> None:
     bpy.context.tool_settings.snap_elements = {"VERTEX"}
     bpy.context.tool_settings.snap_target = "CLOSEST"
 
-    print("Vertex snapping enabled")
+    item("Vertex snapping enabled")
 
 
 def get_3d_space(area: Area) -> Optional[SpaceView3D]:
@@ -93,5 +94,5 @@ def adjust_3D_view_settings() -> None:
                 shading.light = "FLAT"
                 shading.color_type = "TEXTURE"
 
-                print("3D view settings adjusted")
+                item("3D view settings adjusted")
                 return

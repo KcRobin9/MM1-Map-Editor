@@ -3,6 +3,7 @@ from typing import List
 from pathlib import Path
 
 from src.USER.settings.main import MAP_NAME, MAP_FILENAME
+from src.ui.console import ok, sep
 
 
 def create_map_info(output_file: Path, blitz_race_names: List[str], circuit_race_names: List[str], checkpoint_race_names: List[str]) -> None:
@@ -19,7 +20,7 @@ BlitzNames={'|'.join(blitz_race_names)}
 CircuitNames={'|'.join(circuit_race_names)}
 CheckpointNames={'|'.join(checkpoint_race_names)}
 """)
-    print(f"Successfully created map info file")
+    ok("Created map info file")
 
 
 def copy_files_to_folder (input_folder: Path, output_folder: Path, pattern: str = "*") -> None:
@@ -31,7 +32,7 @@ def copy_files_to_folder (input_folder: Path, output_folder: Path, pattern: str 
     
     if files_copied > 0:
         folder_name = input_folder.name
-        print(f"Successfully copied {files_copied} file(s) from {folder_name}")
+        ok(f"Copied {files_copied} file(s) from {folder_name}")
 
 
 def copy_custom_textures_to_shop(input_folder: Path, output_folder: Path) -> None:
@@ -50,7 +51,7 @@ def ensure_empty_mm_dev_folder(input_folder: Path) -> None:
                 file.unlink()
                 files_deleted += 1
         if files_deleted > 0:
-            print(f"Successfully cleared {files_deleted} file(s) from MM dev folder")
+            ok(f"Cleared {files_deleted} file(s) from MM dev folder")
     else:
         input_folder.mkdir(parents=True, exist_ok=True)
-        print(f"Successfully created MM dev folder")
+        ok("Created MM dev folder")

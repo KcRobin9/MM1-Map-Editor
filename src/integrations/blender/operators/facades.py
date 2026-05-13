@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
 from src.constants.folder import Folder
+from src.ui.console import ok, sep, item, suppress_stdout_matching
 
 
 _FACADES_COLLECTION = "Facades"
@@ -271,12 +272,13 @@ def _bms_cached_mesh(bms_file: Path, label: str, tex_folder) -> Optional["bpy.ty
         bms_data = read_bms(bms_file)
         mesh = build_blender_mesh(label, bms_data)
         if tex_folder and bms_data.get("texture_names"):
-            _apply_materials_to_mesh(mesh, bms_data["texture_names"], tex_folder)
+            with suppress_stdout_matching("Unable to find a suitable DXT compression"):
+                _apply_materials_to_mesh(mesh, bms_data["texture_names"], tex_folder)
         mesh["bms_source_file"] = str(bms_file)
         ox, oy, oz = bms_data.get("mesh_offset", [0.0, 0.0, 0.0])
         mesh["_bl_offset"] = (-ox, oz, oy)
     except Exception as exc:
-        print(f"[Facade Editor] BMS load failed ({bms_file.name}): {exc}")
+        item(f"BMS load failed ({bms_file.name}): {exc}")
         return None
 
     _BMS_MESH_CACHE[key] = mesh
@@ -547,7 +549,14 @@ def place_facades_in_scene(
                     if m:
                         _add_child_obj(m, f"{panel_name}_BACK", "BACK", parent_obj, col)
 
-    print(f"[Facade Editor] {rep.summary()}")
+    unique_names = list(dict.fromkeys(cfg.get("name", "") for cfg in facade_cfgs))
+    total_panels = sum(len(_panel_positions(cfg)) for cfg in facade_cfgs)
+    name_list    = ", ".join(unique_names)
+    ok(f"Facades placed in scene{sep()}{total_panels} panel(s)  ·  {len(unique_names)} unique")
+    if unique_names:
+        item(name_list)
+    if rep.missing_names:
+        item(f"Missing BMS: {', '.join(sorted(rep.missing_names))}")
     return rep
 
 

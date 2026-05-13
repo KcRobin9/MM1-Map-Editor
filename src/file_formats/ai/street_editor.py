@@ -8,6 +8,7 @@ from src.game.races.constants_2 import IntersectionType
 from src.file_formats.ai.map import BaiMap
 
 from src.USER.settings.main import MAP_FILENAME
+from src.ui.console import ok, item
 
 
 class aiStreetEditor:
@@ -54,9 +55,8 @@ class aiStreetEditor:
             editor.write()
             street_names.append(editor.street_name)
     
-        # Build the street names list
-        street_names_str = ", ".join(street_names)
-        print(f"Successfully created {len(street_names)} AI street file(s)\n---streets names: {street_names_str}")
+        ok(f"Created {len(street_names)} AI street file(s)")
+        item(", ".join(street_names))
         return BaiMap(street_names)
 
     def write(self):    

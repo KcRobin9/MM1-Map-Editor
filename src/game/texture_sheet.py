@@ -4,6 +4,7 @@ from typing import Dict, List
 
 from src.constants.file_formats import FileType
 from src.constants.configs import TEXTURESHEET_MAPPING
+from src.ui.console import ok, item
 
 
 TEXTURESHEET_HEADER = ["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"]
@@ -66,10 +67,9 @@ class TextureSheet:
                     added_textures.append(custom_tex)
         
         if added_textures:
-            texture_list = ", ".join([f"{tex}{FileType.DIRECTDRAW_SURFACE}" for tex in added_textures])
-            print(f"Successfully appended {len(added_textures)} custom texture(s) to texture sheet ({texture_list})")
-        else:
-            print(f"No new custom textures to append")
+            texture_list = ", ".join(f"{tex}{FileType.DIRECTDRAW_SURFACE}" for tex in added_textures)
+            ok(f"Appended {len(added_textures)} custom texture(s) to texture sheet")
+            item(texture_list)
             
     @staticmethod
     def write(textures: Dict[str, List[str]], output_file: Path):
@@ -107,5 +107,5 @@ class TextureSheet:
                     texture[TEXTURESHEET_MAPPING[key]] = str(value)
 
         cls.write(textures, output_file)
-        print(f"Successfully created texture sheet file")
+        ok("Created texture sheet file")
                     

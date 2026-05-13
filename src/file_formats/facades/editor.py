@@ -7,6 +7,7 @@ from src.constants.file_formats import FileType
 
 from src.file_formats.facades.facades import Facades
 from src.USER.settings.main import MAP_FILENAME
+from src.ui.console import ok, sep, item
 
 
 class FacadeEditor:    
@@ -23,12 +24,10 @@ class FacadeEditor:
         for facade in facades:
             facade_counts[facade.name] = facade_counts.get(facade.name, 0) + 1
         
-        # Build the facade breakdown string
+        ok(f"Created facades file{sep()}{len(facades)} facade(s)")
         if facade_counts:
-            breakdown = ", ".join([f"{count}x {name}" for name, count in sorted(facade_counts.items())])
-            print(f"Successfully created facades file with {len(facades)} facade(s)\n---facades: {breakdown}")
-        else:
-            print(f"Successfully created facades file with {len(facades)} facade(s)")
+            breakdown = ", ".join(f"{count}x {name}" for name, count in sorted(facade_counts.items()))
+            item(breakdown)
 
         Facades.debug(facades, debug_facades, Folder.Debug.Facades / f"{MAP_FILENAME}{FileType.TEXT}")
 

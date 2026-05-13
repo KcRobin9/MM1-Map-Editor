@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 from src.constants.file_formats import FileType
+from src.ui.console import ok, sep
 
 
 def create_animations(output_folder: Path, anim_data: Dict[str, List[Tuple]], set_anim: bool) -> None:
@@ -23,6 +24,6 @@ def create_animations(output_folder: Path, anim_data: Dict[str, List[Tuple]], se
 
    if anim_data:
        anim_names = ", ".join(sorted(anim_data.keys()))
-       print(f"Successfully created {len(anim_data)} animation file(s) ({anim_names})")
+       ok(f"Created {len(anim_data)} animation file(s){sep()}{anim_names}")
    else:
-       print(f"Successfully created 0 animation file(s)")
+       ok("Created 0 animation file(s)")

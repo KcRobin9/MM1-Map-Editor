@@ -6,6 +6,7 @@ from src.core.vector.vector_3 import Vector3
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
 from src.constants.misc import Encoding
 from src.constants.folder import Folder
+from src.ui.console import ok, sep
 
 
 class Physics:
@@ -74,8 +75,8 @@ class Physics:
 
         cls.write_all(output_file, instances)
 
-        indices_str = ", ".join([f"#{idx}" for idx in sorted(user_set_properties.keys())])
-        print(f"Successfully created physics file with {len(user_set_properties)} custom material(s) (indices: {indices_str})")
+        indices_str = ", ".join(f"#{idx}" for idx in sorted(user_set_properties.keys()))
+        ok(f"Created physics file{sep()}{len(user_set_properties)} custom material(s), indices: {indices_str}")
 
         if debug_physics:
             debug_path = Folder.Resources.User.Physics

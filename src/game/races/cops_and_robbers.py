@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 from src.game.races.constants import CNR_HEADER
 from src.game.waypoints.constants import WAYPOINT_FILLER
+from src.ui.console import ok, sep
 
 
 def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, float, float]]) -> None:
@@ -15,4 +16,4 @@ def create_cops_and_robbers(output_file: Path, cnr_waypoints: List[Tuple[float, 
             f.write(", ".join(map(str, cnr_waypoints[i + 2])) + WAYPOINT_FILLER)
 
     num_sets = len(cnr_waypoints) // 3
-    print(f"Successfully created Cops & Robbers file (sets: {num_sets}x, waypoints: {len(cnr_waypoints)}x)")
+    ok(f"Created Cops & Robbers file{sep()}{num_sets} sets, {len(cnr_waypoints)} waypoints")

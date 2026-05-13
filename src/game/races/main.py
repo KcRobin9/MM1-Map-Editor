@@ -10,6 +10,7 @@ from src.game.races.mm_data import write_mm_data_header, write_mm_data
 from src.game.races.constants import RACE_TYPE_TO_EXTENSION, RACE_TYPE_TO_PREFIX, CHECKPOINT_PREFIXES
 from src.game.races.constants_2 import MM_DATA_FILES
 from src.game.waypoints.waypoints import write_waypoints
+from src.ui.console import ok, sep, detail
 
 
 def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
@@ -92,72 +93,52 @@ def create_races(race_data: Dict[str, Dict[str, Any]]) -> None:
     
     if breakdown_parts:
         breakdown = ", ".join(breakdown_parts)
-        print(f"Successfully created {total_races} race file(s) ({breakdown})")
-        
+        ok(f"Created {total_races} race file(s){sep()}{breakdown}")
+
         # Collect all race names
         all_race_names = []
         for race_key in race_data.keys():
             race_type, race_index = race_key.split("_", 1)
             race_index = int(race_index)
-            
             if race_type == RaceMode.CHECKPOINT:
                 race_name = CHECKPOINT_PREFIXES[race_index]
             else:
                 race_name = f"{RACE_TYPE_TO_PREFIX[race_type]}{race_index}"
             all_race_names.append(race_name)
-        
-        race_names_str = ", ".join(all_race_names)
-        print(f"---race names: {race_names_str}")
-        
+
         # Count total waypoints (player + all opponents)
         total_waypoints = 0
         for race_key, config in race_data.items():
-            # Player waypoints
             total_waypoints += len(config["player_waypoints"])
-            
-            # Opponent waypoints
             ai_map = config["aimap"]
             opponents = ai_map["opponents"]
-            
             if isinstance(opponents, dict):
                 for opp_waypoints in opponents.values():
                     total_waypoints += len(opp_waypoints)
             else:
                 for opp in opponents:
-                    opp_waypoints = list(opp.values())[0]
-                    total_waypoints += len(opp_waypoints)
-        
-        print(f"---waypoints set: {total_waypoints}x")
-        
-        # Count total number of opponents across all races
-        total_opponents = 0
-        for race_key, config in race_data.items():
-            ai_map = config["aimap"]
-            opponents = ai_map["opponents"]
-            
-            if isinstance(opponents, dict):
-                total_opponents += len(opponents)
-            else:
-                total_opponents += len(opponents)
-        
-        print(f"---opponents used: {total_opponents}x")
-        
-        # Count opponent car types
+                    total_waypoints += len(list(opp.values())[0])
+
+        # Count total opponents and car types
         from collections import Counter
+        total_opponents = 0
         opponent_cars = []
         for race_key, config in race_data.items():
             ai_map = config["aimap"]
             opponents = ai_map["opponents"]
-            
             if isinstance(opponents, dict):
+                total_opponents += len(opponents)
                 opponent_cars.extend(opponents.keys())
             else:
+                total_opponents += len(opponents)
                 for opp in opponents:
-                    car_name = list(opp.keys())[0]
-                    opponent_cars.append(car_name)
-        
+                    opponent_cars.append(list(opp.keys())[0])
+
         car_counter = Counter(opponent_cars)
-        car_breakdown = ", ".join([f"{car}: {count}x" for car, count in sorted(car_counter.items())])
-        print(f"---opponent cars used: {car_breakdown}")
+        _col = max(len(l) for l in ("Race names", "Waypoints", "Opponents", "Cars"))
+        detail("Race names", ", ".join(all_race_names), col=_col)
+        detail("Waypoints",  f"{total_waypoints}x",    col=_col)
+        detail("Opponents",  f"{total_opponents}x",    col=_col)
+        detail("Cars", ", ".join(f"{car}: {count}x" for car, count in sorted(car_counter.items())), col=_col)
     else:
-        print(f"Successfully created 0 race file(s)")
+        ok("Created 0 race file(s)")

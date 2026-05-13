@@ -93,9 +93,10 @@ from src.io.binary import read_unpack, write_pack, read_binary_name, write_binar
 from src.misc.main import create_commandline, start_game, post_editor_cleanup
 from src.misc.angel import create_angel_resource_file
 
-# Progress bar imports
+# Progress bar / console imports
 from src.ui.progress_bar.main import RunTimeManager, start_progress_tracking
 from src.ui.progress_bar.constants import COLOR_DIVIDER
+from src.ui.console import ok, sep, detail, item, suppress_stdout_matching
 
 # Constants imports
 from src.constants.constants import * 
@@ -1862,12 +1863,12 @@ def create_cells(output_file: Path, polys: List[Polygon]) -> None:
         Room.NO_SKIDS: "no_skids"
     }
 
-    type_breakdown = "x, ".join([f"{cell_type_names.get(t, f'type_{t}')}: {count}" 
-                               for t, count in sorted(cell_type_counts.items())])
-    
-    print(f"Successfully created cells file (count: {len(mesh_files)}, min: {min_cell}, max: {max_cell})")
-    print(f"---cell IDs: {cell_ids_str}")
-    print(f"---cell types: {type_breakdown}")
+    type_breakdown = ", ".join(f"{cell_type_names.get(t, f'type_{t}')}: {count}x"
+                              for t, count in sorted(cell_type_counts.items()))
+
+    ok(f"Created cells file{sep()}{len(mesh_files)} cells, range: {min_cell}–{max_cell}")
+    item(cell_ids_str)
+    detail("Types", type_breakdown)
     
 ################################################################################################################               
 ################################################################################################################
@@ -2243,7 +2244,7 @@ class Portals:
                     _min.write(f)
                     _max.write(f)
                     
-                print(f"Successfully created {len(portal_tuples)} portal(s)")
+                ok(f"Created {len(portal_tuples)} portal(s)")
                 cls.debug(portals, debug_portals, Folder.Debug.Portals / f"{MAP_FILENAME}_PTL.txt")            
 
     @classmethod
@@ -2468,13 +2469,14 @@ if not SKIP_AR_CREATION:
     total_polys = len(polys) - 1  # Exclude default polygon at index 0
     quads = sum(1 for poly in polys[1:] if poly.is_quad)
     triangles = total_polys - quads
-    print(f"Successfully created {total_polys} polygon(s) (triangles: {triangles}x, quads: {quads}x, vertices: {len(vertices)}x)")
+    ok(f"Created {total_polys} polygon(s){sep()}triangles: {triangles}x, quads: {quads}x, vertices: {len(vertices)}x")
 
     # Texture usage statistics
     texture_counter = Counter(texture_names)
     unique_textures = len(texture_counter)
-    all_textures_str = ", ".join([f"{tex}: {count}x" for tex, count in texture_counter.items()])
-    print(f"Succesfully utilized: {unique_textures} unique texture(s)\n---textures: ({all_textures_str})")
+    all_textures_str = ", ".join(f"{tex}: {count}x" for tex, count in texture_counter.items())
+    ok(f"Utilized {unique_textures} unique texture(s)")
+    item(all_textures_str)
 
     create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
@@ -2834,18 +2836,20 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
 create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
 
 if visualize_props and is_process_running(Executable.BLENDER):
-    place_props_in_scene(
-        _fixed_prop_list, random_props, prop_bms_folder,
-        texture_folder=Folder.Resources.Editor.Textures,
-        car_wheels=prop_car_wheels,
-        car_lights=prop_car_lights,
-    )
+    with suppress_stdout_matching("Unable to find a suitable DXT compression"):
+        place_props_in_scene(
+            _fixed_prop_list, random_props, prop_bms_folder,
+            texture_folder=Folder.Resources.Editor.Textures,
+            car_wheels=prop_car_wheels,
+            car_lights=prop_car_lights,
+        )
 
 if visualize_facades and is_process_running(Executable.BLENDER):
-    place_facades_in_scene(
-        facade_list,
-        texture_folder=Folder.Resources.Editor.Textures,
-    )
+    with suppress_stdout_matching("Unable to find a suitable DXT compression"):
+        place_facades_in_scene(
+            facade_list,
+            texture_folder=Folder.Resources.Editor.Textures,
+        )
 
 # Rebuild the "Current" texture list now that polygons, props, and bulk meshes
 # are all loaded — so every material in the scene is reflected.

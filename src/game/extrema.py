@@ -3,6 +3,7 @@ from pathlib import Path
 
 from src.core.geometry.main import calculate_extrema
 from src.core.vector.vector_3 import Vector3
+from src.ui.console import ok, sep
 
 
 
@@ -12,4 +13,4 @@ def create_extrema(output_file: Path, polygons: List[Vector3]) -> None:
     with open(output_file, "w") as f:
         f.write(f"{min_x} {min_z} {max_x} {max_z}")
 
-    print(f"Successfully created extrema file (map extents: X: {min_x:.2f} to {max_x:.2f}, Z: {min_z:.2f} to {max_z:.2f})")
+    ok(f"Created extrema file{sep()}X: {min_x:.2f} to {max_x:.2f}, Z: {min_z:.2f} to {max_z:.2f}")

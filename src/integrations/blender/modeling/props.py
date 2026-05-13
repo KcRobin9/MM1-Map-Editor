@@ -17,6 +17,7 @@ from src.integrations.blender.modeling.meshes import (
     _apply_materials_to_mesh,
 )
 from src.constants.props_orientation import PROP_ORIENTATION_OFFSET
+from src.ui.console import ok, sep, item, suppress_stdout_matching
 
 
 # Anything above this threshold in all three components is the "undefined" sentinel
@@ -321,10 +322,11 @@ def _load_bms_mesh(
         bms_data = read_bms(bms_file)
         mesh = build_blender_mesh(name, bms_data)
         if texture_folder and bms_data["texture_names"]:
-            _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+            with suppress_stdout_matching("Unable to find a suitable DXT compression"):
+                _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
         return mesh
     except Exception as exc:
-        print(f"  Could not load {bms_file.name}: {exc}")
+        item(f"Could not load {bms_file.name}: {exc}")
         return None
 
 
@@ -502,14 +504,15 @@ def place_props_in_scene(
 
     skipped_names: List[str] = []
 
-    print("Building prop meshes...")
+    ok(f"Building prop meshes{sep()}{len(unique_names)} unique prop(s)")
+    _col = max((len(n) for n in unique_names), default=0)
     for prop_name in unique_names:
         prop_folder = _find_prop_folder(prop_name, bms_folder)
         is_vehicle  = prop_name.lower().startswith(("va", "vp"))
 
         if is_vehicle:
             if prop_folder is None:
-                print(f"  No BMS folder for '{prop_name}', skipping")
+                item(f"{prop_name.ljust(_col)}  no BMS folder — skipped")
                 skipped_names.append(prop_name)
                 veh_cache[prop_name] = None
                 continue
@@ -519,14 +522,14 @@ def place_props_in_scene(
                 load_lights=car_lights,
             )
             if parts["body"] is None:
-                print(f"  No body BMS for '{prop_name}', skipping")
+                item(f"{prop_name.ljust(_col)}  no body BMS — skipped")
                 skipped_names.append(prop_name)
                 veh_cache[prop_name] = None
             else:
                 whl_count   = len(parts["wheels"])
                 extra_count = len(parts["extras"])
                 extra_str   = f" + {extra_count} extras" if extra_count else ""
-                print(f"  {prop_name}: body + {whl_count} wheels{extra_str}")
+                item(f"{prop_name.ljust(_col)}  body + {whl_count} wheels{extra_str}")
                 veh_cache[prop_name] = parts
         else:
             bms_file = _resolve_bms_file(prop_name, bms_folder)
@@ -537,10 +540,11 @@ def place_props_in_scene(
             bms_data = read_bms(bms_file)
             mesh = build_blender_mesh(prop_name, bms_data)
             if texture_folder and bms_data["texture_names"]:
-                _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+                with suppress_stdout_matching("Unable to find a suitable DXT compression"):
+                    _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
             mesh_cache[prop_name] = mesh
-            print(f"  {prop_name}: {bms_data['num_surfaces']} faces, "
-                  f"{len(bms_data['texture_names'])} textures")
+            item(f"{prop_name.ljust(_col)}  {bms_data['num_surfaces']} faces, "
+                 f"{len(bms_data['texture_names'])} textures")
 
     # ── Place every instance ──────────────────────────────────────────────────
     placed = 0
@@ -590,11 +594,10 @@ def place_props_in_scene(
             obj["mm_prop_config_json"] = config_json
             placed += 1
 
-    print("---")
-    print(f"Props placed in scene: {placed} (skipped: {skipped})")
+    skipped_str = f"  skipped: {skipped}x" if skipped else ""
+    ok(f"Props placed in scene{sep()}{placed}x{skipped_str}")
     for name in skipped_names:
-        print(f"  No BMS found for '{name}'")
-    print("---")
+        item(f"No BMS found for '{name}'")
 
 
 _TRAFFIC_LIGHTS_COLLECTION = "Traffic Lights"
@@ -728,11 +731,11 @@ def place_bulk_bms_in_scene(
     for folder in bms_folders:
         folder = Path(folder)
         if not folder.is_dir():
-            print(f"  Bulk BMS folder not found, skipping: {folder}")
+            item(f"Bulk BMS folder not found, skipping: {folder}")
             continue
 
         h_files = sorted(folder.glob("*_H.BMS"))
-        print(f"  Bulk loading {len(h_files)} H.BMS files from {folder.name}...")
+        item(f"Bulk loading {len(h_files)} H.BMS files from {folder.name}...")
 
         for bms_file in h_files:
             name = bms_file.stem  # e.g. "CULL1000_H"
@@ -740,7 +743,8 @@ def place_bulk_bms_in_scene(
                 bms_data = read_bms(bms_file)
                 mesh = build_blender_mesh(name, bms_data)
                 if texture_folder and bms_data["texture_names"]:
-                    _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+                    with suppress_stdout_matching("Unable to find a suitable DXT compression"):
+                        _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
 
                 obj = bpy.data.objects.new(name, mesh)
                 city_col.objects.link(obj)
@@ -750,7 +754,8 @@ def place_bulk_bms_in_scene(
 
                 total_loaded += 1
             except Exception as exc:
-                print(f"    Could not load {bms_file.name}: {exc}")
+                item(f"Could not load {bms_file.name}: {exc}")
                 total_skipped += 1
 
-    print(f"Bulk BMS: {total_loaded} meshes placed, {total_skipped} skipped")
+    skipped_str = f"  skipped: {total_skipped}x" if total_skipped else ""
+    ok(f"Bulk BMS placed{sep()}{total_loaded}x{skipped_str}")

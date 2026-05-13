@@ -10,6 +10,7 @@ from src.io.binary import read_unpack
 from src.constants.folder import Folder
 
 from src.USER.settings.main import MAP_FILENAME
+from src.ui.console import ok
 
 
 class aiMap:
@@ -52,7 +53,7 @@ class BaiMap:
     def write_map(self):           
         with open(Folder.MidtownMadness.DevCityMap / f"{MAP_FILENAME}.map", 'w') as f:
             f.write(self.map_template())
-        print(f"Successfully created AI map file")
+        ok("Created AI map file")
     
     def map_template(self):
         num_streets = len(self.street_names)
