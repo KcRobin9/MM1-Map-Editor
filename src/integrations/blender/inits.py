@@ -98,6 +98,16 @@ OBJECT_PROPERTIES = [
     "rs_sidewalk_width", "rs_sidewalk_height",
     "rs_banking_auto", "rs_banking_max_deg",
     "rs_road_tile_x", "rs_road_tile_y",
+    "rs_road_enabled", "rs_curb_enabled", "rs_sidewalk_enabled",
+    "rs_wall_enabled", "rs_median_enabled",
+    "rs_road_angle",
+    "rs_curb_tile_x", "rs_curb_tile_y", "rs_curb_angle",
+    "rs_sidewalk_tile_x", "rs_sidewalk_tile_y", "rs_sidewalk_angle",
+    "rs_wall_height", "rs_median_width",
+    "rs_road_texture", "rs_curb_texture", "rs_sidewalk_texture",
+    "rs_wall_texture", "rs_median_texture",
+    "rs_wall_tile_x", "rs_wall_tile_y", "rs_wall_angle",
+    "rs_wall_side", "rs_sidewalk_side",
     # Street properties
     "st_group_name",
     "st_intersection_0", "st_intersection_1",
@@ -361,7 +371,7 @@ def register_road_builder_properties() -> None:
         description="Number of lanes in this road",
     )
     bpy.types.Object.rs_lane_width = bpy.props.FloatProperty(
-        name="Lane Width", default=4.0, min=1.0, soft_max=20.0,
+        name="Lane Width", default=5.0, min=1.0, soft_max=20.0,
     )
     bpy.types.Object.rs_curb_width = bpy.props.FloatProperty(
         name="Curb Width", default=0.8, min=0.0, soft_max=5.0,
@@ -388,10 +398,120 @@ def register_road_builder_properties() -> None:
         default=15.0, min=0.0, soft_max=45.0,
     )
     bpy.types.Object.rs_road_tile_x = bpy.props.FloatProperty(
-        name="Road Tile X", default=2.0, min=0.1, soft_max=10.0,
+        name="Road Tile X", default=1.0, min=0.1, soft_max=10.0,
     )
     bpy.types.Object.rs_road_tile_y = bpy.props.FloatProperty(
-        name="Road Tile Y", default=2.0, min=0.1, soft_max=10.0,
+        name="Road Tile Y", default=1.0, min=0.1, soft_max=20.0,
+    )
+
+    # ── Component toggles ─────────────────────────────────────────────────────
+    bpy.types.Object.rs_road_enabled = bpy.props.BoolProperty(
+        name="Road",     default=True,
+        description="Generate the central road surface zone(s)",
+    )
+    bpy.types.Object.rs_curb_enabled = bpy.props.BoolProperty(
+        name="Curb",     default=True,
+        description="Generate raised curb strips between road and sidewalk",
+    )
+    bpy.types.Object.rs_sidewalk_enabled = bpy.props.BoolProperty(
+        name="Sidewalk", default=True,
+        description="Generate sidewalks along both edges of the cross-section",
+    )
+    bpy.types.Object.rs_wall_enabled = bpy.props.BoolProperty(
+        name="Wall",     default=False,
+        description="Generate outer wall/barrier strips beyond the sidewalk",
+    )
+    bpy.types.Object.rs_median_enabled = bpy.props.BoolProperty(
+        name="Median",   default=False,
+        description="Split the road around a central raised median strip",
+    )
+
+    # ── Per-zone angle / tiling ───────────────────────────────────────────────
+    bpy.types.Object.rs_road_angle = bpy.props.FloatProperty(
+        name="Road Angle",
+        description="Texture rotation for the road (degrees). 90 = texture U runs across the road",
+        default=90.0, soft_min=-180.0, soft_max=180.0, step=100,
+    )
+    bpy.types.Object.rs_curb_tile_x = bpy.props.FloatProperty(
+        name="Curb Tile X", default=1.0, min=0.1, soft_max=10.0,
+    )
+    bpy.types.Object.rs_curb_tile_y = bpy.props.FloatProperty(
+        name="Curb Tile Y", default=5.0, min=0.1, soft_max=20.0,
+    )
+    bpy.types.Object.rs_curb_angle = bpy.props.FloatProperty(
+        name="Curb Angle", default=0.0, soft_min=-180.0, soft_max=180.0, step=100,
+    )
+    bpy.types.Object.rs_sidewalk_tile_x = bpy.props.FloatProperty(
+        name="Sidewalk Tile X", default=1.0, min=0.1, soft_max=20.0,
+    )
+    bpy.types.Object.rs_sidewalk_tile_y = bpy.props.FloatProperty(
+        name="Sidewalk Tile Y", default=5.0, min=0.1, soft_max=10.0,
+    )
+    bpy.types.Object.rs_sidewalk_angle = bpy.props.FloatProperty(
+        name="Sidewalk Angle", default=90.0, soft_min=-180.0, soft_max=180.0, step=100,
+    )
+
+    # ── Wall + Median dimensions ──────────────────────────────────────────────
+    bpy.types.Object.rs_wall_height = bpy.props.FloatProperty(
+        name="Wall Height", default=10.0, min=0.0, soft_max=30.0,
+    )
+    bpy.types.Object.rs_wall_tile_x = bpy.props.FloatProperty(
+        name="Wall Tile X", default=1.0, min=0.1, soft_max=10.0,
+    )
+    bpy.types.Object.rs_wall_tile_y = bpy.props.FloatProperty(
+        name="Wall Tile Y", default=1.0, min=0.1, soft_max=20.0,
+    )
+    bpy.types.Object.rs_wall_angle = bpy.props.FloatProperty(
+        name="Wall Angle", default=0.0, soft_min=-180.0, soft_max=180.0, step=100,
+    )
+    _SIDE_ITEMS = [("BOTH", "Both", ""), ("LEFT", "Left only", ""), ("RIGHT", "Right only", "")]
+    bpy.types.Object.rs_wall_side = bpy.props.EnumProperty(
+        name="Wall Side", items=_SIDE_ITEMS, default="BOTH",
+        description="Which side(s) to place the wall on",
+    )
+    bpy.types.Object.rs_sidewalk_side = bpy.props.EnumProperty(
+        name="Sidewalk Side", items=_SIDE_ITEMS, default="BOTH",
+        description="Which side(s) to place the sidewalk (and curb) on",
+    )
+    bpy.types.Object.rs_median_width = bpy.props.FloatProperty(
+        name="Median Width", default=1.0, min=0.0, soft_max=10.0,
+        description="Width of the central median strip (taken out of the road)",
+    )
+
+
+    # ── Texture dropdowns ─────────────────────────────────────────────────────
+    from src.constants.textures import Texture as _Tex
+    _TEX_LABEL_OVERRIDES = {
+        "ROAD_1_LANE": "R2",
+        "ROAD_2_LANE": "R4",
+        "ROAD_3_LANE": "R6",
+    }
+    _tex_items = []
+    for _attr in dir(_Tex):
+        if _attr.startswith("_"):
+            continue
+        _val = getattr(_Tex, _attr)
+        if not isinstance(_val, str):
+            continue
+        _label = _TEX_LABEL_OVERRIDES.get(_attr, _attr.replace("_", " ").title())
+        _tex_items.append((_val, _label, _val))
+    _tex_items.sort(key=lambda x: x[1])
+    _road_tex_items = [("AUTO", "Auto (by lanes)", "R2/R4/R6 picked by lane count")] + _tex_items
+
+    bpy.types.Object.rs_road_texture = bpy.props.EnumProperty(
+        name="Road Texture",     items=_road_tex_items, default="AUTO",
+    )
+    bpy.types.Object.rs_curb_texture = bpy.props.EnumProperty(
+        name="Curb Texture",     items=_tex_items, default=_Tex.SIDEWALK,
+    )
+    bpy.types.Object.rs_sidewalk_texture = bpy.props.EnumProperty(
+        name="Sidewalk Texture", items=_tex_items, default=_Tex.SIDEWALK,
+    )
+    bpy.types.Object.rs_wall_texture = bpy.props.EnumProperty(
+        name="Wall Texture",     items=_tex_items, default=_Tex.WALL,
+    )
+    bpy.types.Object.rs_median_texture = bpy.props.EnumProperty(
+        name="Median Texture",   items=_tex_items, default=_Tex.GRASS,
     )
 
 
@@ -738,7 +858,7 @@ def register_scene_properties() -> None:
         name="Road Type",
         description="Quick preset for cross-section dimensions",
         items=ROAD_TYPE_ITEMS,
-        default="ROAD_2L",
+        default="ROAD_TEST",
     )
 
     # ── Car Editor scene properties ───────────────────────────────────────────

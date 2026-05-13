@@ -1,7 +1,7 @@
 import bpy
 from src.integrations.blender.operators.road_builder import (
     is_road_spine, get_all_road_spines, get_spine_vertices,
-    RS_BAKED_TAG, ROAD_TYPE_ITEMS,
+    RS_BAKED_TAG, ROAD_TYPE_ITEMS, _RS_LIFT_KEY, _RS_LIFT_STEP, _RS_LIFT_MIN, _RS_LIFT_MAX,
 )
 
 
@@ -60,19 +60,42 @@ class VIEW3D_PT_RoadBuilderSpine(bpy.types.Panel):
         col.prop(scene, "rd_snap_to_terrain",  text="Snap to Terrain", icon='SNAP_NORMAL')
 
         row = box.row(align=True)
-        op = row.operator("object.extend_road_spine", text="← Start", icon='BACK')
+        op = row.operator("object.extend_road_spine", text="← Start", icon='COLORSET_03_VEC')
         op.to_end = False
-        op = row.operator("object.extend_road_spine", text="End →",   icon='FORWARD')
+        op = row.operator("object.extend_road_spine", text="End →",   icon='COLORSET_01_VEC')
         op.to_end = True
+
+        row2 = box.row(align=True)
+        op = row2.operator("object.remove_road_spine_vertex", text="Undo Start →", icon='BACK')
+        op.from_end = False
+        op = row2.operator("object.remove_road_spine_vertex", text="← Undo End",   icon='FORWARD')
+        op.from_end = True
 
         # ── Cursor append ──────────────────────────────────────────────────
         box2 = layout.box()
         box2.label(text="Cursor", icon='CURSOR')
         row = box2.row(align=True)
-        op = row.operator("object.append_road_spine_vertex", text="← Cursor", icon='BACK')
+        op = row.operator("object.append_road_spine_vertex", text="← Cursor Start", icon='COLORSET_03_VEC')
         op.to_end = False
-        op = row.operator("object.append_road_spine_vertex", text="Cursor →", icon='FORWARD')
+        op = row.operator("object.append_road_spine_vertex", text="Cursor End →",   icon='COLORSET_01_VEC')
         op.to_end = True
+
+        # ── Lift ───────────────────────────────────────────────────────────
+        lift_z = obj.get(_RS_LIFT_KEY, 0.0)
+        box3 = layout.box()
+        row  = box3.row(align=True)
+        row.label(text=f"Lift: {lift_z:+.0f}", icon='ORIENTATION_GLOBAL')
+        up_row = row.row(align=True)
+        up_row.enabled = lift_z < _RS_LIFT_MAX
+        op = up_row.operator("object.lift_road_spine", text="", icon='TRIA_UP')
+        op.delta = _RS_LIFT_STEP
+        dn_row = row.row(align=True)
+        dn_row.enabled = lift_z > _RS_LIFT_MIN
+        op = dn_row.operator("object.lift_road_spine", text="", icon='TRIA_DOWN')
+        op.delta = -_RS_LIFT_STEP
+        if lift_z != 0.0:
+            op = row.operator("object.lift_road_spine", text="", icon='LOOP_BACK')
+            op.delta = -lift_z
 
         # ── Delete ─────────────────────────────────────────────────────────
         layout.separator()
@@ -99,35 +122,75 @@ class VIEW3D_PT_RoadBuilderCrossSection(bpy.types.Panel):
         row = layout.row(align=True)
         row.prop(context.scene, "rd_road_type", text="")
         row.operator("object.apply_road_type_preset", text="Apply", icon='IMPORT')
+        row.operator("object.reset_road_spine",       text="Reset", icon='LOOP_BACK')
         layout.separator()
 
         # ── Road ──────────────────────────────────────────────────────────
         box = layout.box()
-        box.label(text="Road", icon='MESH_PLANE')
-        col = box.column(align=True)
-        col.prop(obj, "rs_lane_count", text="Lanes")
-        col.prop(obj, "rs_lane_width", text="Lane Width")
-        row = box.row(align=True)
-        row.prop(obj, "rs_road_tile_x", text="Tile X")
-        row.prop(obj, "rs_road_tile_y", text="Tile Y")
-
-        # ── Curb ──────────────────────────────────────────────────────────
-        box = layout.box()
-        box.label(text="Curb", icon='SNAP_EDGE')
-        col = box.column(align=True)
-        col.prop(obj, "rs_curb_width",  text="Width")
-        sub = col.column()
-        sub.enabled = obj.rs_curb_width > 0.0
-        sub.prop(obj, "rs_curb_height", text="Height")
+        hdr = box.row(align=True)
+        hdr.prop(obj, "rs_road_enabled", text="")
+        hdr.label(text="Road", icon='MESH_PLANE')
+        sub = box.column(align=True)
+        sub.enabled = obj.rs_road_enabled
+        sub.prop(obj, "rs_road_texture", text="Texture")
+        sub.prop(obj, "rs_lane_count", text="Lanes")
+        sub.prop(obj, "rs_lane_width", text="Lane Width")
+        sub.prop(obj, "rs_road_tile_x", text="Tile X")
+        sub.prop(obj, "rs_road_tile_y", text="Tile Y")
+        sub.prop(obj, "rs_road_angle", text="Angle (°)")
 
         # ── Sidewalk ──────────────────────────────────────────────────────
         box = layout.box()
-        box.label(text="Sidewalk", icon='MESH_GRID')
-        col = box.column(align=True)
-        col.prop(obj, "rs_sidewalk_width",  text="Width")
-        sub = col.column()
-        sub.enabled = obj.rs_sidewalk_width > 0.0
+        hdr = box.row(align=True)
+        hdr.prop(obj, "rs_sidewalk_enabled", text="")
+        hdr.label(text="Sidewalk", icon='MESH_GRID')
+        sub = box.column(align=True)
+        sub.enabled = obj.rs_sidewalk_enabled
+        sub.prop(obj, "rs_sidewalk_texture", text="Texture")
+        sub.prop(obj, "rs_sidewalk_side",    text="Side")
+        sub.prop(obj, "rs_sidewalk_width",  text="Width")
         sub.prop(obj, "rs_sidewalk_height", text="Height")
+        sub.prop(obj, "rs_sidewalk_tile_x", text="Tile X")
+        sub.prop(obj, "rs_sidewalk_tile_y", text="Tile Y")
+        sub.prop(obj, "rs_sidewalk_angle", text="Angle (°)")
+
+        # ── Wall (outer barrier) ──────────────────────────────────────────
+        box = layout.box()
+        hdr = box.row(align=True)
+        hdr.prop(obj, "rs_wall_enabled", text="")
+        hdr.label(text="Wall / Barrier", icon='MOD_SOLIDIFY')
+        sub = box.column(align=True)
+        sub.enabled = obj.rs_wall_enabled
+        sub.prop(obj, "rs_wall_texture", text="Texture")
+        sub.prop(obj, "rs_wall_side",    text="Side")
+        sub.prop(obj, "rs_wall_height",  text="Height")
+        sub.prop(obj, "rs_wall_tile_x", text="Tile X")
+        sub.prop(obj, "rs_wall_tile_y", text="Tile Y")
+        sub.prop(obj, "rs_wall_angle",  text="Angle (°)")
+
+        # ── Curb ──────────────────────────────────────────────────────────
+        box = layout.box()
+        hdr = box.row(align=True)
+        hdr.prop(obj, "rs_curb_enabled", text="")
+        hdr.label(text="Curb", icon='SNAP_EDGE')
+        sub = box.column(align=True)
+        sub.enabled = obj.rs_curb_enabled
+        sub.prop(obj, "rs_curb_texture", text="Texture")
+        sub.prop(obj, "rs_curb_width",  text="Width")
+        sub.prop(obj, "rs_curb_height", text="Height")
+        sub.prop(obj, "rs_curb_tile_x", text="Tile X")
+        sub.prop(obj, "rs_curb_tile_y", text="Tile Y")
+        sub.prop(obj, "rs_curb_angle", text="Angle (°)")
+
+        # ── Median ────────────────────────────────────────────────────────
+        box = layout.box()
+        hdr = box.row(align=True)
+        hdr.prop(obj, "rs_median_enabled", text="")
+        hdr.label(text="Median Divider", icon='MOD_BEVEL')
+        sub = box.column(align=True)
+        sub.enabled = obj.rs_median_enabled
+        sub.prop(obj, "rs_median_texture", text="Texture")
+        sub.prop(obj, "rs_median_width", text="Width")
 
         # ── Banking ───────────────────────────────────────────────────────
         box = layout.box()

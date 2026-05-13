@@ -28,16 +28,22 @@ def validate_and_extract_bound_number(name: str) -> int:
 
 
 def extract_polygon_data(obj: bpy.types.Object) -> Dict[str, Union[int, str, bool, list]]:
+    from src.constants.file_formats import Material, Room
+    from src.constants.color import Color
+
     bound_number = validate_and_extract_bound_number(obj.name)
-    
+
+    # Use .get() with defaults so polygons that are missing one of the
+    # Map-Editor custom properties still export instead of aborting the
+    # whole export batch.
     extracted_polygon_data = {
-        "bound_number": bound_number,
-        "material_index": obj["material_index"],
-        "cell_type": obj["cell_type"],
-        "always_visible": obj["always_visible"], 
-        "sort_vertices": obj["sort_vertices"],
+        "bound_number":   bound_number,
+        "material_index": obj.get("material_index", str(Material.DEFAULT)),
+        "cell_type":      obj.get("cell_type",      str(Room.DEFAULT)),
+        "always_visible": obj.get("always_visible", "YES"),
+        "sort_vertices":  obj.get("sort_vertices",  "NO"),
     }
-    
+
     return extracted_polygon_data
 
 
@@ -93,11 +99,30 @@ def gather_optional_variables(poly_data: Dict[str, Union[int, str, bool, list]],
     return ",\n\t".join(optional_vars) + ("," if optional_vars else "")
 
 
+def _custom_tex_coords_literal(obj: bpy.types.Object) -> str:
+    """Format the polygon's actual Blender UV-layer values as a flat Python
+    list literal so it can be pasted as the `tex_coords=` argument of
+    save_mesh(). Returns "" if the polygon has no UV layer.
+
+    UV order matches the loop order of the first face: [u0,v0, u1,v1, u2,v2, u3,v3].
+    """
+    mesh = obj.data
+    if not mesh.uv_layers.active or not mesh.polygons:
+        return ""
+    uv_layer = mesh.uv_layers.active.data
+    face = mesh.polygons[0]
+    parts = []
+    for loop_idx in face.loop_indices:
+        u, v = uv_layer[loop_idx].uv
+        parts.append(f"{u:.4f}, {v:.4f}")
+    return "[" + ", ".join(parts) + "]"
+
+
 def export_formatted_polygons(obj: bpy.types.Object) -> str:
     poly_data = extract_polygon_data(obj)
     texture_name = extract_polygon_texture(obj).upper()
     formatted_texture = format_texture_name(texture_name)
-    formatted_vertices = format_vertices(obj) 
+    formatted_vertices = format_vertices(obj)
     optional_variables_str = gather_optional_variables(poly_data, obj)
 
     tile_x = obj.tile_x
@@ -107,6 +132,24 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
     if optional_variables_str:
         optional_variables_str = f"\n\t{optional_variables_str}"
 
+    # Road-builder polygons carry custom curve-following UVs that can't be
+    # reproduced by compute_uv()'s flat per-quad tiling. Export their UV
+    # layer verbatim so the game renders them identically to Blender.
+    if obj.get("rs_custom_uvs"):
+        tex_coords_expr = _custom_tex_coords_literal(obj)
+        if not tex_coords_expr:
+            tex_coords_expr = (
+                f"compute_uv(bound_number = {poly_data['bound_number']}, "
+                f"tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, "
+                f"angle_degrees = {angle_degrees:.2f})"
+            )
+    else:
+        tex_coords_expr = (
+            f"compute_uv(bound_number = {poly_data['bound_number']}, "
+            f"tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, "
+            f"angle_degrees = {angle_degrees:.2f})"
+        )
+
     template = f"""create_polygon(
     bound_number = {poly_data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
@@ -114,6 +157,6 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
 
 save_mesh(
     texture_name = [{formatted_texture}],
-    tex_coords = compute_uv(bound_number = {poly_data['bound_number']}, tile_x = {tile_x:.2f}, tile_y = {tile_y:.2f}, angle_degrees = {angle_degrees:.2f}))
+    tex_coords = {tex_coords_expr})
 """
     return template
