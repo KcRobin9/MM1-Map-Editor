@@ -8,8 +8,9 @@ target_blend_file = Folder.Blender.Models / "RACECITY_2ND.blend"  # Only used wh
 load_all_textures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)
                                 # Change to "False" if you want to load only the textures that are used in your Map (faster loading time)
 
-# Props
-visualize_props = True          # Set True to place props in the Blender scene
+# Props & Facades
+visualize_props    = True       # Set True to place props in the Blender scene
+visualize_facades  = True       # Set True to place facades in the Blender scene
 prop_bms_folder = Folder.Resources.Editor.Meshes   # Root folder; subfolders CARS/PROPS/MISC are searched automatically
 
 # Car prop detail options (VP* / VA* vehicles)

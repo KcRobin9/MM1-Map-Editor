@@ -56,17 +56,10 @@ from src.debug.main import Debug
 from src.debug.auto import run_auto_debug
 
 # File format imports
-from src.file_formats.ai.read_write import debug_ai
 from src.file_formats.ai.street_editor import aiStreetEditor 
-
-from src.file_formats.props.props import Bangers
 from src.file_formats.props.editor import BangerEditor, edit_and_copy_bangerdata_to_shop
-
-from src.file_formats.facades.facades import Facades
 from src.file_formats.facades.editor import FacadeEditor
-
 from src.file_formats.physics import Physics
-
 from src.file_formats.development import DLP
 
 # Game imports
@@ -91,6 +84,7 @@ from src.integrations.blender.setup import setup_blender
 from src.integrations.blender.inits import initialize_blender_operators, initialize_blender_panels, initialize_blender_waypoint_editor
 from src.integrations.blender.keybindings import set_blender_keybinding
 from src.integrations.blender.modeling.props import place_props_in_scene
+from src.integrations.blender.operators.facades import place_facades_in_scene
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
@@ -112,7 +106,7 @@ from src.constants.misc import Shape, Encoding, Executable, Default, Threshold
 from src.constants.color import Color
 
 # USER imports
-from src.USER.settings.main import (
+from src.USER.settings._resolver import (
     MAP_NAME, MAP_FILENAME,
     play_game, delete_shop,
     set_bridges, set_props, set_facades, set_physics, set_animations, set_texture_sheet, set_music,
@@ -121,29 +115,26 @@ from src.USER.settings.main import (
     set_lars_race_maker, set_cruise_start,
     cruise_start_position,
     randomize_textures, random_textures,
-    disable_progress_bar
-)
-
-from src.USER.settings.advanced import (
-    no_ui, no_ui_type, no_ai, 
-    less_logs, more_logs, 
-    lower_portals, empty_portals, 
-    set_dlp, fix_faulty_quads
-) 
-
-from src.USER.settings.debug import (
+    disable_progress_bar,
+    set_races, set_cops_and_robbers, set_lighting,
+    no_ui, no_ui_type, no_ai,
+    less_logs, more_logs,
+    lower_portals, empty_portals,
+    set_dlp, fix_faulty_quads,
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
     auto_debug,
+    load_target_model, load_all_textures, 
+    visualize_props, visualize_facades, 
+    prop_bms_folder, prop_car_wheels, prop_car_lights,  # Tweak
+    SKIP_AR_CREATION,
 )
 
-from src.USER.settings.blender import load_target_model, load_all_textures, visualize_props, prop_bms_folder, prop_car_wheels, prop_car_lights
-
 from src.USER.facades import facade_list
-from src.USER.ai_streets import street_list
 from src.USER.physics import custom_physics
 from src.USER.lighting import lighting_configs
 from src.USER.animations import animations_data
 from src.USER.bridges import bridge_list, bridge_config_list
+from src.USER.ai_streets import street_list
 
 from src.USER.races.cops_and_robbers import cops_and_robbers_waypoints
 from src.USER.races.races import blitz_race_names, checkpoint_race_names, circuit_race_names, race_data
@@ -152,10 +143,15 @@ from src.USER.textures.properties import texture_modifications
 
 from src.USER.misc.dlp import dlp_groups, dlp_patches, dlp_vertices
 
-from src.USER.props.properties import prop_properties
-
 from src.USER.props.props import prop_list, random_props  # 'Set' props could be a better name? I.e. create from scratch
 from src.USER.props.append import append_props, props_to_append, append_input_props_file, append_output_props_file
+from src.USER.props.properties import prop_properties
+
+# Blender imports
+from src.integrations.blender.inits import (
+    unregister_all,
+    initialize_blender_panels, initialize_blender_operators, initialize_blender_waypoint_editor
+)
 
 ################################################################################################################               
 ################################################################################################################
@@ -838,11 +834,7 @@ def save_mesh(
 def initialize_mesh(
     vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
     texture_name: List[str], normals: List[int] = None, tex_coords: List[float] = None) -> Meshes:
-    
-    magic = Magic.MESH    
-    flags = MeshFlags.TEXCOORDS_AND_NORMALS
-    cache_size = 0
-       
+
     shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys] 
     coordinates = [coord for shape in shapes for coord in shape]
         
@@ -859,15 +851,17 @@ def initialize_mesh(
     if len(coordinates) in [Shape.QUAD, Shape.TRIANGLE]: 
         indices_count = surface_count * 4
 
+    cache_size = 0
+
     enclosed_shape = list(range(adjunct_count))
     normals = normals or [2] * adjunct_count  # 2 is the default value
     tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]  # tile x and y once if no tex coords are provided
     indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
   
     return Meshes(
-        magic, vertex_count, adjunct_count, surface_count, indices_count,
+        Magic.MESH , vertex_count, adjunct_count, surface_count, indices_count,
         radius, radiussq, bounding_box_radius,
-        texture_count, flags, cache_size,
+        texture_count, MeshFlags.TEXCOORDS_AND_NORMALS, cache_size,
         texture_name, coordinates, normals, tex_coords, [], [],
         enclosed_shape, texture_indices, indices_sides
         )
@@ -1120,7 +1114,7 @@ create_polygon(
 		(-42.23, 30.0, -0.0)])
 
 save_mesh(
-    texture_name = ["R2C_FALL_N"],
+    texture_name = [Texture.CHECKPOINT],
     tex_coords = compute_uv(bound_number = 210, tile_x = 4.00, tile_y = 3.00, angle_degrees = 0.00))
 
 
@@ -2449,153 +2443,156 @@ if set_cruise_start:
 ###################################################################################################################
 #! ======================= CALL FUNCTIONS ======================= !#
 
-# Setup
-copy_custom_textures_to_shop(Folder.Src.User.Textures.Custom, Folder.Shop.Textures.Opaque)
-copy_carsim_files_to_shop(Folder.Resources.Editor.Tune.CarSimulation, Folder.Shop.Tune, FileType.CAR_SIMULATION)
-ensure_empty_mm_dev_folder(Folder.MidtownMadness.DevCityMap) 
-create_commandline(Folder.MidtownMadness.Root / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
-create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
-edit_and_copy_bangerdata_to_shop(prop_properties, Folder.Resources.Editor.Tune.BangerData, Folder.Shop.Tune, FileType.BANGER_DATA)
+_fixed_prop_list = []  # populated inside the AR block; also read by the Blender section
 
-# Races
-create_races(race_data)
-create_cops_and_robbers(Folder.Shop.Map.Race / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
+#* ----------------------------------------------------------------------------------------------------------------
 
-# Map
-check_bound_numbers(polys)
+if not SKIP_AR_CREATION:
+    # Setup
+    copy_custom_textures_to_shop(Folder.Src.User.Textures.Custom, Folder.Shop.Textures.Opaque)
+    copy_carsim_files_to_shop(Folder.Resources.Editor.Tune.CarSimulation, Folder.Shop.Tune, FileType.CAR_SIMULATION)
+    ensure_empty_mm_dev_folder(Folder.MidtownMadness.DevCityMap)
+    create_commandline(Folder.MidtownMadness.Root / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
+    create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
+    edit_and_copy_bangerdata_to_shop(prop_properties, Folder.Resources.Editor.Tune.BangerData, Folder.Shop.Tune, FileType.BANGER_DATA)
 
-total_polys = len(polys) - 1  # Exclude default polygon at index 0
-quads = sum(1 for poly in polys[1:] if poly.is_quad)
-triangles = total_polys - quads
-print(f"Successfully created {total_polys} polygon(s) (triangles: {triangles}x, quads: {quads}x, vertices: {len(vertices)}x)")
+    # Races
+    if set_races:
+        create_races(race_data)
+    if set_cops_and_robbers:
+        create_cops_and_robbers(Folder.Shop.Map.Race / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
 
-# Texture usage statistics
-texture_counter = Counter(texture_names)
-unique_textures = len(texture_counter)
-all_textures_str = ", ".join([f"{tex}: {count}x" for tex, count in texture_counter.items()])
-print(f"Succesfully utilized: {unique_textures} unique texture(s)\n---textures: ({all_textures_str})")
+    # Map
+    check_bound_numbers(polys)
 
-create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
+    total_polys = len(polys) - 1  # Exclude default polygon at index 0
+    quads = sum(1 for poly in polys[1:] if poly.is_quad)
+    triangles = total_polys - quads
+    print(f"Successfully created {total_polys} polygon(s) (triangles: {triangles}x, quads: {quads}x, vertices: {len(vertices)}x)")
 
-Bounds.create(
-    Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}", 
-    vertices, polys, 
-    Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}", 
-    debug_bounds
-)
+    # Texture usage statistics
+    texture_counter = Counter(texture_names)
+    unique_textures = len(texture_counter)
+    all_textures_str = ", ".join([f"{tex}: {count}x" for tex, count in texture_counter.items()])
+    print(f"Succesfully utilized: {unique_textures} unique texture(s)\n---textures: ({all_textures_str})")
 
-Portals.write_all(
-    Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}", 
-    polys, vertices, 
-    lower_portals, empty_portals, 
-    debug_portals
-)
+    create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
-aiStreetEditor.create(
-    street_list, 
-    set_ai_streets, set_reverse_ai_streets
-)
-
-FacadeEditor.create(
-    Folder.Shop.City / f"{MAP_FILENAME}{FileType.FACADE}", 
-    facade_list, 
-    set_facades, 
-    debug_facades
-)
-
-Physics.edit(
-    Folder.Resources.Editor.Physics / f"PHYSICS{FileType.DATABASE}", 
-    Folder.Shop.Material / f"PHYSICS{FileType.DATABASE}", 
-    custom_physics, 
-    set_physics, 
-    debug_physics
-)
-
-TextureSheet.append_custom_textures(
-    Folder.Resources.Editor.MTL / "GLOBAL.TSH", 
-    Folder.Src.User.Textures.Custom, 
-    Folder.Shop.Material / "TEMP_GLOBAL.TSH", 
-    set_texture_sheet
-)
-
-TextureSheet.write_tweaked(
-    Folder.Shop.Material / "TEMP_GLOBAL.TSH", 
-    Folder.Shop.Material / "GLOBAL.TSH", 
-    texture_modifications, 
-    set_texture_sheet
-)
-                    
-prop_editor = BangerEditor()
-_fixed_prop_list = list(prop_list)  # snapshot before random props are expanded into prop_list
-for prop in random_props:
-    prop_list.extend(prop_editor.place_randomly(prop))
-prop_editor.process_all(prop_list, set_props)
-
-lighting_instances = Lighting.read_all(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")  # Read original
-Lighting.write_all(lighting_instances, lighting_configs, Folder.Shop.Tune / "LIGHTING.CSV")  # Tweak and write new file
-Lighting.debug(lighting_instances, Folder.Resources.User.Lighting / "LIGHTING_self.txt", debug_lighting)
-
-create_extrema(f"{Folder.Shop.Map.City}{FileType.EXTREMA}", hudmap_vertices)
-create_animations(Folder.Shop.Map.City, animations_data, set_animations)   
-create_bridges(bridge_list, set_bridges, f"{Folder.Shop.Map.City}{FileType.GIZMO}") 
-create_bridge_config(bridge_config_list, set_bridges, Folder.Shop.Tune)
-create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
-
-create_lars_race_maker(
-    f"Lars_Race_Maker{FileType.HTML}", 
-    street_list, 
-    hudmap_vertices, 
-    set_lars_race_maker
-)
-
-# Misc
-DLP(
-    Magic.DEVELOPMENT, 
-    len(dlp_groups), len(dlp_patches), len(dlp_vertices), 
-    dlp_groups, dlp_patches, dlp_vertices
-).write(f"TEST{FileType.DEVELOPMENT}", set_dlp) 
-
-editor = BangerEditor()
-
-# Auto-debug: drop files into debug/input/ to debug them; output lands in debug/output/run_YYYYMMDD_HHMMSS/
-run_auto_debug(Bounds, Meshes, Portals, auto_debug)
-
-# Finalizing Part
-create_angel_resource_file(Folder.Shop.Root)
-
-end_time = time.monotonic()
-editor_time = end_time - start_time
-
-# Save the runtime
-runtime_manager = RunTimeManager(Folder.Resources.Editor.Root / "editor_runtime.pkl")
-runtime_manager.save(editor_time)
-progress_thread.join()  # Wait for progress bar to complete
-
-print(COLOR_DIVIDER)
-print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
-print(COLOR_DIVIDER)
-
-post_editor_cleanup(Folder.Build, Folder.Shop.Root, delete_shop)
-
-if append_props:
-    shutil.copy(append_input_props_file, append_output_props_file)
-    editor.append_to_file(
-        append_output_props_file,
-        props_to_append,
-        append_output_props_file,
-        append_props
+    Bounds.create(
+        Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}",
+        vertices, polys,
+        Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}",
+        debug_bounds
     )
 
-start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game)
+    Portals.write_all(
+        Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}",
+        polys, vertices,
+        lower_portals, empty_portals,
+        debug_portals
+    )
+
+    aiStreetEditor.create(
+        street_list,
+        set_ai_streets, set_reverse_ai_streets
+    )
+
+    FacadeEditor.create(
+        Folder.Shop.City / f"{MAP_FILENAME}{FileType.FACADE}",
+        facade_list,
+        set_facades,
+        debug_facades
+    )
+
+    Physics.edit(
+        Folder.Resources.Editor.Physics / f"PHYSICS{FileType.DATABASE}",
+        Folder.Shop.Material / f"PHYSICS{FileType.DATABASE}",
+        custom_physics,
+        set_physics,
+        debug_physics
+    )
+
+    TextureSheet.append_custom_textures(
+        Folder.Resources.Editor.MTL / "GLOBAL.TSH",
+        Folder.Src.User.Textures.Custom,
+        Folder.Shop.Material / "TEMP_GLOBAL.TSH",
+        set_texture_sheet
+    )
+
+    TextureSheet.write_tweaked(
+        Folder.Shop.Material / "TEMP_GLOBAL.TSH",
+        Folder.Shop.Material / "GLOBAL.TSH",
+        texture_modifications,
+        set_texture_sheet
+    )
+
+    prop_editor = BangerEditor()
+    _fixed_prop_list = list(prop_list)  # snapshot before random props are expanded into prop_list
+    for prop in random_props:
+        prop_list.extend(prop_editor.place_randomly(prop))
+    prop_editor.process_all(prop_list, set_props)
+
+    if set_lighting:
+        lighting_instances = Lighting.read_all(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")  # Read original
+        Lighting.write_all(lighting_instances, lighting_configs, Folder.Shop.Tune / "LIGHTING.CSV")  # Tweak and write new file
+        Lighting.debug(lighting_instances, Folder.Resources.User.Lighting / "LIGHTING_self.txt", debug_lighting)
+
+    create_extrema(f"{Folder.Shop.Map.City}{FileType.EXTREMA}", hudmap_vertices)
+    create_animations(Folder.Shop.Map.City, animations_data, set_animations)
+    create_bridges(bridge_list, set_bridges, f"{Folder.Shop.Map.City}{FileType.GIZMO}")
+    create_bridge_config(bridge_config_list, set_bridges, Folder.Shop.Tune)
+    create_minimap(set_minimap, debug_minimap, debug_minimap_id, minimap_outline_color, line_width = 0.7, background_color = "black")
+
+    create_lars_race_maker(
+        f"Lars_Race_Maker{FileType.HTML}",
+        street_list,
+        hudmap_vertices,
+        set_lars_race_maker
+    )
+
+    # Misc
+    DLP(
+        Magic.DEVELOPMENT,
+        len(dlp_groups), len(dlp_patches), len(dlp_vertices),
+        dlp_groups, dlp_patches, dlp_vertices
+    ).write(f"TEST{FileType.DEVELOPMENT}", set_dlp)
+
+    editor = BangerEditor()
+
+    # Auto-debug: drop files into debug/input/ to debug them; output lands in debug/output/run_YYYYMMDD_HHMMSS/
+    run_auto_debug(Bounds, Meshes, Portals, auto_debug)
+
+    # Finalizing Part
+    create_angel_resource_file(Folder.Shop.Root)
+
+    end_time = time.monotonic()
+    editor_time = end_time - start_time
+
+    # Save the runtime
+    runtime_manager = RunTimeManager(Folder.Resources.Editor.Root / "editor_runtime.pkl")
+    runtime_manager.save(editor_time)
+    progress_thread.join()  # Wait for progress bar to complete
+
+    print(COLOR_DIVIDER)
+    print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
+    print(COLOR_DIVIDER)
+
+    post_editor_cleanup(Folder.Build, Folder.Shop.Root, delete_shop)
+
+    if append_props:
+        shutil.copy(append_input_props_file, append_output_props_file)
+        editor.append_to_file(
+            append_output_props_file,
+            props_to_append,
+            append_output_props_file,
+            append_props
+        )
+
+    start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game)
+
+#* ----------------------------------------------------------------------------------------------------------------
 
 # Blender
-from src.integrations.blender.inits import (
-    unregister_all,
-    initialize_blender_panels,
-    initialize_blender_operators,
-    initialize_blender_waypoint_editor
-)
-
 unregister_all()  # Clean slate before re-registering
 
 setup_blender(load_target_model)
@@ -2609,6 +2606,7 @@ set_blender_keybinding()
 ###################################################################################################################   
 ###################################################################################################################
 
+#TODO: move to different location
 import os
 import bpy
 
@@ -2841,6 +2839,12 @@ if visualize_props and is_process_running(Executable.BLENDER):
         texture_folder=Folder.Resources.Editor.Textures,
         car_wheels=prop_car_wheels,
         car_lights=prop_car_lights,
+    )
+
+if visualize_facades and is_process_running(Executable.BLENDER):
+    place_facades_in_scene(
+        facade_list,
+        texture_folder=Folder.Resources.Editor.Textures,
     )
 
 # Rebuild the "Current" texture list now that polygons, props, and bulk meshes
