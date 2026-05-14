@@ -44,6 +44,8 @@ from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES
 from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
 from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FACADE_NAME_ITEMS, FACADE_FLAGS_ITEMS, _update_facade_form
 from src.integrations.blender.panels.facade_editor_sidebar import FACADE_EDITOR_PANEL_CLASSES
+from src.integrations.blender.operators.bridges import BRIDGE_EDITOR_CLASSES, BRIDGE_NAME_ITEMS, _update_bridge_form
+from src.integrations.blender.panels.bridge_sidebar import BRIDGE_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.city_loader import CITY_LOADER_CLASSES
 from src.integrations.blender.panels.city_loader_sidebar import CITY_LOADER_PANEL_CLASSES
 
@@ -62,6 +64,7 @@ PANEL_CLASSES = [
     *CAR_EDITOR_PANEL_CLASSES,
     *ROAD_BUILDER_PANEL_CLASSES,
     *FACADE_EDITOR_PANEL_CLASSES,
+    *BRIDGE_EDITOR_PANEL_CLASSES,
     *CITY_LOADER_PANEL_CLASSES,
 ]
 
@@ -83,6 +86,7 @@ OPERATOR_CLASSES = [
     *CAR_EDITOR_CLASSES,
     *ROAD_BUILDER_CLASSES,
     *FACADE_EDITOR_CLASSES,
+    *BRIDGE_EDITOR_CLASSES,
     *CITY_LOADER_CLASSES,
 ]
 
@@ -242,7 +246,23 @@ SCENE_PROPERTIES = [
     "cl_load_bng",
     "cl_load_meshes",
     "cl_load_bai",
+    "cl_load_gizmo",
     "cl_texture_folder",
+    # Bridge Editor — edit form
+    "be_active_obj_name",
+    "be_active_group_id",
+    "be_active_role",
+    "be_prop_name",
+    "be_offset_x", "be_offset_y", "be_offset_z",
+    "be_angle",
+    # Bridge Editor — create form
+    "bc_offset_x", "bc_offset_y", "bc_offset_z",
+    "bc_angle",
+    "bc_span",
+    "bc_gate_offset",
+    "bc_facing_in",
+    "bc_drawbridge_name",
+    "bc_crossgate_name",
     # Facade Editor — create form
     "fc_facade_name",
     "fc_flags",
@@ -1024,6 +1044,11 @@ def register_scene_properties() -> None:
         description="Load AI streets from the .BAI file in the CITY/ subfolder",
         default=True,
     )
+    bpy.types.Scene.cl_load_gizmo = bpy.props.BoolProperty(
+        name="Load GIZMO",
+        description="Load drawbridges from the .GIZMO file",
+        default=True,
+    )
     bpy.types.Scene.cl_texture_folder = bpy.props.StringProperty(
         name="Texture Folder",
         description="Texture folder used when loading city meshes (leave blank for default editor textures)",
@@ -1058,6 +1083,58 @@ def register_scene_properties() -> None:
     bpy.types.Scene.fc_scale_auto = bpy.props.BoolProperty(name="Auto Scale", default=True)
     bpy.types.Scene.fc_scale      = bpy.props.FloatProperty(
         name="Scale", default=1.0, min=0.001, precision=3,
+    )
+
+    # ── Bridge Editor — edit form ─────────────────────────────────────────────
+    bpy.types.Scene.be_active_obj_name = bpy.props.StringProperty(
+        name="Active Bridge Object", default="",
+    )
+    bpy.types.Scene.be_active_group_id = bpy.props.StringProperty(
+        name="Active Bridge Group", default="",
+    )
+    bpy.types.Scene.be_active_role = bpy.props.StringProperty(
+        name="Active Bridge Role", default="",
+    )
+    bpy.types.Scene.be_prop_name = bpy.props.EnumProperty(
+        name="Prop", description="Bridge prop type", items=BRIDGE_NAME_ITEMS,
+        update=_update_bridge_form,
+    )
+    _bkw = dict(precision=3, update=_update_bridge_form)
+    bpy.types.Scene.be_offset_x = bpy.props.FloatProperty(name="Offset X", **_bkw)
+    bpy.types.Scene.be_offset_y = bpy.props.FloatProperty(name="Offset Y", **_bkw)
+    bpy.types.Scene.be_offset_z = bpy.props.FloatProperty(name="Offset Z", **_bkw)
+    bpy.types.Scene.be_angle = bpy.props.FloatProperty(
+        name="Angle", description="Facing angle in degrees (0=East, +90=South per Z+, etc.)",
+        default=0.0, precision=2, update=_update_bridge_form,
+    )
+
+    # ── Bridge Editor — create form ───────────────────────────────────────────
+    bpy.types.Scene.bc_offset_x = bpy.props.FloatProperty(name="X", default=0.0, precision=2)
+    bpy.types.Scene.bc_offset_y = bpy.props.FloatProperty(name="Y", default=0.01, precision=2, description="Height")
+    bpy.types.Scene.bc_offset_z = bpy.props.FloatProperty(name="Z", default=0.0, precision=2)
+    bpy.types.Scene.bc_angle = bpy.props.FloatProperty(
+        name="Angle", default=0.01, precision=2,
+        description="Facing of the bridge set (degrees, 0=East)",
+    )
+    bpy.types.Scene.bc_span = bpy.props.FloatProperty(
+        name="Span", default=64.8, min=1.0, soft_max=200.0, precision=2,
+        description="Distance between the two drawbridge halves",
+    )
+    bpy.types.Scene.bc_gate_offset = bpy.props.FloatProperty(
+        name="Gate Offset", default=15.0, min=0.0, soft_max=50.0, precision=2,
+        description="Crossgate offset from drawbridge centre along the road axis",
+    )
+    bpy.types.Scene.bc_facing_in = bpy.props.BoolProperty(
+        name="Halves Face Inward", default=True,
+        description="If true, the two drawbridge halves face each other",
+    )
+    bpy.types.Scene.bc_drawbridge_name = bpy.props.EnumProperty(
+        name="Drawbridge", items=BRIDGE_NAME_ITEMS,
+        default="tpdrawbridge06",
+    )
+    bpy.types.Scene.bc_crossgate_name = bpy.props.EnumProperty(
+        name="Crossgate", items=BRIDGE_NAME_ITEMS,
+        default="tpcrossgate06",
     )
 
 

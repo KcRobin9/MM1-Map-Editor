@@ -17,3 +17,6 @@ prop_bms_folder = Folder.Resources.Editor.Meshes   # Root folder; subfolders CAR
 prop_car_wheels  = True         # Set True to load and place individual wheel meshes (WHL0–3_H.BMS)
 prop_car_lights  = False         # Set True to also load headlight / tail-light / rear-light meshes
 
+# Bridges (.GIZMO)
+open_bridges        = True              # Visual only — tilt each drawbridge half up around its outer hinge so the two halves form a V at the middle
+open_bridges_angle  = 0.471239 * 100    # Tilt angle in degrees (0 = flat / closed, 90 = fully vertical)S

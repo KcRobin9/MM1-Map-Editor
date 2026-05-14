@@ -218,6 +218,19 @@ class CITY_OT_Load(bpy.types.Operator):
             else:
                 errors.append(f"BAI: no .BAI file found under {folder.name}")
 
+        # ── GIZMO (drawbridges) ──────────────────────────────────────────────
+        if scene.cl_load_gizmo:
+            gizmo_files = list(folder.glob("*.GIZMO")) + list(folder.glob("*.gizmo"))
+            gizmo_path  = gizmo_files[0] if gizmo_files else None
+            if gizmo_path and gizmo_path.exists():
+                try:
+                    bpy.ops.bridges.load_external(filepath=str(gizmo_path))
+                    loaded_parts.append("GIZMO")
+                except Exception as exc:
+                    errors.append(f"GIZMO: {exc}")
+            else:
+                errors.append(f"GIZMO: no .GIZMO file found in {folder.name}")
+
         # ── City meshes ───────────────────────────────────────────────────────
         if scene.cl_load_meshes:
             meshes_root = folder / "MESHES"
