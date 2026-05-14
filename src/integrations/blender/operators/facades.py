@@ -253,14 +253,43 @@ def _find_bms_variant(folder: Path, variants) -> Optional[Path]:
     return None
 
 
-# ── Mesh cache: key = absolute BMS path → cached Blender Mesh datablock ───────
+# ── Mesh cache: key = (absolute BMS path, shear) → cached Blender Mesh ────────
+#
+# A sheared variant is needed because Blender's matrix_world setter decomposes
+# the assigned matrix into loc/rot/scale and drops any non-orthogonal part (see
+# BKE_object_apply_mat4 → mat4_to_loc_rot_size). The game's facade matrix is
+# *deliberately* sheared (m0 carries the Y tilt while m1 stays (0,1,0)), so to
+# reproduce a tilted SHEAR-flag facade we bake that Y tilt into the mesh and
+# leave the object's matrix orthonormal.
 
-_BMS_MESH_CACHE: Dict[str, "bpy.types.Mesh"] = {}
+_BMS_MESH_CACHE: Dict[Tuple[str, int], "bpy.types.Mesh"] = {}
+
+# Round shear to this many decimal places so panels with near-identical tilt
+# share a single sheared mesh datablock.
+_SHEAR_CACHE_PRECISION = 4
 
 
-def _bms_cached_mesh(bms_file: Path, label: str, tex_folder) -> Optional["bpy.types.Mesh"]:
-    """Return a Blender Mesh for `bms_file`, building it once and caching."""
-    key = str(bms_file.resolve()).lower()
+def _shear_y_key(shear_y: float) -> int:
+    return int(round(shear_y * (10 ** _SHEAR_CACHE_PRECISION)))
+
+
+def _apply_shear_to_mesh(mesh: "bpy.types.Mesh", shear_y: float) -> None:
+    """
+    Reproduce the m0.y shear directly on mesh vertices.
+        game:    new_vy = old_vy + (dy/scale) * vx       (the matrix's shear)
+        blender: new_vz = old_vz - shear_y    * vx       (after the X-flip in
+                                                          _to_blender_pos)
+    """
+    if shear_y == 0.0:
+        return
+    for v in mesh.vertices:
+        v.co.z -= shear_y * v.co.x
+    mesh.update()
+
+
+def _bms_cached_mesh(bms_file: Path, label: str, tex_folder, shear_y: float = 0.0) -> Optional["bpy.types.Mesh"]:
+    """Return a Blender Mesh for `bms_file`, optionally with a baked Y shear."""
+    key = (str(bms_file.resolve()).lower(), _shear_y_key(shear_y))
     cached = _BMS_MESH_CACHE.get(key)
     if cached is not None and cached.users >= 0 and cached.name in bpy.data.meshes:
         return cached
@@ -270,13 +299,15 @@ def _bms_cached_mesh(bms_file: Path, label: str, tex_folder) -> Optional["bpy.ty
     )
     try:
         bms_data = read_bms(bms_file)
-        mesh = build_blender_mesh(label, bms_data)
+        label_suffix = f"_sh{key[1]:+d}" if shear_y != 0.0 else ""
+        mesh = build_blender_mesh(f"{label}{label_suffix}", bms_data)
         if tex_folder and bms_data.get("texture_names"):
             with suppress_stdout_matching("Unable to find a suitable DXT compression"):
                 _apply_materials_to_mesh(mesh, bms_data["texture_names"], tex_folder)
         mesh["bms_source_file"] = str(bms_file)
         ox, oy, oz = bms_data.get("mesh_offset", [0.0, 0.0, 0.0])
         mesh["_bl_offset"] = (-ox, oz, oy)
+        _apply_shear_to_mesh(mesh, shear_y)
     except Exception as exc:
         item(f"BMS load failed ({bms_file.name}): {exc}")
         return None
@@ -307,15 +338,32 @@ def _facade_matrix_to_blender(
     start: Tuple[float, float, float],
     end:   Tuple[float, float, float],
     scale: float,
-) -> "mathutils.Matrix":
+) -> Tuple["mathutils.Matrix", float]:
     """
-    Port of MatrixFromPoints() from the game binary.
-    Used by mmFacadeInstance — the regular tile-stretching panel renderer.
+    Port of MatrixFromPoints() from the game binary, split so Blender can
+    actually render the result.
 
-      m0 = normalised(end-start) * (dist/scale)   forward (stretched) axis
-      m1 = (0, 1, 0)                              up axis
-      m2 = m1 × m0_normalised                     right axis (unit)
-      m3 = start, with Y clamped to min(start.y, end.y)
+    Game matrix (per IDA disasm of `?MatrixFromPoints@@…`):
+        m0 = (end-start).normalised() * (|end-start|/scale)    forward
+        m1 = (0, 1, 0)                                          up
+        m2 = m1 × m0_normalised   (in XZ plane, unit length)    right
+        m3 = start                (NO Y clamping — verified in asm)
+
+    Shear note. When start.y ≠ end.y the matrix is *sheared*: m0 carries a Y
+    component but m1 stays (0,1,0), so m0·m1 ≠ 0. The game's renderer applies
+    the Matrix34 directly to vertices, so the shear works. Blender, however,
+    decomposes any matrix assigned to ``obj.matrix_world`` into loc + rot +
+    scale (BKE_object_apply_mat4 → mat4_to_loc_rot_size) and *drops* the shear
+    — which is the bug that flattens every tilted facade.
+
+    The workaround: return an orthonormal matrix (m0 projected to the XZ
+    plane, no Y) plus a separate ``shear_y`` factor that the caller bakes into
+    the mesh vertices. End result matches the game.
+
+    Returns:
+        (mat4, shear_y) where applying the shear to each mesh vertex via
+        ``new_vz_blender = old_vz_blender - shear_y * old_vx_blender`` and
+        then transforming by ``mat4`` reproduces the game's full Matrix34.
     """
     import mathutils
 
@@ -323,27 +371,27 @@ def _facade_matrix_to_blender(
     dy = end[1] - start[1]
     dz = end[2] - start[2]
 
-    dist = (dx * dx + dy * dy + dz * dz) ** 0.5
-    if dist == 0.0 or scale == 0.0:
+    dist_xz = (dx * dx + dz * dz) ** 0.5
+    if scale == 0.0 or dist_xz < 1e-7:
+        # Degenerate (zero-length wall or purely vertical drop). Place the
+        # parent at start and skip the shear — the caller will see a stack
+        # of meshes at the panel origin.
         loc = mathutils.Vector((start[0], -start[2], start[1]))
         mat = mathutils.Matrix.Identity(4)
         mat.translation = loc
-        return mat
+        return mat, 0.0
 
-    inv = 1.0 / dist
-    length_factor = dist / scale
-
-    nx, ny, nz = dx * inv, dy * inv, dz * inv
-
-    # right_g = m1 × m0_norm = (nz, 0, -nx) for m1=(0,1,0); see C++ asm
-    rx, ry, rz = nz, 0.0, -nx
+    length_factor_xz = dist_xz / scale
+    nx_xz = dx / dist_xz
+    nz_xz = dz / dist_xz
 
     def g2b(gx, gy, gz):
         return (gx, -gz, gy)
 
-    fwd_b = g2b(nx * length_factor, ny * length_factor, nz * length_factor)
+    # Forward, up, right — all built with m0.y = 0 so the matrix is orthonormal.
+    fwd_b = g2b(nx_xz * length_factor_xz, 0.0, nz_xz * length_factor_xz)
     up_b  = g2b(0.0, 1.0, 0.0)
-    rgt_b = g2b(rx, ry, rz)
+    rgt_b = g2b(nz_xz, 0.0, -nx_xz)
 
     col_x = (-fwd_b[0], -fwd_b[1], -fwd_b[2])
     col_y = (-rgt_b[0], -rgt_b[1], -rgt_b[2])
@@ -355,14 +403,18 @@ def _facade_matrix_to_blender(
         (col_x[2], col_y[2], col_z[2]),
     ))
 
-    px, py, pz = start[0], start[1], start[2]
-    if start[1] > end[1]:
-        py = end[1]
-    loc = mathutils.Vector(g2b(px, py, pz))
+    loc = mathutils.Vector(g2b(start[0], start[1], start[2]))
 
     mat4 = mat3.to_4x4()
     mat4.translation = loc
-    return mat4
+
+    # Tilt that the matrix's m0.y *would* have applied, expressed in Blender
+    # mesh-space. Derivation:
+    #     game:    Δvy = (dy/scale) * vx
+    #     mesh import (_to_blender_pos): vx_b = -vx_g, vz_b = vy_g
+    #     →        Δvz_b = -(dy/scale) * vx_b
+    shear_y = dy / scale
+    return mat4, shear_y
 
 
 def _dt_matrix_to_blender(
@@ -491,8 +543,14 @@ def place_facades_in_scene(
             if is_dt:
                 mat = _dt_matrix_to_blender(game_start, game_end,
                                             tuple(float(s) for s in sides))
+                # DT buildings render via mmBuildingInstance which stores a
+                # full Matrix34 — no equivalent of mmYInstance's shear, so we
+                # keep the current behaviour and don't bake anything.
+                shear_y = 0.0
             else:
-                mat = _facade_matrix_to_blender(game_start, game_end, fcd_scale)
+                mat, shear_y = _facade_matrix_to_blender(
+                    game_start, game_end, fcd_scale
+                )
             parent_obj.matrix_world = mat
 
             parent_obj[_FACADE_TAG]       = gid
@@ -507,7 +565,7 @@ def place_facades_in_scene(
 
             main_bms = _find_bms_variant(mesh_folder, _BMS_VARIANTS)
             if main_bms:
-                m = _bms_cached_mesh(main_bms, f"{name}_H", texture_folder)
+                m = _bms_cached_mesh(main_bms, f"{name}_H", texture_folder, shear_y)
                 if m:
                     _add_child_obj(m, f"{panel_name}_H", "FACADE_H", parent_obj, col)
                     rep.placed += 1
@@ -517,35 +575,35 @@ def place_facades_in_scene(
 
             grnd_bms = _find_bms_variant(mesh_folder, _GRND_VARIANTS)
             if grnd_bms:
-                m = _bms_cached_mesh(grnd_bms, f"{name}_GRND", texture_folder)
+                m = _bms_cached_mesh(grnd_bms, f"{name}_GRND", texture_folder, shear_y)
                 if m:
                     _add_child_obj(m, f"{panel_name}_GRND", "GRND", parent_obj, col)
 
             if has_left:
                 left_bms = _find_bms_variant(mesh_folder, _LEFT_VARIANTS)
                 if left_bms:
-                    m = _bms_cached_mesh(left_bms, f"{name}_LEFT", texture_folder)
+                    m = _bms_cached_mesh(left_bms, f"{name}_LEFT", texture_folder, shear_y)
                     if m:
                         _add_child_obj(m, f"{panel_name}_LEFT", "LEFT", parent_obj, col)
 
             if has_right:
                 right_bms = _find_bms_variant(mesh_folder, _RIGHT_VARIANTS)
                 if right_bms:
-                    m = _bms_cached_mesh(right_bms, f"{name}_RIGHT", texture_folder)
+                    m = _bms_cached_mesh(right_bms, f"{name}_RIGHT", texture_folder, shear_y)
                     if m:
                         _add_child_obj(m, f"{panel_name}_RIGHT", "RIGHT", parent_obj, col)
 
             if has_roof:
                 top_bms = _find_bms_variant(mesh_folder, _TOP_VARIANTS)
                 if top_bms:
-                    m = _bms_cached_mesh(top_bms, f"{name}_TOP", texture_folder)
+                    m = _bms_cached_mesh(top_bms, f"{name}_TOP", texture_folder, shear_y)
                     if m:
                         _add_child_obj(m, f"{panel_name}_TOP", "TOP", parent_obj, col)
 
             if has_back:
                 back_bms = _find_bms_variant(mesh_folder, _BACK_VARIANTS)
                 if back_bms:
-                    m = _bms_cached_mesh(back_bms, f"{name}_BACK", texture_folder)
+                    m = _bms_cached_mesh(back_bms, f"{name}_BACK", texture_folder, shear_y)
                     if m:
                         _add_child_obj(m, f"{panel_name}_BACK", "BACK", parent_obj, col)
 
