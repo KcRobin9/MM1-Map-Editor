@@ -12,6 +12,11 @@ def write_pack(file: BinaryIO, fmt: str, *args: object) -> None:
     file.write(struct.pack(fmt, *args))
 
 
+def pack_bytes(fmt: str, *args: object) -> bytes:
+    """Like write_pack but returns raw bytes — use when building CRC payloads or buffers."""
+    return struct.pack(fmt, *args)
+
+
 def read_binary_name(f, length: int = None, encoding: str = 'ascii', padding: int = 0) -> str:  # add ascii constant
     name_data = bytearray()
     

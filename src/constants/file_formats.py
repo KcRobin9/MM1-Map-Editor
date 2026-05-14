@@ -183,6 +183,11 @@ class FileType:
     AI_INTERSECTION = ".int"
     AI = ".BAI"
 
+    PLAYER_SAVE   = ".SAV"
+    PLAYER_DIR    = ".DIR"
+    PLAYER_CONFIG = ".CFG"
+    RACE_RECORD   = ".DAT"
+
     CSV = ".CSV"
     TEXT = ".txt"
     HTML = "html"

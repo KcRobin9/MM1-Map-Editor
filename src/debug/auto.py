@@ -10,7 +10,10 @@ from src.file_formats.ai.read_write import debug_ai
 from src.file_formats.development import DLP
 from src.file_formats.facades.facades import Facades
 from src.file_formats.physics import Physics
+from src.file_formats.player_config import PlayerConfig
+from src.file_formats.player_profile import PlayerData, PlayerDirectory
 from src.file_formats.props.props import Bangers
+from src.file_formats.race_records import RaceRecords
 from src.game.lighting import Lighting
 
 if TYPE_CHECKING:
@@ -117,6 +120,26 @@ def run_auto_debug(Bounds: Any, Meshes: Any, Portals: Any, enabled: bool) -> Non
                     str(out_dir / f"{stem}_Intersection{{intersection_id}}.int"),
                     str(out_dir / f"{stem}_Street{{paths}}.road"),
                 )
+
+            elif ext == FileType.PLAYER_SAVE.upper():
+                out = _relative_output(f, out_root, FileType.TEXT)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                PlayerData.debug_file(f, out, True)
+
+            elif ext == FileType.PLAYER_DIR.upper():
+                out = _relative_output(f, out_root, FileType.TEXT)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                PlayerDirectory.debug_file(f, out, True)
+
+            elif ext == FileType.PLAYER_CONFIG.upper():
+                out = _relative_output(f, out_root, FileType.TEXT)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                PlayerConfig.debug_file(f, out, True)
+
+            elif ext == FileType.RACE_RECORD.upper():
+                out = _relative_output(f, out_root, FileType.TEXT)
+                out.parent.mkdir(parents=True, exist_ok=True)
+                RaceRecords.debug_file(f, out, True)
 
             else:
                 print(f"[auto-debug] Skipping unsupported file type: {f.name} ({ext})")

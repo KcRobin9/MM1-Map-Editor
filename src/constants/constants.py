@@ -1,8 +1,11 @@
 import datetime
 
 
-NO = 0  
-YES = 1 
+NO  = 0
+YES = 1
+
+ON  = 1
+OFF = 0
 
 HUGE = 1E10
 

@@ -59,6 +59,7 @@ class Threshold:
     VERTEX_INDEX_COUNT = 0x8000  # 32768
 
 
+# CLI strings for -noui commandline flag (not the same as InputType integers in menu.py)
 class ControlType:
     KEYBOARD = "keyboard"
     MOUSE = "mouse"

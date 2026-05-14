@@ -48,6 +48,7 @@ class Folder:
     class MidtownMadness:
         Root       = _MIDTOWN_MADNESS
         DevCityMap = _MIDTOWN_MADNESS / "dev" / "CITY" / MAP_FILENAME
+        DevPlayers = _MIDTOWN_MADNESS / "dev" / "players"
 
     class Resources:
         UserRoot  = _RESOURCES / "user"
@@ -108,6 +109,9 @@ class Folder:
 
     class Src:
         class User:
+            Root          = _BASE / "src" / "USER"
+            PlayerProfile = _BASE / "src" / "USER" / "player_profile.py"
+
             class Textures:
                 Custom = _BASE / "src" / "USER" / "textures" / "custom"
 

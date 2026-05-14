@@ -75,6 +75,7 @@ from src.game.extrema import create_extrema
 from src.game.lighting import Lighting
 from src.game.texture_sheet import TextureSheet
 from src.game.setup import create_map_info, copy_custom_textures_to_shop, copy_carsim_files_to_shop, ensure_empty_mm_dev_folder
+from src.game.player_profile import apply_player_profile
 
 # Helper imports
 from src.helpers.main import calc_size, is_process_running
@@ -117,6 +118,7 @@ from src.USER.settings._resolver import (
     cruise_start_position,
     randomize_textures, random_textures,
     disable_progress_bar,
+    set_player_data,
     set_races, set_cops_and_robbers, set_lighting,
     no_ui, no_ui_type, no_ai,
     less_logs, more_logs,
@@ -2456,6 +2458,10 @@ if not SKIP_AR_CREATION:
     create_commandline(Folder.MidtownMadness.Root / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
     create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
     edit_and_copy_bangerdata_to_shop(prop_properties, Folder.Resources.Editor.Tune.BangerData, Folder.Shop.Tune, FileType.BANGER_DATA)
+
+    # Player data
+    if set_player_data:
+        apply_player_profile()
 
     # Races
     if set_races:

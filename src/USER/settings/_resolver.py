@@ -16,6 +16,7 @@ from src.USER.settings.main import (
     cruise_start_position,
     randomize_textures, random_textures,
     disable_progress_bar,
+    set_player_data,
     set_races, set_cops_and_robbers, set_lighting,
 )
 
@@ -60,6 +61,7 @@ if _fast_ar:
     set_cruise_start       = False
     randomize_textures     = False
     disable_progress_bar   = True
+    set_player_data        = False
     set_races              = False
     set_cops_and_robbers   = False
     set_lighting           = False

@@ -12,5 +12,6 @@ debug_minimap_id = False        # Change to "True" if you want to display the Bo
 # File Debugging
 # Drop any supported file(s) into:  debug/input/
 # Output is written to:             debug/output/run_YYYYMMDD_HHMMSS/
-# Supported types: .BNG .BMS .BND .FCD .PTL .DLP .DB .CSV (Lighting) .BAI (AI)
+# Supported types: .BNG .BMS .BND .FCD .PTL .DLP .DB .CSV (Lighting) .BAI (AI) ...
+# ... .SAV (player save) .DIR (player directory) .CFG (player config) .DAT (race records)
 auto_debug = False              # Change to "True" to debug all files found in debug/input/

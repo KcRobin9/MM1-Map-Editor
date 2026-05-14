@@ -18,6 +18,9 @@ set_physics = True              # Set True to apply custom PHYSICS
 set_animations = True           # Set True to include ANIMATIONS (plane and eltrain)
 set_lighting = True             # Set True to apply custom LIGHTING overrides
 
+# Player Data
+set_player_data = True          # Set True to write player .sav + .cfg + players.dir into MidtownMadness/dev/players/
+
 # Races & AI
 set_races = True                # Set True to create all race files (player/opponent waypoints, AIMAP, CINFO entries)
 set_cops_and_robbers = True     # Set True to create the cops-and-robbers waypoints file

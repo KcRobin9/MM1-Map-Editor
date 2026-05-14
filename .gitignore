@@ -1,21 +1,26 @@
 __pycache__/
-/dev/
-/blender_export/
-/debug/
-/setup/*.whl
-/SHOP/
+
 /WIP/
+/SHOP/
+
+/dev/
+/debug/
+
+/blender_export/
+
+/setup/*.whl
+
 /.claude/
 
-/resources/debug/
 /resources/editor/*.pkl
 
-MidtownMadness/commandline.txt
 MidtownMadness/crashes
 MidtownMadness/screen
+MidtownMadness/MM.LOCK
+MidtownMadness/dev/
+
 MidtownMadness/*.log
 MidtownMadness/!*.ar
 MidtownMadness/!*.cfg
-MidtownMadness/MM.LOCK
-MidtownMadness/dev/
 MidtownMadness/shiplist.!*
+MidtownMadness/commandline.txt
