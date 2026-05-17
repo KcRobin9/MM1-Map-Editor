@@ -86,6 +86,8 @@ from src.integrations.blender.inits import initialize_blender_operators, initial
 from src.integrations.blender.keybindings import set_blender_keybinding
 from src.integrations.blender.modeling.props import place_props_in_scene
 from src.integrations.blender.operators.facades import place_facades_in_scene
+from src.integrations.blender.modeling.bridges import place_bridges_in_scene
+from src.integrations.blender.operators.bridges import _bridges_py_to_blocks
 
 # IO imports
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
@@ -126,8 +128,8 @@ from src.USER.settings._resolver import (
     set_dlp, fix_faulty_quads,
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
     auto_debug,
-    load_target_model, load_all_textures, 
-    visualize_props, visualize_facades, 
+    load_target_model, load_all_textures,
+    visualize_props, visualize_facades, visualize_bridges,
     prop_bms_folder, prop_car_wheels, prop_car_lights,  # Tweak
     SKIP_AR_CREATION,
 )
@@ -2856,6 +2858,12 @@ if visualize_facades and is_process_running(Executable.BLENDER):
             facade_list,
             texture_folder=Folder.Resources.Editor.Textures,
         )
+
+if visualize_bridges and is_process_running(Executable.BLENDER):
+    blocks = _bridges_py_to_blocks(bridge_list)
+    if blocks:
+        place_bridges_in_scene(blocks, Path(prop_bms_folder),
+                               texture_folder=Folder.Resources.Editor.Textures)
 
 # Rebuild the "Current" texture list now that polygons, props, and bulk meshes
 # are all loaded — so every material in the scene is reflected.

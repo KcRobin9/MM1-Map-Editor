@@ -35,7 +35,7 @@ from src.USER.settings.debug import (
 
 from src.USER.settings.blender import (
     load_target_model, load_all_textures,
-    visualize_props, visualize_facades, prop_bms_folder, prop_car_wheels, prop_car_lights,
+    visualize_props, visualize_facades, visualize_bridges, prop_bms_folder, prop_car_wheels, prop_car_lights,
 )
 
 from src.USER.settings.fast import FAST_AR_ONLY, BLENDER_ONLY, FAST_BLENDER_ONLY, FAST_AR_PLUS_BLENDER
@@ -79,8 +79,9 @@ if _fast_ar:
     debug_minimap_id = False
 
 if _fast_bl:
-    visualize_props   = False
-    visualize_facades = False
+    visualize_props    = False
+    visualize_facades  = False
+    visualize_bridges  = False
 
 # ── Derived runtime flag ───────────────────────────────────────────────────────
 # True → skip the entire .AR creation pipeline (Blender-only run)

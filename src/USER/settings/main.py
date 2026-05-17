@@ -11,7 +11,7 @@ play_game = True                # Set True to start the game after the Map is cr
 delete_shop = True              # Set True to delete the raw city files after the .AR file has been created
 
 # Map Attributes
-set_bridges = False             #! Set True to include BRIDGES — implement last, can cause crashes if added too early
+set_bridges = True              #! Set True to include BRIDGES — implement last, can cause crashes if added too early
 set_props = True                # Set True to include PROPS
 set_facades = True              # Set True to include FACADES
 set_physics = True              # Set True to apply custom PHYSICS
