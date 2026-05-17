@@ -26,6 +26,13 @@ class Room:
     UNKNOWN_100 = 0x100
 
 
+class LOD:
+    HIGH = "H"
+    MEDIUM = "M"
+    LOW = "L"
+    VERY_LOW = "VL"
+
+
 class LevelOfDetail:
     UNKNOWN_1 = 0x1    # A
     LOW = 0x2          # L
@@ -163,7 +170,6 @@ class FileType:
     PROP = ".BNG"
     CELL = ".CELLS"
     BOUND = ".BND"
-    EXTREMA = ".EXT"
     GIZMO = ".GIZMO"
     PORTAL = ".PTL"
     FACADE = ".FCD"
@@ -190,7 +196,7 @@ class FileType:
 
     CSV = ".CSV"
     TEXT = ".txt"
-    HTML = "html"
+    HTML = ".html"
 
 
 class Anim:

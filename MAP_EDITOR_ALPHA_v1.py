@@ -2521,15 +2521,15 @@ if not SKIP_AR_CREATION:
     )
 
     TextureSheet.append_custom_textures(
-        Folder.Resources.Editor.MTL / "GLOBAL.TSH",
+        Folder.Resources.Editor.MTL / f"GLOBAL{FileType.TEXTURE_SHEET}",
         Folder.Src.User.Textures.Custom,
-        Folder.Shop.Material / "TEMP_GLOBAL.TSH",
+        Folder.Shop.Material / f"TEMP_GLOBAL{FileType.TEXTURE_SHEET}",
         set_texture_sheet
     )
 
     TextureSheet.write_tweaked(
-        Folder.Shop.Material / "TEMP_GLOBAL.TSH",
-        Folder.Shop.Material / "GLOBAL.TSH",
+        Folder.Shop.Material / f"TEMP_GLOBAL{FileType.TEXTURE_SHEET}",
+        Folder.Shop.Material / f"GLOBAL{FileType.TEXTURE_SHEET}",
         texture_modifications,
         set_texture_sheet
     )

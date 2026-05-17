@@ -5,12 +5,18 @@ from src.USER.settings.main import MAP_FILENAME
 from src.helpers.main import is_process_running
 
 
-_BASE = Path(__file__).parent.parent.parent.resolve()
-_SHOP = _BASE / "SHOP"
+_BASE      = Path(__file__).parent.parent.parent.resolve()
+_SHOP      = _BASE / "SHOP"
+_DEBUG     = _BASE / "debug"
+_RESOURCES = _BASE / "resources"
+_SRC_USER  = _BASE / "src" / "USER"
 _BLENDER_EXPORT = _BASE / "blender_export"
 _MIDTOWN_MADNESS = _BASE / "MidtownMadness"
+_MM_DEV    = _MIDTOWN_MADNESS / "dev"
 _RESOURCES = _BASE / "resources"
-_DEBUG = _BASE / "debug"
+_USER      = _RESOURCES / "user"
+_EDITOR    = _RESOURCES / "editor"
+_TUNE      = _EDITOR / "TUNE"
 
 
 class Folder:
@@ -26,10 +32,10 @@ class Folder:
         Material = _SHOP / "MTL"
 
         class Textures:
-            Bitmap   = _SHOP / "BMP16"
-            Alpha    = _SHOP / "TEX16A"
-            Opaque   = _SHOP / "TEX16O"
-            Palette  = _SHOP / "TEXP"
+            Bitmap  = _SHOP / "BMP16"
+            Alpha   = _SHOP / "TEX16A"
+            Opaque  = _SHOP / "TEX16O"
+            Palette = _SHOP / "TEXP"
 
         class Map:
             City          = _SHOP / "CITY" / MAP_FILENAME
@@ -47,49 +53,46 @@ class Folder:
 
     class MidtownMadness:
         Root       = _MIDTOWN_MADNESS
-        DevCityMap = _MIDTOWN_MADNESS / "dev" / "CITY" / MAP_FILENAME
-        DevPlayers = _MIDTOWN_MADNESS / "dev" / "players"
+        DevCityMap = _MM_DEV / "CITY" / MAP_FILENAME
+        DevPlayers = _MM_DEV / "players"
 
     class Resources:
-        UserRoot  = _RESOURCES / "user"
-        EditorRoot= _RESOURCES / "editor"
-
         class User:
-            Root  = _RESOURCES / "user"
-            AI    = _RESOURCES / "user" / "AI"
-            Props = _RESOURCES / "user" / "PROPS"
-            Facades = _RESOURCES / "user" / "FACADES"
-            Portals = _RESOURCES / "user" / "PORTALS"
-            Lighting = _RESOURCES / "user" / "LIGHTING"
-            Meshes = _RESOURCES / "user" / "MESHES"
-            Bounds = _RESOURCES / "user" / "BOUNDS"
-            DLP = _RESOURCES / "user" / "DLP"
-            Physics = _RESOURCES / "user" / "PHYSICS"
-        
+            Root     = _USER
+            AI       = _USER / "AI"
+            Props    = _USER / "PROPS"
+            Facades  = _USER / "FACADES"
+            Portals  = _USER / "PORTALS"
+            Lighting = _USER / "LIGHTING"
+            Meshes   = _USER / "MESHES"
+            Bounds   = _USER / "BOUNDS"
+            DLP      = _USER / "DLP"
+            Physics  = _USER / "PHYSICS"
+
         class Editor:
-            Root        = _RESOURCES / "editor"
-            AI          = _RESOURCES / "editor" / "AI"
-            BMS         = _RESOURCES / "editor" / "BMS"
-            Bounds      = _RESOURCES / "editor" / "BOUNDS"
-            DLP         = _RESOURCES / "editor" / "DLP"
-            Facades     = _RESOURCES / "editor" / "FACADES"
-            Lighting    = _RESOURCES / "editor" / "LIGHTING"
-            Meshes      = _RESOURCES / "editor" / "MESHES"
-            MeshesCars    = _RESOURCES / "editor" / "MESHES" / "CARS"
-            MeshesFacades = _RESOURCES / "editor" / "MESHES" / "FACADES"
-            MeshesProps   = _RESOURCES / "editor" / "MESHES" / "PROPS"
-            MeshesMisc    = _RESOURCES / "editor" / "MESHES" / "MISC"
-            MTL         = _RESOURCES / "editor" / "MTL"
-            Physics     = _RESOURCES / "editor" / "PHYSICS"
-            Portals     = _RESOURCES / "editor" / "PORTALS"
-            Props       = _RESOURCES / "editor" / "PROPS"
-            Race        = _RESOURCES / "editor" / "RACE"
-            Textures    = _RESOURCES / "editor" / "TEXTURES"
+            Root          = _EDITOR
+            AI            = _EDITOR / "AI"
+            BMS           = _EDITOR / "BMS"
+            Bounds        = _EDITOR / "BOUNDS"
+            DLP           = _EDITOR / "DLP"
+            Facades       = _EDITOR / "FACADES"
+            Lighting      = _EDITOR / "LIGHTING"
+            Meshes        = _EDITOR / "MESHES"
+            MeshesCars    = _EDITOR / "MESHES" / "CARS"
+            MeshesFacades = _EDITOR / "MESHES" / "FACADES"
+            MeshesProps   = _EDITOR / "MESHES" / "PROPS"
+            MeshesMisc    = _EDITOR / "MESHES" / "MISC"
+            MTL           = _EDITOR / "MTL"
+            Physics       = _EDITOR / "PHYSICS"
+            Portals       = _EDITOR / "PORTALS"
+            Props         = _EDITOR / "PROPS"
+            Race          = _EDITOR / "RACE"
+            Textures      = _EDITOR / "TEXTURES"
 
             class Tune:
-                Root          = _RESOURCES / "editor" / "TUNE"
-                CarSimulation = _RESOURCES / "editor" / "TUNE" / "MMCARSIM"
-                BangerData    = _RESOURCES / "editor" / "TUNE" / "MMBANGERDATA"
+                Root          = _TUNE
+                CarSimulation = _TUNE / "MMCARSIM"
+                BangerData    = _TUNE / "MMBANGERDATA"
 
     class Debug:
         Root     = _DEBUG
@@ -104,16 +107,16 @@ class Folder:
         Portals  = _DEBUG / "PORTALS"
         Props    = _DEBUG / "PROPS"
 
-    Build  = _BASE / "build"
-    Angel  = _BASE / "angel"
+    Build = _BASE / "build"
+    Angel = _BASE / "angel"
 
     class Src:
         class User:
-            Root          = _BASE / "src" / "USER"
-            PlayerProfile = _BASE / "src" / "USER" / "player_profile.py"
+            Root          = _SRC_USER
+            PlayerProfile = _SRC_USER / "player_profile.py"
 
             class Textures:
-                Custom = _BASE / "src" / "USER" / "textures" / "custom"
+                Custom = _SRC_USER / "textures" / "custom"
 
     MAIN = [
         Build,
@@ -132,15 +135,12 @@ class Folder:
         MidtownMadness.DevCityMap,
     ]
 
-    BLENDER = [
-        Blender.Polygons,
-        Blender.Waypoints,
-    ]
+    BLENDER = [Blender.Polygons, Blender.Waypoints]
 
     @classmethod
     def create_all(cls) -> None:
         for folder in cls.MAIN:
-            folder.mkdir(parents = True, exist_ok = True)
+            folder.mkdir(parents=True, exist_ok=True)
         if is_process_running(Executable.BLENDER):
             for folder in cls.BLENDER:
-                folder.mkdir(parents = True, exist_ok = True)
+                folder.mkdir(parents=True, exist_ok=True)
