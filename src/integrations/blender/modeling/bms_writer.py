@@ -324,10 +324,13 @@ def mesh_to_bms_data(obj: bpy.types.Object, bake_location: bool = False) -> dict
         flags |= MeshFlags.COLORS
 
     # ── Build points (Blender vertices → game space) ──────────────────────────
-    # Wheels (bake_location=True): vertices must be in the wheel's local space
-    # (centred at the wheel hub).  We apply only the scale+rotation from
-    # matrix_local; the translation (wheel hub position in body-local space)
-    # is written separately as mesh_offset so the game places the wheel correctly.
+    # Wheels (bake_location=True): stored exactly like original game wheels —
+    # vertices CENTRED at the hub (origin) with the hub position in mesh_offset
+    # and the OFFSET flag set (by write_bms).  The engine draws the centred mesh
+    # at mmWheel::Center, which it reads from the car DLP's WHLn_H centroid; we
+    # generate that DLP (car_dlp.py) to match this same hub.  Baking the hub into
+    # the vertices instead makes the wheel orbit the car centre ("ferris wheel").
+    # The hub is taken from matrix_local (position relative to the car body).
     #
     # Body (bake_location=False): strip world translation from matrix_world so
     # verts are body-origin-relative; mesh_offset carries the world position.
@@ -335,13 +338,12 @@ def mesh_to_bms_data(obj: bpy.types.Object, bake_location: bool = False) -> dict
 
     if bake_location:
         mat_local = obj.matrix_local
-        # Wheels: vertices must be in car-local space (hub-translated, not origin-centred).
-        # GetMeshSet validates bms_offset against the offset passed by the caller (car body CG,
-        # typically {0,0,0}).  If bms_offset != caller offset the BMS is rejected and null returned.
-        # So mesh_offset must be {0,0,0}; the hub translation lives in the vertex positions.
-        mesh_offset = (0.0, 0.0, 0.0)
+        wloc = mat_local.translation
+        mesh_offset = _from_blender_pos((wloc.x, wloc.y, wloc.z))
+        mat = mat_local.copy()
+        mat.translation = _mu.Vector((0, 0, 0))
         points: List[Tuple[float, float, float]] = [
-            _from_blender_pos(tuple(mat_local @ v.co))
+            _from_blender_pos(tuple(mat @ v.co))
             for v in mesh.vertices
         ]
     else:

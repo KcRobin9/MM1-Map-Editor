@@ -559,31 +559,36 @@ def _ensure_dash_in_shop(car_name: str) -> int:
     return copied
 
 
-def _ensure_dlp_in_shop(car_name: str) -> bool:
+def _generate_car_dlp_in_shop(car_name: str) -> bool:
     """
-    Copy the VPMUSTANG99 template DLP to SHOP/DLP/{car_name}.DLP if not present.
+    Generate SHOP/DLP/{car}.DLP from the car's exported BMS by retargeting the
+    VPMUSTANG99 template DLP's BODY_H/WHLn_H groups to the actual part bounds, so
+    each wheel's spin pivot (DLP centroid) matches its real hub position.
 
-    The game reads each wheel's spin pivot (mmWheel::Center) from the DLP's
-    WHLn_H group centroid; without a DLP the pivot defaults to the car origin and
-    the wheels orbit it ("ferris wheel"). The mustang DLP's WHL centroids match
-    the mustang wheel hub positions, which the SEDAN template reuses.
-    Returns True if a file was copied.
+    Falls back to a verbatim mustang DLP copy if generation fails.
     """
     import shutil
-    dlp_dst_dir = Folder.Shop.DLP
-    dlp_dst_dir.mkdir(parents=True, exist_ok=True)
-    dlp_dst = dlp_dst_dir / f"{car_name}{FileType.DEVELOPMENT}"
-    if dlp_dst.exists():
+    from src.integrations.blender.modeling.car_dlp import generate_car_dlp
+
+    bms_dir  = Folder.Shop.Meshes / car_name
+    template = Folder.Resources.Editor.DLP / f"VPMUSTANG99{FileType.DEVELOPMENT}"
+    dlp_dir  = Folder.Shop.DLP
+    dlp_dir.mkdir(parents=True, exist_ok=True)
+    out      = dlp_dir / f"{car_name}{FileType.DEVELOPMENT}"
+
+    if not template.exists():
+        print(f"[Car Editor] Template DLP missing: {template}")
         return False
 
-    src = Folder.Resources.Editor.DLP / f"VPMUSTANG99{FileType.DEVELOPMENT}"
-    if not src.exists():
-        print(f"[Car Editor] Template DLP not found: {src}")
+    try:
+        applied = generate_car_dlp(template, bms_dir, out)
+        groups  = ", ".join(name for name, _ in applied)
+        print(f"[Car Editor] Generated DLP → SHOP/DLP/{out.name} (retargeted: {groups})")
+        return True
+    except Exception as exc:
+        print(f"[Car Editor] DLP generation failed ({exc}); copying mustang DLP verbatim")
+        shutil.copy2(template, out)
         return False
-
-    shutil.copy2(src, dlp_dst)
-    print(f"[Car Editor] Copied template DLP → SHOP/DLP/{car_name}{FileType.DEVELOPMENT}")
-    return True
 
 
 def _build_car_tsh(car_name: str, car_objects) -> None:
@@ -855,10 +860,9 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         errors = []
         for obj in car_objects:
             part_tag = obj.get(_CAR_TAG, "unknown")
-            if part_tag.startswith("wheel_"):
-                # Wheels are never exported via the bake path (it corrupts the spin
-                # pivot). Existing cars keep their originals from the base AR; new
-                # cars get VPMUSTANG99's centered wheel BMS + DLP below.
+            if minimal and part_tag.startswith("wheel_"):
+                # Existing game cars keep their original wheels (from the base AR);
+                # the original DLP there already provides correct spin pivots.
                 continue
             src_file = obj.data.get("bms_source_file", "")
             if src_file:
@@ -898,24 +902,15 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 _shutil.copy2(body_h, city_dir / suffix)
 
         if not minimal:
-            # New car: build a self-contained AR from the VPMUSTANG99 template —
-            # centered wheel BMS + matching DLP (so wheels spin on their axle),
-            # dashboard, wheel LODs and a generated TSH that declares every
-            # texture (the engine fatal-errors on any undeclared texture).
-            #
-            # STAGE 1 — CONFIRMED WORKING IN-GAME (2026-05-21): wheels spin on
-            # their axles instead of orbiting the car centre. Pivot comes from the
-            # DLP's WHLn_H centroid; mesh must be origin-centered. Limitation:
-            # wheels are locked to VPMUSTANG99 positions. Stage 2 will generate a
-            # per-car wheel DLP + export wheels centered for arbitrary placement.
-            #
-            # Drop any stale baked wheels first so _ensure_wheels_in_shop installs
-            # the mustang centered wheels (verts at origin + hub mesh_offset).
-            for stale in city_dir.glob("WHL*.BMS"):
-                stale.unlink()
-            _ensure_wheels_in_shop(car_name)
+            # New car: build a self-contained AR — wheels were just exported
+            # CENTERED (verts at origin + hub mesh_offset + OFFSET flag), so the
+            # mesh draws correctly at the pivot. The pivot itself (mmWheel::Center)
+            # is read from the car DLP's WHLn_H centroid, which we GENERATE from
+            # the exported wheel hubs (Stage 2) so wheels may sit anywhere — not
+            # just VPMUSTANG99 positions. Also: dashboard, wheel LODs, and a TSH
+            # declaring every texture (the engine fatal-errors on undeclared ones).
+            _ensure_wheels_in_shop(car_name)   # fallback for body-only imports
             _ensure_dash_in_shop(car_name)
-            _ensure_dlp_in_shop(car_name)
             for i in range(10):
                 whl_h = city_dir / f"WHL{i}_H.BMS"
                 if not whl_h.exists():
@@ -923,6 +918,7 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 for suffix in (f"WHL{i}_M.BMS", f"WHL{i}_L.BMS", f"WHL{i}_VL.BMS"):
                     _shutil.copy2(whl_h, city_dir / suffix)
             _build_car_tsh(car_name, car_objects)
+            _generate_car_dlp_in_shop(car_name)
 
         if not _pack_car_ar(car_name, minimal=minimal):
             self.report({"ERROR"}, "AR packing failed — check the system console.")

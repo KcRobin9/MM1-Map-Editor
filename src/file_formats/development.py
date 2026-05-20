@@ -76,7 +76,7 @@ class DLPPatch:
         write_pack(f, '>3H', self.material_index, self.texture_index, self.physics_index)
 
         for vertex in self.vertices:
-            vertex.write(f, '>')
+            vertex.write(f)
 
         write_pack(f, '>I', len(self.name))
         write_binary_name(f, self.name)
@@ -134,7 +134,8 @@ class DLPGroup:
 
 class DLP:
     def __init__(self, magic: str, num_groups: int, num_patches: int, num_vertices: int,
-                 groups: List[DLPGroup], patches: List[DLPPatch], vertices: List[Vector3]) -> None:
+                 groups: List[DLPGroup], patches: List[DLPPatch], vertices: List[Vector3],
+                 extra: bytes = b'') -> None:
 
         self.magic = magic
         self.num_groups = num_groups
@@ -143,6 +144,10 @@ class DLP:
         self.groups = groups
         self.patches = patches
         self.vertices = vertices
+        # The material/texture/physics libraries (agiLib mlib/tlib/plib) follow
+        # the vertices in the file. We don't model them, so keep the raw bytes
+        # and write them back verbatim — required for the engine to load the DLP.
+        self.extra = extra
 
     @classmethod
     def read(cls, f: BinaryIO) -> 'DLP':
@@ -151,7 +156,8 @@ class DLP:
         groups = [DLPGroup.read(f) for _ in range(num_groups)]
         patches = [DLPPatch.read(f) for _ in range(num_patches)]
         vertices = Vector3.readn(f, num_vertices, '>')
-        return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices)
+        extra = f.read()
+        return cls(magic, num_groups, num_patches, num_vertices, groups, patches, vertices, extra)
 
     def write(self, output_file: str, set_dlp: bool) -> None:
         if not set_dlp:
@@ -169,6 +175,8 @@ class DLP:
 
             for vertex in self.vertices:
                 vertex.write(f, '>')
+
+            f.write(self.extra)
 
     @staticmethod
     def debug_file(input_file: Path, output_file: Path, debug_dlp_file: bool) -> None:
