@@ -440,6 +440,15 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
                 bnd_dst.mkdir()
                 shutil.copy2(bnd_src, bnd_dst / bnd_src.name)
 
+            # Car DLP → DLP/{NAME}.DLP — the engine reads each wheel's spin pivot
+            # (mmWheel::Center) from this file's WHLn_H group centroid. Without it
+            # the wheels orbit the car origin ("ferris wheel").
+            dlp_src = Folder.Shop.DLP / f"{car_name}{FileType.DEVELOPMENT}"
+            if dlp_src.exists():
+                dlp_dst = tmp_dir / "DLP"
+                dlp_dst.mkdir()
+                shutil.copy2(dlp_src, dlp_dst / dlp_src.name)
+
             # Wheel texture (and any other TEX16A assets) → TEX16A/
             tex16a_shop = Folder.Shop.Textures.Alpha
             if tex16a_shop.is_dir():
@@ -548,6 +557,33 @@ def _ensure_dash_in_shop(car_name: str) -> int:
     if copied:
         print(f"[Car Editor] Copied {copied} dash BMS files → SHOP/BMS/{car_name}_DASH/")
     return copied
+
+
+def _ensure_dlp_in_shop(car_name: str) -> bool:
+    """
+    Copy the VPMUSTANG99 template DLP to SHOP/DLP/{car_name}.DLP if not present.
+
+    The game reads each wheel's spin pivot (mmWheel::Center) from the DLP's
+    WHLn_H group centroid; without a DLP the pivot defaults to the car origin and
+    the wheels orbit it ("ferris wheel"). The mustang DLP's WHL centroids match
+    the mustang wheel hub positions, which the SEDAN template reuses.
+    Returns True if a file was copied.
+    """
+    import shutil
+    dlp_dst_dir = Folder.Shop.DLP
+    dlp_dst_dir.mkdir(parents=True, exist_ok=True)
+    dlp_dst = dlp_dst_dir / f"{car_name}{FileType.DEVELOPMENT}"
+    if dlp_dst.exists():
+        return False
+
+    src = Folder.Resources.Editor.DLP / f"VPMUSTANG99{FileType.DEVELOPMENT}"
+    if not src.exists():
+        print(f"[Car Editor] Template DLP not found: {src}")
+        return False
+
+    shutil.copy2(src, dlp_dst)
+    print(f"[Car Editor] Copied template DLP → SHOP/DLP/{car_name}{FileType.DEVELOPMENT}")
+    return True
 
 
 def _build_car_tsh(car_name: str, car_objects) -> None:
@@ -691,6 +727,17 @@ def _init_new_car_files(car_name: str, display_name: str = "Custom Car") -> list
     else:
         msgs.append("BND: VPMUSTANG99_BND.BND not found in resources/editor/BND, skipped")
 
+    # ── DLP: wheel spin pivots ────────────────────────────────────────────────
+    # The engine reads each wheel's Center from the DLP's WHLn_H group centroid.
+    dlp_dst = Folder.Shop.DLP
+    dlp_dst.mkdir(parents=True, exist_ok=True)
+    dlp_src = editor.DLP / f"{SOURCE}{FileType.DEVELOPMENT}"
+    if dlp_src.exists():
+        shutil.copy2(dlp_src, dlp_dst / f"{car_name}{FileType.DEVELOPMENT}")
+        msgs.append("DLP: copied VPMUSTANG99 wheel pivots")
+    else:
+        msgs.append("DLP: VPMUSTANG99.DLP not found in resources/editor/DLP, skipped")
+
     # ── BMS: lights + shadow reference files ─────────────────────────────────
     bms_src = editor.MeshesCars / SOURCE
     bms_dst = Folder.Shop.Meshes / car_name
@@ -808,8 +855,11 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         errors = []
         for obj in car_objects:
             part_tag = obj.get(_CAR_TAG, "unknown")
-            if minimal and part_tag.startswith("wheel_"):
-                continue  # keep the car's original wheels
+            if part_tag.startswith("wheel_"):
+                # Wheels are never exported via the bake path (it corrupts the spin
+                # pivot). Existing cars keep their originals from the base AR; new
+                # cars get VPMUSTANG99's centered wheel BMS + DLP below.
+                continue
             src_file = obj.data.get("bms_source_file", "")
             if src_file:
                 out_name = Path(src_file).name
@@ -849,10 +899,23 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
 
         if not minimal:
             # New car: build a self-contained AR from the VPMUSTANG99 template —
-            # wheels, dashboard, wheel LODs and a generated TSH that declares
-            # every texture (the engine fatal-errors on any undeclared texture).
+            # centered wheel BMS + matching DLP (so wheels spin on their axle),
+            # dashboard, wheel LODs and a generated TSH that declares every
+            # texture (the engine fatal-errors on any undeclared texture).
+            #
+            # STAGE 1 — CONFIRMED WORKING IN-GAME (2026-05-21): wheels spin on
+            # their axles instead of orbiting the car centre. Pivot comes from the
+            # DLP's WHLn_H centroid; mesh must be origin-centered. Limitation:
+            # wheels are locked to VPMUSTANG99 positions. Stage 2 will generate a
+            # per-car wheel DLP + export wheels centered for arbitrary placement.
+            #
+            # Drop any stale baked wheels first so _ensure_wheels_in_shop installs
+            # the mustang centered wheels (verts at origin + hub mesh_offset).
+            for stale in city_dir.glob("WHL*.BMS"):
+                stale.unlink()
             _ensure_wheels_in_shop(car_name)
             _ensure_dash_in_shop(car_name)
+            _ensure_dlp_in_shop(car_name)
             for i in range(10):
                 whl_h = city_dir / f"WHL{i}_H.BMS"
                 if not whl_h.exists():

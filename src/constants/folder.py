@@ -30,6 +30,7 @@ class Folder:
         Bound    = _SHOP / "BND"
         Meshes   = _SHOP / "BMS"
         Material = _SHOP / "MTL"
+        DLP      = _SHOP / "DLP"
 
         class Textures:
             Bitmap  = _SHOP / "BMP16"
