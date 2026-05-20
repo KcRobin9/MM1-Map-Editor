@@ -1,7 +1,16 @@
+from __future__ import annotations
+
 import math
-import bpy
 from pathlib import Path
 from typing import List, Tuple
+
+# bpy is only referenced in type annotations (lazy via __future__ annotations),
+# so the binary writer (write_bms) can be imported and unit-tested outside
+# Blender. Inside Blender the real module is present.
+try:
+    import bpy
+except ImportError:
+    bpy = None
 
 from src.constants.file_formats import MeshFlags, Magic
 from src.io.binary import write_pack, write_binary_name
@@ -56,6 +65,116 @@ def _compute_radius_bsphere(points: List[Tuple[float, float, float]]) -> Tuple[f
     rz = (max(zs) - min(zs)) * 0.5
     bsphere = math.sqrt(rx * rx + ry * ry + rz * rz)
     return (bsphere, ry, bsphere)
+
+
+# ── Packed normal quantization ────────────────────────────────────────────────
+# 198-entry lookup table from Open1560/code/midtown/agiworld/packnorm.cpp.
+# Stored in game space (X=lateral, Y=up, Z=front).
+_PACKED_NORMALS: List[Tuple[float, float, float]] = [
+    ( 0.0000,  0.0000,  1.0000), ( 1.0000,  0.0000,  0.0000), ( 0.0000,  1.0000,  0.0000),
+    (-1.0000,  0.0000,  0.0000), ( 0.0000, -1.0000,  0.0000), ( 0.0000,  0.0000, -1.0000),
+    ( 0.2225,  0.0000,  0.9749), ( 0.4339,  0.0000,  0.9010), ( 0.6235,  0.0000,  0.7818),
+    ( 0.7818,  0.0000,  0.6235), ( 0.9010,  0.0000,  0.4339), ( 0.9749,  0.0000,  0.2225),
+    ( 0.0000,  0.2225,  0.9749), ( 0.0000,  0.4339,  0.9010), ( 0.0000,  0.6235,  0.7818),
+    ( 0.0000,  0.7818,  0.6235), ( 0.0000,  0.9010,  0.4339), ( 0.0000,  0.9749,  0.2225),
+    (-0.2225,  0.0000,  0.9749), (-0.4339,  0.0000,  0.9010), (-0.6235,  0.0000,  0.7818),
+    (-0.7818,  0.0000,  0.6235), (-0.9010,  0.0000,  0.4339), (-0.9749,  0.0000,  0.2225),
+    ( 0.0000, -0.2225,  0.9749), ( 0.0000, -0.4339,  0.9010), ( 0.0000, -0.6235,  0.7818),
+    ( 0.0000, -0.7818,  0.6235), ( 0.0000, -0.9010,  0.4339), ( 0.0000, -0.9749,  0.2225),
+    ( 0.2225,  0.0000, -0.9749), ( 0.4339,  0.0000, -0.9010), ( 0.6235,  0.0000, -0.7818),
+    ( 0.7818,  0.0000, -0.6235), ( 0.9010,  0.0000, -0.4339), ( 0.9749,  0.0000, -0.2225),
+    ( 0.0000,  0.2225, -0.9749), ( 0.0000,  0.4339, -0.9010), ( 0.0000,  0.6235, -0.7818),
+    ( 0.0000,  0.7818, -0.6235), ( 0.0000,  0.9010, -0.4339), ( 0.0000,  0.9749, -0.2225),
+    (-0.2225,  0.0000, -0.9749), (-0.4339,  0.0000, -0.9010), (-0.6235,  0.0000, -0.7818),
+    (-0.7818,  0.0000, -0.6235), (-0.9010,  0.0000, -0.4339), (-0.9749,  0.0000, -0.2225),
+    ( 0.0000, -0.2225, -0.9749), ( 0.0000, -0.4339, -0.9010), ( 0.0000, -0.6235, -0.7818),
+    ( 0.0000, -0.7818, -0.6235), ( 0.0000, -0.9010, -0.4339), ( 0.0000, -0.9749, -0.2225),
+    ( 0.9749,  0.2225,  0.0000), ( 0.9010,  0.4339,  0.0000), ( 0.7818,  0.6235,  0.0000),
+    ( 0.6235,  0.7818,  0.0000), ( 0.4339,  0.9010,  0.0000), ( 0.2225,  0.9749,  0.0000),
+    (-0.2225,  0.9749,  0.0000), (-0.4339,  0.9010,  0.0000), (-0.6235,  0.7818,  0.0000),
+    (-0.7818,  0.6235,  0.0000), (-0.9010,  0.4339,  0.0000), (-0.9749,  0.2225,  0.0000),
+    (-0.9749, -0.2225,  0.0000), (-0.9010, -0.4339,  0.0000), (-0.7818, -0.6235,  0.0000),
+    (-0.6235, -0.7818,  0.0000), (-0.4339, -0.9010,  0.0000), (-0.2225, -0.9749,  0.0000),
+    ( 0.2225, -0.9749,  0.0000), ( 0.4339, -0.9010,  0.0000), ( 0.6235, -0.7818,  0.0000),
+    ( 0.7818, -0.6235,  0.0000), ( 0.9010, -0.4339,  0.0000), ( 0.9749, -0.2225,  0.0000),
+    ( 0.2279,  0.2279,  0.9466), ( 0.4505,  0.2361,  0.8610), ( 0.2361,  0.4505,  0.8610),
+    ( 0.6533,  0.2450,  0.7164), ( 0.4691,  0.4691,  0.7482), ( 0.2450,  0.6533,  0.7164),
+    ( 0.8197,  0.2502,  0.5153), ( 0.6762,  0.4815,  0.5575), ( 0.4815,  0.6762,  0.5575),
+    ( 0.2502,  0.8197,  0.5153), ( 0.9316,  0.2448,  0.2685), ( 0.8288,  0.4740,  0.2974),
+    ( 0.6729,  0.6729,  0.3072), ( 0.4740,  0.8288,  0.2974), ( 0.2448,  0.9316,  0.2685),
+    (-0.2279,  0.2279,  0.9466), (-0.2361,  0.4505,  0.8610), (-0.4505,  0.2361,  0.8610),
+    (-0.2450,  0.6533,  0.7164), (-0.4691,  0.4691,  0.7482), (-0.6533,  0.2450,  0.7164),
+    (-0.2502,  0.8197,  0.5153), (-0.4815,  0.6762,  0.5575), (-0.6762,  0.4815,  0.5575),
+    (-0.8197,  0.2502,  0.5153), (-0.2448,  0.9316,  0.2685), (-0.4740,  0.8288,  0.2974),
+    (-0.6729,  0.6729,  0.3072), (-0.8288,  0.4740,  0.2974), (-0.9316,  0.2448,  0.2685),
+    (-0.2279, -0.2279,  0.9466), (-0.4505, -0.2361,  0.8610), (-0.2361, -0.4505,  0.8610),
+    (-0.6533, -0.2450,  0.7164), (-0.4691, -0.4691,  0.7482), (-0.2450, -0.6533,  0.7164),
+    (-0.8197, -0.2502,  0.5153), (-0.6762, -0.4815,  0.5575), (-0.4815, -0.6762,  0.5575),
+    (-0.2502, -0.8197,  0.5153), (-0.9316, -0.2448,  0.2685), (-0.8288, -0.4740,  0.2974),
+    (-0.6729, -0.6729,  0.3072), (-0.4740, -0.8288,  0.2974), (-0.2448, -0.9316,  0.2685),
+    ( 0.2279, -0.2279,  0.9466), ( 0.2361, -0.4505,  0.8610), ( 0.4505, -0.2361,  0.8610),
+    ( 0.2450, -0.6533,  0.7164), ( 0.4691, -0.4691,  0.7482), ( 0.6533, -0.2450,  0.7164),
+    ( 0.2502, -0.8197,  0.5153), ( 0.4815, -0.6762,  0.5575), ( 0.6762, -0.4815,  0.5575),
+    ( 0.8197, -0.2502,  0.5153), ( 0.2448, -0.9316,  0.2685), ( 0.4740, -0.8288,  0.2974),
+    ( 0.6729, -0.6729,  0.3072), ( 0.8288, -0.4740,  0.2974), ( 0.9316, -0.2448,  0.2685),
+    ( 0.2279,  0.2279, -0.9466), ( 0.2361,  0.4505, -0.8610), ( 0.4505,  0.2361, -0.8610),
+    ( 0.2450,  0.6533, -0.7164), ( 0.4691,  0.4691, -0.7482), ( 0.6533,  0.2450, -0.7164),
+    ( 0.2502,  0.8197, -0.5153), ( 0.4815,  0.6762, -0.5575), ( 0.6762,  0.4815, -0.5575),
+    ( 0.8197,  0.2502, -0.5153), ( 0.2448,  0.9316, -0.2685), ( 0.4740,  0.8288, -0.2974),
+    ( 0.6729,  0.6729, -0.3072), ( 0.8288,  0.4740, -0.2974), ( 0.9316,  0.2448, -0.2685),
+    (-0.2279,  0.2279, -0.9466), (-0.4505,  0.2361, -0.8610), (-0.2361,  0.4505, -0.8610),
+    (-0.6533,  0.2450, -0.7164), (-0.4691,  0.4691, -0.7482), (-0.2450,  0.6533, -0.7164),
+    (-0.8197,  0.2502, -0.5153), (-0.6762,  0.4815, -0.5575), (-0.4815,  0.6762, -0.5575),
+    (-0.2502,  0.8197, -0.5153), (-0.9316,  0.2448, -0.2685), (-0.8288,  0.4740, -0.2974),
+    (-0.6729,  0.6729, -0.3072), (-0.4740,  0.8288, -0.2974), (-0.2448,  0.9316, -0.2685),
+    (-0.2279, -0.2279, -0.9466), (-0.2361, -0.4505, -0.8610), (-0.4505, -0.2361, -0.8610),
+    (-0.2450, -0.6533, -0.7164), (-0.4691, -0.4691, -0.7482), (-0.6533, -0.2450, -0.7164),
+    (-0.2502, -0.8197, -0.5153), (-0.4815, -0.6762, -0.5575), (-0.6762, -0.4815, -0.5575),
+    (-0.8197, -0.2502, -0.5153), (-0.2448, -0.9316, -0.2685), (-0.4740, -0.8288, -0.2974),
+    (-0.6729, -0.6729, -0.3072), (-0.8288, -0.4740, -0.2974), (-0.9316, -0.2448, -0.2685),
+    ( 0.2279, -0.2279, -0.9466), ( 0.4505, -0.2361, -0.8610), ( 0.2361, -0.4505, -0.8610),
+    ( 0.6533, -0.2450, -0.7164), ( 0.4691, -0.4691, -0.7482), ( 0.2450, -0.6533, -0.7164),
+    ( 0.8197, -0.2502, -0.5153), ( 0.6762, -0.4815, -0.5575), ( 0.4815, -0.6762, -0.5575),
+    ( 0.2502, -0.8197, -0.5153), ( 0.9316, -0.2448, -0.2685), ( 0.8288, -0.4740, -0.2974),
+    ( 0.6729, -0.6729, -0.3072), ( 0.4740, -0.8288, -0.2974), ( 0.2448, -0.9316, -0.2685),
+]
+
+
+def _quantize_normal(gx: float, gy: float, gz: float) -> int:
+    """Return the _PACKED_NORMALS index (0-197) closest to (gx, gy, gz) by dot product."""
+    best_dot = -2.0
+    best_idx = 0
+    for i, (nx, ny, nz) in enumerate(_PACKED_NORMALS):
+        dot = gx * nx + gy * ny + gz * nz
+        if dot > best_dot:
+            best_dot = dot
+            best_idx = i
+    return best_idx
+
+
+def _auto_normal_indices(mesh: bpy.types.Mesh) -> List[int]:
+    """
+    Compute per-loop packed normal indices from Blender face normals.
+    Converts Blender space → game space via (-bx, bz, by), then quantizes.
+    """
+    import bmesh as _bmesh
+    n_loops = len(mesh.loops)
+    ni_flat = [0] * n_loops
+
+    bm = _bmesh.new()
+    bm.from_mesh(mesh)
+    bm.faces.ensure_lookup_table()
+    bm.normal_update()
+
+    for face in bm.faces:
+        fn = face.normal
+        gx, gy, gz = -fn.x, fn.z, fn.y
+        ni = _quantize_normal(gx, gy, gz)
+        for loop in face.loops:
+            ni_flat[loop.index] = ni
+
+    bm.free()
+    return ni_flat
 
 
 # ── Mesh → BMS data ───────────────────────────────────────────────────────────
@@ -141,7 +260,7 @@ def _cache_loop_data(mesh: bpy.types.Mesh, flags: int):
     return loop_verts, uv_flat, col_flat, ni_flat, flags
 
 
-def mesh_to_bms_data(obj: bpy.types.Object) -> dict:
+def mesh_to_bms_data(obj: bpy.types.Object, bake_location: bool = False) -> dict:
     """
     Extract BMS-compatible data from a Blender object.
 
@@ -169,7 +288,8 @@ def mesh_to_bms_data(obj: bpy.types.Object) -> dict:
         if _bmp.loops.layers.color:
             flags |= MeshFlags.COLORS
         _bmp.free()
-    # NORMALS: only set if bms_ni attribute actually exists (never auto-invent it).
+    # If a bms_ni attribute exists on the mesh, honour it now; otherwise normals
+    # are auto-computed below (after _cache_loop_data) from face normals.
     if not (flags & MeshFlags.NORMALS) and mesh.attributes.get("bms_ni"):
         flags |= MeshFlags.NORMALS
 
@@ -181,17 +301,58 @@ def mesh_to_bms_data(obj: bpy.types.Object) -> dict:
         flags &= ~MeshFlags.TEXCOORDS
         flags &= ~MeshFlags.COLORS
 
-    # ── mesh_offset from current object location ──────────────────────────────
-    loc = obj.location
-    mesh_offset = _from_blender_pos((loc.x, loc.y, loc.z))
+    # ── World-space vertex positions ──────────────────────────────────────────
+    # Always transform by matrix_world so scale, rotation, and parent transforms
+    # are baked into the exported vertices.  This correctly handles imported
+    # models (.dae/.fbx) whose scale/rotation lives in the object transform even
+    # after a Blender "Apply" that didn't fully propagate through parents.
+    mat_world = obj.matrix_world
 
     # ── Pre-cache all per-loop data via foreach_get ───────────────────────────
     loop_verts, uv_flat, col_flat, ni_flat, flags = _cache_loop_data(mesh, flags)
 
+    # Cars always need NORMALS (agiMeshLighterTriple dereferences Normals[i] with
+    # no null check → ACCESS_VIOLATION if the flag is absent).  Auto-compute from
+    # face normals when no bms_ni attribute was stored on the mesh.
+    if not (flags & MeshFlags.NORMALS):
+        ni_flat = _auto_normal_indices(mesh)
+        flags |= MeshFlags.NORMALS
+
+    # Ensure COLORS is set; col_flat is already initialised to white (1.0) by
+    # _cache_loop_data, so no additional data computation is required here.
+    if not (flags & MeshFlags.COLORS):
+        flags |= MeshFlags.COLORS
+
     # ── Build points (Blender vertices → game space) ──────────────────────────
-    points: List[Tuple[float, float, float]] = [
-        _from_blender_pos(v.co) for v in mesh.vertices
-    ]
+    # Wheels (bake_location=True): vertices must be in the wheel's local space
+    # (centred at the wheel hub).  We apply only the scale+rotation from
+    # matrix_local; the translation (wheel hub position in body-local space)
+    # is written separately as mesh_offset so the game places the wheel correctly.
+    #
+    # Body (bake_location=False): strip world translation from matrix_world so
+    # verts are body-origin-relative; mesh_offset carries the world position.
+    import mathutils as _mu
+
+    if bake_location:
+        mat_local = obj.matrix_local
+        # Wheels: vertices must be in car-local space (hub-translated, not origin-centred).
+        # GetMeshSet validates bms_offset against the offset passed by the caller (car body CG,
+        # typically {0,0,0}).  If bms_offset != caller offset the BMS is rejected and null returned.
+        # So mesh_offset must be {0,0,0}; the hub translation lives in the vertex positions.
+        mesh_offset = (0.0, 0.0, 0.0)
+        points: List[Tuple[float, float, float]] = [
+            _from_blender_pos(tuple(mat_local @ v.co))
+            for v in mesh.vertices
+        ]
+    else:
+        wloc = mat_world.translation
+        mesh_offset = _from_blender_pos((wloc.x, wloc.y, wloc.z))
+        mat = mat_world.copy()
+        mat.translation = _mu.Vector((0, 0, 0))
+        points: List[Tuple[float, float, float]] = [
+            _from_blender_pos(tuple(mat @ v.co))
+            for v in mesh.vertices
+        ]
 
     # ── Build adjuncts + surface/texture index arrays ─────────────────────────
     adjunct_map: dict    = {}
@@ -334,10 +495,24 @@ def write_bms(bms_data: dict, output_path: Path) -> None:
 
     num_points   = len(points)
     num_textures = len(texture_names)
-    # Part meshes with a non-zero mesh_offset (wheels, fenders, lights) use a
-    # bounding-sphere radius; body/combined meshes use plain AABB half-extents.
-    _nonzero_offset = any(abs(v) > 1e-6 for v in mesh_offset)
-    radius     = _compute_radius_bsphere(points) if _nonzero_offset else _compute_radius(points)
+
+    # Game header stores (Radius, RadiusSqr, BoundingBoxRadius) — three separate floats.
+    # Radius     = sqrt(max vertex squared-distance from origin)
+    # RadiusSqr  = Radius²  (used for fast culling comparisons)
+    # BoundingBoxRadius = same as Radius (conservative; game computes from GetBoundInfo)
+    if points:
+        max_mag_sq = max(p[0] * p[0] + p[1] * p[1] + p[2] * p[2] for p in points)
+    else:
+        max_mag_sq = 1.0
+    _r = math.sqrt(max_mag_sq)
+    radius = (_r, max_mag_sq, _r)
+
+    # Meshes with non-zero mesh_offset (wheels, fenders, lights) have their
+    # vertices in local space.  MESH_SET_OFFSET tells the game NOT to subtract
+    # the offset from vertex positions again (which would corrupt the geometry).
+    if any(abs(v) > 1e-6 for v in mesh_offset):
+        flags |= MeshFlags.OFFSET
+
     cache_size = _compute_cache_size(num_points, num_adjuncts, num_surfaces, num_indices, flags)
 
     # ── Validate consistency BEFORE touching the output file ─────────────────
@@ -362,6 +537,11 @@ def write_bms(bms_data: dict, output_path: Path) -> None:
         write_pack(f, '<fff',  *mesh_offset)
         write_pack(f, '<4I',   num_points, num_adjuncts, num_surfaces, num_indices)
         write_pack(f, '<fff',  *radius)
+        # agiMeshSet stores TextureCount and Flags as adjacent u8 fields
+        # (meshset.h), so both are 1 byte. Writing flags as u16 here shifts the
+        # 2-byte padding, cache_size, and every texture name 1 byte late, which
+        # makes the game read garbage texture names and crash. Texture names must
+        # begin at file offset 52 (0x34).
         write_pack(f, '<2B',   num_textures, flags)
         f.write(b'\x00' * 2)                                     # padding
         write_pack(f, '<I',    cache_size)

@@ -73,6 +73,7 @@ class Folder:
             Root          = _EDITOR
             AI            = _EDITOR / "AI"
             BMS           = _EDITOR / "BMS"
+            Bound         = _EDITOR / "BND"
             Bounds        = _EDITOR / "BOUNDS"
             DLP           = _EDITOR / "DLP"
             Facades       = _EDITOR / "FACADES"

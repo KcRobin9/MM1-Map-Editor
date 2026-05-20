@@ -1701,10 +1701,10 @@ save_mesh(
 create_polygon(
     bound_number = 211,
     vertex_coordinates = [
-        (-55.64, 0.0, 413.24),
-		(256.85, 0.0, 414.13),
-		(264.48, 0.0, 135.52),
-		(-49.88, 0.0, 140.40)])
+        (-55.0, 0.0, 343.36),
+		(240.35, 0.0, 344.25),
+		(247.98, 0.0, 135.52),
+		(-50, 0.0, 140.40)])
 
 save_mesh(
     texture_name = [Texture.BRICKS_GREY],
@@ -2692,8 +2692,6 @@ def apply_texture_to_object(obj, texture_path):
 
 
 def apply_computed_uvs(objects):
-    import math
-
     for obj in objects:
         if obj.type != 'MESH':
             continue

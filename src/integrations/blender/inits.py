@@ -206,10 +206,16 @@ SCENE_PROPERTIES = [
     "ce_face_texture",
     "ce_uv_updating",
     "ce_add_to_city",
-    "ce_start_game",
     "ce_last_export_dir",
     "ce_show_damage",
     "ce_paint_variant",
+    "ce_template",
+    "ce_car_display_name",
+    "ce_import_decimate_ratio",
+    "ce_import_wheel_count",
+    "ce_wheel_texture",
+    *[f"ce_wheel_texture_{i}" for i in range(10)],
+    "ce_mirror_x",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -533,6 +539,24 @@ def register_road_builder_properties() -> None:
     bpy.types.Object.rs_median_texture = bpy.props.EnumProperty(
         name="Median Texture",   items=_tex_items, default=_Tex.GRASS,
     )
+
+
+def _get_wheel_texture_items(self, context):
+    from src.constants.folder import Folder
+    from src.constants.car_assets import WheelTexture
+    return WheelTexture.blender_items(Folder.Resources.Editor.Textures)
+
+
+def _update_wheel_texture(self, context):
+    bpy.ops.car.apply_wheel_texture("EXEC_DEFAULT")
+
+
+def _make_wheel_tex_update(idx):
+    def _update(self, context):
+        bpy.ops.car.apply_wheel_texture_single(
+            "EXEC_DEFAULT", part_tag=f"wheel_{idx}", tex_name=getattr(self, f"ce_wheel_texture_{idx}")
+        )
+    return _update
 
 
 def register_scene_properties() -> None:
@@ -943,11 +967,6 @@ def register_scene_properties() -> None:
         description="Also write exported BMS files to SHOP/BMS/<car_name>/ for in-game use",
         default=True,
     )
-    bpy.types.Scene.ce_start_game = bpy.props.BoolProperty(
-        name="Launch Game After Export",
-        description="Start Open1560.exe after a successful export (only if game is not already running)",
-        default=False,
-    )
     bpy.types.Scene.ce_last_export_dir = bpy.props.StringProperty(
         name="Last Export Dir",
         description="Path of the most recent timestamped export folder (used by Reload)",
@@ -973,6 +992,52 @@ def register_scene_properties() -> None:
         name="Paint Variant",
         description="Current paint variant prefix (e.g. VPBULLET, VPBULLETBLUE)",
         default="",
+    )
+
+    # New Car From Template
+    from src.integrations.blender.modeling.car_templates import get_template_items
+    bpy.types.Scene.ce_template = bpy.props.EnumProperty(
+        name="Template",
+        description="Vehicle archetype used as a starting point",
+        items=get_template_items(),
+        default="SEDAN",
+    )
+    bpy.types.Scene.ce_car_display_name = bpy.props.StringProperty(
+        name="Menu Name",
+        description="Name shown in the game's car selection menu, e.g. Cool Car (filename auto-generated as VP + uppercased name)",
+        default="My Car",
+    )
+    bpy.types.Scene.ce_import_decimate_ratio = bpy.props.FloatProperty(
+        name="Decimate Ratio",
+        description="Target ratio for the Decimate modifier (1.0 = no change, 0.1 = 10% of faces kept)",
+        default=0.3, min=0.01, max=1.0, step=1, precision=2,
+    )
+    bpy.types.Scene.ce_import_wheel_count = bpy.props.IntProperty(
+        name="Wheel Count",
+        description="Number of wheels to spawn (4 = car, 6 = truck/bus)",
+        default=4, min=2, max=10,
+    )
+    bpy.types.Scene.ce_wheel_texture = bpy.props.EnumProperty(
+        name="Wheel Texture",
+        description="Wheel texture to apply to all wheels",
+        items=_get_wheel_texture_items,
+        update=_update_wheel_texture,
+    )
+    for _i in range(10):
+        setattr(
+            bpy.types.Scene,
+            f"ce_wheel_texture_{_i}",
+            bpy.props.EnumProperty(
+                name=f"WHL{_i} Texture",
+                description=f"Wheel texture for wheel {_i}",
+                items=_get_wheel_texture_items,
+                update=_make_wheel_tex_update(_i),
+            ),
+        )
+    bpy.types.Scene.ce_mirror_x = bpy.props.BoolProperty(
+        name="X-Axis Symmetry",
+        description="When ON, Edit-Mode vertex/edge/face transforms are mirrored across each part's local X axis",
+        default=False,
     )
 
     # ── Facade Editor — edit form ─────────────────────────────────────────────
