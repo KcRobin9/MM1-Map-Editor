@@ -561,17 +561,21 @@ def _ensure_dash_in_shop(car_name: str) -> int:
 
 def _generate_car_dlp_in_shop(car_name: str) -> bool:
     """
-    Generate SHOP/DLP/{car}.DLP from the car's exported BMS by retargeting the
-    VPMUSTANG99 template DLP's BODY_H/WHLn_H groups to the actual part bounds, so
-    each wheel's spin pivot (DLP centroid) matches its real hub position.
+    Generate SHOP/DLP/{car}.DLP from the car's exported BMS by retargeting a
+    template DLP's BODY_H/WHLn_H groups to the actual part bounds, so each wheel's
+    spin pivot (DLP centroid) matches its real hub position.
 
-    Falls back to a verbatim mustang DLP copy if generation fails.
+    The template is chosen by wheel count: 5-6 wheels use VPSEMI (which has the
+    WHL4_H/WHL5_H groups a 6-wheeler queries); otherwise VPMUSTANG99.
+    Falls back to a verbatim template copy if generation fails.
     """
     import shutil
     from src.integrations.blender.modeling.car_dlp import generate_car_dlp
 
     bms_dir  = Folder.Shop.Meshes / car_name
-    template = Folder.Resources.Editor.DLP / f"VPMUSTANG99{FileType.DEVELOPMENT}"
+    six_wheel = (bms_dir / "WHL4_H.BMS").exists()
+    template_name = "VPSEMI" if six_wheel else "VPMUSTANG99"
+    template = Folder.Resources.Editor.DLP / f"{template_name}{FileType.DEVELOPMENT}"
     dlp_dir  = Folder.Shop.DLP
     dlp_dir.mkdir(parents=True, exist_ok=True)
     out      = dlp_dir / f"{car_name}{FileType.DEVELOPMENT}"
@@ -583,12 +587,37 @@ def _generate_car_dlp_in_shop(car_name: str) -> bool:
     try:
         applied = generate_car_dlp(template, bms_dir, out)
         groups  = ", ".join(name for name, _ in applied)
-        print(f"[Car Editor] Generated DLP → SHOP/DLP/{out.name} (retargeted: {groups})")
+        print(f"[Car Editor] Generated DLP ({template_name} base) → SHOP/DLP/{out.name} (retargeted: {groups})")
         return True
     except Exception as exc:
-        print(f"[Car Editor] DLP generation failed ({exc}); copying mustang DLP verbatim")
+        print(f"[Car Editor] DLP generation failed ({exc}); copying {template_name} DLP verbatim")
         shutil.copy2(template, out)
         return False
+
+
+def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = False) -> None:
+    """
+    Patch the Flags= line in SHOP/TUNE/{car}.INFO from detected car features.
+    VEH_INFO_FLAG bits: 0x1 = 6 wheels, 0x2 = trailer (see Open1560 vehinfo.h).
+    """
+    info = Folder.Shop.Tune / f"{car_name}.INFO"
+    if not info.exists():
+        return
+
+    flags = (0x1 if six_wheel else 0) | (0x2 if has_trailer else 0)
+    lines = info.read_text(encoding="ascii").splitlines()
+    out, found = [], False
+    for ln in lines:
+        if ln.startswith("Flags="):
+            out.append(f"Flags={flags}")
+            found = True
+        else:
+            out.append(ln)
+    if not found:
+        out.append(f"Flags={flags}")
+
+    info.write_text("\n".join(out) + "\n", encoding="ascii")
+    print(f"[Car Editor] {car_name}.INFO Flags={flags} (6wheel={six_wheel}, trailer={has_trailer})")
 
 
 def _build_car_tsh(car_name: str, car_objects) -> None:
@@ -918,6 +947,7 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 for suffix in (f"WHL{i}_M.BMS", f"WHL{i}_L.BMS", f"WHL{i}_VL.BMS"):
                     _shutil.copy2(whl_h, city_dir / suffix)
             _build_car_tsh(car_name, car_objects)
+            _set_info_flags(car_name, six_wheel=(city_dir / "WHL4_H.BMS").exists())
             _generate_car_dlp_in_shop(car_name)
 
         if not _pack_car_ar(car_name, minimal=minimal):

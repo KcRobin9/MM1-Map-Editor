@@ -16,7 +16,13 @@ import bmesh
 # ── Template catalogue ────────────────────────────────────────────────────────
 
 TEMPLATE_ITEMS = [
-    ("SEDAN", "Sedan", "Full-size sedan (VPMUSTANG99 reference — wheels loaded from BMS)"),
+    ("COMPACT", "Compact", "Small 4-wheel car"),
+    ("SEDAN",   "Sedan",   "Full-size 4-wheel sedan"),
+    ("SPORTS",  "Sports",  "Low 4-wheel sports car"),
+    ("PICKUP",  "Pickup",  "4-wheel pickup truck"),
+    ("TRUCK",   "Truck",   "Large 4-wheel truck"),
+    ("BUS",     "Bus",     "6-wheel bus (flat-top, large)"),
+    ("SEMI",    "Semi",    "6-wheel semi tractor (flat-top, large)"),
 ]
 
 # Raw template data.  All distances in game-space metres.
