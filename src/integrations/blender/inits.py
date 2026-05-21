@@ -218,6 +218,14 @@ SCENE_PROPERTIES = [
     *[f"ce_wheel_texture_{i}" for i in range(10)],
     *[f"ce_trailer_wheel_texture_{i}" for i in range(4)],
     "ce_mirror_x",
+    "ce_phys_override",
+    "ce_phys_mass",
+    "ce_phys_horsepower",
+    "ce_phys_drag",
+    "ce_phys_downforce",
+    "ce_phys_grip",
+    "ce_phys_drift",
+    "ce_phys_suspension",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -1069,6 +1077,52 @@ def register_scene_properties() -> None:
         name="X-Axis Symmetry",
         description="When ON, Edit-Mode vertex/edge/face transforms are mirrored across each part's local X axis",
         default=False,
+    )
+
+    # ── Car Editor — physics (MMCARSIM) ───────────────────────────────────────
+    # When override is ON, these values are written into the car's .MMCARSIM on
+    # pack (works for new cars and existing-car edits). When OFF the car keeps
+    # its stock/template physics. Loading a car syncs these to its real values.
+    bpy.types.Scene.ce_phys_override = bpy.props.BoolProperty(
+        name="Override Physics",
+        description="Write the values below into the car's MMCARSIM on AR + Launch. "
+                    "When off, the car keeps its stock/template handling",
+        default=False,
+    )
+    bpy.types.Scene.ce_phys_mass = bpy.props.FloatProperty(
+        name="Mass",
+        description="Vehicle mass in kg. Heavier = more momentum, harder to shove around (car ~1300-3200, truck/bus 4500-10000)",
+        default=1500.0, min=200.0, max=12000.0,
+    )
+    bpy.types.Scene.ce_phys_horsepower = bpy.props.FloatProperty(
+        name="Horsepower",
+        description="Engine max horsepower — acceleration and top speed (stock ~240-600)",
+        default=320.0, min=50.0, max=1500.0,
+    )
+    bpy.types.Scene.ce_phys_drag = bpy.props.FloatProperty(
+        name="Drag",
+        description="Aerodynamic drag — higher lowers top speed (stock ~0.12-0.62)",
+        default=0.12, min=0.0, max=1.0, precision=3,
+    )
+    bpy.types.Scene.ce_phys_downforce = bpy.props.FloatProperty(
+        name="Downforce",
+        description="High-speed grip pressing the car down (most cars 0; Panoz 0.4)",
+        default=0.0, min=0.0, max=2.0, precision=2,
+    )
+    bpy.types.Scene.ce_phys_grip = bpy.props.FloatProperty(
+        name="Grip",
+        description="Overall handling friction (CarFrictionHandling). Higher = more grip / less slide (stock ~0.7-1.13)",
+        default=0.9, min=0.3, max=1.6, precision=2,
+    )
+    bpy.types.Scene.ce_phys_drift = bpy.props.FloatProperty(
+        name="Drift Torque",
+        description="How readily the car swings its tail out (0 = none; Ford ~14)",
+        default=7.0, min=0.0, max=20.0, precision=1,
+    )
+    bpy.types.Scene.ce_phys_suspension = bpy.props.FloatProperty(
+        name="Suspension",
+        description="Suspension spring stiffness for all wheels. Higher = stiffer/less body roll (car ~40k-100k, truck 280k-420k)",
+        default=75300.0, min=20000.0, max=500000.0,
     )
 
     # ── Facade Editor — edit form ─────────────────────────────────────────────

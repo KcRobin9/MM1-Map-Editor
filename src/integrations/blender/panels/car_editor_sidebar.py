@@ -485,6 +485,46 @@ class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
         r3.operator("car.import_apply_transforms",  text="Apply Scale & Rotation", icon="ORIENTATION_GLOBAL")
 
 
+# ── Panel 5: Physics ──────────────────────────────────────────────────────────
+
+class VIEW3D_PT_CarEditorPhysics(bpy.types.Panel):
+    bl_label       = "Physics"
+    bl_idname      = "VIEW3D_PT_car_editor_physics"
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category    = _CATEGORY
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout  = self.layout
+        scene   = context.scene
+        has_car = bool(get_car_objects())
+
+        layout.prop(scene, "ce_phys_override", text="Override Physics")
+
+        col = layout.column(align=True)
+        col.enabled = scene.ce_phys_override
+        col.label(text="Handling (MMCARSIM)", icon="AUTO")
+        col.prop(scene, "ce_phys_mass")
+        col.prop(scene, "ce_phys_horsepower")
+        col.prop(scene, "ce_phys_drag")
+        col.prop(scene, "ce_phys_downforce")
+        col.prop(scene, "ce_phys_grip")
+        col.prop(scene, "ce_phys_drift")
+        col.prop(scene, "ce_phys_suspension")
+
+        sub = layout.column(align=True)
+        sub.enabled = scene.ce_phys_override
+        sub.operator("car.reset_physics", text="Reset to VPMUSTANG99", icon="LOOP_BACK")
+
+        info = layout.column(align=True)
+        info.enabled = False
+        if scene.ce_phys_override:
+            info.label(text="Applied on AR + Launch", icon="INFO")
+        else:
+            info.label(text="Off — keeps stock handling", icon="INFO")
+
+
 # ── Registration list ─────────────────────────────────────────────────────────
 
 CAR_EDITOR_PANEL_CLASSES = [
@@ -492,4 +532,5 @@ CAR_EDITOR_PANEL_CLASSES = [
     VIEW3D_PT_CarEditorEdit,
     VIEW3D_PT_CarEditorWheels,
     VIEW3D_PT_CarEditorCreate,
+    VIEW3D_PT_CarEditorPhysics,
 ]

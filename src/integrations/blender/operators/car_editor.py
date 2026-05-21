@@ -402,6 +402,17 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
         if body_h.exists() and not body_m.exists():
             shutil.copy2(body_h, body_m)
 
+        # Physics override (existing-car retune): if the user enabled Override
+        # Physics, a patched {NAME}.MMCARSIM was staged in SHOP/TUNE — include it
+        # even in minimal mode so the new handling reaches the game. Geometry-only
+        # edits never create this file, so normal minimal packs are unaffected.
+        if minimal:
+            carsim = Folder.Shop.Tune / f"{car_name}.MMCARSIM"
+            if carsim.exists():
+                tune_dst = tmp_dir / "TUNE"
+                tune_dst.mkdir(exist_ok=True)
+                shutil.copy2(carsim, tune_dst / carsim.name)
+
         # Everything below (dash, tune, TSH, collision, textures) is only packed
         # for brand-new cars.  For an existing game car we override geometry only
         # and let the base AR supply the rest — see _is_original_car.
@@ -671,6 +682,151 @@ def _generate_trailer_dlp_in_shop(car_name: str) -> bool:
     except Exception as exc:
         print(f"[Car Editor] Trailer DLP generation failed ({exc}); keeping stock trailer DLP")
         return False
+
+
+def _generate_car_bnd_in_shop(car_name: str) -> bool:
+    """
+    Generate SHOP/BND/{car}_BND.BND sized to the car's actual body, so it collides
+    at its real dimensions instead of as a copied VPMUSTANG99 box.
+
+    Builds an 8-vertex box collision hull from the exported BODY_H.BMS car-space
+    AABB (same format/edges/hot-verts as stock car bounds). Falls back to copying
+    VPMUSTANG99_BND.BND if generation fails.
+    """
+    import shutil
+    from src.integrations.blender.modeling.car_bnd import generate_car_bnd
+
+    bms_dir = Folder.Shop.Meshes / car_name
+    bnd_dir = Folder.Shop.Bound
+    bnd_dir.mkdir(parents=True, exist_ok=True)
+    out     = bnd_dir / f"{car_name}_BND.BND"
+
+    if not (bms_dir / "BODY_H.BMS").exists():
+        print(f"[Car Editor] BODY_H.BMS missing for {car_name}; skipping BND generation")
+        return False
+
+    try:
+        info = generate_car_bnd(bms_dir, out)
+        print(f"[Car Editor] Generated BND → SHOP/BND/{out.name} "
+              f"(box r={info['radius']:.2f}, {info['edges']} edges)")
+        return True
+    except Exception as exc:
+        print(f"[Car Editor] BND generation failed ({exc}); copying VPMUSTANG99 collision")
+        src = Folder.Resources.Editor.Bound / "VPMUSTANG99_BND.BND"
+        if src.exists():
+            shutil.copy2(src, out)
+        return False
+
+
+def _generate_trailer_bnd_in_shop(car_name: str) -> bool:
+    """
+    Generate SHOP/BND/{car}_TRAILER_BND.BND sized to the edited trailer body.
+
+    The trailer collision box uses the trailer's local AABB with no positional
+    offset (the trailer instance frame handles placement). Falls back to keeping
+    the stock VPSEMI_TRAILER collision staged by _ensure_trailer_in_shop.
+    """
+    from src.integrations.blender.modeling.car_bnd import generate_car_bnd
+
+    bms_dir = Folder.Shop.Meshes / f"{car_name}_TRAILER"
+    out     = Folder.Shop.Bound / f"{car_name}_TRAILER_BND.BND"
+
+    if not (bms_dir / "TRAILER_H.BMS").exists():
+        print(f"[Car Editor] TRAILER_H.BMS missing for {car_name}; keeping stock trailer BND")
+        return False
+
+    try:
+        info = generate_car_bnd(bms_dir, out, body_name="TRAILER_H")
+        print(f"[Car Editor] Generated trailer BND → SHOP/BND/{out.name} "
+              f"(box r={info['radius']:.2f})")
+        return True
+    except Exception as exc:
+        print(f"[Car Editor] Trailer BND generation failed ({exc}); keeping stock trailer BND")
+        return False
+
+
+def _physics_params_from_scene(scene) -> dict:
+    """Read the 7 exposed handling params off the scene props."""
+    return {
+        "mass":       float(getattr(scene, "ce_phys_mass", 1500.0)),
+        "horsepower": float(getattr(scene, "ce_phys_horsepower", 320.0)),
+        "drag":       float(getattr(scene, "ce_phys_drag", 0.12)),
+        "downforce":  float(getattr(scene, "ce_phys_downforce", 0.0)),
+        "grip":       float(getattr(scene, "ce_phys_grip", 0.9)),
+        "drift":      float(getattr(scene, "ce_phys_drift", 7.0)),
+        "suspension": float(getattr(scene, "ce_phys_suspension", 75300.0)),
+    }
+
+
+def _base_carsim_path(car_name: str):
+    """Locate a base MMCARSIM to patch: SHOP first, then editor resources, then core."""
+    candidates = [
+        Folder.Shop.Tune / f"{car_name}.MMCARSIM",
+        Folder.Resources.Editor.Tune.CarSimulation / f"{car_name}.MMCARSIM",
+        Folder.BASE / "development" / "core" / "TUNE" / f"{car_name}.MMCARSIM",
+    ]
+    for c in candidates:
+        if c.exists():
+            return c
+    return None
+
+
+def _apply_physics_in_shop(car_name: str, scene) -> bool:
+    """
+    Patch SHOP/TUNE/{car}.MMCARSIM with the panel's handling values.
+
+    Sources a base MMCARSIM if one isn't already staged (so existing cars can be
+    retuned too). Only called when the user enabled the Override Physics toggle.
+    """
+    import shutil
+    from src.integrations.blender.modeling.car_physics import apply_physics_to_file
+
+    tune_dir = Folder.Shop.Tune
+    tune_dir.mkdir(parents=True, exist_ok=True)
+    out = tune_dir / f"{car_name}.MMCARSIM"
+
+    if not out.exists():
+        base = _base_carsim_path(car_name)
+        if base is None:
+            print(f"[Car Editor] No base MMCARSIM found for {car_name}; physics override skipped")
+            return False
+        shutil.copy2(base, out)
+
+    try:
+        apply_physics_to_file(out, _physics_params_from_scene(scene))
+        print(f"[Car Editor] Applied physics override → SHOP/TUNE/{out.name}")
+        return True
+    except Exception as exc:
+        print(f"[Car Editor] Physics override failed ({exc})")
+        return False
+
+
+_PHYS_PROP = {
+    "mass": "ce_phys_mass", "horsepower": "ce_phys_horsepower", "drag": "ce_phys_drag",
+    "downforce": "ce_phys_downforce", "grip": "ce_phys_grip", "drift": "ce_phys_drift",
+    "suspension": "ce_phys_suspension",
+}
+
+
+def _sync_physics_props_from_car(scene, car_name: str) -> None:
+    """Read a car's MMCARSIM into the Physics panel props and turn override off."""
+    from src.integrations.blender.modeling.car_physics import read_physics_from_file, DEFAULTS
+
+    base = _base_carsim_path(car_name)
+    values = dict(DEFAULTS)
+    if base is not None:
+        try:
+            values.update(read_physics_from_file(base))
+        except Exception as exc:
+            print(f"[Car Editor] Could not read physics for {car_name}: {exc}")
+
+    for key, prop in _PHYS_PROP.items():
+        if key in values:
+            try:
+                setattr(scene, prop, float(values[key]))
+            except Exception:
+                pass
+    scene.ce_phys_override = False
 
 
 def _export_custom_trailer(car_name: str) -> int:
@@ -1075,6 +1231,7 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
             if custom_trailer:
                 _export_custom_trailer(car_name)
                 _generate_trailer_dlp_in_shop(car_name)
+                _generate_trailer_bnd_in_shop(car_name)
 
             for i in range(10):
                 whl_h = city_dir / f"WHL{i}_H.BMS"
@@ -1087,6 +1244,17 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                             six_wheel=(city_dir / "WHL4_H.BMS").exists(),
                             has_trailer=add_trailer)
             _generate_car_dlp_in_shop(car_name)
+            _generate_car_bnd_in_shop(car_name)
+
+        # Physics override applies in both modes (new cars and existing-car edits).
+        if bool(getattr(context.scene, "ce_phys_override", False)):
+            _apply_physics_in_shop(car_name, context.scene)
+        elif minimal:
+            # Clear any override staged by an earlier pack so a geometry-only edit
+            # falls back to the base AR's stock handling.
+            stale = Folder.Shop.Tune / f"{car_name}.MMCARSIM"
+            if stale.exists():
+                stale.unlink()
 
         if was_edit:
             bpy.ops.object.mode_set(mode="EDIT")
@@ -1365,6 +1533,10 @@ class CAR_OT_LoadCar(bpy.types.Operator):
                         setattr(context.scene, f"ce_wheel_texture_{idx}", detected_whl_tex)
                     except (ValueError, IndexError, TypeError):
                         pass
+
+        # Sync the Physics panel to this car's real MMCARSIM values (override off),
+        # so retuning starts from the truth instead of VPMUSTANG99 defaults.
+        _sync_physics_props_from_car(context.scene, _base_car_name(car_name))
 
         # Some BMS files load with one face already pointing at a _DMG material slot.
         # Toggling damage on then immediately off normalises all faces to clean textures.
@@ -3095,10 +3267,25 @@ class CAR_OT_SelectPart(bpy.types.Operator):
         return {"CANCELLED"}
 
 
+class CAR_OT_ResetPhysics(bpy.types.Operator):
+    bl_idname      = "car.reset_physics"
+    bl_label       = "Reset Physics"
+    bl_description = "Reset the handling values to the loaded car's stock MMCARSIM (or VPMUSTANG99 if none)"
+
+    def execute(self, context):
+        body = get_car_body()
+        car_name = _base_car_name(body["mm_car_name"]) if body else "VPMUSTANG99"
+        _sync_physics_props_from_car(context.scene, car_name)
+        context.scene.ce_phys_override = True  # keep editing enabled after reset
+        self.report({"INFO"}, f"Physics reset to {car_name} baseline")
+        return {"FINISHED"}
+
+
 # ── Registration list ─────────────────────────────────────────────────────────
 
 CAR_EDITOR_CLASSES = [
     CAR_OT_SelectFace,
+    CAR_OT_ResetPhysics,
     CAR_OT_LoadCar,
     CAR_OT_LoadTrailer,
     CAR_OT_ExportCar,
