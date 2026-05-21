@@ -874,16 +874,18 @@ def _export_custom_trailer(car_name: str) -> int:
     return n
 
 
-def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = False) -> None:
+def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = False,
+                    has_siren: bool = False) -> None:
     """
     Patch the Flags= line in SHOP/TUNE/{car}.INFO from detected car features.
-    VEH_INFO_FLAG bits: 0x1 = 6 wheels, 0x2 = trailer (see Open1560 vehinfo.h).
+    VEH_INFO_FLAG bits: 0x1 = 6 wheels, 0x2 = trailer, 0x8 = siren
+    (see Open1560 vehinfo.h / mmCar::TranslateFlags).
     """
     info = Folder.Shop.Tune / f"{car_name}.INFO"
     if not info.exists():
         return
 
-    flags = (0x1 if six_wheel else 0) | (0x2 if has_trailer else 0)
+    flags = (0x1 if six_wheel else 0) | (0x2 if has_trailer else 0) | (0x8 if has_siren else 0)
     lines = info.read_text(encoding="ascii").splitlines()
     out, found = [], False
     for ln in lines:
@@ -896,7 +898,299 @@ def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = 
         out.append(f"Flags={flags}")
 
     info.write_text("\n".join(out) + "\n", encoding="ascii")
-    print(f"[Car Editor] {car_name}.INFO Flags={flags} (6wheel={six_wheel}, trailer={has_trailer})")
+    print(f"[Car Editor] {car_name}.INFO Flags={flags} "
+          f"(6wheel={six_wheel}, trailer={has_trailer}, siren={has_siren})")
+
+
+def _bms_extract_faces_by_texture(bms: dict, keep_names, max_yspan: float = None) -> dict:
+    """
+    Return a new BMS dict containing only the faces using the named textures.
+
+    max_yspan (optional): drop faces whose vertical extent exceeds it — used to
+    strip the thin connector face that links VPCOP's roof bar down to the
+    windshield, so only the clean bar remains (and it drops onto the roof neatly).
+    """
+    keep = {t.upper() for t in keep_names}
+    src_tex = bms["texture_names"]
+    si, ti, vi = bms["surface_indices"], bms["texture_indices"], bms["vertex_indices"]
+    tc, vc, ni = bms.get("tex_coords", []), bms.get("vert_colors", []), bms.get("normal_indices", [])
+    pts = bms["points"]
+
+    adj_remap, used_adjuncts, new_surfaces = {}, [], []
+    for s in range(bms["num_surfaces"]):
+        tex_idx = ti[s]
+        tname = src_tex[tex_idx - 1] if 1 <= tex_idx <= len(src_tex) else None
+        if not tname or tname.upper() not in keep:
+            continue
+        base = s * 4
+        # 4th slot == 0 marks a triangle; only the first `side` slots are real.
+        side = 4 if si[base + 3] > 0 else 3
+        real_adj = si[base:base + side]
+        if max_yspan is not None:
+            ys = [pts[vi[a]][1] for a in real_adj]
+            if max(ys) - min(ys) > max_yspan:
+                continue
+        nq = []
+        for a in real_adj:
+            if a not in adj_remap:
+                adj_remap[a] = len(used_adjuncts)
+                used_adjuncts.append(a)
+            nq.append(adj_remap[a])
+        if side == 3:
+            nq.append(0)  # restore triangle marker
+        new_surfaces.append((nq, tex_idx, tname))
+
+    new_tex, tex_remap = [], {}
+    for _, tex_idx, tname in new_surfaces:
+        if tex_idx not in tex_remap:
+            new_tex.append(tname)
+            tex_remap[tex_idx] = len(new_tex)
+
+    point_remap, new_points = {}, []
+    new_vi, new_tc, new_vc, new_ni = [], [], [], []
+    for old_a in used_adjuncts:
+        p = vi[old_a]
+        if p not in point_remap:
+            point_remap[p] = len(new_points)
+            new_points.append(bms["points"][p])
+        new_vi.append(point_remap[p])
+        if tc: new_tc.append(tc[old_a])
+        if vc: new_vc.append(vc[old_a])
+        if ni: new_ni.append(ni[old_a])
+
+    new_si, new_ti = [], []
+    for quad, tex_idx, _ in new_surfaces:
+        new_si += quad
+        new_ti.append(tex_remap[tex_idx])
+
+    return {
+        "points": new_points, "mesh_offset": (0.0, 0.0, 0.0), "radius": bms["radius"],
+        "num_adjuncts": len(new_vi), "num_surfaces": len(new_surfaces),
+        "tex_coords": new_tc, "vert_colors": new_vc, "normal_indices": new_ni,
+        "vertex_indices": new_vi, "texture_indices": new_ti,
+        "surface_indices": new_si, "texture_names": new_tex,
+        "flags": bms["flags"] & ~MeshFlags.PLANES,
+    }
+
+
+def _bms_merge_part_into_body(body: dict, part: dict) -> dict:
+    """Append `part` geometry into `body` (part shifted by its mesh_offset)."""
+    ox, oy, oz = part["mesh_offset"]
+    shifted = [(x + ox, y + oy, z + oz) for (x, y, z) in part["points"]]
+    base_np, base_na, bf, pna = len(body["points"]), body["num_adjuncts"], body["flags"], part["num_adjuncts"]
+
+    part_tc = part.get("tex_coords", [])
+    part_vc = part.get("vert_colors", [])
+    part_ni = part.get("normal_indices", [])
+    part_tc = (part_tc if len(part_tc) == pna else [(0.0, 0.0)] * pna) if (bf & MeshFlags.TEXCOORDS) else []
+    part_vc = (part_vc if len(part_vc) == pna else [(1.0, 1.0, 1.0, 1.0)] * pna) if (bf & MeshFlags.COLORS) else []
+    part_ni = (part_ni if len(part_ni) == pna else [0] * pna) if (bf & MeshFlags.NORMALS) else []
+
+    merged_tex = list(body["texture_names"])
+    upper = [t.upper() for t in merged_tex]
+    tex_map = {}
+    for i, t in enumerate(part["texture_names"]):
+        if t.upper() in upper:
+            tex_map[i + 1] = upper.index(t.upper()) + 1
+        else:
+            merged_tex.append(t); upper.append(t.upper())
+            tex_map[i + 1] = len(merged_tex)
+
+    # Offset the part's adjunct indices, but keep triangle markers intact: a 4th
+    # slot (i%4==3) of 0 means "triangle", not adjunct 0, so it must stay 0.
+    part_si = [
+        0 if (i % 4 == 3 and s == 0) else s + base_na
+        for i, s in enumerate(part["surface_indices"])
+    ]
+
+    out = dict(body)
+    out["points"] = body["points"] + shifted
+    out["texture_names"] = merged_tex
+    out["vertex_indices"] = body["vertex_indices"] + [v + base_np for v in part["vertex_indices"]]
+    out["tex_coords"] = body.get("tex_coords", []) + part_tc
+    out["vert_colors"] = body.get("vert_colors", []) + part_vc
+    out["normal_indices"] = body.get("normal_indices", []) + part_ni
+    out["texture_indices"] = body["texture_indices"] + [tex_map.get(t, t) for t in part["texture_indices"]]
+    out["surface_indices"] = body["surface_indices"] + part_si
+    out["num_adjuncts"] = base_na + pna
+    out["num_surfaces"] = body["num_surfaces"] + part["num_surfaces"]
+    out["flags"] = bf & ~MeshFlags.PLANES
+    return out
+
+
+_SIREN_LIGHT_TAGS = {"light_red": "REDLIGHT.BMS", "light_blue": "BLUELIGHT.BMS"}
+_SIREN_HOUSING_TAG = "siren_housing"
+
+
+def _is_siren_light(tag: str) -> bool:
+    return tag in _SIREN_LIGHT_TAGS
+
+
+def _is_siren_part(tag: str) -> bool:
+    return tag in _SIREN_LIGHT_TAGS or tag == _SIREN_HOUSING_TAG
+
+
+def _get_siren_light_objs():
+    return [o for o in get_car_objects() if _is_siren_light(o.get(_CAR_TAG, ""))]
+
+
+def _get_siren_housing_objs():
+    return [o for o in get_car_objects() if o.get(_CAR_TAG, "") == _SIREN_HOUSING_TAG]
+
+
+def _export_placed_siren_lights(car_name: str, light_objs) -> int:
+    """
+    Write the user-placed siren lights to SHOP/BMS/{car}/REDLIGHT|BLUELIGHT.BMS.
+
+    Exported through mesh_to_bms_data (bake_location=True), exactly like wheels:
+    the object's Blender transform — position, scale, rotation, relative to the
+    body — is baked so the light renders in-game where you placed it (WYSIWYG).
+    The mesh's UVs/materials (VPCOP_TOPLIGHT lens + FXLTGLOWRED glow) are kept.
+    """
+    dst_dir = Folder.Shop.Meshes / car_name
+    dst_dir.mkdir(parents=True, exist_ok=True)
+
+    n = 0
+    for obj in light_objs:
+        mesh_name = _SIREN_LIGHT_TAGS.get(obj.get(_CAR_TAG, ""))
+        if not mesh_name:
+            continue
+        try:
+            # Stock REDLIGHT/BLUELIGHT store ABSOLUTE car-space verts with no OFFSET
+            # flag — the engine draws light slots without applying mesh_offset, so
+            # baking it (centred verts + offset) would render them at the car origin
+            # (buried). Fold the placement into the verts and clear the offset.
+            data = mesh_to_bms_data(obj, bake_location=False)
+            ox, oy, oz = data["mesh_offset"]
+            data["points"] = [(x + ox, y + oy, z + oz) for (x, y, z) in data["points"]]
+            data["mesh_offset"] = (0.0, 0.0, 0.0)
+            data["flags"] &= ~MeshFlags.OFFSET
+            write_bms(data, dst_dir / mesh_name)
+            n += 1
+        except Exception as exc:
+            print(f"[Car Editor] Siren light export failed for {mesh_name}: {exc}")
+    print(f"[Car Editor] Placed siren lights exported ({n}) for {car_name}")
+    return n
+
+
+def _ensure_siren_textures_in_shop() -> int:
+    """
+    Stage the cop light textures into SHOP/TEX16A so the bar renders in game:
+      VPCOPLIGHTS   — the always-visible housing lens (merged into the body)
+      VPCOP_TOPLIGHT — the flashing-lens texture on REDLIGHT/BLUELIGHT
+    Both are cop-specific (in VPCOP.TSH, not GLOBAL.TSH), so — like the cop wheel
+    texture — they must be packed and declared with the 't' (TEX16A) flag.
+    """
+    import shutil
+
+    dst = Folder.Shop.Textures.Alpha
+    dst.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for name in ("VPCOPLIGHTS.DDS", "VPCOP_TOPLIGHT.DDS"):
+        src = Folder.Resources.Editor.Textures / name
+        if src.exists():
+            shutil.copy2(src, dst / name)
+            n += 1
+        else:
+            print(f"[Car Editor] {name} not found at {src}; bar may be invisible")
+    print(f"[Car Editor] Staged {n} cop light texture(s) → SHOP/TEX16A")
+    return n
+
+
+def _bms_roof_ref(bms_path):
+    """(top_y, center_z) of a body BMS in car space, or None if unreadable."""
+    try:
+        d = read_bms(bms_path)
+        ox, oy, oz = d["mesh_offset"]
+        ys = [p[1] + oy for p in d["points"]]
+        zs = [p[2] + oz for p in d["points"]]
+        return (max(ys), (min(zs) + max(zs)) * 0.5)
+    except Exception:
+        return None
+
+
+def _ensure_siren_lights_in_shop(car_name: str) -> int:
+    """
+    Stage the police roof-light meshes (REDLIGHT/BLUELIGHT) into SHOP/BMS/{car}/.
+
+    The stock VPCOP lights are modelled at VPCOP's roof height; on a taller/larger
+    custom body they'd sit buried. We shift each light's vertices so the pair lands
+    on THIS car's roof (top-centre of the body AABB), matching how VPCOP's lights
+    straddle its own roofline. The engine draws these (mesh slots 16-17) when the
+    siren is toggled; their textures (VPCOP_TOPLIGHT, FXLTGLOWRED) are picked up by
+    _build_car_tsh, which scans the BMS folder. Must run BEFORE _build_car_tsh.
+
+    Returns the number of meshes staged.
+    """
+    import shutil
+
+    src_dir = Folder.Resources.Editor.Meshes / "CARS" / "VPCOP"
+    dst_dir = Folder.Shop.Meshes / car_name
+    dst_dir.mkdir(parents=True, exist_ok=True)
+
+    # Shift = how far this car's roof moved vs the VPCOP roof the lights were built
+    # for. The light meshes already carry the OFFSET flag, so we just bump their
+    # 12-byte mesh_offset header field (bytes 4..16) — the engine adds it to every
+    # vertex. Byte-patching preserves the mesh exactly (no read/write round-trip).
+    import struct
+
+    ref = _bms_roof_ref(src_dir / "BODY_H.BMS")
+    new = _bms_roof_ref(dst_dir / "BODY_H.BMS")
+    dy, dz = (new[0] - ref[0], new[1] - ref[1]) if (ref and new) else (0.0, 0.0)
+
+    n = 0
+    for mesh in ("REDLIGHT.BMS", "BLUELIGHT.BMS"):
+        src = src_dir / mesh
+        if not src.exists():
+            print(f"[Car Editor] Siren light mesh missing: {src}")
+            continue
+        raw = bytearray(src.read_bytes())
+        if (dy or dz) and len(raw) >= 16:
+            ox, oy, oz = struct.unpack_from("<3f", raw, 4)
+            struct.pack_into("<3f", raw, 4, ox, oy + dy, oz + dz)
+        (dst_dir / mesh).write_bytes(raw)
+        n += 1
+
+    print(f"[Car Editor] Police lights staged ({n} mesh(es), roof shift dy={dy:.2f} dz={dz:.2f})")
+    return n
+
+
+def _ensure_siren_audio_in_shop(car_name: str) -> bool:
+    """
+    Generate SHOP/TUNE/{car}.MMPLAYERCARAUDIO with the siren audio flag (m_bFlags 4)
+    enabled. Without a player-audio config that has this flag, mmPlayerCarAudio has
+    no siren sound object and StartSiren() crashes (null AudSound::IsPlaying).
+
+    Based on VPMUSTANG99's player audio (standard engine sounds) with m_bFlags set
+    to 4. Sourced from editor resources or development/core.
+    """
+    import re
+
+    tune_dir = Folder.Shop.Tune
+    tune_dir.mkdir(parents=True, exist_ok=True)
+    out = tune_dir / f"{car_name}.MMPLAYERCARAUDIO"
+
+    base = None
+    for cand in (
+        Folder.Resources.Editor.Tune.CarSimulation.parent / "VPMUSTANG99.MMPLAYERCARAUDIO",
+        Folder.BASE / "development" / "core" / "TUNE" / "VPMUSTANG99.MMPLAYERCARAUDIO",
+        Folder.BASE / "development" / "core" / "TUNE" / "VPCOP.MMPLAYERCARAUDIO",
+    ):
+        if cand.exists():
+            base = cand
+            break
+    if base is None:
+        print("[Car Editor] No base MMPLAYERCARAUDIO found; siren audio skipped (siren may crash)")
+        return False
+
+    text = base.read_text(encoding="ascii", errors="replace")
+    text, n = re.subn(r"(m_bFlags\s+)\d+", r"\g<1>4", text, count=1)
+    if n == 0:
+        print("[Car Editor] m_bFlags not found in player audio; siren audio skipped")
+        return False
+    out.write_text(text, encoding="ascii")
+    print(f"[Car Editor] Siren audio enabled → SHOP/TUNE/{out.name} (m_bFlags 4)")
+    return True
 
 
 def _build_car_tsh(car_name: str, car_objects) -> None:
@@ -951,8 +1245,17 @@ def _build_car_tsh(car_name: str, car_objects) -> None:
 
     lines = ["name,neighborhood,h,m,l,flags,alternate,sibling,xres,yres,hexcolor"]
     for n in sorted(names):
-        is_wheel_tex = "WHL" in n
-        flags = "td" if is_wheel_tex else "d"
+        # Global glow textures (FXLTGLOW*) live in GLOBAL.TSH and need the 'g' flag.
+        # Cop-specific textures we pack into TEX16A (wheel, light-bar lens) need 't'.
+        is_global_glow = n.startswith("FXLT")
+        if "TOPLIGHT" in n:
+            flags = "tg"   # flashing-lens texture: packed (TEX16A) + glow (additive)
+        elif "WHL" in n or n == "VPCOPLIGHTS":
+            flags = "td"   # packed normal texture (wheel, housing lens)
+        elif is_global_glow:
+            flags = "g"
+        else:
+            flags = "d"
         lines.append(f"{n},car,0,0,1,{flags},,,64,64,000000")
 
     tsh_path.write_text("\n".join(lines) + "\n", encoding="ascii")
@@ -1167,10 +1470,13 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         city_dir.mkdir(parents=True, exist_ok=True)
 
         errors = []
+        housing_objs = _get_siren_housing_objs()
         for obj in car_objects:
             part_tag = obj.get(_CAR_TAG, "unknown")
             if _is_trailer_part(part_tag):
                 continue  # trailer parts are exported separately to {NAME}_TRAILER
+            if _is_siren_part(part_tag):
+                continue  # lenses exported separately; housing merged into body below
             if minimal and part_tag.startswith("wheel_"):
                 # Existing game cars keep their original wheels (from the base AR);
                 # the original DLP there already provides correct spin pivots.
@@ -1190,6 +1496,13 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
             try:
                 is_wheel = part_tag.startswith("wheel_")
                 bms_data = mesh_to_bms_data(obj, bake_location=is_wheel)
+                # The always-visible siren-bar housing is merged into the body mesh
+                # (MM1 has no spare always-on mesh slot, so VPCOP bakes it into its
+                # body too). Lenses (REDLIGHT/BLUELIGHT) flash on top separately.
+                if part_tag == "body" and housing_objs:
+                    for h in housing_objs:
+                        bms_data = _bms_merge_part_into_body(
+                            bms_data, mesh_to_bms_data(h, bake_location=True))
                 write_bms(bms_data, city_dir / out_name)
             except Exception as exc:
                 errors.append(out_name)
@@ -1239,10 +1552,27 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                     break
                 for suffix in (f"WHL{i}_M.BMS", f"WHL{i}_L.BMS", f"WHL{i}_VL.BMS"):
                     _shutil.copy2(whl_h, city_dir / suffix)
+
+            # Police lights must be staged before the TSH so their textures
+            # (VPCOP_TOPLIGHT / FXLTGLOWRED) get declared by _build_car_tsh.
+            # Editable lights placed via "Load Siren Lights" take precedence; else
+            # the toggle auto-places stock lights on the roof.
+            light_objs = _get_siren_light_objs()
+            add_siren  = (bool(getattr(context.scene, "ce_add_siren", False))
+                         or bool(light_objs) or bool(housing_objs))
+            if add_siren:
+                if light_objs:
+                    _export_placed_siren_lights(car_name, light_objs)
+                else:
+                    _ensure_siren_lights_in_shop(car_name)
+                _ensure_siren_textures_in_shop()       # VPCOP_TOPLIGHT + VPCOPLIGHTS
+                _ensure_siren_audio_in_shop(car_name)  # required: else StartSiren crashes
+
             _build_car_tsh(car_name, car_objects)
             _set_info_flags(car_name,
                             six_wheel=(city_dir / "WHL4_H.BMS").exists(),
-                            has_trailer=add_trailer)
+                            has_trailer=add_trailer,
+                            has_siren=add_siren)
             _generate_car_dlp_in_shop(car_name)
             _generate_car_bnd_in_shop(car_name)
 
@@ -1622,6 +1952,99 @@ class CAR_OT_LoadTrailer(bpy.types.Operator):
         return {"FINISHED"}
 
 
+# ── Operator: Load Siren Lights ───────────────────────────────────────────────
+
+class CAR_OT_LoadSirenLights(bpy.types.Operator):
+    bl_idname      = "car.load_siren_lights"
+    bl_label       = "Load Siren Lights"
+    bl_description = (
+        "Load editable red/blue police lights onto the car roof. Move them to "
+        "position (grab/G); on Create AR + Start Game they pack as REDLIGHT/"
+        "BLUELIGHT and the horn key toggles the flashing siren."
+    )
+
+    def execute(self, context):
+        body_obj = get_car_body()
+        if body_obj is None:
+            self.report({"ERROR"}, "Load a car first, then load siren lights.")
+            return {"CANCELLED"}
+
+        car_name   = _base_car_name(body_obj["mm_car_name"])
+        tex_folder = (Path(context.scene.ce_texture_folder)
+                      if context.scene.ce_texture_folder else Folder.Resources.Editor.Textures)
+        src = Folder.Resources.Editor.MeshesCars / "VPCOP"
+
+        # Replace any existing siren parts (housing + lights).
+        for o in _get_siren_light_objs() + _get_siren_housing_objs():
+            bpy.data.objects.remove(o, do_unlink=True)
+
+        col = _get_or_create_collection(_CAR_COLLECTION)
+        context.view_layer.update()
+
+        # Body roof (world space) — parts sit on top, centred fore/aft.
+        body_corners = [body_obj.matrix_world @ mathutils.Vector(c) for c in body_obj.bound_box]
+        body_top_z = max(c.z for c in body_corners)
+        body_cy    = sum(c.y for c in body_corners) / 8.0
+
+        def _drop_on_roof(obj):
+            context.view_layer.update()
+            lc = [obj.matrix_world @ mathutils.Vector(c) for c in obj.bound_box]
+            l_min_z = min(c.z for c in lc)
+            l_cy    = sum(c.y for c in lc) / 8.0
+            obj.location = (obj.location.x,
+                            obj.location.y + (body_cy - l_cy),
+                            obj.location.z + (body_top_z - l_min_z))
+
+        loaded = 0
+
+        # ── Always-visible housing: extract VPCOPLIGHTS faces from VPCOP body ──
+        body_bms = src / "BODY_H.BMS"
+        if body_bms.exists():
+            try:
+                housing_bms = _bms_extract_faces_by_texture(
+                    read_bms(body_bms), ["VPCOPLIGHTS"], max_yspan=0.4)
+                if housing_bms["num_surfaces"]:
+                    hmesh = build_blender_mesh(f"{car_name}.{_SIREN_HOUSING_TAG}", housing_bms)
+                    _apply_materials_to_mesh(hmesh, housing_bms["texture_names"], tex_folder)
+                    hobj = _add_child_obj(hmesh, hmesh.name, _SIREN_HOUSING_TAG, body_obj, col)
+                    _drop_on_roof(hobj)
+                    loaded += 1
+            except Exception as exc:
+                print(f"[Car Editor] Housing extraction failed: {exc}")
+
+        # ── Flashing lenses (REDLIGHT / BLUELIGHT) ────────────────────────────
+        for tag, mesh_file in _SIREN_LIGHT_TAGS.items():
+            f = src / mesh_file
+            if not f.exists():
+                print(f"[Car Editor] Siren light mesh missing: {f}")
+                continue
+            mesh = _load_bms(f, f"{car_name}.{tag}", tex_folder)
+            if not mesh:
+                continue
+            obj = _add_child_obj(mesh, mesh.name, tag, body_obj, col)
+            _drop_on_roof(obj)
+            loaded += 1
+
+        if not loaded:
+            self.report({"ERROR"}, "No siren meshes found in VPCOP.")
+            return {"CANCELLED"}
+
+        context.scene.ce_add_siren = True
+
+        # Select all siren parts so a single grab (G) moves the whole bar together.
+        bpy.ops.object.select_all(action="DESELECT")
+        parts = _get_siren_housing_objs() + _get_siren_light_objs()
+        for o in parts:
+            o.select_set(True)
+        if parts:
+            context.view_layer.objects.active = parts[0]
+
+        self.report({"INFO"},
+                    "Loaded siren bar (housing + red/blue flash) on the roof — grab (G) to "
+                    "position all, then Create AR + Start Game. Horn toggles the siren.")
+        return {"FINISHED"}
+
+
 # ── Operator: Export Car ──────────────────────────────────────────────────────
 
 class CAR_OT_ExportCar(bpy.types.Operator):
@@ -1680,6 +2103,8 @@ class CAR_OT_ExportCar(bpy.types.Operator):
             part_tag = obj.get(_CAR_TAG, "unknown")
             if _is_trailer_part(part_tag):
                 continue  # trailer is packed via Create AR + Start Game
+            if _is_siren_part(part_tag):
+                continue  # siren parts are handled during Create AR + Start Game
             src_file = obj.data.get("bms_source_file", "")
 
             if src_file:
@@ -3288,6 +3713,7 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_ResetPhysics,
     CAR_OT_LoadCar,
     CAR_OT_LoadTrailer,
+    CAR_OT_LoadSirenLights,
     CAR_OT_ExportCar,
     CAR_OT_ReloadCar,
     CAR_OT_ClearCar,

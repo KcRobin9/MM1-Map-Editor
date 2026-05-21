@@ -495,6 +495,12 @@ def write_bms(bms_data: dict, output_path: Path) -> None:
     texture_names   = bms_data.get("texture_names",  [])
     flags           = bms_data.get("flags", 0)
 
+    # write_bms has no PLANES (BSP) section, so never emit that flag — otherwise a
+    # reader skips 16*num_surfaces bytes that don't exist and falls off the file.
+    # (mesh_to_bms_data already strips it; this also makes read_bms->write_bms of
+    # PLANES-flagged meshes like REDLIGHT round-trip cleanly.)
+    flags &= ~MeshFlags.PLANES
+
     num_points   = len(points)
     num_textures = len(texture_names)
 

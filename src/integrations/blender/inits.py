@@ -207,6 +207,7 @@ SCENE_PROPERTIES = [
     "ce_uv_updating",
     "ce_add_to_city",
     "ce_add_trailer",
+    "ce_add_siren",
     "ce_last_export_dir",
     "ce_show_damage",
     "ce_paint_variant",
@@ -992,6 +993,15 @@ def register_scene_properties() -> None:
             "Attach a trailer to this car. Packs a {NAME}_TRAILER sub-car (stock "
             "VPSEMI trailer) and sets the trailer flag so the game hitches it on. "
             "Best on a large/semi-style tractor"
+        ),
+        default=False,
+    )
+    bpy.types.Scene.ce_add_siren = bpy.props.BoolProperty(
+        name="Police Lights / Siren",
+        description=(
+            "Add flashing red/blue roof lights and a siren. Sets the siren flag and "
+            "packs the REDLIGHT/BLUELIGHT meshes; in-game, press the horn key to "
+            "toggle. New cars only (full pack)"
         ),
         default=False,
     )

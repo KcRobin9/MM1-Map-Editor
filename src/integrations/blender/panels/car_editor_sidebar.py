@@ -82,6 +82,7 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         trow = layout.row(align=True)
         trow.enabled = has_car
         trow.operator("car.load_trailer", text="Load Trailer", icon="AUTO")
+        trow.operator("car.load_siren_lights", text="Load Siren Lights", icon="LIGHT")
 
         if has_car:
             layout.separator(factor=0.5)
@@ -143,6 +144,7 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         col.prop(scene, "ce_load_lights",  text="Load Lights")
         col.prop(scene, "ce_auto_reload",  text="Auto-Reload After Export")
         col.prop(scene, "ce_add_trailer",  text="Add Trailer  (stock semi trailer)")
+        col.prop(scene, "ce_add_siren",    text="Police Lights / Siren")
 
         layout.separator(factor=0.6)
 
