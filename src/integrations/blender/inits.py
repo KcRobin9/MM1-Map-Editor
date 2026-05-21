@@ -206,6 +206,7 @@ SCENE_PROPERTIES = [
     "ce_face_texture",
     "ce_uv_updating",
     "ce_add_to_city",
+    "ce_add_trailer",
     "ce_last_export_dir",
     "ce_show_damage",
     "ce_paint_variant",
@@ -215,6 +216,7 @@ SCENE_PROPERTIES = [
     "ce_import_wheel_count",
     "ce_wheel_texture",
     *[f"ce_wheel_texture_{i}" for i in range(10)],
+    *[f"ce_trailer_wheel_texture_{i}" for i in range(4)],
     "ce_mirror_x",
     # Street Editor — presets
     "st_street_preset",
@@ -555,6 +557,15 @@ def _make_wheel_tex_update(idx):
     def _update(self, context):
         bpy.ops.car.apply_wheel_texture_single(
             "EXEC_DEFAULT", part_tag=f"wheel_{idx}", tex_name=getattr(self, f"ce_wheel_texture_{idx}")
+        )
+    return _update
+
+
+def _make_trailer_wheel_tex_update(idx):
+    def _update(self, context):
+        bpy.ops.car.apply_wheel_texture_single(
+            "EXEC_DEFAULT", part_tag=f"trailer_wheel_{idx}",
+            tex_name=getattr(self, f"ce_trailer_wheel_texture_{idx}")
         )
     return _update
 
@@ -967,6 +978,15 @@ def register_scene_properties() -> None:
         description="Also write exported BMS files to SHOP/BMS/<car_name>/ for in-game use",
         default=True,
     )
+    bpy.types.Scene.ce_add_trailer = bpy.props.BoolProperty(
+        name="Add Trailer",
+        description=(
+            "Attach a trailer to this car. Packs a {NAME}_TRAILER sub-car (stock "
+            "VPSEMI trailer) and sets the trailer flag so the game hitches it on. "
+            "Best on a large/semi-style tractor"
+        ),
+        default=False,
+    )
     bpy.types.Scene.ce_last_export_dir = bpy.props.StringProperty(
         name="Last Export Dir",
         description="Path of the most recent timestamped export folder (used by Reload)",
@@ -1032,6 +1052,17 @@ def register_scene_properties() -> None:
                 description=f"Wheel texture for wheel {_i}",
                 items=_get_wheel_texture_items,
                 update=_make_wheel_tex_update(_i),
+            ),
+        )
+    for _i in range(4):
+        setattr(
+            bpy.types.Scene,
+            f"ce_trailer_wheel_texture_{_i}",
+            bpy.props.EnumProperty(
+                name=f"TWHL{_i} Texture",
+                description=f"Texture for trailer wheel {_i}",
+                items=_get_wheel_texture_items,
+                update=_make_trailer_wheel_tex_update(_i),
             ),
         )
     bpy.types.Scene.ce_mirror_x = bpy.props.BoolProperty(

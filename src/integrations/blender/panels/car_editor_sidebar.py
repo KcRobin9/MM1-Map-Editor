@@ -79,6 +79,10 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         row.operator("car.load_car",  text="Load Car", icon="FILE_FOLDER")
         row.operator("car.clear_car", text="Clear",    icon="X")
 
+        trow = layout.row(align=True)
+        trow.enabled = has_car
+        trow.operator("car.load_trailer", text="Load Trailer", icon="AUTO")
+
         if has_car:
             layout.separator(factor=0.5)
 
@@ -138,6 +142,7 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         col.prop(scene, "ce_add_to_city",  text="Add to City  (SHOP/BMS/<name>)")
         col.prop(scene, "ce_load_lights",  text="Load Lights")
         col.prop(scene, "ce_auto_reload",  text="Auto-Reload After Export")
+        col.prop(scene, "ce_add_trailer",  text="Add Trailer  (stock semi trailer)")
 
         layout.separator(factor=0.6)
 
@@ -302,6 +307,27 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
                 row.prop(scene, f"ce_wheel_texture_{int(idx)}", text="")
             except (ValueError, TypeError):
                 pass
+
+        # ── Trailer wheels (if a trailer is loaded) ───────────────────────────
+        trailer_wheels = sorted(
+            [o for o in car_objs if o.get(_CAR_TAG, "").startswith("trailer_wheel_")],
+            key=lambda o: int(o.get(_CAR_TAG, "trailer_wheel_0").split("_")[-1])
+        )
+        if trailer_wheels:
+            layout.separator(factor=0.6)
+            tcol = layout.column(align=True)
+            tcol.label(text=f"Trailer Wheels: {len(trailer_wheels)}", icon="AUTO")
+            for twhl in trailer_wheels:
+                ttag = twhl.get(_CAR_TAG, "")
+                tidx = ttag.split("_")[-1]
+                trow = tcol.row(align=True)
+                op   = trow.operator("car.select_part", text=f"TWHL{tidx}",
+                                     icon="AUTO", depress=(twhl == active_obj))
+                op.part_tag = ttag
+                try:
+                    trow.prop(scene, f"ce_trailer_wheel_texture_{int(tidx)}", text="")
+                except (ValueError, TypeError):
+                    pass
 
         layout.separator(factor=0.6)
 

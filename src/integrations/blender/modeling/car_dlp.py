@@ -43,25 +43,40 @@ def _bms_aabb_car_space(bms_path: Path) -> AABB:
     return ((min(xs), min(ys), min(zs)), (max(xs), max(ys), max(zs)))
 
 
+def _targets_from(bms_dir: Path, body_name: str, wheel_prefix: str) -> Dict[str, AABB]:
+    """Retarget map for a body group + consecutive wheel groups present in bms_dir."""
+    targets: Dict[str, AABB] = {}
+
+    body = bms_dir / f"{body_name}.BMS"
+    if body.is_file():
+        targets[body_name] = _bms_aabb_car_space(body)
+
+    for i in range(10):
+        whl = bms_dir / f"{wheel_prefix}{i}_H.BMS"
+        if not whl.is_file():
+            break
+        targets[f"{wheel_prefix}{i}_H"] = _bms_aabb_car_space(whl)
+
+    return targets
+
+
 def compute_car_targets(bms_dir: Path) -> Dict[str, AABB]:
     """
     Build the DLP retarget map from a car's exported BMS in bms_dir.
 
     Includes BODY_H (car dimensions) and every WHLn_H present (wheel pivots).
     """
-    targets: Dict[str, AABB] = {}
+    return _targets_from(bms_dir, "BODY_H", "WHL")
 
-    body = bms_dir / "BODY_H.BMS"
-    if body.is_file():
-        targets["BODY_H"] = _bms_aabb_car_space(body)
 
-    for i in range(10):
-        whl = bms_dir / f"WHL{i}_H.BMS"
-        if not whl.is_file():
-            break
-        targets[f"WHL{i}_H"] = _bms_aabb_car_space(whl)
+def compute_trailer_targets(bms_dir: Path) -> Dict[str, AABB]:
+    """
+    Build the DLP retarget map for a trailer sub-car's exported BMS in bms_dir.
 
-    return targets
+    Includes TRAILER_H (trailer dimensions/centroid) and every TWHLn_H present
+    (trailer wheel pivots). Mirrors compute_car_targets but for trailer groups.
+    """
+    return _targets_from(bms_dir, "TRAILER_H", "TWHL")
 
 
 def build_car_dlp(template_path: Path, output_path: Path, targets: Dict[str, AABB]) -> List[Tuple[str, tuple]]:
@@ -126,3 +141,8 @@ def build_car_dlp(template_path: Path, output_path: Path, targets: Dict[str, AAB
 def generate_car_dlp(template_path: Path, bms_dir: Path, output_path: Path) -> List[Tuple[str, tuple]]:
     """Convenience: compute targets from bms_dir and write the retargeted DLP."""
     return build_car_dlp(template_path, output_path, compute_car_targets(bms_dir))
+
+
+def generate_trailer_dlp(template_path: Path, bms_dir: Path, output_path: Path) -> List[Tuple[str, tuple]]:
+    """Convenience: compute trailer targets from bms_dir and write the retargeted DLP."""
+    return build_car_dlp(template_path, output_path, compute_trailer_targets(bms_dir))

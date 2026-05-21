@@ -417,6 +417,16 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
                     if f.is_file():
                         shutil.copy2(f, dash_dst / f.name)
 
+            # Trailer sub-car BMS/{NAME}_TRAILER/ — the game loads the trailer as
+            # a separate vehicle named "{NAME}_trailer" (mmTrailer::Init).
+            trailer_shop = Folder.Shop.Meshes / f"{car_name}_TRAILER"
+            if trailer_shop.is_dir():
+                trailer_dst = tmp_dir / "BMS" / f"{car_name}_TRAILER"
+                trailer_dst.mkdir(parents=True)
+                for f in sorted(trailer_shop.iterdir()):
+                    if f.is_file():
+                        shutil.copy2(f, trailer_dst / f.name)
+
             # TUNE files whose name starts with car_name → TUNE/
             tune_src = Folder.Shop.Tune
             if tune_src.is_dir():
@@ -433,21 +443,25 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
                 mtl_dst.mkdir()
                 shutil.copy2(tsh_src, mtl_dst / tsh_src.name)
 
-            # Collision → BND/
-            bnd_src = Folder.Shop.Bound / f"{car_name}_BND.BND"
-            if bnd_src.exists():
-                bnd_dst = tmp_dir / "BND"
-                bnd_dst.mkdir()
-                shutil.copy2(bnd_src, bnd_dst / bnd_src.name)
+            # Collision → BND/ (car + optional trailer)
+            bnd_dst = tmp_dir / "BND"
+            for bnd_name in (f"{car_name}_BND.BND", f"{car_name}_TRAILER_BND.BND"):
+                bnd_src = Folder.Shop.Bound / bnd_name
+                if bnd_src.exists():
+                    bnd_dst.mkdir(exist_ok=True)
+                    shutil.copy2(bnd_src, bnd_dst / bnd_src.name)
 
             # Car DLP → DLP/{NAME}.DLP — the engine reads each wheel's spin pivot
             # (mmWheel::Center) from this file's WHLn_H group centroid. Without it
-            # the wheels orbit the car origin ("ferris wheel").
-            dlp_src = Folder.Shop.DLP / f"{car_name}{FileType.DEVELOPMENT}"
-            if dlp_src.exists():
-                dlp_dst = tmp_dir / "DLP"
-                dlp_dst.mkdir()
-                shutil.copy2(dlp_src, dlp_dst / dlp_src.name)
+            # the wheels orbit the car origin ("ferris wheel"). The trailer DLP
+            # ({NAME}_TRAILER.DLP) supplies the trailer's TWHL/TRAILER centroids.
+            dlp_dst = tmp_dir / "DLP"
+            for dlp_name in (f"{car_name}{FileType.DEVELOPMENT}",
+                             f"{car_name}_TRAILER{FileType.DEVELOPMENT}"):
+                dlp_src = Folder.Shop.DLP / dlp_name
+                if dlp_src.exists():
+                    dlp_dst.mkdir(exist_ok=True)
+                    shutil.copy2(dlp_src, dlp_dst / dlp_src.name)
 
             # Wheel texture (and any other TEX16A assets) → TEX16A/
             tex16a_shop = Folder.Shop.Textures.Alpha
@@ -559,6 +573,44 @@ def _ensure_dash_in_shop(car_name: str) -> int:
     return copied
 
 
+def _ensure_trailer_in_shop(car_name: str) -> int:
+    """
+    Stage the stock VPSEMI trailer as this car's {NAME}_TRAILER sub-car in SHOP:
+      BMS/{NAME}_TRAILER/      (TRAILER + TWHL0-3 + SHADOW + TLIGHT)
+      DLP/{NAME}_TRAILER.DLP   (TRAILER_H + TWHL0-3_H centroids)
+      BND/{NAME}_TRAILER_BND.BND
+
+    The engine loads this as a separate vehicle "{NAME}_trailer" and hitches it
+    on when the car's .INFO has the trailer flag (0x2). Returns BMS files staged.
+    """
+    import shutil
+    SOURCE = "VPSEMI_TRAILER"
+    editor = Folder.Resources.Editor
+
+    bms_src = editor.MeshesCars / SOURCE
+    bms_dst = Folder.Shop.Meshes / f"{car_name}_TRAILER"
+    bms_dst.mkdir(parents=True, exist_ok=True)
+    n = 0
+    if bms_src.is_dir():
+        for f in sorted(bms_src.glob("*.BMS")):
+            shutil.copy2(f, bms_dst / f.name)
+            n += 1
+
+    dlp_src = editor.DLP / f"{SOURCE}{FileType.DEVELOPMENT}"
+    if dlp_src.exists():
+        Folder.Shop.DLP.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(dlp_src, Folder.Shop.DLP / f"{car_name}_TRAILER{FileType.DEVELOPMENT}")
+
+    bnd_src = editor.Bound / f"{SOURCE}_BND.BND"
+    if bnd_src.exists():
+        Folder.Shop.Bound.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(bnd_src, Folder.Shop.Bound / f"{car_name}_TRAILER_BND.BND")
+
+    if n:
+        print(f"[Car Editor] Staged stock trailer → SHOP/BMS/{car_name}_TRAILER ({n} BMS files)")
+    return n
+
+
 def _generate_car_dlp_in_shop(car_name: str) -> bool:
     """
     Generate SHOP/DLP/{car}.DLP from the car's exported BMS by retargeting a
@@ -593,6 +645,77 @@ def _generate_car_dlp_in_shop(car_name: str) -> bool:
         print(f"[Car Editor] DLP generation failed ({exc}); copying {template_name} DLP verbatim")
         shutil.copy2(template, out)
         return False
+
+
+def _generate_trailer_dlp_in_shop(car_name: str) -> bool:
+    """
+    Generate SHOP/DLP/{car}_TRAILER.DLP from the edited trailer BMS by retargeting
+    the VPSEMI_TRAILER template's TRAILER_H + TWHLn_H groups to the actual part
+    bounds, so the trailer body/wheel centroids match what the user edited.
+    """
+    from src.integrations.blender.modeling.car_dlp import generate_trailer_dlp
+
+    bms_dir  = Folder.Shop.Meshes / f"{car_name}_TRAILER"
+    template = Folder.Resources.Editor.DLP / f"VPSEMI_TRAILER{FileType.DEVELOPMENT}"
+    out      = Folder.Shop.DLP / f"{car_name}_TRAILER{FileType.DEVELOPMENT}"
+
+    if not template.exists():
+        print(f"[Car Editor] Trailer template DLP missing: {template}")
+        return False
+
+    try:
+        applied = generate_trailer_dlp(template, bms_dir, out)
+        groups  = ", ".join(name for name, _ in applied)
+        print(f"[Car Editor] Generated trailer DLP → SHOP/DLP/{out.name} (retargeted: {groups})")
+        return True
+    except Exception as exc:
+        print(f"[Car Editor] Trailer DLP generation failed ({exc}); keeping stock trailer DLP")
+        return False
+
+
+def _export_custom_trailer(car_name: str) -> int:
+    """
+    Export the edited trailer parts (body + TWHL wheels) to SHOP/BMS/{car}_TRAILER/,
+    overwriting the stock TRAILER_H / TWHLn meshes. All parts are centered+offset
+    (bake_location=True) relative to the trailer root. Returns parts exported.
+
+    SHADOW/TLIGHT/BND come from the stock trailer staged by _ensure_trailer_in_shop.
+    Caller must be in OBJECT mode.
+    """
+    import shutil as _sh
+    trailer_dir = Folder.Shop.Meshes / f"{car_name}_TRAILER"
+    trailer_dir.mkdir(parents=True, exist_ok=True)
+
+    n = 0
+    for obj in _get_trailer_parts():
+        tag = obj.get(_CAR_TAG, "")
+        if tag == "trailer_body":
+            out_name = "TRAILER_H.BMS"
+        elif tag.startswith("trailer_wheel_"):
+            out_name = f"TWHL{tag.split('_')[-1]}_H.BMS"
+        else:
+            continue
+        try:
+            write_bms(mesh_to_bms_data(obj, bake_location=True), trailer_dir / out_name)
+            n += 1
+        except Exception as exc:
+            print(f"[Car Editor] Trailer export failed for {out_name}: {exc}")
+
+    # LOD copies so the game's M/L/VL slots match the edited high-detail mesh.
+    th = trailer_dir / "TRAILER_H.BMS"
+    if th.exists():
+        for s in ("TRAILER_M.BMS", "TRAILER_L.BMS", "TRAILER_VL.BMS"):
+            _sh.copy2(th, trailer_dir / s)
+    for i in range(10):
+        wh = trailer_dir / f"TWHL{i}_H.BMS"
+        if not wh.exists():
+            break
+        for s in (f"TWHL{i}_M.BMS", f"TWHL{i}_L.BMS"):
+            _sh.copy2(wh, trailer_dir / s)
+
+    if n:
+        print(f"[Car Editor] Exported {n} custom trailer part(s) → SHOP/BMS/{car_name}_TRAILER")
+    return n
 
 
 def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = False) -> None:
@@ -651,10 +774,11 @@ def _build_car_tsh(car_name: str, car_objects) -> None:
             if mat is not None:
                 _add(mat.name)
 
-    # 2. BMS files already in SHOP — main folder + _DASH subfolder
+    # 2. BMS files already in SHOP — main folder + _DASH + _TRAILER subfolders
     for scan_dir in (
         Folder.Shop.Meshes / car_name,
         Folder.Shop.Meshes / f"{car_name}_DASH",
+        Folder.Shop.Meshes / f"{car_name}_TRAILER",
     ):
         if scan_dir.is_dir():
             for bms_file in scan_dir.glob("*.BMS"):
@@ -889,6 +1013,8 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         errors = []
         for obj in car_objects:
             part_tag = obj.get(_CAR_TAG, "unknown")
+            if _is_trailer_part(part_tag):
+                continue  # trailer parts are exported separately to {NAME}_TRAILER
             if minimal and part_tag.startswith("wheel_"):
                 # Existing game cars keep their original wheels (from the base AR);
                 # the original DLP there already provides correct spin pivots.
@@ -912,9 +1038,6 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
             except Exception as exc:
                 errors.append(out_name)
                 print(f"[Car Editor] Export failed for {out_name}: {exc}")
-
-        if was_edit:
-            bpy.ops.object.mode_set(mode="EDIT")
 
         if errors:
             self.report({"WARNING"}, f"BMS export errors ({len(errors)}): {errors[0]} — AR may be incomplete.")
@@ -940,6 +1063,19 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
             # declaring every texture (the engine fatal-errors on undeclared ones).
             _ensure_wheels_in_shop(car_name)   # fallback for body-only imports
             _ensure_dash_in_shop(car_name)
+
+            # Trailer: an edited (custom) trailer in the scene takes precedence;
+            # otherwise the "Add Trailer" toggle attaches the stock semi trailer.
+            # Either way stage the stock base (shadow/tail-light/collision), then
+            # overwrite body+wheels with the edits and regenerate the trailer DLP.
+            custom_trailer = _has_custom_trailer()
+            add_trailer    = custom_trailer or bool(getattr(context.scene, "ce_add_trailer", False))
+            if add_trailer:
+                _ensure_trailer_in_shop(car_name)
+            if custom_trailer:
+                _export_custom_trailer(car_name)
+                _generate_trailer_dlp_in_shop(car_name)
+
             for i in range(10):
                 whl_h = city_dir / f"WHL{i}_H.BMS"
                 if not whl_h.exists():
@@ -947,8 +1083,13 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 for suffix in (f"WHL{i}_M.BMS", f"WHL{i}_L.BMS", f"WHL{i}_VL.BMS"):
                     _shutil.copy2(whl_h, city_dir / suffix)
             _build_car_tsh(car_name, car_objects)
-            _set_info_flags(car_name, six_wheel=(city_dir / "WHL4_H.BMS").exists())
+            _set_info_flags(car_name,
+                            six_wheel=(city_dir / "WHL4_H.BMS").exists(),
+                            has_trailer=add_trailer)
             _generate_car_dlp_in_shop(car_name)
+
+        if was_edit:
+            bpy.ops.object.mode_set(mode="EDIT")
 
         if not _pack_car_ar(car_name, minimal=minimal):
             self.report({"ERROR"}, "AR packing failed — check the system console.")
@@ -980,6 +1121,38 @@ def get_car_body() -> Optional[bpy.types.Object]:
         if o.get(_CAR_TAG) == "body":
             return o
     return None
+
+
+# ── Trailer part helpers ──────────────────────────────────────────────────────
+# Trailer parts are tagged so they can be edited like car parts but routed to the
+# {NAME}_TRAILER sub-car on export. Like wheels, body + TWHL are centered+offset,
+# so all trailer parts export via bake_location=True relative to the trailer root.
+
+def _is_trailer_part(tag: str) -> bool:
+    return tag in ("trailer_root", "trailer_body") or tag.startswith("trailer_wheel_")
+
+
+def _get_trailer_root() -> Optional[bpy.types.Object]:
+    for o in get_car_objects():
+        if o.get(_CAR_TAG) == "trailer_root":
+            return o
+    return None
+
+
+def _get_trailer_parts() -> list:
+    """Trailer mesh parts (body + wheels), excluding the empty root."""
+    return [o for o in get_car_objects()
+            if o.get(_CAR_TAG) in ("trailer_body",) or o.get(_CAR_TAG, "").startswith("trailer_wheel_")]
+
+
+def _has_custom_trailer() -> bool:
+    return any(o.get(_CAR_TAG) == "trailer_body" for o in get_car_objects())
+
+
+def _clear_trailer_objects() -> None:
+    """Remove the trailer root + all trailer parts from the scene."""
+    for obj in [o for o in get_car_objects() if _is_trailer_part(o.get(_CAR_TAG, ""))]:
+        bpy.data.objects.remove(obj, do_unlink=True)
 
 
 def _bms_to_bl_offset(mesh: bpy.types.Mesh):
@@ -1209,6 +1382,74 @@ class CAR_OT_LoadCar(bpy.types.Operator):
         return {"FINISHED"}
 
 
+# ── Operator: Load Trailer ────────────────────────────────────────────────────
+
+class CAR_OT_LoadTrailer(bpy.types.Operator):
+    bl_idname      = "car.load_trailer"
+    bl_label       = "Load Trailer"
+    bl_description = (
+        "Load an editable trailer (body + 4 wheels) behind the current car. Uses "
+        "the car's own {NAME}_TRAILER if present, otherwise the stock semi trailer "
+        "as a starting point. Edit it like the car, then Create AR + Start Game "
+        "(the trailer is packed as a {NAME}_TRAILER sub-car)."
+    )
+
+    def execute(self, context):
+        body_obj = get_car_body()
+        if body_obj is None:
+            self.report({"ERROR"}, "Load a car first, then load a trailer.")
+            return {"CANCELLED"}
+
+        car_name   = _base_car_name(body_obj["mm_car_name"])
+        tex_folder = (Path(context.scene.ce_texture_folder)
+                      if context.scene.ce_texture_folder else Folder.Resources.Editor.Textures)
+
+        # Source: this car's own trailer if present, else the stock semi trailer.
+        src = Folder.Resources.Editor.MeshesCars / f"{car_name}_TRAILER"
+        if not (src / "TRAILER_H.BMS").exists():
+            src = Folder.Resources.Editor.MeshesCars / "VPSEMI_TRAILER"
+        if not (src / "TRAILER_H.BMS").exists():
+            self.report({"ERROR"}, f"No trailer BMS found at {src}")
+            return {"CANCELLED"}
+
+        _clear_trailer_objects()
+        col = _get_or_create_collection(_CAR_COLLECTION)
+
+        # Trailer root empty at the car origin, NO rotation/offset — this is the
+        # trailer's coordinate frame and it must match the game's so editing is
+        # WYSIWYG. The trailer's stock part offsets are game +z, which maps to
+        # Blender +Y (= behind the car, since the car's rear is +z), so the parts
+        # naturally lay out behind the car. Export uses each part's transform
+        # RELATIVE to this root, i.e. trailer-local coordinates.
+        root = bpy.data.objects.new(f"{car_name}.TRAILER_ROOT", None)
+        col.objects.link(root)
+        root.parent = body_obj
+        root.matrix_parent_inverse = mathutils.Matrix.Identity(4)
+        root.location           = (0.0, 0.0, 0.0)
+        root.empty_display_size = 1.0
+        root[_CAR_TAG]          = "trailer_root"
+        root["mm_trailer_name"] = f"{car_name}_TRAILER"
+
+        # Body + wheels are all centered+offset (like wheels), parented to the root.
+        n_parts = 0
+        body_mesh = _load_bms(src / "TRAILER_H.BMS", f"{car_name}.TRAILER", tex_folder)
+        if body_mesh:
+            _add_child_obj(body_mesh, body_mesh.name, "trailer_body", root, col)
+            n_parts += 1
+
+        for i in range(10):
+            f = src / f"TWHL{i}_H.BMS"
+            if not f.exists():
+                break
+            wm = _load_bms(f, f"{car_name}.TWHL{i}", tex_folder)
+            if wm:
+                _add_child_obj(wm, wm.name, f"trailer_wheel_{i}", root, col)
+                n_parts += 1
+
+        self.report({"INFO"}, f"Loaded trailer ({n_parts} parts) — edit, then Create AR + Start Game.")
+        return {"FINISHED"}
+
+
 # ── Operator: Export Car ──────────────────────────────────────────────────────
 
 class CAR_OT_ExportCar(bpy.types.Operator):
@@ -1265,6 +1506,8 @@ class CAR_OT_ExportCar(bpy.types.Operator):
 
         for obj in car_objects:
             part_tag = obj.get(_CAR_TAG, "unknown")
+            if _is_trailer_part(part_tag):
+                continue  # trailer is packed via Create AR + Start Game
             src_file = obj.data.get("bms_source_file", "")
 
             if src_file:
@@ -2857,6 +3100,7 @@ class CAR_OT_SelectPart(bpy.types.Operator):
 CAR_EDITOR_CLASSES = [
     CAR_OT_SelectFace,
     CAR_OT_LoadCar,
+    CAR_OT_LoadTrailer,
     CAR_OT_ExportCar,
     CAR_OT_ReloadCar,
     CAR_OT_ClearCar,
