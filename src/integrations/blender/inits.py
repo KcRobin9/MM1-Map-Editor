@@ -216,7 +216,11 @@ SCENE_PROPERTIES = [
     "ce_import_decimate_ratio",
     "ce_import_wheel_count",
     "ce_wheel_texture",
+    "ce_wheel_style",
+    "ce_wheel_size",
+    "ce_wheel_radius_syncing",
     *[f"ce_wheel_texture_{i}" for i in range(10)],
+    *[f"ce_wheel_radius_{i}" for i in range(10)],
     *[f"ce_trailer_wheel_texture_{i}" for i in range(4)],
     "ce_mirror_x",
     "ce_phys_override",
@@ -227,6 +231,9 @@ SCENE_PROPERTIES = [
     "ce_phys_grip",
     "ce_phys_drift",
     "ce_phys_suspension",
+    "ce_phys_cg_x",
+    "ce_phys_cg_height",
+    "ce_phys_cg_z",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -558,6 +565,27 @@ def _get_wheel_texture_items(self, context):
     return WheelTexture.blender_items(Folder.Resources.Editor.Textures)
 
 
+_WHEEL_STYLE_CACHE = []
+
+
+def _get_wheel_style_items(self, context):
+    """Source cars (in resources/editor/MESHES/CARS) that have a WHL0_H.BMS."""
+    from src.constants.folder import Folder
+    if _WHEEL_STYLE_CACHE:
+        return _WHEEL_STYLE_CACHE
+    cars_dir = Folder.Resources.Editor.Meshes / "CARS"
+    items = []
+    if cars_dir.is_dir():
+        for d in sorted(p for p in cars_dir.iterdir() if p.is_dir()):
+            if (d / "WHL0_H.BMS").is_file():
+                items.append((d.name, d.name.replace("VP", "", 1).title(),
+                              f"Use {d.name}'s wheel geometry/look"))
+    if not items:
+        items = [("VPMUSTANG99", "Mustang99", "Default wheels")]
+    _WHEEL_STYLE_CACHE[:] = items
+    return _WHEEL_STYLE_CACHE
+
+
 def _update_wheel_texture(self, context):
     bpy.ops.car.apply_wheel_texture("EXEC_DEFAULT")
 
@@ -566,6 +594,16 @@ def _make_wheel_tex_update(idx):
     def _update(self, context):
         bpy.ops.car.apply_wheel_texture_single(
             "EXEC_DEFAULT", part_tag=f"wheel_{idx}", tex_name=getattr(self, f"ce_wheel_texture_{idx}")
+        )
+    return _update
+
+
+def _make_wheel_radius_update(idx):
+    def _update(self, context):
+        if getattr(self, "ce_wheel_radius_syncing", False):
+            return
+        bpy.ops.car.set_wheel_radius(
+            "EXEC_DEFAULT", part_tag=f"wheel_{idx}", radius=getattr(self, f"ce_wheel_radius_{idx}")
         )
     return _update
 
@@ -1061,6 +1099,17 @@ def register_scene_properties() -> None:
         items=_get_wheel_texture_items,
         update=_update_wheel_texture,
     )
+    bpy.types.Scene.ce_wheel_style = bpy.props.EnumProperty(
+        name="Wheel Style",
+        description="Which stock car's wheel geometry/look to use when creating or spawning wheels",
+        items=_get_wheel_style_items,
+    )
+    bpy.types.Scene.ce_wheel_size = bpy.props.FloatProperty(
+        name="Wheel Radius",
+        description="Wheel radius in metres for spawned wheels (New From Template auto-sizes to the body)",
+        default=0.35, min=0.1, max=1.5, precision=2,
+    )
+    bpy.types.Scene.ce_wheel_radius_syncing = bpy.props.BoolProperty(default=False)
     for _i in range(10):
         setattr(
             bpy.types.Scene,
@@ -1070,6 +1119,16 @@ def register_scene_properties() -> None:
                 description=f"Wheel texture for wheel {_i}",
                 items=_get_wheel_texture_items,
                 update=_make_wheel_tex_update(_i),
+            ),
+        )
+        setattr(
+            bpy.types.Scene,
+            f"ce_wheel_radius_{_i}",
+            bpy.props.FloatProperty(
+                name=f"WHL{_i} Radius",
+                description=f"Radius of wheel {_i} (resizes it about its hub)",
+                default=0.35, min=0.05, max=2.0, precision=2,
+                update=_make_wheel_radius_update(_i),
             ),
         )
     for _i in range(4):
@@ -1133,6 +1192,22 @@ def register_scene_properties() -> None:
         name="Suspension",
         description="Suspension spring stiffness for all wheels. Higher = stiffer/less body roll (car ~40k-100k, truck 280k-420k)",
         default=75300.0, min=20000.0, max=500000.0,
+    )
+    bpy.types.Scene.ce_phys_cg_x = bpy.props.FloatProperty(
+        name="CG Lateral (X)",
+        description="Centre-of-gravity left/right offset (BodyCG X). Negative = left, positive = right",
+        default=0.0, min=-10.0, max=10.0, precision=3,
+    )
+    bpy.types.Scene.ce_phys_cg_height = bpy.props.FloatProperty(
+        name="CG Height (Y)",
+        description="Centre-of-gravity height (BodyCG Y). Lower = more stable / harder to flip; "
+                    "raise it for a tippy car. Useful for big-wheel cars that roll over (stock ~-0.01 to -0.12)",
+        default=-0.06, min=-10.0, max=10.0, precision=3,
+    )
+    bpy.types.Scene.ce_phys_cg_z = bpy.props.FloatProperty(
+        name="CG Fore/Aft (Z)",
+        description="Centre-of-gravity front/back offset (BodyCG Z). Negative = front, positive = rear",
+        default=0.0, min=-10.0, max=10.0, precision=3,
     )
 
     # ── Facade Editor — edit form ─────────────────────────────────────────────

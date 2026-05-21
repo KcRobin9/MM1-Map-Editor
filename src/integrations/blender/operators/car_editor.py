@@ -529,6 +529,77 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
                 print(f"[Car Editor] Warning: cleanup failed: {e}")
 
 
+def _scale_wheel_to_radius(mesh, target_radius) -> None:
+    """Uniformly scale a centred wheel mesh so its disc radius == target_radius.
+
+    The wheel disc lies in the Blender Y-Z plane (axle = X); radius is the max
+    distance from the hub (origin) in that plane. Scaling is uniform so width
+    grows proportionally with radius. Verts are baked so the export stays clean.
+    """
+    import math
+    if not target_radius or target_radius <= 0:
+        return
+    cur = max((math.hypot(v.co.y, v.co.z) for v in mesh.vertices), default=0.0)
+    if cur < 1e-5:
+        return
+    factor = target_radius / cur
+    if abs(factor - 1.0) < 1e-3:
+        return
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    for v in bm.verts:
+        v.co *= factor
+    bm.to_mesh(mesh)
+    bm.free()
+    mesh.update()
+
+
+def _wheel_current_radius(mesh) -> float:
+    """Disc radius of a centred wheel mesh (max distance from hub in the Y-Z plane)."""
+    import math
+    return max((math.hypot(v.co.y, v.co.z) for v in mesh.vertices), default=0.0)
+
+
+def _sync_wheel_radius_props(scene) -> None:
+    """Set ce_wheel_radius_{i} to each wheel's actual radius (guarded so the update
+    callback doesn't fire and re-scale)."""
+    try:
+        scene.ce_wheel_radius_syncing = True
+        for obj in get_car_objects():
+            tag = obj.get(_CAR_TAG, "")
+            if not tag.startswith("wheel_") or obj.type != "MESH":
+                continue
+            try:
+                idx = int(tag.split("_")[1])
+            except (ValueError, IndexError):
+                continue
+            r = _wheel_current_radius(obj.data)
+            if r > 0:
+                try:
+                    setattr(scene, f"ce_wheel_radius_{idx}", round(r, 3))
+                except (TypeError, ValueError):
+                    pass
+    finally:
+        scene.ce_wheel_radius_syncing = False
+
+
+def _load_styled_wheel(car_name: str, idx: int, style: str, tex_folder,
+                       target_radius=None):
+    """
+    Load wheel `idx` from the chosen style car's BMS (falls back to its WHL0),
+    sized to target_radius. Returns the Blender mesh, or None if unavailable.
+    """
+    style_dir = Folder.Resources.Editor.MeshesCars / (style or "VPMUSTANG99")
+    mesh_name = f"{car_name}.WHL{idx}"
+    whl = style_dir / f"WHL{idx}_H.BMS"
+    if not whl.is_file():
+        whl = style_dir / "WHL0_H.BMS"
+    mesh = _load_bms(whl, mesh_name, tex_folder) if whl.is_file() else None
+    if mesh is not None and target_radius:
+        _scale_wheel_to_radius(mesh, target_radius)
+    return mesh
+
+
 def _ensure_wheels_in_shop(car_name: str) -> int:
     """
     If no WHL*_H.BMS files exist in SHOP/BMS/{car_name}/, copy them from
@@ -755,6 +826,9 @@ def _physics_params_from_scene(scene) -> dict:
         "grip":       float(getattr(scene, "ce_phys_grip", 0.9)),
         "drift":      float(getattr(scene, "ce_phys_drift", 7.0)),
         "suspension": float(getattr(scene, "ce_phys_suspension", 75300.0)),
+        "cg_x":       float(getattr(scene, "ce_phys_cg_x", 0.0)),
+        "cg_height":  float(getattr(scene, "ce_phys_cg_height", -0.06)),
+        "cg_z":       float(getattr(scene, "ce_phys_cg_z", 0.0)),
     }
 
 
@@ -804,7 +878,8 @@ def _apply_physics_in_shop(car_name: str, scene) -> bool:
 _PHYS_PROP = {
     "mass": "ce_phys_mass", "horsepower": "ce_phys_horsepower", "drag": "ce_phys_drag",
     "downforce": "ce_phys_downforce", "grip": "ce_phys_grip", "drift": "ce_phys_drift",
-    "suspension": "ce_phys_suspension",
+    "suspension": "ce_phys_suspension", "cg_x": "ce_phys_cg_x",
+    "cg_height": "ce_phys_cg_height", "cg_z": "ce_phys_cg_z",
 }
 
 
@@ -1867,6 +1942,7 @@ class CAR_OT_LoadCar(bpy.types.Operator):
         # Sync the Physics panel to this car's real MMCARSIM values (override off),
         # so retuning starts from the truth instead of VPMUSTANG99 defaults.
         _sync_physics_props_from_car(context.scene, _base_car_name(car_name))
+        _sync_wheel_radius_props(context.scene)
 
         # Some BMS files load with one face already pointing at a _DMG material slot.
         # Toggling damage on then immediately off normalises all faces to clean textures.
@@ -2843,20 +2919,22 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         body_obj["mm_car_name"]    = car_name
         body_obj["mm_body_file"]   = body_file
 
-        # ── Wheels — load from VPMUSTANG99 BMS (real geometry + VPCOP_WHL tex) ──
+        # ── Wheels — chosen style's geometry, auto-sized to the template radius ──
         wheel_positions = car_templates.template_wheel_positions(template_id)
         wheel_prefix    = car_templates.template_wheel_filename_prefix(template_id)
-        vpmustang_folder = Folder.Resources.Editor.Meshes / "CARS" / "VPMUSTANG99"
+        style           = getattr(scene, "ce_wheel_style", "") or "VPMUSTANG99"
 
         for i, wpos in enumerate(wheel_positions):
-            mesh_name = f"{car_name}.{wheel_prefix}{i}"
-            whl_bms   = vpmustang_folder / f"WHL{i}_H.BMS"
-            w_mesh    = _load_bms(whl_bms, mesh_name, tex_folder) if whl_bms.exists() else None
+            mesh_name     = f"{car_name}.{wheel_prefix}{i}"
+            wdata         = car_templates._T[template_id]["wheels"][i]
+            target_radius = wdata[3]
+            w_mesh = _load_styled_wheel(car_name, i, style, tex_folder, target_radius)
             if w_mesh is None:
-                wdata      = car_templates._T[template_id]["wheels"][i]
                 w_mesh = car_templates.build_wheel_mesh(
                     mesh_name, wdata[3], wdata[4], mirror=(wpos[0] > 0))
                 w_mesh.materials[0] = _build_material("VPCOP_WHL", tex_folder)
+            else:
+                w_mesh.name = mesh_name
             w_mesh["mesh_offset"]     = list(wpos)
             w_mesh["bms_source_file"] = f"{wheel_prefix}{i}_H.BMS"
             _add_child_obj(w_mesh, mesh_name, f"wheel_{i}", body_obj, col)
@@ -2874,6 +2952,7 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         _paint_variant_cache.clear()
         scene.ce_paint_variant = car_name
         scene.ce_show_damage   = False
+        _sync_wheel_radius_props(scene)
 
         n_wheels = len(wheel_positions)
         self.report({"INFO"},
@@ -3084,6 +3163,31 @@ class CAR_OT_ApplyWheelTextureSingle(bpy.types.Operator):
         _apply_wheel_tex(self.tex_name, wheels, tex_folder)
         # Store choice on the object so the panel can reflect it
         wheels[0]["ce_wheel_tex"] = self.tex_name
+        return {"FINISHED"}
+
+
+class CAR_OT_SetWheelRadius(bpy.types.Operator):
+    """Resize one wheel to a given radius (scaled about its hub)."""
+    bl_idname      = "car.set_wheel_radius"
+    bl_label       = "Set Wheel Radius"
+    bl_description = "Resize this wheel to the given radius"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    part_tag : bpy.props.StringProperty()
+    radius   : bpy.props.FloatProperty(default=0.35, min=0.02, max=3.0)
+
+    def execute(self, context):
+        wheels = [o for o in get_car_objects()
+                  if o.get(_CAR_TAG) == self.part_tag and o.type == "MESH"]
+        if not wheels:
+            return {"CANCELLED"}
+        obj   = wheels[0]
+        old_r = _wheel_current_radius(obj.data)
+        _scale_wheel_to_radius(obj.data, self.radius)
+        # Keep the wheel grounded: raise/lower the hub by the radius change so the
+        # bottom of the tyre stays put instead of sinking into / floating above road.
+        if old_r > 0:
+            obj.location.z += (self.radius - old_r)
         return {"FINISHED"}
 
 
@@ -3379,16 +3483,13 @@ class CAR_OT_SpawnWheelFromTemplate(bpy.types.Operator):
                     pass
         new_idx = next(i for i in range(20) if i not in used_idxs)
 
-        # Load WHL0_H.BMS from resources/editor as a Blender mesh
-        src_dir = Folder.Resources.Editor.MeshesCars / "VPMUSTANG99"
-        whl_bms = src_dir / "WHL0_H.BMS"
-        if not whl_bms.exists():
-            self.report({"ERROR"}, f"Template wheel not found: {whl_bms}")
-            return {"CANCELLED"}
-
-        mesh = _load_bms(whl_bms, f"{car_name}.WHL{new_idx}", Folder.Resources.Editor.Textures)
+        # Load the chosen wheel style, sized to the panel's wheel radius.
+        style  = getattr(context.scene, "ce_wheel_style", "") or "VPMUSTANG99"
+        radius = float(getattr(context.scene, "ce_wheel_size", 0.35))
+        mesh = _load_styled_wheel(car_name, new_idx, style,
+                                  Folder.Resources.Editor.Textures, radius)
         if mesh is None:
-            self.report({"ERROR"}, f"Failed to load template wheel: {whl_bms.name}")
+            self.report({"ERROR"}, f"Failed to load wheel style '{style}'")
             return {"CANCELLED"}
 
         mesh["bms_source_file"] = ""  # will export as WHL{new_idx}_H.BMS
@@ -3410,8 +3511,9 @@ class CAR_OT_SpawnWheelFromTemplate(bpy.types.Operator):
         new_obj.select_set(True)
         context.view_layer.objects.active = new_obj
 
+        _sync_wheel_radius_props(context.scene)
         self.report({"INFO"},
-                    f"Spawned wheel_{new_idx} from VPMUSTANG99 template. "
+                    f"Spawned wheel_{new_idx} sized to {radius:.2f}m. "
                     "Move it to the desired position.")
         return {"FINISHED"}
 
@@ -3570,10 +3672,8 @@ class CAR_OT_SpawnWheelsAuto(bpy.types.Operator):
             return {"CANCELLED"}
 
         car_name = _base_car_name(body_obj.get("mm_car_name", "CAR"))
-        src_bms  = Folder.Resources.Editor.MeshesCars / "VPMUSTANG99" / "WHL0_H.BMS"
-        if not src_bms.exists():
-            self.report({"ERROR"}, f"Template wheel not found: {src_bms}")
-            return {"CANCELLED"}
+        style    = getattr(context.scene, "ce_wheel_style", "") or "VPMUSTANG99"
+        radius   = float(getattr(context.scene, "ce_wheel_size", 0.35))
 
         # Find existing wheel indices to avoid collision
         used_idxs = {
@@ -3589,8 +3689,8 @@ class CAR_OT_SpawnWheelsAuto(bpy.types.Operator):
         spawned   = 0
 
         for pos, new_idx in zip(positions, free_idxs):
-            mesh = _load_bms(src_bms, f"{car_name}.WHL{new_idx}",
-                             Folder.Resources.Editor.Textures)
+            mesh = _load_styled_wheel(car_name, new_idx, style,
+                                      Folder.Resources.Editor.Textures, radius)
             if mesh is None:
                 continue
             mesh["bms_source_file"] = ""
@@ -3604,6 +3704,7 @@ class CAR_OT_SpawnWheelsAuto(bpy.types.Operator):
             new_obj.location = pos
             spawned += 1
 
+        _sync_wheel_radius_props(context.scene)
         self.report({"INFO"}, f"Spawned {spawned} wheel(s) at bounding-box corners.")
         return {"FINISHED"}
 
@@ -3736,6 +3837,7 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_ToggleSymmetry,
     CAR_OT_ApplyWheelTexture,
     CAR_OT_ApplyWheelTextureSingle,
+    CAR_OT_SetWheelRadius,
     CAR_OT_DebugBMS,
     CAR_OT_SelectPart,
     CAR_OT_ImportTagBody,

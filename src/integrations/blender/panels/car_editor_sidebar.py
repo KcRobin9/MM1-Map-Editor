@@ -294,9 +294,9 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
         active_tag = active_obj.get(_CAR_TAG, "") if active_obj else ""
         is_wheel   = active_tag.startswith("wheel_")
 
-        # ── Per-wheel list + texture dropdown ─────────────────────────────────
+        # ── Per-wheel list + texture dropdown + radius ────────────────────────
         col = layout.column(align=True)
-        col.label(text=f"Wheels: {len(wheels)}", icon="MESH_CIRCLE")
+        col.label(text=f"Wheels: {len(wheels)}   (texture · radius)", icon="MESH_CIRCLE")
         for whl in wheels:
             tag       = whl.get(_CAR_TAG, "")
             idx       = tag.split("_")[1] if "_" in tag else "?"
@@ -307,6 +307,7 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
             op.part_tag = tag
             try:
                 row.prop(scene, f"ce_wheel_texture_{int(idx)}", text="")
+                row.prop(scene, f"ce_wheel_radius_{int(idx)}", text="")
             except (ValueError, TypeError):
                 pass
 
@@ -345,8 +346,10 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
         # ── Spawn wheels ──────────────────────────────────────────────────────
         col = layout.column(align=True)
         col.label(text="Add Wheels:", icon="ADD")
+        col.prop(scene, "ce_wheel_style", text="Style")
         row = col.row(align=True)
         row.prop(scene, "ce_import_wheel_count", text="Count")
+        row.prop(scene, "ce_wheel_size", text="Radius")
         col.operator(
             "car.spawn_wheels_auto", text="Spawn at Corners", icon="PIVOT_BOUNDBOX",
         ).wheel_count = scene.ce_import_wheel_count
@@ -421,6 +424,7 @@ class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
             sub.label(text=f"Wheels: {n_w}  ·  radius {spec['wheel_radius']:.2f}", icon="MESH_CIRCLE")
 
         box.separator(factor=0.4)
+        box.prop(scene, "ce_wheel_style", text="Wheels")
         col_tmpl = box.column(align=True)
         r = col_tmpl.row()
         r.enabled = has_name
@@ -443,16 +447,9 @@ class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
         r.operator("car.import_prepare", text="Prepare Imported Model", icon="SHADERFX")
 
         box2.separator(factor=0.4)
-
-        col2 = box2.column(align=True)
-        col2.label(text="Add Wheels:", icon="MESH_CIRCLE")
-        row = col2.row(align=True)
-        row.prop(scene, "ce_import_wheel_count", text="Count")
-        r2 = col2.row()
-        r2.enabled = has_body
-        r2.operator(
-            "car.spawn_wheels_auto", text="Spawn at Corners", icon="PIVOT_BOUNDBOX",
-        ).wheel_count = scene.ce_import_wheel_count
+        hint = box2.row()
+        hint.enabled = False
+        hint.label(text="Add wheels in the Wheels panel below.", icon="MESH_CIRCLE")
 
         layout.separator(factor=0.6)
 
@@ -514,6 +511,13 @@ class VIEW3D_PT_CarEditorPhysics(bpy.types.Panel):
         col.prop(scene, "ce_phys_grip")
         col.prop(scene, "ce_phys_drift")
         col.prop(scene, "ce_phys_suspension")
+
+        cg = layout.column(align=True)
+        cg.enabled = scene.ce_phys_override
+        cg.label(text="Centre of Gravity (BodyCG)", icon="ORIENTATION_LOCAL")
+        cg.prop(scene, "ce_phys_cg_x")
+        cg.prop(scene, "ce_phys_cg_height")
+        cg.prop(scene, "ce_phys_cg_z")
 
         sub = layout.column(align=True)
         sub.enabled = scene.ce_phys_override

@@ -43,6 +43,15 @@ PARAM_KEYS = {
     "suspension":  ("Spring", True),          # both wheel blocks
 }
 
+# Vector params: friendly name -> (mmcarsim key, component index). BodyCG is the
+# body's centre of gravity: x = lateral, y = height (flip tendency — lower = more
+# stable), z = fore/aft (weight bias).
+VEC_KEYS = {
+    "cg_x":      ("BodyCG", 0),
+    "cg_height": ("BodyCG", 1),
+    "cg_z":      ("BodyCG", 2),
+}
+
 # VPMUSTANG99 baseline (the default template) — used as panel defaults.
 DEFAULTS = {
     "mass": 1500.0,
@@ -52,7 +61,12 @@ DEFAULTS = {
     "grip": 0.9,
     "horsepower": 320.0,
     "suspension": 75300.0,
+    "cg_x": 0.0,
+    "cg_height": -0.06,
+    "cg_z": 0.0,
 }
+
+_NUM = r"-?[\d.]+(?:[eE][+-]?\d+)?"
 
 
 def _fmt(value: float) -> str:
@@ -64,7 +78,15 @@ def _line_re(key: str) -> re.Pattern:
     # ^<indent> Key <number> <trailing>$  — indent/trailing are spaces/tabs only,
     # so we never span lines and never match RubberSpring etc.
     return re.compile(
-        rf"^([ \t]*{re.escape(key)}[ \t]+)(-?[\d.]+(?:[eE][+-]?\d+)?)([ \t]*)$",
+        rf"^([ \t]*{re.escape(key)}[ \t]+)({_NUM})([ \t]*)$",
+        re.MULTILINE,
+    )
+
+
+def _vec3_re(key: str) -> re.Pattern:
+    # ^<indent> Key  n  n  n  <trailing>$
+    return re.compile(
+        rf"^([ \t]*{re.escape(key)}[ \t]+)({_NUM})([ \t]+)({_NUM})([ \t]+)({_NUM})([ \t]*)$",
         re.MULTILINE,
     )
 
@@ -72,14 +94,26 @@ def _line_re(key: str) -> re.Pattern:
 def patch_carsim(text: str, params: Dict[str, float]) -> str:
     """Return text with the given friendly params written into the MMCARSIM."""
     for name, value in params.items():
-        spec = PARAM_KEYS.get(name)
-        if spec is None or value is None:
+        if value is None:
             continue
-        key, replace_all = spec
-        count = 0 if replace_all else 1
-        text = _line_re(key).sub(
-            lambda m: f"{m.group(1)}{_fmt(value)}{m.group(3)}", text, count=count
-        )
+        spec = PARAM_KEYS.get(name)
+        if spec is not None:
+            key, replace_all = spec
+            count = 0 if replace_all else 1
+            text = _line_re(key).sub(
+                lambda m: f"{m.group(1)}{_fmt(value)}{m.group(3)}", text, count=count
+            )
+            continue
+        vspec = VEC_KEYS.get(name)
+        if vspec is not None:
+            key, comp = vspec
+            # groups: 1=indent+key, 2/4/6=x/y/z, 3/5=gaps, 7=trailing
+            comp_group = 2 + comp * 2  # comp 0->2, 1->4, 2->6
+            def _sub(m, cg=comp_group, val=value):
+                parts = list(m.groups())
+                parts[cg - 1] = _fmt(val)
+                return "".join(parts)
+            text = _vec3_re(key).sub(_sub, text, count=1)
     return text
 
 
@@ -91,6 +125,13 @@ def read_physics(text: str) -> Dict[str, float]:
         if m:
             try:
                 out[name] = float(m.group(2))
+            except ValueError:
+                pass
+    for name, (key, comp) in VEC_KEYS.items():
+        m = _vec3_re(key).search(text)
+        if m:
+            try:
+                out[name] = float(m.group(2 + comp * 2))
             except ValueError:
                 pass
     return out
