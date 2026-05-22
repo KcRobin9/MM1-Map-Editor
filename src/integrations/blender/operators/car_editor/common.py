@@ -9,6 +9,7 @@ from typing import Optional
 
 from src.constants.folder import Folder
 from src.constants.file_formats import MeshFlags
+from src.integrations.blender.modeling.bms_writer import mesh_to_bms_data
 from src.integrations.blender.modeling.meshes import (
     _apply_materials_to_mesh, _to_blender_pos, build_blender_mesh, read_bms,
 )
@@ -305,6 +306,31 @@ def _bms_merge_part_into_body(body: dict, part: dict) -> dict:
     out["num_surfaces"] = body["num_surfaces"] + part["num_surfaces"]
     out["flags"] = bf & ~MeshFlags.PLANES
     return out
+
+
+def _build_menu_mesh_bms(body_obj, car_objects, housing_objs) -> dict:
+    """Build the combined H.BMS that the vehicle picker renders.
+
+    Stock cars ship H.BMS as the WHOLE car (body + every wheel + fender) baked
+    into one static mesh — the selection menu has no physics sim to place the
+    separate wheel meshes, so a body-only H.BMS shows a wheel-less preview.
+
+    Parts are merged with the same body=local / part=baked convention proven by
+    the siren-housing merge: wheels/fenders are parented to the body, so their
+    baked mesh_offset is body-relative and lands them at the correct hub.  The
+    offset is zeroed to match how the game stores H.BMS (offset 0, no OFFSET flag)."""
+    data = mesh_to_bms_data(body_obj, bake_location=False)
+
+    for h in housing_objs:
+        data = _bms_merge_part_into_body(data, mesh_to_bms_data(h, bake_location=True))
+
+    for obj in car_objects:
+        tag = obj.get(_CAR_TAG, "")
+        if tag.startswith("wheel_") or tag.startswith("fender_"):
+            data = _bms_merge_part_into_body(data, mesh_to_bms_data(obj, bake_location=True))
+
+    data["mesh_offset"] = (0.0, 0.0, 0.0)
+    return data
 
 
 def is_car_obj(obj) -> bool:

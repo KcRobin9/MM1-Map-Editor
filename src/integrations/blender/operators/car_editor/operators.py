@@ -21,8 +21,8 @@ from src.integrations.blender.operators.car_editor.paint import (
 )
 from src.integrations.blender.operators.car_editor.common import (
     _add_child_obj, _base_car_name, _bms_extract_faces_by_texture, _bms_merge_part_into_body,
-    _bms_to_bl_offset, _build_damage_remap, _clear_car_objects, _clear_trailer_objects,
-    _get_or_create_collection, _has_custom_trailer, _is_original_car,
+    _bms_to_bl_offset, _build_damage_remap, _build_menu_mesh_bms, _clear_car_objects,
+    _clear_trailer_objects, _get_or_create_collection, _has_custom_trailer, _is_original_car,
     _is_trailer_part, _load_bms, _read_back_face_uv, _tex_folder, get_car_body, get_car_objects,
     is_car_obj,
 )
@@ -210,16 +210,26 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         if errors:
             self.report({"WARNING"}, f"BMS export errors ({len(errors)}): {errors[0]} — AR may be incomplete.")
 
-        # The engine requires two additional body copies regardless of LOD policy:
-        #   BODY_M.BMS — mmDamage::InitDamage reads Meshes[2] (medium slot);
-        #                NULL there causes an unconditional Abortf (damage.c:14).
-        #   H.BMS      — car selection menu renders this mesh; without it the
-        #                car is invisible or absent in the vehicle picker.
-        # Both are identical to the high-detail export — quality doesn't matter.
+        # BODY_M/L/VL: the engine requires a medium body slot regardless of LOD
+        # policy — mmDamage::InitDamage reads Meshes[2] (medium); NULL there causes
+        # an unconditional Abortf (damage.c:14).  Body-only copies are fine here.
         body_h = city_dir / "BODY_H.BMS"
         if body_h.exists():
-            for suffix in ("BODY_M.BMS", "BODY_L.BMS", "BODY_VL.BMS", "H.BMS"):
+            for suffix in ("BODY_M.BMS", "BODY_L.BMS", "BODY_VL.BMS"):
                 shutil.copy2(body_h, city_dir / suffix)
+
+            # H.BMS is the mesh the vehicle picker renders.  It must be the WHOLE
+            # car (body + wheels + fenders + siren housing) baked into ONE static
+            # mesh — the menu has no physics sim to place the separate wheel meshes,
+            # so a body-only copy shows a wheel-less preview.  Fall back to the body
+            # copy if the merge fails for any reason.
+            body_obj = get_car_body()
+            try:
+                menu_mesh = _build_menu_mesh_bms(body_obj, car_objects, housing_objs)
+                write_bms(menu_mesh, city_dir / "H.BMS")
+            except Exception as exc:
+                print(f"[Car Editor] Menu mesh (H.BMS) build failed, using body copy: {exc}")
+                shutil.copy2(body_h, city_dir / "H.BMS")
 
         # Lights (head/tail/brake/reverse/signals): for a new car, restore the
         # stock light meshes from VPMUSTANG99 so the slots are always present and
