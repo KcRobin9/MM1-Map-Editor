@@ -45,7 +45,7 @@ def main() -> None:
     log_file = get_log_file_path()
     delete_log_file(log_file)
 
-    packages = ["numpy", "psutil", "debugpy", "colorama", "pyautogui", "matplotlib"]
+    packages = ["numpy", "psutil", "debugpy", "colorama", "pyautogui", "matplotlib", "Pillow"]
 
     # Ensure pip is installed
     ensure_pip = ensure_pip_installed()

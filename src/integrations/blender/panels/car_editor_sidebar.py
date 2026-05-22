@@ -165,6 +165,8 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
 
             box.separator(factor=0.4)
             box.prop(scene, "ce_audio_profile", text="Engine Sound")
+            box.separator(factor=0.4)
+            box.operator("car.generate_showcase", text="Generate Showcase Image", icon="RENDER_STILL")
 
         layout.separator(factor=0.6)
 

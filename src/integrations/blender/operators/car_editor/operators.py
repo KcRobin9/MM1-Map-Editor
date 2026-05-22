@@ -1,4 +1,5 @@
 """Car Editor — operators module (split from the former car_editor.py monolith)."""
+import os
 import bpy
 import math
 import bmesh
@@ -14,6 +15,7 @@ from src.integrations.blender.modeling.meshes import (
 )
 from src.constants.constants import CURRENT_TIME_FORMATTED
 from src.integrations.blender.modeling import car_templates
+from src.integrations.blender.modeling.car_showcase import generate_showcase
 from src.integrations.blender.modeling.bms_writer import mesh_to_bms_data, write_bms
 
 from src.integrations.blender.operators.car_editor.paint import (
@@ -1430,6 +1432,84 @@ class CAR_OT_OpenExportFolder(bpy.types.Operator):
         return {"FINISHED"}
 
 
+# ── Operator: Generate Vehicle Showcase image ────────────────────────────────
+
+class CAR_OT_GenerateShowcase(bpy.types.Operator):
+    bl_idname      = "car.generate_showcase"
+    bl_label       = "Generate Showcase"
+    bl_description = (
+        "Render the car to a stock-style 'Vehicle Showcase' image and open a "
+        "preview. Saved to SHOP/BMP16/{NAME}_SHOW.JPG and packed into the car AR "
+        "on AR + Launch. The spec block uses the Car Info stats above."
+    )
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        body_obj = get_car_body()
+        if body_obj is None:
+            self.report({"WARNING"}, "Load a car first.")
+            return {"CANCELLED"}
+
+        scene    = context.scene
+        car_name = _base_car_name(body_obj.get("mm_car_name", "")).upper()
+        if not car_name:
+            self.report({"WARNING"}, "Car has no name.")
+            return {"CANCELLED"}
+
+        parts = [
+            o for o in get_car_objects()
+            if o.get(_CAR_TAG, "") == "body"
+            or o.get(_CAR_TAG, "").startswith("wheel_")
+            or o.get(_CAR_TAG, "").startswith("fender_")
+        ]
+
+        # Calculated dimensions (1 Blender unit = 1 m → inches). Length from the
+        # body's front-back (Y) extent; wheelbase from the front↔rear hub spread.
+        context.view_layer.update()
+        bpts = [body_obj.matrix_world @ mathutils.Vector(c) for c in body_obj.bound_box]
+        length_in = round((max(p.y for p in bpts) - min(p.y for p in bpts)) * 39.37)
+        wheel_y = [o.matrix_world.translation.y for o in parts
+                   if o.get(_CAR_TAG, "").startswith("wheel_")]
+        wheelbase_in = round((max(wheel_y) - min(wheel_y)) * 39.37) if len(wheel_y) >= 2 else 0
+
+        hp   = scene.ce_info_horsepower
+        mph  = scene.ce_info_topspeed
+        lbs  = scene.ce_info_mass
+        specs = [
+            ("Horsepower", f"{hp} hp ({round(hp * 0.7457)} kW)"),
+            ("Top Speed",  f"{mph} mph ({round(mph * 1.60934)} km/h)"),
+            ("Weight",     f"{lbs} lbs ({round(lbs * 0.453592)} kg)"),
+        ]
+        if wheelbase_in:
+            specs.append(("Wheelbase", f'{wheelbase_in}" ({round(wheelbase_in * 25.4)} mm)'))
+        specs.append(("Length", f'{length_in}" ({round(length_in * 25.4)} mm)'))
+        specs.append(("Website", "github.com/KcRobin9/MM1-Map-Editor"))
+
+        info = {"name": scene.ce_info_description or car_name, "specs": specs}
+
+        shop_jpg = Folder.Shop.Textures.Bitmap / f"{car_name}_SHOW.JPG"
+        tmp_dir  = Folder.BASE / f"_showcase_tmp_{car_name}"
+        preview  = Folder.BASE / "blender_export" / "showcase" / f"{car_name}_SHOW.jpg"
+
+        try:
+            generate_showcase(parts, info, shop_jpg, tmp_dir, preview_path=preview)
+        except Exception as exc:
+            self.report({"ERROR"}, f"Showcase render failed: {exc}")
+            print(f"[Car Editor] Showcase render failed: {exc}")
+            return {"CANCELLED"}
+        finally:
+            if tmp_dir.exists():
+                shutil.rmtree(tmp_dir, ignore_errors=True)
+
+        try:
+            os.startfile(str(preview))
+        except Exception:
+            pass
+
+        self.report({"INFO"}, f"Showcase → SHOP/BMP16/{car_name}_SHOW.JPG (preview opened)")
+        return {"FINISHED"}
+
+
 # ── Operator: Clear Shop BMS folder ──────────────────────────────────────────
 
 class CAR_OT_ClearShop(bpy.types.Operator):
@@ -2365,6 +2445,7 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_RemoveWheel,
     CAR_OT_RenumberWheels,
     CAR_OT_OpenExportFolder,
+    CAR_OT_GenerateShowcase,
     CAR_OT_MakeCustomCopy,
     CAR_OT_NewFromTemplate,
     CAR_OT_InitNewCar,

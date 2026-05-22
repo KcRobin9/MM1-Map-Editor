@@ -87,6 +87,15 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
                 tune_dst.mkdir(exist_ok=True)
                 shutil.copy2(carsim, tune_dst / carsim.name)
 
+        # Vehicle Showcase image (BMP16/{NAME}_SHOW.JPG) — the picker's "Vehicle
+        # Showcase" photo. Packed in both modes (a tweaked stock car can override
+        # its stock photo too); only present when the user generated one.
+        show_jpg = Folder.Shop.Textures.Bitmap / f"{car_name.upper()}_SHOW.JPG"
+        if show_jpg.exists():
+            bmp_dst = tmp_dir / "BMP16"
+            bmp_dst.mkdir(exist_ok=True)
+            shutil.copy2(show_jpg, bmp_dst / show_jpg.name)
+
         # Everything below (dash, tune, TSH, collision, textures) is only packed
         # for brand-new cars.  For an existing game car we override geometry only
         # and let the base AR supply the rest — see _is_original_car.
