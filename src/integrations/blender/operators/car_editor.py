@@ -23,6 +23,7 @@ from src.integrations.blender.modeling.bms_writer import mesh_to_bms_data, write
 from src.integrations.blender.modeling import car_templates
 from src.constants.folder import Folder
 from src.constants.file_formats import FileType, MeshFlags
+from src.constants.car_assets import LightColor
 
 
 # ── Paint-variant helpers ─────────────────────────────────────────────────────
@@ -138,6 +139,41 @@ def _variant_color_name(variant: str, all_variants: list) -> str:
     base = os.path.commonprefix(all_variants)
     color = variant[len(base):]
     return color.title() if color else "Default"
+
+
+def _build_paint_chain(body_mesh, tex_folder: Path) -> list:
+    """
+    Ordered paint-variant prefixes for the body, current/default first, e.g.
+    ['VPBULLET', 'VPBULLETBLUE', 'VPBULLETRED', 'VPBULLETWHITE']. Returns [] when
+    the body has no detectable colour variants. Used to wire the TSH sibling chain
+    so the variants are selectable as paint jobs in the game's car menu.
+    """
+    prefix = _detect_paint_prefix(body_mesh)
+    if not prefix:
+        return []
+    variants = _find_paint_variants(body_mesh, tex_folder, prefix)
+    if len(variants) < 2:
+        return []
+    cur = prefix.upper()
+    return [cur] + [v.upper() for v in variants if v.upper() != cur]
+
+
+def _sync_trailer_wheel_texture_props(scene) -> None:
+    """Set ce_trailer_wheel_texture_{i} to each loaded trailer wheel's actual texture."""
+    for o in get_car_objects():
+        tag = o.get(_CAR_TAG, "")
+        if not tag.startswith("trailer_wheel_") or o.type != "MESH":
+            continue
+        try:
+            idx = int(tag.split("_")[-1])
+        except (ValueError, IndexError):
+            continue
+        mats = o.data.materials
+        if mats and mats[0]:
+            try:
+                setattr(scene, f"ce_trailer_wheel_texture_{idx}", mats[0].name)
+            except (TypeError, ValueError):
+                pass  # texture not in the dropdown's item list — leave as-is
 
 
 def _detect_wheel_texture(car_objects: list) -> str:
@@ -565,6 +601,7 @@ def _sync_wheel_radius_props(scene) -> None:
     callback doesn't fire and re-scale)."""
     try:
         scene.ce_wheel_radius_syncing = True
+        first_r = 0.0
         for obj in get_car_objects():
             tag = obj.get(_CAR_TAG, "")
             if not tag.startswith("wheel_") or obj.type != "MESH":
@@ -575,10 +612,16 @@ def _sync_wheel_radius_props(scene) -> None:
                 continue
             r = _wheel_current_radius(obj.data)
             if r > 0:
+                first_r = first_r or r
                 try:
                     setattr(scene, f"ce_wheel_radius_{idx}", round(r, 3))
                 except (TypeError, ValueError):
                     pass
+        if first_r > 0:
+            try:
+                scene.ce_all_wheel_radius = round(first_r, 3)
+            except (TypeError, ValueError):
+                pass
     finally:
         scene.ce_wheel_radius_syncing = False
 
@@ -626,6 +669,29 @@ def _ensure_wheels_in_shop(car_name: str) -> int:
 
     if copied:
         print(f"[Car Editor] No wheels tagged — copied {copied} VPMUSTANG99 wheels to SHOP/BMS/{car_name}/")
+    return copied
+
+
+def _ensure_lights_in_shop(car_name: str) -> int:
+    """
+    Refresh the stock light meshes (head/tail/brake/reverse/signals) in
+    SHOP/BMS/{car_name}/ from the VPMUSTANG99 reference — a verbatim copy that
+    preserves the original light-slot geometry. Edited/recoloured lights (when
+    loaded in the scene) are written AFTER this by _export_car_lights, so they
+    still take precedence; this just guarantees a known-good baseline.
+    Returns the number of files copied.
+    """
+    import shutil
+    bms_dst = Folder.Shop.Meshes / car_name
+    bms_dst.mkdir(parents=True, exist_ok=True)
+    src_dir = Folder.Resources.Editor.MeshesCars / "VPMUSTANG99"
+    copied  = 0
+    for fname in ("HLIGHT_H.BMS", "TLIGHT.BMS", "BLIGHT.BMS",
+                  "RLIGHT.BMS", "SLIGHT0.BMS", "SLIGHT1.BMS"):
+        src = src_dir / fname
+        if src.exists():
+            shutil.copy2(src, bms_dst / fname)
+            copied += 1
     return copied
 
 
@@ -977,6 +1043,26 @@ def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = 
           f"(6wheel={six_wheel}, trailer={has_trailer}, siren={has_siren})")
 
 
+def _set_info_colors(car_name: str, colors: list) -> None:
+    """Patch the Colors= line in SHOP/TUNE/{car}.INFO to the paint colour names."""
+    info = Folder.Shop.Tune / f"{car_name}.INFO"
+    if not info.exists() or not colors:
+        return
+    value = ",".join(colors)
+    lines = info.read_text(encoding="ascii").splitlines()
+    out, found = [], False
+    for ln in lines:
+        if ln.startswith("Colors="):
+            out.append(f"Colors={value}")
+            found = True
+        else:
+            out.append(ln)
+    if not found:
+        out.append(f"Colors={value}")
+    info.write_text("\n".join(out) + "\n", encoding="ascii")
+    print(f"[Car Editor] {car_name}.INFO Colors={value}")
+
+
 def _bms_extract_faces_by_texture(bms: dict, keep_names, max_yspan: float = None) -> dict:
     """
     Return a new BMS dict containing only the faces using the named textures.
@@ -1096,6 +1182,216 @@ def _bms_merge_part_into_body(body: dict, part: dict) -> dict:
 _SIREN_LIGHT_TAGS = {"light_red": "REDLIGHT.BMS", "light_blue": "BLUELIGHT.BMS"}
 _SIREN_HOUSING_TAG = "siren_housing"
 
+# Standard car light effect-meshes. Each renders additively in-game (glow/beam)
+# and uses the same absolute-vertex / no-OFFSET format as the siren lenses.
+#   (tag, output BMS filename, default glow texture, panel label)
+_CAR_LIGHT_DEFS = [
+    ("light_head",    "HLIGHT_H.BMS", "FXLTGLOW",      "Headlights"),
+    ("light_tail",    "TLIGHT.BMS",   "FXLTGLOWRED",   "Tail Lights"),
+    ("light_brake",   "BLIGHT.BMS",   "FXLTGLOWRED",   "Brake Lights"),
+    ("light_reverse", "RLIGHT.BMS",   "FXLTGLOW",      "Reverse Lights"),
+    ("light_signalL", "SLIGHT0.BMS",  "FXLTGLOWAMBER", "Signal Left"),
+    ("light_signalR", "SLIGHT1.BMS",  "FXLTGLOWAMBER", "Signal Right"),
+]
+_CAR_LIGHT_FILE  = {t: f for t, f, _, _ in _CAR_LIGHT_DEFS}
+_CAR_LIGHT_TAGS  = [t for t, _, _, _ in _CAR_LIGHT_DEFS]
+
+# Glow-colour catalogue (texture names, friendly labels, RGB tints) and the set of
+# stock GLOBAL.TSH textures live in src/constants/car_assets.py → LightColor,
+# alongside WheelTexture / Vehicle.
+
+
+def _white_base(tex_name: str) -> str:
+    """Strip the colour suffix to get the white source texture name."""
+    u = tex_name.upper()
+    if u.startswith("FXLTGLOW"):
+        return "FXLTGLOW"
+    if u.startswith("FXLTCONE"):
+        return "FXLTCONE"
+    return tex_name
+
+
+def _colored_tex(tex_name: str, suffix: str) -> str:
+    """White base + colour suffix, e.g. (FXLTCONE, 'RED') → 'FXLTCONERED'."""
+    return _white_base(tex_name) + suffix
+
+
+def _tint_dds_a4r4g4b4(src: Path, dst: Path, rgb) -> bool:
+    """Tint an uncompressed 16-bit A4R4G4B4 DDS (the format the FX glow textures
+    use) to a colour, preserving the header + full mip chain. Each pixel's
+    intensity (max RGB nibble) is kept and re-tinted, so a white glow becomes a
+    coloured glow with the same alpha falloff."""
+    try:
+        data = bytearray(src.read_bytes())
+    except OSError:
+        return False
+    if len(data) < 128 or data[:4] != b"DDS ":
+        return False
+    r_f, g_f, b_f = rgb
+    body = data[128:]
+    for i in range(0, len(body) - 1, 2):
+        v = body[i] | (body[i + 1] << 8)
+        a = (v >> 12) & 0xF
+        r = (v >> 8) & 0xF
+        g = (v >> 4) & 0xF
+        b = v & 0xF
+        inten = max(r, g, b)
+        nr = min(15, round(inten * r_f))
+        ng = min(15, round(inten * g_f))
+        nb = min(15, round(inten * b_f))
+        nv = (a << 12) | (nr << 8) | (ng << 4) | nb
+        body[i] = nv & 0xFF
+        body[i + 1] = (nv >> 8) & 0xFF
+    data[128:] = body
+    try:
+        dst.write_bytes(data)
+        return True
+    except OSError:
+        return False
+
+
+def _ensure_glow_texture(tex_name: str, tex_folder: Path) -> None:
+    """Make sure tex_name.DDS exists in tex_folder, generating a tinted variant
+    from its white base (FXLTGLOW / FXLTCONE) when it's one of our custom colours."""
+    path = tex_folder / f"{tex_name}{FileType.DIRECTDRAW_SURFACE}"
+    if path.exists():
+        return
+    base   = _white_base(tex_name)
+    suffix = tex_name.upper()[len(base):]
+    rgb    = LightColor.SUFFIX_RGB.get(suffix)
+    src    = tex_folder / f"{base}{FileType.DIRECTDRAW_SURFACE}"
+    if rgb and src.exists():
+        _tint_dds_a4r4g4b4(src, path, rgb)
+
+
+def _is_car_light(tag: str) -> bool:
+    return tag in _CAR_LIGHT_FILE
+
+
+def _get_car_light_objs():
+    return [o for o in get_car_objects() if _is_car_light(o.get(_CAR_TAG, ""))]
+
+
+def _load_car_lights(car_name: str, src_folder, body_obj, col, tex_folder) -> int:
+    """Load the car's light effect-meshes (head/tail/brake/reverse/signals) as
+    editable parts at their stock positions. Falls back to VPMUSTANG99 per mesh."""
+    mustang = Folder.Resources.Editor.MeshesCars / "VPMUSTANG99"
+    for o in _get_car_light_objs():
+        bpy.data.objects.remove(o, do_unlink=True)
+    n = 0
+    for tag, fname, _, _ in _CAR_LIGHT_DEFS:
+        f = src_folder / fname
+        if not f.exists():
+            f = mustang / fname
+        if not f.exists():
+            continue
+        mesh = _load_bms(f, f"{car_name}.{tag}", tex_folder)
+        if mesh:
+            _add_child_obj(mesh, mesh.name, tag, body_obj, col)
+            n += 1
+    return n
+
+
+def _export_car_lights(car_name: str, light_objs, minimal: bool = False) -> int:
+    """Write the (possibly edited/moved) car lights to SHOP/BMS/{car}/. Like the
+    siren lenses, these store ABSOLUTE verts with no OFFSET flag (the engine
+    ignores mesh_offset for light slots), so fold placement into the vertices.
+
+    In ``minimal`` mode (editing a stock car) we can't pack custom textures or a
+    TSH, so any generated colour (blue/green/coloured cone) is remapped back to a
+    global GLOBAL.TSH texture (its white base) — the light still works, just white."""
+    dst = Folder.Shop.Meshes / car_name
+    dst.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for obj in light_objs:
+        fname = _CAR_LIGHT_FILE.get(obj.get(_CAR_TAG, ""))
+        if not fname:
+            continue
+        try:
+            data = mesh_to_bms_data(obj, bake_location=False)
+            ox, oy, oz = data["mesh_offset"]
+            data["points"] = [(x + ox, y + oy, z + oz) for (x, y, z) in data["points"]]
+            data["mesh_offset"] = (0.0, 0.0, 0.0)
+            data["flags"] &= ~MeshFlags.OFFSET
+            if minimal:
+                data["texture_names"] = [
+                    t if t.upper() in LightColor.GLOBAL_TEXTURES else _white_base(t)
+                    for t in data.get("texture_names", [])
+                ]
+            write_bms(data, dst / fname)
+            n += 1
+        except Exception as exc:
+            print(f"[Car Editor] Light export failed for {fname}: {exc}")
+    return n
+
+
+def _ensure_custom_glow_in_shop(light_objs) -> int:
+    """Stage any custom (non-global) FXLT glow textures referenced by the lights
+    into SHOP/TEX16A so _pack_car_ar bundles them. Returns the count staged."""
+    import shutil
+    tex_folder = Folder.Resources.Editor.Textures
+    tex16a     = Folder.Shop.Textures.Alpha
+    wanted: set = set()
+    for obj in light_objs:
+        for mat in obj.data.materials:
+            if not mat:
+                continue
+            u = mat.name.upper()
+            if u.startswith("FXLT") and u not in LightColor.GLOBAL_TEXTURES:
+                wanted.add(mat.name)
+    if not wanted:
+        return 0
+    tex16a.mkdir(parents=True, exist_ok=True)
+    n = 0
+    for name in wanted:
+        _ensure_glow_texture(name, tex_folder)
+        src = tex_folder / f"{name}{FileType.DIRECTDRAW_SURFACE}"
+        if src.exists():
+            shutil.copy2(src, tex16a / src.name)
+            n += 1
+    return n
+
+
+def _light_color_value(obj) -> str:
+    """The FXLTGLOW* glow texture currently on this light (defaults to FXLTGLOW)."""
+    for mat in obj.data.materials:
+        if mat and mat.name.upper() in LightColor.TEXTURES:
+            return mat.name.upper()
+    return "FXLTGLOW"
+
+
+def _sync_light_props(scene) -> None:
+    """Set ce_light_color_{i}/ce_light_beam/siren colours from the loaded objects."""
+    by_tag = {o.get(_CAR_TAG, ""): o for o in _get_car_light_objs()}
+    try:
+        scene.ce_light_syncing = True
+        for i, tag in enumerate(_CAR_LIGHT_TAGS):
+            obj = by_tag.get(tag)
+            if obj is None:
+                continue
+            try:
+                setattr(scene, f"ce_light_color_{i}", _light_color_value(obj))
+            except (TypeError, ValueError):
+                pass
+        head = by_tag.get("light_head")
+        if head is not None:
+            try:
+                scene.ce_light_beam = float(head.get("light_beam", 1.0))
+            except (TypeError, ValueError):
+                pass
+        # Siren lenses (loaded via Load Siren Lights).
+        siren = {o.get(_CAR_TAG, ""): o for o in _get_siren_light_objs()}
+        for tag, prop in (("light_red", "ce_siren_color_red"),
+                          ("light_blue", "ce_siren_color_blue")):
+            obj = siren.get(tag)
+            if obj is not None:
+                try:
+                    setattr(scene, prop, _light_color_value(obj))
+                except (TypeError, ValueError):
+                    pass
+    finally:
+        scene.ce_light_syncing = False
+
 
 def _is_siren_light(tag: str) -> bool:
     return tag in _SIREN_LIGHT_TAGS
@@ -1111,6 +1407,29 @@ def _get_siren_light_objs():
 
 def _get_siren_housing_objs():
     return [o for o in get_car_objects() if o.get(_CAR_TAG, "") == _SIREN_HOUSING_TAG]
+
+
+def _body_roof_anchor(body_obj):
+    """
+    (top_z, x, y) of the body's high region (the cabin peak) in world space.
+
+    Uses the actual mesh vertices, not the bounding box: for low/wedge cars (e.g.
+    Panoz) the highest point is the cockpit, which sits well forward of the bbox
+    centre — placing a roof bar at bbox-centre would float it over the lower rear
+    deck. We average the X/Y of vertices within the top ~20% of the height so the
+    bar lands over the cabin for both boxy and wedge shapes.
+    """
+    mw = body_obj.matrix_world
+    vs = [mw @ v.co for v in body_obj.data.vertices]
+    if not vs:
+        c = [mw @ mathutils.Vector(b) for b in body_obj.bound_box]
+        return (max(p.z for p in c), 0.0, sum(p.y for p in c) / 8.0)
+    top_z = max(v.z for v in vs)
+    band  = max(0.05, (top_z - min(v.z for v in vs)) * 0.20)
+    near  = [v for v in vs if v.z >= top_z - band]
+    rx = sum(v.x for v in near) / len(near)
+    ry = sum(v.y for v in near) / len(near)
+    return (top_z, rx, ry)
 
 
 def _export_placed_siren_lights(car_name: str, light_objs) -> int:
@@ -1268,7 +1587,7 @@ def _ensure_siren_audio_in_shop(car_name: str) -> bool:
     return True
 
 
-def _build_car_tsh(car_name: str, car_objects) -> None:
+def _build_car_tsh(car_name: str, car_objects, paint_variants: bool = True) -> list:
     """
     Write SHOP/MTL/{car_name}.TSH from ALL textures that will end up in the AR:
 
@@ -1277,10 +1596,17 @@ def _build_car_tsh(car_name: str, car_objects) -> None:
        export (e.g. stale VL.BMS, light meshes copied by Init) — those files
        reference textures the game will try to look up, so they must be declared.
 
+    When `paint_variants` and the body's textures have colour siblings (e.g. a car
+    built on VPBULLET → VPBULLETBLUE/RED/WHITE), every variant is declared and the
+    TSH `sibling` column is chained so the game offers them as paint jobs (the
+    engine derives the paint-job count from this chain via GetVariationCount).
+
     Rules:
     - CARBOTTOM is in GLOBAL.TSH — skip it here.
-    - Wheel textures (contain "WHL") need flag 't' (loaded from TEX16A/).
-    - Everything else: standard body texture entry.
+    - Wheel / cop textures (WHL, *TOPLIGHT, VPCOPLIGHTS) load from TEX16A ('t').
+    - FXLTGLOW* are global glow ('g'); everything else is a body texture ('d').
+
+    Returns the list of paint colour names (e.g. ['Default','Blue',...]) or [].
     """
     seen  = set()
     names = []
@@ -1314,27 +1640,62 @@ def _build_car_tsh(car_name: str, car_objects) -> None:
                 except Exception:
                     pass
 
+    # 3. Paint variants — declare every colour sibling + build the sibling chain.
+    #    ONLY for genuinely custom variant textures. If the variants belong to a
+    #    STOCK car (e.g. a car built on VPBUG textures), the base game's TSH already
+    #    chains them — re-declaring a different chain order conflicts with it and
+    #    makes GetVariationCount loop forever (hang at load). Stock-textured cars
+    #    already get their paint jobs from core for free, so we skip them.
+    import os
+    sibling_map: dict = {}   # NAME(upper) -> sibling name (or "")
+    color_names: list = []
+    if paint_variants:
+        body_obj   = get_car_body()
+        tex_folder = Folder.Resources.Editor.Textures
+        chain = _build_paint_chain(body_obj.data, tex_folder) if body_obj else []
+        common_base = os.path.commonprefix(chain) if chain else ""
+        if len(chain) >= 2 and not _is_original_car(common_base):
+            base = chain[0]
+            suffixes = sorted({n[len(base):] for n in names
+                               if n.startswith(base) and "_" in n})
+            for suf in suffixes:
+                variant_names = [p + suf for p in chain]
+                for i, vn in enumerate(variant_names):
+                    _add(vn)
+                    sibling_map[vn.upper()] = variant_names[i + 1] if i + 1 < len(variant_names) else ""
+            color_names = [_variant_color_name(p, chain) for p in chain]
+        elif len(chain) >= 2:
+            print(f"[Car Editor] Paint variants for '{common_base}' come from the base "
+                  "game TSH — skipping re-chain to avoid a sibling cycle.")
+
     mtl_dst = Folder.Shop.Material
     mtl_dst.mkdir(parents=True, exist_ok=True)
     tsh_path = mtl_dst / f"{car_name}{FileType.TEXTURE_SHEET}"
 
     lines = ["name,neighborhood,h,m,l,flags,alternate,sibling,xres,yres,hexcolor"]
     for n in sorted(names):
-        # Global glow textures (FXLTGLOW*) live in GLOBAL.TSH and need the 'g' flag.
-        # Cop-specific textures we pack into TEX16A (wheel, light-bar lens) need 't'.
-        is_global_glow = n.startswith("FXLT")
+        # Stock glow textures (FXLTGLOW/RED/AMBER, FXLTCONE) live in GLOBAL.TSH and
+        # need the 'g' flag. Our generated colours (blue/green/coloured cone) are
+        # packed into TEX16A, so they need 'tg' (packed + additive glow).
+        is_global_glow = n.upper() in LightColor.GLOBAL_TEXTURES
+        is_custom_glow = n.upper().startswith("FXLT") and not is_global_glow
         if "TOPLIGHT" in n:
             flags = "tg"   # flashing-lens texture: packed (TEX16A) + glow (additive)
         elif "WHL" in n or n == "VPCOPLIGHTS":
             flags = "td"   # packed normal texture (wheel, housing lens)
+        elif is_custom_glow:
+            flags = "tg"   # generated colour: packed (TEX16A) + glow (additive)
         elif is_global_glow:
             flags = "g"
         else:
             flags = "d"
-        lines.append(f"{n},car,0,0,1,{flags},,,64,64,000000")
+        sib = sibling_map.get(n, "")
+        lines.append(f"{n},car,0,0,1,{flags},,{sib},64,64,000000")
 
     tsh_path.write_text("\n".join(lines) + "\n", encoding="ascii")
-    print(f"[Car Editor] TSH written: {len(names)} texture(s) → {tsh_path.name}")
+    extra = f", {len(color_names)} paint colours" if color_names else ""
+    print(f"[Car Editor] TSH written: {len(names)} texture(s){extra} → {tsh_path.name}")
+    return color_names
 
 
 def _init_new_car_files(car_name: str, display_name: str = "Custom Car") -> list:
@@ -1504,6 +1865,110 @@ class CAR_OT_InitNewCar(bpy.types.Operator):
         return {"FINISHED"}
 
 
+def _validate_car(context) -> tuple:
+    """
+    Pre-flight checks for the loaded car. Returns (errors, warnings) — errors
+    block packing (would crash / not appear in-game), warnings are advisory.
+    """
+    errors:   list = []
+    warnings: list = []
+
+    car_objects = get_car_objects()
+    if not car_objects:
+        return (["No car loaded — use Load Car or New From Template."], [])
+
+    body = get_car_body()
+    if body is None:
+        errors.append("No body part — tag a mesh as the body.")
+    elif not body.data.polygons:
+        errors.append("Body mesh has no faces.")
+
+    nfaces = sum(len(o.data.polygons) for o in car_objects if o.type == "MESH")
+    if nfaces > 12000:
+        warnings.append(f"High poly count ({nfaces} faces) — MM1 may slow or fail to load.")
+
+    # ── Wheels ────────────────────────────────────────────────────────────────
+    wheels = [o for o in car_objects if o.get(_CAR_TAG, "").startswith("wheel_")]
+    idxs = sorted(int(o.get(_CAR_TAG).split("_")[1]) for o in wheels
+                  if o.get(_CAR_TAG, "").split("_")[1].isdigit())
+    if not wheels:
+        warnings.append("No wheels tagged — the car will have none in-game.")
+    else:
+        if len(wheels) not in (4, 6):
+            warnings.append(f"{len(wheels)} wheels — MM1 expects 4 or 6 (others may misbehave).")
+        if idxs != list(range(len(idxs))):
+            warnings.append(f"Wheel indices have gaps {idxs} — use Renumber (fill gaps).")
+
+    # ── Materials / textures ──────────────────────────────────────────────────
+    tex_folder = (Path(context.scene.ce_texture_folder)
+                  if context.scene.ce_texture_folder else Folder.Resources.Editor.Textures)
+    empty_slots = 0
+    missing: set = set()
+    for o in car_objects:
+        if o.type != "MESH":
+            continue
+        if not o.data.materials:
+            empty_slots += 1
+            continue
+        for mat in o.data.materials:
+            if mat is None:
+                empty_slots += 1
+                continue
+            name = mat.name.upper()
+            if name in _GENERIC_TEXTURES or name == "CARBOTTOM" or name.startswith("FXLT"):
+                continue
+            if not (tex_folder / f"{name}.DDS").exists() and not (tex_folder / f"{name}.dds").exists():
+                missing.add(mat.name)
+    if empty_slots:
+        warnings.append(f"{empty_slots} empty material slot(s) — those faces export as CARBOTTOM.")
+    if missing:
+        shown = ", ".join(sorted(missing)[:6]) + ("…" if len(missing) > 6 else "")
+        warnings.append(f"{len(missing)} texture(s) missing from editor TEXTURES: {shown} "
+                        "(must exist in the game or the car renders untextured).")
+
+    # ── Custom car needs a .INFO to appear in the menu ────────────────────────
+    if body is not None:
+        car_name = _base_car_name(body.get("mm_car_name", ""))
+        if car_name and not _is_original_car(car_name):
+            if not (Folder.Shop.Tune / f"{car_name}.INFO").exists():
+                errors.append(f"Custom car '{car_name}' has no .INFO — run 'Init Support "
+                              "Files' or 'Save Loaded Car as Custom' first (else it won't appear in the menu).")
+
+    return errors, warnings
+
+
+class CAR_OT_ValidateCar(bpy.types.Operator):
+    bl_idname      = "car.validate"
+    bl_label       = "Validate Car"
+    bl_description = (
+        "Pre-flight check (body, wheels, textures, material slots, .INFO) so you "
+        "catch problems here instead of via an in-game crash."
+    )
+
+    def execute(self, context):
+        errors, warnings = _validate_car(context)
+        for e in errors:
+            print(f"[Validate] ERROR: {e}")
+        for w in warnings:
+            print(f"[Validate] WARN:  {w}")
+
+        def _draw(menu, _ctx):
+            lay = menu.layout
+            if not errors and not warnings:
+                lay.label(text="All checks passed — ready to pack.", icon="CHECKMARK")
+                return
+            for e in errors:
+                lay.label(text=e, icon="ERROR")
+            for w in warnings:
+                lay.label(text=w, icon="DOT")
+
+        title = ("Validation: all good"
+                 if not errors and not warnings
+                 else f"Validation: {len(errors)} error(s), {len(warnings)} warning(s)")
+        context.window_manager.popup_menu(_draw, title=title, icon="INFO")
+        return {"FINISHED"}
+
+
 class CAR_OT_PackAndStartGame(bpy.types.Operator):
     bl_idname  = "car.pack_and_start_game"
     bl_label   = "Create AR + Start Game"
@@ -1520,6 +1985,16 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         body_obj    = get_car_body()
         if not car_objects or body_obj is None:
             self.report({"ERROR"}, "No car loaded.")
+            return {"CANCELLED"}
+
+        # Pre-flight validation: block on errors, log warnings.
+        v_errors, v_warnings = _validate_car(context)
+        for w in v_warnings:
+            print(f"[Validate] WARN:  {w}")
+        if v_errors:
+            for e in v_errors:
+                print(f"[Validate] ERROR: {e}")
+            self.report({"ERROR"}, f"Can't pack: {v_errors[0]} (run Validate for the full list).")
             return {"CANCELLED"}
 
         car_name = _base_car_name(body_obj["mm_car_name"])
@@ -1552,6 +2027,8 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 continue  # trailer parts are exported separately to {NAME}_TRAILER
             if _is_siren_part(part_tag):
                 continue  # lenses exported separately; housing merged into body below
+            if _is_car_light(part_tag):
+                continue  # head/tail/brake/etc exported separately (absolute verts)
             if minimal and part_tag.startswith("wheel_"):
                 # Existing game cars keep their original wheels (from the base AR);
                 # the original DLP there already provides correct spin pivots.
@@ -1596,6 +2073,23 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
         if body_h.exists():
             for suffix in ("BODY_M.BMS", "BODY_L.BMS", "BODY_VL.BMS", "H.BMS"):
                 _shutil.copy2(body_h, city_dir / suffix)
+
+        # Lights (head/tail/brake/reverse/signals): for a new car, restore the
+        # stock light meshes from VPMUSTANG99 so the slots are always present and
+        # correct. Only when the user has explicitly loaded lights in the scene do
+        # we overlay their edited/recoloured versions on top (opt-in).
+        car_light_objs = _get_car_light_objs()
+        if not minimal:
+            _ensure_lights_in_shop(car_name)
+        if car_light_objs:
+            _export_car_lights(car_name, car_light_objs, minimal=minimal)
+        if not minimal:
+            # Custom colours (blue/green/coloured cone) aren't in GLOBAL.TSH; bundle
+            # their generated DDS — for car lights AND recoloured siren lenses — so
+            # the TSH 'tg' flag can resolve them in-game.
+            staged = _ensure_custom_glow_in_shop(car_light_objs + _get_siren_light_objs())
+            if staged:
+                print(f"[Car Editor] Staged {staged} custom glow texture(s) → TEX16A")
 
         if not minimal:
             # New car: build a self-contained AR — wheels were just exported
@@ -1643,11 +2137,13 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 _ensure_siren_textures_in_shop()       # VPCOP_TOPLIGHT + VPCOPLIGHTS
                 _ensure_siren_audio_in_shop(car_name)  # required: else StartSiren crashes
 
-            _build_car_tsh(car_name, car_objects)
+            paint_on = bool(getattr(context.scene, "ce_export_paint_variants", True))
+            colors = _build_car_tsh(car_name, car_objects, paint_variants=paint_on)
             _set_info_flags(car_name,
                             six_wheel=(city_dir / "WHL4_H.BMS").exists(),
                             has_trailer=add_trailer,
                             has_siren=add_siren)
+            _set_info_colors(car_name, colors)
             _generate_car_dlp_in_shop(car_name)
             _generate_car_bnd_in_shop(car_name)
 
@@ -1855,31 +2351,13 @@ class CAR_OT_LoadCar(bpy.types.Operator):
                 fender_count += 1
 
         # ── Lights (optional, off by default) ────────────────────────────────
+        # Load the standard glow meshes (head/tail/brake/reverse/signals) as
+        # tagged, editable parts so the Lights panel can recolour / move them.
         light_count = 0
         if context.scene.ce_load_lights:
-            _LIGHT_CANDIDATES = (
-                "HLIGHT_H.BMS", "HLIGHT_M.BMS", "HLIGHT.BMS",   # headlights
-                "TLIGHT_H.BMS", "TLIGHT_M.BMS", "TLIGHT.BMS",   # tail lights
-                "RLIGHT_H.BMS", "RLIGHT.BMS",                    # reverse lights
-                "BLIGHT_H.BMS", "BLIGHT.BMS",                    # brake lights
-                "SLIGHT0.BMS",  "SLIGHT1.BMS",                   # side/signal lights
-                "BLUELIGHT.BMS",                                  # police blue light
-                "REDLIGHT.BMS",                                   # red light
-            )
-            found_any = False
-            for candidate in _LIGHT_CANDIDATES:
-                f = car_folder / candidate
-                if not f.exists():
-                    continue
-                found_any = True
-                mesh = _load_bms(f, f"{car_name}.{Path(candidate).stem}", tex_folder)
-                if mesh:
-                    _add_child_obj(mesh, mesh.name, f"light_{Path(candidate).stem}",
-                                   body_obj, col)
-                    light_count += 1
-            if not found_any:
-                print(f"[Car Editor] No light BMS files found in {car_folder} "
-                      f"(checked: {', '.join(_LIGHT_CANDIDATES)})")
+            light_count = _load_car_lights(car_name, car_folder, body_obj, col, tex_folder)
+            if not light_count:
+                print(f"[Car Editor] No light BMS files found in {car_folder} or VPMUSTANG99")
 
         # ── Trailer body (TRAILER_H.BMS) ──────────────────────────────────────
         # Skip if TRAILER_H.BMS was already loaded as the main body
@@ -1943,6 +2421,7 @@ class CAR_OT_LoadCar(bpy.types.Operator):
         # so retuning starts from the truth instead of VPMUSTANG99 defaults.
         _sync_physics_props_from_car(context.scene, _base_car_name(car_name))
         _sync_wheel_radius_props(context.scene)
+        _sync_light_props(context.scene)
 
         # Some BMS files load with one face already pointing at a _DMG material slot.
         # Toggling damage on then immediately off normalises all faces to clean textures.
@@ -2024,6 +2503,10 @@ class CAR_OT_LoadTrailer(bpy.types.Operator):
                 _add_child_obj(wm, wm.name, f"trailer_wheel_{i}", root, col)
                 n_parts += 1
 
+        # Sync the "Trailer Wheels" texture dropdowns to the actual loaded textures
+        # (otherwise they'd hang on a default like Police/Mustang).
+        _sync_trailer_wheel_texture_props(context.scene)
+
         self.report({"INFO"}, f"Loaded trailer ({n_parts} parts) — edit, then Create AR + Start Game.")
         return {"FINISHED"}
 
@@ -2057,21 +2540,11 @@ class CAR_OT_LoadSirenLights(bpy.types.Operator):
         col = _get_or_create_collection(_CAR_COLLECTION)
         context.view_layer.update()
 
-        # Body roof (world space) — parts sit on top, centred fore/aft.
-        body_corners = [body_obj.matrix_world @ mathutils.Vector(c) for c in body_obj.bound_box]
-        body_top_z = max(c.z for c in body_corners)
-        body_cy    = sum(c.y for c in body_corners) / 8.0
+        # Roof anchor from the body MESH (cabin peak + its centre), robust to low
+        # wedge cars where the high point sits forward of the bounding-box centre.
+        top_z, roof_x, roof_y = _body_roof_anchor(body_obj)
 
-        def _drop_on_roof(obj):
-            context.view_layer.update()
-            lc = [obj.matrix_world @ mathutils.Vector(c) for c in obj.bound_box]
-            l_min_z = min(c.z for c in lc)
-            l_cy    = sum(c.y for c in lc) / 8.0
-            obj.location = (obj.location.x,
-                            obj.location.y + (body_cy - l_cy),
-                            obj.location.z + (body_top_z - l_min_z))
-
-        loaded = 0
+        loaded_objs = []
 
         # ── Always-visible housing: extract VPCOPLIGHTS faces from VPCOP body ──
         body_bms = src / "BODY_H.BMS"
@@ -2082,9 +2555,8 @@ class CAR_OT_LoadSirenLights(bpy.types.Operator):
                 if housing_bms["num_surfaces"]:
                     hmesh = build_blender_mesh(f"{car_name}.{_SIREN_HOUSING_TAG}", housing_bms)
                     _apply_materials_to_mesh(hmesh, housing_bms["texture_names"], tex_folder)
-                    hobj = _add_child_obj(hmesh, hmesh.name, _SIREN_HOUSING_TAG, body_obj, col)
-                    _drop_on_roof(hobj)
-                    loaded += 1
+                    loaded_objs.append(
+                        _add_child_obj(hmesh, hmesh.name, _SIREN_HOUSING_TAG, body_obj, col))
             except Exception as exc:
                 print(f"[Car Editor] Housing extraction failed: {exc}")
 
@@ -2097,15 +2569,36 @@ class CAR_OT_LoadSirenLights(bpy.types.Operator):
             mesh = _load_bms(f, f"{car_name}.{tag}", tex_folder)
             if not mesh:
                 continue
-            obj = _add_child_obj(mesh, mesh.name, tag, body_obj, col)
-            _drop_on_roof(obj)
-            loaded += 1
+            loaded_objs.append(_add_child_obj(mesh, mesh.name, tag, body_obj, col))
 
-        if not loaded:
+        if not loaded_objs:
             self.report({"ERROR"}, "No siren meshes found in VPCOP.")
             return {"CANCELLED"}
 
+        # Place the whole rig as ONE group, anchored on the housing (the bar): its
+        # bottom rests on the roof and its centre is over the cabin; the lenses keep
+        # their position relative to the bar instead of each drifting independently.
+        context.view_layer.update()
+        anchor = next((o for o in loaded_objs if o.get(_CAR_TAG) == _SIREN_HOUSING_TAG),
+                      loaded_objs[0])
+        ac = [anchor.matrix_world @ mathutils.Vector(c) for c in anchor.bound_box]
+        dx = roof_x - sum(c.x for c in ac) / 8.0
+        dy = roof_y - sum(c.y for c in ac) / 8.0
+        dz = top_z - min(c.z for c in ac)
+        for o in loaded_objs:
+            o.location = (o.location.x + dx, o.location.y + dy, o.location.z + dz)
+
+        loaded = len(loaded_objs)
         context.scene.ce_add_siren = True
+
+        # Stock REDLIGHT/BLUELIGHT both carry a red glow; tint the blue lens blue so
+        # the bar reads red+blue by default. The Lights panel can recolour either.
+        try:
+            bpy.ops.car.set_light_color("EXEC_DEFAULT", part_tag="light_blue",
+                                        color="FXLTGLOWBLUE")
+        except Exception:
+            pass
+        _sync_light_props(context.scene)
 
         # Select all siren parts so a single grab (G) moves the whole bar together.
         bpy.ops.object.select_all(action="DESELECT")
@@ -2117,7 +2610,133 @@ class CAR_OT_LoadSirenLights(bpy.types.Operator):
 
         self.report({"INFO"},
                     "Loaded siren bar (housing + red/blue flash) on the roof — grab (G) to "
-                    "position all, then Create AR + Start Game. Horn toggles the siren.")
+                    "position all, then Create AR + Start Game. Recolour in the Lights panel; "
+                    "horn toggles the siren.")
+        return {"FINISHED"}
+
+
+# ── Operator: Load Car Lights ─────────────────────────────────────────────────
+
+class CAR_OT_LoadCarLights(bpy.types.Operator):
+    bl_idname      = "car.load_car_lights"
+    bl_label       = "Load Lights"
+    bl_description = (
+        "Load the car's head / tail / brake / reverse / signal glow meshes as "
+        "editable parts (from this car, or VPMUSTANG99 as a fallback). They render "
+        "as additive glows in-game; move, recolour, then Create AR + Start Game."
+    )
+
+    def execute(self, context):
+        body = get_car_body()
+        if body is None:
+            self.report({"ERROR"}, "Load a car first, then load lights.")
+            return {"CANCELLED"}
+        car_name   = _base_car_name(body["mm_car_name"])
+        tex_folder = (Path(context.scene.ce_texture_folder)
+                      if context.scene.ce_texture_folder else Folder.Resources.Editor.Textures)
+        src = Path(body.get("mm_car_folder", "")) if body.get("mm_car_folder") else None
+        if not (src and src.is_dir()):
+            src = Folder.Resources.Editor.MeshesCars / "VPMUSTANG99"
+
+        col = _get_or_create_collection(_CAR_COLLECTION)
+        n = _load_car_lights(car_name, src, body, col, tex_folder)
+        if not n:
+            self.report({"ERROR"}, "No light meshes found for this car or VPMUSTANG99.")
+            return {"CANCELLED"}
+        _sync_light_props(context.scene)
+        self.report({"INFO"},
+                    f"Loaded {n} light(s). Edit/recolour in the Lights panel, then "
+                    "Create AR + Start Game.")
+        return {"FINISHED"}
+
+
+class CAR_OT_SetLightColor(bpy.types.Operator):
+    bl_idname      = "car.set_light_color"
+    bl_label       = "Set Light Colour"
+    bl_description = "Swap this light's glow colour (white / red / amber)"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    part_tag : bpy.props.StringProperty()
+    color    : bpy.props.StringProperty(default="FXLTGLOW")
+
+    def execute(self, context):
+        objs = [o for o in get_car_objects()
+                if o.get(_CAR_TAG) == self.part_tag and o.type == "MESH"]
+        if not objs:
+            return {"CANCELLED"}
+        tex_folder = (Path(context.scene.ce_texture_folder)
+                      if context.scene.ce_texture_folder else Folder.Resources.Editor.Textures)
+        # color is the chosen glow texture (FXLTGLOW / ...RED / ...BLUE / …).
+        suffix = self.color.upper().replace("FXLTGLOW", "", 1)
+        # Recolour BOTH the glow billboard AND the beam cone so Blender and the
+        # game agree. Coloured variants are generated on demand from the white
+        # source (so blue/green and coloured cones exist even though the game ships
+        # only white/red/amber).
+        for obj in objs:
+            mesh = obj.data
+            for i, mat in enumerate(mesh.materials):
+                if not mat:
+                    continue
+                u = mat.name.upper()
+                if u.startswith("FXLTGLOW") or u.startswith("FXLTCONE"):
+                    target = _colored_tex(mat.name, suffix)
+                    _ensure_glow_texture(target, tex_folder)
+                    mesh.materials[i] = _build_material(target, tex_folder)
+        return {"FINISHED"}
+
+
+class CAR_OT_SetBeamLength(bpy.types.Operator):
+    bl_idname      = "car.set_beam_length"
+    bl_label       = "Set Headlight Beam Length"
+    bl_description = "Lengthen / shorten the headlight beam cone"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    factor : bpy.props.FloatProperty(default=1.0, min=0.2, max=4.0)
+
+    def execute(self, context):
+        objs = [o for o in get_car_objects()
+                if o.get(_CAR_TAG) == "light_head" and o.type == "MESH"]
+        if not objs:
+            return {"CANCELLED"}
+        obj   = objs[0]
+        cur   = float(obj.get("light_beam", 1.0)) or 1.0
+        ratio = self.factor / cur
+        if abs(ratio - 1.0) > 1e-3:
+            mesh = obj.data
+            # Only the beam CONE (FXLTCONE) should stretch; the glow billboard
+            # (FXLTGLOW) marks the headlight position and must stay put. Collect the
+            # verts used by cone faces and scale just those.
+            cone_slots = {i for i, m in enumerate(mesh.materials)
+                          if m and m.name.upper().startswith("FXLTCONE")}
+            cone_verts = set()
+            if cone_slots:
+                for poly in mesh.polygons:
+                    if poly.material_index in cone_slots:
+                        cone_verts.update(poly.vertices)
+            bm = bmesh.new(); bm.from_mesh(mesh)
+            bm.verts.ensure_lookup_table()
+            target = ([bm.verts[i] for i in cone_verts] if cone_verts else list(bm.verts))
+            # The beam runs along Blender Y (game fore/aft); the headlight (near)
+            # end sits at the largest Y. Anchor there so the cone grows forward only.
+            anchor = max(v.co.y for v in target)
+            for v in target:
+                v.co.y = anchor + (v.co.y - anchor) * ratio
+            bm.to_mesh(mesh); bm.free(); mesh.update()
+        obj["light_beam"] = self.factor
+        return {"FINISHED"}
+
+
+class CAR_OT_ToggleLightGlows(bpy.types.Operator):
+    bl_idname      = "car.toggle_light_glows"
+    bl_label       = "Toggle Light Glows"
+    bl_description = "Show/hide the light & siren glow meshes in the viewport (they're additive in-game; hide them while editing the body)"
+
+    def execute(self, context):
+        hide = bool(context.scene.ce_hide_light_glows)
+        for o in get_car_objects():
+            tag = o.get(_CAR_TAG, "")
+            if _is_car_light(tag) or _is_siren_part(tag):
+                o.hide_set(hide)
         return {"FINISHED"}
 
 
@@ -2181,6 +2800,8 @@ class CAR_OT_ExportCar(bpy.types.Operator):
                 continue  # trailer is packed via Create AR + Start Game
             if _is_siren_part(part_tag):
                 continue  # siren parts are handled during Create AR + Start Game
+            if _is_car_light(part_tag):
+                continue  # car lights are handled during Create AR + Start Game
             src_file = obj.data.get("bms_source_file", "")
 
             if src_file:
@@ -2774,8 +3395,8 @@ class CAR_OT_ClearShop(bpy.types.Operator):
         import shutil
         body_obj = get_car_body()
         if body_obj is None:
-            self.report({"ERROR"}, "No car loaded.")
-            return {"CANCELLED"}
+            self.report({"INFO"}, "No car loaded — nothing to clear.")
+            return {"FINISHED"}
         car_name = _base_car_name(body_obj.get("mm_car_name", ""))
         shop_dir = Folder.Shop.Meshes / car_name
         if not shop_dir.exists():
@@ -2875,6 +3496,68 @@ def _mirror_wheel_mesh(src_mesh: bpy.types.Mesh, new_name: str) -> bpy.types.Mes
 
 # ── Operator: New Car From Template ──────────────────────────────────────────
 
+class CAR_OT_MakeCustomCopy(bpy.types.Operator):
+    bl_idname      = "car.make_custom_copy"
+    bl_label       = "Save as Custom Car"
+    bl_description = (
+        "Convert the loaded car into an editable CUSTOM car under the Menu Name. "
+        "Custom cars use the full export pipeline, so siren / trailer / paint / "
+        "physics all work (stock cars only override geometry). The original car is "
+        "left untouched. After this, click Create AR + Start Game."
+    )
+    bl_options = {"REGISTER", "UNDO"}
+
+    def execute(self, context):
+        scene = context.scene
+        body  = get_car_body()
+        if body is None:
+            self.report({"ERROR"}, "Load a car first.")
+            return {"CANCELLED"}
+
+        display = (scene.ce_car_display_name or "").strip()
+        if not display:
+            self.report({"ERROR"}, "Set a Menu Name first (Create panel).")
+            return {"CANCELLED"}
+
+        new_name  = "VP" + display.upper().replace(" ", "")
+        orig_name = _base_car_name(body.get("mm_car_name", ""))
+        if new_name == orig_name:
+            self.report({"ERROR"}, "Menu Name matches the loaded car — pick a different name for the copy.")
+            return {"CANCELLED"}
+        if _is_original_car(new_name):
+            self.report({"ERROR"}, f"{new_name} is a stock car name — choose a different Menu Name.")
+            return {"CANCELLED"}
+
+        # Rename the loaded car to the custom name (only the body carries the name).
+        body["mm_car_name"]   = new_name
+        body["mm_car_folder"] = ""
+        body["mm_body_file"]  = "BODY_H.BMS"
+        try:
+            body.name = new_name
+        except Exception:
+            pass
+
+        # Build support files for the new name, then override physics with the
+        # original car's MMCARSIM so the copy drives like the source.
+        msgs = _init_new_car_files(new_name, display)
+        base_carsim = _base_carsim_path(orig_name)
+        if base_carsim is not None:
+            import shutil
+            shutil.copy2(base_carsim, Folder.Shop.Tune / f"{new_name}.MMCARSIM")
+            msgs.append(f"physics sourced from {orig_name}")
+
+        _paint_variant_cache.clear()
+        scene.ce_paint_variant = new_name
+        _sync_physics_props_from_car(scene, new_name)
+        for m in msgs:
+            print(f"[Custom Copy] {m}")
+
+        self.report({"INFO"},
+                    f"Saved as custom car '{new_name}' (from {orig_name}). "
+                    "Now click Create AR + Start Game — siren/trailer/paint/physics all export.")
+        return {"FINISHED"}
+
+
 class CAR_OT_NewFromTemplate(bpy.types.Operator):
     bl_idname      = "car.new_from_template"
     bl_label       = "New Car From Template"
@@ -2949,6 +3632,11 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         except Exception:
             pass
 
+        # Auto-create support files (TUNE/.INFO/.MMCARSIM, TSH, BND, …) so the car
+        # is packable straight away — no separate "Init Support Files" step.
+        for m in _init_new_car_files(car_name, display_name or car_name):
+            print(f"[New Car] {m}")
+
         _paint_variant_cache.clear()
         scene.ce_paint_variant = car_name
         scene.ce_show_damage   = False
@@ -2957,7 +3645,7 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         n_wheels = len(wheel_positions)
         self.report({"INFO"},
                     f"Created {car_name}: {car_templates.TEMPLATES[template_id]['label']} "
-                    f"(box body + {n_wheels} wheels).")
+                    f"(box body + {n_wheels} wheels, support files ready).")
         return {"FINISHED"}
 
 
@@ -3188,6 +3876,30 @@ class CAR_OT_SetWheelRadius(bpy.types.Operator):
         # bottom of the tyre stays put instead of sinking into / floating above road.
         if old_r > 0:
             obj.location.z += (self.radius - old_r)
+        return {"FINISHED"}
+
+
+class CAR_OT_SetAllWheelRadius(bpy.types.Operator):
+    """Resize every wheel to one radius (each kept grounded)."""
+    bl_idname      = "car.set_all_wheel_radius"
+    bl_label       = "Set All Wheel Radii"
+    bl_description = "Resize every wheel to this radius at once"
+    bl_options     = {"REGISTER", "UNDO"}
+
+    radius : bpy.props.FloatProperty(default=0.35, min=0.02, max=3.0)
+
+    def execute(self, context):
+        n = 0
+        for o in get_car_objects():
+            if not o.get(_CAR_TAG, "").startswith("wheel_") or o.type != "MESH":
+                continue
+            old_r = _wheel_current_radius(o.data)
+            _scale_wheel_to_radius(o.data, self.radius)
+            if old_r > 0:
+                o.location.z += (self.radius - old_r)
+            n += 1
+        _sync_wheel_radius_props(context.scene)
+        self.report({"INFO"}, f"Set {n} wheel(s) to radius {self.radius:.2f}m.")
         return {"FINISHED"}
 
 
@@ -3815,6 +4527,10 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_LoadCar,
     CAR_OT_LoadTrailer,
     CAR_OT_LoadSirenLights,
+    CAR_OT_LoadCarLights,
+    CAR_OT_SetLightColor,
+    CAR_OT_SetBeamLength,
+    CAR_OT_ToggleLightGlows,
     CAR_OT_ExportCar,
     CAR_OT_ReloadCar,
     CAR_OT_ClearCar,
@@ -3829,8 +4545,10 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_RemoveWheel,
     CAR_OT_RenumberWheels,
     CAR_OT_OpenExportFolder,
+    CAR_OT_MakeCustomCopy,
     CAR_OT_NewFromTemplate,
     CAR_OT_InitNewCar,
+    CAR_OT_ValidateCar,
     CAR_OT_PackAndStartGame,
     CAR_OT_MirrorWheel,
     CAR_OT_MirrorAllWheels,
@@ -3838,6 +4556,7 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_ApplyWheelTexture,
     CAR_OT_ApplyWheelTextureSingle,
     CAR_OT_SetWheelRadius,
+    CAR_OT_SetAllWheelRadius,
     CAR_OT_DebugBMS,
     CAR_OT_SelectPart,
     CAR_OT_ImportTagBody,

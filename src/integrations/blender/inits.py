@@ -36,7 +36,10 @@ from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLA
 from src.integrations.blender.panels.prop_sidebar import PROP_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, PROP_NAME_ITEMS_FROM, PROP_NAME_ITEMS_TO, _update_prop_form
 from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_CLASSES
-from src.integrations.blender.operators.car_editor import CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv
+from src.integrations.blender.operators.car_editor import (
+    CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv, _CAR_LIGHT_TAGS,
+)
+from src.constants.car_assets import LightColor
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling, update_texture_category, OBJECT_OT_RefreshCurrentTextures
 from src.integrations.blender.modeling.texture_catalog import CATEGORY_ITEMS
@@ -194,6 +197,7 @@ SCENE_PROPERTIES = [
     "ce_car_folder",
     "ce_texture_folder",
     "ce_load_lights",
+    "ce_show_parts",
     "ce_auto_reload",
     "ce_assign_slot",
     "ce_face_tile_x",
@@ -208,6 +212,7 @@ SCENE_PROPERTIES = [
     "ce_add_to_city",
     "ce_add_trailer",
     "ce_add_siren",
+    "ce_export_paint_variants",
     "ce_last_export_dir",
     "ce_show_damage",
     "ce_paint_variant",
@@ -218,6 +223,7 @@ SCENE_PROPERTIES = [
     "ce_wheel_texture",
     "ce_wheel_style",
     "ce_wheel_size",
+    "ce_all_wheel_radius",
     "ce_wheel_radius_syncing",
     *[f"ce_wheel_texture_{i}" for i in range(10)],
     *[f"ce_wheel_radius_{i}" for i in range(10)],
@@ -234,6 +240,12 @@ SCENE_PROPERTIES = [
     "ce_phys_cg_x",
     "ce_phys_cg_height",
     "ce_phys_cg_z",
+    "ce_light_beam",
+    "ce_hide_light_glows",
+    "ce_light_syncing",
+    "ce_siren_color_red",
+    "ce_siren_color_blue",
+    *[f"ce_light_color_{i}" for i in range(6)],
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -569,19 +581,23 @@ _WHEEL_STYLE_CACHE = []
 
 
 def _get_wheel_style_items(self, context):
-    """Source cars (in resources/editor/MESHES/CARS) that have a WHL0_H.BMS."""
+    """Source cars (in resources/editor/MESHES/CARS) that have a WHL0_H.BMS,
+    with friendly names and player cars (sensible default) listed first."""
     from src.constants.folder import Folder
+    from src.constants.car_assets import Vehicle
     if _WHEEL_STYLE_CACHE:
         return _WHEEL_STYLE_CACHE
     cars_dir = Folder.Resources.Editor.Meshes / "CARS"
-    items = []
+    found = []
     if cars_dir.is_dir():
-        for d in sorted(p for p in cars_dir.iterdir() if p.is_dir()):
-            if (d / "WHL0_H.BMS").is_file():
-                items.append((d.name, d.name.replace("VP", "", 1).title(),
-                              f"Use {d.name}'s wheel geometry/look"))
+        for d in cars_dir.iterdir():
+            if d.is_dir() and (d / "WHL0_H.BMS").is_file():
+                found.append(d.name)
+    # Catalogue order first (player cars), then any extras alphabetically.
+    found.sort(key=lambda n: (Vehicle.ORDER.get(n.upper(), 10_000), n.upper()))
+    items = [(n, Vehicle.label(n), f"Use {Vehicle.label(n)} wheels") for n in found]
     if not items:
-        items = [("VPMUSTANG99", "Mustang99", "Default wheels")]
+        items = [("VPMUSTANG99", "Ford Mustang", "Default wheels")]
     _WHEEL_STYLE_CACHE[:] = items
     return _WHEEL_STYLE_CACHE
 
@@ -608,12 +624,54 @@ def _make_wheel_radius_update(idx):
     return _update
 
 
+def _update_all_wheel_radius(self, context):
+    if getattr(self, "ce_wheel_radius_syncing", False):
+        return
+    bpy.ops.car.set_all_wheel_radius("EXEC_DEFAULT", radius=self.ce_all_wheel_radius)
+
+
 def _make_trailer_wheel_tex_update(idx):
     def _update(self, context):
         bpy.ops.car.apply_wheel_texture_single(
             "EXEC_DEFAULT", part_tag=f"trailer_wheel_{idx}",
             tex_name=getattr(self, f"ce_trailer_wheel_texture_{idx}")
         )
+    return _update
+
+
+# Single source of truth: colour catalogue from constants, light-slot order from
+# the Car Editor (the part tags it loads, e.g. light_head … light_signalR).
+_LIGHT_COLOR_ITEMS = LightColor.blender_items()
+_LIGHT_PART_TAGS   = list(_CAR_LIGHT_TAGS)
+
+
+def _make_light_color_update(idx):
+    def _update(self, context):
+        if getattr(self, "ce_light_syncing", False):
+            return
+        bpy.ops.car.set_light_color(
+            "EXEC_DEFAULT", part_tag=_LIGHT_PART_TAGS[idx],
+            color=getattr(self, f"ce_light_color_{idx}"),
+        )
+    return _update
+
+
+def _update_light_beam(self, context):
+    if getattr(self, "ce_light_syncing", False):
+        return
+    bpy.ops.car.set_beam_length("EXEC_DEFAULT", factor=self.ce_light_beam)
+
+
+def _update_hide_light_glows(self, context):
+    bpy.ops.car.toggle_light_glows("EXEC_DEFAULT")
+
+
+def _make_siren_color_update(part_tag, prop_name):
+    def _update(self, context):
+        if getattr(self, "ce_light_syncing", False):
+            return
+        bpy.ops.car.set_light_color(
+            "EXEC_DEFAULT", part_tag=part_tag, color=getattr(self, prop_name))
     return _update
 
 
@@ -981,6 +1039,11 @@ def register_scene_properties() -> None:
         description="Also load headlight / taillight BMS files when loading a car",
         default=False,
     )
+    bpy.types.Scene.ce_show_parts = bpy.props.BoolProperty(
+        name="Show Parts",
+        description="Expand the per-part list (body, wheels, lights, trailer)",
+        default=False,
+    )
     bpy.types.Scene.ce_auto_reload = bpy.props.BoolProperty(
         name="Auto-Reload After Export",
         description="Automatically reimport the exported BMS files after exporting",
@@ -1033,6 +1096,13 @@ def register_scene_properties() -> None:
             "Best on a large/semi-style tractor"
         ),
         default=False,
+    )
+    bpy.types.Scene.ce_export_paint_variants = bpy.props.BoolProperty(
+        name="Paint Variants",
+        description="If the car's body textures have colour siblings (e.g. built on "
+                    "VPBULLET → Blue/Red/White), export the TSH sibling chain so the "
+                    "colours are selectable as paint jobs in the game's car menu",
+        default=True,
     )
     bpy.types.Scene.ce_add_siren = bpy.props.BoolProperty(
         name="Police Lights / Siren",
@@ -1109,6 +1179,12 @@ def register_scene_properties() -> None:
         description="Wheel radius in metres for spawned wheels (New From Template auto-sizes to the body)",
         default=0.35, min=0.1, max=1.5, precision=2,
     )
+    bpy.types.Scene.ce_all_wheel_radius = bpy.props.FloatProperty(
+        name="All Wheels Radius",
+        description="Resize every wheel to this radius — applies as you change it",
+        default=0.35, min=0.05, max=2.0, precision=2,
+        update=_update_all_wheel_radius,
+    )
     bpy.types.Scene.ce_wheel_radius_syncing = bpy.props.BoolProperty(default=False)
     for _i in range(10):
         setattr(
@@ -1142,6 +1218,50 @@ def register_scene_properties() -> None:
                 update=_make_trailer_wheel_tex_update(_i),
             ),
         )
+    # ── Car lights (head/tail/brake/reverse/signals) ─────────────────────────
+    bpy.types.Scene.ce_light_syncing = bpy.props.BoolProperty(default=False)
+    _LIGHT_COLOR_DEFAULTS = [
+        "FXLTGLOW", "FXLTGLOWRED", "FXLTGLOWRED",
+        "FXLTGLOW", "FXLTGLOWAMBER", "FXLTGLOWAMBER",
+    ]
+    for _i in range(6):
+        setattr(
+            bpy.types.Scene,
+            f"ce_light_color_{_i}",
+            bpy.props.EnumProperty(
+                name="Glow Colour",
+                description="Glow colour for this light (white / red / amber)",
+                items=_LIGHT_COLOR_ITEMS,
+                default=_LIGHT_COLOR_DEFAULTS[_i],
+                update=_make_light_color_update(_i),
+            ),
+        )
+    bpy.types.Scene.ce_light_beam = bpy.props.FloatProperty(
+        name="Headlight Beam",
+        description="Lengthen / shorten the headlight beam cone — applies as you change it",
+        default=1.0, min=0.2, max=4.0, precision=2,
+        update=_update_light_beam,
+    )
+    bpy.types.Scene.ce_hide_light_glows = bpy.props.BoolProperty(
+        name="Hide Glows in Viewport",
+        description="Hide the light & siren glow meshes while editing the body (they still render in-game)",
+        default=False,
+        update=_update_hide_light_glows,
+    )
+    bpy.types.Scene.ce_siren_color_red = bpy.props.EnumProperty(
+        name="Siren Light 1",
+        description="Glow colour of the first siren lens",
+        items=_LIGHT_COLOR_ITEMS,
+        default="FXLTGLOWRED",
+        update=_make_siren_color_update("light_red", "ce_siren_color_red"),
+    )
+    bpy.types.Scene.ce_siren_color_blue = bpy.props.EnumProperty(
+        name="Siren Light 2",
+        description="Glow colour of the second siren lens",
+        items=_LIGHT_COLOR_ITEMS,
+        default="FXLTGLOWBLUE",
+        update=_make_siren_color_update("light_blue", "ce_siren_color_blue"),
+    )
     bpy.types.Scene.ce_mirror_x = bpy.props.BoolProperty(
         name="X-Axis Symmetry",
         description="When ON, Edit-Mode vertex/edge/face transforms are mirrored across each part's local X axis",

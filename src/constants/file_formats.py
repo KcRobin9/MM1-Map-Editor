@@ -87,19 +87,48 @@ class PlaneEdgesWinding:
 
 
 class AgiTexParameters:
+    """
+    TexSheet (.TSH) per-texture flag letters → agiTexProp::Flags (agiworld/texsheet.h,
+    consumed in agiworld/getmesh.cpp).
+
+    Which ones actually CHANGE what you see (and why several seem to do nothing):
+
+    Clearly visible:
+      t (TRANSPARENT)  – enables alpha blending (uses the texture's alpha channel).
+      g (ALPHA_GLOW)   – additive/glow blend (headlights, sirens, glass glints).
+      k (CHROMAKEY)    – colour-key transparency (a key colour becomes see-through).
+      n (NOT_LIT)      – full-bright, ignores scene lighting (dashboards, glow, signs).
+      d (DULL_OR_DAMAGED) – marks the damaged-skin variant (used by the damage swap).
+
+    Subtle / situational (easy to miss):
+      w (SNOWABLE)     – only differs in snow weather (snow builds up); also keeps the
+                         texture resident + drops mipmaps.
+      l (LIGHTMAP)     – only relevant where a lightmap pass applies (world geometry).
+      s (SHADOW)       – flags a shadow-blob texture; no effect on normal car skins.
+      e (ROAD_FLOOR_CEILING) – just disables mipmaps; only visible on big tiled surfaces.
+      m (ALWAYS_MODULATE) – multiply by vertex/material colour; only shows if the mesh
+                         actually carries a non-white colour to modulate with.
+
+    Usually NO visible change on a custom car (this is likely what you hit):
+      p (ALWAYS_PERSP_CORRECT) – Open1560's GL renderer is always perspective-correct,
+                         so this is effectively a no-op now.
+      u / v / c / U / V (CLAMP_*) – texture-edge clamp vs wrap. Only matters when UVs
+                         tile beyond [0,1]; car-body UVs sit inside [0,1], so clamping
+                         looks identical to wrapping → no visible difference.
+    """
     TRANSPARENT = "t"
     SNOWABLE = "w"
-    DULL_OR_DAMAGED = "d"    
+    DULL_OR_DAMAGED = "d"
     ALPHA_GLOW = "g"
     NOT_LIT = "n"
     ROAD_FLOOR_CEILING = "e"
     CHROMAKEY = "k"
     LIGHTMAP = "l"
     SHADOW = "s"
-    
+
     ALWAYS_MODULATE = "m"
     ALWAYS_PERSP_CORRECT = "p"
-    
+
     CLAMP_U_OR_BOTH = "u"
     CLAMP_V_OR_BOTH = "v"
     CLAMP_BOTH = "c"

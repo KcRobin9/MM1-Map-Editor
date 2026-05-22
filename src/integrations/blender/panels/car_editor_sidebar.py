@@ -11,6 +11,7 @@ from pathlib import Path
 from src.integrations.blender.operators.car_editor import (
     is_car_obj, get_car_objects, get_car_body, _CAR_TAG,
     _find_paint_variants_cached, _variant_color_name,
+    _CAR_LIGHT_DEFS, _CAR_LIGHT_TAGS,
 )
 from src.constants.folder import Folder
 
@@ -91,17 +92,20 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
             car_name = body_obj["mm_car_name"] if body_obj else "Unknown"
             n_wheels = sum(1 for o in car_objs if o.get(_CAR_TAG, "").startswith("wheel_"))
 
-            row = layout.row()
-            row.label(text=car_name, icon="AUTO")
-            row.label(text=f"{len(car_objs)} parts  ·  {n_wheels} wheels")
+            # Collapsible parts list — the car-name header toggles it.
+            hdr = layout.row(align=True)
+            hdr.prop(scene, "ce_show_parts", text=car_name, emboss=False,
+                     icon="TRIA_DOWN" if scene.ce_show_parts else "TRIA_RIGHT")
+            hdr.label(text=f"{len(car_objs)} parts · {n_wheels} wheels")
 
-            col = layout.column(align=True)
-            for o in sorted(car_objs, key=lambda x: x.get(_CAR_TAG, "")):
-                tag = o.get(_CAR_TAG, "?")
-                r   = col.row(align=True)
-                op  = r.operator("car.select_part", text=_part_label(tag),
-                                 icon=_part_icon(tag), depress=(o == obj))
-                op.part_tag = tag
+            if scene.ce_show_parts:
+                col = layout.column(align=True)
+                for o in sorted(car_objs, key=lambda x: x.get(_CAR_TAG, "")):
+                    tag = o.get(_CAR_TAG, "?")
+                    r   = col.row(align=True)
+                    op  = r.operator("car.select_part", text=_part_label(tag),
+                                     icon=_part_icon(tag), depress=(o == obj))
+                    op.part_tag = tag
 
             # ── Selected part details ─────────────────────────────────────────
             if is_car_obj(obj):
@@ -140,11 +144,10 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
 
         # ── Settings ──────────────────────────────────────────────────────────
         col = layout.column(align=True)
-        col.prop(scene, "ce_add_to_city",  text="Add to City  (SHOP/BMS/<name>)")
         col.prop(scene, "ce_load_lights",  text="Load Lights")
-        col.prop(scene, "ce_auto_reload",  text="Auto-Reload After Export")
         col.prop(scene, "ce_add_trailer",  text="Add Trailer  (stock semi trailer)")
         col.prop(scene, "ce_add_siren",    text="Police Lights / Siren")
+        col.prop(scene, "ce_export_paint_variants", text="Paint Variants  (in-game colour menu)")
 
         layout.separator(factor=0.6)
 
@@ -152,26 +155,26 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         has_last_exp = bool(scene.ce_last_export_dir.strip())
 
         col = layout.column(align=True)
-        row = col.row(align=True)
-        row.enabled = has_car
-        row.operator("car.export_car",        text="Export BMS",  icon="FILE_TICK")
-        row.operator("car.pack_and_start_game", text="AR + Launch", icon="PLAY")
-
-        row2 = col.row(align=True)
-        row2.enabled = has_last_exp
-        row2.operator("car.reload_car", text="Reload Exported", icon="FILE_REFRESH")
+        # Row 1 — export / launch
+        r1 = col.row(align=True)
+        r1.enabled = has_car
+        r1.operator("car.export_car",          text="Export BMS",  icon="FILE_TICK")
+        r1.operator("car.pack_and_start_game", text="AR + Launch", icon="PLAY")
+        # Row 2 — reload / validate (independent enable states)
+        r2 = col.row(align=True)
+        c = r2.row(align=True); c.enabled = has_last_exp
+        c.operator("car.reload_car", text="Reload", icon="FILE_REFRESH")
+        c = r2.row(align=True); c.enabled = has_car
+        c.operator("car.validate", text="Validate", icon="CHECKMARK")
+        # Row 3 — maintenance (Clear Shop is always available; Debug needs a car)
+        r3 = col.row(align=True)
+        r3.operator("car.clear_shop", text="Clear Shop", icon="TRASH")
+        c = r3.row(align=True); c.enabled = has_car
+        c.operator("car.debug_bms",  text="Debug BMS",  icon="INFO")
 
         if has_last_exp:
-            exp_path = Path(scene.ce_last_export_dir)
-            sub = col.row()
-            sub.enabled = False
-            sub.label(text=exp_path.name, icon="TIME")
-            col.operator("car.open_export_folder", text="Open in Explorer", icon="FILE_FOLDER")
-
-        row3 = col.row(align=True)
-        row3.enabled = has_car
-        row3.operator("car.clear_shop", text="Clear Shop", icon="TRASH")
-        row3.operator("car.debug_bms",  text="Debug BMS",  icon="INFO")
+            col.operator("car.open_export_folder",
+                         text=Path(scene.ce_last_export_dir).name, icon="FILE_FOLDER")
 
 
 # ── Panel 2: Edit ─────────────────────────────────────────────────────────────
@@ -303,7 +306,7 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
             is_active = (whl == active_obj)
             row = col.row(align=True)
             op  = row.operator("car.select_part", text=f"WHL{idx}",
-                               icon="MESH_CIRCLE", depress=is_active)
+                               icon="NONE", depress=is_active)
             op.part_tag = tag
             try:
                 row.prop(scene, f"ce_wheel_texture_{int(idx)}", text="")
@@ -325,7 +328,7 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
                 tidx = ttag.split("_")[-1]
                 trow = tcol.row(align=True)
                 op   = trow.operator("car.select_part", text=f"TWHL{tidx}",
-                                     icon="AUTO", depress=(twhl == active_obj))
+                                     icon="NONE", depress=(twhl == active_obj))
                 op.part_tag = ttag
                 try:
                     trow.prop(scene, f"ce_trailer_wheel_texture_{int(tidx)}", text="")
@@ -334,12 +337,13 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
 
         layout.separator(factor=0.6)
 
-        # ── All-wheels texture ────────────────────────────────────────────────
+        # ── All-wheels texture + radius (apply to every wheel at once) ────────
         col = layout.column(align=True)
         col.label(text="All Wheels:", icon="TEXTURE")
         row = col.row(align=True)
         row.prop(scene, "ce_wheel_texture", text="")
         row.operator("car.apply_wheel_texture", text="", icon="CHECKMARK")
+        col.prop(scene, "ce_all_wheel_radius", text="Radius")
 
         layout.separator(factor=0.6)
 
@@ -376,6 +380,97 @@ class VIEW3D_PT_CarEditorWheels(bpy.types.Panel):
         col.operator("car.renumber_wheels", text="Renumber (fill gaps)", icon="SORTALPHA")
 
 
+# ── Panel: Lights ─────────────────────────────────────────────────────────────
+
+class VIEW3D_PT_CarEditorLights(bpy.types.Panel):
+    bl_label       = "Lights"
+    bl_idname      = "VIEW3D_PT_car_editor_lights"
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category    = _CATEGORY
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout   = self.layout
+        scene    = context.scene
+        car_objs = get_car_objects()
+        has_car  = bool(car_objs)
+
+        # Load button (loads this car's glow meshes, or VPMUSTANG99 as fallback)
+        row = layout.row(align=True)
+        row.enabled = has_car
+        row.operator("car.load_car_lights", text="Load Lights", icon="LIGHT")
+
+        if not has_car:
+            layout.label(text="Load a car first", icon="INFO")
+            return
+
+        loaded = {o.get(_CAR_TAG, ""): o for o in car_objs}
+        active = context.active_object
+        light_label = {tag: lbl for tag, _f, _t, lbl in _CAR_LIGHT_DEFS}
+
+        present = [t for t in _CAR_LIGHT_TAGS if t in loaded]
+        has_siren = ("light_red" in loaded) or ("light_blue" in loaded)
+        if not present and not has_siren:
+            layout.separator(factor=0.5)
+            info = layout.column(align=True)
+            info.enabled = False
+            info.label(text="No lights loaded yet.", icon="INFO")
+            return
+
+        layout.separator(factor=0.5)
+
+        # ── Per-light: select + glow colour ───────────────────────────────────
+        if present:
+            col = layout.column(align=True)
+            col.label(text="Lights  (select · colour)", icon="LIGHT")
+            for i, tag in enumerate(_CAR_LIGHT_TAGS):
+                obj = loaded.get(tag)
+                if obj is None:
+                    continue
+                row = col.row(align=True)
+                op  = row.operator("car.select_part", text=light_label.get(tag, tag),
+                                   icon="NONE", depress=(obj == active))
+                op.part_tag = tag
+                row.prop(scene, f"ce_light_color_{i}", text="")
+
+        # ── Headlight beam length ─────────────────────────────────────────────
+        if "light_head" in loaded:
+            layout.separator(factor=0.5)
+            bcol = layout.column(align=True)
+            bcol.label(text="Headlight Beam:", icon="LIGHT_SPOT")
+            bcol.prop(scene, "ce_light_beam", text="Length")
+
+        # ── Siren lenses (if a siren bar is loaded) ───────────────────────────
+        siren_red  = loaded.get("light_red")
+        siren_blue = loaded.get("light_blue")
+        if siren_red or siren_blue:
+            layout.separator(factor=0.5)
+            scol = layout.column(align=True)
+            scol.label(text="Siren  (select · colour)", icon="LIGHT_SUN")
+            if siren_red:
+                row = scol.row(align=True)
+                op  = row.operator("car.select_part", text="Siren Light 1",
+                                   icon="NONE", depress=(siren_red == active))
+                op.part_tag = "light_red"
+                row.prop(scene, "ce_siren_color_red", text="")
+            if siren_blue:
+                row = scol.row(align=True)
+                op  = row.operator("car.select_part", text="Siren Light 2",
+                                   icon="NONE", depress=(siren_blue == active))
+                op.part_tag = "light_blue"
+                row.prop(scene, "ce_siren_color_blue", text="")
+        else:
+            layout.separator(factor=0.3)
+            srow = layout.row(align=True)
+            srow.operator("car.load_siren_lights", text="Load Siren Lights", icon="LIGHT_SUN")
+
+        # ── Viewport visibility ───────────────────────────────────────────────
+        layout.separator(factor=0.5)
+        layout.prop(scene, "ce_hide_light_glows", text="Hide Glows in Viewport",
+                    icon="HIDE_ON" if scene.ce_hide_light_glows else "HIDE_OFF")
+
+
 # ── Panel 4: Create ───────────────────────────────────────────────────────────
 
 class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
@@ -396,15 +491,26 @@ class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
         has_name = bool(scene.ce_car_display_name.strip())
         has_body = get_car_body() is not None
 
-        # ── Menu Name (shared between both creation paths) ────────────────────
-        col = layout.column(align=True)
-        col.label(text="Menu Name:", icon="TEXT")
-        col.prop(scene, "ce_car_display_name", text="")
+        # ── Car / Menu Name (shared between both creation paths) ──────────────
         display = scene.ce_car_display_name.strip()
-        derived = ("VP" + display.upper().replace(" ", "")) if display else "VP???"
-        sub = col.row()
-        sub.enabled = False
-        sub.label(text=f"Filename: {derived}", icon="OUTLINER_OB_FONT")
+        derived = ("VP" + display.upper().replace(" ", "")) if display else ""
+        col = layout.column(align=True)
+        hdr = col.row(align=True)
+        hdr.label(text="Car/Menu Name", icon="TEXT")
+        if derived:
+            sub = hdr.row()
+            sub.enabled = False
+            sub.label(text=f"({derived})")
+        col.prop(scene, "ce_car_display_name", text="")
+
+        layout.separator(factor=0.5)
+
+        # ── Copy a loaded car into an editable custom car ─────────────────────
+        box0 = layout.box()
+        box0.label(text="Copy Loaded Car → Custom", icon="DUPLICATE")
+        r0 = box0.row()
+        r0.enabled = has_body and has_name
+        r0.operator("car.make_custom_copy", text="Save Loaded Car as Custom", icon="FILE_TICK")
 
         layout.separator(factor=0.8)
 
@@ -414,31 +520,16 @@ class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
 
         col = box.column(align=True)
         col.prop(scene, "ce_template", text="")
-        spec = TEMPLATES.get(scene.ce_template)
-        if spec:
-            w, h, l, _, _, _ = spec["body"]
-            sub = col.column(align=True)
-            sub.enabled = False
-            sub.label(text=f"Body  W×H×L  ({w:.2f} × {h:.2f} × {l:.2f})", icon="MESH_CUBE")
-            n_w = len(spec["custom_wheels"]) if "custom_wheels" in spec else 4
-            sub.label(text=f"Wheels: {n_w}  ·  radius {spec['wheel_radius']:.2f}", icon="MESH_CIRCLE")
-
-        box.separator(factor=0.4)
-        box.prop(scene, "ce_wheel_style", text="Wheels")
-        col_tmpl = box.column(align=True)
-        r = col_tmpl.row()
+        col.prop(scene, "ce_wheel_style", text="Wheels")
+        r = col.row()
         r.enabled = has_name
         r.operator("car.new_from_template", text="Create Car in Blender", icon="ADD")
-        r2 = col_tmpl.row()
-        r2.enabled = has_name
-        r2.operator("car.init_new_car", text="Init Support Files", icon="IMPORT")
 
         layout.separator(factor=0.6)
 
         # ── Import External ───────────────────────────────────────────────────
         box2 = layout.box()
         box2.label(text="Import External  (.dae / .fbx / …)", icon="IMPORT")
-        box2.label(text="Select your meshes in the scene first.", icon="INFO")
 
         col = box2.column(align=True)
         r = col.row()
@@ -537,6 +628,7 @@ CAR_EDITOR_PANEL_CLASSES = [
     VIEW3D_PT_CarEditorCar,
     VIEW3D_PT_CarEditorEdit,
     VIEW3D_PT_CarEditorWheels,
+    VIEW3D_PT_CarEditorLights,
     VIEW3D_PT_CarEditorCreate,
     VIEW3D_PT_CarEditorPhysics,
 ]
