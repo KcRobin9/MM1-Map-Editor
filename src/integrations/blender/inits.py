@@ -245,6 +245,13 @@ SCENE_PROPERTIES = [
     "ce_light_syncing",
     "ce_siren_color_red",
     "ce_siren_color_blue",
+    "ce_info_description",
+    "ce_info_colors",
+    "ce_info_horsepower",
+    "ce_info_topspeed",
+    "ce_info_durability",
+    "ce_info_mass",
+    "ce_audio_profile",
     *[f"ce_light_color_{i}" for i in range(6)],
     # Street Editor — presets
     "st_street_preset",
@@ -575,6 +582,27 @@ def _get_wheel_texture_items(self, context):
     from src.constants.folder import Folder
     from src.constants.car_assets import WheelTexture
     return WheelTexture.blender_items(Folder.Resources.Editor.Textures)
+
+
+def _get_audio_profile_items(self, context):
+    """Source cars with a .MMPLAYERCARAUDIO (engine + horn sounds) — the chosen one
+    is copied to the custom car so it sounds like that vehicle."""
+    from src.constants.folder import Folder
+    from src.constants.car_assets import Vehicle
+
+    seen = {}
+    for d in (Folder.BASE / "development" / "core" / "TUNE",
+              Folder.Resources.Editor.Tune.CarSimulation.parent):
+        try:
+            for f in d.iterdir():
+                if f.suffix.upper() == ".MMPLAYERCARAUDIO":
+                    seen.setdefault(f.stem.upper(), f.stem)
+        except OSError:
+            pass
+
+    stems = sorted(seen.values(), key=lambda s: (Vehicle.ORDER.get(s.upper(), 10_000), s.upper()))
+    items = [(s, Vehicle.label(s), f"Use {Vehicle.label(s)} engine + horn sounds") for s in stems]
+    return items or [("VPMUSTANG99", "Ford Mustang", "")]
 
 
 _WHEEL_STYLE_CACHE = []
@@ -1261,6 +1289,38 @@ def register_scene_properties() -> None:
         items=_LIGHT_COLOR_ITEMS,
         default="FXLTGLOWBLUE",
         update=_make_siren_color_update("light_blue", "ce_siren_color_blue"),
+    )
+
+    # ── Car Info (.INFO menu stats) ───────────────────────────────────────────
+    bpy.types.Scene.ce_info_description = bpy.props.StringProperty(
+        name="Description",
+        description="Name shown in the in-game car-select menu",
+        default="Custom Car",
+    )
+    bpy.types.Scene.ce_info_colors = bpy.props.StringProperty(
+        name="Colors",
+        description="Comma-separated colour names shown in the menu. Auto-set when paint "
+                    "variants are exported; used as-is otherwise",
+        default="Red",
+    )
+    bpy.types.Scene.ce_info_horsepower = bpy.props.IntProperty(
+        name="Horsepower", description="Menu horsepower stat", default=320, min=0, max=2000,
+    )
+    bpy.types.Scene.ce_info_topspeed = bpy.props.IntProperty(
+        name="Top Speed", description="Menu top-speed stat", default=200, min=0, max=500,
+    )
+    bpy.types.Scene.ce_info_durability = bpy.props.IntProperty(
+        name="Durability", description="How much damage the car takes before wrecking",
+        default=500000, min=0, max=10_000_000,
+    )
+    bpy.types.Scene.ce_info_mass = bpy.props.IntProperty(
+        name="Mass", description="Car mass (kg) reported in the menu .INFO",
+        default=1500, min=100, max=20_000,
+    )
+    bpy.types.Scene.ce_audio_profile = bpy.props.EnumProperty(
+        name="Engine Sound",
+        description="Which car's engine + horn sounds the custom car uses (copied on AR + Launch)",
+        items=_get_audio_profile_items,
     )
     bpy.types.Scene.ce_mirror_x = bpy.props.BoolProperty(
         name="X-Axis Symmetry",

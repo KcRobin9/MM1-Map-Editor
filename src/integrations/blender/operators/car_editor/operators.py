@@ -28,7 +28,7 @@ from src.integrations.blender.operators.car_editor.common import (
 )
 from src.integrations.blender.operators.car_editor.lights import (
     _body_roof_anchor, _colored_tex, _ensure_custom_glow_in_shop, _ensure_glow_texture,
-    _ensure_siren_audio_in_shop, _ensure_siren_lights_in_shop, _ensure_siren_textures_in_shop,
+    _ensure_siren_lights_in_shop, _ensure_siren_textures_in_shop,
     _export_car_lights, _export_placed_siren_lights, _get_car_light_objs, _get_siren_housing_objs,
     _get_siren_light_objs, _is_car_light, _is_siren_part, _load_car_lights, _sync_light_props,
 )
@@ -40,7 +40,8 @@ from src.integrations.blender.operators.car_editor.packing import (
     _build_car_tsh, _ensure_dash_in_shop, _ensure_lights_in_shop, _ensure_trailer_in_shop,
     _ensure_wheels_in_shop, _generate_car_bnd_in_shop, _generate_car_dlp_in_shop,
     _generate_trailer_bnd_in_shop, _generate_trailer_dlp_in_shop, _init_new_car_files,
-    _pack_car_ar, _set_info_colors, _set_info_flags,
+    _pack_car_ar, _set_info_colors, _set_info_flags, _apply_info_stats, _sync_info_props_from_car,
+    _ensure_car_audio_in_shop, _generate_shadow_in_shop,
 )
 from src.integrations.blender.operators.car_editor.physics import (
     _apply_physics_in_shop, _base_carsim_path, _sync_physics_props_from_car,
@@ -74,6 +75,7 @@ class CAR_OT_InitNewCar(bpy.types.Operator):
             return {"CANCELLED"}
 
         msgs = _init_new_car_files(car_name, display_name)
+        _sync_info_props_from_car(context.scene, car_name)
         errors = [m for m in msgs if m.startswith("ERROR")]
         for m in msgs:
             print(f"[Car Init] {m}")
@@ -280,10 +282,14 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 else:
                     _ensure_siren_lights_in_shop(car_name)
                 _ensure_siren_textures_in_shop()       # VPCOP_TOPLIGHT + VPCOPLIGHTS
-                _ensure_siren_audio_in_shop(car_name)  # required: else StartSiren crashes
+
+            # Engine + horn sounds: copy the chosen source car's audio profile (and
+            # enable the siren flag when a siren is present, else StartSiren crashes).
+            _ensure_car_audio_in_shop(car_name, context.scene.ce_audio_profile, siren=add_siren)
 
             paint_on = bool(getattr(context.scene, "ce_export_paint_variants", True))
             colors = _build_car_tsh(car_name, car_objects, paint_variants=paint_on)
+            _apply_info_stats(car_name, context.scene)
             _set_info_flags(car_name,
                             six_wheel=(city_dir / "WHL4_H.BMS").exists(),
                             has_trailer=add_trailer,
@@ -291,6 +297,7 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
             _set_info_colors(car_name, colors)
             _generate_car_dlp_in_shop(car_name)
             _generate_car_bnd_in_shop(car_name)
+            _generate_shadow_in_shop(car_name)   # ground shadow fitted to the body
 
         # Physics override applies in both modes (new cars and existing-car edits).
         if bool(getattr(context.scene, "ce_phys_override", False)):
@@ -475,6 +482,7 @@ class CAR_OT_LoadCar(bpy.types.Operator):
         _sync_physics_props_from_car(context.scene, _base_car_name(car_name))
         _sync_wheel_radius_props(context.scene)
         _sync_light_props(context.scene)
+        _sync_info_props_from_car(context.scene, _base_car_name(car_name))
 
         # Some BMS files load with one face already pointing at a _DMG material slot.
         # Toggling damage on then immediately off normalises all faces to clean textures.
@@ -1486,6 +1494,7 @@ class CAR_OT_MakeCustomCopy(bpy.types.Operator):
         # Build support files for the new name, then override physics with the
         # original car's MMCARSIM so the copy drives like the source.
         msgs = _init_new_car_files(new_name, display)
+        _sync_info_props_from_car(scene, new_name)
         base_carsim = _base_carsim_path(orig_name)
         if base_carsim is not None:
             shutil.copy2(base_carsim, Folder.Shop.Tune / f"{new_name}.MMCARSIM")
@@ -1581,6 +1590,7 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         # is packable straight away — no separate "Init Support Files" step.
         for m in _init_new_car_files(car_name, display_name or car_name):
             print(f"[New Car] {m}")
+        _sync_info_props_from_car(scene, car_name)
 
         _paint_variant_cache.clear()
         scene.ce_paint_variant = car_name

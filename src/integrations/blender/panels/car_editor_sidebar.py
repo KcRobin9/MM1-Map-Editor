@@ -149,6 +149,23 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         col.prop(scene, "ce_add_siren",    text="Police Lights / Siren")
         col.prop(scene, "ce_export_paint_variants", text="Paint Variants  (in-game colour menu)")
 
+        # ── Car Info (.INFO menu stats + engine sound — applied on AR + Launch) ─
+        if has_car:
+            box = layout.box()
+            box.label(text="Car Info  (menu stats)", icon="INFO")
+            col = box.column(align=True)
+            col.prop(scene, "ce_info_description", text="Name")
+            col.prop(scene, "ce_info_colors",      text="Colors")
+            row = col.row(align=True)
+            row.prop(scene, "ce_info_horsepower", text="HP")
+            row.prop(scene, "ce_info_topspeed",   text="Top")
+            row = col.row(align=True)
+            row.prop(scene, "ce_info_mass",       text="Mass")
+            row.prop(scene, "ce_info_durability", text="Durab.")
+
+            box.separator(factor=0.4)
+            box.prop(scene, "ce_audio_profile", text="Engine Sound")
+
         layout.separator(factor=0.6)
 
         # ── Export ────────────────────────────────────────────────────────────

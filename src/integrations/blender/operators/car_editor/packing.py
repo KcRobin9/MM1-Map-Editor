@@ -1,5 +1,6 @@
 """Car Editor — packing module (split from the former car_editor.py monolith)."""
 import os
+import re
 import shutil
 import subprocess
 
@@ -7,6 +8,7 @@ from src.constants.folder import Folder
 from src.constants.car_assets import LightColor
 from src.constants.file_formats import FileType
 from src.integrations.blender.modeling.meshes import read_bms
+from src.integrations.blender.modeling.bms_writer import write_bms
 from src.integrations.blender.modeling.car_bnd import generate_car_bnd
 from src.integrations.blender.modeling.car_dlp import generate_car_dlp, generate_trailer_dlp
 
@@ -383,6 +385,54 @@ def _generate_car_bnd_in_shop(car_name: str) -> bool:
         return False
 
 
+def _generate_shadow_in_shop(car_name: str) -> bool:
+    """
+    Generate SHOP/BMS/{car}/SHADOW_H.BMS sized to the car's footprint so the ground
+    shadow matches the real body instead of a copied VPMUSTANG99 one.
+
+    Takes the stock VPMUSTANG99 shadow as a template (a flat VPFSHDW quad pair at
+    ground level) and rescales its X (width) / Z (length) to the exported body's
+    car-space AABB, keeping the UVs and surface structure intact.
+    """
+    bms_dir  = Folder.Shop.Meshes / car_name
+    body_bms = bms_dir / "BODY_H.BMS"
+    template = Folder.Resources.Editor.MeshesCars / "VPMUSTANG99" / "SHADOW_H.BMS"
+    if not body_bms.exists() or not template.exists():
+        return False
+
+    try:
+        body = read_bms(body_bms)
+        bpts = body["points"]
+        xs = [p[0] for p in bpts]
+        zs = [p[2] for p in bpts]
+        body_x_half  = (max(xs) - min(xs)) / 2.0
+        body_x_mid   = (max(xs) + min(xs)) / 2.0
+        body_z_half  = (max(zs) - min(zs)) / 2.0
+        body_z_mid   = (max(zs) + min(zs)) / 2.0
+
+        shadow = read_bms(template)
+        spts = shadow["points"]
+        sx_half = max(abs(p[0]) for p in spts) or 1.0
+        szs     = [p[2] for p in spts]
+        sz_half = (max(szs) - min(szs)) / 2.0 or 1.0
+        sz_mid  = (max(szs) + min(szs)) / 2.0
+
+        xk = body_x_half / sx_half
+        zk = body_z_half / sz_half
+        shadow["points"] = [
+            (body_x_mid + x * xk, 0.0, body_z_mid + (z - sz_mid) * zk)
+            for (x, _y, z) in spts
+        ]
+
+        write_bms(shadow, bms_dir / "SHADOW_H.BMS")
+        print(f"[Car Editor] Generated shadow → SHOP/BMS/{car_name}/SHADOW_H.BMS "
+              f"(±{body_x_half:.2f} × {body_z_half * 2:.2f})")
+        return True
+    except Exception as exc:
+        print(f"[Car Editor] Shadow generation failed ({exc}); keeping copied shadow")
+        return False
+
+
 def _generate_trailer_bnd_in_shop(car_name: str) -> bool:
     """
     Generate SHOP/BND/{car}_TRAILER_BND.BND sized to the edited trailer body.
@@ -409,6 +459,39 @@ def _generate_trailer_bnd_in_shop(car_name: str) -> bool:
         return False
 
 
+def _patch_info_fields(car_name: str, fields: dict) -> None:
+    """Replace (or append) ``key=value`` lines in SHOP/TUNE/{car}.INFO. Keys not
+    present in the file are appended; everything else is preserved in place."""
+    info = Folder.Shop.Tune / f"{car_name}.INFO"
+    if not info.exists():
+        return
+
+    remaining = {k: v for k, v in fields.items()}
+    out = []
+    for ln in info.read_text(encoding="ascii").splitlines():
+        key = ln.split("=", 1)[0] if "=" in ln else None
+        if key in remaining:
+            out.append(f"{key}={remaining.pop(key)}")
+        else:
+            out.append(ln)
+    for key, value in remaining.items():
+        out.append(f"{key}={value}")
+
+    info.write_text("\n".join(out) + "\n", encoding="ascii")
+
+
+def _read_info_fields(car_name: str) -> dict:
+    """Parse SHOP/TUNE/{car}.INFO into a {key: value} dict (empty if no file)."""
+    info = Folder.Shop.Tune / f"{car_name}.INFO"
+    out = {}
+    if info.exists():
+        for ln in info.read_text(encoding="ascii").splitlines():
+            if "=" in ln:
+                k, v = ln.split("=", 1)
+                out[k.strip()] = v.strip()
+    return out
+
+
 def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = False,
                     has_siren: bool = False) -> None:
     """
@@ -416,45 +499,84 @@ def _set_info_flags(car_name: str, six_wheel: bool = False, has_trailer: bool = 
     VEH_INFO_FLAG bits: 0x1 = 6 wheels, 0x2 = trailer, 0x8 = siren
     (see Open1560 vehinfo.h / mmCar::TranslateFlags).
     """
-    info = Folder.Shop.Tune / f"{car_name}.INFO"
-    if not info.exists():
-        return
-
     flags = (0x1 if six_wheel else 0) | (0x2 if has_trailer else 0) | (0x8 if has_siren else 0)
-    lines = info.read_text(encoding="ascii").splitlines()
-    out, found = [], False
-    for ln in lines:
-        if ln.startswith("Flags="):
-            out.append(f"Flags={flags}")
-            found = True
-        else:
-            out.append(ln)
-    if not found:
-        out.append(f"Flags={flags}")
-
-    info.write_text("\n".join(out) + "\n", encoding="ascii")
+    _patch_info_fields(car_name, {"Flags": flags})
     print(f"[Car Editor] {car_name}.INFO Flags={flags} "
           f"(6wheel={six_wheel}, trailer={has_trailer}, siren={has_siren})")
 
 
 def _set_info_colors(car_name: str, colors: list) -> None:
     """Patch the Colors= line in SHOP/TUNE/{car}.INFO to the paint colour names."""
-    info = Folder.Shop.Tune / f"{car_name}.INFO"
-    if not info.exists() or not colors:
+    if not colors:
         return
     value = ",".join(colors)
-    lines = info.read_text(encoding="ascii").splitlines()
-    out, found = [], False
-    for ln in lines:
-        if ln.startswith("Colors="):
-            out.append(f"Colors={value}")
-            found = True
-        else:
-            out.append(ln)
-    if not found:
-        out.append(f"Colors={value}")
-    info.write_text("\n".join(out) + "\n", encoding="ascii")
+    _patch_info_fields(car_name, {"Colors": value})
     print(f"[Car Editor] {car_name}.INFO Colors={value}")
+
+
+def _apply_info_stats(car_name: str, scene) -> None:
+    """Write the menu/.INFO stat fields from the Car Info panel props. Paint
+    variant Colors (if any) are applied AFTER this by _set_info_colors."""
+    _patch_info_fields(car_name, {
+        "Description": scene.ce_info_description.strip() or car_name,
+        "Colors":      scene.ce_info_colors.strip() or "Red",
+        "Horsepower":  int(scene.ce_info_horsepower),
+        "Top Speed":   int(scene.ce_info_topspeed),
+        "Durability":  int(scene.ce_info_durability),
+        "Mass":        int(scene.ce_info_mass),
+    })
+    print(f"[Car Editor] {car_name}.INFO stats updated "
+          f"(HP={scene.ce_info_horsepower}, top={scene.ce_info_topspeed})")
+
+
+def _sync_info_props_from_car(scene, car_name: str) -> None:
+    """Populate the Car Info panel props from an existing {car}.INFO (no-op if the
+    car has none — stock cars don't carry a .INFO)."""
+    d = _read_info_fields(car_name)
+    if not d:
+        return
+    if "Description" in d:
+        scene.ce_info_description = d["Description"]
+    if "Colors" in d:
+        scene.ce_info_colors = d["Colors"]
+    for key, prop in (("Horsepower", "ce_info_horsepower"), ("Top Speed", "ce_info_topspeed"),
+                      ("Durability", "ce_info_durability"), ("Mass", "ce_info_mass")):
+        try:
+            setattr(scene, prop, int(float(d[key])))
+        except (KeyError, ValueError, TypeError):
+            pass
+
+
+def _audio_profile_path(profile: str):
+    """Locate {profile}.MMPLAYERCARAUDIO (engine + horn sounds) — editor resources
+    first, then the game's development/core/TUNE."""
+    for cand in (
+        Folder.Resources.Editor.Tune.CarSimulation.parent / f"{profile}.MMPLAYERCARAUDIO",
+        Folder.BASE / "development" / "core" / "TUNE" / f"{profile}.MMPLAYERCARAUDIO",
+    ):
+        if cand.exists():
+            return cand
+    return None
+
+
+def _ensure_car_audio_in_shop(car_name: str, profile: str, siren: bool = False) -> bool:
+    """Stage SHOP/TUNE/{car}.MMPLAYERCARAUDIO from the chosen source car's audio
+    profile so the custom car uses that car's engine + horn sounds. When ``siren``
+    is set, enable the siren flag (m_bFlags 4) so StartSiren has a sound object
+    (else it crashes on a null AudSound)."""
+    base = _audio_profile_path(profile) or _audio_profile_path("VPMUSTANG99")
+    if base is None:
+        print(f"[Car Editor] No MMPLAYERCARAUDIO for '{profile}'; audio skipped")
+        return False
+
+    text = base.read_text(encoding="ascii", errors="replace")
+    if siren:
+        text = re.sub(r"(m_bFlags\s+)\d+", r"\g<1>4", text, count=1)
+
+    out = Folder.Shop.Tune / f"{car_name}.MMPLAYERCARAUDIO"
+    out.write_text(text, encoding="ascii")
+    print(f"[Car Editor] Car audio → {out.name} (profile={profile}, siren={siren})")
+    return True
 
 
 def _build_car_tsh(car_name: str, car_objects, paint_variants: bool = True) -> list:

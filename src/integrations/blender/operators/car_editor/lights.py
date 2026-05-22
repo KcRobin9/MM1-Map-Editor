@@ -1,5 +1,4 @@
 """Car Editor — lights module (split from the former car_editor.py monolith)."""
-import re
 import bpy
 import shutil
 import struct
@@ -352,40 +351,3 @@ def _ensure_siren_lights_in_shop(car_name: str) -> int:
 
     print(f"[Car Editor] Police lights staged ({n} mesh(es), roof shift dy={dy:.2f} dz={dz:.2f})")
     return n
-
-
-def _ensure_siren_audio_in_shop(car_name: str) -> bool:
-    """
-    Generate SHOP/TUNE/{car}.MMPLAYERCARAUDIO with the siren audio flag (m_bFlags 4)
-    enabled. Without a player-audio config that has this flag, mmPlayerCarAudio has
-    no siren sound object and StartSiren() crashes (null AudSound::IsPlaying).
-
-    Based on VPMUSTANG99's player audio (standard engine sounds) with m_bFlags set
-    to 4. Sourced from editor resources or development/core.
-    """
-
-    tune_dir = Folder.Shop.Tune
-    tune_dir.mkdir(parents=True, exist_ok=True)
-    out = tune_dir / f"{car_name}.MMPLAYERCARAUDIO"
-
-    base = None
-    for cand in (
-        Folder.Resources.Editor.Tune.CarSimulation.parent / "VPMUSTANG99.MMPLAYERCARAUDIO",
-        Folder.BASE / "development" / "core" / "TUNE" / "VPMUSTANG99.MMPLAYERCARAUDIO",
-        Folder.BASE / "development" / "core" / "TUNE" / "VPCOP.MMPLAYERCARAUDIO",
-    ):
-        if cand.exists():
-            base = cand
-            break
-    if base is None:
-        print("[Car Editor] No base MMPLAYERCARAUDIO found; siren audio skipped (siren may crash)")
-        return False
-
-    text = base.read_text(encoding="ascii", errors="replace")
-    text, n = re.subn(r"(m_bFlags\s+)\d+", r"\g<1>4", text, count=1)
-    if n == 0:
-        print("[Car Editor] m_bFlags not found in player audio; siren audio skipped")
-        return False
-    out.write_text(text, encoding="ascii")
-    print(f"[Car Editor] Siren audio enabled → SHOP/TUNE/{out.name} (m_bFlags 4)")
-    return True
