@@ -16,6 +16,7 @@ import bmesh
 # ── Template catalogue ────────────────────────────────────────────────────────
 
 TEMPLATE_ITEMS = [
+    ("MOTORCYCLE", "Motorcycle", "2-wheel bike (4 physics wheels as 2 coincident pairs)"),
     ("COMPACT", "Compact", "Small 4-wheel car"),
     ("SEDAN",   "Sedan",   "Full-size 4-wheel sedan"),
     ("SPORTS",  "Sports",  "Low 4-wheel sports car"),
@@ -45,6 +46,21 @@ TEMPLATE_ITEMS = [
 #   wheel_prefix     export filename prefix (default "WHL")
 
 _T: dict = {
+    # Motorcycle: the engine ALWAYS simulates 4 physics wheels (WHL0/1 front, WHL2/3
+    # rear), so a bike is faked as two near-coincident pairs on the centreline — a tiny
+    # half-track (±0.05) keeps a (very narrow) lateral base so the body stays upright,
+    # while the overlapping meshes read as one wheel per end. Front pair steers, rear
+    # doesn't — that comes for free from the engine's front/rear axle split.
+    "MOTORCYCLE": dict(
+        hw=0.22, h=1.05, hl=1.05, gc=0.33,
+        cf_frac=0.34, cr_frac=0.66, hood_frac=0.62,
+        wheels=[
+            (-0.01, 0.33, -0.92, 0.33, 0.06),
+            ( 0.01, 0.33, -0.92, 0.33, 0.06),
+            ( 0.01, 0.33,  0.92, 0.33, 0.06),
+            (-0.01, 0.33,  0.92, 0.33, 0.06),
+        ],
+    ),
     "COMPACT": dict(
         hw=0.88, h=1.17, hl=1.78, gc=0.26,
         cf_frac=0.38, cr_frac=0.64, hood_frac=0.48,
@@ -363,6 +379,7 @@ def _make_templates() -> dict:
 TEMPLATES = _make_templates()
 
 _DEFAULT_NAMES = {
+    "MOTORCYCLE": "VPNEWMOTO",
     "COMPACT": "VPNEWCOMPACT",
     "SEDAN":   "VPNEWSEDAN",
     "SPORTS":  "VPNEWSPORTS",

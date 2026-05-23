@@ -185,9 +185,10 @@ class VIEW3D_PT_CarEditorCar(bpy.types.Panel):
         c.operator("car.reload_car", text="Reload", icon="FILE_REFRESH")
         c = r2.row(align=True); c.enabled = has_car
         c.operator("car.validate", text="Validate", icon="CHECKMARK")
-        # Row 3 — maintenance (Clear Shop is always available; Debug needs a car)
+        # Row 3 — maintenance (Clear Shop / Clean AR always available; Debug needs a car)
         r3 = col.row(align=True)
         r3.operator("car.clear_shop", text="Clear Shop", icon="TRASH")
+        r3.operator("car.clean_ar",   text="Clean AR",   icon="TRASH")
         c = r3.row(align=True); c.enabled = has_car
         c.operator("car.debug_bms",  text="Debug BMS",  icon="INFO")
 
@@ -540,6 +541,7 @@ class VIEW3D_PT_CarEditorCreate(bpy.types.Panel):
         col = box.column(align=True)
         col.prop(scene, "ce_template", text="")
         col.prop(scene, "ce_wheel_style", text="Wheels")
+        col.prop(scene, "ce_template_wheel_count", text="Wheel Count  (0 = template default)")
         r = col.row()
         r.enabled = has_name
         r.operator("car.new_from_template", text="Create Car in Blender", icon="ADD")

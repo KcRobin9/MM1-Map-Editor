@@ -43,7 +43,7 @@ from src.integrations.blender.operators.car_editor.packing import (
     _ensure_wheels_in_shop, _generate_car_bnd_in_shop, _generate_car_dlp_in_shop,
     _generate_trailer_bnd_in_shop, _generate_trailer_dlp_in_shop, _init_new_car_files,
     _pack_car_ar, _set_info_colors, _set_info_flags, _apply_info_stats, _sync_info_props_from_car,
-    _ensure_car_audio_in_shop, _generate_shadow_in_shop,
+    _ensure_car_audio_in_shop, _generate_shadow_in_shop, CAR_AR_PREFIX,
 )
 from src.integrations.blender.operators.car_editor.physics import (
     _apply_physics_in_shop, _base_carsim_path, _sync_physics_props_from_car,
@@ -170,6 +170,10 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
 
         errors = []
         housing_objs = _get_siren_housing_objs()
+
+        # Every placed wheel is written as its own WHLn_H.BMS. The reworked Open1560
+        # engine simulates WHL6+ as real free-rolling extra wheels (loaded by name),
+        # so they must ship as separate meshes — no longer baked into the body.
         for obj in car_objects:
             part_tag = obj.get(_CAR_TAG, "unknown")
             if _is_trailer_part(part_tag):
@@ -200,7 +204,7 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
                 # The always-visible siren-bar housing is merged into the body mesh
                 # (MM1 has no spare always-on mesh slot, so VPCOP bakes it into its
                 # body too). Lenses (REDLIGHT/BLUELIGHT) flash on top separately.
-                if part_tag == "body" and housing_objs:
+                if part_tag == "body":
                     for h in housing_objs:
                         bms_data = _bms_merge_part_into_body(
                             bms_data, mesh_to_bms_data(h, bake_location=True))
@@ -302,8 +306,13 @@ class CAR_OT_PackAndStartGame(bpy.types.Operator):
             paint_on = bool(getattr(context.scene, "ce_export_paint_variants", True))
             colors = _build_car_tsh(car_name, car_objects, paint_variants=paint_on)
             _apply_info_stats(car_name, context.scene)
+            # 6-wheel mode makes the engine drive WHL4_H/WHL5_H as the rear axle. Only
+            # flag it for EXACTLY 6 wheels (WHL0-5, no WHL6): then it's a proper truck.
+            # With 7-10 wheels we stay 4-wheel so WHL0-3 remain the real physics wheels
+            # and everything beyond is a free-rolling extra (Open1560 simulates WHL6+).
             _set_info_flags(car_name,
-                            six_wheel=(city_dir / "WHL4_H.BMS").exists(),
+                            six_wheel=(city_dir / "WHL5_H.BMS").exists()
+                            and not (city_dir / "WHL6_H.BMS").exists(),
                             has_trailer=add_trailer,
                             has_siren=add_siren)
             _set_info_colors(car_name, colors)
@@ -1538,6 +1547,36 @@ class CAR_OT_ClearShop(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class CAR_OT_CleanAR(bpy.types.Operator):
+    bl_idname      = "car.clean_ar"
+    bl_label       = "Clean AR"
+    bl_description = (
+        "Delete every editor-generated car AR in the MidtownMadness folder (files "
+        f"prefixed with {len(CAR_AR_PREFIX)} '!'). Base-game ARs are left untouched."
+    )
+    bl_options = {"REGISTER"}
+
+    def execute(self, context):
+        mm1_folder = Folder.MidtownMadness.Root
+        if not mm1_folder.is_dir():
+            self.report({"ERROR"}, f"MidtownMadness folder not found: {mm1_folder}")
+            return {"CANCELLED"}
+
+        removed = 0
+        for f in mm1_folder.iterdir():
+            if f.is_file() and f.name.startswith(CAR_AR_PREFIX):
+                try:
+                    f.unlink()
+                    removed += 1
+                except OSError as exc:
+                    print(f"[Car Editor] Could not delete {f.name}: {exc}")
+
+        self.report({"INFO"},
+                    f"Removed {removed} generated car AR(s)." if removed
+                    else "No generated car ARs to clean.")
+        return {"FINISHED"}
+
+
 # ── Operator: New Car From Template ──────────────────────────────────────────
 
 class CAR_OT_MakeCustomCopy(bpy.types.Operator):
@@ -1646,25 +1685,36 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         body_obj["mm_car_name"]    = car_name
         body_obj["mm_body_file"]   = body_file
 
-        # ── Wheels — chosen style's geometry, auto-sized to the template radius ──
-        wheel_positions = car_templates.template_wheel_positions(template_id)
-        wheel_prefix    = car_templates.template_wheel_filename_prefix(template_id)
-        style           = getattr(scene, "ce_wheel_style", "") or "VPMUSTANG99"
+        # ── Wheels ──────────────────────────────────────────────────────────────
+        style          = getattr(scene, "ce_wheel_style", "") or "VPMUSTANG99"
+        override_count = int(getattr(scene, "ce_template_wheel_count", 0))
 
-        for i, wpos in enumerate(wheel_positions):
-            mesh_name     = f"{car_name}.{wheel_prefix}{i}"
-            wdata         = car_templates._T[template_id]["wheels"][i]
-            target_radius = wdata[3]
-            w_mesh = _load_styled_wheel(car_name, i, style, tex_folder, target_radius)
-            if w_mesh is None:
-                w_mesh = car_templates.build_wheel_mesh(
-                    mesh_name, wdata[3], wdata[4], mirror=(wpos[0] > 0))
-                w_mesh.materials[0] = _build_material("VPCOP_WHL", tex_folder)
-            else:
-                w_mesh.name = mesh_name
-            w_mesh["mesh_offset"]     = list(wpos)
-            w_mesh["bms_source_file"] = f"{wheel_prefix}{i}_H.BMS"
-            _add_child_obj(w_mesh, mesh_name, f"wheel_{i}", body_obj, col)
+        if override_count > 0:
+            # Explicit count → spawn at the body's bounding-box corners, reusing the
+            # tested corner-spawn path (bikes/trikes 1-3, cars 4, trucks 6, 7-10 axles).
+            context.view_layer.update()
+            bpy.ops.car.spawn_wheels_auto(wheel_count=override_count)
+            n_wheels = sum(1 for o in get_car_objects()
+                           if o.get(_CAR_TAG, "").startswith("wheel_"))
+        else:
+            # Chosen style's geometry, auto-sized to the template's per-wheel radius.
+            wheel_positions = car_templates.template_wheel_positions(template_id)
+            wheel_prefix    = car_templates.template_wheel_filename_prefix(template_id)
+            for i, wpos in enumerate(wheel_positions):
+                mesh_name     = f"{car_name}.{wheel_prefix}{i}"
+                wdata         = car_templates._T[template_id]["wheels"][i]
+                target_radius = wdata[3]
+                w_mesh = _load_styled_wheel(car_name, i, style, tex_folder, target_radius)
+                if w_mesh is None:
+                    w_mesh = car_templates.build_wheel_mesh(
+                        mesh_name, wdata[3], wdata[4], mirror=(wpos[0] > 0))
+                    w_mesh.materials[0] = _build_material("VPCOP_WHL", tex_folder)
+                else:
+                    w_mesh.name = mesh_name
+                w_mesh["mesh_offset"]     = list(wpos)
+                w_mesh["bms_source_file"] = f"{wheel_prefix}{i}_H.BMS"
+                _add_child_obj(w_mesh, mesh_name, f"wheel_{i}", body_obj, col)
+            n_wheels = len(wheel_positions)
 
         scene.ce_car_folder = ""
 
@@ -1687,7 +1737,6 @@ class CAR_OT_NewFromTemplate(bpy.types.Operator):
         scene.ce_show_damage   = False
         _sync_wheel_radius_props(scene)
 
-        n_wheels = len(wheel_positions)
         self.report({"INFO"},
                     f"Created {car_name}: {car_templates.TEMPLATES[template_id]['label']} "
                     f"(box body + {n_wheels} wheels, support files ready).")
@@ -2274,7 +2323,7 @@ class CAR_OT_SpawnWheelsAuto(bpy.types.Operator):
     bl_options     = {"REGISTER", "UNDO"}
 
     wheel_count: bpy.props.IntProperty(
-        name="Wheel Count", default=4, min=2, max=10,
+        name="Wheel Count", default=4, min=1, max=10,
     )
 
     def execute(self, context):
@@ -2442,6 +2491,7 @@ CAR_EDITOR_CLASSES = [
     CAR_OT_ToggleDamage,
     CAR_OT_SetPaintVariant,
     CAR_OT_ClearShop,
+    CAR_OT_CleanAR,
     CAR_OT_RemoveWheel,
     CAR_OT_RenumberWheels,
     CAR_OT_OpenExportFolder,

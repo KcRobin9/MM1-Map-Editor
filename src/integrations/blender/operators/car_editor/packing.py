@@ -19,6 +19,11 @@ from src.integrations.blender.operators.car_editor.common import (
     _copy_files_to_shop, _is_original_car, get_car_body,
 )
 
+# Filename prefix for editor-generated car ARs. Ten '!' (the lowest printable ASCII)
+# sorts the AR earliest so it wins the override, and uniquely tags our cars so
+# "Clean AR" can remove only them (never the base game's !1560.ar / 1560.ar / etc.).
+CAR_AR_PREFIX = "!" * 10
+
 
 def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
     """
@@ -55,7 +60,7 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
         print(f"[Car Editor] No BMS files in {car_bms_dir}")
         return False
 
-    ar_name = f"!!!!!{car_name}.ar"
+    ar_name = f"{CAR_AR_PREFIX}{car_name}.ar"
     ar_out  = mm1_folder / ar_name
     tmp_dir = Folder.BASE / f"_car_pack_tmp_{car_name}"
 

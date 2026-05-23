@@ -217,6 +217,7 @@ SCENE_PROPERTIES = [
     "ce_show_damage",
     "ce_paint_variant",
     "ce_template",
+    "ce_template_wheel_count",
     "ce_car_display_name",
     "ce_import_decimate_ratio",
     "ce_import_wheel_count",
@@ -1176,6 +1177,12 @@ def register_scene_properties() -> None:
         items=get_template_items(),
         default="SEDAN",
     )
+    bpy.types.Scene.ce_template_wheel_count = bpy.props.IntProperty(
+        name="Wheels",
+        description="Number of wheels for the new car (0 = use the template's own layout; "
+                    "1-10 spawns that many at the body's corners — bikes, trikes, 8/10-wheelers)",
+        default=0, min=0, max=10,
+    )
     bpy.types.Scene.ce_car_display_name = bpy.props.StringProperty(
         name="Menu Name",
         description="Name shown in the game's car selection menu, e.g. Cool Car (filename auto-generated as VP + uppercased name)",
@@ -1188,8 +1195,8 @@ def register_scene_properties() -> None:
     )
     bpy.types.Scene.ce_import_wheel_count = bpy.props.IntProperty(
         name="Wheel Count",
-        description="Number of wheels to spawn (4 = car, 6 = truck/bus)",
-        default=4, min=2, max=10,
+        description="Number of wheels to spawn (1-3 = bike/trike, 4 = car, 6 = truck/bus, 7-10 = extra axles)",
+        default=4, min=1, max=10,
     )
     bpy.types.Scene.ce_wheel_texture = bpy.props.EnumProperty(
         name="Wheel Texture",

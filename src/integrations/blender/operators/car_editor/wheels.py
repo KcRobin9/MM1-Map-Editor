@@ -156,8 +156,16 @@ def _body_wheel_positions(body_obj, n: int):
     So front/rear separation is along Blender Y, left/right along Blender X,
     and height (wheel ground level) is along Blender Z.
 
-    n=4 → FL, FR, RL, RR
-    n=6 → FL, FM, FR, RL, RM, RR  (trucks / buses)
+    Engine reality (confirmed from Open1560 mmCarSim/mmCarModel):
+      • Physics is always 4 wheels: WHL0/1 = front axle, WHL2/3 = rear axle
+        (or WHL4/5 when the 6-wheel flag is set).
+      • At most 6 wheel meshes render in-game (WHL0..WHL5); WHL4/5 render as
+        STATIC extras when present. Wheels 7-10 (WHL6..9) have no engine slot —
+        the export bakes them into the body so they still show (static).
+
+    Layouts (n = desired visible wheels):
+      n=1 monowheel · n=2 bike (4 physics wheels as 2 coincident pairs) · n=3 trike ·
+      n=4 corners · n=5 corners+centre · n=6 truck · n>=7 paired rows.
 
     Returns positions in body-local space (ready to assign to obj.location
     when the wheel is parented to body with identity parent-inverse).
@@ -182,33 +190,43 @@ def _body_wheel_positions(body_obj, n: int):
     # Blender Y maps to game Z: y_min = game front (game -Z), y_max = game rear (+Z)
     gl = x_max - inset_x   # game left  (Blender +X)
     gr = x_min + inset_x   # game right (Blender -X)
+    cx = (gl + gr) * 0.5   # centre line
     fy = y_min + inset_y   # front (Blender -Y = game -Z front)
     ry = y_max - inset_y   # rear  (Blender +Y = game +Z rear)
+    mid_y = (fy + ry) * 0.5
 
-    # Wheel order matches MM1 convention: 0=FL, 1=FR, 2=RR, 3=RL
+    def V(x, y):
+        return mathutils.Vector((x, y, z_ground))
+
+    if n <= 1:
+        return [V(cx, mid_y)]                              # monowheel
+    if n == 2:
+        # Motorcycle trick: the engine ALWAYS simulates 4 physics wheels (WHL0/1 front,
+        # WHL2/3 rear), so a 2-wheel bike is faked as a near-coincident FRONT pair and
+        # REAR pair on the centreline. A tiny half-track keeps a (very narrow) lateral
+        # base so the body stays upright; the overlapping meshes read as one wheel per
+        # end. Ordering matches the n=4 corner convention (WHL0=FL,1=FR,2=RR,3=RL).
+        bt = max((x_max - x_min) * 0.04, 0.04)            # tiny half-track
+        return [V(cx + bt, fy), V(cx - bt, fy), V(cx - bt, ry), V(cx + bt, ry)]
+    if n == 3:
+        return [V(cx, fy), V(gr, ry), V(gl, ry)]           # trike: 1 front, 2 rear
     if n == 4:
-        return [
-            mathutils.Vector((gl, fy, z_ground)),  # 0 front-left
-            mathutils.Vector((gr, fy, z_ground)),  # 1 front-right
-            mathutils.Vector((gr, ry, z_ground)),  # 2 rear-right
-            mathutils.Vector((gl, ry, z_ground)),  # 3 rear-left
-        ]
-    elif n == 6:
-        mid_y = (fy + ry) * 0.5
-        return [
-            mathutils.Vector((gl, fy,    z_ground)),  # 0 front-left
-            mathutils.Vector((gr, fy,    z_ground)),  # 1 front-right
-            mathutils.Vector((gl, mid_y, z_ground)),  # 2 mid-left
-            mathutils.Vector((gr, mid_y, z_ground)),  # 3 mid-right
-            mathutils.Vector((gr, ry,    z_ground)),  # 4 rear-right
-            mathutils.Vector((gl, ry,    z_ground)),  # 5 rear-left
-        ]
-    else:
-        # Generic: evenly spaced along Y axis (forward/rear), alternating left/right
-        positions = []
-        for i in range(n):
-            t  = i / max(n - 1, 1)
-            y  = fy + t * (ry - fy)
-            bx = gl if (i % 2 == 0) else gr
-            positions.append(mathutils.Vector((bx, y, z_ground)))
-        return positions
+        return [V(gl, fy), V(gr, fy), V(gr, ry), V(gl, ry)]
+    if n == 5:
+        return [V(gl, fy), V(gr, fy), V(gr, ry), V(gl, ry), V(cx, mid_y)]
+    if n == 6:
+        return [V(gl, fy), V(gr, fy), V(gl, mid_y), V(gr, mid_y), V(gr, ry), V(gl, ry)]
+
+    # n >= 7: keep WHL0-3 at the OUTER corners (these are the real physics wheels in
+    # 4-wheel mode) and fill the rest as evenly-spaced paired rows BETWEEN front and
+    # rear — so the extras are clearly the in-between axles when testing.
+    positions = [V(gl, fy), V(gr, fy), V(gr, ry), V(gl, ry)]   # WHL0-3 = corners
+    extra = n - 4
+    rows = (extra + 1) // 2
+    for r in range(rows):
+        t = (r + 1) / (rows + 1)                              # strictly between fy..ry
+        y = fy + t * (ry - fy)
+        positions.append(V(gl, y))
+        if len(positions) < n:
+            positions.append(V(gr, y))
+    return positions[:n]
