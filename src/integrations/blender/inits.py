@@ -51,6 +51,8 @@ from src.integrations.blender.operators.bridges import BRIDGE_EDITOR_CLASSES, BR
 from src.integrations.blender.panels.bridge_sidebar import BRIDGE_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.city_loader import CITY_LOADER_CLASSES
 from src.integrations.blender.panels.city_loader_sidebar import CITY_LOADER_PANEL_CLASSES
+from src.integrations.blender.operators.skeleton_editor import SKELETON_EDITOR_CLASSES, CHAR_ITEMS, _anim_items
+from src.integrations.blender.panels.skeleton_editor_sidebar import SKELETON_EDITOR_PANEL_CLASSES
 
 
 PANEL_CLASSES = [
@@ -69,6 +71,7 @@ PANEL_CLASSES = [
     *FACADE_EDITOR_PANEL_CLASSES,
     *BRIDGE_EDITOR_PANEL_CLASSES,
     *CITY_LOADER_PANEL_CLASSES,
+    *SKELETON_EDITOR_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -91,6 +94,7 @@ OPERATOR_CLASSES = [
     *FACADE_EDITOR_CLASSES,
     *BRIDGE_EDITOR_CLASSES,
     *CITY_LOADER_CLASSES,
+    *SKELETON_EDITOR_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -307,6 +311,15 @@ SCENE_PROPERTIES = [
     "bc_facing_in",
     "bc_drawbridge_name",
     "bc_crossgate_name",
+    # Skeleton Editor
+    "ske_char_name",
+    "ske_anim_name",
+    "ske_new_anim_name",
+    "ske_new_anim_frames",
+    "ske_gen_style",
+    "ske_walk_speed",
+    "ske_ar_name",
+    "ske_var_variant",
     # Facade Editor — create form
     "fc_facade_name",
     "fc_flags",
@@ -1559,6 +1572,63 @@ def register_scene_properties() -> None:
         default="tpcrossgate06",
     )
 
+    # ── Skeleton Editor ───────────────────────────────────────────────────────
+    bpy.types.Scene.ske_char_name = bpy.props.EnumProperty(
+        name="Character",
+        description="Pedestrian character to load",
+        items=CHAR_ITEMS,
+        default="BUSMAN_INIT",
+    )
+    bpy.types.Scene.ske_anim_name = bpy.props.EnumProperty(
+        name="Animation",
+        description="Animation to load from the character CSV",
+        items=_anim_items,
+    )
+    bpy.types.Scene.ske_new_anim_name = bpy.props.StringProperty(
+        name="Anim Name",
+        description="Name for the new blank animation action",
+        default="MY_ANIM",
+    )
+    bpy.types.Scene.ske_new_anim_frames = bpy.props.IntProperty(
+        name="Frames",
+        description="Number of frames for the new blank animation",
+        default=30, min=2, max=1000,
+    )
+    bpy.types.Scene.ske_gen_style = bpy.props.EnumProperty(
+        name="Style",
+        description="Procedural animation style to generate",
+        items=[
+            ("WALK",    "Walk",    "30-frame walk cycle with forward root motion"),
+            ("RUN",     "Run",     "20-frame run cycle with fast forward root motion"),
+            ("WAVE",    "Wave",    "30-frame right-arm wave"),
+            ("IDLE",    "Idle",    "60-frame subtle idle breathing"),
+            ("DIVE",    "Dive",    "30-frame forward dive / tackle fall"),
+            ("STUMBLE", "Stumble", "20-frame stumble / hit reaction"),
+            ("CHEER",   "Cheer",   "40-frame victory cheer with raised arms"),
+            ("SCARED",  "Scared",  "24-frame panicked run with flailing arms"),
+        ],
+        default="WALK",
+    )
+    bpy.types.Scene.ske_walk_speed = bpy.props.FloatProperty(
+        name="Speed",
+        description="Multiplier for root motion distance (walk/run/dive/scared)",
+        default=1.0, min=0.1, max=5.0, step=10,
+    )
+    bpy.types.Scene.ske_ar_name = bpy.props.StringProperty(
+        name="AR Name",
+        description="Output .AR filename (without extension) written to MidtownMadness/",
+        default="!!!!!ped_anims",
+    )
+    def _update_ske_var_variant(self, context):
+        bpy.ops.ske.load_variant("EXEC_DEFAULT")
+
+    bpy.types.Scene.ske_var_variant = bpy.props.IntProperty(
+        name="Variant",
+        description="Clothing color variant (0–5, the game picks one randomly at spawn)",
+        default=0, min=0, max=5,
+        update=_update_ske_var_variant,
+    )
+
 
 def _safe_register(cls) -> None:
     try:
@@ -1591,6 +1661,7 @@ def _prefill_car_editor_paths() -> None:
     scene.ce_texture_folder = str(Folder.Resources.Editor.Textures)
     if not scene.ce_car_folder:
         scene.ce_car_folder = str(Folder.Resources.Editor.BMS)
+
 
 
 def initialize_blender_panels() -> None:

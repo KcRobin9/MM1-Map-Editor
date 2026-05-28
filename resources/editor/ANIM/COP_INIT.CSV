@@ -1,0 +1,9 @@
+# anim name,mma name,first frame,last frame,Y AXIS Offset,Y AXIS DISTANCE,X AXIS Offset,X AXIS DISTANCE
+# transition moves [by convention] are of the form: from_to where the,,,,,,,,,,
+# source and destination are looped animations
+STAND,copwave,1,1,0,0,0,0,STAND
+STAND_WAVING,copwave,2,14,0,0,0,0,WAVING
+WAVING_STAND,copwave,14,2,0,0,0,0,STAND
+WAVING,copwave,15,35,0,0,0,0,WAVING
+DIVING,copdivel,1,18,0,0,0,0,PRONE
+PRONE,copdivel,18,18,0,0,0,0,PRONE

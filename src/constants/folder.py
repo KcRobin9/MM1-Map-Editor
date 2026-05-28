@@ -90,6 +90,8 @@ class Folder:
             Props         = _EDITOR / "PROPS"
             Race          = _EDITOR / "RACE"
             Textures      = _EDITOR / "TEXTURES"
+            Rex           = _EDITOR / "REX"
+            PedAnim       = _EDITOR / "ANIM"
 
             class Tune:
                 Root          = _TUNE

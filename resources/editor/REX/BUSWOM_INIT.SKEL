@@ -1,0 +1,79 @@
+NumBones 26
+bone root {
+	offset 0.000000 1.035861 0.019255
+	bone spine1 {
+		offset 0.000000 0.063854 -0.000000
+		bone spine2 {
+			offset 0.000000 0.220050 -0.000000
+			bone neck {
+				offset 0.000000 0.144320 -0.000000
+				bone head {
+					offset -0.000000 0.160000 -0.000000
+				}
+			}
+		}
+		bone spine {
+			offset 0.000000 0.066407 0.000000
+			bone clavicle_r {
+				offset 0.062434 0.138931 -0.000000
+				bone shoulder_r {
+					offset 0.060000 0.040000 -0.000000
+					bone arm_r {
+						offset 0.260106 -0.008705 -0.000134
+						bone lowarm_r {
+							offset 0.185431 -0.005431 -0.019490
+							bone wrist_r {
+								offset 0.144024 -0.007241 -0.015138
+							}
+						}
+					}
+				}
+			}
+			bone clavicle_l {
+				offset -0.065937 0.138932 -0.000000
+				bone shoulder_l {
+					offset -0.056245 0.038227 0.000650
+					bone arm_l {
+						offset -0.261328 -0.007160 0.000000
+						bone lowarm_l {
+							offset -0.187226 -0.007160 -0.016380
+							bone wrist_l {
+								offset -0.139082 -0.007160 -0.012168
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	bone spine {
+		offset 0.000000 -0.080000 0.000000
+		bone pelvis {
+			offset 0.000000 0.000000 0.000000
+			bone hip_r {
+				offset 0.080000 -0.040000 0.000000
+				bone leg_r {
+					offset 0.000003 -0.465403 -0.022767
+					bone shin_r {
+						offset -0.000003 -0.384433 0.026055
+						bone foot_r {
+							offset -0.005734 -0.091321 -0.218383
+						}
+					}
+				}
+			}
+			bone hip_l {
+				offset -0.080000 -0.040000 0.000000
+				bone leg_l {
+					offset 0.000003 -0.465403 -0.022767
+					bone shin_l {
+						offset -0.000003 -0.384433 0.026055
+						bone foot_l {
+							offset 0.002121 -0.091486 -0.218378
+						}
+					}
+				}
+			}
+		}
+	}
+}
