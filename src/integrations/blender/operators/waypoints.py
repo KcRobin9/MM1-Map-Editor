@@ -3,15 +3,13 @@ from pathlib import Path
 
 from src.constants.folder import Folder
 
+from src.game.waypoints.constants import RACE_TYPE_SHORT
 from src.integrations.blender.waypoints.create import create_waypoint, create_gold_bar
 from src.integrations.blender.waypoints.export import export_selected_waypoints
+from src.integrations.blender.waypoints.constants import FlagUV
 from src.integrations.blender.waypoints.helpers import get_all_waypoints, update_waypoint_colors
-from src.integrations.blender.waypoints.load import (
-    load_cops_and_robbers_waypoints,
-    load_waypoints_from_csv,
-    load_waypoints_from_race_data,
-)
-
+from src.integrations.blender.waypoints.load import (load_cops_and_robbers_waypoints,
+                                                      load_waypoints_from_csv, load_waypoints_from_race_data)
 from src.USER.races.races import race_data
 
 
@@ -22,7 +20,6 @@ _RACE_TYPE_KEY = {
     "CIRCUIT":    "CIRCUIT",
     "CHECKPOINT": "RACE",
 }
-
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Legacy operators (kept for keyboard-shortcut compatibility)
@@ -78,14 +75,6 @@ class EXPORT_ALL_WAYPOINTS_WITH_BRACKETS_OT_operator(bpy.types.Operator):
         return {"FINISHED"}
 
 
-# Short labels for naming  WP_BLZ_0-1, WP_CIR_0-1, WP_CHK_0-1
-_RACE_TYPE_SHORT = {
-    "BLITZ":      "BLZ",
-    "CIRCUIT":    "CIR",
-    "CHECKPOINT": "CHK",
-}
-
-
 def _parse_wp_index(name: str) -> int:
     """Extract the trailing numeric index from a WP_XXX_N-INDEX name."""
     try:
@@ -102,6 +91,7 @@ def _next_incomplete_set_number(role: str) -> int:
     existing_names = [o.name for o in bpy.data.objects if o.name.startswith("CR_")]
     sets_with_role: set = set()
     all_sets: set = set()
+
     for name in existing_names:
         for r in ("Bank", "Gold", "Robber"):
             if r in name:
@@ -109,11 +99,14 @@ def _next_incomplete_set_number(role: str) -> int:
                 try:
                     n = int(num_str)
                     all_sets.add(n)
+
                     if r == role:
                         sets_with_role.add(n)
                 except ValueError:
                     pass
+
     incomplete = sorted(all_sets - sets_with_role)
+
     if incomplete:
         return incomplete[0]
     return (max(all_sets) + 1) if all_sets else 1
@@ -136,6 +129,7 @@ class WP_OT_LoadFromRaceData(bpy.types.Operator):
         race_index = int(scene.wp_race_index_enum)
 
         race_key = f"{key_prefix}_{race_index}"
+
         if race_key not in race_data:
             available = [k for k in race_data if k.startswith(key_prefix)]
             self.report({"ERROR"},
@@ -159,8 +153,6 @@ class WP_OT_CreateObject(bpy.types.Operator):
     use_position: bpy.props.BoolProperty(default=False)
 
     def execute(self, context):
-        from src.constants.color import Color
-
         scene    = context.scene
         obj_type = scene.wp_create_type
 
@@ -172,6 +164,7 @@ class WP_OT_CreateObject(bpy.types.Operator):
             cursor = context.scene.cursor.location.copy()
             depsgraph = context.evaluated_depsgraph_get()
             ray_origin = cursor + _Vec((0.0, 0.0, 100.0))
+
             hit, loc, _n, _i, hit_obj, _m = context.scene.ray_cast(
                 depsgraph, ray_origin, _Vec((0.0, 0.0, -1.0))
             )
@@ -183,7 +176,7 @@ class WP_OT_CreateObject(bpy.types.Operator):
         if obj_type == "WAYPOINT":
             race_type  = scene.wp_race_type
             race_index = int(scene.wp_race_index_enum) if scene.wp_race_index_enum.isdigit() else 0
-            short      = _RACE_TYPE_SHORT[race_type]
+            short      = RACE_TYPE_SHORT[race_type]
             prefix     = f"WP_{short}_{race_index}-"
 
             # Sorted existing waypoints for this race
@@ -212,7 +205,7 @@ class WP_OT_CreateObject(bpy.types.Operator):
         elif obj_type == "BANK":
             set_num = _next_incomplete_set_number("Bank")
             name    = f"CR_Bank{set_num}"
-            create_waypoint(x, y, z, name=name, flag_color=Color.PURPLE)
+            create_waypoint(x, y, z, name=name, flag_type=FlagUV.BANK)
             self.report({"INFO"}, f"Created {name} (set {set_num})")
 
         elif obj_type == "GOLD":
@@ -226,7 +219,7 @@ class WP_OT_CreateObject(bpy.types.Operator):
         elif obj_type == "ROBBER":
             set_num = _next_incomplete_set_number("Robber")
             name    = f"CR_Robber{set_num}"
-            create_waypoint(x, y, z, name=name, flag_color=Color.GREEN)
+            create_waypoint(x, y, z, name=name, flag_type=FlagUV.HIDEOUT)
             self.report({"INFO"}, f"Created {name} (set {set_num})")
 
         return {"FINISHED"}
@@ -248,7 +241,9 @@ class WP_OT_LoadFromCSV(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
+
         p = Path(self.filepath)
+
         if not p.exists():
             self.report({"ERROR"}, f"File not found: {self.filepath}")
             return {"CANCELLED"}
@@ -268,9 +263,9 @@ class WP_OT_LoadCnRFromData(bpy.types.Operator):
     bl_options = {"REGISTER", "UNDO"}
 
     def execute(self, context):
+
         from itertools import cycle
         from mathutils import Vector
-        from src.constants.color import Color
         from src.game.races.constants_2 import CopsAndRobbers
         from src.core.geometry.main import transform_coordinate_system
         from src.USER.races.cops_and_robbers import cops_and_robbers_waypoints
@@ -291,12 +286,12 @@ class WP_OT_LoadCnRFromData(bpy.types.Operator):
             waypoint_type = next(waypoint_types)
 
             if waypoint_type == CopsAndRobbers.BANK_HIDEOUT:
-                create_waypoint(x, y, z, name=f"CR_Bank{set_count}", flag_color=Color.PURPLE)
+                create_waypoint(x, y, z, name=f"CR_Bank{set_count}",   flag_type=FlagUV.BANK)
             elif waypoint_type == CopsAndRobbers.GOLD_POSITION:
                 create_gold_bar((x, y, z), scale=3.0)
                 bpy.context.object.name = f"CR_Gold{set_count}"
             elif waypoint_type == CopsAndRobbers.ROBBER_HIDEOUT:
-                create_waypoint(x, y, z, name=f"CR_Robber{set_count}", flag_color=Color.GREEN)
+                create_waypoint(x, y, z, name=f"CR_Robber{set_count}", flag_type=FlagUV.HIDEOUT)
                 set_count += 1
 
         total_sets = len(cops_and_robbers_waypoints) // 3
@@ -320,6 +315,7 @@ class WP_OT_LoadCnRFromCSV(bpy.types.Operator):
         return {"RUNNING_MODAL"}
 
     def execute(self, context):
+
         p = Path(self.filepath)
         if not p.exists():
             self.report({"ERROR"}, f"File not found: {self.filepath}")
@@ -376,12 +372,15 @@ class WP_OT_ClearWaypoints(bpy.types.Operator):
     def execute(self, context):
         wps = get_all_waypoints()
         count = len(wps)
+
         for obj in wps:
             mesh = obj.data if obj.type == "MESH" else None
             bpy.data.objects.remove(obj, do_unlink=True)
+
             if mesh and mesh.users == 0:
                 bpy.data.meshes.remove(mesh)
         _remove_wp_collection_if_empty()
+
         self.report({"INFO"}, f"Removed {count} waypoint(s)")
         return {"FINISHED"}
 
@@ -398,12 +397,15 @@ class WP_OT_ClearCnR(bpy.types.Operator):
     def execute(self, context):
         cnr_objs = [o for o in bpy.data.objects if o.name.startswith("CR_")]
         count = len(cnr_objs)
+
         for obj in cnr_objs:
             mesh = obj.data if obj.type == "MESH" else None
             bpy.data.objects.remove(obj, do_unlink=True)
+
             if mesh and mesh.users == 0:
                 bpy.data.meshes.remove(mesh)
         _remove_wp_collection_if_empty()
+
         self.report({"INFO"}, f"Removed {count} CnR object(s)")
         return {"FINISHED"}
 

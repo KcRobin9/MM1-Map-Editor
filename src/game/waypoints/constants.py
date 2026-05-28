@@ -1,5 +1,18 @@
 WAYPOINT_FILLER = ",0,0,0,0,0,\n"
 
+RACE_TYPE_SHORT = {
+    "BLITZ":   "BLZ",
+    "CIRCUIT": "CIR",
+    "RACE":    "CHK",
+    # Legacy / CSV-parsed values
+    "B":   "BLZ",
+    "C":   "CIR",
+    "R":   "CHK",
+    "BLZ": "BLZ",
+    "CIR": "CIR",
+    "CHK": "CHK",
+}
+
 
 class Rotation:
     NORTH = 0.01

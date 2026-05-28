@@ -1,6 +1,7 @@
 import math
 import bpy
 
+from src.game.waypoints.constants import RACE_TYPE_SHORT
 from src.integrations.blender.waypoints.helpers import get_all_waypoints
 from src.USER.races.races import race_data
 
@@ -11,13 +12,6 @@ _RACE_TYPE_KEY = {
     "BLITZ":      "BLITZ",
     "CIRCUIT":    "CIRCUIT",
     "CHECKPOINT": "RACE",
-}
-
-# Short labels used in waypoint names  WP_BLZ_0-1 / WP_CIR_0-1 / WP_CHK_0-1
-_RACE_TYPE_SHORT = {
-    "BLITZ":      "BLZ",
-    "CIRCUIT":    "CIR",
-    "CHECKPOINT": "CHK",
 }
 
 
