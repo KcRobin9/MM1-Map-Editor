@@ -27,8 +27,6 @@ import struct
 from pathlib import Path
 from typing import List, Tuple
 
-import numpy as np
-
 from src.core.geometry.planes import compute_edges, compute_normal
 
 AABB = Tuple[Tuple[float, float, float], Tuple[float, float, float]]
@@ -99,17 +97,17 @@ def build_box_bnd(aabb: AABB, output_path: Path, offset=(0.0, 0.0, 0.0)) -> dict
     )
 
     # Per-face: plane normal/distance, plane edges, projection-axis flag.
-    face_normals: List[np.ndarray] = []
+    face_normals = []
     face_records = []  # (flags, vidx(4), plane_edges(4x3), plane_n(3), plane_d)
     for face in _FACES:
         fv = [verts[i] for i in face]
         n = compute_normal(fv[0], fv[1], fv[2])  # unrounded, outward
         face_normals.append(n)
-        plane_d = float(-np.dot(n, np.array(fv[0])))
+        plane_d = -(n.x * fv[0][0] + n.y * fv[0][1] + n.z * fv[0][2])
         plane_edges, axis_flag = compute_edges(fv)
         flags = 0x4 | axis_flag  # quad + projection axis
         pe = [(e.x, e.y, e.z) for e in plane_edges]
-        face_records.append((flags, list(face), pe, (float(n[0]), float(n[1]), float(n[2])), plane_d))
+        face_records.append((flags, list(face), pe, (n.x, n.y, n.z), plane_d))
 
     edge_v1, edge_v2 = _compute_edge_list(_FACES)
     n_edges = len(edge_v1)
@@ -121,10 +119,10 @@ def build_box_bnd(aabb: AABB, output_path: Path, offset=(0.0, 0.0, 0.0)) -> dict
     for a, b in zip(edge_v1, edge_v2):
         adj = [face_normals[fi] for fi, f in enumerate(_FACES) if a in f and b in f]
         s = adj[0] + adj[1] if len(adj) >= 2 else adj[0]
-        ln = float(np.linalg.norm(s))
+        ln = s.Mag()
         en = s / ln if ln > 1e-9 else s
-        edge_pn.append((float(en[0]), float(en[1]), float(en[2])))
-        edge_pd.append(float(np.dot(en, adj[0])))
+        edge_pn.append((en.x, en.y, en.z))
+        edge_pd.append(en.Dot(adj[0]))
 
     num_polys_field = len(_FACES)  # stored = real face count; file holds +1 (sentinel)
 

@@ -38,7 +38,6 @@ from dataclasses import dataclass
 from typing import List, Dict, Set, Any, Tuple, Optional, BinaryIO
 
 #* Third-party imports
-import numpy as np
 import matplotlib.pyplot as plt
 from colorama import Fore
 
@@ -192,9 +191,6 @@ class Polygon:
         
         if isinstance(plane_distance, list) and len(plane_distance) == 1:
             plane_distance = plane_distance[0]
-        elif isinstance(plane_distance, np.float64):
-            plane_distance = float(plane_distance)
-            
         self.plane_distance = plane_distance
         
         self.cell_type = cell_type
@@ -1033,10 +1029,7 @@ def create_polygon(
                 
             plane_normal, plane_distance = corners[:3], corners[3]
 
-    if isinstance(plane_normal, np.ndarray):
-        plane_normal = Vector3(*plane_normal.tolist())
-        
-    elif isinstance(plane_normal, list):
+    if isinstance(plane_normal, list):
         plane_normal = Vector3(*plane_normal)
         
     # Finalize Polygon

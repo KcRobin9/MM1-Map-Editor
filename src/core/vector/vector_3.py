@@ -36,7 +36,14 @@ class Vector3:
     def copy(self) -> 'Vector3':
         return Vector3(self.x, self.y, self.z)
     
-    def __getitem__(self, key: str) -> float:
+    def __iter__(self):
+        yield self.x
+        yield self.y
+        yield self.z
+
+    def __getitem__(self, key) -> float:
+        if isinstance(key, int):
+            return (self.x, self.y, self.z)[key]
         return self._data[key]
 
     def __setitem__(self, key: str, value: float) -> None:
