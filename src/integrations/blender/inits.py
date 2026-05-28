@@ -28,7 +28,7 @@ from src.integrations.blender.panels.cells import OBJECT_PT_CellTypePanel, CELL_
 from src.integrations.blender.panels.hud import OBJECT_PT_HUDColorPanel, HUD_COLOR_ITEMS, HUD_IMPORT
 from src.integrations.blender.panels.materials import OBJECT_PT_MaterialTypePanel, MATERIAL_IMPORT
 from src.integrations.blender.panels.misc import OBJECT_PT_PolygonMiscOptionsPanel
-from src.integrations.blender.panels.vertex import OBJECT_PT_VertexCoordinates, VertexGroup
+from src.integrations.blender.panels.vertex import VIEW3D_PT_MapEditorVertices, VertexGroup
 from src.integrations.blender.panels.uv import OBJECT_PT_UVMappingPanel
 from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
@@ -41,6 +41,7 @@ from src.integrations.blender.operators.car_editor import (
 )
 from src.constants.car_assets import LightColor
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
+from src.integrations.blender.handlers import _vertex_poll_timer
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling, update_texture_category, OBJECT_OT_RefreshCurrentTextures
 from src.integrations.blender.modeling.texture_catalog import CATEGORY_ITEMS
 from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
@@ -60,9 +61,9 @@ PANEL_CLASSES = [
     OBJECT_PT_MaterialTypePanel,
     OBJECT_PT_PolygonMiscOptionsPanel,
     OBJECT_PT_HUDColorPanel,
-    OBJECT_PT_VertexCoordinates,
     OBJECT_PT_UVMappingPanel,
     *SIDEBAR_CLASSES,
+    VIEW3D_PT_MapEditorVertices,
     *STREET_EDITOR_CLASSES,
     *WAYPOINT_EDITOR_CLASSES,
     *PROP_EDITOR_PANEL_CLASSES,
@@ -1709,6 +1710,9 @@ def unregister_all() -> None:
         return
 
     unregister_draw_handler()
+
+    if bpy.app.timers.is_registered(_vertex_poll_timer):
+        bpy.app.timers.unregister(_vertex_poll_timer)
 
     for cls in reversed(ALL_CLASSES):
         _safe_unregister(cls)

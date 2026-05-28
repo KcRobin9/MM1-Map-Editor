@@ -1,21 +1,47 @@
 import bpy
+import bmesh
+from pathlib import Path
 
 from src.integrations.blender.waypoints.helpers import update_waypoint_colors
 from src.integrations.blender.operators.ai_streets import apply_street_color, ST_PREFIX
+from src.integrations.blender.modeling.uv_mapping import category_for_texture, ensure_category_loaded
 
-# Track the last active polygon so we only sync once per selection change.
 _last_active_polygon: str = ""
+
+_VERTEX_POLL_INTERVAL = 0.05  # seconds — fast enough for smooth live feedback
+
+
+def _is_polygon_name(name: str) -> bool:
+    return (name.startswith("P") and name[1:].split(".")[0].isdigit()) or name.startswith("Shape_")
+
+
+def _sync_vertex_coords_from_bmesh(obj) -> None:
+    bm     = bmesh.from_edit_mesh(obj.data)
+    verts  = bm.verts
+    coords = obj.vertex_coords
+
+    while len(coords) < len(verts):
+        coords.add()
+
+    for i, v in enumerate(verts):
+        co = v.co
+        coords[i].x = co.x
+        coords[i].y = co.y
+        coords[i].z = co.z
+
+
+def _vertex_poll_timer() -> float:
+    try:
+        ctx = bpy.context
+        obj = ctx.active_object
+        if obj and obj.type == "MESH" and ctx.mode == "EDIT_MESH" and _is_polygon_name(obj.name):
+            _sync_vertex_coords_from_bmesh(obj)
+    except Exception:
+        pass
+    return _VERTEX_POLL_INTERVAL
 
 
 def _sync_texture_category(obj) -> None:
-    """Switch the scene's texture_category and obj.texture_name to match the
-    active polygon's material.  Safe to call from a depsgraph handler."""
-    from pathlib import Path
-    from src.integrations.blender.modeling.uv_mapping import (
-        category_for_texture, ensure_category_loaded,
-    )
-
-    # Read the texture stem from the material node (ground truth).
     tex_stem = None
     if obj.material_slots:
         mat = obj.material_slots[0].material
@@ -29,16 +55,14 @@ def _sync_texture_category(obj) -> None:
     if not tex_stem:
         return
 
-    scene = bpy.context.scene
-    needed_cat = category_for_texture(tex_stem)
+    scene       = bpy.context.scene
+    needed_cat  = category_for_texture(tex_stem)
 
-    # Load DDS files for the target category before switching (safe here).
     ensure_category_loaded(needed_cat)
 
     if scene.texture_category != needed_cat:
         scene.texture_category = needed_cat
 
-    # Sync the enum property to match the material.
     if obj.texture_name != tex_stem:
         try:
             obj.texture_name = tex_stem
@@ -47,12 +71,12 @@ def _sync_texture_category(obj) -> None:
 
 
 def initialize_depsgraph_update_handler() -> None:
-    # Remove existing handlers to prevent duplicates
     if depsgraph_update_handler in bpy.app.handlers.depsgraph_update_post:
         bpy.app.handlers.depsgraph_update_post.remove(depsgraph_update_handler)
-
-    # Register the handler
     bpy.app.handlers.depsgraph_update_post.append(depsgraph_update_handler)
+
+    if not bpy.app.timers.is_registered(_vertex_poll_timer):
+        bpy.app.timers.register(_vertex_poll_timer, persistent=True)
 
 
 def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:
@@ -69,7 +93,7 @@ def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgr
                 elif obj.name.startswith(ST_PREFIX) and obj.type == 'CURVE':
                     updated_streets.add(obj.name)
             elif update.id.__class__ == bpy.types.Curve:
-                # Spline changes come through as Curve data-block updates
+                # Spline edits arrive as Curve data-block updates, not Object updates
                 for obj in bpy.data.objects:
                     if obj.type == 'CURVE' and obj.name.startswith(ST_PREFIX) and obj.data == update.id:
                         updated_streets.add(obj.name)
@@ -85,21 +109,29 @@ def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgr
             if obj:
                 apply_street_color(obj)
 
-        # ── Texture category sync on polygon selection change ──────────────────
+        # ── Vertex coords sync + texture category sync ────────────────────────────
         active = bpy.context.active_object
-        if (
-            active
-            and active.type == "MESH"
-            and active.name != _last_active_polygon
-        ):
-            _last_active_polygon = active.name
-            # Only sync for polygon objects (P<number> / Shape_<number>).
-            n = active.name
-            is_polygon = (
-                (n.startswith("P") and n[1:].split(".")[0].isdigit())
-                or n.startswith("Shape_")
-            )
-            if is_polygon:
+        if active and active.type == "MESH":
+            n          = active.name
+            is_polygon = _is_polygon_name(n)
+
+            if is_polygon and depsgraph.id_type_updated('MESH'):
+                eval_obj = depsgraph.objects.get(active.name)
+                mesh     = eval_obj.data if eval_obj else active.data
+                verts    = mesh.vertices
+                coords   = active.vertex_coords
+
+                while len(coords) < len(verts):
+                    coords.add()
+
+                for i, v in enumerate(verts):
+                    co = v.co
+                    coords[i].x = co.x
+                    coords[i].y = co.y
+                    coords[i].z = co.z
+
+            if is_polygon and n != _last_active_polygon:
+                _last_active_polygon = n
                 _sync_texture_category(active)
 
     except Exception as e:
