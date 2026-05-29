@@ -11,7 +11,6 @@ from src.constants.keyboard import Key
 from src.constants.folder import Folder
 
 from src.integrations.blender.export_polygons import export_formatted_polygons
-from src.integrations.blender.utils import has_invalid_polygon_names
 
 from src.misc.main import open_with_notepad_plus
 
@@ -97,15 +96,6 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             return {"CANCELLED"}
 
         if self.select_all:
-            invalid = has_invalid_polygon_names(context.scene)
-            if invalid:
-                _popup_error(context, "Cannot Export — Invalid Names", [
-                    "Some polygons have duplicate (.001-style) names:",
-                    ", ".join(invalid),
-                    "\nUse 'Fix Poly Names' in the Map Editor panel to resolve.",
-                ])
-                return {"CANCELLED"}
-
             names_in_scene = {obj.name for obj in mesh_objects}
 
             if "P1" not in names_in_scene:

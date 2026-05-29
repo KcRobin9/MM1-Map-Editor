@@ -33,7 +33,7 @@ import math
 import time
 import shutil
 import random
-from collections import Counter
+from collections import Counter, defaultdict
 from dataclasses import dataclass
 from typing import List, Dict, Set, Any, Tuple, Optional, BinaryIO
 
@@ -296,7 +296,404 @@ class Debug:
 
         print(f"Debugged list data to {output_file.name}")
 
-################################################################################################################          
+################################################################################################################
+#! ======================= SPATIAL GRID (MakeTable) ======================= !#
+
+# ── MaxY helpers (mmPolygon::MaxY, CornersHeight, CheckCellXSide, CheckCellZSide, CheckCorner) ──
+
+def _poly_check_corner(poly: Polygon, x: float, z: float,
+                       plane_x: List[float], plane_z: List[float], plane_d: List[float]) -> float:
+    if poly.plane_normal.y == 0.0:
+        return -999999.0
+
+    for i in range(len(plane_x)):
+        if x * plane_x[i] + z * plane_z[i] + plane_d[i] < 0.0:
+            return -999999.0
+
+    return -(poly.plane_normal.x * x + poly.plane_normal.z * z + poly.plane_distance) / poly.plane_normal.y
+
+
+def _poly_corners_height(poly: Polygon, vertices: List[Vector3],
+                         x1: float, z1: float, x2: float, z2: float) -> float:
+    n = poly.num_verts
+    sign = 1.0 if poly.plane_normal.y <= 0.0 else -1.0
+    plane_x, plane_z, plane_d = [], [], []
+
+    for i in range(n):
+        v1 = vertices[poly.vertex_index[i]]
+        v2 = vertices[poly.vertex_index[(i + 1) % n]]
+        px = -(v2.z - v1.z) * sign
+        pz = (v2.x - v1.x) * sign
+        pd = -(px * v1.x + pz * v1.z)
+        length = math.sqrt(px * px + pz * pz)
+        if length < 1e-9:
+            return -999999.0
+        plane_x.append(px / length)
+        plane_z.append(pz / length)
+        plane_d.append(pd / length)
+
+    max_y = -999999.0
+    for cx, cz in ((x1, z1), (x1, z2), (x2, z1), (x2, z2)):
+        y = _poly_check_corner(poly, cx, cz, plane_x, plane_z, plane_d)
+        if y > max_y:
+            max_y = y
+    return max_y
+
+
+def _poly_check_x_side(poly: Polygon, vertices: List[Vector3],
+                       plane_x: float, z_min: float, z_max: float) -> float:
+    max_y = -999999.0
+    n = poly.num_verts
+
+    for i in range(n):
+        v1 = vertices[poly.vertex_index[i]]
+        v2 = vertices[poly.vertex_index[(i + 1) % n]]
+        if (v1.x < plane_x < v2.x) or (v1.x > plane_x > v2.x):
+            factor = (plane_x - v1.x) / (v2.x - v1.x)
+            z_int = (v2.z - v1.z) * factor + v1.z
+            if z_min <= z_int <= z_max:
+                y = (v2.y - v1.y) * factor + v1.y
+                if y > max_y:
+                    max_y = y
+    return max_y
+
+
+def _poly_check_z_side(poly: Polygon, vertices: List[Vector3],
+                       plane_z: float, x_min: float, x_max: float) -> float:
+    max_y = -999999.0
+    n = poly.num_verts
+
+    for i in range(n):
+        v1 = vertices[poly.vertex_index[i]]
+        v2 = vertices[poly.vertex_index[(i + 1) % n]]
+        if (v1.z < plane_z < v2.z) or (v1.z > plane_z > v2.z):
+            factor = (plane_z - v1.z) / (v2.z - v1.z)
+            x_int = (v2.x - v1.x) * factor + v1.x
+            if x_min <= x_int <= x_max:
+                y = (v2.y - v1.y) * factor + v1.y
+                if y > max_y:
+                    max_y = y
+    return max_y
+
+
+def _poly_max_y(poly: Polygon, vertices: List[Vector3],
+                x_min: float, z_min: float, x_max: float, z_max: float) -> float:
+    max_y = -999999.0
+
+    for i in range(poly.num_verts):
+        v = vertices[poly.vertex_index[i]]
+        if x_min <= v.x <= x_max and z_min <= v.z <= z_max:
+            if v.y > max_y:
+                max_y = v.y
+
+    max_y = max(max_y, _poly_corners_height(poly, vertices, x_min, z_min, x_max, z_max))
+    max_y = max(max_y, _poly_check_x_side(poly, vertices, x_min, z_min, z_max))
+    max_y = max(max_y, _poly_check_x_side(poly, vertices, x_max, z_min, z_max))
+    max_y = max(max_y, _poly_check_z_side(poly, vertices, z_min, x_min, x_max))
+    max_y = max(max_y, _poly_check_z_side(poly, vertices, z_max, x_min, x_max))
+    return max_y
+
+
+# ── Scanline rasterizer (mmPolygon::Plot, PlotTriangle, PlotScan) ────────────
+
+def _plot_scan(x1: int, x2: int, z: int,
+               table: List[List[int]], x_dim: int, z_dim: int,
+               poly_idx: int, max_bucket: int) -> bool:
+    x1 = max(0, min(x_dim - 1, int(x1)))
+    x2 = max(0, min(x_dim - 1, int(x2)))
+    z = max(0, min(z_dim - 1, int(z)))
+    overflow = False
+
+    for x in range(x1, x2 + 1):
+        cell = x + x_dim * z
+        bucket = table[cell]
+        if poly_idx in bucket:
+            continue
+        if len(bucket) >= max_bucket:
+            overflow = True
+            continue
+        bucket.append(poly_idx)
+    return overflow
+
+
+def _plot_triangle(vi0: int, vi1: int, vi2: int,
+                   poly: Polygon, vertices: List[Vector3],
+                   table: List[List[int]], x_dim: int, z_dim: int,
+                   bb_min: Vector3, x_scale: float, z_scale: float,
+                   poly_idx: int, max_bucket: int) -> bool:
+    def grid_pos(vi):
+        v = vertices[poly.vertex_index[vi]]
+        return [(v.x - bb_min.x) * x_scale, (v.z - bb_min.z) * z_scale]
+
+    v0 = grid_pos(vi0)
+    v1 = grid_pos(vi1)
+    v2 = grid_pos(vi2)
+
+    # Sort descending by Z so v0[1] >= v1[1] >= v2[1] — rest of function depends on this
+    if v1[1] < v0[1] or v1[1] < v2[1]:
+        if v2[1] >= v0[1] and v2[1] >= v1[1]:
+            v0, v2 = v2, v0
+    else:
+        v0, v1 = v1, v0
+    if v2[1] >= v1[1]:
+        v1, v2 = v2, v1
+
+    slope_01 = (v1[0] - v0[0]) / (v0[1] - v1[1]) if v0[1] != v1[1] else 0.0
+    slope_02 = (v2[0] - v0[0]) / (v0[1] - v2[1]) if v0[1] != v2[1] else 0.0
+    slope_12 = (v2[0] - v1[0]) / (v1[1] - v2[1]) if v1[1] != v2[1] else 0.0
+
+    overflow = False
+
+    if int(v0[1]) - int(v1[1]) >= 2:
+        left_x = v0[0]
+        right_x = v0[0]
+        left_sl = slope_01
+        right_sl = slope_02
+
+        if left_sl > right_sl:
+            left_sl, right_sl = right_sl, left_sl
+
+        if left_sl > 0.0:
+            left_x -= left_sl
+        if right_sl < 0.0:
+            right_x -= right_sl
+
+        frac0 = v0[1] - float(int(v0[1]))
+        left_x += frac0 * left_sl
+        right_x += frac0 * right_sl
+
+        for z in range(int(v0[1]) - 1, int(v1[1]), -1):
+            left_x += left_sl
+            right_x += right_sl
+            overflow |= _plot_scan(int(left_x), int(right_x), z, table, x_dim, z_dim, poly_idx, max_bucket)
+
+    if int(v1[1]) - int(v2[1]) >= 2:
+        t_mid = (v1[1] - v0[1]) / (v2[1] - v0[1])
+        left_x = v1[0]
+        right_x = v0[0] + t_mid * (v2[0] - v0[0])
+        left_sl = slope_12
+        right_sl = slope_02
+
+        if left_x > right_x:
+            left_x, right_x = right_x, left_x
+            left_sl, right_sl = right_sl, left_sl
+
+        if left_sl > 0.0:
+            left_x -= left_sl
+        if right_sl < 0.0:
+            right_x -= right_sl
+
+        frac1 = v1[1] - float(int(v1[1]))
+        left_x += frac1 * left_sl
+        right_x += frac1 * right_sl
+
+        for z in range(int(v1[1]) - 1, int(v2[1]), -1):
+            left_x += left_sl
+            right_x += right_sl
+            overflow |= _plot_scan(int(left_x), int(right_x), z, table, x_dim, z_dim, poly_idx, max_bucket)
+
+    frac0 = v0[1] - float(int(v0[1]))
+    frac1 = v1[1] - float(int(v1[1]))
+    frac2 = v2[1] - float(int(v2[1]))
+
+    px_v0_v0v1 = slope_01 * frac0 + v0[0]
+    px_v0_v0v2 = slope_02 * frac0 + v0[0]
+    px_v1_v1v2 = slope_12 * frac1 + v1[0]
+    px_v1_back = v1[0] - (1.0 - frac1) * slope_01
+    px_v2_v0v2 = v2[0] - (1.0 - frac2) * slope_02
+    px_v2_v1v2 = v2[0] - (1.0 - frac2) * slope_12
+
+    if int(v0[1]) == int(v2[1]):
+        overflow |= _plot_scan(int(min(v0[0], v1[0], v2[0])),
+                               int(max(v0[0], v1[0], v2[0])),
+                               int(v0[1]), table, x_dim, z_dim, poly_idx, max_bucket)
+    elif int(v0[1]) == int(v1[1]):
+        overflow |= _plot_scan(int(min(v0[0], v1[0], px_v0_v0v2, px_v1_v1v2)),
+                               int(max(v0[0], v1[0], px_v0_v0v2, px_v1_v1v2)),
+                               int(v0[1]), table, x_dim, z_dim, poly_idx, max_bucket)
+    elif int(v1[1]) == int(v2[1]):
+        overflow |= _plot_scan(int(min(v1[0], v2[0], px_v1_back, px_v2_v0v2)),
+                               int(max(v1[0], v2[0], px_v1_back, px_v2_v0v2)),
+                               int(v1[1]), table, x_dim, z_dim, poly_idx, max_bucket)
+
+    if int(v0[1]) != int(v1[1]):
+        overflow |= _plot_scan(int(min(v0[0], px_v0_v0v1, px_v0_v0v2)),
+                               int(max(v0[0], px_v0_v0v1, px_v0_v0v2)),
+                               int(v0[1]), table, x_dim, z_dim, poly_idx, max_bucket)
+
+    if int(v1[1]) != int(v0[1]) and int(v1[1]) != int(v2[1]):
+        lx = min(v1[0], px_v1_back, px_v1_v1v2)
+        rx = max(v1[0], px_v1_back, px_v1_v1v2)
+
+        t_v1 = (v1[1] - v0[1]) / (v2[1] - v0[1])
+        long_x = v0[0] + t_v1 * (v2[0] - v0[0])
+        long_fwd = slope_02 * frac1 + long_x
+        long_bk = long_x - (1.0 - frac1) * slope_02
+
+        lx = min(lx, long_fwd, long_bk)
+        rx = max(rx, long_fwd, long_bk)
+        overflow |= _plot_scan(int(lx), int(rx), int(v1[1]), table, x_dim, z_dim, poly_idx, max_bucket)
+
+    if int(v2[1]) != int(v1[1]):
+        overflow |= _plot_scan(int(min(v2[0], px_v2_v0v2, px_v2_v1v2)),
+                               int(max(v2[0], px_v2_v0v2, px_v2_v1v2)),
+                               int(v2[1]), table, x_dim, z_dim, poly_idx, max_bucket)
+
+    return overflow
+
+
+def _plot_polygon(poly: Polygon, vertices: List[Vector3],
+                  table: List[List[int]], x_dim: int, z_dim: int,
+                  bb_min: Vector3, x_scale: float, z_scale: float,
+                  poly_idx: int, max_bucket: int) -> bool:
+    if poly.num_verts == 4:
+        overflow = _plot_triangle(0, 1, 2, poly, vertices, table, x_dim, z_dim,
+                                  bb_min, x_scale, z_scale, poly_idx, max_bucket)
+        overflow |= _plot_triangle(0, 2, 3, poly, vertices, table, x_dim, z_dim,
+                                   bb_min, x_scale, z_scale, poly_idx, max_bucket)
+    else:
+        overflow = _plot_triangle(0, 1, 2, poly, vertices, table, x_dim, z_dim,
+                                  bb_min, x_scale, z_scale, poly_idx, max_bucket)
+    return overflow
+
+
+# ── Grid array builder (mmBoundTemplate::DoMakeTable second pass) ─────────────
+
+def _build_grid_arrays(table: List[List[int]], x_dim: int, z_dim: int,
+                       x_scale: float, z_scale: float,
+                       bb_min: Vector3, vertices: List[Vector3], polys: List[Polygon]):
+    row_offsets: List[int] = []
+    bucket_offsets: List[int] = []
+    row_buckets: List[int] = [0]     # index 0 is the empty-cell sentinel (never written)
+    heights: List[float] = []
+
+    current_idx = 1
+    global_max_y = 0.0
+
+    for z in range(z_dim):
+        row_offsets.append(current_idx - 1)
+
+        for x in range(x_dim):
+            cell = x + x_dim * z
+            bucket = table[cell]
+            added = False
+            max_y = -999999.0
+
+            bucket_offsets.append(current_idx - row_offsets[z])
+
+            for poly_idx in bucket:
+                row_buckets.append(poly_idx)
+                current_idx += 1
+                added = True
+
+                x_min = x / x_scale + bb_min.x
+                z_min = z / z_scale + bb_min.z
+                x_max = (x + 1) / x_scale + bb_min.x
+                z_max = (z + 1) / z_scale + bb_min.z
+                y = _poly_max_y(polys[poly_idx], vertices, x_min, z_min, x_max, z_max)
+                if y > max_y:
+                    max_y = y
+
+            if added:
+                row_buckets[-1] |= 0x8000   # terminator bit on last entry
+            else:
+                bucket_offsets[-1] = 0       # empty-cell sentinel
+
+            heights.append(max_y)
+            if max_y > global_max_y:
+                global_max_y = max_y
+
+    if global_max_y < 0.0:
+        global_max_y = 0.0
+
+    height_scale = global_max_y / 255.0
+
+    fixed_heights: List[int] = []
+    for h in heights:
+        if h <= 0.0 or height_scale <= 0.0:
+            fixed_heights.append(0)
+        else:
+            fixed_heights.append(min(255, int(h / height_scale)))
+
+    return row_offsets, bucket_offsets, row_buckets, fixed_heights, height_scale, current_idx
+
+
+def make_table(vertices: List[Vector3], polys: List[Polygon],
+               x_dim: int = 100, z_dim: int = 100,
+               max_bucket: int = 80, max_tries: int = 25):
+    if not vertices or len(polys) <= 1:
+        return None
+
+    bb_min = Vector3.min(vertices)
+    bb_max = Vector3.max(vertices)
+
+    x_extent = bb_max.x - bb_min.x
+    z_extent = bb_max.z - bb_min.z
+    if x_extent <= 0.0 or z_extent <= 0.0:
+        return None
+
+    for attempt in range(max_tries):
+        scale = 1.0 + attempt * 0.5
+        cur_xd = max(1, int(x_dim * scale))
+        cur_zd = max(1, int(z_dim * scale))
+        x_scale = cur_xd / x_extent
+        z_scale = cur_zd / z_extent
+
+        table: List[List[int]] = [[] for _ in range(cur_xd * cur_zd)]
+        overflow = False
+
+        for poly_idx, poly in enumerate(polys[1:], start=1):  # skip filler at index 0
+            if _plot_polygon(poly, vertices, table, cur_xd, cur_zd,
+                             bb_min, x_scale, z_scale, poly_idx, max_bucket):
+                overflow = True
+
+        if not overflow:
+            break
+
+    row_offsets, bucket_offsets, row_buckets, fixed_heights, height_scale, _ = \
+        _build_grid_arrays(table, cur_xd, cur_zd, x_scale, z_scale, bb_min, vertices, polys)
+
+    # ── Grid debug ────────────────────────────────────────────────────────────
+    total_cells = cur_xd * cur_zd
+    bucket_sizes = [len(b) for b in table if b]
+    non_empty = len(bucket_sizes)
+    max_fill = max(bucket_sizes) if bucket_sizes else 0
+    avg_fill = sum(bucket_sizes) / non_empty if non_empty else 0.0
+    num_entries = len(row_buckets) - 1
+    max_y = height_scale * 255.0
+
+    ok(f"HITID Grid: {cur_xd}×{cur_zd} ({total_cells} cells){sep()}attempt {attempt + 1}/{max_tries}")
+    item(f"XScale={x_scale:.3f}  ZScale={z_scale:.3f}  HeightScale={height_scale:.5f}  maxY≈{max_y:.2f}")
+    item(f"Non-empty: {non_empty}/{total_cells} ({100 * non_empty / total_cells:.1f}%)  "
+         f"Entries: {num_entries}  Avg fill: {avg_fill:.1f}  Max fill: {max_fill}/80")
+
+    for poly_idx, poly in enumerate(polys[1:], start=1):
+        cell_count = sum(1 for b in table if poly_idx in b)
+        shape = "quad" if poly.num_verts == 4 else "tri"
+        item(f"  P{poly.cell_id} (idx={poly_idx}, {shape}) → {cell_count} cells")
+
+    fill_dist = Counter(len(b) for b in table if b)
+    dist_str = "  ".join(f"{k}pol:{v}cells" for k, v in sorted(fill_dist.items()))
+    item(f"Fill dist: {dist_str}")
+
+    top_cells = sorted([(i, table[i]) for i in range(len(table)) if table[i]],
+                       key=lambda kv: len(kv[1]), reverse=True)[:5]
+    for cell_idx, bucket in top_cells:
+        cx = cell_idx % cur_xd
+        cz = cell_idx // cur_xd
+        poly_ids = ", ".join(f"P{polys[p].cell_id}(idx={p})" for p in bucket)
+        item(f"  Top cell ({cx},{cz}): {len(bucket)} polys → {poly_ids}")
+
+    non_zero_h = [h for h in fixed_heights if h > 0]
+    if non_zero_h:
+        item(f"MaxY heights (0-255): min={min(non_zero_h)}  max={max(non_zero_h)}  "
+             f"non-zero cells: {len(non_zero_h)}/{total_cells}")
+    # ─────────────────────────────────────────────────────────────────────────
+
+    return cur_xd, cur_zd, x_scale, z_scale, height_scale, row_offsets, bucket_offsets, row_buckets, fixed_heights
+
+
+################################################################################################################
 #! ======================= BOUNDS CLASS ======================= !#
 
 #TODO: refactor and move later
@@ -388,33 +785,46 @@ class Bounds:
             )
     
     @classmethod
-    def initialize(cls, vertices: List[Vector3], polys: List[Polygon]) -> 'Bounds':
+    def initialize(cls, vertices: List[Vector3], polys: List[Polygon],
+                   grid_x_dim: int = 0, grid_z_dim: int = 0) -> 'Bounds':
         magic = Magic.BOUND
         offset = Default.VECTOR_3
-        x_dim, y_dim, z_dim = 0, 0, 0
         center = Vector3.center(vertices)
         radius = Vector3.calculate_radius(vertices, center)
         radius_sqr = Vector3.calculate_radius_squared(vertices, center)
         bb_min = Vector3.min(vertices)
         bb_max = Vector3.max(vertices)
         num_hot_verts_1, num_hot_verts_2, num_edges = 0, 0, 0
-        x_scale, z_scale = 0.0, 0.0
-        num_indices, height_scale, cache_size = 0, 0.0, 0
-        
-        hot_verts = [Default.VECTOR_3]
-        edge_verts_1, edge_verts_2 = [0], [1] 
-        edge_plane_normal = [Default.VECTOR_3]
-        edge_plane_distance = [0.0]  
-        row_offsets, bucket_offsets, row_buckets, fixed_heights = [0], [0], [0], [0]  
+        cache_size = 0
+
+        hot_verts = []
+        edge_verts_1, edge_verts_2 = [], []
+        edge_plane_normal = []
+        edge_plane_distance = []
+
+        if grid_x_dim > 0 and grid_z_dim > 0:
+            grid = make_table(vertices, polys, grid_x_dim, grid_z_dim)
+        else:
+            grid = None
+
+        if grid is not None:
+            x_dim, z_dim, x_scale, z_scale, height_scale, row_offsets, bucket_offsets, row_buckets, fixed_heights = grid
+            y_dim       = 1
+            num_indices = len(row_buckets)
+        else:
+            x_dim, y_dim, z_dim = 0, 0, 0
+            x_scale, z_scale = 0.0, 0.0
+            num_indices, height_scale = 0, 0.0
+            row_offsets, bucket_offsets, row_buckets, fixed_heights = [], [], [], []
 
         return cls(
-            magic, offset, x_dim, y_dim, z_dim, 
-            center, radius, radius_sqr, bb_min, bb_max, 
-            len(vertices), len(polys) - 1, 
-            num_hot_verts_1, num_hot_verts_2, num_edges, 
-            x_scale, z_scale, num_indices, height_scale, cache_size, 
-            vertices, polys, 
-            hot_verts, edge_verts_1, edge_verts_2, 
+            magic, offset, x_dim, y_dim, z_dim,
+            center, radius, radius_sqr, bb_min, bb_max,
+            len(vertices), len(polys) - 1,
+            num_hot_verts_1, num_hot_verts_2, num_edges,
+            x_scale, z_scale, num_indices, height_scale, cache_size,
+            vertices, polys,
+            hot_verts, edge_verts_1, edge_verts_2,
             edge_plane_normal, edge_plane_distance,
             row_offsets, bucket_offsets, row_buckets, fixed_heights
             )
@@ -431,18 +841,37 @@ class Bounds:
         write_pack(f, '<3l', self.num_hot_verts_1, self.num_hot_verts_2, self.num_edges)
         write_pack(f, '<2f', self.x_scale, self.z_scale)
         write_pack(f, '<lfl', self.num_indices, self.height_scale, self.cache_size)
- 
-        for vertex in self.vertices:       
+
+        for vertex in self.vertices:
             vertex.write(f)
-        
-        for poly in self.polys:           
+
+        for poly in self.polys:
             poly.write(f)
-                    
+
+        # Edge section (num_edges=0 for editor-generated bounds → no bytes written)
+        for v in self.hot_verts:
+            v.write(f)
+        if self.num_edges:
+            write_pack(f, f'<{self.num_edges}I', *self.edge_verts_1)
+            write_pack(f, f'<{self.num_edges}I', *self.edge_verts_2)
+            for n in self.edge_plane_normal:
+                n.write(f)
+            write_pack(f, f'<{self.num_edges}f', *self.edge_plane_distance)
+
+        # Spatial grid (only written when XDim/YDim/ZDim are all non-zero)
+        if self.x_dim and self.y_dim and self.z_dim:
+            write_pack(f, f'<{self.z_dim}I',               *self.row_offsets)
+            write_pack(f, f'<{self.x_dim * self.z_dim}H',  *self.bucket_offsets)
+            write_pack(f, f'<{self.num_indices}H',          *self.row_buckets)
+            write_pack(f, f'<{self.x_dim * self.z_dim}B',  *self.fixed_heights)
+
     @staticmethod
-    def create(output_file: Path, vertices: List[Vector3], polys: List[Polygon], debug_file: Path, debug_bounds: bool) -> None:
-        bnd = Bounds.initialize(vertices, polys)
-                
-        with open (output_file, "wb") as f:
+    def create(output_file: Path, vertices: List[Vector3], polys: List[Polygon],
+               debug_file: Path, debug_bounds: bool,
+               grid_x_dim: int = 0, grid_z_dim: int = 0) -> None:
+        bnd = Bounds.initialize(vertices, polys, grid_x_dim, grid_z_dim)
+
+        with open(output_file, "wb") as f:
             bnd.write(f)
 
         bnd.debug(debug_bounds, debug_file)
@@ -790,8 +1219,11 @@ def compute_uv(bound_number: int, tile_x: int = 1, tile_y: int = 1, angle_degree
     
     if "entries" not in texcoords_data:
         texcoords_data["entries"] = {}
-        
-    texcoords_data["entries"][bound_number] = {"tile_x": tile_x, "tile_y": tile_y, "angle_degrees": angle_degrees}
+
+    # Key by (bound_number, sub) so each polygon in a multi-poly cell keeps its own UV settings.
+    # sub = how many segments already accumulated for this cell → matches Blender's .001/.002 suffix order.
+    sub = len(_mesh_segments.get(bound_number, []))
+    texcoords_data["entries"][(bound_number, sub)] = {"tile_x": tile_x, "tile_y": tile_y, "angle_degrees": angle_degrees}
 
     return adjust_and_rotate_coords(coords, angle_degrees)
         
@@ -1208,7 +1640,7 @@ save_mesh(
 
 
 create_polygon(
-    bound_number = 201,
+    bound_number = 999,
     vertex_coordinates = [
         (-50.0, 0.0, 70.0),
 		(50.0, 0.0, 70.0),
@@ -1217,7 +1649,7 @@ create_polygon(
 
 save_mesh(
     texture_name = [Texture.ROAD_3_LANE],
-    tex_coords = compute_uv(bound_number = 201, tile_x = 10.00, tile_y = 10.00, angle_degrees = 45.00))
+    tex_coords = compute_uv(bound_number = 999, tile_x = 10.00, tile_y = 10.00, angle_degrees = 45.00))
 
 
 create_polygon(
@@ -1326,7 +1758,7 @@ save_mesh(
 
 
 create_polygon(
-    bound_number = 204,
+    bound_number = 999,
 	cell_type = Room.NO_SKIDS,
 	hud_color = Color.YELLOW_LIGHT,
     vertex_coordinates = [
@@ -1336,11 +1768,11 @@ create_polygon(
 
 save_mesh(
     texture_name = [Texture.BRICKS_MALL],
-    tex_coords = compute_uv(bound_number = 204, tile_x = 10.00, tile_y = 10.00, angle_degrees = 90.00))
+    tex_coords = compute_uv(bound_number = 999, tile_x = 10.00, tile_y = 10.00, angle_degrees = 90.00))
 
 
 create_polygon(
-    bound_number = 205,
+    bound_number = 999,
 	cell_type = Room.NO_SKIDS,
 	hud_color = Color.YELLOW_LIGHT,
     vertex_coordinates = [
@@ -1350,7 +1782,7 @@ create_polygon(
 
 save_mesh(
     texture_name = [Texture.BRICKS_MALL],
-    tex_coords = compute_uv(bound_number = 205, tile_x = 10.00, tile_y = 10.00, angle_degrees = 0.00))
+    tex_coords = compute_uv(bound_number = 999, tile_x = 10.00, tile_y = 10.00, angle_degrees = 0.00))
 
 
 create_polygon(
@@ -2543,7 +2975,7 @@ if not SKIP_AR_CREATION:
         create_cops_and_robbers(Folder.Shop.Map.Race / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
 
     # Map
-    check_bound_numbers(polys)
+    # check_bound_numbers(polys)
 
     total_polys = len(polys) - 1  # Exclude default polygon at index 0
     quads = sum(1 for poly in polys[1:] if poly.is_quad)
@@ -2776,7 +3208,9 @@ def apply_computed_uvs(objects):
             continue
 
         bound_number = int(obj.name.lstrip("P").split(".")[0])
-        entry = texcoords_data.get("entries", {}).get(bound_number, {})
+        name_parts = obj.name.split(".")
+        sub = int(name_parts[1]) if len(name_parts) > 1 else 0
+        entry = texcoords_data.get("entries", {}).get((bound_number, sub), {})
 
         tile_x = entry.get("tile_x", 1.0)
         tile_y = entry.get("tile_y", 1.0)
@@ -2840,10 +3274,12 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
     bpy.types.Object.tile_y = bpy.props.FloatProperty(name="Tile Y", default=2.0, update=update_uv_tiling)
     bpy.types.Object.angle_degrees = bpy.props.FloatProperty(name="Angle Degrees", default=0.0, update=update_uv_tiling)
 
-    if bound_number in texcoords_data.get("entries", {}):
-        obj.tile_x = texcoords_data["entries"][bound_number].get("tile_x", 1.0)
-        obj.tile_y = texcoords_data["entries"][bound_number].get("tile_y", 1.0)
-        obj.angle_degrees = texcoords_data["entries"][bound_number].get("angle_degrees", 0.0)
+    name_parts = obj.name.split(".")
+    sub = int(name_parts[1]) if len(name_parts) > 1 else 0
+    if (bound_number, sub) in texcoords_data.get("entries", {}):
+        obj.tile_x = texcoords_data["entries"][(bound_number, sub)].get("tile_x", 1.0)
+        obj.tile_y = texcoords_data["entries"][(bound_number, sub)].get("tile_y", 1.0)
+        obj.angle_degrees = texcoords_data["entries"][(bound_number, sub)].get("angle_degrees", 0.0)
     else:
         obj.tile_x = 2.0
         obj.tile_y = 2.0
