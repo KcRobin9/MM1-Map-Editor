@@ -75,7 +75,7 @@ def debug_bms(bms_file: Path) -> None:
     else:
         print(f"  vert_colors      = (not present)")
 
-    print(f"\n--- Adjunct → point mapping ---")
+    print(f"\n--- Adjunct -> point mapping ---")
     print(f"  vertex_indices[0..15] = {vertex_indices[:16]}")
     out_of_range = [v for v in vertex_indices if v >= num_points]
     if out_of_range:

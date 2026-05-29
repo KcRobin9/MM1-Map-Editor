@@ -248,8 +248,11 @@ POLYGON
 
 Default.POLYGON = Polygon(0, 0, 0, [0, 0, 0, 0], [Default.VECTOR_3 for _ in range(4)], Default.VECTOR_3, [0.0], 0)
 polys = [Default.POLYGON]
-        
-################################################################################################################               
+
+# Accumulates per-polygon mesh data keyed by cell_id; flushed to BMS files at export time
+_mesh_segments: Dict[int, list] = {}
+
+################################################################################################################
 
 #TODO: move this somewhere else
 class Debug:
@@ -808,64 +811,139 @@ def determine_mesh_folder_and_filename(cell_id: int, texture_name: List[str]) ->
 
            
 def save_mesh(
-    texture_name: str, texture_indices: List[int] = [1], 
-    vertices: List[Vector3] = vertices, polys: List[Polygon] = polys, 
-    normals: List[int] = None, tex_coords: List[float] = None, 
-    randomize_textures: bool = randomize_textures, random_textures: List[str] = random_textures, 
+    texture_name: str, texture_indices: List[int] = [1],
+    vertices: List[Vector3] = vertices, polys: List[Polygon] = polys,
+    normals: List[int] = None, tex_coords: List[float] = None,
+    randomize_textures: bool = randomize_textures, random_textures: List[str] = random_textures,
     debug_meshes: bool = debug_meshes) -> None:
-            
+
     poly = polys[-1]  # Get the last polygon added
-    
     cell_id = poly.cell_id
-    target_folder, mesh_filename = determine_mesh_folder_and_filename(cell_id, texture_name)
-    
+    n_verts = poly.num_verts
+
     if randomize_textures:
-        texture_name = [random.choice(random_textures)] 
-        
+        texture_name = [random.choice(random_textures)]
+
     texture_names.append(texture_name[0])
-    
-    mesh = initialize_mesh(vertices, [poly], texture_indices, texture_name, normals, tex_coords)
-    mesh.write(target_folder / mesh_filename)
-    
-    #TODO: see "Debug.internal()"
-    if debug_meshes:
-        mesh.debug(Path(mesh_filename).with_suffix({FileType.TEXT}), Folder.DEBUG / "MESHES" / MAP_FILENAME, debug_meshes)
+
+    raw_uvs = list(tex_coords) if tex_coords is not None else [1.0] * (n_verts * 2)
+
+    seg = {
+        'poly':          poly,
+        'texture_name':  texture_name[0],
+        'texture_index': texture_indices[0] if texture_indices else 1,
+        'normals':       list(normals)     if normals is not None else [2] * n_verts,
+        'tex_coords':    raw_uvs[:n_verts * 2],  # compute_uv() always yields 4 pairs; triangles need only 3
+    }
+
+    if cell_id not in _mesh_segments:
+        _mesh_segments[cell_id] = []
+    _mesh_segments[cell_id].append(seg)
 
 
 def initialize_mesh(
-    vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int], 
+    vertices: List[Vector3], polys: List[Polygon], texture_indices: List[int],
     texture_name: List[str], normals: List[int] = None, tex_coords: List[float] = None) -> Meshes:
 
-    shapes = [[vertices[i] for i in poly.vertex_index] for poly in polys] 
+    shapes = [[vertices[i] for i in poly.vertex_index[:poly.num_verts]] for poly in polys]
     coordinates = [coord for shape in shapes for coord in shape]
-        
-    radius = Vector3.calculate_radius(coordinates, Default.VECTOR_3)  # Use Local Offset for the Center (this is not the case for the Bound files)
+
+    radius = Vector3.calculate_radius(coordinates, Default.VECTOR_3)
     radiussq = Vector3.calculate_radius_squared(coordinates, Default.VECTOR_3)
-    bounding_box_radius = Vector3.calculate_bounding_box_radius(coordinates)  
-    
+    bounding_box_radius = Vector3.calculate_bounding_box_radius(coordinates)
+
     vertex_count = len(coordinates)
     adjunct_count = len(coordinates)
-    surface_count = len(texture_indices)   
+    surface_count = len(texture_indices)
     texture_count = len(texture_name)
-    
-    # Each polygon requires four indices 
-    if len(coordinates) in [Shape.QUAD, Shape.TRIANGLE]: 
-        indices_count = surface_count * 4
+    indices_count = surface_count * 4  # always 4 indices per polygon (tris get a 0-padded 4th)
 
     cache_size = 0
 
     enclosed_shape = list(range(adjunct_count))
-    normals = normals or [2] * adjunct_count  # 2 is the default value
-    tex_coords = tex_coords or [1.0 for _ in range(adjunct_count * 2)]  # tile x and y once if no tex coords are provided
-    indices_sides = [list(range(i, i + len(shape))) for i, shape in enumerate(shapes, start = 0)]
-  
+    normals    = normals    or [2]   * adjunct_count
+    tex_coords = tex_coords or [1.0] * (adjunct_count * 2)
+
+    # Build per-surface vertex index lists using cumulative offsets
+    offset = 0
+    indices_sides = []
+    for shape in shapes:
+        indices_sides.append(list(range(offset, offset + len(shape))))
+        offset += len(shape)
+
     return Meshes(
-        Magic.MESH , vertex_count, adjunct_count, surface_count, indices_count,
+        Magic.MESH, vertex_count, adjunct_count, surface_count, indices_count,
         radius, radiussq, bounding_box_radius,
         texture_count, MeshFlags.TEXCOORDS_AND_NORMALS, cache_size,
         texture_name, coordinates, normals, tex_coords, [], [],
         enclosed_shape, texture_indices, indices_sides
         )
+
+
+def flush_meshes(vertices: List[Vector3] = vertices, debug_meshes: bool = debug_meshes) -> None:
+    for cell_id, segments in _mesh_segments.items():
+        # Build ordered-unique texture list (preserves first-occurrence order)
+        seen: Dict[str, int] = {}
+        for seg in segments:
+            name = seg['texture_name']
+            if name not in seen:
+                seen[name] = len(seen) + 1  # 1-based texture index
+
+        all_texture_names   = list(seen.keys())
+        texture_indices     = [seen[seg['texture_name']] for seg in segments]
+        all_polys           = [seg['poly'] for seg in segments]
+        combined_normals    = [v for seg in segments for v in seg['normals']]
+        combined_tex_coords = [v for seg in segments for v in seg['tex_coords']]
+
+        all_tex_names_for_folder = [seg['texture_name'] for seg in segments]
+        target_folder, mesh_filename = determine_mesh_folder_and_filename(cell_id, all_tex_names_for_folder)
+
+        mesh = initialize_mesh(vertices, all_polys, texture_indices, all_texture_names, combined_normals, combined_tex_coords)
+        mesh.write(target_folder / mesh_filename)
+
+        if debug_meshes:
+            mesh.debug(Path(mesh_filename).with_suffix(FileType.TEXT), Folder.Debug.Meshes / MAP_FILENAME, debug_meshes)
+
+
+def write_per_cell_bounds(vertices: List[Vector3], polys: List[Polygon]) -> None:
+    cells: Dict[int, List[Polygon]] = defaultdict(list)
+
+    for poly in polys[1:]:  # skip filler polygon at index 0
+        cells[poly.cell_id].append(poly)
+
+    for cell_id, cell_polys in cells.items():
+        # Collect unique global vertex indices (preserve first-seen order)
+        seen_global: Dict[int, int] = {}
+        for poly in cell_polys:
+            for g_idx in poly.vertex_index[:poly.num_verts]:
+                if g_idx not in seen_global:
+                    seen_global[g_idx] = len(seen_global)
+
+        local_vertices = [vertices[g] for g in seen_global]
+
+        # Build copies of polygons with local vertex indices
+        local_polys: List[Polygon] = [Default.POLYGON]
+        for poly in cell_polys:
+            local_poly = Polygon(
+                cell_id        = poly.cell_id,
+                material_index = poly.material_index,
+                flags          = poly.flags,
+                vertex_index   = [seen_global[i] for i in poly.vertex_index[:poly.num_verts]],
+                plane_edges    = poly.plane_edges,
+                plane_normal   = poly.plane_normal,
+                plane_distance = poly.plane_distance,
+                cell_type      = poly.cell_type,
+                always_visible = poly.always_visible,
+            )
+            local_polys.append(local_poly)
+
+        if cell_id < Threshold.CELL_TYPE_SWITCH:
+            output_folder = Folder.Shop.Map.BoundLandmark
+        else:
+            output_folder = Folder.Shop.Map.BoundCity
+
+        output_file = output_folder / f"BOUND{cell_id:02d}{FileType.BOUND}"
+        Bounds.create(output_file, local_vertices, local_polys, None, False)
 
 ################################################################################################################               
 ################################################################################################################  
@@ -2479,14 +2557,18 @@ if not SKIP_AR_CREATION:
     ok(f"Utilized {unique_textures} unique texture(s)")
     item(all_textures_str)
 
+    flush_meshes()
     create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
     Bounds.create(
         Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}",
         vertices, polys,
         Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}",
-        debug_bounds
+        debug_bounds,
+        grid_x_dim=100, grid_z_dim=100,
     )
+
+    write_per_cell_bounds(vertices, polys)
 
     Portals.write_all(
         Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}",
