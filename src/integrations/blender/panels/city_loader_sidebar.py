@@ -69,6 +69,18 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
 
         layout.separator()
 
+        # ── Round-trip polygon import ─────────────────────────────────────────
+        layout.label(text="Round-Trip Editing", icon="LOOP_FORWARDS")
+        box = layout.box()
+        col = box.column(align=True)
+        col.label(text="Import CULL_H as editable P{N} objects", icon="INFO")
+        row = col.row(align=True)
+        row.scale_y = 1.4
+        row.enabled = bool(folder_path)
+        row.operator("city_loader.import_as_polygons", text="Import as Polygons", icon="IMPORT")
+
+        layout.separator()
+
         # ── Quick info about discovered files ─────────────────────────────────
         if folder_path:
             p = Path(folder_path)
@@ -105,7 +117,8 @@ class VIEW3D_PT_CityLoaderTools(bpy.types.Panel):
 
         layout.label(text="Clear loaded data", icon="TRASH")
         col = layout.column(align=True)
-        col.operator("city_loader.clear_meshes", text="Clear City Meshes", icon="MESH_DATA")
+        col.operator("city_loader.clear_meshes",             text="Clear City Meshes",      icon="MESH_DATA")
+        col.operator("city_loader.clear_imported_polygons",  text="Clear Imported Polygons", icon="OUTLINER_OB_MESH")
         col.operator("facades.clear",            text="Clear Facades",     icon="MOD_BUILD")
         col.operator("props.clear",              text="Clear Props",       icon="PARTICLES")
         col.operator("object.delete_all_streets", text="Clear Streets",    icon="CURVE_DATA")

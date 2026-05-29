@@ -222,6 +222,10 @@ def update_uv_tiling(self, context) -> None:
     uv_layer = obj.data.uv_layers.active
     if not uv_layer:
         return
+    # User is explicitly setting tile/angle — discard stored raw BMS UVs so
+    # export switches to compute_uv() with the new values.
+    if "bms_uvs" in obj:
+        del obj["bms_uvs"]
 
     tile_x = obj.tile_x
     tile_y = obj.tile_y

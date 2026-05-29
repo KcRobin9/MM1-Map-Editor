@@ -132,10 +132,19 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
     if optional_variables_str:
         optional_variables_str = f"\n\t{optional_variables_str}"
 
-    # Road-builder polygons carry custom curve-following UVs that can't be
-    # reproduced by compute_uv()'s flat per-quad tiling. Export their UV
-    # layer verbatim so the game renders them identically to Blender.
-    if obj.get("rs_custom_uvs"):
+    # UV priority:
+    #   1. bms_uvs  — raw BMS floats stored on import; exact game round-trip
+    #   2. rs_custom_uvs — road-builder curve UVs read from the Blender UV layer
+    #   3. compute_uv() — editor-created or user-edited tile/angle parameters
+    #
+    # When the user edits tile_x/tile_y/angle on an imported polygon via the
+    # Blender UI, update_uv_tiling() clears bms_uvs so export falls through to
+    # compute_uv(), picking up the user's new values.
+    if obj.get("bms_uvs"):
+        raw = list(obj["bms_uvs"])
+        parts = [f"{raw[i]:.6f}, {raw[i + 1]:.6f}" for i in range(0, len(raw), 2)]
+        tex_coords_expr = "[" + ", ".join(parts) + "]"
+    elif obj.get("rs_custom_uvs"):
         tex_coords_expr = _custom_tex_coords_literal(obj)
         if not tex_coords_expr:
             tex_coords_expr = (
@@ -150,6 +159,10 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
             f"angle_degrees = {angle_degrees:.2f})"
         )
 
+    normals_arg = ""
+    if obj.get("bms_normals"):
+        normals_arg = f",\n\tnormals = {list(obj['bms_normals'])}"
+
     template = f"""create_polygon(
     bound_number = {poly_data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
@@ -157,6 +170,6 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
 
 save_mesh(
     texture_name = [{formatted_texture}],
-    tex_coords = {tex_coords_expr})
+    tex_coords = {tex_coords_expr}{normals_arg})
 """
     return template

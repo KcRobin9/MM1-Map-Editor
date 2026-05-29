@@ -51,6 +51,7 @@ from src.integrations.blender.panels.facade_editor_sidebar import FACADE_EDITOR_
 from src.integrations.blender.operators.bridges import BRIDGE_EDITOR_CLASSES, BRIDGE_NAME_ITEMS, _update_bridge_form
 from src.integrations.blender.panels.bridge_sidebar import BRIDGE_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.city_loader import CITY_LOADER_CLASSES
+from src.integrations.blender.operators.city_polygon_import import CITY_POLYGON_IMPORT_CLASSES
 from src.integrations.blender.panels.city_loader_sidebar import CITY_LOADER_PANEL_CLASSES
 from src.integrations.blender.operators.skeleton_editor import SKELETON_EDITOR_CLASSES, CHAR_ITEMS, _anim_items
 from src.integrations.blender.panels.skeleton_editor_sidebar import SKELETON_EDITOR_PANEL_CLASSES
@@ -95,6 +96,7 @@ OPERATOR_CLASSES = [
     *FACADE_EDITOR_CLASSES,
     *BRIDGE_EDITOR_CLASSES,
     *CITY_LOADER_CLASSES,
+    *CITY_POLYGON_IMPORT_CLASSES,
     *SKELETON_EDITOR_CLASSES,
 ]
 

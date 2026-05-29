@@ -85,11 +85,13 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
     def execute(self, context: bpy.types.Context) -> Set[str]:
         export_file = Folder.Blender.Polygons / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
 
-        # Select Mesh Objects based on the "select_all" property
+        # Select Mesh Objects based on the "select_all" property.
+        # Match P followed by a digit so PA* reference objects are excluded.
+        _is_poly = lambda n: len(n) > 1 and n[0] == "P" and n[1].isdigit()
         if self.select_all:
-            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and obj.name.startswith("P")]
+            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and _is_poly(obj.name)]
         else:
-            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH" and obj.name.startswith("P")]
+            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH" and _is_poly(obj.name)]
 
         if not mesh_objects:
             self.report({"WARNING"}, "No mesh objects found for export.")
@@ -98,7 +100,13 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         if self.select_all:
             names_in_scene = {obj.name for obj in mesh_objects}
 
-            if "P1" not in names_in_scene:
+            # P1 is required for editor-built maps (bound_numbers 1–199).
+            # City round-trips (all cells ≥ 1000) don't have or need a P1.
+            has_city_cells = any(
+                _bound_number_from_name(n) is not None and _bound_number_from_name(n) >= 1000
+                for n in names_in_scene
+            )
+            if "P1" not in names_in_scene and not has_city_cells:
                 _popup_error(context, "Cannot Export — P1 Missing", [
                     "No 'P1' polygon found in the scene.",
                     "Every map must have at least one polygon",
