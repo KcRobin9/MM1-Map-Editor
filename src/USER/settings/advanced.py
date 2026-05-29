@@ -15,3 +15,4 @@ set_dlp = False                 # Change to "True" if you want to create a DLP f
 
 # Other
 fix_faulty_quads = False        # Change to "True" if you want to fix faulty quads (e.g. self-intersecting quads)
+deduplicate_bound_vertices = True  # Change to "False" to disable vertex sharing in BND output (useful for debugging per-polygon index ranges)

@@ -124,7 +124,7 @@ from src.USER.settings._resolver import (
     no_ui, no_ui_type, no_ai,
     less_logs, more_logs,
     lower_portals, empty_portals,
-    set_dlp, fix_faulty_quads,
+    set_dlp, fix_faulty_quads, deduplicate_bound_vertices,
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
     auto_debug,
     load_target_model, load_all_textures,
@@ -1343,31 +1343,46 @@ def write_per_cell_bounds(vertices: List[Vector3], polys: List[Polygon]) -> None
     for poly in polys[1:]:  # skip filler polygon at index 0
         cells[poly.cell_id].append(poly)
 
+    total_raw = 0
+    total_local = 0
+    cells_with_sharing = 0
+    best_saved = 0
+    best_cell = -1
+
     for cell_id, cell_polys in cells.items():
-        # Collect unique global vertex indices (preserve first-seen order)
-        seen_global: Dict[int, int] = {}
-        for poly in cell_polys:
-            for g_idx in poly.vertex_index[:poly.num_verts]:
-                if g_idx not in seen_global:
-                    seen_global[g_idx] = len(seen_global)
+        g_to_local: Dict[int, int] = {}
+        local_vertices: List[Vector3] = []
+        raw_count = sum(poly.num_verts for poly in cell_polys)
 
-        local_vertices = [vertices[g] for g in seen_global]
+        if deduplicate_bound_vertices:
+            coord_to_local: Dict[tuple, int] = {}
+            for poly in cell_polys:
+                for g_idx in poly.vertex_index[:poly.num_verts]:
+                    key = (vertices[g_idx].x, vertices[g_idx].y, vertices[g_idx].z)
+                    if key not in coord_to_local:
+                        coord_to_local[key] = len(local_vertices)
+                        local_vertices.append(vertices[g_idx])
+                    g_to_local[g_idx] = coord_to_local[key]
+        else:
+            for poly in cell_polys:
+                for g_idx in poly.vertex_index[:poly.num_verts]:
+                    if g_idx not in g_to_local:
+                        g_to_local[g_idx] = len(g_to_local)
+                        local_vertices.append(vertices[g_idx])
 
-        # Build copies of polygons with local vertex indices
         local_polys: List[Polygon] = [Default.POLYGON]
         for poly in cell_polys:
-            local_poly = Polygon(
+            local_polys.append(Polygon(
                 cell_id        = poly.cell_id,
                 material_index = poly.material_index,
                 flags          = poly.flags,
-                vertex_index   = [seen_global[i] for i in poly.vertex_index[:poly.num_verts]],
+                vertex_index   = [g_to_local[i] for i in poly.vertex_index[:poly.num_verts]],
                 plane_edges    = poly.plane_edges,
                 plane_normal   = poly.plane_normal,
                 plane_distance = poly.plane_distance,
                 cell_type      = poly.cell_type,
                 always_visible = poly.always_visible,
-            )
-            local_polys.append(local_poly)
+            ))
 
         if cell_id < Threshold.CELL_TYPE_SWITCH:
             output_folder = Folder.Shop.Map.BoundLandmark
@@ -1376,6 +1391,26 @@ def write_per_cell_bounds(vertices: List[Vector3], polys: List[Polygon]) -> None
 
         output_file = output_folder / f"BOUND{cell_id:02d}{FileType.BOUND}"
         Bounds.create(output_file, local_vertices, local_polys, None, False)
+
+        saved = raw_count - len(local_vertices)
+        total_raw += raw_count
+        total_local += len(local_vertices)
+        if saved > 0:
+            cells_with_sharing += 1
+        if saved > best_saved:
+            best_saved = saved
+            best_cell = cell_id
+
+    # ── BND deduplication debug ───────────────────────────────────────────────
+    mode = "ON" if deduplicate_bound_vertices else "OFF"
+    ok(f"Per-cell BNDs: {len(cells)} cells written  (vertex dedup {mode})")
+    total_saved = total_raw - total_local
+    pct = 100 * total_saved / total_raw if total_raw else 0.0
+    item(f"Raw vertex-refs: {total_raw}  →  Local verts: {total_local}  ({total_saved} saved, {pct:.1f}%)")
+    if deduplicate_bound_vertices and best_cell >= 0:
+        item(f"Cells with sharing: {cells_with_sharing}/{len(cells)}  "
+             f"(most saved: {best_saved} verts in BOUND{best_cell:02d})")
+    # ─────────────────────────────────────────────────────────────────────────
 
 ################################################################################################################               
 ################################################################################################################  

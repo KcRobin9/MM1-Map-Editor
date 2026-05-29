@@ -24,7 +24,7 @@ from src.USER.settings.advanced import (
     no_ui, no_ui_type, no_ai,
     less_logs, more_logs,
     lower_portals, empty_portals,
-    set_dlp, fix_faulty_quads,
+    set_dlp, fix_faulty_quads, deduplicate_bound_vertices,
 )
 
 from src.USER.settings.debug import (
