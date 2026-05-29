@@ -163,10 +163,13 @@ def export_formatted_polygons(obj: bpy.types.Object) -> str:
     if obj.get("bms_normals"):
         normals_arg = f",\n\tnormals = {list(obj['bms_normals'])}"
 
+    # City-imported polygons carry their original game winding — skip ensure_ccw_order.
+    fix_winding_arg = "" if not obj.get("bms_uvs") else ",\n    fix_winding = False"
+
     template = f"""create_polygon(
     bound_number = {poly_data['bound_number']},{optional_variables_str}
     vertex_coordinates = [
-        {formatted_vertices}])
+        {formatted_vertices}]{fix_winding_arg})
 
 save_mesh(
     texture_name = [{formatted_texture}],

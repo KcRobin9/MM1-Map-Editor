@@ -29,7 +29,7 @@ LINE_WIDTH = 100  # max visual characters per line before wrapping
 
 def ok(message: str) -> None:
     """Green checkmark success line."""
-    print(f"{Fore.LIGHTGREEN_EX}✓{Style.RESET_ALL} {message}")
+    print(f"{Fore.LIGHTGREEN_EX}OK{Style.RESET_ALL} {message}")
 
 def sep() -> str:
     """Inline cyan · separator — use inside ok() to append secondary info."""

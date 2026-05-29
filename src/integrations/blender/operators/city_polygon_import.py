@@ -81,12 +81,17 @@ def _invert_compute_uv(raw_uvs: List[float]) -> Tuple[float, float, float]:
     return tile_x, tile_y, angle_degrees
 
 
-_COL_H = "City Polygons"
-_COL_A = "City Polygons (A)"
+_COL_H  = "City Polygons"
+_COL_LM = "City Polygons (LM)"
+_COL_A  = "City Polygons (A)"
 
-# High-LOD and ambient-LOD patterns
-_H_PATTERN = re.compile(r'^CULL(\d+)_H\.BMS$', re.IGNORECASE)
-_A_PATTERN = re.compile(r'^CULL(\d+)_A\.BMS$', re.IGNORECASE)
+# _H matches CULL{N}_H.BMS and CULL{N}_H2.BMS etc. (all H-variants)
+_H_PATTERN  = re.compile(r'^CULL(\d+)_H\d*\.BMS$', re.IGNORECASE)
+_A_PATTERN  = re.compile(r'^CULL(\d+)_A\.BMS$',    re.IGNORECASE)
+# _A2 is the LM ambient LOD — imported as editable P objects for LM cells that have no _H
+_A2_PATTERN = re.compile(r'^CULL(\d+)_A2\.BMS$',   re.IGNORECASE)
+
+_LM_THRESHOLD = 200  # cell IDs below this are landmark cells
 
 
 # ── BND helper ────────────────────────────────────────────────────────────────
@@ -254,7 +259,7 @@ def _import_bms_surfaces(
         mat_idx = bnd_material_indices[surf_idx] if surf_idx < len(bnd_material_indices) else 0
         obj["material_index"] = str(mat_idx)
         obj["cell_type"]      = "0"
-        obj["always_visible"] = False  # portal-controlled, matches original city cells
+        obj["always_visible"] = cell_id < _LM_THRESHOLD  # LM cells are always visible; city cells are portal-controlled
         obj["sort_vertices"]  = False
 
         loaded += 1
@@ -290,25 +295,48 @@ class CITY_OT_ImportAsPolygons(bpy.types.Operator):
             self.report({"ERROR"}, f"No MESHES/ subfolders in {folder.name}")
             return {"CANCELLED"}
 
-        col_h = _ensure_collection(_COL_H)
-        col_a = _ensure_collection(_COL_A)
-        total_h = total_a = 0
+        col_h  = _ensure_collection(_COL_H)
+        col_lm = _ensure_collection(_COL_LM)
+        col_a  = _ensure_collection(_COL_A)
+        total_h = total_lm = total_a = 0
+
+        # Track which LM cell IDs already have a _H file so we don't
+        # double-import the _A2 for those cells.
+        lm_h_seen: set = set()
+
+        # Two-pass: first collect _H files so we know which LM cells are covered.
+        for mesh_dir in mesh_dirs:
+            for bms_file in mesh_dir.glob("*.BMS"):
+                m = _H_PATTERN.match(bms_file.name)
+                if m:
+                    cid = int(m.group(1))
+                    if cid < _LM_THRESHOLD:
+                        lm_h_seen.add(cid)
 
         for mesh_dir in mesh_dirs:
             for bms_file in sorted(mesh_dir.glob("*.BMS")):
-                m_h = _H_PATTERN.match(bms_file.name)
-                m_a = _A_PATTERN.match(bms_file.name)
+                m_h  = _H_PATTERN.match(bms_file.name)
+                m_a  = _A_PATTERN.match(bms_file.name)
+                m_a2 = _A2_PATTERN.match(bms_file.name)
 
                 if m_h:
-                    cell_id    = int(m_h.group(1))
-                    col        = col_h
+                    cell_id = int(m_h.group(1))
+                    is_lm   = cell_id < _LM_THRESHOLD
+                    col        = col_lm if is_lm else col_h
                     obj_prefix = "P"
-                    count_ref  = "total_h"
+                    count_key  = "lm" if is_lm else "h"
                 elif m_a:
                     cell_id    = int(m_a.group(1))
                     col        = col_a
                     obj_prefix = "PA"
-                    count_ref  = "total_a"
+                    count_key  = "a"
+                elif m_a2:
+                    cell_id = int(m_a2.group(1))
+                    if cell_id >= _LM_THRESHOLD or cell_id in lm_h_seen:
+                        continue  # city _A2 or LM cell already covered by _H
+                    col        = col_lm
+                    obj_prefix = "P"
+                    count_key  = "lm"
                 else:
                     continue
 
@@ -322,16 +350,15 @@ class CITY_OT_ImportAsPolygons(bpy.types.Operator):
 
                 try:
                     n = _import_bms_surfaces(bms_file, cell_id, bnd_mats, tex_folder, col, obj_prefix)
-                    if count_ref == "total_h":
-                        total_h += n
-                    else:
-                        total_a += n
+                    if   count_key == "h":  total_h  += n
+                    elif count_key == "lm": total_lm += n
+                    else:                   total_a  += n
                 except Exception as exc:
                     self.report({"WARNING"}, f"[{bms_file.name}] {exc}")
 
-        msg = f"Imported from {folder.name}: {total_h} _H polygon(s)"
+        msg = f"Imported from {folder.name}: {total_h} city _H, {total_lm} landmark"
         if total_a:
-            msg += f", {total_a} _A polygon(s) (reference only)"
+            msg += f", {total_a} _A (reference)"
         self.report({"INFO"}, msg)
         return {"FINISHED"}
 
@@ -343,7 +370,7 @@ class CITY_OT_ClearImportedPolygons(bpy.types.Operator):
 
     def execute(self, context):
         removed = 0
-        for col_name in (_COL_H, _COL_A):
+        for col_name in (_COL_H, _COL_LM, _COL_A):
             col = bpy.data.collections.get(col_name)
             if col:
                 for obj in list(col.objects):

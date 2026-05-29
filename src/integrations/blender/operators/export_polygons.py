@@ -64,7 +64,8 @@ def _popup_error(context: bpy.types.Context, title: str, lines: list) -> None:
 
 
 def _bound_number_from_name(name: str):
-    m = re.match(r"^P(\d+)$", name)
+    # Match P201 and Blender's auto-deduplicated P201.001 form
+    m = re.match(r"^P(\d+)(?:\.\d+)?$", name)
     return int(m.group(1)) if m else None
 
 
@@ -87,11 +88,18 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
 
         # Select Mesh Objects based on the "select_all" property.
         # Match P followed by a digit so PA* reference objects are excluded.
-        _is_poly = lambda n: len(n) > 1 and n[0] == "P" and n[1].isdigit()
+        _is_poly   = lambda n: len(n) > 1 and n[0] == "P" and n[1].isdigit()
+        _sort_key  = lambda obj: ((_bound_number_from_name(obj.name) or 0), obj.name)
         if self.select_all:
-            mesh_objects = [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and _is_poly(obj.name)]
+            mesh_objects = sorted(
+                [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and _is_poly(obj.name)],
+                key=_sort_key,
+            )
         else:
-            mesh_objects = [obj for obj in bpy.context.selected_objects if obj.type == "MESH" and _is_poly(obj.name)]
+            mesh_objects = sorted(
+                [obj for obj in bpy.context.selected_objects if obj.type == "MESH" and _is_poly(obj.name)],
+                key=_sort_key,
+            )
 
         if not mesh_objects:
             self.report({"WARNING"}, "No mesh objects found for export.")

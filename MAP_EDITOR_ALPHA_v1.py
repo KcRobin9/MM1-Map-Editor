@@ -124,7 +124,8 @@ from src.USER.settings._resolver import (
     no_ui, no_ui_type, no_ai,
     less_logs, more_logs,
     lower_portals, empty_portals,
-    set_dlp, fix_faulty_quads, deduplicate_bound_vertices,
+    set_dlp, fix_faulty_quads, deduplicate_bound_vertices, set_hitid_grid,
+    inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms, inherit_ai,
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
     auto_debug,
     load_target_model, load_all_textures,
@@ -1056,8 +1057,15 @@ class Meshes:
                 vertex.write(f)
 
             if self.vertex_count >= Threshold.MESH_VERTEX_COUNT:
-                for _ in range(8):
-                    Default.VECTOR_3.write(f)
+                xs = [v.x for v in self.vertices]
+                ys = [v.y for v in self.vertices]
+                zs = [v.z for v in self.vertices]
+                mn = (min(xs), min(ys), min(zs))
+                mx = (max(xs), max(ys), max(zs))
+                for cx in (mn[0], mx[0]):
+                    for cy in (mn[1], mx[1]):
+                        for cz in (mn[2], mx[2]):
+                            write_pack(f, '<3f', cx, cy, cz)
 
             if self.flags & MeshFlags.NORMALS:
                 write_pack(f, f"{self.adjunct_count}B", *self.normals)
@@ -1513,11 +1521,12 @@ def create_polygon(
     plane_edges: List[Vector3] = None, wall_side: str = None, sort_vertices: bool = False,
     hud_color: str = Color.ROAD, minimap_outline_color: str = minimap_outline_color,
     always_visible: bool = True, fix_faulty_quads: bool = fix_faulty_quads, base: bool = False,
-    flip: bool = False) -> None:
+    flip: bool = False, fix_winding: bool = True) -> None:
 
     base_vertex_index = len(vertices)
     check_shape_type(vertex_coordinates)
-    vertex_coordinates = process_winding(vertex_coordinates, fix_faulty_quads)
+    if fix_winding:
+        vertex_coordinates = process_winding(vertex_coordinates, fix_faulty_quads)
     flags = process_flags(vertex_coordinates, flags)
 
     if sort_vertices:
@@ -1646,7 +1655,7 @@ def user_notes():
 
 #! ==============================TEST_CITY============================== #*
 #! ==============================MAIN AREA============================== #*
-# Last exported: 2026-05-10 03:27:12
+# Last exported: 2026-05-30 00:26:43
 
 create_polygon(
     bound_number = 210,
@@ -2290,20 +2299,23 @@ def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], S
 
 
 def calculate_cell_centers(polys: List[Polygon]) -> Dict[int, CellCenter]:
-    # print("\nCalculating cell centers...")
-    centers = {}
-    valid_cell_count = 0
-    
+    # Accumulate ALL vertex positions across ALL polygons per cell, then average.
+    # Overwriting per-polygon (old behaviour) gave wrong centers for cells with
+    # many surfaces (city round-trip), because the last polygon could be a small
+    # edge piece far from the actual cell centroid.
+    all_positions: Dict[int, List[Tuple[float, float, float]]] = {}
+
     for poly in polys:
-        if poly.cell_id > 0:  # Only count non-zero cells
-            valid_cell_count += 1
-            vertex_positions = [(vertices[i].x, vertices[i].y, vertices[i].z) for i in poly.vertex_index]
-            center_x, center_y, center_z = calc_center_coords(vertex_positions)
-            
-            centers[poly.cell_id] = CellCenter(center_x, center_y, center_z, poly.cell_id)
-            # print(f"Cell {poly.cell_id} center: ({center_x:.2f}, {center_y:.2f}, {center_z:.2f})")
-    
-    # print(f"Total valid cells (excluding 0): {valid_cell_count}")
+        if poly.cell_id > 0:
+            bucket = all_positions.setdefault(poly.cell_id, [])
+            for i in poly.vertex_index[:poly.num_verts]:
+                bucket.append((vertices[i].x, vertices[i].y, vertices[i].z))
+
+    centers = {}
+    for cell_id, positions in all_positions.items():
+        center_x, center_y, center_z = calc_center_coords(positions)
+        centers[cell_id] = CellCenter(center_x, center_y, center_z, cell_id)
+
     return centers
 
 
@@ -2359,6 +2371,73 @@ def get_cell_visibility_by_distance(cell_id: int, polys: List[Polygon], cell_typ
     centers = calculate_cell_centers(polys)
     max_cells = get_cell_count_limit(cell_id, LevelOfDetail.HIGH, cell_type)
     return get_nearest_cells(cell_id, centers, max_cells)
+
+
+def _inherit_city_files(city, hitid: bool, cells: bool, portals: bool, bounds: bool, bms: bool) -> None:
+    import shutil
+    src    = city.path
+    prefix = city.prefix
+
+    ok(f"Inheriting city files from {city.name}")
+
+    single_copies = [
+        (hitid,   src / f"{prefix}_HITID{FileType.BOUND}", Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}"),
+        (cells,   src / f"{prefix}{FileType.CELL}",        Folder.Shop.City  / f"{MAP_FILENAME}{FileType.CELL}"),
+        (portals, src / f"{prefix}{FileType.PORTAL}",      Folder.Shop.City  / f"{MAP_FILENAME}{FileType.PORTAL}"),
+    ]
+    for enabled, src_file, dst_file in single_copies:
+        if not enabled:
+            item(f"[OFF]  {src_file.name}")
+            continue
+        if src_file.exists():
+            shutil.copy2(src_file, dst_file)
+            item(f"{src_file.name} → {dst_file.name}")
+        else:
+            item(f"[SKIP] {src_file.name} not found")
+
+    # Per-cell BND files — original has extra collision geometry (walls, kerbs)
+    # beyond what's in the BMS surfaces, so polygon counts differ. Inheriting
+    # keeps bounding spheres correct for frustum culling.
+    for bound_src_dir, bound_dst_dir, label in [
+        (src / "BOUNDS" / f"{prefix}CITY", Folder.Shop.Map.BoundCity,     "CITY bounds"),
+        (src / "BOUNDS" / f"{prefix}LM",   Folder.Shop.Map.BoundLandmark, "LM bounds"),
+    ]:
+        if not bound_src_dir.is_dir():
+            continue
+        if bounds:
+            copied = sum(
+                1 for f in bound_src_dir.iterdir()
+                if (shutil.copy2(f, bound_dst_dir / f.name), True)[1]
+            )
+            item(f"{label}: {copied} file(s) → {bound_dst_dir.name}")
+        else:
+            item(f"[OFF]  {label}")
+
+    # BMS mesh files — overwrite generated files with originals for isolation testing.
+    for bms_src_dir, bms_dst_dir, label in [
+        (src / "MESHES" / f"{prefix}CITY", Folder.Shop.Map.MeshCity,     "CITY meshes"),
+        (src / "MESHES" / f"{prefix}LM",   Folder.Shop.Map.MeshLandmark, "LM meshes"),
+    ]:
+        if not bms_src_dir.is_dir():
+            continue
+        if bms:
+            copied = sum(
+                1 for f in bms_src_dir.iterdir()
+                if f.suffix.upper() == FileType.MESH.upper()
+                and (shutil.copy2(f, bms_dst_dir / f.name), True)[1]
+            )
+            item(f"{label}: {copied} file(s) → {bms_dst_dir.name}")
+        else:
+            # Gap-fill only: copy files that weren't generated (e.g. CULL60_H2.BMS)
+            copied = 0
+            for f in bms_src_dir.iterdir():
+                dst = bms_dst_dir / f.name
+                if not dst.exists():
+                    shutil.copy2(f, dst)
+                    copied += 1
+            if copied:
+                item(f"{label}: {copied} gap-fill file(s) → {bms_dst_dir.name}")
+        item(f"LM meshes: {copied} gap-fill file(s) → {Folder.Shop.Map.MeshLandmark.name}")
 
 
 def create_cells(output_file: Path, polys: List[Polygon]) -> None:
@@ -3025,24 +3104,33 @@ if not SKIP_AR_CREATION:
     item(all_textures_str)
 
     flush_meshes()
-    create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
-    Bounds.create(
-        Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}",
-        vertices, polys,
-        Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}",
-        debug_bounds,
-        grid_x_dim=100, grid_z_dim=100,
-    )
+    if not (inherit_city and inherit_cells):
+        create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
-    write_per_cell_bounds(vertices, polys)
+    if not (inherit_city and inherit_hitid):
+        Bounds.create(
+            Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}",
+            vertices, polys,
+            Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}",
+            debug_bounds,
+            grid_x_dim=100 if set_hitid_grid else 0,
+            grid_z_dim=100 if set_hitid_grid else 0,
+        )
 
-    Portals.write_all(
-        Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}",
-        polys, vertices,
-        lower_portals, empty_portals,
-        debug_portals
-    )
+    if not (inherit_city and inherit_bounds):
+        write_per_cell_bounds(vertices, polys)
+
+    if not (inherit_city and inherit_portals):
+        Portals.write_all(
+            Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}",
+            polys, vertices,
+            lower_portals, empty_portals,
+            debug_portals
+        )
+
+    if inherit_city:
+        _inherit_city_files(inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms)
 
     aiStreetEditor.create(
         street_list,

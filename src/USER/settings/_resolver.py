@@ -24,7 +24,8 @@ from src.USER.settings.advanced import (
     no_ui, no_ui_type, no_ai,
     less_logs, more_logs,
     lower_portals, empty_portals,
-    set_dlp, fix_faulty_quads, deduplicate_bound_vertices,
+    set_dlp, fix_faulty_quads, deduplicate_bound_vertices, set_hitid_grid,
+    inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms, inherit_ai,
 )
 
 from src.USER.settings.debug import (
@@ -66,7 +67,8 @@ if _fast_ar:
     set_cops_and_robbers   = False
     set_lighting           = False
     set_dlp                = False
-    empty_portals          = False
+    # empty_portals is intentionally NOT overridden here — the user may want
+    # empty_portals = True during fast builds for city round-trip testing.
     # suppress all debug output
     debug_props      = False
     debug_meshes     = False
