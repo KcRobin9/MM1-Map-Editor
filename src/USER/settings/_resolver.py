@@ -25,7 +25,8 @@ from src.USER.settings.advanced import (
     less_logs, more_logs,
     lower_portals, empty_portals,
     set_dlp, fix_faulty_quads, deduplicate_bound_vertices, set_hitid_grid,
-    inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms, inherit_ai,
+    inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms,
+    inherit_ai, inherit_props, inherit_facades, inherit_gizmo, inherit_extrema,
 )
 
 from src.USER.settings.debug import (

@@ -16,7 +16,7 @@ set_props = True                # Set True to include PROPS
 set_facades = True              # Set True to include FACADES
 set_physics = True              # Set True to apply custom PHYSICS
 set_animations = True           # Set True to include ANIMATIONS (plane and eltrain)
-set_lighting = True             # Set True to apply custom LIGHTING overrides
+set_lighting = False            # Set True to apply custom LIGHTING overrides
 
 # Player Data
 set_player_data = True          # Set True to write player .sav + .cfg + players.dir into MidtownMadness/dev/players/

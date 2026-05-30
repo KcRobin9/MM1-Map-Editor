@@ -125,7 +125,8 @@ from src.USER.settings._resolver import (
     less_logs, more_logs,
     lower_portals, empty_portals,
     set_dlp, fix_faulty_quads, deduplicate_bound_vertices, set_hitid_grid,
-    inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms, inherit_ai,
+    inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms,
+    inherit_ai, inherit_props, inherit_facades, inherit_gizmo, inherit_extrema,
     debug_props, debug_meshes, debug_bounds, debug_facades, debug_physics, debug_portals, debug_lighting, debug_minimap, debug_minimap_id,
     auto_debug,
     load_target_model, load_all_textures,
@@ -668,10 +669,10 @@ def make_table(vertices: List[Vector3], polys: List[Polygon],
     item(f"Non-empty: {non_empty}/{total_cells} ({100 * non_empty / total_cells:.1f}%)  "
          f"Entries: {num_entries}  Avg fill: {avg_fill:.1f}  Max fill: {max_fill}/80")
 
-    for poly_idx, poly in enumerate(polys[1:], start=1):
-        cell_count = sum(1 for b in table if poly_idx in b)
-        shape = "quad" if poly.num_verts == 4 else "tri"
-        item(f"  P{poly.cell_id} (idx={poly_idx}, {shape}) → {cell_count} cells")
+    # for poly_idx, poly in enumerate(polys[1:], start=1):
+    #     cell_count = sum(1 for b in table if poly_idx in b)
+    #     shape = "quad" if poly.num_verts == 4 else "tri"
+    #     item(f"  P{poly.cell_id} (idx={poly_idx}, {shape}) → {cell_count} cells")
 
     fill_dist = Counter(len(b) for b in table if b)
     dist_str = "  ".join(f"{k}pol:{v}cells" for k, v in sorted(fill_dist.items()))
@@ -788,6 +789,30 @@ class Bounds:
     @classmethod
     def initialize(cls, vertices: List[Vector3], polys: List[Polygon],
                    grid_x_dim: int = 0, grid_z_dim: int = 0) -> 'Bounds':
+        # Remap global vertex indices to a local deduplicated vertex table so
+        # polygon vertex_index values always fit in uint16 (< 65535).
+        # Large cities (Chicago) have 80k+ global vertices; the original HITID
+        # for Chicago has only 8049 unique positions — dedup keeps us in range.
+        coord_to_local: dict = {}
+        local_vertices: List[Vector3] = []
+        local_polys: List[Polygon] = []
+        for poly in polys:
+            new_vi = []
+            for g_idx in poly.vertex_index[:poly.num_verts]:
+                v = vertices[g_idx]
+                key = (v.x, v.y, v.z)
+                if key not in coord_to_local:
+                    coord_to_local[key] = len(local_vertices)
+                    local_vertices.append(v)
+                new_vi.append(coord_to_local[key])
+            local_polys.append(Polygon(
+                poly.cell_id, poly.material_index, poly.flags, new_vi,
+                poly.plane_edges, poly.plane_normal, poly.plane_distance,
+                poly.cell_type, poly.always_visible,
+            ))
+        vertices = local_vertices
+        polys    = local_polys
+
         magic = Magic.BOUND
         offset = Default.VECTOR_3
         center = Vector3.center(vertices)
@@ -1655,7 +1680,7 @@ def user_notes():
 
 #! ==============================TEST_CITY============================== #*
 #! ==============================MAIN AREA============================== #*
-# Last exported: 2026-05-30 00:26:43
+# Last exported: 2026-05-30 14:57:45
 
 create_polygon(
     bound_number = 210,
@@ -2373,7 +2398,8 @@ def get_cell_visibility_by_distance(cell_id: int, polys: List[Polygon], cell_typ
     return get_nearest_cells(cell_id, centers, max_cells)
 
 
-def _inherit_city_files(city, hitid: bool, cells: bool, portals: bool, bounds: bool, bms: bool) -> None:
+def _inherit_city_files(city, hitid: bool, cells: bool, portals: bool, bounds: bool, bms: bool,
+                        ai: bool, props: bool, facades: bool, gizmo: bool, extrema: bool) -> None:
     import shutil
     src    = city.path
     prefix = city.prefix
@@ -2384,6 +2410,11 @@ def _inherit_city_files(city, hitid: bool, cells: bool, portals: bool, bounds: b
         (hitid,   src / f"{prefix}_HITID{FileType.BOUND}", Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}"),
         (cells,   src / f"{prefix}{FileType.CELL}",        Folder.Shop.City  / f"{MAP_FILENAME}{FileType.CELL}"),
         (portals, src / f"{prefix}{FileType.PORTAL}",      Folder.Shop.City  / f"{MAP_FILENAME}{FileType.PORTAL}"),
+        (ai,      src / f"{prefix}{FileType.AI}",          Folder.Shop.City  / f"{MAP_FILENAME}{FileType.AI}"),
+        (props,   src / f"{prefix}{FileType.PROP}",        Folder.Shop.City  / f"{MAP_FILENAME}{FileType.PROP}"),
+        (facades, src / f"{prefix}{FileType.FACADE}",      Folder.Shop.City  / f"{MAP_FILENAME}{FileType.FACADE}"),
+        (gizmo,   src / f"{prefix}{FileType.GIZMO}",       Folder.Shop.City  / f"{MAP_FILENAME}{FileType.GIZMO}"),
+        (extrema, src / f"{prefix}{FileType.EXTREMA}",     Folder.Shop.City  / f"{MAP_FILENAME}{FileType.EXTREMA}"),
     ]
     for enabled, src_file, dst_file in single_copies:
         if not enabled:
@@ -2437,7 +2468,6 @@ def _inherit_city_files(city, hitid: bool, cells: bool, portals: bool, bounds: b
                     copied += 1
             if copied:
                 item(f"{label}: {copied} gap-fill file(s) → {bms_dst_dir.name}")
-        item(f"LM meshes: {copied} gap-fill file(s) → {Folder.Shop.Map.MeshLandmark.name}")
 
 
 def create_cells(output_file: Path, polys: List[Polygon]) -> None:
@@ -2838,17 +2868,22 @@ class Portals:
             
         with open(output_file, "wb") as f:
             if empty_portals:
-                pass
-            
+                # Write a valid zero-portal header so the game reads magic+count cleanly.
+                write_pack(f, '<I', Magic.PORTAL)
+                write_pack(f, '<I', 0)
+
             else:
                 _, portal_tuples = prepare_portals(polys, vertices)
-                
+
                 portals = []
-                
+
                 cls.write_n(f, portal_tuples)
 
                 for cell_1, cell_2, v1, v2 in portal_tuples:
-                    flags = Portal.ACTIVE
+                    # OPEN_AREA (0x2): resets all clipping planes at each portal crossing.
+                    # ACTIVE (0x1) is implicit — the engine treats all portals as active
+                    # regardless of that bit. Reference: hitid_to_ptl.py by 0x1F9F1.
+                    flags = Portal.OPEN_AREA
                     edge_count = Shape.LINE
                     gap_2 = Default.GAP_2
                     height = MAX_Y - MIN_Y
@@ -2857,14 +2892,14 @@ class Portals:
 
                     portal = Portals(flags, edge_count, gap_2, cell_1, cell_2, height, _min, _max)
                     portals.append(portal)
-                    
+
                     write_pack(f, '<2B', flags, edge_count)
                     write_pack(f, '<H', gap_2)
                     write_pack(f, '<2H', cell_2, cell_1)
                     write_pack(f, '<f', height)
                     _min.write(f)
                     _max.write(f)
-                    
+
                 ok(f"Created {len(portal_tuples)} portal(s)")
                 cls.debug(portals, debug_portals, Folder.Debug.Portals / f"{MAP_FILENAME}_PTL.txt")            
 
@@ -3108,14 +3143,20 @@ if not SKIP_AR_CREATION:
     if not (inherit_city and inherit_cells):
         create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
+    # Ground-plane polygon filter — used for both HITID and portal generation.
+    # Keeps horizontal surfaces (roads, sidewalks, ramps) and discards walls,
+    # curbs, and vertical faces that have no meaningful XZ footprint.
+    # Matches the polygon set the original hitid_to_ptl.py tool operated on.
+    _ground_polys = [p for p in polys if abs(p.plane_normal.y) >= 0.3]
+
     if not (inherit_city and inherit_hitid):
         Bounds.create(
             Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}",
-            vertices, polys,
+            vertices, _ground_polys,
             Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}",
             debug_bounds,
-            grid_x_dim=100 if set_hitid_grid else 0,
-            grid_z_dim=100 if set_hitid_grid else 0,
+            grid_x_dim=300 if set_hitid_grid else 0,
+            grid_z_dim=300 if set_hitid_grid else 0,
         )
 
     if not (inherit_city and inherit_bounds):
@@ -3124,13 +3165,14 @@ if not SKIP_AR_CREATION:
     if not (inherit_city and inherit_portals):
         Portals.write_all(
             Folder.Shop.City / f"{MAP_FILENAME}{FileType.PORTAL}",
-            polys, vertices,
+            _ground_polys, vertices,
             lower_portals, empty_portals,
             debug_portals
         )
 
     if inherit_city:
-        _inherit_city_files(inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms)
+        _inherit_city_files(inherit_city, inherit_hitid, inherit_cells, inherit_portals, inherit_bounds, inherit_bms,
+                            inherit_ai, inherit_props, inherit_facades, inherit_gizmo, inherit_extrema)
 
     aiStreetEditor.create(
         street_list,

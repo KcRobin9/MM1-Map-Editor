@@ -2,7 +2,7 @@
 # Set exactly one flag to True, or leave all False for normal behaviour.
 # These override individual settings without touching your saved values.
 
-FAST_AR_ONLY         = False   # Build the .AR faster — skips heavy features (props, AI, physics, races…)
+FAST_AR_ONLY         = True   # Build the .AR faster — skips heavy features (props, AI, physics, races…)
 
 BLENDER_ONLY         = False   # Skip .AR creation - full Blender scene (props + facades at startup)
 
