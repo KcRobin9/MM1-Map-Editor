@@ -51,11 +51,13 @@ class FacadeEditor:
 
             num_facades = math.ceil(abs(end_coord - start_coord) / params['separator'])
 
+            room = params.get('room', Default.ROOM)
+
             for i in range(num_facades):
                 current_start, current_end = cls.calculate_start_end(params, axis, direction, start_coord, i)
                 sides = params.get('sides', (0.0, 0.0, 0.0))
                 scale = scales.get(params['name'], params.get('scale', 1.0))
-                facades.append(Facades(Default.ROOM, params['flags'], current_start, current_end, sides, scale, params['name']))
+                facades.append(Facades(room, params['flags'], current_start, current_end, sides, scale, params['name']))
 
         return facades
     

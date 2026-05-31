@@ -86,6 +86,13 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
         row.enabled = bool(folder_path)
         row.operator("city_loader.import_props", text="Import Props", icon="IMPORT")
 
+        col.separator()
+        col.label(text="Import facades as editable facade groups", icon="INFO")
+        row = col.row(align=True)
+        row.scale_y = 1.4
+        row.enabled = bool(folder_path)
+        row.operator("city_loader.import_facades", text="Import Facades", icon="IMPORT")
+
         layout.separator()
 
         # ── Quick info about discovered files ─────────────────────────────────

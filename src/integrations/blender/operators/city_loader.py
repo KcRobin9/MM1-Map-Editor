@@ -286,6 +286,34 @@ class CITY_OT_ImportProps(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class CITY_OT_ImportFacades(bpy.types.Operator):
+    """Import the city's facades (.FCD) as editable, tagged facade groups for round-trip editing"""
+    bl_idname = "city_loader.import_facades"
+    bl_label  = "Import Facades"
+
+    def execute(self, context):
+        scene  = context.scene
+        folder = Path(scene.cl_city_folder)
+
+        if not folder.is_dir():
+            self.report({"ERROR"}, f"City folder not found: {folder}")
+            return {"CANCELLED"}
+
+        fcd_files = sorted(folder.glob("*.FCD")) + sorted(folder.glob("*.fcd"))
+        if not fcd_files:
+            self.report({"ERROR"}, f"No .FCD file found in {folder.name}")
+            return {"CANCELLED"}
+
+        try:
+            bpy.ops.facades.load_external(filepath=str(fcd_files[0]))
+        except Exception as exc:
+            self.report({"ERROR"}, f"Facade import failed: {exc}")
+            return {"CANCELLED"}
+
+        self.report({"INFO"}, f"Imported facades from {fcd_files[0].name}")
+        return {"FINISHED"}
+
+
 class CITY_OT_ClearMeshes(bpy.types.Operator):
     """Remove all loaded city meshes from the scene"""
     bl_idname = "city_loader.clear_meshes"
@@ -313,5 +341,6 @@ CITY_LOADER_CLASSES = [
     CITY_OT_SelectFolder,
     CITY_OT_Load,
     CITY_OT_ImportProps,
+    CITY_OT_ImportFacades,
     CITY_OT_ClearMeshes,
 ]

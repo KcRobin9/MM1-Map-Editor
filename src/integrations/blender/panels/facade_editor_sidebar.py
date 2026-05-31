@@ -351,6 +351,11 @@ class VIEW3D_PT_FacadeEditorTools(bpy.types.Panel):
         col.operator("facades.export_code",       text="Export All as Code",    icon="WORLD")
         col.operator("facades.export_group_code", text="Export Active as Code", icon="RESTRICT_SELECT_OFF")
         col.separator()
+        col.prop(context.scene, "fr_replace_user_facades", text="Replace USER facades.py (backup old)")
+        dest = "USER facades.py" if context.scene.fr_replace_user_facades else "chosen .py file"
+        col.label(text=f"To {dest}:")
+        col.operator("facades.export_file",       text="Export to .py",         icon="EXPORT")
+        col.separator()
         col.operator("facades.save_fcd",          text="Save FCD File",         icon="FILE")
 
 

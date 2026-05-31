@@ -5,7 +5,6 @@ from typing import List, BinaryIO
 from src.core.vector.vector_3 import Vector3
 from src.debug.main import Debug
 from src.io.binary import read_unpack, write_pack, read_binary_name, write_binary_name
-from src.constants.misc import Default
 
 
 class Facades:
@@ -40,9 +39,13 @@ class Facades:
     def write_n(cls, f: BinaryIO, facades: List['Facades']) -> None:
         return write_pack(f, '<I', len(facades))
         
-    def write(self, f: BinaryIO) -> None: 
-        write_pack(f, '<2H', Default.ROOM, self.flags)  # Hardcode the Room value such that all Facades are visible in the game    
-        write_pack(f, '<3f', *self.offset)  
+    def write(self, f: BinaryIO) -> None:
+        # Facades take the STATIC/BuildingChain path in the engine, which parents
+        # each instance to its `room` cell directly (NOT re-binned by position
+        # like bangers). For a full-city round-trip the original per-facade room
+        # must be preserved or facades only render in cell 1 (most go black).
+        write_pack(f, '<2H', self.room, self.flags)
+        write_pack(f, '<3f', *self.offset)
         write_pack(f, '<3f', *self.face)
         write_pack(f, '<3f', *self.sides)
         write_pack(f, '<f', self.scale)

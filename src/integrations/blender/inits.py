@@ -337,6 +337,7 @@ SCENE_PROPERTIES = [
     "fc_sides_x",  "fc_sides_y",  "fc_sides_z",
     "fc_scale_auto",
     "fc_scale",
+    "fr_replace_user_facades",
 ]
 
 
@@ -1544,6 +1545,12 @@ def register_scene_properties() -> None:
     bpy.types.Scene.fc_scale_auto = bpy.props.BoolProperty(name="Auto Scale", default=True)
     bpy.types.Scene.fc_scale      = bpy.props.FloatProperty(
         name="Scale", default=1.0, min=0.001, precision=3,
+    )
+    # Export → write directly to src/USER/facades.py (backs up the old file)
+    bpy.types.Scene.fr_replace_user_facades = bpy.props.BoolProperty(
+        name="Replace USER facades.py",
+        description="Write the export straight into src/USER/facades.py, backing up the old file as facades_backup_{timestamp}.py. When off, you pick a file path",
+        default=False,
     )
 
     # ── Bridge Editor — edit form ─────────────────────────────────────────────

@@ -6,7 +6,9 @@ import uuid
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
+from src.constants.misc import Default
 from src.constants.folder import Folder
+from src.constants.constants import CURRENT_TIME_FORMATTED
 from src.ui.console import ok, sep, item, suppress_stdout_matching
 
 
@@ -638,6 +640,8 @@ def generate_python_code(groups: Dict[str, dict]) -> str:
         lines.append(f"{var} = {{")
         lines.append(f'    "name":      {facade_name_to_const(cfg.get("name", ""))},')
         lines.append(f'    "flags":     {flags_to_const(int(cfg.get("flags", 1)))},')
+        if "room" in cfg and int(cfg["room"]) != Default.ROOM:
+            lines.append(f'    "room":      {int(cfg["room"])},')
         lines.append(f'    "offset":    {_fmt_vec(cfg.get("offset", [0, 0, 0]))},')
         lines.append(f'    "end":       {_fmt_vec(cfg.get("end",    [0, 0, 0]))},')
         lines.append(f'    "axis":      "{cfg.get("axis", "x")}",')
@@ -652,6 +656,33 @@ def generate_python_code(groups: Dict[str, dict]) -> str:
 
     lines.append(f"facade_list = [{', '.join(var_names)}]")
     return "\n".join(lines)
+
+
+# ── File export helpers (.py file / replace USER facades.py) ──────────────────
+
+def _write_facades_py(filepath: str, code: str) -> Path:
+    path = Path(filepath)
+    if path.suffix.lower() != ".py":
+        path = path.with_suffix(".py")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(code, encoding="utf-8")
+    return path
+
+
+def _replace_user_facades_file(code: str) -> Tuple[Path, Optional[Path]]:
+    """
+    Back up the current src/USER/facades.py to facades_backup_{timestamp}.py
+    (same folder), then overwrite it with the exported code. Returns
+    (target_path, backup_path | None).
+    """
+    target = Folder.Src.User.Facades
+    backup = None
+    if target.exists():
+        backup = target.with_name(f"facades_backup_{CURRENT_TIME_FORMATTED}.py")
+        backup.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(code, encoding="utf-8")
+    return target, backup
 
 
 # ── Update callbacks (form → scene → deferred re-place) ──────────────────────
@@ -1056,7 +1087,9 @@ class FACADES_OT_LoadExternal(bpy.types.Operator):
 
         # Each binary record is one fully-expanded panel. Map directly into the
         # standard offset/end form so live-editing the panel's start or end
-        # updates the rendered position. Separator=length+ε keeps n_panels=1.
+        # updates the rendered position. Separator = length + margin keeps
+        # n_panels=1; the 0.1 margin survives the 2-decimal rounding applied by
+        # generate_python_code (a tiny ε would round away and split into 2 panels).
         cfg_list = []
         for fcd in raw_facades:
             name = fcd.name.rstrip("\x00")
@@ -1067,10 +1100,11 @@ class FACADES_OT_LoadExternal(bpy.types.Operator):
             cfg_list.append({
                 "name":       name,
                 "flags":      fcd.flags,
+                "room":       fcd.room,
                 "offset":     [offset[0], offset[1], offset[2]],
                 "end":        [end[0],    end[1],    end[2]],
                 "axis":       axis,
-                "separator":  max(length, 0.01) + 1e-3,
+                "separator":  max(length, 0.01) + 0.1,
                 "sides":      [fcd.sides.x, fcd.sides.y, fcd.sides.z],
                 "scale_auto": False,
                 "scale":      fcd.scale,
@@ -1078,6 +1112,40 @@ class FACADES_OT_LoadExternal(bpy.types.Operator):
 
         rep = place_facades_in_scene(cfg_list)
         self.report({"INFO"}, f"Loaded {len(cfg_list)} records from {path.name} — {rep.summary()}")
+        return {"FINISHED"}
+
+
+class FACADES_OT_ExportFile(bpy.types.Operator):
+    """Write all facade groups to a .py file (drop-in for src/USER/facades.py)"""
+    bl_idname = "facades.export_file"
+    bl_label  = "Export Facades (.py)"
+
+    filepath:    bpy.props.StringProperty(subtype="FILE_PATH")
+    filter_glob: bpy.props.StringProperty(default="*.py", options={"HIDDEN"})
+
+    def invoke(self, context, event):
+        if getattr(context.scene, "fr_replace_user_facades", False):
+            return self.execute(context)
+        if not self.filepath:
+            self.filepath = str(Folder.BASE / "facades_export.py")
+        context.window_manager.fileselect_add(self)
+        return {"RUNNING_MODAL"}
+
+    def execute(self, context):
+        groups = get_unique_groups()
+        if not groups:
+            self.report({"WARNING"}, "No facade groups in scene — load or create facades first")
+            return {"CANCELLED"}
+
+        code = generate_python_code(groups)
+
+        if getattr(context.scene, "fr_replace_user_facades", False):
+            target, backup = _replace_user_facades_file(code)
+            note = f" (backup: {backup.name})" if backup else ""
+            self.report({"INFO"}, f"Replaced {target.name}: {len(groups)} facade group(s){note}")
+        else:
+            path = _write_facades_py(self.filepath, code)
+            self.report({"INFO"}, f"Wrote {len(groups)} facade group(s) to {path.name}")
         return {"FINISHED"}
 
 
@@ -1128,5 +1196,6 @@ FACADE_EDITOR_CLASSES = [
     FACADES_OT_DeleteGroup,
     FACADES_OT_BakeFromCursor,
     FACADES_OT_LoadExternal,
+    FACADES_OT_ExportFile,
     FACADES_OT_SaveFCD,
 ]
