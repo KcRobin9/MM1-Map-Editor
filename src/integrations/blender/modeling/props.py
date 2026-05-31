@@ -10,6 +10,7 @@ from src.constants.folder import Folder
 from src.constants.constants import HUGE
 from src.constants.props import BangerFlags
 from src.core.vector.vector_3 import Vector3
+from src.constants.custom_props import get_custom_city, custom_city_of_prop
 from src.core.geometry.main import transform_coordinate_system
 
 from src.integrations.blender.modeling.meshes import (
@@ -241,13 +242,30 @@ def expand_prop_instances(
 
 # ── BMS file resolver ─────────────────────────────────────────────────────────
 
+def _custom_texture_folders(prop_name: str, base_folder: Optional[Path]):
+    """For a custom-city prop, return [stock pool, custom TEX16A, TEX16O] so its
+    DDS preview textures resolve; otherwise return base_folder unchanged."""
+    city_folder = custom_city_of_prop(prop_name)
+    if city_folder and base_folder is not None:
+        tex = get_custom_city(city_folder).texture_root
+        return [base_folder, tex / "TEX16A", tex / "TEX16O"]
+    return base_folder
+
+
 def _find_prop_folder(prop_name: str, bms_root: Path) -> Optional[Path]:
     """
     Locate the subfolder for a prop inside bms_root.
 
-    Searches bms_root directly, then each immediate subdirectory (e.g. CARS,
-    PROPS, MISC), so the layout can be either flat or categorized.
+    Custom-city props resolve to their isolated store first; otherwise searches
+    bms_root directly, then each immediate subdirectory (e.g. CARS, PROPS, MISC),
+    so the layout can be either flat or categorized.
     """
+    city_folder = custom_city_of_prop(prop_name)
+    if city_folder:
+        candidate = get_custom_city(city_folder).mesh_root / prop_name.upper()
+        if candidate.is_dir():
+            return candidate
+
     name_upper = prop_name.upper()
     # Direct child first
     direct = bms_root / name_upper
@@ -545,7 +563,8 @@ def place_props_in_scene(
             mesh = build_blender_mesh(prop_name, bms_data)
             if texture_folder and bms_data["texture_names"]:
                 with suppress_stdout_matching("Unable to find a suitable DXT compression"):
-                    _apply_materials_to_mesh(mesh, bms_data["texture_names"], texture_folder)
+                    _apply_materials_to_mesh(mesh, bms_data["texture_names"],
+                                             _custom_texture_folders(prop_name, texture_folder))
             mesh_cache[prop_name] = mesh
             item(f"{prop_name.ljust(_col)}  {bms_data['num_surfaces']} faces, "
                  f"{len(bms_data['texture_names'])} textures")

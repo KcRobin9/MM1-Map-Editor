@@ -51,10 +51,64 @@ PROP_NAME_ITEMS: List[Tuple[str, str, str]] = _build_prop_name_items()
 PROP_NAME_ITEMS_FROM = [("__ALL__", "ALL", "Replace every prop type in the scene")] + PROP_NAME_ITEMS
 PROP_NAME_ITEMS_TO   = PROP_NAME_ITEMS + [("__RANDOM__", "RANDOM", "Assign a random prop type to each matched group")]
 
+
+# ── Custom-city props (community maps) ────────────────────────────────────────
+
+def _build_custom_prop_items() -> Dict[str, List[Tuple[str, str, str]]]:
+    """city folder → [(game_id, 'PREFIX: Friendly', 'Catalogue.ATTR'), ...]."""
+    from src.constants.custom_props import CUSTOM_CITIES
+
+    by_city: Dict[str, List[Tuple[str, str, str]]] = {}
+    for folder, city in CUSTOM_CITIES.items():
+        cat = city.catalogue
+        items = []
+        for attr, val in sorted(vars(cat).items()):
+            if attr.startswith("_") or not isinstance(val, str):
+                continue
+            friendly = f"{city.definition.prefix}: " + attr.replace("_", " ").title()
+            items.append((val, friendly, f"{cat.__name__}.{attr}"))
+        by_city[folder] = items
+    return by_city
+
+
+CUSTOM_PROP_ITEMS: Dict[str, List[Tuple[str, str, str]]] = _build_custom_prop_items()
+
+
+def _build_custom_city_items() -> List[Tuple[str, str, str]]:
+    """Dropdown selector: NONE + each custom city by its friendly name."""
+    from src.constants.custom_props import CUSTOM_CITIES
+
+    items = [("NONE", "Chicago / Stock", "Show the stock props (Chicago and shared base-game props)")]
+    for folder, city in CUSTOM_CITIES.items():
+        if not city.prop_ids:   # texture-only cities (e.g. Paulville) have no props to list
+            continue
+        items.append((folder, city.definition.name, f"Show custom props from {city.definition.name}"))
+    return items
+
+
+CUSTOM_CITY_ITEMS: List[Tuple[str, str, str]] = _build_custom_city_items()
+
+# Cache the per-city merged item lists so Blender keeps the string refs alive.
+_PROP_ENUM_CACHE: Dict[str, List[Tuple[str, str, str]]] = {}
+
+
+def prop_name_enum_items(self, context):
+    """Dynamic dropdown items: stock props when no city is selected, otherwise
+    ONLY the chosen custom city's props (keeps the menu small)."""
+    folder = getattr(context.scene, "pe_custom_city", "NONE") if context else "NONE"
+    if folder not in _PROP_ENUM_CACHE:
+        _PROP_ENUM_CACHE[folder] = PROP_NAME_ITEMS if folder == "NONE" else CUSTOM_PROP_ITEMS.get(folder, [])
+    return _PROP_ENUM_CACHE[folder]
+
+
 # Fast reverse lookup: game_id → const string (e.g. "tpdrawbridge04" → "Prop.BRIDGE_SLIM")
 _GAME_TO_CONST: Dict[str, str] = {item[0]: item[2] for item in PROP_NAME_ITEMS}
-# game_id → friendly label
+# game_id → friendly label  (includes custom props for nice panel labels)
 _GAME_TO_FRIENDLY: Dict[str, str] = {item[0]: item[1] for item in PROP_NAME_ITEMS}
+for _items in CUSTOM_PROP_ITEMS.values():
+    for _id, _friendly, _const in _items:
+        _GAME_TO_FRIENDLY[_id] = _friendly
+        _GAME_TO_CONST[_id]    = _const
 
 
 def prop_name_to_const(name: str) -> str:
@@ -359,7 +413,17 @@ def generate_python_code(groups: Dict) -> str:
 
     lines.append(f"random_props = [{', '.join(random_var_names)}]")
 
-    return "\n".join(lines)
+    code = "\n".join(lines)
+
+    # Inject custom-prop catalogue imports when their constants are referenced
+    from src.constants.custom_props import CUSTOM_CITIES
+    extra = [f"from {c.catalogue.__module__} import {c.catalogue.__name__}"
+             for c in CUSTOM_CITIES.values() if f"{c.catalogue.__name__}." in code]
+    if extra:
+        anchor = "from src.constants.props import Prop, BangerFlags\n"
+        code = code.replace(anchor, anchor + "\n".join(extra) + "\n", 1)
+
+    return code
 
 
 def _code_from_lists(prop_list: list, random_props: list) -> str:

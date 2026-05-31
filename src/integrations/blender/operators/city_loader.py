@@ -96,7 +96,8 @@ def _sub_collection_label(dir_name: str) -> str:
 
 
 
-def _load_city_meshes(mesh_dirs: List[Path], texture_folder: Path) -> int:
+def _load_city_meshes(mesh_dirs: List[Path], texture_folder) -> int:
+    """texture_folder may be a Path or a list of Paths (custom-city DDS search)."""
     from src.integrations.blender.modeling.meshes import read_bms
     from src.integrations.blender.modeling.meshes import _apply_materials_to_mesh
 
@@ -237,8 +238,11 @@ class CITY_OT_Load(bpy.types.Operator):
             mesh_dirs = [d for d in meshes_root.iterdir() if d.is_dir()] if meshes_root.is_dir() else []
 
             if mesh_dirs:
+                from src.constants.custom_props import custom_city_texture_folders
                 tex_folder = Path(scene.cl_texture_folder) if scene.cl_texture_folder else Folder.Resources.Editor.Textures
-                n = _load_city_meshes(mesh_dirs, tex_folder)
+                # Custom cities ship their own DDS — search the custom store too
+                tex_search = [tex_folder] + custom_city_texture_folders(folder)
+                n = _load_city_meshes(mesh_dirs, tex_search)
                 loaded_parts.append(f"Meshes ({n} BMS)")
             else:
                 errors.append(f"Meshes: no MESHES subfolders found in {folder.name}")

@@ -22,3 +22,10 @@ class City:
     RaceTrack8  = CityDefinition("Race Track 8",         "RACETRACK_8",          "RACETRACK8")
     RaceTrack10 = CityDefinition("Race Track 10",        "RACETRACK_10",         "RACETRACK10")
     RaceTrack14 = CityDefinition("Race Track 14",        "RACETRACK_14",         "RACETRACK14")
+
+    # ── Custom cities (community maps; some ship their own custom props) ───────
+    BoxDesignRaceway = CityDefinition("Box Design Raceway", "BOX_DESIGN_RACEWAY", "BDRW")
+    Archipelago      = CityDefinition("Archipelago",        "ARCHIPELAGO",        "ARCH")
+    OffroadMadness   = CityDefinition("Offroad Madness",    "OFFROAD_MADNESS",    "ORM")
+    Seaview          = CityDefinition("Seaview",            "SEAVIEW",            "SEAVIEW")
+    Paulville        = CityDefinition("Paulville",          "PAULVILLE",          "RACETRACK3")

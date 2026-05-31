@@ -140,6 +140,10 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
         # ── Prop name dropdown ────────────────────────────────────────────────
         box = layout.box()
         row = box.row(align=True)
+        row.label(text="City:", icon="WORLD")
+        row.prop(scene, "pe_custom_city", text="")
+
+        row = box.row(align=True)
         row.label(text="Prop:", icon="MESH_DATA")
         row.prop(scene, "pe_prop_name", text="")
 
@@ -313,6 +317,10 @@ class VIEW3D_PT_PropEditorCreate(bpy.types.Panel):
 
         # ── Prop name ─────────────────────────────────────────────────────────
         box = layout.box()
+        row = box.row(align=True)
+        row.label(text="City:", icon="WORLD")
+        row.prop(scene, "pe_custom_city", text="")
+
         row = box.row(align=True)
         row.label(text="Prop:", icon="MESH_DATA")
         row.prop(scene, "pc_prop_name", text="")

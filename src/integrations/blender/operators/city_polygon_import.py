@@ -282,13 +282,16 @@ class CITY_OT_ImportAsPolygons(bpy.types.Operator):
             self.report({"ERROR"}, f"City folder not found: {folder}")
             return {"CANCELLED"}
 
+        from src.constants.custom_props import custom_city_texture_folders
         meshes_root = folder / "MESHES"
         bounds_root = folder / "BOUNDS"
-        tex_folder  = (
+        base_tex    = (
             Path(scene.cl_texture_folder)
             if scene.cl_texture_folder
             else Folder.Resources.Editor.Textures
         )
+        # Custom cities ship their own DDS — search the custom store too
+        tex_folder  = [base_tex] + custom_city_texture_folders(folder)
 
         mesh_dirs = [d for d in meshes_root.iterdir() if d.is_dir()] if meshes_root.is_dir() else []
         if not mesh_dirs:

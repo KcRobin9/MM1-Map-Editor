@@ -72,6 +72,7 @@ class Folder:
 
         class Editor:
             Root          = _EDITOR
+            Custom        = _EDITOR / "custom"   # per-city custom-prop assets: custom/<CITY>/{MESHES,BND,TUNE,TEXTURES}
             AI            = _EDITOR / "AI"
             BMS           = _EDITOR / "BMS"
             Bound         = _EDITOR / "BND"

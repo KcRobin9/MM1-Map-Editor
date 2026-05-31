@@ -35,7 +35,7 @@ from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
 from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLASSES
 from src.integrations.blender.panels.prop_sidebar import PROP_EDITOR_PANEL_CLASSES
-from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, PROP_NAME_ITEMS_FROM, PROP_NAME_ITEMS_TO, BANGER_FLAG_ITEMS, _update_prop_form
+from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, PROP_NAME_ITEMS_FROM, PROP_NAME_ITEMS_TO, BANGER_FLAG_ITEMS, CUSTOM_CITY_ITEMS, prop_name_enum_items, _update_prop_form
 from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.car_editor import (
     CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv, _CAR_LIGHT_TAGS,
@@ -154,6 +154,7 @@ SCENE_PROPERTIES = [
     # Prop Editor
     "pe_active_group_id",
     "pe_active_group_type",
+    "pe_custom_city",
     "pe_prop_name",
     "pe_offset_x",
     "pe_offset_y",
@@ -819,11 +820,18 @@ def register_scene_properties() -> None:
         description="Internal: 'fixed' or 'random'",
         default="fixed",
     )
-    # Prop name dropdown
+    # Custom-city selector — adds that community map's props to the dropdowns
+    bpy.types.Scene.pe_custom_city = bpy.props.EnumProperty(
+        name="Custom City",
+        description="Show custom props from a community map (e.g. Box Design Raceway) alongside stock props",
+        items=CUSTOM_CITY_ITEMS,
+        default="NONE",
+    )
+    # Prop name dropdown (stock + selected custom city's props)
     bpy.types.Scene.pe_prop_name = bpy.props.EnumProperty(
         name="Prop",
         description="Select prop type",
-        items=PROP_NAME_ITEMS,
+        items=prop_name_enum_items,
         update=_update_prop_form,
     )
     # Fixed prop offset (game coords)
@@ -898,7 +906,7 @@ def register_scene_properties() -> None:
     bpy.types.Scene.pc_prop_name = bpy.props.EnumProperty(
         name="Prop",
         description="Select prop type",
-        items=PROP_NAME_ITEMS,
+        items=prop_name_enum_items,
     )
     bpy.types.Scene.pc_offset_x = bpy.props.FloatProperty(name="X", default=0.0)
     bpy.types.Scene.pc_offset_y = bpy.props.FloatProperty(name="Y", default=0.0, description="Height")

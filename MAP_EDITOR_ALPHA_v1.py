@@ -57,6 +57,7 @@ from src.debug.auto import run_auto_debug
 # File format imports
 from src.file_formats.ai.street_editor import aiStreetEditor 
 from src.file_formats.props.editor import BangerEditor, edit_and_copy_bangerdata_to_shop
+from src.file_formats.props.custom import copy_custom_prop_assets_to_shop
 from src.file_formats.facades.editor import FacadeEditor
 from src.file_formats.physics import Physics
 from src.file_formats.development import DLP
@@ -3213,6 +3214,9 @@ if not SKIP_AR_CREATION:
     for prop in random_props:
         prop_list.extend(prop_editor.place_randomly(prop))
     prop_editor.process_all(prop_list, set_props)
+
+    # Pack mesh/bound/tune/textures for any custom-city props the map uses
+    copy_custom_prop_assets_to_shop(_fixed_prop_list, random_props, set_props)
 
     if set_lighting:
         lighting_instances = Lighting.read_all(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")  # Read original

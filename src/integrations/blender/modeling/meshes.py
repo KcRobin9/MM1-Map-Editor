@@ -184,16 +184,20 @@ def build_blender_mesh(prop_name: str, bms_data: dict):
     return me
 
 
-def _build_material(texture_name: str, texture_folder: Path):
+def _build_material(texture_name: str, texture_folder):
     import bpy
     """
     Return a Principled BSDF material for texture_name.
 
-    If a material with this name already exists in bpy.data (e.g. from a
-    previous script run), it is rebuilt from scratch so stale/empty materials
-    from earlier runs never silently persist.
+    `texture_folder` may be a single Path or a list of Paths searched in order
+    (so custom-city prop textures can sit beside the stock TEXTURES pool). If a
+    material with this name already exists in bpy.data (e.g. from a previous
+    script run), it is rebuilt from scratch so stale/empty materials from earlier
+    runs never silently persist.
     """
-    texture_path = texture_folder / f"{texture_name}{FileType.DIRECTDRAW_SURFACE}"
+    folders  = list(texture_folder) if isinstance(texture_folder, (list, tuple)) else [texture_folder]
+    filename = f"{texture_name}{FileType.DIRECTDRAW_SURFACE}"
+    texture_path = next((f / filename for f in folders if (f / filename).exists()), folders[0] / filename)
 
     if texture_name in bpy.data.materials:
         mat = bpy.data.materials[texture_name]
