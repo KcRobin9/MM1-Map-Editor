@@ -4,10 +4,9 @@ from typing import List, BinaryIO
 from src.core.vector.vector_3 import Vector3
 from src.io.binary import read_unpack, write_pack, read_binary_name
 from src.debug.main import Debug
-from src.constants.misc import Encoding, Default
+from src.constants.misc import Encoding
 from src.constants.folder import Folder
 from src.constants.file_formats import FileType
-from src.constants.constants import PROP_CAN_COLLIDE_FLAG
 
 
 class Bangers:
@@ -43,9 +42,9 @@ class Bangers:
         with open(output_file, mode = "wb") as f:
             
             cls.write_n(f, bangers)
-        
+
             for banger in bangers:
-                write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
+                write_pack(f, '<2H', banger.room, banger.flags)
                 banger.offset.write(f)
                 banger.face.write(f)
                 f.write(banger.name.encode(Encoding.UTF_8))

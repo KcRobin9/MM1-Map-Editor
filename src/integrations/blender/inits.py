@@ -2,6 +2,7 @@ import re
 import bpy
 
 from src.constants.misc import Executable
+from src.constants.props import BangerFlags
 from src.helpers.main import is_process_running
 from src.integrations.blender.modeling.uv_mapping import OBJECT_OT_UpdateUVMapping
 
@@ -34,7 +35,7 @@ from src.integrations.blender.panels.sidebar import SIDEBAR_CLASSES
 from src.integrations.blender.panels.ai_streets_sidebar import STREET_EDITOR_CLASSES
 from src.integrations.blender.panels.waypoint_sidebar import WAYPOINT_EDITOR_CLASSES
 from src.integrations.blender.panels.prop_sidebar import PROP_EDITOR_PANEL_CLASSES
-from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, PROP_NAME_ITEMS_FROM, PROP_NAME_ITEMS_TO, _update_prop_form
+from src.integrations.blender.operators.props import PROP_EDITOR_CLASSES, PROP_NAME_ITEMS, PROP_NAME_ITEMS_FROM, PROP_NAME_ITEMS_TO, BANGER_FLAG_ITEMS, _update_prop_form
 from src.integrations.blender.panels.car_editor_sidebar import CAR_EDITOR_PANEL_CLASSES
 from src.integrations.blender.operators.car_editor import (
     CAR_EDITOR_CLASSES, update_ce_face_texture, update_ce_face_uv, _CAR_LIGHT_TAGS,
@@ -170,9 +171,11 @@ SCENE_PROPERTIES = [
     "pe_area_z2",
     "pe_seed",
     "pe_rand_count",
+    "pe_flags",
     # Replace Prop Type tool
     "pr_from_name",
     "pr_to_name",
+    "pr_replace_user_props",
     # Create Prop form
     "pc_prop_type",
     "pc_prop_name",
@@ -192,6 +195,7 @@ SCENE_PROPERTIES = [
     "pc_area_z2",
     "pc_seed",
     "pc_rand_count",
+    "pc_flags",
     # Street Editor — vertex tools
     "st_sl_pos_expanded",
     "st_show_arrows",
@@ -854,6 +858,13 @@ def register_scene_properties() -> None:
         name="Count", default=1, min=1, description="Number of props to place (count / num_props)",
         update=_update_prop_form,
     )
+    # Banger collision/breakability flags
+    bpy.types.Scene.pe_flags = bpy.props.EnumProperty(
+        name="Flags",
+        description="Collision behavior: Breakable shatters when hit; Drivable Solid is a solid surface you can drive on (won't break)",
+        items=BANGER_FLAG_ITEMS,
+        update=_update_prop_form,
+    )
     # Replace Prop Type tool
     bpy.types.Scene.pr_from_name = bpy.props.EnumProperty(
         name="From",
@@ -865,6 +876,12 @@ def register_scene_properties() -> None:
         name="To",
         description="New prop type. RANDOM picks a different random type for each group.",
         items=PROP_NAME_ITEMS_TO,
+    )
+    # Export → write directly to src/USER/props/props.py (backs up the old file)
+    bpy.types.Scene.pr_replace_user_props = bpy.props.BoolProperty(
+        name="Replace USER props.py",
+        description="Write the export straight into src/USER/props/props.py, backing up the old file as props_backup_{timestamp}.py. When off, you pick a file path",
+        default=False,
     )
 
     # ── Create Prop form scene properties ─────────────────────────────────────
@@ -905,6 +922,12 @@ def register_scene_properties() -> None:
     )
     bpy.types.Scene.pc_rand_count = bpy.props.IntProperty(
         name="Count", default=1, min=1, description="Number of props to place",
+    )
+    bpy.types.Scene.pc_flags = bpy.props.EnumProperty(
+        name="Flags",
+        description="Collision behavior: Breakable shatters when hit; Drivable Solid is a solid surface you can drive on (won't break)",
+        items=BANGER_FLAG_ITEMS,
+        default=str(BangerFlags.DEFAULT),
     )
 
     # ── Street Editor scene properties ────────────────────────────────────────

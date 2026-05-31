@@ -79,6 +79,13 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
         row.enabled = bool(folder_path)
         row.operator("city_loader.import_as_polygons", text="Import as Polygons", icon="IMPORT")
 
+        col.separator()
+        col.label(text="Import props as editable prop groups", icon="INFO")
+        row = col.row(align=True)
+        row.scale_y = 1.4
+        row.enabled = bool(folder_path)
+        row.operator("city_loader.import_props", text="Import Props", icon="IMPORT")
+
         layout.separator()
 
         # ── Quick info about discovered files ─────────────────────────────────

@@ -118,6 +118,7 @@ class Folder:
         class User:
             Root          = _SRC_USER
             PlayerProfile = _SRC_USER / "player_profile.py"
+            Props         = _SRC_USER / "props" / "props.py"
 
             class Textures:
                 Custom = _SRC_USER / "textures" / "custom"

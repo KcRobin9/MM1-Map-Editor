@@ -156,6 +156,7 @@ class BangerEditor:
             end = Vector3(*prop['end']) if 'end' in prop else None
 
             name = prop['name']
+            flags = prop.get('flags', PROP_CAN_COLLIDE_FLAG)
 
             if 'face' in prop:
                 face = Vector3(*prop['face'])
@@ -165,27 +166,27 @@ class BangerEditor:
                 face = Vector3(HUGE * math.cos(angle_rad), 0.0, HUGE * math.sin(angle_rad))
             else:
                 face = Vector3(HUGE, HUGE, HUGE)
-            
+
             if end is not None:
                 diagonal = end - offset
                 diagonal_length = diagonal.Mag()
                 normalized_diagonal = diagonal.Normalize()
-                
+
                 if face == Vector3(HUGE, HUGE, HUGE):
                     face = normalized_diagonal * HUGE
-                
+
                 separator = prop.get('separator', default_separator)
                 separator = self._resolve_separator(separator, name)
-                                            
+
                 num_props = int(diagonal_length / separator)
-                
+
                 for i in range(0, num_props):
                     dynamic_offset = offset + normalized_diagonal * (i * separator)
                     self.props.append(
-                        Bangers(Default.ROOM, PROP_CAN_COLLIDE_FLAG, dynamic_offset, face, name + "\x00"))
+                        Bangers(Default.ROOM, flags, dynamic_offset, face, name + "\x00"))
             else:
                 self.props.append(
-                    Bangers(Default.ROOM, PROP_CAN_COLLIDE_FLAG, offset, face, name + "\x00"))
+                    Bangers(Default.ROOM, flags, offset, face, name + "\x00"))
 
     def append_to_file(self, input_props_f: Path, props_to_append: list, appended_props_f: Path, append_props: bool):
         if not append_props:
@@ -209,7 +210,7 @@ class BangerEditor:
             
             f.seek(append_offset)
             for i, prop in enumerate(self.props[original_count:], start=original_count):
-                write_pack(f, '<2H', Default.ROOM, PROP_CAN_COLLIDE_FLAG)  
+                write_pack(f, '<2H', prop.room, prop.flags)
                 prop.offset.write(f, '<')
                 prop.face.write(f, '<')
                 f.write(prop.name.encode(Encoding.UTF_8))
@@ -262,6 +263,9 @@ class BangerEditor:
 
                     if separator is not None:
                         new_prop["separator"] = separator
+
+                    if "flags" in config:
+                        new_prop["flags"] = config["flags"]
 
                     random_props.append(new_prop)
 

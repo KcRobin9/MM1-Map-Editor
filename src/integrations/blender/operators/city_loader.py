@@ -254,6 +254,38 @@ class CITY_OT_Load(bpy.types.Operator):
         return {"FINISHED"}
 
 
+class CITY_OT_ImportProps(bpy.types.Operator):
+    """Import the city's props (.BNG) as editable, tagged prop groups for round-trip editing"""
+    bl_idname = "city_loader.import_props"
+    bl_label  = "Import Props"
+
+    def execute(self, context):
+        scene  = context.scene
+        folder = Path(scene.cl_city_folder)
+
+        if not folder.is_dir():
+            self.report({"ERROR"}, f"City folder not found: {folder}")
+            return {"CANCELLED"}
+
+        bng_files = sorted(folder.glob("*.BNG")) + sorted(folder.glob("*.bng"))
+        if not bng_files:
+            self.report({"ERROR"}, f"No .BNG file found in {folder.name}")
+            return {"CANCELLED"}
+
+        # Prefer the persistent props file (e.g. CHICAGO.BNG) over per-race
+        # variants (CHICAGO_C0.BNG, _R1, _B2, ...) — the main one has the shortest stem.
+        main_bng = min(bng_files, key=lambda p: len(p.stem))
+
+        try:
+            bpy.ops.props.load_external(filepath=str(main_bng))
+        except Exception as exc:
+            self.report({"ERROR"}, f"Prop import failed: {exc}")
+            return {"CANCELLED"}
+
+        self.report({"INFO"}, f"Imported props from {main_bng.name}")
+        return {"FINISHED"}
+
+
 class CITY_OT_ClearMeshes(bpy.types.Operator):
     """Remove all loaded city meshes from the scene"""
     bl_idname = "city_loader.clear_meshes"
@@ -280,5 +312,6 @@ class CITY_OT_ClearMeshes(bpy.types.Operator):
 CITY_LOADER_CLASSES = [
     CITY_OT_SelectFolder,
     CITY_OT_Load,
+    CITY_OT_ImportProps,
     CITY_OT_ClearMeshes,
 ]

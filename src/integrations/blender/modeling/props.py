@@ -6,10 +6,11 @@ import random
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.constants.folder import Folder
+from src.constants.constants import HUGE
+from src.constants.props import BangerFlags
 from src.core.vector.vector_3 import Vector3
 from src.core.geometry.main import transform_coordinate_system
-from src.constants.constants import HUGE
-from src.constants.folder import Folder
 
 from src.integrations.blender.modeling.meshes import (
     read_bms,
@@ -148,6 +149,7 @@ def expand_prop_instances(
         end    = Vector3(*prop["end"]) if "end" in prop else None
         angle  = prop.get("angle", None)
         face   = prop.get("face", None)
+        flags  = prop.get("flags", BangerFlags.DEFAULT)
 
         group_id     = f"fixed_{prop_idx}"
         config_json  = _serialize_prop_config(prop)
@@ -174,12 +176,12 @@ def expand_prop_instances(
             for i in range(count):
                 pos = offset + direction * (i * sep)
                 instances.append({
-                    "name": name, "offset": pos.to_tuple(), "face": face, "angle": angle,
+                    "name": name, "offset": pos.to_tuple(), "face": face, "angle": angle, "flags": flags,
                     "mm_group_id": group_id, "mm_group_type": "fixed", "mm_config_json": config_json,
                 })
         else:
             instances.append({
-                "name": name, "offset": offset.to_tuple(), "face": face, "angle": angle,
+                "name": name, "offset": offset.to_tuple(), "face": face, "angle": angle, "flags": flags,
                 "mm_group_id": group_id, "mm_group_type": "fixed", "mm_config_json": config_json,
             })
 
@@ -198,6 +200,7 @@ def expand_prop_instances(
 
         cfg_angle = config.get("angle", None)
         cfg_face  = config.get("face", None)
+        cfg_flags = config.get("flags", BangerFlags.DEFAULT)
 
         group_id    = f"random_{rand_idx}"
         config_json = _serialize_prop_config(config)
@@ -227,6 +230,7 @@ def expand_prop_instances(
                     "offset": (x, y, z),
                     "face": face,
                     "angle": cfg_angle,
+                    "flags": cfg_flags,
                     "mm_group_id": group_id,
                     "mm_group_type": "random",
                     "mm_config_json": config_json,
@@ -550,6 +554,19 @@ def place_props_in_scene(
     placed = 0
     skipped = 0
 
+    def _place_placeholder(prop_name, game_loc, z_rot, group_id, group_type, config_json):
+        # Props whose BMS is absent from the editor resources still need a tagged
+        # object so they round-trip through export/save instead of vanishing.
+        ph = bpy.data.objects.new(prop_name, None)  # None data → Empty
+        props_col.objects.link(ph)
+        ph.empty_display_type = "PLAIN_AXES"
+        ph.empty_display_size = 1.0
+        ph.location = game_loc
+        ph.rotation_euler = (0.0, 0.0, z_rot)
+        ph["mm_prop_group_id"]    = group_id
+        ph["mm_prop_type"]        = group_type
+        ph["mm_prop_config_json"] = config_json
+
     for inst in instances:
         prop_name  = inst["name"]
         game_loc   = _to_blender_location(inst["offset"])
@@ -566,6 +583,7 @@ def place_props_in_scene(
         if is_vehicle:
             parts = veh_cache.get(prop_name)
             if parts is None:
+                _place_placeholder(prop_name, game_loc, z_rot, group_id, group_type, config_json)
                 skipped += 1
                 continue
             body_obj = _place_vehicle_instance(prop_name, parts, game_loc, z_rot, props_col)
@@ -577,6 +595,7 @@ def place_props_in_scene(
         else:
             mesh = mesh_cache.get(prop_name)
             if mesh is None:
+                _place_placeholder(prop_name, game_loc, z_rot, group_id, group_type, config_json)
                 skipped += 1
                 continue
             obj = bpy.data.objects.new(prop_name, mesh)

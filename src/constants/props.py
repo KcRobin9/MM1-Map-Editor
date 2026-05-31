@@ -154,3 +154,54 @@ class AudioProp:
     NO_NAME_2 = 24      # Sounds a bit similar to "glass"
     NEWSBOX = 25
     GLASS = 27
+
+
+class BangerFlags:
+    """
+    Per-banger flag field stored in the .BNG file (the u16 right after `room`).
+
+    ── Authoritative semantics (Open1560: mmCullCity::AddInstance →
+       mmUnhitBangerInstance::Init) ──────────────────────────────────────────
+      - STATIC (0x1) is the ONLY bit that changes a prop's class. When set the
+        prop becomes a static building/facade (solid, NON-breakable); when clear
+        the prop is a mmUnhitBangerInstance (breakable). No ordinary prop sets it.
+      - For a banger (STATIC clear) the loader reads ONLY two bits:
+            GLOW    (0x40)  — prop has a glow mesh (street lights).
+            TERRAIN (0x800) — collides with wheels; behaves as a drivable solid
+                              surface and will NOT break when hit.
+      - Bits 0x8 / 0x10 / 0x400 are facade-draw bits the banger path ignores.
+        Original Chicago props carry a 0x18 base purely as an artifact of the
+        city-export tool, so for a banger 0x18 is equivalent to 0x0.
+
+    Breakability also requires a MMBANGERDATA tune file defining NumParts /
+    PartNames (the debris pieces). A non-static prop with no tune file is
+    silently dropped by the engine.
+    """
+
+    # ── Primitive bits ────────────────────────────────────────────────────────
+    STATIC  = 0x1      # becomes a building/facade — not a breakable banger
+    GLOW    = 0x40     # has a glow mesh (lights)
+    TERRAIN = 0x800    # drivable solid surface; will NOT break when hit
+
+    # ── Presets (author with these) ───────────────────────────────────────────
+    BREAKABLE       = 0x18            # standard street prop; breaks when hit
+    BREAKABLE_GLOW  = 0x18 | GLOW     # breakable light (0x58)
+    DRIVABLE_SOLID  = TERRAIN         # drivable road prop; will NOT break (0x800)
+    STATIC_BUILDING = STATIC          # solid wall building (0x1)
+
+    DEFAULT = DRIVABLE_SOLID          # editor default — drivable road props
+
+    @classmethod
+    def normalize(cls, raw: int) -> int:
+        """
+        Collapse a raw .BNG flag value onto the one meaningful preset, dropping
+        the facade-draw bits the banger loader ignores. Behaviorally lossless:
+        0x18/0x0/0x418 → BREAKABLE, 0x58 → BREAKABLE_GLOW, 0x800 → DRIVABLE_SOLID.
+        """
+        if raw & cls.STATIC:
+            return cls.STATIC_BUILDING
+        if raw & cls.TERRAIN:
+            return cls.DRIVABLE_SOLID
+        if raw & cls.GLOW:
+            return cls.BREAKABLE_GLOW
+        return cls.BREAKABLE

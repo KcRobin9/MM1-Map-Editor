@@ -143,6 +143,10 @@ class VIEW3D_PT_PropEditorForm(bpy.types.Panel):
         row.label(text="Prop:", icon="MESH_DATA")
         row.prop(scene, "pe_prop_name", text="")
 
+        row = box.row(align=True)
+        row.label(text="Flags:", icon="MOD_PHYSICS")
+        row.prop(scene, "pe_flags", text="")
+
         layout.separator()
 
         if ptype == "fixed":
@@ -239,6 +243,12 @@ class VIEW3D_PT_PropEditorTools(bpy.types.Panel):
         col.operator("props.export_code",       text="Export All as Code",    icon="WORLD")
         col.operator("props.export_group_code", text="Export Active as Code", icon="RESTRICT_SELECT_OFF")
         col.separator()
+        col.prop(context.scene, "pr_replace_user_props", text="Replace USER props.py (backup old)")
+        dest = "USER props.py" if context.scene.pr_replace_user_props else "chosen .py file"
+        col.label(text=f"To {dest}:")
+        col.operator("props.export_faithful_file",     text="Faithful (exact)",     icon="EXPORT")
+        col.operator("props.export_consolidated_file", text="Consolidated (rows)",  icon="EXPORT")
+        col.separator()
         col.operator("props.save_bng",          text="Save BNG File",         icon="FILE")
 
 
@@ -306,6 +316,10 @@ class VIEW3D_PT_PropEditorCreate(bpy.types.Panel):
         row = box.row(align=True)
         row.label(text="Prop:", icon="MESH_DATA")
         row.prop(scene, "pc_prop_name", text="")
+
+        row = box.row(align=True)
+        row.label(text="Flags:", icon="MOD_PHYSICS")
+        row.prop(scene, "pc_flags", text="")
 
         layout.separator()
 
