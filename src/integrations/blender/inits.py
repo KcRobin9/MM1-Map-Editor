@@ -56,6 +56,8 @@ from src.integrations.blender.operators.city_polygon_import import CITY_POLYGON_
 from src.integrations.blender.panels.city_loader_sidebar import CITY_LOADER_PANEL_CLASSES
 from src.integrations.blender.operators.skeleton_editor import SKELETON_EDITOR_CLASSES, CHAR_ITEMS, _anim_items
 from src.integrations.blender.panels.skeleton_editor_sidebar import SKELETON_EDITOR_PANEL_CLASSES
+from src.integrations.blender.operators.dash_editor import DASH_EDITOR_CLASSES, get_dash_car_items, get_dash_texture_items, update_de_preview, update_de_gauge, update_de_reskin_texture
+from src.integrations.blender.panels.dash_editor_sidebar import DASH_EDITOR_PANEL_CLASSES
 
 
 PANEL_CLASSES = [
@@ -75,6 +77,7 @@ PANEL_CLASSES = [
     *BRIDGE_EDITOR_PANEL_CLASSES,
     *CITY_LOADER_PANEL_CLASSES,
     *SKELETON_EDITOR_PANEL_CLASSES,
+    *DASH_EDITOR_PANEL_CLASSES,
 ]
 
 OPERATOR_CLASSES = [
@@ -99,6 +102,7 @@ OPERATOR_CLASSES = [
     *CITY_LOADER_CLASSES,
     *CITY_POLYGON_IMPORT_CLASSES,
     *SKELETON_EDITOR_CLASSES,
+    *DASH_EDITOR_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES
@@ -266,6 +270,29 @@ SCENE_PROPERTIES = [
     "ce_info_mass",
     "ce_audio_profile",
     *[f"ce_light_color_{i}" for i in range(6)],
+    # Dash Editor
+    "de_dash_car",
+    "de_new_car",
+    "de_updating",
+    "de_preview",
+    "de_speed_rot_min",
+    "de_speed_rot_max",
+    "de_rpm_rot_min",
+    "de_rpm_rot_max",
+    "de_damage_rot_min",
+    "de_damage_rot_max",
+    "de_max_speed",
+    "de_max_rpm",
+    "de_min_speed",
+    "de_wheel_fact",
+    "de_cam_fov",
+    "de_cam_offset",
+    "de_cam_pitch",
+    "de_cam_near",
+    "de_cam_far",
+    "de_swap_car",
+    "de_reskin_texture",
+    "de_reskin_image",
     # Street Editor — presets
     "st_street_preset",
     "st_preset_length",
@@ -1668,6 +1695,101 @@ def register_scene_properties() -> None:
         description="Clothing color variant (0–5, the game picks one randomly at spawn)",
         default=0, min=0, max=5,
         update=_update_ske_var_variant,
+    )
+
+    # ── Dash Editor scene properties ──────────────────────────────────────────
+    bpy.types.Scene.de_dash_car = bpy.props.EnumProperty(
+        name="Car",
+        description="Which car's cockpit dash to load and edit",
+        items=get_dash_car_items,
+    )
+    bpy.types.Scene.de_new_car = bpy.props.StringProperty(
+        name="New Car",
+        description="Car name to seed a fresh dash for (from the template)",
+        default="",
+    )
+    bpy.types.Scene.de_updating = bpy.props.BoolProperty(default=False)
+    bpy.types.Scene.de_preview = bpy.props.FloatProperty(
+        name="Preview",
+        description="Sweep the gauge needles 0 (rest) → 1 (full scale) to preview them",
+        default=0.0, min=0.0, max=1.0,
+        update=update_de_preview,
+    )
+    bpy.types.Scene.de_speed_rot_min = bpy.props.FloatProperty(
+        name="Speed Min", description="Speed needle angle at zero (radians)",
+        default=0.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_speed_rot_max = bpy.props.FloatProperty(
+        name="Speed Max", description="Speed needle angle at max speed (radians)",
+        default=0.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_rpm_rot_min = bpy.props.FloatProperty(
+        name="RPM Min", description="Tach needle angle at zero (radians)",
+        default=0.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_rpm_rot_max = bpy.props.FloatProperty(
+        name="RPM Max", description="Tach needle angle at max RPM (radians)",
+        default=0.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_damage_rot_min = bpy.props.FloatProperty(
+        name="Damage Min", description="Damage needle angle at zero (radians)",
+        default=0.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_damage_rot_max = bpy.props.FloatProperty(
+        name="Damage Max", description="Damage needle angle at full damage (radians)",
+        default=0.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_max_speed = bpy.props.FloatProperty(
+        name="Max Speed", description="Full-scale speed for the speed gauge",
+        default=160.0, min=1.0, max=400.0,
+    )
+    bpy.types.Scene.de_max_rpm = bpy.props.FloatProperty(
+        name="Max RPM", description="Full-scale RPM for the tach gauge",
+        default=8000.0, min=1.0, max=20000.0,
+    )
+    bpy.types.Scene.de_min_speed = bpy.props.FloatProperty(
+        name="Min Speed", description="Speed below which the gauge reads zero",
+        default=0.0, min=0.0, max=100.0,
+    )
+    bpy.types.Scene.de_wheel_fact = bpy.props.FloatProperty(
+        name="Wheel Factor", description="Steering-wheel turn amount per steer input",
+        default=1.0, min=-10.0, max=10.0, update=update_de_gauge,
+    )
+    bpy.types.Scene.de_cam_fov = bpy.props.FloatProperty(
+        name="Camera FOV", description="Cockpit camera field of view (degrees)",
+        default=60.0, min=10.0, max=120.0,
+    )
+    bpy.types.Scene.de_cam_offset = bpy.props.FloatVectorProperty(
+        name="Camera Offset", description="Cockpit camera position (game car-local)",
+        size=3, default=(0.0, 1.2, 0.3),
+    )
+    bpy.types.Scene.de_cam_pitch = bpy.props.FloatProperty(
+        name="Camera Pitch", description="Cockpit camera downward tilt (radians)",
+        default=0.0, soft_min=-1.5, soft_max=1.5,
+    )
+    bpy.types.Scene.de_cam_near = bpy.props.FloatProperty(
+        name="Near Clip", description="Cockpit camera near clip distance",
+        default=0.1, min=0.001, soft_max=10.0,
+    )
+    bpy.types.Scene.de_cam_far = bpy.props.FloatProperty(
+        name="Far Clip", description="Cockpit camera far clip distance",
+        default=1600.0, min=1.0, soft_max=10000.0,
+    )
+    bpy.types.Scene.de_swap_car = bpy.props.EnumProperty(
+        name="Swap From",
+        description="Source car to borrow a dash part (e.g. steering wheel) from",
+        items=get_dash_car_items,
+    )
+    bpy.types.Scene.de_reskin_texture = bpy.props.EnumProperty(
+        name="Dash Texture",
+        description="Apply a dash texture (from any car) to the active part's active slot",
+        items=get_dash_texture_items,
+        update=update_de_reskin_texture,
+    )
+    bpy.types.Scene.de_reskin_image = bpy.props.StringProperty(
+        name="Reskin Image",
+        description="Custom .DDS to apply to the active part's active texture slot",
+        default="", subtype="FILE_PATH",
     )
 
 
