@@ -28,8 +28,8 @@ my_profile = PlayerData(
     progress    = Progress.ALL,  # all 12 races unlocked
 
     last_car_picked  = PlayerCar.PANOZ_GTR1,
-    last_car_color   = 3,        # 0-based paint index
-    last_game_picked = GameMode.CHECKPOINT,
+    last_car_color   = 0,        # 0-based paint index
+    last_game_picked = GameMode.CRUISE,
     last_race_picked = 0,
 
     checkpoint_records = [
@@ -86,8 +86,8 @@ my_profile = PlayerData(
 my_config = PlayerConfig(
 
     audio = AudioConfig(
-        wav_vol     = 0.8,          # 0.0-1.0
-        cd_vol      = 0.7,          # 0.0-1.0
+        wav_vol     = 0.2,          # 0.0-1.0
+        cd_vol      = 0.2,          # 0.0-1.0
         balance     = 0.0,
         flags       = AudioFlags.DEFAULT,   # SFX | CD_MUSIC | HI_RES | COMMENTARY
         channels    = 32,

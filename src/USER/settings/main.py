@@ -3,8 +3,8 @@ from src.constants.file_formats import Axis
 
 
 # Map Name
-MAP_NAME = "My First City"                      # Can be multiple words --- name of the Map in the Race Locale Menu
-MAP_FILENAME = "FirstCity"                     # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
+MAP_NAME = "My First City"      # Can be multiple words --- name of the Map in the Race Locale Menu
+MAP_FILENAME = "FirstCity"      # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
    
 # Play Game + Delete Shop
 play_game = True                # Set True to start the game after the Map is created (defaults to False when Blender is running)

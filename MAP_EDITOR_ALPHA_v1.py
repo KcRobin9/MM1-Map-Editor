@@ -1684,7 +1684,7 @@ def user_notes():
 # Last exported: 2026-05-30 14:57:45
 
 create_polygon(
-    bound_number = 210,
+    bound_number = 1,
     vertex_coordinates = [
         (-42.23, 30.0, 40.0),
 		(-12.23, 30.0, 40.0),
@@ -1693,7 +1693,7 @@ create_polygon(
 
 save_mesh(
     texture_name = [Texture.CHECKPOINT],
-    tex_coords = compute_uv(bound_number = 210, tile_x = 4.00, tile_y = 3.00, angle_degrees = 0.00))
+    tex_coords = compute_uv(bound_number = 1, tile_x = 4.00, tile_y = 3.00, angle_degrees = 0.00))
 
 
 create_polygon(
