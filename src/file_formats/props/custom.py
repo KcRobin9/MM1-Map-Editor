@@ -137,7 +137,12 @@ def copy_custom_prop_assets_to_shop(prop_list: list, random_props: list, set_pro
             continue
 
         # ── Mesh (H/M/L/VL) ───────────────────────────────────────────────────
-        mesh_dst = Folder.Shop.Meshes / name
+        # The BNG references the banger by its LOWERCASE id and the game's AR lookup
+        # is case-sensitive (core.ar stores banger geometry lowercase, e.g.
+        # bms/tp_tree10m/). The source folder on disk is uppercase, so copy it into a
+        # LOWERCASE SHOP folder to match the reference — otherwise the prop loads but
+        # is invisible (geometry path never resolves).
+        mesh_dst = Folder.Shop.Meshes / prop_id
         mesh_dst.mkdir(parents=True, exist_ok=True)
         for bms in mesh_src.glob("*.BMS"):
             shutil.copy(bms, mesh_dst / bms.name)
