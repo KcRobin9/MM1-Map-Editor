@@ -1,5 +1,6 @@
 import math
 import bpy
+from src.integrations.blender.compat import ICON_ON, ICON_OFF, ICON_ALT, icon
 
 from src.game.waypoints.constants import RACE_TYPE_SHORT
 from src.integrations.blender.waypoints.helpers import get_all_waypoints
@@ -101,12 +102,12 @@ class VIEW3D_PT_WaypointEditorPanel(bpy.types.Panel):
         # ── Scene status ──────────────────────────────────────────────────────
         box = layout.box()
         col = box.column(align=True)
-        wp_icon = 'SEQUENCE_COLOR_04' if all_wps else 'SEQUENCE_COLOR_01'
+        wp_icon = ICON_ON if all_wps else ICON_OFF
         col.label(text=f"Race waypoints: {len(all_wps)}", icon=wp_icon)
         if groups:
             complete   = sum(1 for g in groups if g["Bank"] and g["Gold"] and g["Robber"])
             incomplete = len(groups) - complete
-            cnr_icon   = 'SEQUENCE_COLOR_04' if not incomplete else 'ERROR'
+            cnr_icon   = ICON_ON if not incomplete else 'ERROR'
             col.label(
                 text=f"CnR sets: {complete} complete"
                      + (f", {incomplete} incomplete" if incomplete else ""),
@@ -132,13 +133,13 @@ class VIEW3D_PT_WaypointEditorPanel(bpy.types.Panel):
             wp_count = len(all_wps)
 
             if wp_count == 1:
-                role, role_icon = "Only waypoint", 'SEQUENCE_COLOR_05'
+                role, role_icon = "Only waypoint", ICON_ALT
             elif wp_idx == 0:
-                role, role_icon = "Start", 'SEQUENCE_COLOR_08'
+                role, role_icon = "Start", icon('STRIP_COLOR_08', 'SEQUENCE_COLOR_08', default='KEYFRAME')
             elif wp_idx == wp_count - 1:
-                role, role_icon = "End", 'SEQUENCE_COLOR_04'
+                role, role_icon = "End", ICON_ON
             else:
-                role, role_icon = f"#{wp_idx + 1} of {wp_count}", 'SEQUENCE_COLOR_05'
+                role, role_icon = f"#{wp_idx + 1} of {wp_count}", ICON_ALT
 
             layout.label(text=obj.name, icon='ARROW_LEFTRIGHT')
             layout.label(text=role, icon=role_icon)

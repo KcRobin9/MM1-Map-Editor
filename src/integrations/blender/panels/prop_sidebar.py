@@ -1,4 +1,5 @@
 import bpy
+from src.integrations.blender.compat import ICON_ON, ICON_OFF
 import json
 
 from src.integrations.blender.operators.props import (
@@ -64,7 +65,7 @@ class VIEW3D_PT_PropEditorPanel(bpy.types.Panel):
 
         box = layout.box()
         col = box.column(align=True)
-        icon = "SEQUENCE_COLOR_04" if n_instances else "SEQUENCE_COLOR_01"
+        icon = ICON_ON if n_instances else ICON_OFF
         col.label(text=f"{n_instances} prop instances in scene", icon=icon)
 
         layout.separator()

@@ -1,4 +1,5 @@
 import bpy
+from src.integrations.blender.compat import ICON_ON
 
 from src.integrations.blender.operators.face_side import _is_active
 
@@ -123,7 +124,7 @@ class VIEW3D_PT_MapEditorTools(bpy.types.Panel):
         box = layout.box()
         row = box.row()
         if has_p1:
-            row.label(text="P1 present", icon='SEQUENCE_COLOR_04')
+            row.label(text="P1 present", icon=ICON_ON)
         else:
             row.alert = True
             row.label(text="P1 missing!", icon='ERROR')

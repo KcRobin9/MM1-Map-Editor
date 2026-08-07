@@ -9,6 +9,7 @@ Panels:
   5. Bridge Groups     — overview of all groups in the scene
 """
 import bpy
+from src.integrations.blender.compat import ICON_ON, ICON_OFF
 
 from src.integrations.blender.modeling.bridges import (
     TAG_GROUP_ID, TAG_ENTRY_IDX, TAG_ROLE, TAG_NAME,
@@ -41,7 +42,7 @@ class VIEW3D_PT_BridgeInspector(bpy.types.Panel):
 
         box = layout.box()
         col = box.column(align=True)
-        icon = "SEQUENCE_COLOR_04" if n_objs else "SEQUENCE_COLOR_01"
+        icon = ICON_ON if n_objs else ICON_OFF
         col.label(text=f"{n_objs} entries  ·  {len(groups)} bridge(s)", icon=icon)
 
         layout.separator()

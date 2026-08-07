@@ -9,6 +9,7 @@ Panels:
   5. Facade Groups      – collapsible overview of all groups + statistics
 """
 import bpy
+from src.integrations.blender.compat import ICON_ON, ICON_OFF
 
 from src.integrations.blender.operators.facades import (
     is_facade_obj, get_facade_objects, get_unique_groups,
@@ -61,7 +62,7 @@ class VIEW3D_PT_FacadeEditorPanel(bpy.types.Panel):
 
         box = layout.box()
         col = box.column(align=True)
-        icon = "SEQUENCE_COLOR_04" if n_instances else "SEQUENCE_COLOR_01"
+        icon = ICON_ON if n_instances else ICON_OFF
         col.label(text=f"{n_instances} facade instance(s)  ·  {len(groups)} group(s)", icon=icon)
 
         layout.separator()

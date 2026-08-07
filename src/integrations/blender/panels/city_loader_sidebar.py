@@ -6,6 +6,7 @@ any combination of FCD (facades), BNG (props/bangers) and MESHES in one click.
 All heavy lifting is delegated to the existing facade / prop operators.
 """
 import bpy
+from src.integrations.blender.compat import ICON_ON, ICON_OFF
 from pathlib import Path
 
 _PANEL_CATEGORY = "Map Loader"
@@ -30,7 +31,7 @@ class VIEW3D_PT_CityLoader(bpy.types.Panel):
         folder_path = scene.cl_city_folder
         if folder_path:
             folder_name = Path(folder_path).name
-            col.label(text=folder_name, icon="SEQUENCE_COLOR_04")
+            col.label(text=folder_name, icon=ICON_ON)
         else:
             row = col.row()
             row.alert = True
@@ -144,10 +145,10 @@ class VIEW3D_PT_CityLoaderTools(bpy.types.Panel):
 def _file_row(col, label: str, value):
     row = col.row(align=True)
     if value:
-        row.label(text=f"  {label}:  {value}", icon="SEQUENCE_COLOR_04")
+        row.label(text=f"  {label}:  {value}", icon=ICON_ON)
     else:
         row.alert = True
-        row.label(text=f"  {label}:  not found", icon="SEQUENCE_COLOR_01")
+        row.label(text=f"  {label}:  not found", icon=ICON_OFF)
 
 
 # ── Registration ──────────────────────────────────────────────────────────────
