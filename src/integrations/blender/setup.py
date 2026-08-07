@@ -18,7 +18,8 @@ def setup_blender(load_target_model: bool) -> None:
         return
 
     delete_default_objects()
-    enable_developer_extras()
+    enable_developer_extras()          # may save_userpref — keep BEFORE the undo toggle so the
+    suppress_undo_during_build()       # temporary use_global_undo=False is never persisted to disk
     enable_vertex_snapping()
     adjust_3D_view_settings()
     initialize_depsgraph_update_handler()
@@ -29,13 +30,52 @@ def setup_blender(load_target_model: bool) -> None:
     ok("Blender setup complete")
 
 
+def suppress_undo_during_build() -> None:
+    """CRASH FIX (GPU_batch use-after-free): the VS Code script runner wraps the WHOLE build in one
+    operator, so Blender pushes a full-scene undo snapshot of a 129k-poly city + thousands of props
+    when it ends — a classic source of EXCEPTION_ACCESS_VIOLATION in the next workbench draw
+    (freed GPU batches referenced by the undo/redo depsgraph swap). Disable global undo for the
+    duration of the build and restore it ~2s after the script's operator has ended, so manual
+    editing afterwards (the MM2 cell-edit workflow) keeps normal Ctrl+Z."""
+    prefs = bpy.context.preferences.edit
+
+    def _restore():
+        try:
+            bpy.context.preferences.edit.use_global_undo = True
+        except Exception:
+            pass
+        return None                  # one-shot timer
+
+    # Registered FIRST and UNCONDITIONALLY: if an earlier build died before reaching this point it
+    # left undo off with no pending timer, and an early return here would strand it off for the
+    # whole session (silently — Ctrl+Z just stops working). Re-arming a one-shot restore is free.
+    bpy.app.timers.register(_restore, first_interval=2.0)
+
+    if prefs.use_global_undo:
+        prefs.use_global_undo = False
+        item("Undo suppressed for the build (auto-restores right after)")
+
+
 def delete_default_objects() -> None:
-    for obj in bpy.data.objects:
-        obj.select_set(obj.name in DEFAULT_OBJECTS)
+    # Pure data API (no bpy.ops.object.delete): an operator here pushes an undo step and depends on
+    # selection/context state; both are crash vectors while a heavy generated scene exists.
+    removed = []
+    for name in sorted(DEFAULT_OBJECTS):
+        obj = bpy.data.objects.get(name)
+        if obj is not None:
+            data = obj.data
+            bpy.data.objects.remove(obj, do_unlink=True)
+            if data is not None and data.users == 0:
+                # remove the orphaned mesh/camera/light datablock too
+                for pool in (bpy.data.meshes, bpy.data.cameras, bpy.data.lights):
+                    try:
+                        pool.remove(data)
+                        break
+                    except Exception:
+                        continue
+            removed.append(name)
 
-    bpy.ops.object.delete()
-
-    item(f"Default objects deleted  ({', '.join(sorted(DEFAULT_OBJECTS))})")
+    item(f"Default objects deleted  ({', '.join(removed) if removed else 'none present'})")
 
 
 def load_model() -> None:
