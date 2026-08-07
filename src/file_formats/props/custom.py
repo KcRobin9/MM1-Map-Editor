@@ -101,11 +101,16 @@ def _register_textures_in_tsh(tex_names: Set[str]) -> int:
         for tex in sorted(tex_names):
             if tex in existing:
                 continue
-            w, h = _dds_dimensions(Folder.Shop.Textures.Opaque / f"{tex}.DDS")
-            if not (Folder.Shop.Textures.Opaque / f"{tex}.DDS").exists():
+            is_alpha = (Folder.Shop.Textures.Alpha / f"{tex}.DDS").exists()
+            if is_alpha:
                 w, h = _dds_dimensions(Folder.Shop.Textures.Alpha / f"{tex}.DDS")
+            else:
+                w, h = _dds_dimensions(Folder.Shop.Textures.Opaque / f"{tex}.DDS")
+            # Alpha cutout textures need the 't' (Transparent) flag so the engine enables
+            # alpha blending; without it they render as solid black rectangles.
+            flags = "t" if is_alpha else ""
             # name,neighborhood,h,m,l,flags,alternate,sibling,xres,yres,hexcolor
-            f.write(f"{tex},0,0,0,1,,{tex},,{w},{h},000000\n")
+            f.write(f"{tex},0,0,0,1,{flags},{tex},,{w},{h},000000\n")
             added += 1
 
     return added

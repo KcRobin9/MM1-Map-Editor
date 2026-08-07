@@ -15,10 +15,10 @@ MapName={MAP_FILENAME}
 RaceDir={MAP_FILENAME}
 BlitzCount={len(blitz_race_names)}
 CircuitCount={len(circuit_race_names)}
-CheckpointCount={len(circuit_race_names)}
-BlitzNames={'|'.join(blitz_race_names)}
-CircuitNames={'|'.join(circuit_race_names)}
-CheckpointNames={'|'.join(checkpoint_race_names)}
+CheckpointCount={len(checkpoint_race_names)}
+BlitzNames={'|'.join(blitz_race_names) or ' '}
+CircuitNames={'|'.join(circuit_race_names) or ' '}
+CheckpointNames={'|'.join(checkpoint_race_names) or ' '}
 """)
     ok("Created map info file")
 
