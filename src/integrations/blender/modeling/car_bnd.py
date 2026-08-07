@@ -104,7 +104,9 @@ def build_box_bnd(aabb: AABB, output_path: Path, offset=(0.0, 0.0, 0.0)) -> dict
         n = compute_normal(fv[0], fv[1], fv[2])  # unrounded, outward
         face_normals.append(n)
         plane_d = -(n.x * fv[0][0] + n.y * fv[0][1] + n.z * fv[0][2])
-        plane_edges, axis_flag = compute_edges(fv)
+        # edge_pad=0.0: the city's seam padding is for gaps BETWEEN neighbouring polygons.
+        # A car bound is a closed box, so padding would only inflate its hit-test.
+        plane_edges, axis_flag = compute_edges(fv, edge_pad = 0.0)
         flags = 0x4 | axis_flag  # quad + projection axis
         pe = [(e.x, e.y, e.z) for e in plane_edges]
         face_records.append((flags, list(face), pe, (n.x, n.y, n.z), plane_d))
