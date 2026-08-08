@@ -9,3 +9,5 @@ BLENDER_ONLY         = False   # Skip .AR creation - full Blender scene (props +
 FAST_BLENDER_ONLY    = False   # Skip .AR creation - minimal Blender scene (no props, no facades)
 
 FAST_AR_PLUS_BLENDER = False    # Combined: fast .AR + minimal Blender scene
+
+CONNECT_BLENDER_ONLY = False   # Skip .AR creation - empty Blender scene, every panel ready (overrides the above)

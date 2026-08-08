@@ -40,7 +40,8 @@ from src.USER.settings.blender import (
     visualize_props, visualize_facades, visualize_bridges, prop_bms_folder, prop_car_wheels, prop_car_lights,
 )
 
-from src.USER.settings.fast import FAST_AR_ONLY, BLENDER_ONLY, FAST_BLENDER_ONLY, FAST_AR_PLUS_BLENDER
+from src.USER.settings.fast import (FAST_AR_ONLY, BLENDER_ONLY, FAST_BLENDER_ONLY,
+                                    FAST_AR_PLUS_BLENDER, CONNECT_BLENDER_ONLY)
 
 # ── Fast mode overrides ────────────────────────────────────────────────────────
 _fast_ar = FAST_AR_ONLY or FAST_AR_PLUS_BLENDER
@@ -86,12 +87,20 @@ if _fast_bl:
     visualize_facades  = False
     visualize_bridges  = False
 
+# CONNECT_BLENDER_ONLY: panels-only session — no .AR, no scene content at all.
+# Force every visualization off.
+if CONNECT_BLENDER_ONLY:
+    visualize_props    = False
+    visualize_facades  = False
+    visualize_bridges  = False
+
 # ── Derived runtime flag ───────────────────────────────────────────────────────
 # True → skip the entire .AR creation pipeline (Blender-only run)
-SKIP_AR_CREATION = BLENDER_ONLY or FAST_BLENDER_ONLY
+SKIP_AR_CREATION = BLENDER_ONLY or FAST_BLENDER_ONLY or CONNECT_BLENDER_ONLY
 
 # ── Startup banner ─────────────────────────────────────────────────────────────
 _ACTIVE_MODE = (
+    "CONNECT_BLENDER_ONLY" if CONNECT_BLENDER_ONLY else
     "FAST_AR_ONLY"         if FAST_AR_ONLY         else
     "BLENDER_ONLY"         if BLENDER_ONLY         else
     "FAST_BLENDER_ONLY"    if FAST_BLENDER_ONLY    else
@@ -101,6 +110,7 @@ _ACTIVE_MODE = (
 
 if _ACTIVE_MODE:
     _DESCRIPTIONS = {
+        "CONNECT_BLENDER_ONLY": "Panels only      — no .AR, empty scene, all operators/panels ready",
         "FAST_AR_ONLY":         "Fast .AR build  — props/AI/physics/races skipped",
         "BLENDER_ONLY":         "Blender only     — .AR skipped, props & facades loaded",
         "FAST_BLENDER_ONLY":    "Fast Blender     — .AR skipped, props & facades skipped",
