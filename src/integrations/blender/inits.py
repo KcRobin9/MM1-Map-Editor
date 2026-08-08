@@ -46,6 +46,7 @@ from src.integrations.blender.handlers import _vertex_poll_timer
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling, update_texture_category, OBJECT_OT_RefreshCurrentTextures
 from src.integrations.blender.modeling.texture_catalog import CATEGORY_ITEMS
 from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
+from src.integrations.blender.operators.road_automation import ROAD_AUTOMATION_CLASSES, RD_PROP_ITEMS, RD_PROP_FLAG_ITEMS, RD_AI_INTERSECTION_ITEMS, RD_FACADE_ITEMS, RD_JUNCTION_PRESET_ITEMS
 from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
 from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FACADE_NAME_ITEMS, FACADE_FLAGS_ITEMS, _update_facade_form
 from src.integrations.blender.panels.facade_editor_sidebar import FACADE_EDITOR_PANEL_CLASSES
@@ -98,6 +99,7 @@ OPERATOR_CLASSES = [
     *PROP_EDITOR_CLASSES,
     *CAR_EDITOR_CLASSES,
     *ROAD_BUILDER_CLASSES,
+    *ROAD_AUTOMATION_CLASSES,
     *FACADE_EDITOR_CLASSES,
     *BRIDGE_EDITOR_CLASSES,
     *CITY_LOADER_CLASSES,
@@ -314,6 +316,19 @@ SCENE_PROPERTIES = [
     # Road Builder scene properties
     "rd_extend_length", "rd_extend_angle", "rd_extend_elevation",
     "rd_snap_to_terrain", "rd_road_type",
+    "rd_ai_two_way",
+    "rd_ai_intersection_start", "rd_ai_intersection_end",
+    "rd_ai_alley", "rd_ai_traffic_blocked", "rd_ai_ped_blocked",
+    "rd_prop_name", "rd_prop_interval", "rd_prop_side", "rd_prop_offset",
+    "rd_prop_flags", "rd_prop_angle_offset", "rd_prop_height_offset", "rd_prop_stagger",
+    "rd_facade_name", "rd_facade_width", "rd_facade_side", "rd_facade_offset",
+    "rd_facade_height_offset", "rd_facade_flip", "rd_facade_bright",
+    "rd_build_bake", "rd_build_ai", "rd_build_props", "rd_build_facades", "rd_build_junctions",
+    "rd_snap_threshold",
+    "rd_junction_size", "rd_junction_type", "rd_junction_lights", "rd_junction_crosswalk",
+    "rd_junction_preset", "rd_junction_arm_length", "rd_junction_arms", "rd_junction_rotation",
+    "rd_fill_width", "rd_fill_length", "rd_fill_rotation",
+    "rd_verge_width", "rd_verge_offset", "rd_verge_side", "rd_verge_height",
     # Facade Editor — edit form
     "fe_active_group_id",
     "fe_facade_name",
@@ -1125,6 +1140,198 @@ def register_scene_properties() -> None:
         description="Quick preset for cross-section dimensions",
         items=ROAD_TYPE_ITEMS,
         default="ROAD_TEST",
+    )
+
+    # ── Road Builder automation (AI streets + street props) ───────────────────
+    bpy.types.Scene.rd_ai_two_way = bpy.props.BoolProperty(
+        name="Two-Way",
+        description="Generate opposing lanes (left of centre run the other direction). "
+                    "Off = all lanes one-way",
+        default=True,
+    )
+    _rd_yes_no = [("YES", "Yes", ""), ("NO", "No", "")]
+    bpy.types.Scene.rd_ai_intersection_start = bpy.props.EnumProperty(
+        name="Start", description="Intersection behaviour at the spine's start end",
+        items=RD_AI_INTERSECTION_ITEMS,
+    )
+    bpy.types.Scene.rd_ai_intersection_end = bpy.props.EnumProperty(
+        name="End", description="Intersection behaviour at the spine's end",
+        items=RD_AI_INTERSECTION_ITEMS,
+    )
+    bpy.types.Scene.rd_ai_alley = bpy.props.EnumProperty(
+        name="Alley", description="Mark generated lanes as an alley",
+        items=_rd_yes_no, default="NO",
+    )
+    bpy.types.Scene.rd_ai_traffic_blocked = bpy.props.EnumProperty(
+        name="Traffic Blocked", description="Block AI traffic on the generated lanes",
+        items=_rd_yes_no, default="NO",
+    )
+    bpy.types.Scene.rd_ai_ped_blocked = bpy.props.EnumProperty(
+        name="Peds Blocked", description="Block pedestrians on the generated lanes",
+        items=_rd_yes_no, default="NO",
+    )
+    bpy.types.Scene.rd_prop_name = bpy.props.EnumProperty(
+        name="Street Prop",
+        description="Which prop to place along the sidewalk",
+        items=RD_PROP_ITEMS,
+    )
+    bpy.types.Scene.rd_prop_interval = bpy.props.FloatProperty(
+        name="Interval",
+        description="Distance between props along the sidewalk (game units)",
+        default=20.0, min=1.0, soft_max=100.0,
+    )
+    bpy.types.Scene.rd_prop_side = bpy.props.EnumProperty(
+        name="Side",
+        description="Which sidewalk(s) to furnish",
+        items=[("BOTH", "Both", ""), ("LEFT", "Left", ""), ("RIGHT", "Right", "")],
+        default="BOTH",
+    )
+    bpy.types.Scene.rd_prop_offset = bpy.props.FloatProperty(
+        name="Lateral Nudge",
+        description="Fine lateral offset from the sidewalk centre (±, game units)",
+        default=0.0, soft_min=-10.0, soft_max=10.0,
+    )
+    bpy.types.Scene.rd_prop_flags = bpy.props.EnumProperty(
+        name="Flags",
+        description="Collision/behaviour flags for the placed props (AUTO picks by type)",
+        items=RD_PROP_FLAG_ITEMS, default="AUTO",
+    )
+    bpy.types.Scene.rd_prop_angle_offset = bpy.props.FloatProperty(
+        name="Rotate",
+        description="Rotate prop facing relative to perpendicular-to-road (degrees)",
+        default=0.0, soft_min=-180.0, soft_max=180.0,
+    )
+    bpy.types.Scene.rd_prop_height_offset = bpy.props.FloatProperty(
+        name="Height Nudge",
+        description="Raise/lower props off the sidewalk top (±, game units)",
+        default=0.0, soft_min=-5.0, soft_max=5.0,
+    )
+    bpy.types.Scene.rd_prop_stagger = bpy.props.BoolProperty(
+        name="Stagger Sides",
+        description="Offset the right side by half an interval so the two rows alternate",
+        default=False,
+    )
+    bpy.types.Scene.rd_facade_name = bpy.props.EnumProperty(
+        name="Facade",
+        description="Which building/wall facade to line the road with",
+        items=RD_FACADE_ITEMS,
+    )
+    bpy.types.Scene.rd_facade_width = bpy.props.FloatProperty(
+        name="Panel Width",
+        description="Width of each facade panel along the wall (game units)",
+        default=10.0, min=1.0, soft_max=50.0,
+    )
+    bpy.types.Scene.rd_facade_side = bpy.props.EnumProperty(
+        name="Side",
+        description="Which side(s) to line with facades",
+        items=[("BOTH", "Both", ""), ("LEFT", "Left", ""), ("RIGHT", "Right", "")],
+        default="BOTH",
+    )
+    bpy.types.Scene.rd_facade_offset = bpy.props.FloatProperty(
+        name="Setback",
+        description="Gap from the outer sidewalk edge to the building wall (game units)",
+        default=0.0, soft_min=-10.0, soft_max=30.0,
+    )
+    bpy.types.Scene.rd_facade_height_offset = bpy.props.FloatProperty(
+        name="Height Nudge",
+        description="Raise/lower the facade base off the road elevation (±, game units)",
+        default=0.0, soft_min=-10.0, soft_max=10.0,
+    )
+    bpy.types.Scene.rd_facade_flip = bpy.props.BoolProperty(
+        name="Flip Facing",
+        description="Flip which way the facades face (toward / away from the road)",
+        default=False,
+    )
+    bpy.types.Scene.rd_facade_bright = bpy.props.BoolProperty(
+        name="Lit (Bright)",
+        description="Set the BRIGHT flag for a lit-windows look",
+        default=False,
+    )
+    bpy.types.Scene.rd_build_bake = bpy.props.BoolProperty(
+        name="Bake", description="Bake road geometry in Build All", default=True,
+    )
+    bpy.types.Scene.rd_build_ai = bpy.props.BoolProperty(
+        name="AI Lanes", description="Generate AI lanes in Build All", default=True,
+    )
+    bpy.types.Scene.rd_build_props = bpy.props.BoolProperty(
+        name="Props", description="Place street props in Build All", default=False,
+    )
+    bpy.types.Scene.rd_build_facades = bpy.props.BoolProperty(
+        name="Facades", description="Place facades in Build All", default=False,
+    )
+    bpy.types.Scene.rd_build_junctions = bpy.props.BoolProperty(
+        name="Junctions", description="Auto-wire junctions where roads meet in Build Network",
+        default=True,
+    )
+    bpy.types.Scene.rd_snap_threshold = bpy.props.FloatProperty(
+        name="Snap Distance",
+        description="Spine endpoints from different roads within this distance form a junction",
+        default=8.0, min=0.5, soft_max=50.0,
+    )
+    bpy.types.Scene.rd_junction_size = bpy.props.FloatProperty(
+        name="Junction Size",
+        description="Side length of the junction road patch (game units)",
+        default=14.0, min=2.0, soft_max=80.0,
+    )
+    bpy.types.Scene.rd_junction_type = bpy.props.EnumProperty(
+        name="AI Type",
+        description="Intersection type applied to AI lanes ending at this junction",
+        items=RD_AI_INTERSECTION_ITEMS,
+    )
+    bpy.types.Scene.rd_junction_lights = bpy.props.BoolProperty(
+        name="Traffic Lights",
+        description="Place a traffic light at each junction corner",
+        default=False,
+    )
+    bpy.types.Scene.rd_junction_crosswalk = bpy.props.BoolProperty(
+        name="Crosswalks",
+        description="Lay a zebra crossing across each road approaching the junction",
+        default=False,
+    )
+    bpy.types.Scene.rd_junction_arms = bpy.props.IntProperty(
+        name="Arms", description="Number of road arms for a custom N-way junction",
+        default=4, min=1, max=8,
+    )
+    bpy.types.Scene.rd_junction_rotation = bpy.props.FloatProperty(
+        name="Rotation", description="Base rotation for custom junction arms (degrees)",
+        default=0.0, soft_min=-180.0, soft_max=180.0,
+    )
+    bpy.types.Scene.rd_fill_width = bpy.props.FloatProperty(
+        name="Fill Width", description="Grass patch width (game units)",
+        default=20.0, min=1.0, soft_max=400.0,
+    )
+    bpy.types.Scene.rd_fill_length = bpy.props.FloatProperty(
+        name="Fill Length", description="Grass patch length (game units)",
+        default=20.0, min=1.0, soft_max=400.0,
+    )
+    bpy.types.Scene.rd_fill_rotation = bpy.props.FloatProperty(
+        name="Fill Rotation", description="Grass patch rotation around vertical (degrees)",
+        default=0.0, soft_min=-180.0, soft_max=180.0,
+    )
+    bpy.types.Scene.rd_junction_preset = bpy.props.EnumProperty(
+        name="Preset", description="Junction skeleton to spawn at the 3D cursor",
+        items=RD_JUNCTION_PRESET_ITEMS,
+    )
+    bpy.types.Scene.rd_junction_arm_length = bpy.props.FloatProperty(
+        name="Arm Length", description="Length of each road arm radiating from the junction",
+        default=30.0, min=2.0, soft_max=200.0,
+    )
+    bpy.types.Scene.rd_verge_width = bpy.props.FloatProperty(
+        name="Verge Width", description="Grass strip width alongside the road (game units)",
+        default=6.0, min=0.5, soft_max=60.0,
+    )
+    bpy.types.Scene.rd_verge_offset = bpy.props.FloatProperty(
+        name="Verge Offset", description="Gap from the outer sidewalk edge to the verge",
+        default=0.0, soft_min=-10.0, soft_max=30.0,
+    )
+    bpy.types.Scene.rd_verge_side = bpy.props.EnumProperty(
+        name="Verge Side", description="Which side(s) to line with grass",
+        items=[("BOTH", "Both", ""), ("LEFT", "Left", ""), ("RIGHT", "Right", "")],
+        default="BOTH",
+    )
+    bpy.types.Scene.rd_verge_height = bpy.props.FloatProperty(
+        name="Verge Height", description="Raise/lower the verge off the road elevation",
+        default=0.0, soft_min=-5.0, soft_max=5.0,
     )
 
     # ── Car Editor scene properties ───────────────────────────────────────────

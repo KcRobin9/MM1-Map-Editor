@@ -236,10 +236,193 @@ class VIEW3D_PT_RoadBuilderBake(bpy.types.Panel):
                 col.label(text=f"{segs} segment(s) ready to bake", icon='INFO')
             col.operator("object.bake_road_mesh",    text="Bake Road →  Polygons", icon='MOD_BUILD')
 
+        layout.separator()
+        box = layout.box()
+        box.label(text="One-Click Build", icon='SOLO_ON')
+        row = box.row(align=True)
+        row.prop(context.scene, "rd_build_bake",    text="Bake",    toggle=True)
+        row.prop(context.scene, "rd_build_ai",      text="AI",      toggle=True)
+        row = box.row(align=True)
+        row.prop(context.scene, "rd_build_props",   text="Props",   toggle=True)
+        row.prop(context.scene, "rd_build_facades", text="Facades", toggle=True)
+        box.operator("object.build_road_all", text="Build All (this spine)", icon='SOLO_ON')
+        row = box.row(align=True)
+        row.prop(context.scene, "rd_build_junctions", text="Junctions", toggle=True)
+        box.operator("object.build_road_network", text="Build Network (all/selected)", icon='OUTLINER_OB_LIGHTPROBE')
+
+
+class VIEW3D_PT_RoadBuilderAI(bpy.types.Panel):
+    bl_label       = "AI Traffic"
+    bl_idname      = "VIEW3D_PT_road_builder_ai"
+    bl_space_type  = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category    = "Road Builder"
+    bl_parent_id   = "VIEW3D_PT_road_builder"
+    bl_options     = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene  = context.scene
+        obj    = context.active_object
+
+        if not obj or not is_road_spine(obj):
+            layout.label(text="Select a road spine", icon='INFO')
+            return
+
+        layout.prop(scene, "rd_ai_two_way")
+
+        col = layout.column(align=True)
+        col.label(text="Intersection ends:")
+        row = col.row(align=True)
+        row.prop(scene, "rd_ai_intersection_start", text="Start")
+        row.prop(scene, "rd_ai_intersection_end", text="End")
+
+        col = layout.column(align=True)
+        col.prop(scene, "rd_ai_alley", text="Alley")
+        col.prop(scene, "rd_ai_traffic_blocked", text="Traffic Blocked")
+        col.prop(scene, "rd_ai_ped_blocked", text="Peds Blocked")
+
+        layout.operator("object.generate_ai_street", text="Generate AI Street", icon='AUTO')
+        layout.label(text=f"{obj.rs_lane_count} lane(s) @ {obj.rs_lane_width:.1f}", icon='INFO')
+
+
+class VIEW3D_PT_RoadBuilderProps(bpy.types.Panel):
+    bl_label       = "Street Props"
+    bl_idname      = "VIEW3D_PT_road_builder_props"
+    bl_space_type  = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category    = "Road Builder"
+    bl_parent_id   = "VIEW3D_PT_road_builder"
+    bl_options     = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene  = context.scene
+        obj    = context.active_object
+
+        if not obj or not is_road_spine(obj):
+            layout.label(text="Select a road spine", icon='INFO')
+            return
+
+        col = layout.column(align=True)
+        col.prop(scene, "rd_prop_name", text="")
+        col.prop(scene, "rd_prop_interval", text="Interval")
+        col.prop(scene, "rd_prop_side", text="Side")
+        if scene.rd_prop_side == "BOTH":
+            col.prop(scene, "rd_prop_stagger", text="Stagger Sides")
+
+        col = layout.column(align=True)
+        col.prop(scene, "rd_prop_offset", text="Lateral Nudge")
+        col.prop(scene, "rd_prop_height_offset", text="Height Nudge")
+        col.prop(scene, "rd_prop_angle_offset", text="Rotate")
+        col.prop(scene, "rd_prop_flags", text="Flags")
+
+        layout.operator("object.place_road_props", text="Place Street Props", icon='OUTLINER_OB_POINTCLOUD')
+        if not obj.rs_sidewalk_enabled:
+            layout.label(text="Tip: enable Sidewalk for placement to line up", icon='INFO')
+
+
+class VIEW3D_PT_RoadBuilderFacades(bpy.types.Panel):
+    bl_label       = "Facades"
+    bl_idname      = "VIEW3D_PT_road_builder_facades"
+    bl_space_type  = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category    = "Road Builder"
+    bl_parent_id   = "VIEW3D_PT_road_builder"
+    bl_options     = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene  = context.scene
+        obj    = context.active_object
+
+        if not obj or not is_road_spine(obj):
+            layout.label(text="Select a road spine", icon='INFO')
+            return
+
+        col = layout.column(align=True)
+        col.prop(scene, "rd_facade_name", text="")
+        col.prop(scene, "rd_facade_width", text="Panel Width")
+        col.prop(scene, "rd_facade_side", text="Side")
+
+        col = layout.column(align=True)
+        col.prop(scene, "rd_facade_offset", text="Setback")
+        col.prop(scene, "rd_facade_height_offset", text="Height")
+        row = col.row(align=True)
+        row.prop(scene, "rd_facade_flip", text="Flip Facing", toggle=True)
+        row.prop(scene, "rd_facade_bright", text="Lit", toggle=True)
+
+        layout.operator("object.place_road_facades", text="Place Facades", icon='HOME')
+
+
+class VIEW3D_PT_RoadBuilderJunctions(bpy.types.Panel):
+    bl_label       = "Junctions & Fill"
+    bl_idname      = "VIEW3D_PT_road_builder_junctions"
+    bl_space_type  = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category    = "Road Builder"
+    bl_parent_id   = "VIEW3D_PT_road_builder"
+    bl_options     = {'DEFAULT_CLOSED'}
+
+    def draw(self, context):
+        layout = self.layout
+        scene  = context.scene
+
+        layout.label(text="Place the 3D cursor at the spot.", icon='CURSOR')
+
+        pbox = layout.box()
+        pbox.label(text="Junction Preset (spawn arms):", icon='MOD_ARRAY')
+        col = pbox.column(align=True)
+        col.prop(scene, "rd_junction_preset", text="")
+        if scene.rd_junction_preset == "CUSTOM":
+            row = col.row(align=True)
+            row.prop(scene, "rd_junction_arms", text="Arms")
+            row.prop(scene, "rd_junction_rotation", text="Rotate")
+        col.prop(scene, "rd_junction_arm_length", text="Arm Length")
+        pbox.operator("object.spawn_junction_preset", text="Spawn Junction Preset", icon='MOD_ARRAY')
+
+        jbox = layout.box()
+        jbox.label(text="Junction (road patch):", icon='MOD_BOOLEAN')
+        col = jbox.column(align=True)
+        col.prop(scene, "rd_junction_size", text="Size")
+        col.prop(scene, "rd_junction_type", text="AI Type")
+        row = col.row(align=True)
+        row.prop(scene, "rd_junction_lights", text="Lights", toggle=True)
+        row.prop(scene, "rd_junction_crosswalk", text="Crosswalks", toggle=True)
+        jbox.operator("object.create_road_junction", text="Create Junction", icon='ADD')
+        col = jbox.column(align=True)
+        col.prop(scene, "rd_snap_threshold", text="Snap Distance")
+        jbox.operator("object.auto_junctions", text="Auto Junctions (where roads meet)", icon='AUTOMERGE_ON')
+
+        gbox = layout.box()
+        gbox.label(text="Grass Patch (at cursor):", icon='SEQ_CHROMA_SCOPE')
+        col = gbox.column(align=True)
+        col.prop(scene, "rd_fill_width", text="Width")
+        col.prop(scene, "rd_fill_length", text="Length")
+        col.prop(scene, "rd_fill_rotation", text="Rotation")
+        gbox.operator("object.fill_grass_patch", text="Fill Grass Patch", icon='ADD')
+
+        if is_road_spine(context.active_object):
+            vbox = layout.box()
+            vbox.label(text="Grass Verge (along spine):", icon='IPO_EASE_IN_OUT')
+            col = vbox.column(align=True)
+            col.prop(scene, "rd_verge_width", text="Width")
+            col.prop(scene, "rd_verge_offset", text="Offset")
+            col.prop(scene, "rd_verge_side", text="Side")
+            col.prop(scene, "rd_verge_height", text="Height")
+            vbox.operator("object.place_grass_verge", text="Place Grass Verge", icon='ADD')
+
+        layout.separator()
+        layout.operator("object.clear_road_extras", text="Clear Junctions & Fills", icon='X')
+
 
 ROAD_BUILDER_PANEL_CLASSES = [
     VIEW3D_PT_RoadBuilderPanel,
     VIEW3D_PT_RoadBuilderSpine,
     VIEW3D_PT_RoadBuilderCrossSection,
     VIEW3D_PT_RoadBuilderBake,
+    VIEW3D_PT_RoadBuilderAI,
+    VIEW3D_PT_RoadBuilderProps,
+    VIEW3D_PT_RoadBuilderFacades,
+    VIEW3D_PT_RoadBuilderJunctions,
 ]

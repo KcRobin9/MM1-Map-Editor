@@ -17,7 +17,6 @@ The editor is its own N-panel tab, **Dash Editor**, next to the Car Editor.
 - [How Packing Works](#how-packing-works)
 - [Troubleshooting](#troubleshooting)
 - [Tips & Best Practices](#tips--best-practices)
-- [Need More Help?](#need-more-help)
 
 ---
 

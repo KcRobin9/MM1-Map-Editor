@@ -32,6 +32,7 @@ Step-by-step guides to help you get started:
 * [Races](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/races.md)
 * [AI streets](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/ai_streets.md)
 * [Dash Editor](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/dash_editor.md)
+* [Road Builder](https://github.com/KcRobin9/MM1-Map-Editor/blob/main/docs/tutorials/road_builder.md)
 
 ## Visual Reference
 Reference images and assets for building your city:
