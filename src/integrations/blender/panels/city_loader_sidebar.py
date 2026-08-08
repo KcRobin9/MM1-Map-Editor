@@ -140,6 +140,22 @@ class VIEW3D_PT_CityLoaderTools(bpy.types.Panel):
         col.operator("bridges.clear",            text="Clear Bridges",     icon="MOD_LATTICE")
 
 
+class VIEW3D_PT_TextureAudit(bpy.types.Panel):
+    bl_label       = "Texture Audit"
+    bl_idname      = "VIEW3D_PT_texture_audit"
+    bl_space_type  = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category    = _PANEL_CATEGORY
+    bl_options     = {"DEFAULT_CLOSED"}
+
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Check built SHOP textures resolve", icon="TEXTURE")
+        layout.operator("object.audit_map_textures", text="Audit Textures (SHOP)", icon="VIEWZOOM")
+        layout.label(text="Run after building the map / car.", icon="INFO")
+        layout.label(text="Catches invisible / black props.", icon="INFO")
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _file_row(col, label: str, value):
@@ -156,4 +172,5 @@ def _file_row(col, label: str, value):
 CITY_LOADER_PANEL_CLASSES = [
     VIEW3D_PT_CityLoader,
     VIEW3D_PT_CityLoaderTools,
+    VIEW3D_PT_TextureAudit,
 ]
