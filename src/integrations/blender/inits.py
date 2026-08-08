@@ -2065,6 +2065,15 @@ def initialize_blender_operators() -> None:
     for cls in OPERATOR_CLASSES:
         _safe_register(cls)
 
+    # Additive, isolated: the single-graph road-network compiler (its own "Road Net" tab).
+    # Guarded so a failure here can never break the rest of the addon registration.
+    try:
+        from src.integrations.blender.operators.roadnet_editor import register_roadnet
+        register_roadnet()
+    except Exception as exc:  # pragma: no cover - defensive
+        from src.ui.console import item
+        item(f"roadnet editor not registered: {exc}")
+
 
 def initialize_blender_waypoint_editor() -> None:
     if not is_process_running(Executable.BLENDER):
@@ -2081,6 +2090,12 @@ def unregister_all() -> None:
         return
 
     unregister_draw_handler()
+
+    try:
+        from src.integrations.blender.operators.roadnet_editor import unregister_roadnet
+        unregister_roadnet()
+    except Exception:  # pragma: no cover - defensive
+        pass
 
     if bpy.app.timers.is_registered(_vertex_poll_timer):
         bpy.app.timers.unregister(_vertex_poll_timer)

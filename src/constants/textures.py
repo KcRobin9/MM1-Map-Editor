@@ -18,11 +18,22 @@ class Texture:
     ROAD = "ROAD"
     ICE = "L_RIVET"
 
+    # Paved AREA surfaces (no lane lines) - for parking lots, plazas, open squares, dirt, piers.
+    PARKING_LOT = "LMMALL_LOT"   # an actual parking-lot texture
+    ASPHALT = "T_ASPHALT"        # clean asphalt, no lines
+    CONCRETE = "T_CONCRETE01"    # concrete slab / civic square
+    DIRT = "T_DIRT"              # dirt / gravel
+    PIER = "R_NAVYPIER"          # Navy Pier decking - waterfront edge
+    TUNNEL_WALL = "T_TUN_WALL"   # authentic Chicago tunnel wall (tunnel02 facade), in core.ar
+    TUNNEL_TOP = "T_TUN_TOP"     # authentic Chicago tunnel ceiling/top, in core.ar
+
     BRICKS_MALL = "OT_MALL_BRICK"
     BRICKS_SAND = "OT_SHOP03_BRICK"
     BRICKS_GREY = "CT_FOOD_BRICK"
     WALL = "T_WALL"
     IND_WALL = "IND_WALL"
+    INDUSTRIAL = "IND_ASPHALT"   # gritty industrial-yard ground (paved, oil-stained)
+    RAIL = "T_RAIL03"            # see-through guardrail (alpha texture) - bridge/overpass deck edges
     SHOP_BRICK = "CT_SHOP_BRICK"
     MARKT_BRICK = "OT_MARKT_BRICK"
 
@@ -60,6 +71,8 @@ TEXTURE_EXPORT = {
     "T_BARRICADE": Texture.BARRICADE,
     "CHECK04": Texture.CHECKPOINT,
     "VPBUSRED_TP_BK": Texture.BUS_RED_TOP,
+    "T_TUN_WALL": Texture.TUNNEL_WALL,
+    "T_TUN_TOP": Texture.TUNNEL_TOP,
 }
 
 
