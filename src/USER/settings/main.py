@@ -6,6 +6,14 @@ from src.constants.file_formats import Axis
 MAP_NAME = "My First City"      # Can be multiple words --- name of the Map in the Race Locale Menu
 MAP_FILENAME = "FirstCity"      # One word (no spaces)  --- name of the .AR file and the folder in the SHOP folder
    
+# Generated Cities (opt-in) --- each one REPLACES the hand-authored polygon block
+MAP_SPEC_FILE = None            # Path to a MapSpec .json (see src/USER/maps/ and src/game/mapgen)
+ROADNET_CITY = None             # Preset name, (cols, rows), or a RoadNetwork --- builds geometry + AI
+                                # Presets: small/medium/large/mega/downtown/avenues/manhattan/boulevard
+ROADNET_BOOT_RACE = "race"      # "race" to boot into Checkpoint 0, False for Cruise with traffic
+MM2_CITY = None                 # Path to a tessellated MM2 'expanded_psdl.json', or (path, options)
+EXTRA_TEXTURE_DIRS = []         # Extra texture folders merged into the shared GLOBAL.TSH
+
 # Play Game + Delete Shop
 play_game = True                # Set True to start the game after the Map is created (defaults to False when Blender is running)
 delete_shop = True              # Set True to delete the raw city files after the .AR file has been created
@@ -48,3 +56,10 @@ random_textures = [Texture.WATER, Texture.GRASS, Texture.WOOD, Texture.ROAD_3_LA
 disable_progress_bar = True     # Set True to show raw console output (disables the progress bar)
 
 default_separator = Axis.Longest
+
+# Local Override
+# settings/local.py is gitignored --- put machine paths and personal build config there
+try:
+    from src.USER.settings.local import *
+except ImportError:
+    pass
