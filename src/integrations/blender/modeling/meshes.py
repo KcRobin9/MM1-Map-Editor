@@ -1,3 +1,4 @@
+import struct
 from pathlib import Path
 from typing import List, Optional
 
@@ -39,19 +40,26 @@ def read_bms(bms_file: Path) -> dict:
 
         texture_names = [read_binary_name(f, 32, padding=16) for _ in range(num_textures)]
 
-        points = [read_unpack(f, '<3f') for _ in range(num_points)]
+        # Bulk-unpack the big per-vertex / per-adjunct blocks in one struct call each
+        # (one read instead of N Python-level unpacks) — same bytes, same output.
+        pts_flat = struct.unpack(f'<{3 * num_points}f', f.read(12 * num_points))
+        points   = [(pts_flat[i], pts_flat[i + 1], pts_flat[i + 2]) for i in range(0, len(pts_flat), 3)]
 
         if num_points >= 16:
             f.read(12 * 8)  # skip 8 AABB corner sentinel vertices
 
-        normal_indices = list(read_unpack(f, f'{num_adjuncts}B'))   if (flags & MeshFlags.NORMALS)   else []
-        tex_coords     = [read_unpack(f, '<2f') for _ in range(num_adjuncts)] if (flags & MeshFlags.TEXCOORDS) else []
+        normal_indices = list(read_unpack(f, f'{num_adjuncts}B')) if (flags & MeshFlags.NORMALS) else []
+
+        tex_coords: List[tuple] = []
+        if flags & MeshFlags.TEXCOORDS:
+            tc_flat    = struct.unpack(f'<{2 * num_adjuncts}f', f.read(8 * num_adjuncts))
+            tex_coords = [(tc_flat[i], tc_flat[i + 1]) for i in range(0, len(tc_flat), 2)]
 
         vert_colors: List[tuple] = []
         if flags & MeshFlags.COLORS:
-            for _ in range(num_adjuncts):
-                b, g, r, a = read_unpack(f, '4B')
-                vert_colors.append((r / 255.0, g / 255.0, b / 255.0, a / 255.0))
+            vc = struct.unpack(f'<{4 * num_adjuncts}B', f.read(4 * num_adjuncts))   # BGRA per adjunct
+            vert_colors = [(vc[i + 2] / 255.0, vc[i + 1] / 255.0, vc[i] / 255.0, vc[i + 3] / 255.0)
+                           for i in range(0, len(vc), 4)]
 
         vertex_indices  = list(read_unpack(f, f'{num_adjuncts}H'))
 

@@ -6,7 +6,7 @@ import random
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-from src.constants.folder import Folder
+from src.constants.folder import Folder, TextureFolder
 from src.constants.constants import HUGE
 from src.constants.props import BangerFlags
 from src.core.vector.vector_3 import Vector3
@@ -248,7 +248,7 @@ def _custom_texture_folders(prop_name: str, base_folder: Optional[Path]):
     city_folder = custom_city_of_prop(prop_name)
     if city_folder and base_folder is not None:
         tex = get_custom_city(city_folder).texture_root
-        return [base_folder, tex / "TEX16A", tex / "TEX16O"]
+        return [base_folder, tex / TextureFolder.ALPHA, tex / TextureFolder.OPAQUE]
     return base_folder
 
 
@@ -488,6 +488,7 @@ def place_props_in_scene(
     texture_folder: Optional[Path] = None,
     car_wheels: bool = True,
     car_lights: bool = False,
+    merge_instances: bool = False,
 ) -> None:
     """
     Build prop meshes from BMS files and place instances directly in the scene.
@@ -506,6 +507,12 @@ def place_props_in_scene(
         texture_folder : Folder containing .DDS textures (optional).
         car_wheels     : Load WHL0–N_H.BMS and parent to body.
         car_lights     : Load HLIGHT/TLIGHT/RLIGHT meshes and parent to body.
+        merge_instances: bake all instances of each regular prop TYPE into ONE
+                         merged object (e.g. 1887 opstlite -> 1 object). Viewport
+                         stays fluid for MM2-scale prop counts (~6.3k instances ->
+                         ~37 objects) at the cost of per-instance editability.
+                         Vehicles and missing-BMS placeholders keep individual
+                         objects (they carry per-instance metadata / parts).
     """
     # Clear previous run's objects so re-running never doubles up props
     props_col = _get_or_create_collection(_PROPS_COLLECTION)
@@ -572,6 +579,7 @@ def place_props_in_scene(
     # ── Place every instance ──────────────────────────────────────────────────
     placed = 0
     skipped = 0
+    merge_bins: Dict[str, list] = {}   # merged mode: prop_name -> [(loc, z_rot), ...]
 
     def _place_placeholder(prop_name, game_loc, z_rot, group_id, group_type, config_json):
         # Props whose BMS is absent from the editor resources still need a tagged
@@ -617,20 +625,55 @@ def place_props_in_scene(
                 _place_placeholder(prop_name, game_loc, z_rot, group_id, group_type, config_json)
                 skipped += 1
                 continue
+            bl_off = _bms_to_bl_offset(mesh, z_rot)
+            loc = (game_loc[0] + bl_off[0], game_loc[1] + bl_off[1], game_loc[2] + bl_off[2])
+            if merge_instances:
+                # world transform of a mesh vertex v = RotZ(z_rot) @ v + loc  (same as the object
+                # placement below: rotation about the object origin, then translate).
+                merge_bins.setdefault(prop_name, []).append((loc, z_rot))
+                placed += 1
+                continue
             obj = bpy.data.objects.new(prop_name, mesh)
             props_col.objects.link(obj)
-            bl_off = _bms_to_bl_offset(mesh, z_rot)
-            obj.location = (
-                game_loc[0] + bl_off[0],
-                game_loc[1] + bl_off[1],
-                game_loc[2] + bl_off[2],
-            )
+            obj.location = loc
             obj.rotation_euler = (0.0, 0.0, z_rot)
             # Tag with Prop Editor metadata
             obj["mm_prop_group_id"]   = group_id
             obj["mm_prop_type"]       = group_type
             obj["mm_prop_config_json"] = config_json
             placed += 1
+
+    # ── Merged mode: one baked object per prop type ────────────────────────────
+    # NOTE (crash avoidance): no temp datablocks here. An earlier version did mesh.copy() +
+    # bpy.data.meshes.remove() per instance (~6.3k create/remove cycles for MM2 SF), which churns
+    # Blender's datablock/GPU caches and contributes to the workbench draw use-after-free crash.
+    # Instead, bm.from_mesh(base) APPENDS the base geometry, and we transform just the newly added
+    # vertex slice in place — zero datablock traffic.
+    if merge_instances and merge_bins:
+        import bmesh
+        from mathutils import Matrix
+        for prop_name, placements in merge_bins.items():
+            base = mesh_cache[prop_name]
+            merged = bpy.data.meshes.new(f"{prop_name}_merged")
+            bm = bmesh.new()
+            for loc, z_rot in placements:
+                start = len(bm.verts)
+                bm.from_mesh(base)              # appends; keeps UVs + material indices
+                bm.verts.ensure_lookup_table()
+                mat = Matrix.Translation(loc) @ Matrix.Rotation(z_rot, 4, "Z")
+                for vi in range(start, len(bm.verts)):
+                    bm.verts[vi].co = mat @ bm.verts[vi].co
+            bm.to_mesh(merged)
+            bm.free()
+            merged.validate(verbose=False)      # GPU-crash hardening (see cell builder note)
+            merged.update()
+            for m in base.materials:            # same slot order as every appended instance
+                merged.materials.append(m)
+            obj = bpy.data.objects.new(f"MERGED_{prop_name}", merged)
+            obj["mm_prop_merged"] = len(placements)
+            props_col.objects.link(obj)
+        item(f"merged mode: {len(merge_bins)} object(s) for "
+             f"{sum(len(v) for v in merge_bins.values())} instances")
 
     skipped_str = f"  skipped: {skipped}x" if skipped else ""
     ok(f"Props placed in scene{sep()}{placed}x{skipped_str}")

@@ -1150,7 +1150,7 @@ def write_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
 
     # the .map lists the streets the game loads
     with open(os.path.join(devmap_dir, f"{map_filename}.map"), "w") as f:
-        f.write(_map_text(map_filename, street_names))
+        f.write(map_file_text(map_filename, street_names))
 
     isect_written = 0
     if write_intersections:
@@ -1164,7 +1164,7 @@ def write_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
             "intersections_written": isect_written, "devmap": devmap_dir}
 
 
-def _map_text(map_filename: str, street_names: List[str]) -> str:
+def map_file_text(map_filename: str, street_names: List[str]) -> str:
     streets = "\n        ".join(f'"{n}"' for n in street_names)
     return (f"mmMapData :0 {{\n"
             f"    NumStreets {len(street_names)}\n"
@@ -1178,7 +1178,7 @@ def _map_text(map_filename: str, street_names: List[str]) -> str:
 # build, after the clear + after the normal AI pass (so roadnet AI wins). Staging is
 # cleared on consume, so it never goes stale into an unrelated later build.
 
-def _staging_dir(map_filename: str) -> str:
+def staging_dir(map_filename: str) -> str:
     return os.path.join(tempfile.gettempdir(), f"mm1_roadnet_ai_{map_filename}")
 
 
@@ -1188,7 +1188,7 @@ def stage_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
     if map_filename is None:
         from src.USER.settings.main import MAP_FILENAME
         map_filename = MAP_FILENAME
-    d = _staging_dir(map_filename)
+    d = staging_dir(map_filename)
     if os.path.isdir(d):
         for f in os.listdir(d):
             os.remove(os.path.join(d, f))
@@ -1202,7 +1202,7 @@ def stage_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
             f.write(emit_road(s, None if FLAT_AI_RAILS else getattr(compiled.network, "terrain", None),
                               getattr(compiled.network, "flat_climb", False)))
     with open(os.path.join(d, f"{map_filename}.map"), "w") as f:
-        f.write(_map_text(map_filename, street_names))
+        f.write(map_file_text(map_filename, street_names))
     if write_intersections:
         from src.game.mapgen.roadnet.emit import emit_intersection
         for rec in compiled.intersections:
@@ -1211,7 +1211,7 @@ def stage_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
     return {"staged": len(street_names), "dir": d}
 
 
-def write_roam_aimap(compiled: CompiledNetwork, race_dir, density: float = 2.0,
+def write_roam_aimap(compiled, race_dir, density: float = 2.0,
                      speed_limit: int = 30, num_cops: int = 4, cop_model: str = "vpcop") -> str:
     """
     Write RACE/<MAP>/ROAM.AIMAP — the cruise AI-event file that turns on AMBIENT TRAFFIC
@@ -1222,13 +1222,17 @@ def write_roam_aimap(compiled: CompiledNetwork, race_dir, density: float = 2.0,
 
     Format matches Game_Files/core/RACE/CHICAGO/ROAM.AIMAP. Cops are seeded at intersection
     node positions. 0 opponents (cruise has none -> no aiVehicleOpponent crash).
+
+    `compiled` may be None, which writes the same file with no cops in it.
     """
     import os
     os.makedirs(str(race_dir), exist_ok=True)
 
+    # `compiled` may be None: the direct-BAI path has no compiled network, and with no network
+    # there is nowhere to seed cops, so it asks for the cop-free file.
     cops = []
-    nodes = list(compiled.network.nodes.values())
-    terrain = getattr(compiled.network, "terrain", None)
+    nodes = list(compiled.network.nodes.values()) if compiled is not None else []
+    terrain = getattr(compiled.network, "terrain", None) if compiled is not None else None
     for i in range(min(num_cops, len(nodes))):
         x, z = nodes[i].pos
         # y a touch above the road so the cop drops onto it; FOLLOW THE HILLS (was hardcoded 2.0,
@@ -1268,7 +1272,7 @@ def consume_staged_ai(devmap_dir, map_filename: str) -> int:
     Move staged AI into the dev city-map folder (clearing any AI already there), then
     clear staging. Returns the number of files copied (0 if nothing was staged).
     """
-    d = _staging_dir(map_filename)
+    d = staging_dir(map_filename)
     if not os.path.isdir(d):
         return 0
     files = [f for f in os.listdir(d) if f.endswith((".road", ".map", ".int"))]

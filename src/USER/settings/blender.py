@@ -21,3 +21,13 @@ prop_car_lights  = False         # Set True to also load headlight / tail-light 
 # Bridges
 open_bridges        = True              # Visual only — tilt each drawbridge half up around its outer hinge so the two halves form a V at the middle
 open_bridges_angle  = 0.26 * 100    # default value. Value for multiplayer is: : 0.471239 * 100
+
+# MM2 City Import (only used when MM2_CITY is set)
+MM2_BLENDER_VIZ = "cell"        # "cell" = one object per landmark cell (fast), "poly" = one per polygon
+                                # (full detail, slow --- SF is ~129k objects), "none" = skip the preview
+MM2_PROPS_MERGED = True         # Set True to bake each prop TYPE into one object (~6.3k props -> ~37 objects)
+                                # Set False for per-instance editing at the cost of a heavier scene
+MM2_EXPORT_CITY_FOLDER = True   # Set True to also copy the baked city into resources/city_files/<NAME>/
+                                # so the Map Loader panel can reload it after delete_shop wipes SHOP
+MM2_SAVE_RELOAD_AFTER_BUILD = True  # Set True to save + reopen the .blend after a build (rebuilds every GPU
+                                # batch from scratch; works around the Blender 4.3 NVIDIA draw crash)

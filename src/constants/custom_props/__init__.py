@@ -10,11 +10,13 @@ from pathlib import Path
 from dataclasses import dataclass
 
 from src.constants.city import City, CityDefinition
+from src.constants.folder import TextureFolder
 from src.constants.custom_props.box_design import BoxDesignProp
 from src.constants.custom_props.archipelago import ArchipelagoProp
 from src.constants.custom_props.offroad import OffroadProp
 from src.constants.custom_props.seaview import SeaviewProp
 from src.constants.custom_props.paulville import PaulvilleProp
+from src.constants.custom_props.mm2_props import Mm2Prop
 
 
 _EDITOR_CUSTOM = Path(__file__).parent.parent.parent.parent / "resources" / "editor" / "custom"
@@ -58,6 +60,7 @@ CUSTOM_CITIES = {
     City.OffroadMadness.folder:   CustomCity(City.OffroadMadness,   OffroadProp),
     City.Seaview.folder:          CustomCity(City.Seaview,          SeaviewProp),
     City.Paulville.folder:        CustomCity(City.Paulville,        PaulvilleProp),  # textures only, no props
+    City.Mm2Props.folder:         CustomCity(City.Mm2Props,         Mm2Prop),        # real MM2 prop meshes
 }
 
 # prop id (lowercased) → city folder
@@ -88,10 +91,8 @@ def custom_city_texture_folders(folder) -> list:
     geometry/prop DDS, given its city folder name or path. Empty list for stock
     cities. Append these to the editor TEXTURES pool when loading custom meshes.
     """
-    from pathlib import Path
-
     name = Path(folder).name if folder else ""
     city = CUSTOM_CITIES.get(name)
     if not city:
         return []
-    return [city.texture_root / "TEX16A", city.texture_root / "TEX16O"]
+    return [city.texture_root / TextureFolder.ALPHA, city.texture_root / TextureFolder.OPAQUE]

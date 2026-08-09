@@ -57,6 +57,7 @@ class Threshold:
 
     MESH_VERTEX_COUNT = 16
     VERTEX_INDEX_COUNT = 0x8000  # 32768
+    MESH_VERTEX_BUFFER = 16384   # engine render buffer; a cell mesh above this is split
 
 
 # CLI strings for -noui commandline flag (not the same as InputType integers in menu.py)

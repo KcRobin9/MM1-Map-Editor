@@ -81,12 +81,13 @@ def create_commandline(output_file: Path, no_ui: bool, no_ui_type: str, no_ai: b
     ok("Created commandline file")
 
       
-def start_game(mm1_folder: str, executable: str, play_game: bool) -> None:    
+def start_game(mm1_folder: str, executable: str, play_game: bool, boot_args=None) -> None:
     if not play_game or is_process_running(Executable.BLENDER) or is_process_running(executable):
         return
-    
-    subprocess.run(mm1_folder / executable, cwd = mm1_folder)
-    print(f"Successfully started {executable}")
+
+    cmd = [str(mm1_folder / executable)] + list(boot_args or [])
+    subprocess.run(cmd, cwd = mm1_folder)
+    print(f"Successfully started {executable} {' '.join(boot_args or [])}".rstrip())
 
 
 def open_with_notepad_plus(input_file: Path) -> None:

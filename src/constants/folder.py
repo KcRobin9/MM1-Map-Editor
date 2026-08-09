@@ -19,8 +19,17 @@ _EDITOR    = _RESOURCES / "editor"
 _TUNE      = _EDITOR / "TUNE"
 
 
+class TextureFolder:
+    """Texture sub-folder names the engine expects, used for both SHOP and custom cities."""
+    ALPHA   = "TEX16A"   # alpha / cut-out textures (A4R4G4B4)
+    OPAQUE  = "TEX16O"   # opaque textures (RGB565)
+    BITMAP  = "BMP16"    # minimap / loading-screen JPEGs
+    PALETTE = "TEXP"     # palettised textures
+
+
 class Folder:
     BASE = _BASE
+    EDITOR_SCRIPT = _BASE / "MAP_EDITOR_ALPHA_v1.py"
 
     class Shop:
         Root     = _SHOP
@@ -33,10 +42,10 @@ class Folder:
         DLP      = _SHOP / "DLP"
 
         class Textures:
-            Bitmap  = _SHOP / "BMP16"
-            Alpha   = _SHOP / "TEX16A"
-            Opaque  = _SHOP / "TEX16O"
-            Palette = _SHOP / "TEXP"
+            Bitmap  = _SHOP / TextureFolder.BITMAP
+            Alpha   = _SHOP / TextureFolder.ALPHA
+            Opaque  = _SHOP / TextureFolder.OPAQUE
+            Palette = _SHOP / TextureFolder.PALETTE
 
         class Map:
             City          = _SHOP / "CITY" / MAP_FILENAME
@@ -58,6 +67,8 @@ class Folder:
         DevPlayers = _MM_DEV / "players"
 
     class Resources:
+        CityFiles = _RESOURCES / "city_files"
+
         class User:
             Root     = _USER
             AI       = _USER / "AI"
@@ -121,6 +132,8 @@ class Folder:
             Props         = _SRC_USER / "props" / "props.py"
             Facades       = _SRC_USER / "facades.py"
             PlayerProfile = _SRC_USER / "player_profile.py"
+            Maps          = _SRC_USER / "maps"
+            Mm2Edits      = _SRC_USER / "mm2_edits"
 
             class Textures:
                 Custom = _SRC_USER / "textures" / "custom"

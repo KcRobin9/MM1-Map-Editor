@@ -8,6 +8,16 @@ def read_unpack(file: BinaryIO, fmt: str) -> Tuple:
     return struct.unpack(fmt, file.read(calc_size(fmt)))
 
 
+def read_vectors(file: BinaryIO, count: int) -> list:
+    """`count` consecutive XYZ float triples as plain tuples.
+
+    Vector3.readn is the right call when you want Vector3 objects; the MM2 parsers walk hundreds of
+    thousands of raw coordinates and index them positionally, so they take the tuples.
+    """
+    flat = read_unpack(file, f'<{3 * count}f')
+    return [(flat[i], flat[i + 1], flat[i + 2]) for i in range(0, 3 * count, 3)]
+
+
 def write_pack(file: BinaryIO, fmt: str, *args: object) -> None:
     file.write(struct.pack(fmt, *args))
 

@@ -138,9 +138,43 @@ class AgiTexParameters:
 
 class Magic:
     MESH = "3HSM"
-    BOUND = "2DNB"
+    BOUND = "2DNB"           # BND2: what retail MM1 reads, and what the editor writes by default
+    BOUND_EXTENDED = "3DNB"  # BND3: Open1560-only, written ONLY when a city needs >32767 vertices
     PORTAL = 0
     DEVELOPMENT = "DLP7"
+
+    # MM2 source formats, read by the MM2 -> MM1 conversion
+    MM2_AI = "CAI1"
+    MM2_PROPS = "PTH1"
+    MM2_GEOMETRY = "PSD0"
+
+
+class BoundFormat:
+    """BND polygon VertIndices width.
+
+    BND2 stores 4 x i16 (76 bytes/poly) and is what RETAIL MM1 understands. BND3 widens them to
+    4 x i32 (84 bytes/poly); it is an Open1560 extension for cities whose vertex count overflows a
+    signed i16, so writing it makes the map unloadable on retail. We therefore write BND2 unless
+    the city genuinely needs BND3, and read whichever the file's magic declares.
+    """
+    VERTEX_INDEX          = "<4H"
+    VERTEX_INDEX_EXTENDED = "<4i"
+
+    MAX_VERTICES = 32767      # i16 ceiling; above this a city must be written as BND3
+
+    # Spatial-grid RowBuckets entries are poly indices with a terminator bit on a cell's last entry.
+    # BND2 stores them as u16 (terminator at bit15); BND3 widens them to u32 (bit31) and sets the
+    # same bit in the on-disk entry COUNT, which is how a reader tells the two layouts apart.
+    ROW_BUCKETS_TERMINATOR_U16 = 0x8000
+    ROW_BUCKETS_TERMINATOR_U32 = 0x80000000
+    ROW_BUCKETS_U32_FLAG       = 0x80000000
+
+
+class DdsHeader:
+    """DDS surface header: height then width, as two u32 at DIMENSIONS_OFFSET. Used when registering
+    a texture in the sheet; a header that reads back 0 falls back to FALLBACK_SIZE."""
+    DIMENSIONS_OFFSET = 12
+    FALLBACK_SIZE = 64
 
 
 class AxisRef:
@@ -224,8 +258,15 @@ class FileType:
     RACE_RECORD   = ".DAT"
 
     CSV = ".CSV"
+    JSON = ".json"
     TEXT = ".txt"
     HTML = ".html"
+
+    # MM2 source formats (read-only --- the MM2 -> MM1 conversion consumes these)
+    MM2_GEOMETRY = ".psdl"
+    MM2_MESH     = ".pkg"
+    MM2_PROPS    = ".pathset"
+    MM2_TEXTURE  = ".tex"
 
 
 class Anim:

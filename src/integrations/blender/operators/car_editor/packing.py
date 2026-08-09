@@ -4,7 +4,7 @@ import re
 import shutil
 import subprocess
 
-from src.constants.folder import Folder
+from src.constants.folder import Folder, TextureFolder
 from src.constants.car_assets import LightColor
 from src.constants.file_formats import FileType
 from src.integrations.blender.modeling.meshes import read_bms
@@ -97,7 +97,7 @@ def _pack_car_ar(car_name: str, minimal: bool = False) -> bool:
         # its stock photo too); only present when the user generated one.
         show_jpg = Folder.Shop.Textures.Bitmap / f"{car_name.upper()}_SHOW.JPG"
         if show_jpg.exists():
-            bmp_dst = tmp_dir / "BMP16"
+            bmp_dst = tmp_dir / TextureFolder.BITMAP
             bmp_dst.mkdir(exist_ok=True)
             shutil.copy2(show_jpg, bmp_dst / show_jpg.name)
 

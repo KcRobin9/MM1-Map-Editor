@@ -6,7 +6,8 @@ individual settings files — user values are never mutated.
 
 # ── Raw user settings ──────────────────────────────────────────────────────────
 from src.USER.settings.main import (
-    MAP_NAME, MAP_FILENAME,
+    MAP_NAME, MAP_FILENAME, MAP_SPEC_FILE,
+    EXTRA_TEXTURE_DIRS,
     play_game, delete_shop,
     set_bridges, set_props, set_facades, set_physics, set_animations,
     set_texture_sheet, set_music,
@@ -38,6 +39,7 @@ from src.USER.settings.debug import (
 from src.USER.settings.blender import (
     load_target_model, load_all_textures,
     visualize_props, visualize_facades, visualize_bridges, prop_bms_folder, prop_car_wheels, prop_car_lights,
+    MM2_BLENDER_VIZ, MM2_PROPS_MERGED, MM2_EXPORT_CITY_FOLDER, MM2_SAVE_RELOAD_AFTER_BUILD,
 )
 
 from src.USER.settings.fast import (FAST_AR_ONLY, BLENDER_ONLY, FAST_BLENDER_ONLY,

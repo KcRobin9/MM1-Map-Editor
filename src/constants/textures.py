@@ -80,3 +80,15 @@ DDS_TO_CONSTANT = {
     v: k for k, v in vars(Texture).items()
     if not k.startswith('_') and isinstance(v, str)
 }
+
+
+# MM1 texture tag -> the real MM2 texture that replaces it when an MM2 poly carries no material of
+# its own (psdl-import drops MM2's active texture-ref). Keeps an imported city fully MM2-textured.
+MM2_TEXTURE_FALLBACK = {
+    "R4":      "R4_F",
+    "R6":      "R6_F",
+    "RINTER":  "RINTER_F",
+    "SDWLK2":  "SWALK_F",
+    "T_GRASS": "S_GRASS",
+    "T_WATER": "S_WATER",
+}

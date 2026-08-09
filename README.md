@@ -51,8 +51,10 @@ Contributions are welcomed. All questions, feature requests, issues, and pull re
 * [AstrixTube](https://www.youtube.com/@astrixtube/) - Alpha tester, Prop Editing Expansions/Improvements inspired from his Standalone Prop Editor
 * [Vwp914](https://github.com/Vwp914) - Alpha tester, Blender tutor
 * [Rodrighazzo](https://www.youtube.com/@Rodrighazzo/videos) - Alpha tester, experimenting with the original 3D Studio Max R2.5 dev plugin
-* [Lars](https://github.com/Larspolo) - For his Race Making Tool
 * [MadManMammoth](https://www.youtube.com/@MadManMammoth) - Tutorial feedback
+* [Wilkovatch](https://github.com/Wilkovatch) - For his [psdl-import](https://github.com/Wilkovatch/psdl-import), which tessellates the MM2 city geometry
+* [Dummiesman](https://github.com/Dummiesman) - For his [angel-file-formats](https://github.com/Dummiesman/angel-file-formats), which documents the MM2 BAI, PSDL, PKG and Pathset formats
+* [Lars](https://github.com/Larspolo) - For his Race Making Tool
 * DDucky - Code help with Legacy Prop Editor
 * [sharkwouter](https://github.com/sharkwouter) - Small code fix
 

@@ -16,7 +16,7 @@ from src.game.mapgen.roadnet.roadsect import PathData, RoadSection
 from src.game.mapgen.roadnet.intersections import IntersectionRecord
 
 
-class _Writer:
+class RoadFileWriter:
     def __init__(self):
         self.buf: List[str] = []
         self.indent = 0
@@ -86,7 +86,7 @@ def emit_road(section: RoadSection, terrain=None, flat_climb=False) -> str:
     the road height; Normals stay UP (the engine re-derives the lateral frames at load).
     """
     fwd, rev = section.fwd, section.rev
-    w = _Writer()
+    w = RoadFileWriter()
     w.begin("mmRoadSect")
 
     w.f_int("NumVertexs", fwd.num_vertexs)
@@ -167,7 +167,7 @@ def emit_road(section: RoadSection, terrain=None, flat_climb=False) -> str:
 
 
 def emit_intersection(rec: IntersectionRecord) -> str:
-    w = _Writer()
+    w = RoadFileWriter()
     w.begin("mmIntersection")
     w.f_int("ID", rec.id)
     w.f_vec3("Position", rec.position)
@@ -183,7 +183,7 @@ def emit_intersection(rec: IntersectionRecord) -> str:
 
 def emit_map(street_path_ids: Sequence[int], _name: str = "mmMapData") -> str:
     """CHICAGO.map — NumStreets + the Street name list (one per road section)."""
-    w = _Writer()
+    w = RoadFileWriter()
     w.begin("mmMapData")
     w.f_int("NumStreets", len(street_path_ids))
     w.f_str_list("Street", [f"Street{pid}" for pid in street_path_ids])

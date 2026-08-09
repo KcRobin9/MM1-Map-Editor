@@ -54,8 +54,16 @@ class TextureSheet:
             texturesheet_lines = in_f.readlines()
                     
         existing_texture_names = set(line.split(',')[0].strip() for line in texturesheet_lines)
-        custom_texture_names = TextureSheet.get_custom_texture_filenames(input_textures)
-        
+        # input_textures may be a single dir OR a list of dirs. Multiple dirs build a UNION sheet so
+        # several MM2 cities (each with its own DDS in its own .ar) work from one shared install.
+        _dirs = input_textures if isinstance(input_textures, (list, tuple)) else [input_textures]
+        custom_texture_names = []
+        seen = set()
+        for _d in _dirs:
+            for _nm in TextureSheet.get_custom_texture_filenames(Path(_d)):
+                if _nm not in seen:
+                    seen.add(_nm); custom_texture_names.append(_nm)
+
         added_textures = []
         
         with open(output_file, "w") as out_f: 

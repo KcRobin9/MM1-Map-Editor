@@ -11,7 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Iterable, List, Set
 
-from src.constants.folder import Folder
+from src.constants.folder import Folder, TextureFolder
 from src.constants.file_formats import FileType
 from src.constants.custom_props import get_custom_city, custom_city_of_prop
 from src.integrations.blender.modeling.meshes import read_bms
@@ -54,8 +54,8 @@ def _copy_prop_textures(texture_root: Path, mesh_dir: Path) -> Set[str]:
 
     registered: Set[str] = set()
     for tex in tex_names:
-        for sub, shop in (("TEX16A", Folder.Shop.Textures.Alpha),
-                          ("TEX16O", Folder.Shop.Textures.Opaque)):
+        for sub, shop in ((TextureFolder.ALPHA, Folder.Shop.Textures.Alpha),
+                          (TextureFolder.OPAQUE, Folder.Shop.Textures.Opaque)):
             # Base texture + its optional normal map (engine loads "<name>_N" by suffix).
             for candidate in (f"{tex}.DDS", f"{tex}_N.DDS"):
                 src = texture_root / sub / candidate

@@ -29,6 +29,7 @@ if str(project_root) not in sys.path:
 
 #* Standard library imports
 import re
+import json
 import math
 import time
 import shutil
@@ -77,6 +78,21 @@ from src.game.texture_sheet import TextureSheet
 from src.game.setup import create_map_info, copy_custom_textures_to_shop, copy_carsim_files_to_shop, ensure_empty_mm_dev_folder
 from src.game.player_profile import apply_player_profile
 
+# Roadnet (single-graph city compiler) imports
+from src.game.mapgen.roadnet import RoadNetwork, RoadNetworkCompiler, grid_city
+from src.game.mapgen.roadnet.presets import build_preset
+from src.game.mapgen.roadnet.validate import validate_network, summarize as summarize_issues
+from src.game.mapgen.roadnet.build_city import emit_roadnet_city, stage_roadnet_ai, write_roam_aimap, curved_grade, audit_collision
+from src.game.mapgen.roadnet.race_gen import roadnet_checkpoint_race, roadnet_circuit_race
+from src.game.mapgen.roadnet.scenery import generate_props
+
+# MM2 -> MM1 conversion imports
+from src.game.mapgen.mm2 import emit_mm2_city, Mm2Options, mm2_props
+from src.game.mapgen.mm2.pathset import pathset_props
+from src.game.mapgen.mm2.groundsnap import snap_props
+from src.game.mapgen.mm2.bai import build_network as build_bai_network
+from src.game.mapgen.mm2.bai_direct import stage_bai_direct
+
 # Helper imports
 from src.helpers.main import calc_size, is_process_running
 
@@ -103,15 +119,20 @@ from src.ui.console import ok, sep, detail, item, suppress_stdout_matching
 
 # Constants imports
 from src.constants.constants import * 
-from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, MeshFlags, PlaneEdgesWinding, Magic, FileType
+from src.constants.file_formats import Portal, Material, Room, LevelOfDetail, MeshFlags, PlaneEdgesWinding, Magic, FileType, BoundFormat, DdsHeader
 from src.constants.textures import Texture
-from src.constants.folder import Folder
+from src.constants.folder import Folder, TextureFolder
+from src.constants.city import City
+from src.constants.custom_props import get_custom_city
+from src.constants.custom_props.mm2_props import Mm2Prop
+from src.constants.props import Prop, BangerFlags
 from src.constants.misc import Shape, Encoding, Executable, Default, Threshold
 from src.constants.color import Color
 
 # USER imports
 from src.USER.settings._resolver import (
-    MAP_NAME, MAP_FILENAME,
+    MAP_NAME, MAP_FILENAME, MAP_SPEC_FILE,
+    EXTRA_TEXTURE_DIRS,
     play_game, delete_shop,
     set_bridges, set_props, set_facades, set_physics, set_animations, set_texture_sheet, set_music,
     set_minimap, minimap_outline_color,
@@ -132,8 +153,9 @@ from src.USER.settings._resolver import (
     auto_debug,
     load_target_model, load_all_textures,
     visualize_props, visualize_facades, visualize_bridges,
+    MM2_BLENDER_VIZ, MM2_EXPORT_CITY_FOLDER, MM2_PROPS_MERGED, MM2_SAVE_RELOAD_AFTER_BUILD,
     prop_bms_folder, prop_car_wheels, prop_car_lights,  # Tweak
-    SKIP_AR_CREATION,
+    SKIP_AR_CREATION, CONNECT_BLENDER_ONLY,
 )
 
 from src.USER.facades import facade_list
@@ -208,22 +230,22 @@ class Polygon:
         return Shape.QUAD if self.is_quad else Shape.TRIANGLE
           
     @classmethod
-    def read(cls, f: BinaryIO) -> 'Polygon':
+    def read(cls, f: BinaryIO, vertex_index_format: str = BoundFormat.VERTEX_INDEX) -> 'Polygon':
         cell_id, material_index, = read_unpack(f, '<HB')
-        flags = read_unpack(f, '<B')
-        vertex_index = read_unpack(f, '<4H') 
+        flags, = read_unpack(f, '<B')
+        vertex_index = read_unpack(f, vertex_index_format)
         plane_edges = Vector3.readn(f, Shape.QUAD)
         plane_normal = Vector3.read(f)
         plane_distance = read_unpack(f, '<f')
         return cls(cell_id, material_index, flags, vertex_index, plane_edges, plane_normal, plane_distance)
-            
-    def write(self, f: BinaryIO) -> None:            
+
+    def write(self, f: BinaryIO, vertex_index_format: str = BoundFormat.VERTEX_INDEX) -> None:
         if len(self.vertex_index) == Shape.TRIANGLE:  # Each polygon requires four vertex indices
             self.vertex_index += (0,)
-        
+
         write_pack(f, '<HB', self.cell_id, self.material_index)
         write_pack(f, '<B', self.flags)
-        write_pack(f, '<4H', *self.vertex_index)
+        write_pack(f, vertex_index_format, *self.vertex_index)
 
         for edge in self.plane_edges:
             edge.write(f)
@@ -593,12 +615,19 @@ def _build_grid_arrays(table: List[List[int]], x_dim: int, z_dim: int,
                 z_min = z / z_scale + bb_min.z
                 x_max = (x + 1) / x_scale + bb_min.x
                 z_max = (z + 1) / z_scale + bb_min.z
-                y = _poly_max_y(polys[poly_idx], vertices, x_min, z_min, x_max, z_max)
+                try:
+                    y = _poly_max_y(polys[poly_idx], vertices, x_min, z_min, x_max, z_max)
+                except (TypeError, ZeroDivisionError):
+                    # Robustness guard: a malformed poly must not abort the whole build. The cell's
+                    # MaxY is only a culling height hint (not collision), so skipping one poly's
+                    # contribution is harmless. (Added during the BOUNDS fix after a non-reproducible
+                    # range_iterator vertex crash here.)
+                    continue
                 if y > max_y:
                     max_y = y
 
             if added:
-                row_buckets[-1] |= 0x8000   # terminator bit on last entry
+                row_buckets[-1] |= BoundFormat.ROW_BUCKETS_TERMINATOR_U32   # terminator bit on the last entry
             else:
                 bucket_offsets[-1] = 0       # empty-cell sentinel
 
@@ -623,7 +652,13 @@ def _build_grid_arrays(table: List[List[int]], x_dim: int, z_dim: int,
 
 def make_table(vertices: List[Vector3], polys: List[Polygon],
                x_dim: int = 100, z_dim: int = 100,
-               max_bucket: int = 80, max_tries: int = 25):
+               max_bucket: int = 256, max_tries: int = 25):
+    # BOUNDS/COLLISION FIX (SLIDE / cell=0): a cell bucket that fills past max_bucket DROPS the
+    # overflowing polys from the lookup grid (see _plot_scan) -> those polys have no HITID cell ->
+    # the car slides on them. The retry loop below grows the grid on overflow, but dense
+    # terrain/overpass stacks could still exceed the old cap of 80 at the largest grid and silently
+    # lose drivable polys. Raised to 256 (the row_buckets entries are 15-bit poly indices + a
+    # terminator bit, so depth has no format limit; the grow loop still keeps most buckets shallow).
     if not vertices or len(polys) <= 1:
         return None
 
@@ -653,6 +688,30 @@ def make_table(vertices: List[Vector3], polys: List[Polygon],
         if not overflow:
             break
 
+    # HITID gap fill: give every empty cell the first polygon of an 8-connected neighbour, closing
+    # the 1-cell seams left by sliver-rejected road transitions and PSDL boundary rounding.
+    # ONE pass only, so genuinely empty areas (ocean, building interiors) stay empty.
+    gap_filled = 0
+
+    for cell_z in range(cur_zd):
+        for cell_x in range(cur_xd):
+            cell = cell_x + cur_xd * cell_z
+            if table[cell]:
+                continue
+
+            neighbours = ((cell_x + dx, cell_z + dz)
+                          for dz in (-1, 0, 1) for dx in (-1, 0, 1) if dx or dz)
+
+            for nx, nz in neighbours:
+                if not (0 <= nx < cur_xd and 0 <= nz < cur_zd):
+                    continue
+
+                neighbour = table[nx + cur_xd * nz]
+                if neighbour:
+                    table[cell] = [neighbour[0]]
+                    gap_filled += 1
+                    break
+
     row_offsets, bucket_offsets, row_buckets, fixed_heights, height_scale, _ = \
         _build_grid_arrays(table, cur_xd, cur_zd, x_scale, z_scale, bb_min, vertices, polys)
 
@@ -666,9 +725,10 @@ def make_table(vertices: List[Vector3], polys: List[Polygon],
     max_y = height_scale * 255.0
 
     ok(f"HITID Grid: {cur_xd}×{cur_zd} ({total_cells} cells){sep()}attempt {attempt + 1}/{max_tries}")
-    item(f"XScale={x_scale:.3f}  ZScale={z_scale:.3f}  HeightScale={height_scale:.5f}  maxY≈{max_y:.2f}")
+    item(f"XScale={x_scale:.3f}  ZScale={z_scale:.3f}  HeightScale={height_scale:.5f}  maxY~{max_y:.2f}")
     item(f"Non-empty: {non_empty}/{total_cells} ({100 * non_empty / total_cells:.1f}%)  "
-         f"Entries: {num_entries}  Avg fill: {avg_fill:.1f}  Max fill: {max_fill}/80")
+         f"Entries: {num_entries}  Avg fill: {avg_fill:.1f}  Max fill: {max_fill}/256"
+         + (f"  Gap-filled: {gap_filled}" if gap_filled else ""))
 
     # for poly_idx, poly in enumerate(polys[1:], start=1):
     #     cell_count = sum(1 for b in table if poly_idx in b)
@@ -685,7 +745,7 @@ def make_table(vertices: List[Vector3], polys: List[Polygon],
         cx = cell_idx % cur_xd
         cz = cell_idx // cur_xd
         poly_ids = ", ".join(f"P{polys[p].cell_id}(idx={p})" for p in bucket)
-        item(f"  Top cell ({cx},{cz}): {len(bucket)} polys → {poly_ids}")
+        item(f"  Top cell ({cx},{cz}): {len(bucket)} polys -> {poly_ids}")
 
     non_zero_h = [h for h in fixed_heights if h > 0]
     if non_zero_h:
@@ -757,10 +817,16 @@ class Bounds:
         num_verts, num_polys = read_unpack(f, '<2l')
         num_hot_verts_1, num_hot_verts_2, num_edges = read_unpack(f, '<3l')
         x_scale, z_scale = read_unpack(f, '<2f')
-        num_indices, height_scale, cache_size = read_unpack(f, '<lfl')
-        
+        num_indices_raw, height_scale, cache_size = read_unpack(f, '<Ifl')
+        has_u32_row_buckets = bool(num_indices_raw & BoundFormat.ROW_BUCKETS_U32_FLAG)
+        num_indices = num_indices_raw & ~BoundFormat.ROW_BUCKETS_U32_FLAG
+
         vertices = Vector3.readn(f, num_verts)
-        polys = [Polygon.read(f) for _ in range(num_polys + 1)] 
+        # BND3 stores i32 VertIndices, the older BND2 i16. Pick from the magic, otherwise every
+        # field after VertIndices reads at the wrong offset on an existing city.
+        vertex_index_format = (BoundFormat.VERTEX_INDEX_EXTENDED if magic == Magic.BOUND_EXTENDED
+                               else BoundFormat.VERTEX_INDEX)
+        polys = [Polygon.read(f, vertex_index_format) for _ in range(num_polys + 1)]
 
         hot_verts = Vector3.readn(f, num_hot_verts_2)
         edge_verts_1 = read_unpack(f, f'<{num_edges}I')
@@ -776,7 +842,16 @@ class Bounds:
         if x_dim and y_dim and z_dim:
             row_offsets = read_unpack(f, f'<{z_dim}I')
             bucket_offsets = read_unpack(f, f'<{x_dim * z_dim}H')
-            row_buckets = read_unpack(f, f'<{num_indices}H')
+            if has_u32_row_buckets:
+                row_buckets = read_unpack(f, f'<{num_indices}I')
+            else:
+                narrow = read_unpack(f, f'<{num_indices}H')
+                # Widen BND2's u16 entries to the in-memory u32 form, moving the terminator bit.
+                row_buckets = tuple(
+                    (entry & ~BoundFormat.ROW_BUCKETS_TERMINATOR_U16) | BoundFormat.ROW_BUCKETS_TERMINATOR_U32
+                    if entry & BoundFormat.ROW_BUCKETS_TERMINATOR_U16 else entry
+                    for entry in narrow
+                )
             fixed_heights = read_unpack(f, f'<{x_dim * z_dim}B')
 
         return cls(
@@ -814,7 +889,11 @@ class Bounds:
         vertices = local_vertices
         polys    = local_polys
 
-        magic = Magic.BOUND
+        # RETAIL COMPATIBILITY: write BND2 (i16 VertIndices) so the map loads on stock MM1. Only a
+        # city that still overflows i16 AFTER the dedup above -- an imported MM2 city like NY or
+        # Buenos Aires with INST buildings -- escalates to BND3, which needs Open1560 to load.
+        magic = (Magic.BOUND_EXTENDED if len(vertices) > BoundFormat.MAX_VERTICES
+                 else Magic.BOUND)
         offset = Default.VECTOR_3
         center = Vector3.center(vertices)
         radius = Vector3.calculate_radius(vertices, center)
@@ -857,6 +936,13 @@ class Bounds:
             )
             
     def write(self, f: BinaryIO) -> None:
+        # A city that overflows i16 vertex indices is written as BND3, which also carries the wider
+        # u32 RowBuckets. Everything else stays BND2 so retail MM1 can still load the map.
+        is_extended = (self.magic == Magic.BOUND_EXTENDED)
+        vertex_index_format = (BoundFormat.VERTEX_INDEX_EXTENDED if is_extended
+                               else BoundFormat.VERTEX_INDEX)
+        row_bucket_count = self.num_indices | BoundFormat.ROW_BUCKETS_U32_FLAG if is_extended else self.num_indices
+
         write_binary_name(f, self.magic)
         self.offset.write(f)
         write_pack(f, '<3l', self.x_dim, self.y_dim, self.z_dim)
@@ -867,13 +953,13 @@ class Bounds:
         write_pack(f, '<2l', self.num_verts, self.num_polys)
         write_pack(f, '<3l', self.num_hot_verts_1, self.num_hot_verts_2, self.num_edges)
         write_pack(f, '<2f', self.x_scale, self.z_scale)
-        write_pack(f, '<lfl', self.num_indices, self.height_scale, self.cache_size)
+        write_pack(f, '<Ifl', row_bucket_count, self.height_scale, self.cache_size)
 
         for vertex in self.vertices:
             vertex.write(f)
 
         for poly in self.polys:
-            poly.write(f)
+            poly.write(f, vertex_index_format)
 
         # Edge section (num_edges=0 for editor-generated bounds → no bytes written)
         for v in self.hot_verts:
@@ -889,7 +975,17 @@ class Bounds:
         if self.x_dim and self.y_dim and self.z_dim:
             write_pack(f, f'<{self.z_dim}I',               *self.row_offsets)
             write_pack(f, f'<{self.x_dim * self.z_dim}H',  *self.bucket_offsets)
-            write_pack(f, f'<{self.num_indices}H',          *self.row_buckets)
+
+            if is_extended:
+                write_pack(f, f'<{self.num_indices}I', *self.row_buckets)
+            else:
+                # RowBuckets are held in memory in the wide u32 form (bit31 = terminator). BND2
+                # stores them as u16 with the terminator at bit15, so narrow them back on the way out.
+                narrowed = [((entry & ~BoundFormat.ROW_BUCKETS_TERMINATOR_U32) | BoundFormat.ROW_BUCKETS_TERMINATOR_U16)
+                            if entry & BoundFormat.ROW_BUCKETS_TERMINATOR_U32 else entry
+                            for entry in self.row_buckets]
+                write_pack(f, f'<{self.num_indices}H', *narrowed)
+
             write_pack(f, f'<{self.x_dim * self.z_dim}B',  *self.fixed_heights)
 
     @staticmethod
@@ -1346,36 +1442,126 @@ def initialize_mesh(
         )
 
 
+
+
+def write_one_mesh(cell_id, segments, vertices, target_folder, mesh_filename, debug_meshes):
+    texture_slot: Dict[str, int] = {}
+    for segment in segments:
+        name = segment['texture_name']
+        if name not in texture_slot:
+            texture_slot[name] = len(texture_slot) + 1  # 1-based texture index
+
+    all_texture_names   = list(texture_slot.keys())
+    texture_indices     = [texture_slot[segment['texture_name']] for segment in segments]
+    all_polys           = [segment['poly'] for segment in segments]
+    combined_normals    = [v for segment in segments for v in segment['normals']]
+    combined_tex_coords = [v for segment in segments for v in segment['tex_coords']]
+
+    mesh = initialize_mesh(vertices, all_polys, texture_indices, all_texture_names,
+                           combined_normals, combined_tex_coords)
+    mesh.write(target_folder / mesh_filename)
+
+    if debug_meshes:
+        mesh.debug(Path(mesh_filename).with_suffix(FileType.TEXT), Folder.Debug.Meshes / MAP_FILENAME, debug_meshes)
+
+
 def flush_meshes(vertices: List[Vector3] = vertices, debug_meshes: bool = debug_meshes) -> None:
+    # AUTO-SPLIT over-dense cells (2026-07): a landmark cell whose HIGH mesh exceeds the engine's
+    # 16384-verts/mesh render buffer is split into CULL<id>_H + CULL<id>_H2. The engine renders H2 as a
+    # real secondary opaque mesh (Meshes[6], pass-3, DrawLit+Z; cull flag LevelOfDetail.UNKNOWN_4=0x100),
+    # so this ~doubles a cell's capacity to 2×16384 without portals — unblocks dense INST cities (NY/BA)
+    # under the 199-landmark-cell limit. No-op for SF/London (all cells < 16384). Water (_A2) cells are
+    # never split. get_cell_ids/write_cell_row set the H2 cull flag for split cells.
     for cell_id, segments in _mesh_segments.items():
-        # Build ordered-unique texture list (preserves first-occurrence order)
-        seen: Dict[str, int] = {}
-        for seg in segments:
-            name = seg['texture_name']
-            if name not in seen:
-                seen[name] = len(seen) + 1  # 1-based texture index
+        cell_textures = [segment['texture_name'] for segment in segments]
+        target_folder, base_fname = determine_mesh_folder_and_filename(cell_id, cell_textures)
+        is_water = base_fname.endswith(f"_A2{FileType.MESH_lowercase}")
+        total_verts = sum(segment['poly'].num_verts for segment in segments)
 
-        all_texture_names   = list(seen.keys())
-        texture_indices     = [seen[seg['texture_name']] for seg in segments]
-        all_polys           = [seg['poly'] for seg in segments]
-        combined_normals    = [v for seg in segments for v in seg['normals']]
-        combined_tex_coords = [v for seg in segments for v in seg['tex_coords']]
+        if is_water or total_verts <= Threshold.MESH_VERTEX_BUFFER:
+            write_one_mesh(cell_id, segments, vertices, target_folder, base_fname, debug_meshes)
+            continue
 
-        all_tex_names_for_folder = [seg['texture_name'] for seg in segments]
-        target_folder, mesh_filename = determine_mesh_folder_and_filename(cell_id, all_tex_names_for_folder)
+        # Pack the primary group (H) up to the vert limit; the remainder goes to H2.
+        primary_segments, primary_verts = [], 0
+        for segment in segments:
+            segment_verts = segment['poly'].num_verts
+            if primary_segments and primary_verts + segment_verts > Threshold.MESH_VERTEX_BUFFER:
+                break
+            primary_segments.append(segment)
+            primary_verts += segment_verts
 
-        mesh = initialize_mesh(vertices, all_polys, texture_indices, all_texture_names, combined_normals, combined_tex_coords)
-        mesh.write(target_folder / mesh_filename)
+        secondary_segments = segments[len(primary_segments):]
+        secondary_verts = sum(segment['poly'].num_verts for segment in secondary_segments)
+        secondary_filename = f"CULL{cell_id:02d}_H2{FileType.MESH_lowercase}"
 
-        if debug_meshes:
-            mesh.debug(Path(mesh_filename).with_suffix(FileType.TEXT), Folder.Debug.Meshes / MAP_FILENAME, debug_meshes)
+        write_one_mesh(cell_id, primary_segments, vertices, target_folder, base_fname, debug_meshes)
+        write_one_mesh(cell_id, secondary_segments, vertices, target_folder, secondary_filename, debug_meshes)
+        item(f"cell {cell_id}: {total_verts} verts > {Threshold.MESH_VERTEX_BUFFER} --- "
+             f"split into H({primary_verts}) + H2({secondary_verts})")
+
+        if secondary_verts > Threshold.MESH_VERTEX_BUFFER:
+            item(f"WARNING: cell {cell_id} H2 = {secondary_verts} verts still > "
+                 f"{Threshold.MESH_VERTEX_BUFFER} (no H3 slot) --- lower max_tris_per_cell so each "
+                 f"cell fits in 2x{Threshold.MESH_VERTEX_BUFFER} verts.")
 
 
 def write_per_cell_bounds(vertices: List[Vector3], polys: List[Polygon]) -> None:
+    # Build per-cell polygon sets.  Every polygon is written to its own cell (primary)
+    # AND to any other cell whose tight XZ bounding box it overlaps.  This ensures that
+    # when GetStartCell returns a stale neighbouring cell (the common case while
+    # transitioning between road blocks) the wheel-physics BND for that cell still has
+    # the ground polygon → no fall-through.  Non-drivable polys (facades, INST) only
+    # expand collision geometry, which is harmless: near-vertical normals cause FullSegment
+    # to fail for downward probes anyway.
     cells: Dict[int, List[Polygon]] = defaultdict(list)
 
-    for poly in polys[1:]:  # skip filler polygon at index 0
-        cells[poly.cell_id].append(poly)
+    # Step 1: compute tight XZ bbox for every cell from its primary polygons.
+    cell_bbox: Dict[int, List[float]] = {}   # cell_id -> [min_x, max_x, min_z, max_z]
+
+    for poly in polys[1:]:
+        cell_id = poly.cell_id
+        xs = [vertices[vi].x for vi in poly.vertex_index[:poly.num_verts]]
+        zs = [vertices[vi].z for vi in poly.vertex_index[:poly.num_verts]]
+
+        if cell_id in cell_bbox:
+            bbox = cell_bbox[cell_id]
+            if xs[0] < bbox[0] or len(xs) > 1:
+                bbox[0] = min(bbox[0], min(xs))
+            bbox[1] = max(bbox[1], max(xs))
+            if zs[0] < bbox[2] or len(zs) > 1:
+                bbox[2] = min(bbox[2], min(zs))
+            bbox[3] = max(bbox[3], max(zs))
+        else:
+            cell_bbox[cell_id] = [min(xs), max(xs), min(zs), max(zs)]
+
+    cell_ids = list(cell_bbox.keys())
+    cell_boxes = [cell_bbox[cell_id] for cell_id in cell_ids]   # parallel to cell_ids
+
+    # Step 2: assign each polygon to all cells it overlaps (O(N_polys × N_cells);
+    # N_cells ≈ 394 for BA/NY so this is fast even for 600 k polys).
+    multi_added = 0
+
+    for poly in polys[1:]:
+        xs = [vertices[vi].x for vi in poly.vertex_index[:poly.num_verts]]
+        zs = [vertices[vi].z for vi in poly.vertex_index[:poly.num_verts]]
+        poly_min_x, poly_max_x = min(xs), max(xs)
+        poly_min_z, poly_max_z = min(zs), max(zs)
+
+        primary_cell = poly.cell_id
+        cells[primary_cell].append(poly)   # always include in its primary cell
+
+        for cell_id, (min_x, max_x, min_z, max_z) in zip(cell_ids, cell_boxes):
+            if cell_id == primary_cell:
+                continue
+            if (poly_max_x >= min_x and poly_min_x <= max_x
+                    and poly_max_z >= min_z and poly_min_z <= max_z):
+                cells[cell_id].append(poly)
+                multi_added += 1
+
+    if multi_added:
+        item(f"Per-cell BNDs: {multi_added} extra polygon placements from XZ bbox overlap "
+             f"(avg {multi_added / max(1, len(cell_ids)):.1f} extras/cell)")
 
     total_raw = 0
     total_local = 0
@@ -1440,7 +1626,7 @@ def write_per_cell_bounds(vertices: List[Vector3], polys: List[Polygon]) -> None
     ok(f"Per-cell BNDs: {len(cells)} cells written  (vertex dedup {mode})")
     total_saved = total_raw - total_local
     pct = 100 * total_saved / total_raw if total_raw else 0.0
-    item(f"Raw vertex-refs: {total_raw}  →  Local verts: {total_local}  ({total_saved} saved, {pct:.1f}%)")
+    item(f"Raw vertex-refs: {total_raw}  ->  Local verts: {total_local}  ({total_saved} saved, {pct:.1f}%)")
     if deduplicate_bound_vertices and best_cell >= 0:
         item(f"Cells with sharing: {cells_with_sharing}/{len(cells)}  "
              f"(most saved: {best_saved} verts in BOUND{best_cell:02d})")
@@ -1637,13 +1823,38 @@ def create_polygon(
     hudmap_vertices.append(vertex_coordinates)
     hudmap_properties[len(hudmap_vertices) - 1] = (hud_fill, hud_color, minimap_outline_color, str(bound_number))
     
-################################################################################################################               
-################################################################################################################  
+################################################################################################################
+################################################################################################################
 
-Folder.create_all() 
+# Wipe SHOP before building too, not just after, so leftovers from a previous (or crashed) build
+# cannot be packed into the .AR — that is what bloated MM2SF.ar from 36 MB to 67 MB with London's
+# files. Folder.create_all() below recreates the empty skeleton.
+if delete_shop and Folder.Shop.Root.is_dir():
+    shutil.rmtree(Folder.Shop.Root, ignore_errors=True)
+    ok("Cleaned the SHOP folder before building (no stale / cross-city leftovers)")
 
-################################################################################################################               
-################################################################################################################  
+Folder.create_all()
+
+# ROADNET (opt-in, export-safe): defined here BEFORE the polygon region so the editor's
+# "Export Polygons" (which rewrites that region) cannot wipe this definition. See
+# src/game/mapgen/roadnet. ROADNET_CITY drives the geometry block (end of polygon region);
+# the AI is staged then consumed during the build, around the dev-folder clear.
+try:
+    from src.USER.settings.main import ROADNET_CITY
+except Exception:
+    ROADNET_CITY = None
+try:
+    from src.USER.settings.main import MM2_CITY
+except Exception:
+    MM2_CITY = None
+try:
+    from src.USER.settings.main import ROADNET_BOOT_RACE
+except Exception:
+    ROADNET_BOOT_RACE = False
+from src.game.mapgen.roadnet.build_city import consume_staged_ai as roadnet_consume_ai
+
+################################################################################################################
+################################################################################################################
 
 #! =======================CREATING YOUR MAP======================= !#
 
@@ -2301,27 +2512,38 @@ def get_cell_type(cell_id: int, polys: List[Polygon]) -> int:
     return Room.DEFAULT
 
 
-def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int]) -> str:       
+def write_cell_row(cell_id: int, cell_type: int, always_visible_data: str, mesh_a2_files: Set[int],
+                   h2_cells: Set[int] = frozenset()) -> str:
+    # `model` is the engine's cull-flags bitmask (LevelOfDetail.* == CULL_FLAG_* in cellrend.cpp).
     model = LevelOfDetail.DRIFT if cell_id in mesh_a2_files else LevelOfDetail.HIGH
+    if cell_id in h2_cells:
+        model |= LevelOfDetail.UNKNOWN_4     # 0x100 == CULL_FLAG_H2: also load the split _H2 mesh
     return f"{cell_id},{model},{cell_type}{always_visible_data}\n"
 
 
-def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int]]:
+def get_cell_ids(landmark_folder: Path, city_folder: Path) -> Tuple[List[int], Set[int], Set[int]]:
     meshes_regular = []
+    seen_regular: Set[int] = set()          # dedup: a cell may now have both _H and _H2 files
     meshes_water_drift = set()
+    h2_cells: Set[int] = set()              # cells whose HIGH mesh was split into a secondary _H2
 
     files = [file for folder in [landmark_folder, city_folder] for file in folder.iterdir()]
-    
+
+    bms_path = FileType.MESH_lowercase          # ".bms"
     for file in files:
         cell_id = int(re.findall(r'\d+', file.name)[0])
+        low = file.name.lower()
 
-        if file.name.endswith(f"_A2{FileType.MESH_lowercase}"):
+        if low.endswith(f"_a2{bms_path}"):
             meshes_water_drift.add(cell_id)
+        if low.endswith(f"_h2{bms_path}"):
+            h2_cells.add(cell_id)
 
-        if file.name.endswith(FileType.MESH_lowercase):
+        if low.endswith(bms_path) and cell_id not in seen_regular:
+            seen_regular.add(cell_id)
             meshes_regular.append(cell_id)
-            
-    return meshes_regular, meshes_water_drift
+
+    return meshes_regular, meshes_water_drift, h2_cells
 
 
 def calculate_cell_centers(polys: List[Polygon]) -> Dict[int, CellCenter]:
@@ -2472,7 +2694,7 @@ def _inherit_city_files(city, hitid: bool, cells: bool, portals: bool, bounds: b
 
 
 def create_cells(output_file: Path, polys: List[Polygon]) -> None:
-    mesh_files, mesh_a2_files = get_cell_ids(Folder.Shop.Map.MeshLandmark, Folder.Shop.Map.MeshCity)
+    mesh_files, mesh_a2_files, h2_cells = get_cell_ids(Folder.Shop.Map.MeshLandmark, Folder.Shop.Map.MeshCity)
 
     with open(output_file, "w") as f:    
         f.write(f"{len(mesh_files)}\n")
@@ -2492,7 +2714,7 @@ def create_cells(output_file: Path, polys: List[Polygon]) -> None:
             
             # Write the cell row
             model = LevelOfDetail.DRIFT if cell_id in mesh_a2_files else LevelOfDetail.HIGH
-            row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files)
+            row = write_cell_row(cell_id, cell_type, always_visible_data, mesh_a2_files, h2_cells)
             f.write(row)
 
     sorted_cells = sorted(mesh_files)
@@ -2528,9 +2750,11 @@ def create_cells(output_file: Path, polys: List[Polygon]) -> None:
 
 #TODO: refactor and move later
 def create_minimap(set_minimap: bool, debug_minimap: bool, debug_minimap_id: bool, minimap_outline_color: str, line_width: float, background_color: str) -> None:
-    if not set_minimap or is_process_running(Executable.BLENDER):
+    # No Blender auto-skip: the headless roadnet build needs the minimap too. Still gated by
+    # set_minimap, so interactive authoring is unaffected.
+    if not set_minimap:
         return
-    
+
     global hudmap_vertices
     global hudmap_properties
 
@@ -2644,6 +2868,10 @@ class Edge:
 
     # Distance tangential to the line
     def tangent_dist(self, point):
+        # Defensive: guard against degenerate geometry (malformed vertices or edges).
+        # 'float' with no .z has been observed for large MM2 cities — skip this edge pair.
+        if not hasattr(point, 'x') or not hasattr(point, 'y') or not hasattr(self.line, 'z'):
+            return float('inf')
         return (point.x * self.line.x) + (point.y * self.line.y) + self.line.z
 
     # Distance along the line
@@ -2653,6 +2881,8 @@ class Edge:
         return (x * self.line.y) - (y * self.line.x)
 
     def pos_to_point(self, pos):
+        if not hasattr(self.line, 'z'):
+            return Vector2(0.0, 0.0)
         return Vector2(
              (self.line.y * pos) - (self.line.x * self.line.z),
             -(self.line.x * pos) - (self.line.y * self.line.z))
@@ -2766,6 +2996,14 @@ def prepare_portals(polys: List[Polygon], vertices: List[Vector3]):
     for cell1 in cells.values():
         for cell2 in cells.values():
             if cell1.id >= cell2.id:
+                continue
+
+            # Landmark/ground cells (bound < CELL_TYPE_SWITCH, e.g. the grass base = 1) are
+            # ALWAYS visible and don't need portals. Skipping them is correct for any map and
+            # critical when the ground is subdivided into many tiles: otherwise that one cell
+            # gains hundreds of edges and the portal graph explodes, making the runtime cull
+            # spin (city hangs on the first frame at ~100% CPU).
+            if cell1.id < Threshold.CELL_TYPE_SWITCH or cell2.id < Threshold.CELL_TYPE_SWITCH:
                 continue
 
             if not cell1.check_radius(cell2, RADIUS_FUDGE):
@@ -3102,14 +3340,275 @@ if set_cruise_start:
 #! ======================= CALL FUNCTIONS ======================= !#
 
 _fixed_prop_list = []  # populated inside the AR block; also read by the Blender section
+mm2_prop_net = None   # MM2 BAI road network -> procedural scenery props (lights/hydrants/etc.)
+# Per-city converted-DDS dir (e.g. custom_london): both the DDS file-copy AND the texsheet append must
+# use it so city-unique textures reach the build. Read from the MM2_CITY opts up-front.
+mm2_custom_dir = None
+if MM2_CITY:
+    mc_opts = MM2_CITY[1] if (isinstance(MM2_CITY, (tuple, list)) and len(MM2_CITY) > 1) else {}
+    mm2_custom_dir = (mc_opts.get("custom_dds_dir") if isinstance(mc_opts, dict) else None) or None
+
+
+def load_mm2_cell_overrides() -> Optional[dict]:
+    """Cells edited in Blender and exported by 'Export MM2 Cell Edits', or None if there are none."""
+    overrides_file = Folder.Src.User.Mm2Edits / f"{MAP_FILENAME}cell_overrides{FileType.JSON}"
+    if not overrides_file.is_file():
+        return None
+
+    try:
+        cells = json.load(open(overrides_file)).get("cells") or None
+    except Exception as error:
+        item(f"WARNING: {overrides_file.name} unreadable ({error}) — ignored")
+        return None
+
+    if cells:
+        ok(f"MM2: loaded {len(cells)} Blender cell override(s){sep()}"
+           f"delete {overrides_file.name} to build pristine again")
+
+    return cells
+
+# Debug-only: force roadnet AI on even for a curves+height map, to reproduce the remaining
+# ambient-collision crash against a debug build. See stage_roadnet_ai_if_safe.
+FORCE_ROADNET_AI = False
+
+
+def clear_geometry_buffers() -> None:
+    """Drop every in-memory city buffer so a generator can replace the whole map from scratch."""
+    for buffer in (vertices, texture_names, texcoords_data, polygons_data,
+                   hudmap_vertices, hudmap_properties, _mesh_segments, polys):
+        buffer.clear()
+    polys.append(Default.POLYGON)
+
+
+def resolve_roadnet_network(roadnet_city):
+    """Turn the ROADNET_CITY setting into a RoadNetwork.
+
+    Accepts a RoadNetwork, a callable returning one, a preset name, the literal "blender" (compile
+    the roads authored in the Blender Road Builder), or a (cols, rows) pair for a grid city.
+    """
+    if isinstance(roadnet_city, RoadNetwork):
+        return roadnet_city
+
+    if callable(roadnet_city):
+        return roadnet_city()
+
+    if isinstance(roadnet_city, str):
+        if roadnet_city.lower() == "blender":
+            # Phase 2: compile the roads authored in the Blender Road Builder (RS_* spines).
+            from src.integrations.blender.road_to_roadnet import blender_roads_network
+            return blender_roads_network()
+        return build_preset(roadnet_city)
+
+    if isinstance(roadnet_city, (tuple, list)) and len(roadnet_city) == 2:
+        return grid_city(int(roadnet_city[0]), int(roadnet_city[1]))
+
+    raise ValueError("ROADNET_CITY must be a preset name, (cols,rows), a RoadNetwork, or a "
+                     f"callable; got {type(roadnet_city)}")
+
+
+def validate_roadnet_network(roadnet_network) -> None:
+    """Surface structural ERRORs + AI-safe-envelope WARNINGs BEFORE building, so a bad graph fails
+    with a clear, actionable message instead of crashing mid-compile."""
+    issues = validate_network(roadnet_network)
+    errors = [issue for issue in issues if issue.severity == "ERROR"]
+    warnings = [issue for issue in issues if issue.severity == "WARN"]
+    network_name = getattr(roadnet_network, "name", "?")
+
+    if issues:
+        ok(f"roadnet: network '{network_name}' check - {summarize_issues(issues)}")
+        for issue in warnings:
+            ok(f"   WARN  {issue.message}")
+        for issue in errors:
+            ok(f"   ERROR {issue.message}")
+
+    if errors:
+        raise ValueError(f"roadnet network '{network_name}' has {len(errors)} structural error(s) "
+                         f"(listed above) - fix the graph or choose another ROADNET_CITY")
+
+
+def stage_roadnet_ai_if_safe(roadnet_network, roadnet_compiled, polygon_count: int) -> None:
+    """Stage the AI map + ROAM.AIMAP, unless the graph is one the engine's AI cannot survive.
+
+    AI on a curves+HEIGHT map still corrupts memory in the ambient/collision AI: the engine's
+    spatial AI assumes a flat city, so the rails reset fine but DetectAmbientCollision jumps a
+    garbage pointer. The opponent crash IS fixed (Open1560 forces 0 race opponents in roam mode).
+    Until the ambient layer is fixed too, a curves+height map runs with NO AI --- the player still
+    drives, crash-free. Flat / straight-terraced / flat-curved maps keep full traffic. A road has to
+    be BOTH curved AND graded to trip this, so zoned slopes+curves keep full AI.
+    """
+    if FORCE_ROADNET_AI or not curved_grade(roadnet_network):
+        stage_roadnet_ai(roadnet_compiled)
+        write_roam_aimap(roadnet_compiled, Folder.Shop.Map.Race, density = 1.0, num_cops = 2)
+
+    ok(f"roadnet: replaced city with {polygon_count} polygons + staged AI + ROAM.AIMAP "
+       f"({len(roadnet_network.nodes)} nodes / {len(roadnet_compiled.sections)} roads)")
+
+
+def audit_roadnet_collision(roadnet_compiled) -> None:
+    """Warn about quads the car would fall through. Never fatal --- the map is still playable."""
+    try:
+        non_planar, down_facing, _ = audit_collision(roadnet_compiled)
+    except Exception:
+        return
+
+    if non_planar or down_facing:
+        ok(f"roadnet: COLLISION WARNING - {non_planar} non-planar + {down_facing} down-facing "
+           f"quads would FALL THROUGH")
+
+
+def generate_roadnet_races(roadnet_network, roadnet_compiled) -> None:
+    """Build the graph's races: RACE_0 is a checkpoint race near the change (0 opponents/cops/
+    ambient, so it works on hilly maps too); CIRCUIT_0 is a real loop with OPPONENTS that navigate
+    the intersections, and is only generated on non-curve+height maps because opponents crash on
+    those. Boot `-race 0` for the checkpoints, `-circuit 0` to race the opponents."""
+    try:
+        Folder.Shop.Map.Race.mkdir(parents = True, exist_ok = True)
+        race_data = roadnet_checkpoint_race(roadnet_compiled)
+        feature_spawns = getattr(roadnet_compiled.network, "feature_spawns", None) or []
+        checkpoint_names = [name for (_, _, name) in feature_spawns]
+
+        if not curved_grade(roadnet_network) and not checkpoint_names:
+            try:
+                race_data.update(roadnet_circuit_race(roadnet_compiled, num_opponents = 5))
+                ok(f"roadnet: circuit race + "
+                   f"{race_data['CIRCUIT_0']['aimap']['num_of_opponents']} opponents")
+            except Exception as error:
+                ok(f"roadnet: circuit race skipped ({error})")
+
+        create_races(race_data)
+
+        if checkpoint_names:
+            create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}",
+                            blitz_race_names, circuit_race_names, checkpoint_names)
+            ok(f"roadnet: showcase {len(checkpoint_names)} checkpoint races -> "
+               f"{', '.join(checkpoint_names)}")
+
+        # The engine reads the base "<race>.aimap" on default difficulty -> copy each _P variant.
+        for aimap_p in Folder.Shop.Map.Race.glob("*.AIMAP_P"):
+            shutil.copy(aimap_p, aimap_p.with_suffix(".AIMAP"))
+    except Exception as error:
+        ok(f"roadnet: races skipped ({error})")
+
+
+
+def collect_mm2_pathset_props(pathset_path):
+    """Hand-placed scenery from <city>/props.pathset: trees, palms, lamps, benches and signs at
+    their real MM2 world coords + facing (1:1 frame, no mirror).
+
+    MM2's own .pkg prop meshes do not load in MM1, so each MM2 model maps to the nearest MM1
+    placeholder --- locations and angles first, better meshes later.
+    """
+    props, skipped = pathset_props(str(pathset_path))
+    ok(f"mm2: {len(props)} prop(s) from props.pathset "
+       f"(skipped {sum(skipped.values())} with no MM1 placeholder)")
+
+    return props
+
+
+def collect_mm2_density_props(rules_dir, raw_psdl_path):
+    """Per-road street furniture at MM2's REAL density: a 1:1 reproduction of MM2's own procedural
+    placement (propdefs.csv / proprules.csv + the .psdl propRule/paths), walked exactly like MM2
+    walks each road's two sidewalks."""
+    # .psdl fallback, used only when raw_psdl.json was not patched with the rule bytes:
+    # <city_dir>/../<cityname>.psdl, e.g. .../city/sf/ -> .../city/sf.psdl
+    psdl_path = rules_dir.parent / (rules_dir.name + FileType.MM2_GEOMETRY)
+    props = list(mm2_props.generate(str(raw_psdl_path), str(rules_dir),
+                                    psdl_path = str(psdl_path), log = item))
+    ok(f"mm2: + {len(props)} per-road furniture (1:1 MM2 propdefs/proprules)")
+
+    return props
+
+
+def collect_mm2_traffic_lights(bai_path, json_path):
+    """Traffic lights, 1:1 from the BAI's STORED per-road-end (position, facing) verts.
+
+    The PSDL-intersection synthesis over-placed badly (~814 vs SF's real 283), so it is only the
+    fallback for a city with no .bai configured.
+    """
+    if bai_path and Path(bai_path).exists():
+        props = list(mm2_props.bai_traffic_lights(bai_path, log = item))
+        if props:
+            ok(f"mm2: + {len(props)} traffic lights (1:1 from BAI stored data)")
+    else:
+        props = list(mm2_props.intersection_traffic_lights(json_path, log = item))
+        if props:
+            ok(f"mm2: + {len(props)} intersection traffic lights (synthesised, no BAI)")
+
+    return props
+
+
+def collect_mm2_legacy_props(mm2_prop_net):
+    """LEGACY shortcut: approximate furniture from the road graph (lamps / benches / bins).
+
+    Its trees are dropped because the pathset carries the real ones, and the props it does keep are
+    remapped onto the real converted MM2 meshes.
+    """
+    remap = {Prop.LIGHT_SIDEWALK: (Mm2Prop.LAMP, BangerFlags.BREAKABLE_GLOW),
+             Prop.BENCH: (Mm2Prop.BENCH, BangerFlags.BREAKABLE)}
+    dropped = {Prop.TREE_SLIM, Prop.TREE_WIDE}
+
+    props = []
+    for prop in generate_props(mm2_prop_net, hydrants = False):
+        if prop["name"] in dropped:
+            continue
+
+        remapped = remap.get(prop["name"])
+        if remapped:
+            prop["name"], prop["flags"] = remapped
+        props.append(prop)
+
+    return props
+
+
+def collect_mm2_props(json_path, options, pathset_path, bai_path, mm2_prop_net, legacy_props):
+    """Assemble the full MM2 prop list: hand-placed pathset scenery, then per-road furniture and
+    traffic lights, falling back to procedural road-graph scenery when a city has neither."""
+    pathset = Path(pathset_path) if pathset_path else None
+    has_pathset = bool(pathset and pathset.exists())
+
+    prop_list = collect_mm2_pathset_props(pathset) if has_pathset else []
+
+    # The density rules run INDEPENDENTLY of the hand-placed pathset: NY ships propdefs/proprules
+    # but no city props.pathset, so the rules dir falls back to the facades.csv folder.
+    facades_csv = options.get("facades_csv")
+    rules_dir = (pathset.parent if has_pathset else
+                 Path(facades_csv).parent if facades_csv else None)
+    raw_psdl_path = Path(json_path.replace("expanded_psdl.json", "raw_psdl.json"))
+
+    use_density_rules = (not legacy_props and rules_dir
+                         and (rules_dir / "propdefs.csv").exists() and raw_psdl_path.exists())
+
+    if use_density_rules:
+        prop_list += collect_mm2_density_props(rules_dir, raw_psdl_path)
+        prop_list += collect_mm2_traffic_lights(bai_path, json_path)
+    elif has_pathset:
+        legacy = collect_mm2_legacy_props(mm2_prop_net)
+        prop_list += legacy
+        ok(f"mm2: + {len(legacy)} per-road furniture (LEGACY approximate density)")
+    elif not prop_list:
+        prop_list = generate_props(mm2_prop_net)
+        ok(f"mm2: generated {len(prop_list)} scenery prop(s) along the MM2 road graph")
+
+    return prop_list
+
 
 #* ----------------------------------------------------------------------------------------------------------------
 
 if not SKIP_AR_CREATION:
     # Setup
-    copy_custom_textures_to_shop(Folder.Src.User.Textures.Custom, Folder.Shop.Textures.Opaque)
+    copy_custom_textures_to_shop(Path(mm2_custom_dir) if mm2_custom_dir else Folder.Src.User.Textures.Custom,
+                                 Folder.Shop.Textures.Opaque)
     copy_carsim_files_to_shop(Folder.Resources.Editor.Tune.CarSimulation, Folder.Shop.Tune, FileType.CAR_SIMULATION)
     ensure_empty_mm_dev_folder(Folder.MidtownMadness.DevCityMap)
+    # Wipe the per-cell SHOP output: the packer walks the WHOLE SHOP, so orphaned BND/BMS from an
+    # earlier layout would ship in the .AR. This build rewrites only the cells it needs, so every
+    # other cell must be gone. Single-file outputs (.CELLS/.PTL/HITID) are overwritten anyway.
+    for stale_dir in (Folder.Shop.Map.BoundCity, Folder.Shop.Map.MeshCity,
+                      Folder.Shop.Map.BoundLandmark, Folder.Shop.Map.MeshLandmark):
+        if stale_dir.is_dir():
+            shutil.rmtree(stale_dir, ignore_errors=True)
+        stale_dir.mkdir(parents = True, exist_ok = True)
+    ok("Wiped stale per-cell BND/BMS from SHOP (clean build, no leftovers)")
     create_commandline(Folder.MidtownMadness.Root / f"commandline{FileType.TEXT}", no_ui, no_ui_type, no_ai, set_music, less_logs, more_logs)
     create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}", blitz_race_names, circuit_race_names, checkpoint_race_names)
     edit_and_copy_bangerdata_to_shop(prop_properties, Folder.Resources.Editor.Tune.BangerData, Folder.Shop.Tune, FileType.BANGER_DATA)
@@ -3123,6 +3622,133 @@ if not SKIP_AR_CREATION:
         create_races(race_data)
     if set_cops_and_robbers:
         create_cops_and_robbers(Folder.Shop.Map.Race / f"COPSWAYPOINTS{FileType.CSV}", cops_and_robbers_waypoints)
+
+    # ROADNET (opt-in): replace ALL hand-authored / exported polygons with geometry built
+    # from one road-network graph, and stage its AI. Runs HERE — after the polygon region
+    # and outside it — so the editor's "Export Polygons" can never wipe it (the previous
+    # in-region block kept getting overwritten). Geometry + AI come from the same vertices.
+    roadnet_compiled = None   # set when ROADNET_CITY is active; used later to auto-generate scenery
+    if ROADNET_CITY:
+        roadnet_network = resolve_roadnet_network(ROADNET_CITY)
+        validate_roadnet_network(roadnet_network)
+
+        clear_geometry_buffers()
+
+        roadnet_compiled = RoadNetworkCompiler().compile(roadnet_network)
+        polygon_count = emit_roadnet_city(roadnet_compiled, create_polygon, save_mesh, compute_uv)
+
+        stage_roadnet_ai_if_safe(roadnet_network, roadnet_compiled, polygon_count)
+        audit_roadnet_collision(roadnet_compiled)
+        generate_roadnet_races(roadnet_network, roadnet_compiled)
+
+    # MM2 -> MM1 (opt-in): replace ALL polygons with tessellated MM2 PSDL geometry
+    # (wilkovatch/psdl-import 'expanded_psdl.json'). Phase-1 = player-only drivable shell:
+    # real geometry + collision, MM1 placeholder textures, every cell always-visible (no portals).
+    # MM2_CITY = "path/to/expanded_psdl.json"  OR  ("path", {"mirror_x": False, "grid_cells": 14, ...})
+    if MM2_CITY:
+        clear_geometry_buffers()
+
+        if isinstance(MM2_CITY, (tuple, list)):
+            mm2_json, mm2_options = MM2_CITY[0], (MM2_CITY[1] if len(MM2_CITY) > 1 else {})
+        else:
+            mm2_json, mm2_options = MM2_CITY, {}
+        mm2_min_ai = bool(mm2_options.pop("min_ai", False))
+        mm2_bai_path = mm2_options.pop("bai_path", None)   # Phase-2: real BAI AI source (not a Mm2Options field)
+        # DIRECT-AI toggle (opt-in): write the BAI's REAL 3D lane/sidewalk geometry straight into
+        # .road (preserves hills/one-way/curves+grades), bypassing the lossy roadnet rebuild.
+        # DEFAULT OFF -> the hybrid roadnet path below stays the shipped default.
+        mm2_bai_direct = bool(mm2_options.pop("bai_direct", False))
+        mm2_options.pop("mm2_races", None)      # consumed by the MM2 race import
+        mm2_pathset_path = mm2_options.pop("props_pathset", None)  # MM2 props.pathset (not a Mm2Options field)
+        # 1:1 PROCEDURAL FURNITURE (default): reproduce MM2's propdefs/proprules placement exactly
+        # (src/game/mapgen/mm2/mm2_props). Set "legacy_props": True in the MM2_CITY opts to fall back
+        # to the old approximate roadnet.scenery.generate_props furniture (hydrants/grass-trees/etc.).
+        mm2_legacy_props = bool(mm2_options.pop("legacy_props", False))
+        mm2_custom_dir = mm2_options.get("custom_dds_dir") or None  # per-city DDS dir for the texsheet append
+        mm2_stats = emit_mm2_city(create_polygon, save_mesh, compute_uv, mm2_json,
+                                  Mm2Options(**mm2_options), overrides = load_mm2_cell_overrides())
+        ok(f"mm2: imported {mm2_stats['polygons']} polygons into {mm2_stats['cells']} cells "
+           f"(always-visible, no portals)")
+        # BOUNDS/COLLISION FIX (FALL-THROUGH): report drivable sliver tris dropped (their rounded
+        # edge half-planes would degenerate -> point-in-poly rejects -> car falls through).
+        rej_s = mm2_stats.get("rejected_slivers", 0)
+        if rej_s:
+            ok(f"mm2: rejected {rej_s} sliver DRIVABLE poly(s) (fall-through guard)")
+        # Per-poly MM2 obj_type aligned to `polys` (filler at index 0, then one entry per emitted
+        # poly in creation order). Consumed by the prop ground-snap to skip building roofs/podiums
+        # (BUG A: traffic-lights were riding up onto buildings). Captured HERE, right after emit, so
+        # the 1:1 alignment with polys[1:] is guaranteed before any later geometry could touch polys.
+        mm2_poly_types = [None] * len(polys)
+        ot_list = mm2_stats.get("obj_types") or []
+        for _i, _t in enumerate(ot_list):
+            if 1 + _i < len(mm2_poly_types):
+                mm2_poly_types[1 + _i] = _t
+        item(", ".join(f"{t}: {c}x" for t, c in mm2_stats['textures'].items()))
+
+        # DIAGNOSTIC scaffold: a tiny roadnet AI grid so the city has an AI map (HasAIMap=true),
+        # a ROAM.AIMAP and a checkpoint race + cinfo - matching what a normal/roadnet city has.
+        # Tests whether the player-car-audio boot crash is caused by a city with no AI/race data.
+        # The AI rails are a small grid near origin (geometry stays MM2); density 0 = no traffic.
+        if mm2_min_ai:
+            # A MINIMAL 2-node road segment placed so node 0 sits EXACTLY on the MM2 spawn road
+            # point (same pipeline coord frame as the MM2 geometry). spawn_near snaps to that node,
+            # so the player spawns on a real MM2 surface -> GetStartCell's down-ray hits a poly.
+            mm2_spawn = mm2_options.get("spawn_xz", (0.0, 0.0))
+            _sx, _sz = float(mm2_spawn[0]), float(mm2_spawn[1])
+            mm2_bai = mm2_bai_path
+            if mm2_bai and mm2_bai_direct:
+                # DIRECT-AI PATH (opt-in via "bai_direct": True): write the BAI's real 3D geometry
+                # straight into .road -> rails follow SF's hills, one-way roads stay one-way, curved
+                # + graded roads are kept, and NO mid-road spurious intersections (the engine
+                # regenerates intersections from pinched road endpoints). No compiled roadnet, so
+                # cops aren't seeded and procedural props fall back off (pathset props still work).
+                direct_stats = stage_bai_direct(mm2_bai, MAP_FILENAME)
+                # PROPS: still compile the roadnet graph (cheap) purely to feed mm2_prop_net, so the
+                # pathset/furniture prop list + its texsheet sync (copy_custom_prop_assets) run EXACTLY
+                # like the default path. (Setting this None drops the custom-prop textures from
+                # GLOBAL.TSH -> FATAL "texture not in texsheet" on the first banger, e.g. mm2hotdog.)
+                # The roadnet AI itself is NOT staged here -- the DIRECT .road above wins.
+                mm2_network, _ = build_bai_network(mm2_bai)
+                mm2_network.spawn_near = (_sx, _sz)
+                mm2_prop_net = RoadNetworkCompiler().compile(mm2_network)
+
+                # No compiled roadnet drives the AI here, so ROAM gets ambient traffic and no cops.
+                write_roam_aimap(None, Folder.Shop.Map.Race, density = 1.0, num_cops = 0)
+                ok(f"mm2: staged DIRECT BAI AI ({direct_stats['written']} roads, "
+                   f"{direct_stats['one_way']} one-way, {direct_stats['skipped_loop']} loops "
+                   f"skipped) + AMBIENT traffic [real 3D rails]")
+            elif mm2_bai:
+                # Phase-2 EXPERIMENTAL (DEFAULT): the REAL SF road graph from the MM2 .bai (379 roads /
+                # 214 intersections), so traffic drives actual SF streets instead of the 2-node stub.
+                # CAVEAT: roadnet AI is FLAT while SF is hilly -> cars sit at the wrong height on
+                # slopes (per-vertex-Y rails are a known hard problem). Spawn area is ~sea level.
+                mm2_network, bai_stats = build_bai_network(mm2_bai)
+                mm2_network.spawn_near = (_sx, _sz)
+                mm2_compiled = RoadNetworkCompiler().compile(mm2_network)
+                mm2_prop_net = mm2_compiled   # reuse the BAI road graph for procedural scenery props
+                stage_roadnet_ai(mm2_compiled)
+                # ambient traffic ONLY: cops crash on Reset (aiVehiclePolice::Reset ->
+                # DeterminePerpMapComponent) on this network; ambient cars drive fine. num_cops=0.
+                # TEMP: detailed INST buildings finer-partition the cells -> ambient cars near them hit
+                # cellAtPos=-999 and fall (cascade crash). Until that buildings<->AI-cell interaction is
+                # fixed, drop ambient density to 0 when buildings are baked in (player + races still work).
+                mm2_ambient = 1.0   # full ambient traffic (re-testing the buildings<->AI-cell interaction)
+                write_roam_aimap(mm2_compiled, Folder.Shop.Map.Race, density=mm2_ambient, num_cops=0)
+                ok(f"mm2: staged REAL BAI AI ({bai_stats['edges']} roads / {len(mm2_network.nodes)} "
+                   f"intersections) + AMBIENT traffic (no cops) [terrain-following AI]")
+            else:
+                mm2_network = RoadNetwork(name="MM2Stub")
+                mm2_network.add_node((_sx, _sz), node_id=0)
+                mm2_network.add_node((_sx + 40.0, _sz), node_id=1)
+                mm2_network.add_edge(0, 1, lanes_fwd=1, lanes_rev=1)
+                mm2_network.spawn_near = (_sx, _sz)
+                mm2_compiled = RoadNetworkCompiler().compile(mm2_network)
+                stage_roadnet_ai(mm2_compiled)
+                write_roam_aimap(mm2_compiled, Folder.Shop.Map.Race, density=0.0, num_cops=0)
+                # NB: deliberately NO checkpoint race here - it would hijack the cruise spawn to the
+                # grid origin (empty space). We keep only the AI map + ROAM so HasAIMap=true; the
+                # car spawns at our base=True MM2 road poly.
+                ok("mm2: staged minimal AI map + ROAM (HasAIMap diagnostic, no race spawn)")
 
     # Map
     # check_bound_numbers(polys)
@@ -3145,20 +3771,100 @@ if not SKIP_AR_CREATION:
         create_cells(Folder.Shop.City / f"{MAP_FILENAME}{FileType.CELL}", polys)
 
     # Ground-plane polygon filter — used for both HITID and portal generation.
-    # Keeps horizontal surfaces (roads, sidewalks, ramps) and discards walls,
-    # curbs, and vertical faces that have no meaningful XZ footprint.
-    # Matches the polygon set the original hitid_to_ptl.py tool operated on.
-    _ground_polys = [p for p in polys if abs(p.plane_normal.y) >= 0.3]
+    # For MM2 cities: use a DRIVABLE allowlist rather than a |ny| threshold. mm2_poly_types
+    # is captured right after emit_mm2_city (before INST buildings are added), so INST polys
+    # have no entry in poly_id_to_type and are excluded by the allowlist — avoiding bucket
+    # overflow from INST building roofs (horizontal |ny|≈1, huge vertex/polygon counts).
+    # For non-MM2 builds (roadnet/manual): fall back to the normal |ny|>=0.3 height filter.
+    _DRIVABLE_OBJ = frozenset((
+        "road", "divided_road", "walkway", "road_triangle_fan",
+        "triangle_fan", "sidewalk_strip", "crosswalk",
+    ))
+    # Steep-but-drivable rescue band: ramps, banked roads and hill crests sit below the |ny|>=0.3
+    # ground filter yet still have a real XZ footprint the car drives across. Anything flatter than
+    # this is a near-vertical curb riser or road-edge wall --- no footprint, not drivable, and
+    # including it would only bloat the grid and worsen bucket overflow.
+    STEEP_DRIVABLE_MIN_NY = 0.05
+    UNCOVERED_REPORT_LIMIT = 15
+    poly_types = globals().get("mm2_poly_types")
+    # Build id→type map so we can filter O(1) per poly (list is indexed 1:1 with polys).
+    poly_id_to_type = (
+        {id(polys[i]): poly_types[i] for i in range(min(len(polys), len(poly_types)))}
+        if poly_types else {}
+    )
+    if poly_types:
+        # MM2 build: only DRIVABLE-typed PSDL polys. INST polys (absent from poly_id_to_type)
+        # are visual-only geometry and must not appear in the HITID ground/collision mesh.
+        _ground_polys = [p for p in polys if poly_id_to_type.get(id(p)) in _DRIVABLE_OBJ]
+    else:
+        _ground_polys = [p for p in polys if abs(p.plane_normal.y) >= 0.3]
+
+    # BOUNDS/COLLISION FIX (SLIDE / cell=0 / no car control): the HITID cell-lookup grid is what
+    # the engine uses to resolve which RoomId/poly is under the car. The plain |ny|>=0.3 filter
+    # EXCLUDES steep-but-drivable surfaces — ramps, banked roads, hill crests — so on those the
+    # per-cell BND collision plane exists but the HITID grid returns cell 0 -> the car gets no
+    # surface RoomId -> it slides with no control. FIX: force every DRIVABLE MM2 obj_type
+    # (road/divided/walkway/crosswalk/sidewalk/triangle_fan) into the HITID grid regardless of ny,
+    # while leaving the (ny>=0.3) set untouched for portal generation. mm2_poly_types is indexed
+    # 1:1 with `polys` (index 0 = filler); absent (None) for non-MM2 builds -> falls back to the
+    # plain ground set, so this is a no-op for roadnet/manual cities.
+    if poly_types:
+        ground_set = set(id(p) for p in _ground_polys)
+        hitid_polys = list(_ground_polys)
+        added_count = 0
+
+        for poly_index, poly in enumerate(polys):
+            if id(poly) in ground_set:
+                continue
+
+            obj_type = poly_types[poly_index] if poly_index < len(poly_types) else None
+            if obj_type in _DRIVABLE_OBJ and abs(poly.plane_normal.y) >= STEEP_DRIVABLE_MIN_NY:
+                hitid_polys.append(poly)
+                added_count += 1
+
+        if added_count:
+            ok(f"HITID: forced {added_count} steep/banked DRIVABLE poly(s) into the cell grid "
+               f"(0.05<=|ny|<0.3, would have slid) -> {len(hitid_polys)} total ground polys")
+    else:
+        hitid_polys = _ground_polys
 
     if not (inherit_city and inherit_hitid):
+        # 300x300 grid keeps HITID.BND around 6.5 MB (u32 row_buckets are 4 bytes each,
+        # adding ~0.5 MB over the old u16 build). mkar.exe fails silently above ~8 MB
+        # because its internal size field is 23-bit; tested: 11 MB (793x778 + u32) → exit 1.
+        hitid_xd = 300 if set_hitid_grid else 0
+        hitid_zd = 300 if set_hitid_grid else 0
+
+        overflow_note = "15-bit safe" if len(hitid_polys) <= 32767 else "WOULD OVERFLOW 15-bit -> u32 fix active"
+        ok(f"HITID: {len(hitid_polys)} poly(s) -> grid {hitid_xd}x{hitid_zd} ({overflow_note})")
+
         Bounds.create(
             Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}",
-            vertices, _ground_polys,
+            vertices, hitid_polys,
             Folder.Debug.Bounds / f"{MAP_FILENAME}{FileType.TEXT}",
             debug_bounds,
-            grid_x_dim=300 if set_hitid_grid else 0,
-            grid_z_dim=300 if set_hitid_grid else 0,
+            grid_x_dim=hitid_xd,
+            grid_z_dim=hitid_zd,
         )
+
+    # Build-time coverage check: any HITID poly with cell_id=0 has RoomId=0 in the BND file.
+    # The engine returns RoomId=0 from the grid lookup -> no surface physics -> car drifts.
+    # These are the "bound but no cell" polygons that show up in-game as loss-of-control zones.
+    uncovered_hitid = [p for p in hitid_polys if p.cell_id == 0]
+
+    if uncovered_hitid:
+        ok(f"HITID COVERAGE: {len(hitid_polys) - len(uncovered_hitid)}/{len(hitid_polys)} poly(s) have a cell")
+        item(f"UNCOVERED (cell_id=0, DRIFT RISK): {len(uncovered_hitid)} poly(s) -> fix their cell assignment")
+
+        for poly in uncovered_hitid[:UNCOVERED_REPORT_LIMIT]:
+            centroid_x = sum(vertices[vi].x for vi in poly.vertex_index[:poly.num_verts]) / max(1, poly.num_verts)
+            centroid_z = sum(vertices[vi].z for vi in poly.vertex_index[:poly.num_verts]) / max(1, poly.num_verts)
+            item(f"  mat={poly.material_index}  centroid=({centroid_x:.1f}, {centroid_z:.1f})")
+
+        if len(uncovered_hitid) > UNCOVERED_REPORT_LIMIT:
+            item(f"  ... and {len(uncovered_hitid) - UNCOVERED_REPORT_LIMIT} more")
+    else:
+        ok(f"HITID coverage: all {len(hitid_polys)} HITID poly(s) have a cell (zero drift-from-cell=0 risk)")
 
     if not (inherit_city and inherit_bounds):
         write_per_cell_bounds(vertices, polys)
@@ -3180,10 +3886,24 @@ if not SKIP_AR_CREATION:
         set_ai_streets, set_reverse_ai_streets
     )
 
+    # ROADNET AI: if a road-network was built (Blender "Road Net" button or the ROADNET_CITY
+    # block staged it), move its .road/.map into the dev folder NOW — after the normal AI pass
+    # and after the dev-folder clear — so roadnet AI wins and survives. No-op if nothing staged.
+    roadnet_ai_n = roadnet_consume_ai(Folder.MidtownMadness.DevCityMap, MAP_FILENAME)
+    if roadnet_ai_n:
+        ok(f"roadnet AI: {roadnet_ai_n} file(s) -> {Folder.MidtownMadness.DevCityMap.name}")
+
+    mm2_facade_list, facades_on = facade_list, set_facades
+    if roadnet_compiled is not None:
+        # Auto-generate building fronts around the block perimeters from the road graph.
+        from src.game.mapgen.roadnet.scenery import generate_facades as gen_fac
+        mm2_facade_list = gen_fac(roadnet_compiled)
+        facades_on = True
+        ok(f"roadnet: generated {len(mm2_facade_list)} facade(s)")
     FacadeEditor.create(
         Folder.Shop.City / f"{MAP_FILENAME}{FileType.FACADE}",
-        facade_list,
-        set_facades,
+        mm2_facade_list,
+        facades_on,
         debug_facades
     )
 
@@ -3195,9 +3915,21 @@ if not SKIP_AR_CREATION:
         debug_physics
     )
 
+    # MM2 cities keep their converted DDS in a per-city folder (custom_dds_dir); append THAT so
+    # city-unique textures (e.g. London's CF_MARBLE01_WIN_5_F) reach the sheet, not just src/.../custom.
+    # Plus EXTRA_TEXTURE_DIRS -> a UNION loose sheet so several cities run from one shared install.
+    if mm2_custom_dir:
+        tex_custom_dir = Path(mm2_custom_dir)
+    else:
+        tex_custom_dir = Folder.Src.User.Textures.Custom
+    try:
+        from src.USER.settings.main import EXTRA_TEXTURE_DIRS as extra_tex_dirs
+    except Exception:
+        extra_tex_dirs = []
+    tex_dirs = [tex_custom_dir] + [Path(d) for d in (extra_tex_dirs or []) if Path(d).is_dir()]
     TextureSheet.append_custom_textures(
         Folder.Resources.Editor.MTL / f"GLOBAL{FileType.TEXTURE_SHEET}",
-        Folder.Src.User.Textures.Custom,
+        tex_dirs if len(tex_dirs) > 1 else tex_custom_dir,
         Folder.Shop.Material / f"TEMP_GLOBAL{FileType.TEXTURE_SHEET}",
         set_texture_sheet
     )
@@ -3209,14 +3941,103 @@ if not SKIP_AR_CREATION:
         set_texture_sheet
     )
 
+    # Custom-texture fix: the engine loads mtl/global.tsh ONCE at startup (InitTexSheet), and the
+    # FileSystem returns the first provider that has it - a LOOSE file under the dev path (-path ./dev)
+    # is searched before core.ar, whereas the city .ar mounts too late to override. So the appended
+    # sheet (base + custom) must also be dropped loose in dev/MTL or referenced custom textures fail
+    # with "Trying to load texture not in texsheet". (The DDS themselves load fine from the city .ar.)
+    if set_texture_sheet:
+        import shutil as _sh
+        dev_mtl = Folder.MidtownMadness.DevCityMap.parent.parent / "MTL"
+        dev_mtl.mkdir(parents=True, exist_ok=True)
+        _sh.copy(str(Folder.Shop.Material / f"GLOBAL{FileType.TEXTURE_SHEET}"),
+                 str(dev_mtl / f"GLOBAL{FileType.TEXTURE_SHEET}"))
+        ok(f"texsheet: copied GLOBAL.TSH -> {dev_mtl} (loose startup override for custom textures)")
+
     prop_editor = BangerEditor()
+    props_on = set_props
+    rn_random = random_props
+
+    if roadnet_compiled is not None:
+        # Auto-generate scenery (street-lights / trees / hydrants) from the road graph and use it in
+        # place of the hand-authored prop_list; force props on for the generated city. The template's
+        # random props (cars / sailboats) are skipped so the generated city stays clean.
+        prop_list = generate_props(roadnet_compiled)
+        props_on = True
+        rn_random = []
+        ok(f"roadnet: generated {len(prop_list)} scenery prop(s)")
+
+    elif mm2_prop_net is not None:
+        prop_list = collect_mm2_props(mm2_json, mm2_options, mm2_pathset_path, mm2_bai_path,
+                                      mm2_prop_net, mm2_legacy_props)
+        props_on = True
+        rn_random = []
+
+        # GROUND-SNAP (measured fix): the MM2 city geometry is authored 1:1 into the MM1 frame and
+        # the pathset props sit at their real MM2 Y (delta ~0), but the per-road DENSITY FURNITURE
+        # (lamps/benches/bins/meters/poles/traffic-lights) is placed at a fixed CURB_HEIGHT plus a
+        # COARSE nearest-BAI-road-point terrain() estimate. On hilly SF that left ~50% of the ~3,600
+        # furniture props half-buried or sunk (min -112 m, per the built BNG). Snapping every prop's
+        # Y to the ACTUAL authored ground triangle under it makes the delta ~0 by construction.
+        # Hanging props (banners / exit gantries / Ghirardelli) keep their raw elevated Y.
+        #
+        # mm2_poly_types (captured right after emit) lets the snap rest props on real GROUND
+        # (road/sidewalk/grass) and never on a building roof or podium.
+        snap_props(prop_list, vertices, polys,
+                   obj_types = globals().get("mm2_poly_types"), log = item)
     _fixed_prop_list = list(prop_list)  # snapshot before random props are expanded into prop_list
-    for prop in random_props:
+    for prop in rn_random:
         prop_list.extend(prop_editor.place_randomly(prop))
-    prop_editor.process_all(prop_list, set_props)
+    prop_editor.process_all(prop_list, props_on)
 
     # Pack mesh/bound/tune/textures for any custom-city props the map uses
-    copy_custom_prop_assets_to_shop(_fixed_prop_list, random_props, set_props)
+    copy_custom_prop_assets_to_shop(_fixed_prop_list, random_props, props_on)
+
+    # copy_custom_prop_assets_to_shop just APPENDED the custom PROP textures (palm fronds, hotdog cart,
+    # etc.) to SHOP/MTL/GLOBAL.TSH -- but the LOOSE dev/MTL/GLOBAL.TSH (the sheet the engine actually
+    # loads at startup) was copied earlier, BEFORE the prop list existed. Without re-syncing it the game
+    # FATALs with "Trying to load texture not in texsheet" on the first custom-prop banger. Re-copy now.
+    if set_texture_sheet and props_on:
+        import shutil as sh2
+        dev_mtl2 = Folder.MidtownMadness.DevCityMap.parent.parent / "MTL"
+        dev_mtl2.mkdir(parents=True, exist_ok=True)
+        sh2.copy(str(Folder.Shop.Material / f"GLOBAL{FileType.TEXTURE_SHEET}"),
+                  str(dev_mtl2 / f"GLOBAL{FileType.TEXTURE_SHEET}"))
+        ok("texsheet: re-synced loose dev/MTL/GLOBAL.TSH with custom prop textures")
+        # Multi-city coexistence: register EVERY MM2_PROPS texture (both SF + London props) in the loose
+        # sheet, so the OTHER city's props resolve too (their DDS load from that city's own .ar). Without
+        # this, building one city drops the other city's prop textures from the shared loose sheet, and
+        # the other city's bangers FATAL with "not in texsheet". The DDS only need to be in each city's
+        # own .ar (packed per-build for that city's used props); the sheet is shared.
+        mm2tex_root = get_custom_city(City.Mm2Props.folder).texture_root
+        loose_tsh = dev_mtl2 / f"GLOBAL{FileType.TEXTURE_SHEET}"
+
+        if mm2tex_root.is_dir() and loose_tsh.exists():
+            declared_names = {line.split(",")[0] for line in open(loose_tsh)}
+            added_count = 0
+
+            with open(loose_tsh, "a") as sheet_file:
+                for sub_name in (TextureFolder.OPAQUE, TextureFolder.ALPHA):
+                    texture_dir = mm2tex_root / sub_name
+                    if not texture_dir.is_dir():
+                        continue
+
+                    poly_flags = "t" if sub_name == TextureFolder.ALPHA else ""
+                    for texture_file in texture_dir.glob(f"*{FileType.DIRECTDRAW_SURFACE}"):
+                        name = texture_file.stem
+                        if name in declared_names:
+                            continue
+
+                        # DDS header: height and width are the two u32 at byte offset 12.
+                        with open(texture_file, "rb") as dds_file:
+                            dds_file.seek(DdsHeader.DIMENSIONS_OFFSET)
+                            height, width = read_unpack(dds_file, "<II")
+
+                        sheet_file.write(f"{name},0,0,0,1,{poly_flags},{name},,"
+                                         f"{width or DdsHeader.FALLBACK_SIZE},{height or DdsHeader.FALLBACK_SIZE},000000\n")
+                        declared_names.add(name); added_count += 1
+
+            ok(f"texsheet: +{added_count} extra MM2_PROPS textures registered (multi-city coexistence)")
 
     if set_lighting:
         lighting_instances = Lighting.read_all(Folder.Resources.Editor.Lighting / "LIGHTING.CSV")  # Read original
@@ -3263,6 +4084,70 @@ if not SKIP_AR_CREATION:
     print(Fore.LIGHTCYAN_EX + "   Successfully created " + Fore.LIGHTYELLOW_EX + f"{MAP_NAME}!" + Fore.MAGENTA + f" (in {editor_time:.4f} s)" + Fore.RESET)
     print(COLOR_DIVIDER)
 
+def export_mm2_city_folder() -> None:
+    """Copy the baked city into resources/city_files/<NAME>/ so the Map Loader panel can reload it.
+
+    Runs BEFORE post_editor_cleanup wipes SHOP; otherwise the geometry only survives inside the .ar.
+    """
+    destination = Folder.Resources.CityFiles / MAP_FILENAME
+    if destination.exists():
+        shutil.rmtree(destination, ignore_errors = True)
+    destination.mkdir(parents = True, exist_ok = True)
+
+    for source, target in (
+        (Folder.Shop.Map.MeshCity,      destination / "MESHES" / f"{MAP_FILENAME}CITY"),
+        (Folder.Shop.Map.MeshLandmark,  destination / "MESHES" / f"{MAP_FILENAME}LM"),
+        (Folder.Shop.Map.BoundCity,     destination / "BOUNDS" / f"{MAP_FILENAME}CITY"),
+        (Folder.Shop.Map.BoundLandmark, destination / "BOUNDS" / f"{MAP_FILENAME}LM"),
+    ):
+        if source.is_dir() and any(source.iterdir()):
+            shutil.copytree(source, target, dirs_exist_ok = True)
+
+    # Loose per-city metadata: <NAME>.FCD / .BNG / .CELLS / .EXT / .PTL
+    for city_file in Folder.Shop.City.glob(f"{MAP_FILENAME}.*"):
+        if city_file.is_file():
+            shutil.copy(city_file, destination / city_file.name)
+
+    hitid = Folder.Shop.Bound / f"{MAP_FILENAME}_HITID{FileType.BOUND}"
+    if hitid.is_file():
+        shutil.copy(hitid, destination / hitid.name)
+
+    # MM2 AI is roadnet .road/.map rather than a single .BAI, so ship it under AI/ for reference.
+    if Folder.MidtownMadness.DevCityMap.is_dir():
+        shutil.copytree(Folder.MidtownMadness.DevCityMap, destination / "AI", dirs_exist_ok = True)
+
+    write_mm2_source_manifest(destination)
+
+    # MM2 cities are all always-visible LANDMARK cells, so count both dirs for an honest total.
+    mesh_count = sum(1 for sub in (f"{MAP_FILENAME}CITY", f"{MAP_FILENAME}LM")
+                     for f in (destination / "MESHES" / sub).glob("*")
+                     if f.suffix.lower() == ".bms")
+    ok(f"Exported city folder -> resources/city_files/{MAP_FILENAME}/{sep()}"
+       f"{mesh_count} BMS meshes{sep()}load via the 'Map Loader' N-panel")
+
+
+def write_mm2_source_manifest(destination: Path) -> None:
+    """Record which real MM2 sources this conversion came from, so the pairing stays discoverable."""
+    options = MM2_CITY[1] if isinstance(MM2_CITY, (tuple, list)) and len(MM2_CITY) > 1 else {}
+    manifest = {
+        "note": "MM1 conversion of an MM2 city. Ground truth loads from these MM2 sources "
+                "(Map Loader N-panel -> 'Load MM2 Ground Truth (PSDL)').",
+        "expanded_psdl":  MM2_CITY[0] if isinstance(MM2_CITY, (tuple, list)) else str(MM2_CITY),
+        "props_pathset":  options.get("props_pathset"),
+        "bai":            options.get("bai_path"),
+        "inst_buildings": options.get("inst_buildings"),
+        "geometry_dir":   options.get("inst_geometry_dir"),
+        "custom_dds_dir": options.get("custom_dds_dir"),
+    }
+    (destination / f"MM2_SOURCE{FileType.JSON}").write_text(json.dumps(manifest, indent = 2))
+
+
+if MM2_CITY and MM2_EXPORT_CITY_FOLDER:
+    try:
+        export_mm2_city_folder()
+    except Exception as error:
+        item(f"WARNING: city-folder export failed ({error}) — the .ar is unaffected")
+
     post_editor_cleanup(Folder.Build, Folder.Shop.Root, delete_shop)
 
     if append_props:
@@ -3274,7 +4159,16 @@ if not SKIP_AR_CREATION:
             append_props
         )
 
-    start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game)
+    # ROADNET_BOOT_RACE: "circuit" -> boot the lap race WITH OPPONENTS; True/"race" -> checkpoint
+    # race at the change; False -> normal Cruise auto-boot near the change (with traffic).
+    _bm = str(ROADNET_BOOT_RACE).lower() if ROADNET_CITY else "false"
+    if _bm == "circuit":
+        boot_args = ["-cruisenow", "-circuit", "0"]
+    elif _bm in ("true", "race", "1"):
+        boot_args = ["-cruisenow", "-race", "0"]
+    else:
+        boot_args = None
+    start_game(Folder.MidtownMadness.Root, Executable.MIDTOWN_MADNESS, play_game, boot_args)
 
 #* ----------------------------------------------------------------------------------------------------------------
 
@@ -3292,13 +4186,13 @@ set_blender_keybinding()
 ###################################################################################################################   
 ###################################################################################################################
 
-#TODO: move to different location
-import os
 import bpy
+import bmesh
 
 from src.core.geometry.main import transform_coordinate_system
 
-from src.integrations.blender.modeling.uv_mapping import update_uv_tiling
+from src.integrations.blender.modeling.meshes import _apply_materials_to_mesh
+from src.integrations.blender.modeling.uv_mapping import update_uv_tiling, set_texture_folder
 from src.integrations.blender.panels.hud import set_hud_color
 
 
@@ -3339,8 +4233,8 @@ def create_material_from_texture(material_name, texture_image):
 
 
 def apply_texture_to_object(obj, texture_path):
-    material_name = os.path.splitext(os.path.basename(texture_path))[0]
-    
+    material_name = Path(texture_path).stem
+
     if material_name in bpy.data.materials:
         mat = bpy.data.materials[material_name]
     else:
@@ -3355,16 +4249,24 @@ def apply_texture_to_object(obj, texture_path):
         nodes.remove(node)
 
     diffuse_shader = nodes.new(type="ShaderNodeBsdfPrincipled")
-    texture_node = nodes.new(type="ShaderNodeTexImage")
-    texture_image = bpy.data.images.load(str(texture_path))
-    texture_node.image = texture_image
-
+    output_node = nodes.new(type="ShaderNodeOutputMaterial")
     links = mat.node_tree.links
     link = links.new
-    link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
-
-    output_node = nodes.new(type="ShaderNodeOutputMaterial")
     link(diffuse_shader.outputs["BSDF"], output_node.inputs["Surface"])
+
+    # MM2 cities keep their DDS in src/USER/textures/custom* (not resources/editor/TEXTURES), so a
+    # texture may be absent here. Only wire an image node when the file actually loads -- a missing or
+    # unreadable DDS leaves an untextured (base-colour) material instead of hard-crashing the whole
+    # Blender visualisation (bpy.data.images.load raises RuntimeError on a bad path). See the search
+    # path built in create_blender_meshes.
+    if texture_path and Path(texture_path).is_file():
+        try:
+            texture_image = bpy.data.images.load(str(texture_path))
+            texture_node = nodes.new(type="ShaderNodeTexImage")
+            texture_node.image = texture_image
+            link(texture_node.outputs["Color"], diffuse_shader.inputs["Base Color"])
+        except Exception as _e:
+            print(f"WARNING: Blender could not load texture '{texture_path}': {_e}")
 
 
 def apply_computed_uvs(objects):
@@ -3460,6 +4362,55 @@ def create_mesh_from_polygon_data(polygon_data, texture_folder=None):
     return obj
 
 
+def blender_texture_search_dirs(primary) -> list:
+    """Ordered texture-folder search path for the Blender preview. Stock editor TEXTURES first, then
+    the active MM2 city's per-city DDS dir (custom_dds_dir), every EXTRA_TEXTURE_DIRS, and the
+    MM2_PROPS prop textures. An imported MM2 city keeps its DDS in src/USER/textures/custom* (NOT in
+    resources/editor/TEXTURES), so without this the preview crashes on the first MM2 texture (S_GRASS).
+    Order = precedence; the first existing <dir>/<name>.DDS wins."""
+    dirs = [Path(primary)]
+
+    # mm2_custom_dir is only bound when an MM2 city is being built in this run.
+    try:
+        if mm2_custom_dir:
+            dirs.append(Path(mm2_custom_dir))
+    except NameError:
+        pass
+
+    dirs += [Path(extra_dir) for extra_dir in (EXTRA_TEXTURE_DIRS or [])]
+    mm2_props_tex = get_custom_city(City.Mm2Props.folder).texture_root
+    dirs += [mm2_props_tex / TextureFolder.OPAQUE, mm2_props_tex / TextureFolder.ALPHA]
+
+    # CRITICAL: make every dir ABSOLUTE (relative to the repo root). The custom/EXTRA dirs are relative
+    # strings ("src/USER/textures/custom"); Path.exists() resolves them against the process CWD, but
+    # bpy.data.images.load() resolves a relative path against Blender's blend-file dir -> exists() can
+    # pass while the load fails ("No such file": S_OCEAN-0007.DDS). Absolute paths make both agree.
+    seen, search_dirs = set(), []
+    for directory in dirs:
+        directory = directory if directory.is_absolute() else (Folder.BASE / directory)
+        key = str(directory).lower()
+        if key not in seen:
+            seen.add(key)
+            search_dirs.append(directory)
+
+    return search_dirs
+
+
+def resolve_texture_file(texture_name: str, search_dirs: list):
+    """First existing <dir>/<texture_name>.DDS across search_dirs, else None."""
+    filename = f"{texture_name}{FileType.DIRECTDRAW_SURFACE}"
+
+    for directory in search_dirs:
+        candidate = directory / filename
+        try:
+            if candidate.is_file():
+                return candidate
+        except OSError:
+            continue        # an unreadable / disconnected dir must not abort the whole search
+
+    return None
+
+
 def _show_blender_error(message: str, title: str = "MM1 Map Editor — Error") -> None:
     """Display a popup message box in Blender's UI."""
     lines = [ln.strip() for ln in message.strip().splitlines() if ln.strip()]
@@ -3467,6 +4418,134 @@ def _show_blender_error(message: str, title: str = "MM1 Map Editor — Error") -
         for line in lines:
             self.layout.label(text=line)
     bpy.context.window_manager.popup_menu(draw, title=title, icon="ERROR")
+
+
+def group_polygons_by_cell() -> dict:
+    """Group poly indices by cell -> {bound_number: [(poly_index, sub)]}.
+
+    `sub` is the per-cell occurrence index, so the UV lookup keys (bound_number, sub) match what the
+    per-poly path uses (Blender's P{n} / P{n}.001 dedup order).
+    """
+    cell_members = {}
+    sub_counter = {}
+
+    for poly_index, poly in enumerate(polygons_data):
+        bound_number = poly["bound_number"]
+        sub = sub_counter.get(bound_number, 0)
+        sub_counter[bound_number] = sub + 1
+        cell_members.setdefault(bound_number, []).append((poly_index, sub))
+
+    return cell_members
+
+
+def reset_mm2_cell_collection():
+    """Return the "MM2 Cells" collection, emptied. Clearing it stops re-runs from accumulating
+    duplicates (Cell1, Cell1.001, ...) and frees the meshes those objects held."""
+    collection = bpy.data.collections.get("MM2 Cells") or bpy.data.collections.new("MM2 Cells")
+    if collection.name not in bpy.context.scene.collection.children:
+        bpy.context.scene.collection.children.link(collection)
+
+    for stale_object in list(collection.objects):
+        stale_mesh = stale_object.data
+        bpy.data.objects.remove(stale_object, do_unlink=True)
+        if stale_mesh and stale_mesh.users == 0:
+            bpy.data.meshes.remove(stale_mesh)
+
+    return collection
+
+
+def create_blender_meshes_merged_by_cell(texture_folder) -> None:
+    """MM2 VIZ PATH B — one MERGED Blender object per landmark cell instead of one per polygon.
+
+    A full MM2 city is ~129k polygons across ~86 landmark cells (SF); one-object-per-poly is
+    unusable in Blender. This groups the in-memory `polygons_data` by `bound_number` (= cell id) and
+    builds a single bmesh per cell with one material slot per distinct texture, so SF loads as ~86
+    editable, textured objects in seconds. UVs use the same tile/angle scheme as the per-poly path
+    (texcoords_data), and textures resolve across the MM2 custom dirs (see blender_texture_search_dirs).
+    """
+    if not is_process_running(Executable.BLENDER):
+        return
+
+    search_dirs = blender_texture_search_dirs(texture_folder)
+    cell_members = group_polygons_by_cell()
+    collection = reset_mm2_cell_collection()
+
+    # Per-face obj_type (road/facade/roof/...) is embedded as an int attribute + a legend custom prop
+    # so the "Export MM2 Cell Edits" operator can re-emit edited cells faithfully (drivable/HITID
+    # classification depends on it). mm2_poly_types is parallel to polys (filler at 0).
+    poly_types = globals().get("mm2_poly_types") or []
+    type_legend = sorted({t for t in poly_types if t})
+    type_index = {t: k for k, t in enumerate(type_legend)}
+    cells_built = 0
+
+    for bound_number, members in sorted(cell_members.items()):
+        # Distinct textures in this cell -> material slot index.
+        cell_textures, texture_slot = [], {}
+        for poly_index, _ in members:
+            texture = texture_names[poly_index] if poly_index < len(texture_names) else ""
+            if texture not in texture_slot:
+                texture_slot[texture] = len(cell_textures)
+                cell_textures.append(texture)
+
+        segments = _mesh_segments.get(bound_number, [])   # per-poly segments for THIS cell, emit order
+        mesh = bpy.data.meshes.new(f"Cell{bound_number}")
+        builder = bmesh.new()
+        uv_layer = builder.loops.layers.uv.new()
+        type_layer = builder.faces.layers.int.new("mm2_ot") if type_legend else None
+
+        for poly_index, sub in members:
+            vertices = [transform_coordinate_system(Vector3.from_tuple(v), game_to_blender=True)
+                        for v in polygons_data[poly_index]["vertex_coordinates"]]
+            try:
+                face = builder.faces.new([builder.verts.new(v) for v in vertices])
+            except ValueError:
+                continue  # degenerate/duplicate
+
+            texture = texture_names[poly_index] if poly_index < len(texture_names) else ""
+            face.material_index = texture_slot.get(texture, 0)
+            if type_layer is not None and (poly_index + 1) < len(poly_types) and poly_types[poly_index + 1]:
+                face[type_layer] = type_index.get(poly_types[poly_index + 1], 0)
+
+            # Real MM2 UVs are per-vertex, stored by save_mesh in _mesh_segments[cell][sub]['tex_coords']
+            # (the SAME data that feeds the .bms -> what the game and "load city" use). The tile/angle
+            # texcoords_data is a placeholder (tile=1, angle=0) for MM2 and must NOT be used here. They
+            # align to vertex_coordinates order because _wind_up_facing reorders verts+uvs together and
+            # MM2 polys emit with fix_winding=False. V is flipped for Blender's bottom-left origin,
+            # same as the .bms importer (_to_blender_uv).
+            tex_coords = segments[sub]["tex_coords"] if sub < len(segments) else None
+            for corner, loop in enumerate(face.loops):
+                if tex_coords and (2 * corner + 1) < len(tex_coords):
+                    loop[uv_layer].uv = (tex_coords[2 * corner], 1.0 - tex_coords[2 * corner + 1])
+                else:
+                    loop[uv_layer].uv = (0.0, 0.0)
+
+        for _ in cell_textures:
+            mesh.materials.append(None)
+
+        # GPU-crash hardening: a failed faces.new (degenerate/duplicate) leaves orphan loose verts;
+        # malformed procedural meshes are a known trigger for the NVIDIA draw-manager use-after-free
+        # (GPU_batch_draw_parameter_get). Drop loose verts and validate before the mesh is ever drawn.
+        loose_vertices = [v for v in builder.verts if not v.link_faces]
+        if loose_vertices:
+            bmesh.ops.delete(builder, geom=loose_vertices, context="VERTS")
+
+        builder.normal_update(); builder.to_mesh(mesh); builder.free()
+        mesh.validate(verbose=False)
+        mesh.update()
+
+        cell_object = bpy.data.objects.new(f"Cell{bound_number}", mesh)
+        cell_object["mm2_cell"] = bound_number
+        if type_legend:
+            cell_object["mm2_ot_legend"] = json.dumps(type_legend)   # face attr "mm2_ot" indexes this
+        collection.objects.link(cell_object)
+
+        try:
+            _apply_materials_to_mesh(mesh, cell_textures, search_dirs)
+        except Exception as error:
+            print(f"WARNING: materials for Cell{bound_number} failed ({error}) --- left untextured")
+        cells_built += 1
+
+    print(f"OK MM2 viz (merge-per-cell): {cells_built} cell object(s) from {len(polygons_data)} polygons")
 
 
 def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_target_model: bool) -> None:
@@ -3496,16 +4575,26 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
         )
         return
 
-    from src.integrations.blender.modeling.uv_mapping import set_texture_folder
     set_texture_folder(texture_folder)
 
     load_textures(texture_folder, load_all_textures)
 
+    # Resolve each poly's texture across the stock + MM2 custom dirs so an imported MM2 city renders
+    # (its DDS live in src/USER/textures/custom*, not resources/editor/TEXTURES). Unresolved -> None
+    # (untextured mesh) instead of a hard crash on the first missing DDS.
+    texture_search_dirs = blender_texture_search_dirs(texture_folder)
+    missing_names = set()
     created_objects = []
     for poly, texture_name in zip(polygons_data, texture_names):
-        texture_path = texture_folder / f"{texture_name}{FileType.DIRECTDRAW_SURFACE}"
+        texture_path = resolve_texture_file(texture_name, texture_search_dirs)
+        if texture_path is None:
+            missing_names.add(texture_name)
         obj = create_mesh_from_polygon_data(poly, texture_path)
         created_objects.append(obj)
+    if missing_names:
+        _ex = ", ".join(sorted(missing_names)[:15])
+        print(f"WARNING: {len(missing_names)} texture(s) not found in any search dir -> untextured in "
+              f"Blender preview: {_ex}{' ...' if len(missing_names) > 15 else ''}")
 
     # Set texture_name on each object after all materials are loaded
     for obj, texture_name in zip(created_objects, texture_names):
@@ -3519,7 +4608,84 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
 ###################################################################################################################   
 ###################################################################################################################
 
-create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
+# BLENDER-ONLY MM2 preview: the .AR block (with its MM2 emit) is skipped in Blender-only modes, so
+# polygons_data would still hold the hand-authored grid. Emit the MM2 geometry + props for the scene.
+def emit_mm2_blender_preview() -> list:
+    """Emit MM2 geometry into the scene buffers and return its props. Geometry only: no .AR/AI/SHOP."""
+    json_path, options = (MM2_CITY[0], dict(MM2_CITY[1])) if isinstance(MM2_CITY, (tuple, list)) else (MM2_CITY, {})
+
+    clear_geometry_buffers()
+
+    emit_options = dict(options)
+    for key in ("min_ai", "bai_path", "bai_direct", "mm2_races", "props_pathset", "legacy_props"):
+        emit_options.pop(key, None)                 # not Mm2Options fields
+    stats = emit_mm2_city(create_polygon, save_mesh, compute_uv, json_path,
+                          Mm2Options(**emit_options), overrides = load_mm2_cell_overrides())
+    ok(f"MM2 preview: {stats['polygons']} polygons in {stats['cells']} cells")
+
+    # obj_type per poly (parallel to polys, filler at 0) — the cell viz embeds it per face so
+    # 'Export MM2 Cell Edits' can round-trip edits back into the emit.
+    globals()["mm2_poly_types"] = [None] + list(stats.get("obj_types") or [])
+
+    return mm2_preview_props(json_path, options)
+
+
+def mm2_preview_props(json_path: str, options: dict) -> list:
+    """The same 1:1 furniture the .AR gets: pathset placements, density rules, traffic lights."""
+    pathset = Path(options["props_pathset"]) if options.get("props_pathset") else None
+    has_pathset = bool(pathset and pathset.exists())
+
+    # Rule files sit beside the pathset, or beside facades.csv for cities without one (NY).
+    facades_csv = options.get("facades_csv")
+    rules_dir = (pathset.parent if has_pathset else
+                 Path(facades_csv).parent if facades_csv else None)
+
+    props = []
+    if has_pathset:
+        props, _ = pathset_props(str(pathset))
+
+    raw_json = Path(str(json_path).replace("expanded_psdl.json", "raw_psdl.json"))
+    if rules_dir and (rules_dir / "propdefs.csv").exists() and raw_json.exists():
+        psdl_path = rules_dir.parent / (rules_dir.name + FileType.MM2_GEOMETRY)
+        props += list(mm2_props.generate(str(raw_json), str(rules_dir), psdl_path = str(psdl_path)))
+
+        bai_path = options.get("bai_path")
+        if bai_path and Path(bai_path).exists():
+            props += list(mm2_props.bai_traffic_lights(bai_path))      # the BAI's own stored lights
+        else:
+            props += list(mm2_props.intersection_traffic_lights(json_path))
+
+    if not props:
+        item("MM2 preview: no pathset or propdefs for this city — no props")
+        return []
+
+    snap_props(props, vertices, polys, obj_types = None)
+    ok(f"MM2 preview: {len(props)} prop(s)")
+
+    return props
+
+
+if MM2_CITY and SKIP_AR_CREATION and is_process_running(Executable.BLENDER) and not load_target_model         and MM2_BLENDER_VIZ != "none" and not CONNECT_BLENDER_ONLY:
+    try:
+        _fixed_prop_list = emit_mm2_blender_preview()
+    except Exception as error:
+        item(f"WARNING: MM2 preview failed ({error})")
+
+# MM2 city preview: pick the viz path (poly = one obj/poly, cell = merged per landmark cell, none =
+# skip). Only branches for an active MM2 city; a normal hand-authored/roadnet map keeps the per-poly
+# path. See MM2_BLENDER_VIZ in src/USER/settings/blender.py.
+if CONNECT_BLENDER_ONLY and is_process_running(Executable.BLENDER):
+    print("CONNECT_BLENDER_ONLY: empty scene — panels/operators ready (Map Loader / MM2 Ground "
+          "Truth / Car Editor). Load content on demand; flip the flag in settings/fast.py to build.")
+elif MM2_CITY and is_process_running(Executable.BLENDER) and not load_target_model:
+    if MM2_BLENDER_VIZ == "cell":
+        create_blender_meshes_merged_by_cell(Folder.Resources.Editor.Textures)
+    elif MM2_BLENDER_VIZ == "none":
+        print("MM2 viz: skipped (MM2_BLENDER_VIZ='none')")
+    else:
+        create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
+else:
+    create_blender_meshes(Folder.Resources.Editor.Textures, load_all_textures, load_target_model)
 
 if visualize_props and is_process_running(Executable.BLENDER):
     with suppress_stdout_matching("Unable to find a suitable DXT compression"):
@@ -3528,6 +4694,7 @@ if visualize_props and is_process_running(Executable.BLENDER):
             texture_folder=Folder.Resources.Editor.Textures,
             car_wheels=prop_car_wheels,
             car_lights=prop_car_lights,
+            merge_instances=MM2_PROPS_MERGED,
         )
 
 if visualize_facades and is_process_running(Executable.BLENDER):
@@ -3548,6 +4715,60 @@ if visualize_bridges and is_process_running(Executable.BLENDER):
 if is_process_running(Executable.BLENDER):
     from src.integrations.blender.modeling.uv_mapping import refresh_current_textures
     refresh_current_textures()
+
+# END-OF-BUILD SCENE HYGIENE (GPU crash fix): the build creates/removes thousands of datablocks in
+# one operator; Blender's draw manager can then reference freed GPU batches on the next workbench
+# redraw (EXCEPTION_ACCESS_VIOLATION in GPU_batch_draw_parameter_get). Purge orphaned datablocks and
+# rebuild the depsgraph ONCE, cleanly, before the first heavy draw, and tag every 3D view so the
+# redraw starts from fresh caches.
+if is_process_running(Executable.BLENDER):
+    try:
+        bpy.data.orphans_purge(do_local_ids=True, do_linked_ids=False, do_recursive=True)
+        bpy.context.view_layer.update()
+        for win in bpy.context.window_manager.windows:
+            for cell_area in win.screen.areas:
+                if cell_area.type == "VIEW_3D":
+                    cell_area.tag_redraw()
+        print("OK Blender scene hygiene: orphans purged, depsgraph rebuilt, views tagged")
+    except Exception as _he:
+        print(f"WARNING: scene-hygiene pass failed ({_he}) — harmless, continuing")
+
+# NUCLEAR GPU-crash workaround (MM2_SAVE_RELOAD_AFTER_BUILD), v3. The Blender 4.3.0 NVIDIA
+# use-after-free (GPU_batch_draw_parameter_get in workbench::OpaquePass) fires on the FIRST viewport
+# redraw after the build script's operator returns — BEFORE any timer can run (Blender's main loop
+# draws in the same iteration; timers only get the next one). So a deferred save+reload alone cannot
+# help. v3 sequence:
+#   1. SYNC: save the built scene to a .blend NOW (file carries the normal SOLID shading).
+#   2. SYNC: flip every 3D viewport to WIREFRAME — wireframe shading does not enter
+#      workbench::OpaquePass, so the unavoidable first draws bypass the crashing code path entirely.
+#   3. DEFERRED (0.1s timer): wm.open_mainfile(the saved file) — a clean load rebuilds every GPU
+#      batch from scratch and restores the file's SOLID shading. Session state (panels, VS Code
+#      connection) survives an open_mainfile.
+if MM2_SAVE_RELOAD_AFTER_BUILD and MM2_CITY and is_process_running(Executable.BLENDER) \
+        and not load_target_model and MM2_BLENDER_VIZ != "none" and not CONNECT_BLENDER_ONLY:
+    srl_path = str(Folder.Blender.Models / f"{MAP_FILENAME}session_path.blend")
+    Folder.Blender.Models.mkdir(parents=True, exist_ok=True)
+    try:
+        bpy.ops.wm.save_as_mainfile(filepath=srl_path, check_existing=False, compress=False)
+        for win in bpy.context.window_manager.windows:
+            for cell_area in win.screen.areas:
+                if cell_area.type == "VIEW_3D":
+                    for view_space in cell_area.spaces:
+                        if view_space.type == "VIEW_3D":
+                            view_space.shading.type = "WIREFRAME"   # dodge OpaquePass until the reload
+        print(f"OK saved session + viewports to WIREFRAME (crash dodge) — reloading {srl_path} ...")
+
+        def mm2_reload():
+            try:
+                bpy.ops.wm.open_mainfile(filepath=srl_path)
+                print("OK reload complete — GPU caches rebuilt from clean load, shading restored")
+            except Exception as _se:
+                print(f"WARNING: reload failed ({_se}) — set a 3D view back to Solid manually")
+            return None                 # one-shot timer
+
+        bpy.app.timers.register(mm2_reload, first_interval=0.1)
+    except Exception as _se:
+        print(f"WARNING: save+wireframe stage failed ({_se}) — scene left as built")
 
 ###################################################################################################################
 ################################################################################################################### 

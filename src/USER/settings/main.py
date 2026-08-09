@@ -12,6 +12,7 @@ ROADNET_CITY = None             # Preset name, (cols, rows), or a RoadNetwork --
                                 # Presets: small/medium/large/mega/downtown/avenues/manhattan/boulevard
 ROADNET_BOOT_RACE = "race"      # "race" to boot into Checkpoint 0, False for Cruise with traffic
 MM2_CITY = None                 # Path to a tessellated MM2 'expanded_psdl.json', or (path, options)
+                                # Needs the wilkovatch/psdl-import toolchain to produce that .json
 EXTRA_TEXTURE_DIRS = []         # Extra texture folders merged into the shared GLOBAL.TSH
 
 # Play Game + Delete Shop

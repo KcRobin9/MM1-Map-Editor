@@ -29,3 +29,4 @@ class City:
     OffroadMadness   = CityDefinition("Offroad Madness",    "OFFROAD_MADNESS",    "ORM")
     Seaview          = CityDefinition("Seaview",            "SEAVIEW",            "SEAVIEW")
     Paulville        = CityDefinition("Paulville",          "PAULVILLE",          "RACETRACK3")
+    Mm2Props         = CityDefinition("MM2 Props",           "MM2_PROPS",          "MM2P")
