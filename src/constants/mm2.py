@@ -10,6 +10,26 @@ from src.constants.textures import Texture
 from src.constants.file_formats import Material
 from src.constants.custom_props.mm2_props import Mm2Prop
 
+
+class Mm2CellPreview:
+    """Names shared by the MM2 Blender cell preview and the edit round-trip that reads it back.
+
+    The preview (create_blender_meshes_merged_by_cell) writes these; the exporter
+    (operators/mm2_cells.py) reads them. They MUST agree --- if one side is renamed on its own the
+    round-trip silently exports nothing, so both sides take the names from here.
+    """
+    COLLECTION = "MM2 Cells"        # collection holding one merged object per landmark cell
+    OBJECT_PREFIX = "Cell"          # object naming: Cell<bound_number>
+
+    CELL_ID = "mm2_cell"            # object custom property: which landmark cell this object is
+    OBJECT_TYPE = "mm2_ot"          # face int attribute: index into OBJECT_TYPE_LEGEND
+    OBJECT_TYPE_LEGEND = "mm2_ot_legend"   # object custom property: JSON list of obj_type names
+
+    # Exported overrides file, written by the operator and read by the build:
+    # src/USER/mm2_edits/<MAP_FILENAME>cell_overrides.json
+    OVERRIDES_SUFFIX = "cell_overrides"
+
+
 _BREAKABLE = BangerFlags.BREAKABLE
 _BREAKABLE_GLOW = BangerFlags.BREAKABLE_GLOW
 

@@ -46,6 +46,7 @@ from src.integrations.blender.handlers import _vertex_poll_timer
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling, update_texture_category, OBJECT_OT_RefreshCurrentTextures
 from src.integrations.blender.modeling.texture_catalog import CATEGORY_ITEMS
 from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
+from src.integrations.blender.operators.mm2_cells import MM2_CELLS_CLASSES
 from src.integrations.blender.operators.road_automation import ROAD_AUTOMATION_CLASSES, RD_PROP_ITEMS, RD_PROP_FLAG_ITEMS, RD_AI_INTERSECTION_ITEMS, RD_FACADE_ITEMS, RD_JUNCTION_PRESET_ITEMS
 from src.integrations.blender.panels.road_builder_sidebar import ROAD_BUILDER_PANEL_CLASSES
 from src.integrations.blender.operators.facades import FACADE_EDITOR_CLASSES, FACADE_NAME_ITEMS, FACADE_FLAGS_ITEMS, _update_facade_form
@@ -107,6 +108,7 @@ OPERATOR_CLASSES = [
     *SKELETON_EDITOR_CLASSES,
     *DASH_EDITOR_CLASSES,
     *VALIDATE_TEXTURES_CLASSES,
+    *MM2_CELLS_CLASSES,
 ]
 
 ALL_CLASSES = [VertexGroup] + PANEL_CLASSES + OPERATOR_CLASSES + WAYPOINT_CLASSES

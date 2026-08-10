@@ -125,6 +125,7 @@ from src.constants.folder import Folder, TextureFolder
 from src.constants.city import City
 from src.constants.custom_props import get_custom_city
 from src.constants.custom_props.mm2_props import Mm2Prop
+from src.constants.mm2 import Mm2CellPreview
 from src.constants.props import Prop, BangerFlags
 from src.constants.misc import Shape, Encoding, Executable, Default, Threshold
 from src.constants.color import Color
@@ -3351,7 +3352,8 @@ if MM2_CITY:
 
 def load_mm2_cell_overrides() -> Optional[dict]:
     """Cells edited in Blender and exported by 'Export MM2 Cell Edits', or None if there are none."""
-    overrides_file = Folder.Src.User.Mm2Edits / f"{MAP_FILENAME}cell_overrides{FileType.JSON}"
+    overrides_file = (Folder.Src.User.Mm2Edits /
+                      f"{MAP_FILENAME}{Mm2CellPreview.OVERRIDES_SUFFIX}{FileType.JSON}")
     if not overrides_file.is_file():
         return None
 
@@ -4441,7 +4443,8 @@ def group_polygons_by_cell() -> dict:
 def reset_mm2_cell_collection():
     """Return the "MM2 Cells" collection, emptied. Clearing it stops re-runs from accumulating
     duplicates (Cell1, Cell1.001, ...) and frees the meshes those objects held."""
-    collection = bpy.data.collections.get("MM2 Cells") or bpy.data.collections.new("MM2 Cells")
+    collection = (bpy.data.collections.get(Mm2CellPreview.COLLECTION)
+                  or bpy.data.collections.new(Mm2CellPreview.COLLECTION))
     if collection.name not in bpy.context.scene.collection.children:
         bpy.context.scene.collection.children.link(collection)
 
@@ -4488,10 +4491,11 @@ def create_blender_meshes_merged_by_cell(texture_folder) -> None:
                 cell_textures.append(texture)
 
         segments = _mesh_segments.get(bound_number, [])   # per-poly segments for THIS cell, emit order
-        mesh = bpy.data.meshes.new(f"Cell{bound_number}")
+        mesh = bpy.data.meshes.new(f"{Mm2CellPreview.OBJECT_PREFIX}{bound_number}")
         builder = bmesh.new()
         uv_layer = builder.loops.layers.uv.new()
-        type_layer = builder.faces.layers.int.new("mm2_ot") if type_legend else None
+        type_layer = (builder.faces.layers.int.new(Mm2CellPreview.OBJECT_TYPE)
+                      if type_legend else None)
 
         for poly_index, sub in members:
             vertices = [transform_coordinate_system(Vector3.from_tuple(v), game_to_blender=True)
@@ -4533,10 +4537,10 @@ def create_blender_meshes_merged_by_cell(texture_folder) -> None:
         mesh.validate(verbose=False)
         mesh.update()
 
-        cell_object = bpy.data.objects.new(f"Cell{bound_number}", mesh)
-        cell_object["mm2_cell"] = bound_number
+        cell_object = bpy.data.objects.new(f"{Mm2CellPreview.OBJECT_PREFIX}{bound_number}", mesh)
+        cell_object[Mm2CellPreview.CELL_ID] = bound_number
         if type_legend:
-            cell_object["mm2_ot_legend"] = json.dumps(type_legend)   # face attr "mm2_ot" indexes this
+            cell_object[Mm2CellPreview.OBJECT_TYPE_LEGEND] = json.dumps(type_legend)
         collection.objects.link(cell_object)
 
         try:
