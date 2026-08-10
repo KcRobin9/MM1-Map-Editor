@@ -92,6 +92,7 @@ from src.game.mapgen.mm2.pathset import pathset_props
 from src.game.mapgen.mm2.groundsnap import snap_props
 from src.game.mapgen.mm2.bai import build_network as build_bai_network
 from src.game.mapgen.mm2.bai_direct import stage_bai_direct
+from src.game.mapgen.mm2.races import convert_mm2_races
 
 # Helper imports
 from src.helpers.main import calc_size, is_process_running
@@ -3493,6 +3494,28 @@ def generate_roadnet_races(roadnet_network, roadnet_compiled) -> None:
 
 
 
+def import_mm2_races(mm2_races_dir: str) -> None:
+    """Import a city's MM2 races (blitz / checkpoint / circuit) so they are selectable in MM1 with
+    the same spawn and checkpoints as MM2.
+
+    Writes the MM1 race files into the build's RACE folder and re-registers the CINFO under the real
+    MM2 race names, which live in the city's own .cinfo at <mm2core>/tune/<city>.cinfo --- a sibling
+    of the race folder itself.
+    """
+    races_dir = Path(mm2_races_dir)
+    Folder.Shop.Map.Race.mkdir(parents = True, exist_ok = True)
+
+    city_cinfo = races_dir.parent.parent / "tune" / f"{races_dir.name}{FileType.CITY_INFO}"
+    blitz_names, checkpoint_names, circuit_names, _ = convert_mm2_races(
+        str(races_dir), str(Folder.Shop.Map.Race),
+        cinfo_path = str(city_cinfo) if city_cinfo.exists() else "", log = item)
+
+    create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}",
+                    blitz_names, circuit_names, checkpoint_names)
+    ok(f"mm2: imported MM2 races -> {len(blitz_names)} blitz, {len(checkpoint_names)} checkpoint, "
+       f"{len(circuit_names)} circuit (real MM2 names from cinfo)")
+
+
 def collect_mm2_pathset_props(pathset_path):
     """Hand-placed scenery from <city>/props.pathset: trees, palms, lamps, benches and signs at
     their real MM2 world coords + facing (1:1 frame, no mirror).
@@ -3660,7 +3683,7 @@ if not SKIP_AR_CREATION:
         # .road (preserves hills/one-way/curves+grades), bypassing the lossy roadnet rebuild.
         # DEFAULT OFF -> the hybrid roadnet path below stays the shipped default.
         mm2_bai_direct = bool(mm2_options.pop("bai_direct", False))
-        mm2_options.pop("mm2_races", None)      # consumed by the MM2 race import
+        mm2_races_dir = mm2_options.pop("mm2_races", None)   # MM2 race folder (not an Mm2Options field)
         mm2_pathset_path = mm2_options.pop("props_pathset", None)  # MM2 props.pathset (not a Mm2Options field)
         # 1:1 PROCEDURAL FURNITURE (default): reproduce MM2's propdefs/proprules placement exactly
         # (src/game/mapgen/mm2/mm2_props). Set "legacy_props": True in the MM2_CITY opts to fall back
@@ -3686,6 +3709,9 @@ if not SKIP_AR_CREATION:
             if 1 + _i < len(mm2_poly_types):
                 mm2_poly_types[1 + _i] = _t
         item(", ".join(f"{t}: {c}x" for t, c in mm2_stats['textures'].items()))
+
+        if mm2_races_dir:
+            import_mm2_races(mm2_races_dir)
 
         # DIAGNOSTIC scaffold: a tiny roadnet AI grid so the city has an AI map (HasAIMap=true),
         # a ROAM.AIMAP and a checkpoint race + cinfo - matching what a normal/roadnet city has.

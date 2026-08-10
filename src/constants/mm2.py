@@ -5,10 +5,23 @@ Lookup tables that translate Midtown Madness 2's own names into the MM1 equivale
 emits. Kept here, beside the other constants, so the MM2 modules stay parsing/emitting code.
 """
 from src.constants.color import Color
+from src.constants.modes import RaceMode
 from src.constants.props import Prop, BangerFlags
 from src.constants.textures import Texture
 from src.constants.file_formats import Material
 from src.constants.custom_props.mm2_props import Mm2Prop
+
+
+class Mm2RaceType:
+    """MM2's race-type names, and what each becomes in MM1.
+
+    A checkpoint race carries three different names: MM2 calls it "race" in its file names and
+    "Checkpoint" in its .cinfo, while MM1 uses RaceMode.CHECKPOINT ("RACE") as the file prefix.
+    Mapping them here keeps that from being re-derived, differently, at each call site.
+    """
+    ALL = ("blitz", "race", "circuit")
+    TO_RACE_MODE = {"blitz": RaceMode.BLITZ, "race": RaceMode.CHECKPOINT, "circuit": RaceMode.CIRCUIT}
+    TO_CINFO_KEY = {"blitz": "blitz", "race": "checkpoint", "circuit": "circuit"}
 
 
 class Mm2CellPreview:
