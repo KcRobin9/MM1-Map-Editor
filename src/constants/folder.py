@@ -67,7 +67,11 @@ class Folder:
         DevPlayers = _MM_DEV / "players"
 
     class Resources:
-        CityFiles = _RESOURCES / "city_files"
+        # city_files/ is split by game: MM1/<CITY> for the editor's own cities, MM2/<CITY> for
+        # cities converted from Midtown Madness 2.
+        CityFiles    = _RESOURCES / "city_files"
+        CityFilesMM1 = CityFiles / "MM1"
+        CityFilesMM2 = CityFiles / "MM2"
 
         class User:
             Root     = _USER

@@ -1,0 +1,11 @@
+LocalizedName=San Francisco
+MapName=sf
+RaceDir=sf
+BlitzCount=10
+CircuitCount=10
+CheckpointCount=12
+BlitzNames=Ignorance Is Blitz|Hold On Tight|Wrong Way!|Golden Race|Presidio Push|Amazing Grace|Lombard Lunacy|Embarca-dare-o|Telegraph Turnaround|Coit Nightmare
+CircuitNames=Take It Easy|Hang Time|Gimme SOMA|Wind It Up|Midtown Mayhem|Chinatown|Presidio!|Square Dancing|Circuit Breaker|Floor It!
+CheckpointNames=Racing 101|Deck The Hall|Golden Hour|City Tour|Foggy Memory|Park & Ride|The Hills Are Alive|Lookout!|Wanted!|After Hours|Full Speed Ahead|Panoz Pressure 
+MustPlace=3
+UnlockGroup=3

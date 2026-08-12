@@ -1,0 +1,23 @@
+# Default Road Speed Limit
+[Speed Limit]
+15
+
+# Ambient Traffic Exceptions
+# Rd Id, Density, Speed Limit
+[Exceptions]
+0
+
+# Police Init
+# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route
+[Police]
+0
+
+# Opponent Init
+# Geo File, WavePoint File
+# vpfer vpbug vpcaddie vpmtruck
+[Opponent]
+4
+vpdb7 circuit5-p-0.opp 1.00 0 67.000000 1.000000 0 0 0 0 0 1.000000
+vpdb7 circuit5-p-1.opp 1.00 0 94.000000 1.000000 0 0 0 0 0 1.000000
+vpdb7 circuit5-p-2.opp 1.00 0 83.000000 1.000000 0 0 0 0 0 1.000000
+vpdb7 circuit5-p-3.opp 1.00 0 76.000000 1.000000 0 0 0 0 0 1.000000

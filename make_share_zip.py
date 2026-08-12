@@ -113,6 +113,29 @@ def bundle(cities: List[str], with_exe: bool) -> Path:
     return output
 
 
+def _city_folder(city: str):
+    """The exported folder for `city`, searching MM2/ then MM1/. None when it has not been built.
+
+    A build names the folder after MAP_FILENAME (MM2SF), but folders get renamed by hand to
+    something readable (SAN_FRANSISCO). So the exact name is tried first, then any folder whose
+    contents are named for this city --- MM2SF.CELLS, AI/MM2SF.map and so on.
+    """
+    roots = (Folder.Resources.CityFilesMM2, Folder.Resources.CityFilesMM1)
+
+    for root in roots:
+        if (root / city).is_dir():
+            return root / city
+
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for candidate in sorted(root.iterdir()):
+            if candidate.is_dir() and next(candidate.glob(f"**/{city}.*"), None):
+                return candidate
+
+    return None
+
+
 def bundle_blender_pack(cities: List[str]) -> Path:
     base = Folder.BASE
     output = OUTPUT_FOLDER / f"MM2_blender_pack_{'_'.join(cities)}_{time.strftime('%Y%m%d')}.zip"
@@ -129,10 +152,11 @@ def bundle_blender_pack(cities: List[str]) -> Path:
 
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         for city in cities:
-            city_dir = Folder.Resources.CityFiles / city
-            if not city_dir.is_dir():
-                raise SystemExit(f"{city_dir.relative_to(base).as_posix()} missing --- run a normal "
-                                 f"build first (the build exports it)")
+            city_dir = _city_folder(city)
+            if city_dir is None or not city_dir.is_dir():
+                raise SystemExit(f"no exported folder for {city} under "
+                                 f"{Folder.Resources.CityFiles.relative_to(base).as_posix()} --- "
+                                 f"run a normal build first (the build exports it)")
             item(f"{city_dir.relative_to(base).as_posix()}  ({add_tree(city_dir)} files)")
 
         for data_dir in BLENDER_DATA_DIRS:

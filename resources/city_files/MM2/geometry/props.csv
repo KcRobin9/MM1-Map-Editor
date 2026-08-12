@@ -1,0 +1,9 @@
+Name,H Tris,M Tris,L Tris,VL Tris
+va_bus_f.pkg,68,178,78,12
+va_cablecar_f.pkg,390,270,106,10
+va_eurovan_f.pkg,258,240,70,10
+va_garbagetruck.pkg,456,419,244,98
+va_limo_f.pkg,271,202,58,10
+va_pickup_f.pkg,264,182,58,10
+va_taxi_f.pkg,256,144,62,10
+va_wedelivertruck_f.pkg,236,174,64,10

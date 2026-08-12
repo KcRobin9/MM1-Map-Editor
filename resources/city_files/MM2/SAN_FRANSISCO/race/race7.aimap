@@ -1,0 +1,38 @@
+# Default Road Speed Limit
+[Speed Limit]
+15
+
+# Ambient Traffic Exceptions
+# Rd Id, Density, Speed Limit
+[Exceptions]
+12
+280	0.00	0
+271	0.00	0
+272	0.00	0
+322	0.00	0
+324	0.00	0
+239	0.00	0
+225	0.00	0
+273	0.00	0
+277	0.00	0
+237	0.00	0
+278	0.00	0
+279	0.00	0
+
+# Police Init
+# Geo File, StartLink, Start Dist, Start Mode, Start Lane, Patrol Route
+[Police]
+1
+vpcop	-1157.418701 35.038452 -503.476440 0.000000 0 15 0.500000 50.000000
+
+# Opponent Init
+# Geo File, WavePoint File
+# vpfer vpbug vpcaddie vpmtruck
+[Opponent]
+6
+vpauditt race7-a-0.opp 0.95 0 50.000000 0.700000 0 0 0 0 0 1.000000
+vpbullet race7-a-1.opp 0.95 0 50.000000 0.700000 0 0 0 0 0 1.000000
+vpauditt race7-a-2.opp 0.91 0 50.000000 0.700000 1 1 1 1 0 1.000000
+vpmustang99 race7-a-3.opp 1.00 0 50.000000 0.700000 1 1 1 1 0 1.000000
+vpbullet race7-a-4.opp 0.97 0 50.000000 0.700000 1 1 1 1 0 1.000000
+vpauditt race7-a-5.opp 0.91 0 50.000000 0.700000 1 1 1 1 0 1.000000

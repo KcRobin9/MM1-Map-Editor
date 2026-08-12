@@ -1,0 +1,11 @@
+RaceType,RaceNum,CarName,VariantNum (zero if it unlocks a car),
+blitz,half,vpcoop2k,0,Congratulations! You've unlocked the NEW MINI COOPER,
+blitz,all,vpcoop2k,4,Congrats!  New paint job for the NEW MINI COOPER,
+circuit,half,vpvwcup,0,Congratulations! You've unlocked the New Beetle RSi!
+circuit,all,vpvwcup,4,Congrats!  New paint job for the New Beetle RSi!,
+race,half,vppanozgt,0,Congratulations! You've unlocked the Panoz GTR-1!,
+race,all,vppanozgt,4,Congrats!  New paint job for the Panoz GTR-1!,
+crash,3,vpvwcup,6,Congrats!  Mystery paint job for the New Beetle RSi!,
+crash,7,vpcab,1,Congrats!  New paint job for the London Cab!,
+crash,11,vpcoop,4,Congrats!  New paint job for the Mini Cooper!,
+crash,12,vpdb7,0,Congratulations! You've unlocked the Aston Martin DB7 Vantage!,

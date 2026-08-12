@@ -1,0 +1,11 @@
+LocalizedName=London
+MapName=london
+RaceDir=london
+BlitzCount=10
+CircuitCount=10
+CheckpointCount=12
+BlitzNames=London's Calling|Embank On It|Tower Tour|Hyde And Go Seek|Going Underground|Battle of Trafalgar|Crosstown Sprint|Alley Cats|Midnight Mash|Five-Ring Circus
+CircuitNames=Mini Race|Round Westminster|View From Two Bridges|Parks But No Parking|City Circuit|Underground|London Run|Gimme Some Royalties|Soho Mojo|Zany Zigzag
+CheckpointNames=Top Of The Morning|Bridge Bash|Through The Park|V & A Visit|South Bank Brawl|River Thames Run|Circuit Within|Check This!|Splish Splash|Cut It Short|Dizzy Driving|Foggy, Foggy Night
+MustPlace=3
+UnlockGroup=3

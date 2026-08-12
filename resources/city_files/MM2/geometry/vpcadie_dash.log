@@ -1,0 +1,184 @@
+max30_exsne Exporter Version: 1.00
+Time of day: Fri Jan 21 14:11:45 2000
+Max File: S:\Madness2\Art\vehicles\02_Player_Vehicles\MM_1_Player_Vehicles\vpcaddie\Dash\vpcadie_dash.max
+Scene File: S:\Madness2\Shop\Scene\vpcadie_dash.sne
+check = S:\Madness2\Shop\Scene\VALIDATE.BAT, valid = 1 attrib = 80
+no config file
+FixCsMatrix:
+  1.0   0.0   0.0
+  0.0   1.0   0.0
+  0.0   0.0   1.0
+FrameFirst: 0
+FrameLast:  100
+NumFrames:  101
+NumNodes:   17
+vpcad_sneedle
+	ambient    0.988    0.988    0.988    1.000
+	emissive    0.198    0.198    0.198    0.200
+	diffuse    0.988    0.988    0.988    1.000
+	specular    1.000    1.000    1.000    1.000
+	opacity 1.000000
+	shininess 0.250000
+	diffuse \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dasneedle.TIF
+	opacity \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dasneedle.TIF
+	matid 0.000000
+	submatid 0.000000
+vpcad_strwheel
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.200    0.200    0.200    0.200
+	diffuse    1.000    1.000    1.000    1.000
+	specular    1.000    1.000    1.000    1.000
+	opacity 1.000000
+	shininess 0.250000
+	diffuse \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashwhl.TIF
+	opacity \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashwhl.TIF
+	matid 1.000000
+	submatid 0.000000
+vpbug_dash:vpbug_dashl
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.200    0.200    0.200    0.200
+	diffuse    1.000    1.000    1.000    1.000
+	specular    1.000    1.000    1.000    1.000
+	opacity 1.000000
+	shininess 0.250000
+	diffuse \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashl.TIF
+	opacity \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashl.TIF
+	matid 2.000000
+	submatid 1.000000
+vpbug_dash:vpcad_dashm
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.200    0.200    0.200    0.200
+	diffuse    1.000    1.000    1.000    1.000
+	specular    1.000    1.000    1.000    1.000
+	opacity 1.000000
+	shininess 0.250000
+	diffuse \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashm.TIF
+	opacity \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashm.TIF
+	matid 2.000000
+	submatid 2.000000
+vpbug_dash:vpcad_dashr
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.200    0.200    0.200    0.200
+	diffuse    1.000    1.000    1.000    1.000
+	specular    1.000    1.000    1.000    1.000
+	opacity 1.000000
+	shininess 0.250000
+	diffuse \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashr.TIF
+	opacity \\taxi\projects\madness2\art\vehicles\02_Player_Vehicles\MM_1_Player_vehicles\vpcaddie\Dash\vpcad_dashr.TIF
+	matid 2.000000
+	submatid 3.000000
+VAR1_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\R.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\R.tif
+	matid 3.000000
+	submatid 0.000000
+VAR2_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\N.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\N.tif
+	matid 4.000000
+	submatid 0.000000
+VAR3_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\One.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\One.tif
+	matid 5.000000
+	submatid 0.000000
+VAR4_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Two.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Two.tif
+	matid 6.000000
+	submatid 0.000000
+VAR5_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Three.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Three.tif
+	matid 7.000000
+	submatid 0.000000
+VAR6_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Four.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Four.tif
+	matid 8.000000
+	submatid 0.000000
+VAR7_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Five.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Five.tif
+	matid 9.000000
+	submatid 0.000000
+VAR8_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Six.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\Six.tif
+	matid 10.000000
+	submatid 0.000000
+VAR9_A
+	ambient    1.000    1.000    1.000    1.000
+	emissive    0.000    0.000    0.000    0.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	opacity 1.000000
+	shininess 0.000000
+	diffuse \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\D.tif
+	opacity \\taxi\projects\Madness2\Art\vehicles\08_Dash_gear_Dial\Small\Arial_Bold\D.tif
+	matid 11.000000
+	submatid 0.000000
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ speed_needle_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ wheel_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ tach_needle_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ Gear_indicator_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ dash_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ roof_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ damage_needle_H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR1_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR2_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR3_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR4_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR5_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR6_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR7_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR8_A
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ VAR9_A

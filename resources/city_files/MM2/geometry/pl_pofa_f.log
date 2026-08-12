@@ -1,0 +1,166 @@
+max30_exsne Exporter Version: 1.00
+Time of day: Thu Dec 02 11:03:18 1999
+Max File: F:\Madness2\Art\san_francisco\landmarks\presidio\pl_pofa_f.max
+Scene File: F:\Madness2\Shop\geometry\pl_pofa_f.sne
+check = F:\Madness2\Shop\geometry\VALIDATE.BAT, valid = 0 attrib = ffffffff
+no config file
+FrameFirst: 0
+FrameLast:  100
+NumFrames:  101
+NumNodes:   23
+pl_pofapiller
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\Taxi\projects\Madness2\Art\san_francisco\tex\presidio\landmarks\palace_fineart\pl_pofapiller_f.tif
+	matid 0.000000
+	submatid 1.000000
+pl_pofapillertop
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\Taxi\projects\Madness2\Art\san_francisco\tex\presidio\landmarks\palace_fineart\pl_pofapillertop_f.tif
+	matid 0.000000
+	submatid 2.000000
+pl_pofadoortop
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\Taxi\projects\Madness2\Art\san_francisco\tex\presidio\landmarks\palace_fineart\pl_pofadoortop_f.tif
+	matid 0.000000
+	submatid 3.000000
+pl_pofapillermid
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\Taxi\projects\Madness2\Art\san_francisco\tex\presidio\landmarks\palace_fineart\pl_pofapillermid_f.tif
+	matid 0.000000
+	submatid 4.000000
+pl_pofapiller2
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\Taxi\projects\Madness2\Art\san_francisco\tex\presidio\landmarks\palace_fineart\pl_pofapiller2_f.tif
+	matid 0.000000
+	submatid 5.000000
+s_water
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\TAXI\projects\Madness2\Art\shared\tex\s_water.tif
+	matid 0.000000
+	submatid 6.000000
+s_grass
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\TAXI\projects\Madness2\Art\shared\tex\s_grass.tif
+	matid 0.000000
+	submatid 7.000000
+s_grass2mud
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.100    0.100    0.100    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\TAXI\projects\Madness2\Art\shared\tex\s_grass2mud.tif
+	matid 0.000000
+	submatid 8.000000
+s_concrt
+	emissive    0.000    0.000    0.000    1.000
+	ambient    1.000    1.000    1.000    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\TAXI\projects\Madness2\Art\shared\tex\s_concrt.tif
+	matid 0.000000
+	submatid 9.000000
+s_steps
+	emissive    0.000    0.000    0.000    1.000
+	ambient    1.000    1.000    1.000    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\TAXI\projects\Madness2\Art\shared\tex\s_steps.tif
+	matid 0.000000
+	submatid 10.000000
+pl_expsides_f
+	emissive    0.000    0.000    0.000    1.000
+	ambient    1.000    1.000    1.000    1.000
+	diffuse    1.000    1.000    1.000    1.000
+	specular    0.900    0.900    0.900    1.000
+	shininess 0.250000
+	diffuse \\TAXI\projects\Madness2\Art\san_francisco\tex\presidio\landmarks\palace_fineart\pl_expsides_f.tif
+	matid 0.000000
+	submatid 11.000000
+VMtl01
+	emissive    0.000    0.000    0.000    1.000
+	ambient    0.160    0.160    0.160    1.000
+	diffuse    0.800    0.800    0.800    1.000
+	specular    0.000    0.000    0.000    1.000
+	shininess 0.017000
+	matid 1.000000
+	submatid 0.000000
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni01
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni02
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni03
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni04
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni05
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni06
+	class id:       30     1013        0 LIGHT UNSUPPORTED Sun01
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni07
+	class id:       30     1011        0 LIGHT OMNI_LIGHT Omni08
+	class id:       50   876234        0 HELPER DUMMY H
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ bldg_h
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ grnd_h
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ top_h
+	class id:       50   876234        0 HELPER DUMMY M
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ bldg_m
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ grnd_m
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ top_m
+	class id:       50   876234        0 HELPER DUMMY L
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ bldg_l
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ grnd_l
+	class id:       10 e44f10b3        0 GEOMOBJECT EDITTRIOBJ top_l
+	class id:       40     1040        0 SHAPE SPLINE3D JOIN0
+MaxINodeToSneSkin::HasSkin NumVertices == 315
+MaxINodeToSneSkin::HasSkin name of geom node: bldg_h
+MaxINodeToSneSkin::HasSkin NumNormals == 1356
+MaxINodeToSneSkin::HasSkin NumVertices == 45
+MaxINodeToSneSkin::HasSkin name of geom node: grnd_h
+MaxINodeToSneSkin::HasSkin NumNormals == 165
+MaxINodeToSneSkin::HasSkin NumVertices == 5
+MaxINodeToSneSkin::HasSkin name of geom node: top_h
+MaxINodeToSneSkin::HasSkin NumNormals == 9
+MaxINodeToSneSkin::HasSkin NumVertices == 176
+MaxINodeToSneSkin::HasSkin name of geom node: bldg_m
+MaxINodeToSneSkin::HasSkin NumNormals == 633
+MaxINodeToSneSkin::HasSkin NumVertices == 45
+MaxINodeToSneSkin::HasSkin name of geom node: grnd_m
+MaxINodeToSneSkin::HasSkin NumNormals == 165
+MaxINodeToSneSkin::HasSkin NumVertices == 5
+MaxINodeToSneSkin::HasSkin name of geom node: top_m
+MaxINodeToSneSkin::HasSkin NumNormals == 9
+MaxINodeToSneSkin::HasSkin NumVertices == 105
+MaxINodeToSneSkin::HasSkin name of geom node: bldg_l
+MaxINodeToSneSkin::HasSkin NumNormals == 306
+MaxINodeToSneSkin::HasSkin NumVertices == 30
+MaxINodeToSneSkin::HasSkin name of geom node: grnd_l
+MaxINodeToSneSkin::HasSkin NumNormals == 84
+MaxINodeToSneSkin::HasSkin NumVertices == 4
+MaxINodeToSneSkin::HasSkin name of geom node: top_l
+MaxINodeToSneSkin::HasSkin NumNormals == 6

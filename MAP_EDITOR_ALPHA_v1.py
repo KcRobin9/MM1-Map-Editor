@@ -4113,11 +4113,14 @@ if not SKIP_AR_CREATION:
     print(COLOR_DIVIDER)
 
 def export_mm2_city_folder() -> None:
-    """Copy the baked city into resources/city_files/<NAME>/ so the Map Loader panel can reload it.
+    """Copy the baked city into resources/city_files/ so the Map Loader panel can reload it.
 
-    Runs BEFORE post_editor_cleanup wipes SHOP; otherwise the geometry only survives inside the .ar.
+    city_files is split by game: a city converted from MM2 lands under MM2/, anything else under
+    MM1/. Runs BEFORE post_editor_cleanup wipes SHOP; otherwise the geometry only survives inside
+    the .ar.
     """
-    destination = Folder.Resources.CityFiles / MAP_FILENAME
+    city_root = Folder.Resources.CityFilesMM2 if MM2_CITY else Folder.Resources.CityFilesMM1
+    destination = city_root / MAP_FILENAME
     if destination.exists():
         shutil.rmtree(destination, ignore_errors = True)
     destination.mkdir(parents = True, exist_ok = True)

@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from pathlib import Path
 
-_CITY_RESOURCES = Path(__file__).parent.parent.parent / "resources" / "city_files"
+# Every CityDefinition below is an MM1 city; MM2 conversions live under city_files/MM2.
+_CITY_RESOURCES = Path(__file__).parent.parent.parent / "resources" / "city_files" / "MM1"
 
 
 @dataclass(frozen=True)

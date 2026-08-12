@@ -1,0 +1,22 @@
+Name,H Tris,M Tris,L Tris,VL Tris
+vpbug.pkg,446,366,92,10
+vpbullet.pkg,398,338,92,10
+vpbus.pkg,420,330,152,10
+vpcab36.pkg,495,547,120,28
+vpcab37.pkg,495,547,120,28
+vpcaddie.pkg,360,314,96,10
+vpcoop.pkg,586,718,84,10
+vpcoop2.pkg,428,548,76,10
+vpcoop_dash.pkg,22,0,0,0
+vpcoop_test.pkg,428,564,84,10
+vpcop.pkg,396,302,122,10
+vpdb7.pkg,418,484,94,20
+vpdb731.pkg,128,352,88,20
+vpford.pkg,456,344,150,10
+vpftruck.pkg,503,606,203,16
+vpftruck_trailer.pkg,512,476,156,10
+vpmustang99.pkg,360,281,104,10
+vppanoz.pkg,542,480,166,10
+vppanozgt.pkg,498,415,123,10
+vpsemi.pkg,480,432,152,10
+vpsemi_trailer.pkg,280,220,72,8

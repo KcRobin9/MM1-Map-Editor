@@ -1,0 +1,17 @@
+name,start,distance,maxUse,minLerp,maxLerp,file1,file2,file3,file4,,,,,,,
+streetlight,9,29,9999,0.1,0.1,sp_lightstreet_l
+streetlightb,18,29,9999,0.1,0.1,sp_lightstreet_l
+streetlight02,9,40,6,0.1,0.1,sp_lightpark_f
+streetlight02b,18,40,6,0.1,0.1,sp_lightpark_f
+streetlight03,9,40,6,0.1,0.1,sp_lightthames_l
+streetlight03b,18,40,6,0.1,0.1,sp_lightthames_l
+streetlight04,9,40,6,0.1,0.1,sp_light_tall_l
+streetlight04b,18,40,6,0.1,0.1,sp_light_tall_l
+mailbox,2,1,1,0.2,0.2,sp_mailbox_l
+meter,13,17,9999,0.1,0.1,sp_parkmtr_f
+trashcan,4,10,1,0.1,0.1,sp_can_royal_l
+dumpster,9,10,1,0.1,0.1,sp_dumpstr_l
+newsboxs,7,10,1,0.1,0.1,sp_newsgroup01_l
+phone,16,29,1,0.1,0.1,sp_phonebooth_l
+streetree,14,50,2,0.1,0.1,sp_tree1_s,sp_tree1_s
+bench,11,10,1,0.1,0.1,sp_benchwood_f
