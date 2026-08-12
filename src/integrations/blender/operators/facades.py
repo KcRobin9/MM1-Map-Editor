@@ -8,7 +8,7 @@ from typing import Dict, List, Tuple, Optional
 
 from src.constants.misc import Default
 from src.constants.folder import Folder
-from src.constants.constants import CURRENT_TIME_FORMATTED
+from src.constants.constants import current_time_formatted
 from src.ui.console import ok, sep, item, suppress_stdout_matching
 
 
@@ -678,7 +678,7 @@ def _replace_user_facades_file(code: str) -> Tuple[Path, Optional[Path]]:
     target = Folder.Src.User.Facades
     backup = None
     if target.exists():
-        backup = target.with_name(f"facades_backup_{CURRENT_TIME_FORMATTED}.py")
+        backup = target.with_name(f"facades_backup_{current_time_formatted()}.py")
         backup.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(code, encoding="utf-8")

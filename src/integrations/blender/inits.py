@@ -43,6 +43,7 @@ from src.integrations.blender.operators.car_editor import (
 from src.constants.car_assets import LightColor
 from src.integrations.blender.waypoints.draw import register_draw_handler, unregister_draw_handler
 from src.integrations.blender.handlers import _vertex_poll_timer
+from src.integrations.blender.auto_save import shutdown_auto_save
 from src.integrations.blender.modeling.uv_mapping import TEXTURE_ENUM_ITEMS, update_texture_name, update_uv_tiling, update_texture_category, OBJECT_OT_RefreshCurrentTextures
 from src.integrations.blender.modeling.texture_catalog import CATEGORY_ITEMS
 from src.integrations.blender.operators.road_builder import ROAD_BUILDER_CLASSES, ROAD_TYPE_ITEMS
@@ -2101,6 +2102,8 @@ def unregister_all() -> None:
 
     if bpy.app.timers.is_registered(_vertex_poll_timer):
         bpy.app.timers.unregister(_vertex_poll_timer)
+
+    shutdown_auto_save()
 
     for cls in reversed(ALL_CLASSES):
         _safe_unregister(cls)

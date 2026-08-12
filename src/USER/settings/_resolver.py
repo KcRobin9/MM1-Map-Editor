@@ -37,6 +37,7 @@ from src.USER.settings.debug import (
 )
 
 from src.USER.settings.blender import (
+    time_auto_save, keep_auto_saves,
     load_target_model, load_all_textures,
     visualize_props, visualize_facades, visualize_bridges, prop_bms_folder, prop_car_wheels, prop_car_lights,
     MM2_BLENDER_VIZ, MM2_PROPS_MERGED, MM2_EXPORT_CITY_FOLDER, MM2_SAVE_RELOAD_AFTER_BUILD,

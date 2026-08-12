@@ -13,7 +13,14 @@ PROP_CAN_COLLIDE_FLAG = 0x800
 
 REQUIRED_ANGEL_FILES = ["RUN.BAT", "SHIP.BAT"]
 
-CURRENT_TIME_FORMATTED = datetime.datetime.now().strftime("%Y_%d_%m_%H%M_%S")
+TIME_FORMAT = "%Y_%d_%m_%H%M_%S"
+
+
+# Read at the moment of the call, never at import. A module-level stamp is fixed for the whole
+# Blender session, so exporting or backing up twice writes the same filename and the second run
+# silently overwrites the first.
+def current_time_formatted() -> str:
+    return datetime.datetime.now().strftime(TIME_FORMAT)
     
 #TODO: find a better location for this
 NOTEPAD_PLUS_PATHS = [

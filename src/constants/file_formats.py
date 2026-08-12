@@ -264,6 +264,7 @@ class FileType:
     RACE_RECORD   = ".DAT"
 
     ANGEL_RESOURCE = ".ar"
+    BLENDER = ".blend"
     CSV = ".CSV"
     JSON = ".json"
     TEXT = ".txt"

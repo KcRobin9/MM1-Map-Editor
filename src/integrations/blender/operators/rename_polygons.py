@@ -1,14 +1,10 @@
 import re
 import bpy
 
-from src.integrations.blender.utils import get_used_bound_numbers, next_available_bound_number, assign_map_editor_properties
-
-
-def get_polygon_objects(context: bpy.types.Context, sort: bool = False) -> list:
-    polygons = [obj for obj in context.scene.objects if obj.type == "MESH" and obj.name.startswith("P")]
-    if not sort or not polygons:
-        return polygons
-    return sorted(polygons, key=lambda x: int(re.search(r"P(\d+)", x.name).group(1)))
+from src.integrations.blender.utils import (
+    get_polygon_objects, get_used_bound_numbers, next_available_bound_number,
+    assign_map_editor_properties,
+)
 
 
 def rename_sequential(polygons: list) -> int:
@@ -29,7 +25,7 @@ class OBJECT_OT_RenameSequential(bpy.types.Operator):
 
     def execute(self, context: bpy.types.Context) -> set:
         try:
-            polygons = get_polygon_objects(context, sort=True)
+            polygons = get_polygon_objects(context.scene.objects, sort=True)
             if not polygons:
                 self.report({"WARNING"}, "No polygon objects found")
                 return {"CANCELLED"}

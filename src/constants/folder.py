@@ -59,6 +59,7 @@ class Folder:
         Export    = _BLENDER_EXPORT
         Polygons  = _BLENDER_EXPORT / "polygons"
         Waypoints = _BLENDER_EXPORT / "waypoints"
+        AutoSave  = _BLENDER_EXPORT / "autosave"
         Models    = _BASE / "blender_models"
 
     class MidtownMadness:

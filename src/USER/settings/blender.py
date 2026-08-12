@@ -1,8 +1,14 @@
 from pathlib import Path
 from src.constants.folder import Folder
+from src.constants.file_formats import FileType
 
 load_target_model = False               # Set True to load an external model instead of the test city
-target_blend_file = Folder.Blender.Models / "RACECITY_2ND.blend"  # Only used when load_target_model = True
+target_blend_file = Folder.Blender.Models / f"RACECITY_2ND{FileType.BLENDER}"  # Only used when load_target_model = True
+
+# Auto-Save
+time_auto_save  = 10            # Minutes between automatic polygon exports (0 = off). Each one writes
+                                # a timestamped .txt to blender_export/autosave/
+keep_auto_saves = 20            # How many of those exports to keep (0 = keep every one)
 
 # Textures
 load_all_textures = False        # Change to "True" if you want to load all textures (materials) (slower loading time)

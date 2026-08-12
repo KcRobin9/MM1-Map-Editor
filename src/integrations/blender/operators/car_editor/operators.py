@@ -13,7 +13,7 @@ from src.constants.misc import Executable
 from src.integrations.blender.modeling.meshes import (
     _apply_materials_to_mesh, _build_material, build_blender_mesh, read_bms,
 )
-from src.constants.constants import CURRENT_TIME_FORMATTED
+from src.constants.constants import current_time_formatted
 from src.integrations.blender.modeling import car_templates
 from src.integrations.blender.modeling.car_showcase import generate_showcase
 from src.integrations.blender.modeling.bms_writer import mesh_to_bms_data, write_bms
@@ -859,7 +859,7 @@ class CAR_OT_ExportCar(bpy.types.Operator):
             bpy.ops.object.mode_set(mode="OBJECT")
 
         # Timestamped export dir — timestamp generated fresh at export time
-        export_dir = Folder.Blender.Export / "cars" / f"{car_name}_{CURRENT_TIME_FORMATTED}"
+        export_dir = Folder.Blender.Export / "cars" / f"{car_name}_{current_time_formatted()}"
         export_dir.mkdir(parents=True, exist_ok=True)
         scene.ce_last_export_dir = str(export_dir)
 

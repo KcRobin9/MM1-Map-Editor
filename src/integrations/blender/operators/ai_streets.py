@@ -7,7 +7,7 @@ from mathutils import Vector
 
 from src.constants.folder import Folder
 from src.constants.file_formats import FileType
-from src.constants.constants import CURRENT_TIME_FORMATTED, YES, NO
+from src.constants.constants import current_time_formatted, YES, NO
 from src.constants.keyboard import Key
 from src.constants.props import Prop
 from src.game.races.constants_2 import IntersectionType
@@ -767,7 +767,7 @@ class OBJECT_OT_ExportAIStreets(bpy.types.Operator):
             self.report({"WARNING"}, "No street objects found.")
             return {"CANCELLED"}
 
-        export_file = Folder.Blender.Polygons / f"Streets_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+        export_file = Folder.Blender.Polygons / f"Streets_{current_time_formatted()}{FileType.TEXT}"
 
         try:
             with open(export_file, "w") as f:

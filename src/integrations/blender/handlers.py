@@ -1,4 +1,6 @@
 import bpy
+
+from src.integrations.blender.auto_save import initialize_auto_save
 import bmesh
 from pathlib import Path
 
@@ -77,6 +79,8 @@ def initialize_depsgraph_update_handler() -> None:
 
     if not bpy.app.timers.is_registered(_vertex_poll_timer):
         bpy.app.timers.register(_vertex_poll_timer, persistent=True)
+
+    initialize_auto_save()
 
 
 def depsgraph_update_handler(scene: bpy.types.Scene, depsgraph: bpy.types.Depsgraph) -> None:

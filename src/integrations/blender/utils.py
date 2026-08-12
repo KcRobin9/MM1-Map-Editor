@@ -5,15 +5,38 @@ from src.constants.file_formats import Material, Room
 from src.constants.constants import YES, NO
 
 
+# The bound number in a polygon name, or None when the name is not one.
+# Blender's deduplicated form counts, so P201 and P201.001 both give 201.
+def polygon_bound_number(name: str):
+    if not name.startswith("P"):
+        return None
+
+    try:
+        return int(name[1:].split(".")[0])
+    except ValueError:
+        return None
+
+
+# Takes any object sequence rather than the scene, so callers can pass a selection instead.
+def get_polygon_objects(objects, sort: bool = False) -> list:
+    # A polygon is P followed by a digit, which leaves out reference objects such as PA_Start
+    polygons = [
+        obj for obj in objects
+        if obj.type == "MESH" and polygon_bound_number(obj.name) is not None
+    ]
+
+    if not sort:
+        return polygons
+
+    return sorted(polygons, key=lambda obj: (polygon_bound_number(obj.name), obj.name))
+
+
 def get_used_bound_numbers(scene) -> set:
     used = set()
     for obj in scene.objects:
-        if obj.type == "MESH" and obj.name.startswith("P"):
-            try:
-                num = int(obj.name[1:].split(".")[0])
-                used.add(num)
-            except ValueError:
-                pass
+        number = polygon_bound_number(obj.name) if obj.type == "MESH" else None
+        if number is not None:
+            used.add(number)
     return used
 
 

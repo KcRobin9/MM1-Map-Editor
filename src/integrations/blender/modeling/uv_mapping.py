@@ -4,6 +4,7 @@ import math
 from src.constants.textures import Texture
 
 from pathlib import Path
+from contextlib import contextmanager
 from src.constants.file_formats import FileType
 
 from src.integrations.blender.modeling.texture_catalog import (
@@ -12,6 +13,10 @@ from src.integrations.blender.modeling.texture_catalog import (
 
 
 _texture_folder: Path | None = None
+
+# True while code assigns texture_name in bulk, so the update callback does not treat each
+# assignment as a user picking a texture (see texture_updates_suppressed).
+_bulk_assigning: bool = False
 
 # Full per-category catalog (populated once the texture folder is known).
 # Key → sorted list of (id, label, tooltip) enum tuples.
@@ -169,8 +174,23 @@ class OBJECT_OT_RefreshCurrentTextures(bpy.types.Operator):
 
 # ── Texture-name / UV callbacks ────────────────────────────────────────────────
 
+# Setting texture_name fires update_texture_name, which applies the texture to every SELECTED
+# object --- right when a user picks one from the dropdown, ruinous when code assigns in a loop,
+# because each polygon then re-textures the ones before it and the scene ends on a single texture.
+@contextmanager
+def texture_updates_suppressed():
+    """Assign texture_name in bulk without the update callback firing."""
+    global _bulk_assigning
+    was_assigning = _bulk_assigning
+    _bulk_assigning = True
+    try:
+        yield
+    finally:
+        _bulk_assigning = was_assigning
+
+
 def update_texture_name(self, context) -> None:
-    if not _texture_folder or not self.texture_name:
+    if _bulk_assigning or not _texture_folder or not self.texture_name:
         return
 
     def apply(obj) -> None:
@@ -186,6 +206,12 @@ def update_texture_name(self, context) -> None:
         _apply_material(obj, tex_name, texture_path)
 
     apply(self)
+
+    # "Apply to the rest of the selection" is a UI convenience, so it only makes sense when the
+    # edit came from the ACTIVE object --- the one whose panel the user is looking at.
+    if context.active_object is not self:
+        return
+
     for obj in context.selected_objects:
         if obj.type == "MESH" and obj != self:
             apply_from(obj, self.texture_name)

@@ -4223,7 +4223,7 @@ import bmesh
 from src.core.geometry.main import transform_coordinate_system
 
 from src.integrations.blender.modeling.meshes import _apply_materials_to_mesh
-from src.integrations.blender.modeling.uv_mapping import update_uv_tiling, set_texture_folder
+from src.integrations.blender.modeling.uv_mapping import update_uv_tiling, set_texture_folder, texture_updates_suppressed
 from src.integrations.blender.panels.hud import set_hud_color
 
 
@@ -4629,12 +4629,14 @@ def create_blender_meshes(texture_folder: Path, load_all_textures: bool, load_ta
         print(f"WARNING: {len(missing_names)} texture(s) not found in any search dir -> untextured in "
               f"Blender preview: {_ex}{' ...' if len(missing_names) > 15 else ''}")
 
-    # Set texture_name on each object after all materials are loaded
-    for obj, texture_name in zip(created_objects, texture_names):
-        try:
-            obj.texture_name = texture_name
-        except TypeError:
-            pass
+    # Set texture_name on each object after all materials are loaded. Suppressed, or each
+    # assignment would re-texture the whole selection and the scene would end on one texture.
+    with texture_updates_suppressed():
+        for obj, texture_name in zip(created_objects, texture_names):
+            try:
+                obj.texture_name = texture_name
+            except TypeError:
+                pass        # texture is not in the enum (a category not currently loaded)
 
     apply_computed_uvs(created_objects)
 

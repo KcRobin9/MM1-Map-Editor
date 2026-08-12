@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from src.constants.folder import Folder
 from src.constants.props import BangerFlags
 from src.constants.file_formats import AxisRef
-from src.constants.constants import HUGE, CURRENT_TIME_FORMATTED
+from src.constants.constants import HUGE, current_time_formatted
 from src.constants.props_orientation import PROP_ORIENTATION_OFFSET
 from src.integrations.blender.modeling.props import place_props_in_scene, _find_prop_folder
 
@@ -938,7 +938,7 @@ def _replace_user_props_file(code: str) -> Tuple[Path, Optional[Path]]:
     target = Folder.Src.User.Props
     backup = None
     if target.exists():
-        backup = target.with_name(f"props_backup_{CURRENT_TIME_FORMATTED}.py")
+        backup = target.with_name(f"props_backup_{current_time_formatted()}.py")
         backup.write_text(target.read_text(encoding="utf-8"), encoding="utf-8")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(code, encoding="utf-8")

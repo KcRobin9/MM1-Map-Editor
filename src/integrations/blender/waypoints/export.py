@@ -5,7 +5,7 @@ import pyautogui
 from src.constants.keyboard import Key
 from src.constants.folder import Folder
 from src.constants.file_formats import FileType
-from src.constants.constants import CURRENT_TIME_FORMATTED
+from src.constants.constants import current_time_formatted
 
 from src.misc.main import open_with_notepad_plus
 from src.game.waypoints.constants import Rotation
@@ -64,7 +64,7 @@ def export_selected_waypoints(export_all: bool = False, add_brackets: bool = Fal
     race_wps = _get_race_waypoints(export_all)
     cnr_sets = _get_cnr_sets()
 
-    export_file = Folder.Blender.Waypoints / f"Waypoints_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+    export_file = Folder.Blender.Waypoints / f"Waypoints_{current_time_formatted()}{FileType.TEXT}"
 
     with open(export_file, "w") as f:
         # ── Race waypoints ────────────────────────────────────────────────────

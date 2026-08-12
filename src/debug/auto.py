@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.constants.constants import CURRENT_TIME_FORMATTED
+from src.constants.constants import current_time_formatted
 from src.constants.file_formats import FileType
 from src.constants.folder import Folder
 from src.file_formats.ai.read_write import debug_ai
@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
 
 def _output_root() -> Path:
-    run_dir = Folder.Debug.Output / f"run_{CURRENT_TIME_FORMATTED}"
+    run_dir = Folder.Debug.Output / f"run_{current_time_formatted()}"
     run_dir.mkdir(parents=True, exist_ok=True)
     return run_dir
 

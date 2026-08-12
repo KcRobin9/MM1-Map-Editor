@@ -1,16 +1,16 @@
-import re
 import bpy
 import time
 import pyautogui
 from pathlib import Path
 from typing import Set
 
-from src.constants.constants import CURRENT_TIME_FORMATTED
+from src.constants.constants import current_time_formatted
 from src.constants.file_formats import FileType
 from src.constants.keyboard import Key
 from src.constants.folder import Folder
 
 from src.integrations.blender.export_polygons import export_formatted_polygons
+from src.integrations.blender.utils import get_polygon_objects, polygon_bound_number
 
 from src.misc.main import open_with_notepad_plus
 
@@ -47,7 +47,7 @@ def _replace_polygons_in_script(new_content: str) -> None:
     # Back up the existing polygon block before overwriting
     old_block = text[after_start:end_idx].strip()
     if old_block:
-        backup_file = Folder.Blender.Polygons / f"MAP_EDITOR_ALPHA_v1_BACKUP_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+        backup_file = Folder.Blender.Polygons / f"MAP_EDITOR_ALPHA_v1_BACKUP_{current_time_formatted()}{FileType.TEXT}"
         backup_file.parent.mkdir(parents=True, exist_ok=True)
         backup_file.write_text(old_block, encoding="utf-8")
 
@@ -61,12 +61,6 @@ def _popup_error(context: bpy.types.Context, title: str, lines: list) -> None:
         for line in lines:
             self.layout.label(text=line)
     context.window_manager.popup_menu(draw, title=title, icon='ERROR')
-
-
-def _bound_number_from_name(name: str):
-    # Match P201 and Blender's auto-deduplicated P201.001 form
-    m = re.match(r"^P(\d+)(?:\.\d+)?$", name)
-    return int(m.group(1)) if m else None
 
 
 class OBJECT_OT_ExportPolygons(bpy.types.Operator):
@@ -84,22 +78,11 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             return False
 
     def execute(self, context: bpy.types.Context) -> Set[str]:
-        export_file = Folder.Blender.Polygons / f"Polygons_{CURRENT_TIME_FORMATTED}{FileType.TEXT}"
+        export_file = Folder.Blender.Polygons / f"Polygons_{current_time_formatted()}{FileType.TEXT}"
 
-        # Select Mesh Objects based on the "select_all" property.
-        # Match P followed by a digit so PA* reference objects are excluded.
-        _is_poly   = lambda n: len(n) > 1 and n[0] == "P" and n[1].isdigit()
-        _sort_key  = lambda obj: ((_bound_number_from_name(obj.name) or 0), obj.name)
-        if self.select_all:
-            mesh_objects = sorted(
-                [obj for obj in bpy.context.scene.objects if obj.type == "MESH" and _is_poly(obj.name)],
-                key=_sort_key,
-            )
-        else:
-            mesh_objects = sorted(
-                [obj for obj in bpy.context.selected_objects if obj.type == "MESH" and _is_poly(obj.name)],
-                key=_sort_key,
-            )
+        # Export All walks the whole scene, Export Selected only what the user picked.
+        source_objects = bpy.context.scene.objects if self.select_all else bpy.context.selected_objects
+        mesh_objects = get_polygon_objects(source_objects, sort=True)
 
         if not mesh_objects:
             self.report({"WARNING"}, "No mesh objects found for export.")
@@ -111,7 +94,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
             # P1 is required for editor-built maps (bound_numbers 1–199).
             # City round-trips (all cells ≥ 1000) don't have or need a P1.
             has_city_cells = any(
-                _bound_number_from_name(n) is not None and _bound_number_from_name(n) >= 1000
+                polygon_bound_number(n) is not None and polygon_bound_number(n) >= 1000
                 for n in names_in_scene
             )
             if "P1" not in names_in_scene and not has_city_cells:
@@ -134,7 +117,7 @@ class OBJECT_OT_ExportPolygons(bpy.types.Operator):
         else:
             # ── Selected export: only validate the polygons being exported ────
             for obj in mesh_objects:
-                num = _bound_number_from_name(obj.name)
+                num = polygon_bound_number(obj.name)
                 if num is None:
                     _popup_error(context, "Cannot Export — Invalid Name", [
                         f"'{obj.name}' is not a valid polygon name.",

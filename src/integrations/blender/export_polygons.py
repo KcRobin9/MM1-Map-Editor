@@ -72,10 +72,16 @@ def format_vertices(obj: bpy.types.Object) -> str:
     face = mesh.polygons[0]  # Each polygon object has exactly one face
     formatted_vertices = []
 
+    # Vertices are stored in OBJECT space, so the object's transform has to be folded in to get the
+    # world position the game needs. Export All does that by applying transforms first, which leaves
+    # matrix_world as identity and makes this a no-op; auto-save cannot mutate the scene, so it
+    # relies on the multiply instead.
+    to_world = obj.matrix_world
+
     for loop_idx in face.loop_indices:
         loop = mesh.loops[loop_idx]
         vertex = mesh.vertices[loop.vertex_index]
-        transformed_vertex = transform_coordinate_system(vertex.co, blender_to_game=True)
+        transformed_vertex = transform_coordinate_system(to_world @ vertex.co, blender_to_game=True)
         formatted_vertex = f"({', '.join(format_decimal(comp) for comp in transformed_vertex)})"
         formatted_vertices.append(formatted_vertex)
 
