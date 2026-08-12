@@ -22,9 +22,9 @@ Usage from MAP_EDITOR_ALPHA_v1.py (mirrors the MAP_SPEC_FILE block at ~1692):
         write_roadnet_ai(compiled, overwrite=True)      # set set_ai_streets=False!
 """
 import math
-import os
 import shutil
 import tempfile
+from pathlib import Path
 from typing import Iterator, List, NamedTuple
 
 from src.game.mapgen.roadnet.network_compiler import (
@@ -232,8 +232,8 @@ def _bank_slopes(e, cl, arch, deck):
     return [bs * (a / deck) for a in arch]
 
 
-# TEMP (Robin 2026-06-26): deck guardrails OFF. On narrow/scaled roads the T_RAIL03 fences have collision,
-# so swerving opponents clip them and get stuck. Flip back to True to restore the deck fences.
+# Deck guardrails are OFF: on narrow/scaled roads the T_RAIL03 fences have collision, so swerving
+# opponents clip them and get stuck. Flip back to True to restore the deck fences.
 DECK_GUARDRAILS = False
 
 
@@ -1131,7 +1131,8 @@ def write_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
         from src.constants.folder import Folder
         devmap_dir = str(Folder.MidtownMadness.DevCityMap)
 
-    os.makedirs(devmap_dir, exist_ok=True)
+    devmap = Path(devmap_dir)
+    devmap.mkdir(parents=True, exist_ok=True)
     written = 0
     skipped = 0
     street_names = []
@@ -1139,25 +1140,23 @@ def write_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
     for s in compiled.sections:
         name = f"Street{s.fwd.id}"
         street_names.append(name)
-        path = os.path.join(devmap_dir, f"{name}.road")
-        if not overwrite and os.path.exists(path):
+        road_file = devmap / f"{name}.road"
+        if not overwrite and road_file.exists():
             skipped += 1
             continue
-        with open(path, "w") as f:
-            f.write(emit_road(s, None if FLAT_AI_RAILS else getattr(compiled.network, "terrain", None),
-                              getattr(compiled.network, "flat_climb", False)))
+        road_file.write_text(
+            emit_road(s, None if FLAT_AI_RAILS else getattr(compiled.network, "terrain", None),
+                      getattr(compiled.network, "flat_climb", False)))
         written += 1
 
     # the .map lists the streets the game loads
-    with open(os.path.join(devmap_dir, f"{map_filename}.map"), "w") as f:
-        f.write(map_file_text(map_filename, street_names))
+    (devmap / f"{map_filename}.map").write_text(map_file_text(map_filename, street_names))
 
     isect_written = 0
     if write_intersections:
         from src.game.mapgen.roadnet.emit import emit_intersection
         for rec in compiled.intersections:
-            with open(os.path.join(devmap_dir, f"Intersection{rec.id}.int"), "w") as f:
-                f.write(emit_intersection(rec))
+            (devmap / f"Intersection{rec.id}.int").write_text(emit_intersection(rec))
             isect_written += 1
 
     return {"roads_written": written, "roads_skipped": skipped,
@@ -1178,8 +1177,11 @@ def map_file_text(map_filename: str, street_names: List[str]) -> str:
 # build, after the clear + after the normal AI pass (so roadnet AI wins). Staging is
 # cleared on consume, so it never goes stale into an unrelated later build.
 
-def staging_dir(map_filename: str) -> str:
-    return os.path.join(tempfile.gettempdir(), f"mm1_roadnet_ai_{map_filename}")
+AI_SUFFIXES = (".road", ".map", ".int")
+
+
+def staging_dir(map_filename: str) -> Path:
+    return Path(tempfile.gettempdir()) / f"mm1_roadnet_ai_{map_filename}"
 
 
 def stage_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
@@ -1188,27 +1190,28 @@ def stage_roadnet_ai(compiled: CompiledNetwork, map_filename: str = None,
     if map_filename is None:
         from src.USER.settings.main import MAP_FILENAME
         map_filename = MAP_FILENAME
-    d = staging_dir(map_filename)
-    if os.path.isdir(d):
-        for f in os.listdir(d):
-            os.remove(os.path.join(d, f))
-    os.makedirs(d, exist_ok=True)
+    stage = staging_dir(map_filename)
+    if stage.is_dir():
+        for stale in stage.iterdir():
+            stale.unlink()
+    stage.mkdir(parents=True, exist_ok=True)
 
     street_names = []
     for s in compiled.sections:
         name = f"Street{s.fwd.id}"
         street_names.append(name)
-        with open(os.path.join(d, f"{name}.road"), "w") as f:
-            f.write(emit_road(s, None if FLAT_AI_RAILS else getattr(compiled.network, "terrain", None),
-                              getattr(compiled.network, "flat_climb", False)))
-    with open(os.path.join(d, f"{map_filename}.map"), "w") as f:
-        f.write(map_file_text(map_filename, street_names))
+        (stage / f"{name}.road").write_text(
+            emit_road(s, None if FLAT_AI_RAILS else getattr(compiled.network, "terrain", None),
+                      getattr(compiled.network, "flat_climb", False)))
+
+    (stage / f"{map_filename}.map").write_text(map_file_text(map_filename, street_names))
+
     if write_intersections:
         from src.game.mapgen.roadnet.emit import emit_intersection
         for rec in compiled.intersections:
-            with open(os.path.join(d, f"Intersection{rec.id}.int"), "w") as f:
-                f.write(emit_intersection(rec))
-    return {"staged": len(street_names), "dir": d}
+            (stage / f"Intersection{rec.id}.int").write_text(emit_intersection(rec))
+
+    return {"staged": len(street_names), "dir": str(stage)}
 
 
 def write_roam_aimap(compiled, race_dir, density: float = 2.0,
@@ -1225,8 +1228,8 @@ def write_roam_aimap(compiled, race_dir, density: float = 2.0,
 
     `compiled` may be None, which writes the same file with no cops in it.
     """
-    import os
-    os.makedirs(str(race_dir), exist_ok=True)
+    race_dir = Path(race_dir)
+    race_dir.mkdir(parents=True, exist_ok=True)
 
     # `compiled` may be None: the direct-BAI path has no compiled network, and with no network
     # there is nowhere to seed cops, so it asks for the cop-free file.
@@ -1261,10 +1264,10 @@ def write_roam_aimap(compiled, race_dir, density: float = 2.0,
         "[Opponent]\n"
         "0\n"
     )
-    path = os.path.join(str(race_dir), "ROAM.AIMAP")
-    with open(path, "w") as f:
-        f.write(text)
-    return path
+    path = race_dir / "ROAM.AIMAP"
+    path.write_text(text)
+
+    return str(path)
 
 
 def consume_staged_ai(devmap_dir, map_filename: str) -> int:
@@ -1272,22 +1275,28 @@ def consume_staged_ai(devmap_dir, map_filename: str) -> int:
     Move staged AI into the dev city-map folder (clearing any AI already there), then
     clear staging. Returns the number of files copied (0 if nothing was staged).
     """
-    d = staging_dir(map_filename)
-    if not os.path.isdir(d):
+    stage = staging_dir(map_filename)
+    if not stage.is_dir():
         return 0
-    files = [f for f in os.listdir(d) if f.endswith((".road", ".map", ".int"))]
-    if not files:
+
+    staged = [path for path in stage.iterdir() if path.suffix in AI_SUFFIXES]
+    if not staged:
         return 0
-    devmap_dir = str(devmap_dir)
-    os.makedirs(devmap_dir, exist_ok=True)
-    for f in os.listdir(devmap_dir):
-        if f.endswith((".road", ".int", ".map")):
-            os.remove(os.path.join(devmap_dir, f))
-    for f in files:
-        shutil.copy2(os.path.join(d, f), os.path.join(devmap_dir, f))
-    for f in os.listdir(d):
-        os.remove(os.path.join(d, f))
-    return len(files)
+
+    devmap = Path(devmap_dir)
+    devmap.mkdir(parents=True, exist_ok=True)
+
+    for existing in devmap.iterdir():
+        if existing.suffix in AI_SUFFIXES:
+            existing.unlink()
+
+    for path in staged:
+        shutil.copy2(path, devmap / path.name)
+
+    for path in stage.iterdir():        # staging is cleared so it cannot go stale into a later build
+        path.unlink()
+
+    return len(staged)
 
 
 def audit_collision(compiled):
