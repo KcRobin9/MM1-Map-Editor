@@ -4,6 +4,7 @@ import shutil
 from pathlib import Path
 
 from src.constants.folder import Folder
+from src.constants.file_formats import FileType, CITY_AR_PREFIX
 from src.constants.constants import REQUIRED_ANGEL_FILES
 from src.USER.settings.main import MAP_FILENAME
 from src.ui.console import ok, item, red
@@ -54,9 +55,9 @@ def run_angel_process(shop_folder: Path) -> bool:
     continues to cleanup / delete_shop (the old Popen raced that and produced a ~1 KB AR).
     """
     mm = Path(Folder.MidtownMadness.Root)
-    ar_tag = f"!!!!!{MAP_FILENAME}"
+    ar_tag = f"{CITY_AR_PREFIX}{MAP_FILENAME}"
     shiplist = mm / f"shiplist.{ar_tag}"
-    ar_out = mm / f"{ar_tag}.ar"
+    ar_out = mm / f"{ar_tag}{FileType.ANGEL_RESOURCE}"
     mkar = Path(Folder.Angel) / "mkar.exe"
 
     count = _build_shiplist(Path(shop_folder), shiplist)

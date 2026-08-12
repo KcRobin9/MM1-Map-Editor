@@ -170,6 +170,12 @@ class BoundFormat:
     ROW_BUCKETS_U32_FLAG       = 0x80000000
 
 
+# Angel Resource archives load in NAME order, so a leading-'!' prefix makes a pack load late and
+# override any earlier copy of the same file. Cities use five; the car and dash packers use ten
+# (CAR_AR_PREFIX), so a custom car still wins over the city it is driven in.
+CITY_AR_PREFIX = "!!!!!"
+
+
 class DdsHeader:
     """DDS surface header: height then width, as two u32 at DIMENSIONS_OFFSET. Used when registering
     a texture in the sheet; a header that reads back 0 falls back to FALLBACK_SIZE."""
@@ -257,6 +263,7 @@ class FileType:
     PLAYER_CONFIG = ".CFG"
     RACE_RECORD   = ".DAT"
 
+    ANGEL_RESOURCE = ".ar"
     CSV = ".CSV"
     JSON = ".json"
     TEXT = ".txt"

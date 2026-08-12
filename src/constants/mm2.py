@@ -12,6 +12,21 @@ from src.constants.file_formats import Material
 from src.constants.custom_props.mm2_props import Mm2Prop
 
 
+class Mm2City:
+    """The MM2 cities the converter knows how to build.
+
+    Each has its own .ar (MM2SF.ar, MM2BA.ar, ...) so they coexist in MidtownMadness/ and are picked
+    by race locale in-game. The per-city source paths live in the gitignored settings/local.py as
+    CITY_CFGS --- this is only the set of names.
+    """
+    SAN_FRANCISCO = "SF"          # stock MM2
+    LONDON        = "LONDON"      # stock MM2
+    NEW_YORK      = "NY"          # community-made
+    BUENOS_AIRES  = "BA"          # community-made
+
+    ALL = (SAN_FRANCISCO, LONDON, NEW_YORK, BUENOS_AIRES)
+
+
 class Mm2RaceType:
     """MM2's race-type names, and what each becomes in MM1.
 
