@@ -31,3 +31,14 @@ class City:
     Seaview          = CityDefinition("Seaview",            "SEAVIEW",            "SEAVIEW")
     Paulville        = CityDefinition("Paulville",          "PAULVILLE",          "RACETRACK3")
     Mm2Props         = CityDefinition("MM2 Props",           "MM2_PROPS",          "MM2P")
+
+
+def resolve_city(name: str) -> CityDefinition:
+    cities = [value for value in vars(City).values() if isinstance(value, CityDefinition)]
+    wanted = name.strip().lower()
+
+    for city in cities:
+        if wanted in (city.prefix.lower(), city.folder.lower(), city.name.replace(" ", "").lower()):
+            return city
+
+    raise ValueError(f"Unknown city '{name}'. Options: {', '.join(sorted(c.prefix for c in cities))}")
