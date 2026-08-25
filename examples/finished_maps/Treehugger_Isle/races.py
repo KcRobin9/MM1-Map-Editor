@@ -1,5 +1,7 @@
-from src.Constants.vehicles import PlayerCar, TrafficCar
-from src.Constants.races import Rotation, Width, TimeOfDay, Weather, MaxOpponents, CopDensity, AmbientDensity, PedDensity, Laps, CopStartLane, CopBehavior
+from src.constants.vehicles import PlayerCar, TrafficCar
+from src.constants.time_weather import TimeOfDay, Weather
+from src.game.waypoints.constants import Rotation, Width
+from src.game.races.constants_2 import MaxOpponents, CopDensity, AmbientDensity, PedDensity, Laps, CopStartLane, CopBehavior
 
 
 # Max number of Races is 15 for Blitz, 15 for Circuit, and 12 for Checkpoint

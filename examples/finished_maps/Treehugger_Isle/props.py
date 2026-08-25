@@ -1,9 +1,10 @@
-from src.Constants.props import Prop
-from src.Constants.constants import HUGE
-from src.Constants.file_types import Axis
+from src.constants.props import Prop
+from src.constants.constants import HUGE
+from src.constants.file_formats import Axis
 
-from src.Constants.races import RaceModeNum, RaceMode
-from src.Constants.vehicles import PlayerCar
+from src.constants.modes import RaceMode
+from src.constants.vehicles import PlayerCar
+from src.game.races.constants import RaceModeNum
 
 # Race specific props  # Also possible: RaceModeNum.CIRCUIT_ALL
 ########################
