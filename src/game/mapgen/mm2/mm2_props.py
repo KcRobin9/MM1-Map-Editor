@@ -1,47 +1,43 @@
 """
 1:1 reproduction of Midtown Madness 2's PROCEDURAL street-furniture placement.
 
-MM2 places street furniture (lamps, meters, benches, bins, news boxes, signs, trees, ...) by
-walking PROP RULES along every road's two sidewalks. The rules live in three places:
+MM2 places furniture (lamps, meters, benches, bins, signs, trees, ...) by walking PROP RULES along
+every road's two sidewalks. The rules live in three places:
 
   * `<city>/propdefs.csv`   one row per furniture KIND:
         name,start,distance,maxUse,minLerp,maxLerp,file1..file4
         start    = arc-length (m) of the FIRST instance along the road sidewalk
         distance = spacing (m) between consecutive instances (<=0 -> place nothing)
         maxUse   = max instances per road-side (9999 = unlimited)
-        minLerp/maxLerp = lateral lerp fraction across the sidewalk (0=curb, 1=building);
-                          rnd(min,max) -- but EVERY MM2 row has min==max, so this is exact.
-        file1..4 = .pkg model name(s); one is picked per instance (rnd(0,nMeshes)).
+        minLerp/maxLerp = lateral lerp across the sidewalk (0=curb, 1=building). Nominally
+                          rnd(min,max), but every MM2 row has min==max, so it is exact.
+        file1..4 = .pkg model name(s); one is picked per instance.
   * `<city>/proprules.csv`  one row per ROAD-SIDE:  rulename,prop1..prop8
         rulename = "n{NN}left" | "n{NN}right"  (NN = the rule-pair number)
-        prop1..8 = furniture KIND names placed on that sidewalk (each walked independently).
+        prop1..8 = furniture KIND names placed on that sidewalk, each walked independently.
   * the `.psdl`             links each Road room to a rule-pair number (the `propRule` byte) and
-        groups road blocks into whole roads (the `paths`/roadBlocks list). roomFlags bit3 = Road.
+        groups road blocks into whole roads. roomFlags bit3 = Road.
 
-ALGORITHM (per road, per side -- faithful to wilkovatch/km2-city-builder RoadGenerator.PlacePropsLane
-+ GeometryHelper.GetPointAndDirOnSidewalk + km2cb-mm2-core props/psdl.json placementRules):
+ALGORITHM (per road, per side), faithful to wilkovatch/km2-city-builder's RoadGenerator:
 
-  inLine  = the CURB-edge polyline of the sidewalk (road side)
-  outLine = the BUILDING-edge polyline (back of the sidewalk)
+  inLine  = CURB-edge polyline of the sidewalk;  outLine = BUILDING-edge polyline
   midLine[i] = (inLine[i] + outLine[i]) / 2 ;  totalLength = arclength(midLine)
   for each furniture KIND on the side, walk i = 0,1,2,...:
       z = (i==0 ? start : lastZ + distance)
       place WHILE  distance > 0  AND  i < maxUse  AND  z <= totalLength :
           pMid = point at arclength z along midLine
-          pIn  = closest point on inLine  to pMid ;  pOut = closest point on outLine to pMid
-          pos  = lerp(pIn, pOut, rnd(minLerp,maxLerp))          # lateral across the sidewalk
-          dir  = normalize(pIn - pOut)                          # across the road, toward the curb
-          fwd  = normalize(cross(down, dir))                    # ALONG the road tangent
-          angle = signedAngle(+Z, fwd, +Up)                     # props face along the road
-          emit { name: mm1(model), offset:(pos.x, pos.y, pos.z), angle }
+          pIn  = closest point on inLine to pMid ;  pOut = closest point on outLine to pMid
+          pos  = lerp(pIn, pOut, rnd(minLerp, maxLerp))   # lateral across the sidewalk
+          dir  = normalize(pIn - pOut)                    # toward the curb
+          facing = -dir                                   # pkg +X points AWAY from the road
+          angle  = degrees(atan2(facing.z, facing.x))     # MM1 banger: mesh +X = facing
 
-Output: editor prop-dicts {name, offset:(x,y,z), angle, flags} -- the SAME shape generate_props
-returns (consumed by BangerEditor). Y is the sidewalk Y here; the groundsnap pass refines it.
+Output: editor prop-dicts {name, offset:(x,y,z), angle, flags} --- the same shape generate_props
+returns. Y is the sidewalk Y; the groundsnap pass refines it.
 
-Coordinate frame: the MM2 city is authored 1:1 into the MM1 frame (mm2_city.transform is identity
-for SF/London -- scale 1, no mirror), and the hand-placed props.pathset uses MM1 angle
-= atan2(dz,dx) and goes straight in (verified in-game). So we emit the same: world (x,z) pass
-through unchanged and angle = degrees(atan2(fwd.z, fwd.x)).
+The MM2 city is authored 1:1 into the MM1 frame (identity transform), so world (x,z) pass through
+unchanged. Every model is the real MM2 mesh, so one facing convention covers all of them and there
+are NO per-model angle offsets anywhere.
 """
 import json
 import math
@@ -54,7 +50,7 @@ from pathlib import Path
 from src.io.binary import read_unpack
 from src.constants.file_formats import Magic
 from src.constants.props import Prop, BangerFlags
-from src.constants.custom_props.mm2_props import Mm2Prop
+from src.constants.custom_props.mm2_props import Mm2Prop, mm2_model_map
 from .bai import parse_bai_full
 
 # BAI road-end vehicleRule: 3 = signalized (place a light), 0/1 = uncontrolled/stop (none).
@@ -147,77 +143,19 @@ def patch_raw_psdl(raw_path: str, psdl_path: str) -> dict:
 
 
 # ── MM2 .pkg model name -> MM1 banger prop id ────────────────────────────────────────────────────
-# Reuses the real converted MM2 prop meshes (Mm2Prop) where they exist, else the nearest MM1
-# placeholder (Prop). Lights get the GLOW flag. Anything not listed is skipped + logged.
+# Every model the 4 cities use is a REAL converted MM2 mesh; MM2_PROP_MODELS is the single source
+# of truth. One placeholder survives (below), and anything unlisted is skipped and counted.
+# Shared by the density placer AND pathset_props().
 
-def _build_model_map():
-    BRK = BangerFlags.BREAKABLE
-    GLOW = BangerFlags.BREAKABLE_GLOW
-
-    return {
-        # ── San Francisco ────────────────────────────────────────────────────────────────────
-        "sp_lightstreet_f":      (Prop.LIGHT_SIDEWALK, GLOW),
-        "sp_lightbanrb_f":       (Mm2Prop.LAMP, GLOW),        # banner street lamp (real MM2 mesh)
-        "sp_lightbanrg_f":       (Mm2Prop.LAMP, GLOW),
-        "sp_lightbanr_rainbo_f": (Mm2Prop.LAMP, GLOW),
-        "sp_lightpark_f":        (Mm2Prop.LIGHT_PARK, GLOW),  # real MM2 park lamp
-        "sp_chinalight_f":       (Prop.LIGHT_SIDEWALK, GLOW),
-        "sp_mailbox_f":          (Mm2Prop.MAIL, BRK),         # real MM2 mailbox
-        "sp_parkmtr_f":          (Prop.PARKING_METER, BRK),
-        "sp_hotdogcart_f":       (Mm2Prop.HOTDOG, BRK),       # real MM2 food cart
-        "sp_can_gen_f":          (Prop.BIN, BRK),
-        "sp_recycle_can_f":      (Prop.BIN, BRK),
-        "sp_dumpstr_f":          (Mm2Prop.DUMPSTER, BRK),     # real MM2 dumpster
-        "sp_newsblue_f":         (Prop.NEWSPAPER_BOX_BLUE, BRK),
-        "sp_newsred_f":          (Prop.NEWSPAPER_BOX_RED, BRK),
-        "sp_newsyelw_f":         (Prop.NEWSPAPER_BOX_YELLOW, BRK),
-        "sp_benchwood_f":        (Mm2Prop.BENCH, BRK),        # real MM2 bench
-        "sp_phonestand_f":       (Prop.PAYPHONE, BRK),
-        "sp_traflitsingle_f":    (Prop.TRAFFIC_LIGHT_SINGLE, BRK),
-        "sp_traflitdual_f":      (Prop.TRAFFIC_LIGHT_DUAL, BRK),
-        "sp_cone_f":             (Prop.CONE, BRK),
-        "sp_callbox_f":          (Prop.CALLBOX_EMERGENCY, BRK),
-        "sp_telephonepole_f":    (Prop.TELEPHONE_POLE, BRK),
-        "sp_chinagate_f":        (Prop.CHINATOWN_GATE, BRK),
-        "sp_busstop_f":          (Prop.BUS_STOP, BRK),
-        "sp_tree1_s":            (Mm2Prop.TREE, BRK),         # real MM2 tree billboard
-        "sp_wrongwayfw":         (Mm2Prop.WRONGWAY, BRK),     # real MM2 wrong-way sign
-        "sp_noprk_f":            (Prop.SIGN_DO_NOT_ENTER, BRK),  # no MM1 "no parking" -> sign placeholder
-        # ── London ───────────────────────────────────────────────────────────────────────────
-        "sp_lightstreet_l":      (Prop.LIGHT_SIDEWALK, GLOW),
-        "sp_light_tall_l":       (Prop.LIGHT_HIGHWAY, GLOW),
-        "sp_lightthames_l":      (Mm2Prop.LIGHT_THAMES, GLOW),  # real London Thames lamp
-        "sp_dumpstr_l":          (Mm2Prop.DUMPSTER_L, BRK),     # real London dumpster
-        "sp_can_royal_l":        (Prop.BIN, BRK),
-        "sp_mailbox_l":          (Prop.MAILBOX, BRK),
-        "sp_newsgroup01_l":      (Prop.NEWSPAPER_BOX_BLUE, BRK),
-        "sp_phonebooth_l":       (Prop.PHONE_BOOTH, BRK),       # red phone booth
-        # ── New York (as_manhattan, player-made; stock sp_* names + a few as_sp_* customs) ─────
-        "sp_crashcan_f":          (Prop.BIN, BRK),
-        "sp_speed65_f":           (Mm2Prop.HILLWARN, BRK),      # speed-limit sign -> warn-sign placeholder
-        "as_sp_garbage01_m":      (Prop.BIN, BRK),
-        "as_sp_garbage02_m":      (Prop.BIN, BRK),
-        "as_sp_homelessbox_m":    (Mm2Prop.BOXCARD, BRK),
-        "as_sp_sign_noparking_m": (Prop.SIGN_DO_NOT_ENTER, BRK),
-        # ── Buenos Aires (bsas, player-made; *_bsas/_ba variants of familiar props) ────────────
-        "sp_lightstreet_bsas":     (Mm2Prop.LAMP, GLOW),
-        "sp_lightstreet_bsas_hwy": (Prop.LIGHT_HIGHWAY, GLOW),
-        "sp_bg_lightstreet_bsas2": (Mm2Prop.LAMP, GLOW),
-        "sp_lightpark_bsas":       (Mm2Prop.LIGHT_PARK, GLOW),
-        "bsas_farol_4":            (Mm2Prop.LIGHT_PARK, GLOW),  # farol = lantern
-        "sp_bigtree1_bsas":        (Mm2Prop.TREE, BRK),
-        "sp_tree1_ba":             (Mm2Prop.TREE, BRK),
-        "sp_tree5_s":              (Mm2Prop.TREE, BRK),
-        "sp_tree6_s":              (Mm2Prop.TREE6, BRK),
-        "sp_treejacaranda_ba":     (Mm2Prop.TREE, BRK),
-        "sp_palm1_bsas":           (Mm2Prop.PALM, BRK),
-        "bsas_dumpster":           (Mm2Prop.DUMPSTER, BRK),
-        "sp_light_white_f":        (Prop.LIGHT_SIDEWALK, GLOW),
-        # deliberately unmapped (skipped + counted): giz_pcar* parked-car gizmos, cafe furniture /
-        # kiosks / billboards / subway entrances (bsas_mesa_*, bsas_kioscodiarios,
-        # sp_carapantalla_bsas, sp_subwayen_bsas_s) — no sensible placeholder; needs real converted
-        # meshes (build_custom_props) in a later 1:1 pass.
-    }
+def _build_model_map() -> dict:
+    model_map = mm2_model_map()
+    # sp_cone_f: the MM2 cone has NO texture (vertex colour only) -> MM1 cone; it is round, so the
+    # facing does not matter.
+    model_map["sp_cone_f"] = (Prop.CONE, BangerFlags.BREAKABLE)
+    # NOT mapped on purpose (skipped + counted): sp_light_white_f (a 1-triangle untextured glow-only
+    # light source, MM2 draws no pole there), r4i_rails_f (no .pkg exists) and the giz_pcar0[1-3]_ba
+    # parked-car gizmos (MM2 spawns random traffic cars on those points, not a prop).
+    return model_map
 
 
 # ── small geometry helpers (mirror km2cb GeometryHelper) ──────────────────────────────────────────
@@ -340,10 +278,9 @@ def generate(raw_psdl_path: str, city_dir: str, *, psdl_path: Optional[str] = No
     city_dir      : the MM2 `mm2core/city/<city>/` folder holding propdefs.csv + proprules.csv.
     psdl_path     : optional `<city>.psdl` (fallback source for roomFlags/propRule/paths).
     swap_sides    : flip which sidewalk is `left` vs `right` (handedness eyeball -- see caveats).
-    max_furniture : engine BANGER-COUNT ceiling guard (see the cap near the end). MM1/Open1560
-                    ACCESS_VIOLATIONs in agiMonoLighter::LightVertex above ~5.3k TOTAL city bangers;
-                    the hand-placed pathset adds ~760, so the procedural furniture is capped here to
-                    keep the city under the ceiling. Raise this only if the engine ceiling is raised.
+    max_furniture : banger-count ceiling guard. The engine access-violates in
+                    agiMonoLighter::LightVertex above ~5.3k total city bangers and the hand-placed
+                    pathset already adds ~760, so furniture is capped to stay under it.
     Returns editor prop-dicts: [{name, offset:(x,y,z), angle, flags}, ...].
     """
     def _log(msg):
@@ -368,21 +305,18 @@ def generate(raw_psdl_path: str, city_dir: str, *, psdl_path: Optional[str] = No
     proprules = _load_proprules(str(Path(city_dir) / "proprules.csv"))
     model_map = _build_model_map()
 
-    # ── DIRECTED-PROP FACING (MM2 -> MM1, log-verified) ────────────────────────────────────────────
-    # Most furniture faces along the road TANGENT (cross(down, dir)); that is correct for symmetric
-    # props (poles/meters/cans/trees). But a prop with an ARM or a SEAT must face the ROAD, and each
-    # converted mesh's own "forward" axis differs (measured from the .pkg/.bms geometry):
-    #   * mm2lamp  (sp_lightstreet_rt_f):   arm + lamp head extend along pkg +Z  (z[-0.01..3.56])
-    #   * tplttrafc/dual (MM1 traffic light): arm extends along pkg -X           (x[-6.72..0.12])
-    #   * mm2bench (sp_benchwood_f):         backrest at pkg +X -> seat faces pkg -X; long axis pkg +Z
-    # The banger matrix aligns the mesh-local +X axis to the placed heading (banger.cpp), and a mesh
-    # vertex maps  world = lx*m0 + ly*+Y + lz*m2,  so mesh +Z lands at heading+90 and mesh -X at
-    # heading+180. So to point each mesh's real front at the road we set the heading from `dir` (the
-    # curb->road direction, heading D) per class. `dir` flips per side automatically, so the arm/seat
-    # on BOTH sidewalks reaches the shared carriageway.
-    arm_lamp_ids = {Mm2Prop.LAMP}                                         # arm = pkg +Z -> D-90
-    traffic_ids = {Prop.TRAFFIC_LIGHT_SINGLE, Prop.TRAFFIC_LIGHT_DUAL}    # arm = pkg -X -> D+180
-    bench_ids = {Mm2Prop.BENCH}                                           # seat = pkg -X -> D+180
+    # ── THE ONE FACING RULE ───────────────────────────────────────────────────────────────────────
+    # Both engines build the banger matrix the same way: mesh-local +X = the facing vector (Open1560
+    # banger.cpp:380 `m0 = ~(pos2 - pos1)`; midtown2.exe dgPath::Enumerate 0x466D40 is byte-for-byte
+    # the same math). km2cb (PropsElementType.FillPositionVariables + RoadGenerator.PlacePropsLane)
+    # places density furniture with localRight = curb - building (toward the road) in Unity, and its
+    # pkg importer negates X (mesh_formats.read_vec3) -> in MM2 space the pkg +X axis points AWAY from
+    # the road, toward the building. Every MM2 furniture mesh is modelled for exactly that: lamp arms
+    # and traffic-light arms extend along pkg -X (over the carriageway), bench backrests sit at +X,
+    # sign faces are the XY plane (facing the traffic along the road). Verified on the hand-placed
+    # BA pathset: 730 of 812 sp_lightstreet_bsas directed pairs point p1 AWAY from the road.
+    #   facing = building_point - curb_point  ->  angle = atan2(facing.z, facing.x)   for EVERY model.
+    # Because every model is now the REAL MM2 mesh there is no per-model fudge: do not add any.
 
     def V(i):
         v = verts[i]; return (v[0], v[1], v[2])
@@ -481,18 +415,10 @@ def generate(raw_psdl_path: str, city_dir: str, *, psdl_path: Optional[str] = No
                     degenerate["nonfinite_pos"] += 1
                     continue
 
-                # Facing basis: across = the curb->road direction (curb - building);
-                # forward = cross(down, across) = along the road tangent (default furniture facing).
+                # across = the building->curb direction (curb - building) = km2cb `dir` / localRight.
                 across_x, across_z = curb_point[0] - building_point[0], curb_point[2] - building_point[2]
                 across_length = math.hypot(across_x, across_z)
                 if not math.isfinite(across_length) or across_length < 1e-6:   # zero-width sidewalk
-                    degenerate["degenerate_facing"] += 1
-                    continue
-
-                across_x, across_z = across_x / across_length, across_z / across_length
-                forward_x, forward_z = -across_z, across_x     # cross(Vector3.down, across) in XZ
-                if ((forward_x == 0.0 and forward_z == 0.0)
-                        or not (math.isfinite(forward_x) and math.isfinite(forward_z))):
                     degenerate["degenerate_facing"] += 1       # atan2(0,0) / NaN -> undefined angle
                     continue
 
@@ -505,18 +431,9 @@ def generate(raw_psdl_path: str, city_dir: str, *, psdl_path: Optional[str] = No
                     skipped[model] += 1
                     continue
 
-                # Per-class facing (see the DIRECTED-PROP FACING note above): arm/seat props face the
-                # ROAD via the curb->road heading; everything else keeps the road-tangent facing.
+                # THE ONE FACING RULE: mesh +X = building - curb (away from the road), see above.
                 prop_id, flags = mapped
-                across_deg = math.degrees(math.atan2(across_z, across_x))
-                if prop_id in arm_lamp_ids:
-                    angle = across_deg - 90.0    # arm-lamp: arm reaches over the road
-                elif prop_id in traffic_ids:
-                    angle = across_deg + 180.0   # traffic light: arm over the road
-                elif prop_id in bench_ids:
-                    angle = across_deg + 180.0   # bench: seat faces road, long axis along it
-                else:
-                    angle = math.degrees(math.atan2(forward_z, forward_x))   # symmetric/pole: tangent
+                angle = math.degrees(math.atan2(-across_z, -across_x))
 
                 if not math.isfinite(angle):
                     degenerate["degenerate_facing"] += 1
@@ -596,11 +513,11 @@ def bai_traffic_lights(bai_path: str, *, log=None) -> List[Dict]:
 
     Ground truth (MM2Hook src/modules/ai/aiTrafficLight.h + bai RoadEnd record): each road end
     stores vehicleRule + trafficLightOrigin[2], and the engine builds each light via
-    aiTrafficLightInstance::Init(name, position, positionFacing) — i.e. the two verts are
+    aiTrafficLightInstance::Init(name, position, positionFacing) --- i.e. the two verts are
     (position, facing target). Rule semantics (observed SF: 3=337x, 1=215x, 0=206x ends):
     rule 3 = signalized -> place a light; 0/1 = uncontrolled/stop -> none.
-    Model: dual-arm for multi-lane approaches, single otherwise (refinable). Banger angle = mesh
-    local +X toward the facing target (the engine's own convention)."""
+    Model: the real MM2 sp_traflitdual_f for multi-lane approaches, sp_traflitsingle_f otherwise
+    (refinable). Banger angle = mesh local +X toward the facing target (both engines' convention)."""
     roads, _ = parse_bai_full(bai_path)
     out: List[Dict] = []
 
@@ -624,8 +541,8 @@ def bai_traffic_lights(bai_path: str, *, log=None) -> List[Dict]:
                 continue                    # position == target -> no defined facing
 
             angle = math.degrees(math.atan2(delta_z, delta_x))
-            name = (Prop.TRAFFIC_LIGHT_DUAL if getattr(side, "n_lanes", 1) >= 2
-                    else Prop.TRAFFIC_LIGHT_SINGLE)
+            name = (Mm2Prop.TRAFLITDUAL_F if getattr(side, "n_lanes", 1) >= 2
+                    else Mm2Prop.TRAFLITSINGLE_F)        # the REAL MM2 sp_traflit*_f meshes
             out.append({"name": name, "offset": (position[0], position[1], position[2]),
                         "angle": angle, "flags": BangerFlags.BREAKABLE})
 
@@ -638,16 +555,14 @@ def bai_traffic_lights(bai_path: str, *, log=None) -> List[Dict]:
 def intersection_traffic_lights(expanded_psdl_path: str, *, log=None) -> List[Dict]:
     """Synthesise traffic light props at every PSDL intersection (road_triangle_fan room).
 
-    MM2's engine places traffic lights at controlled intersections via its traffic-control system --
-    these are not in any pathset, inst, or proprules CSV. We replicate the visual result here.
+    MM2 places these through its traffic-control system, so they appear in no pathset, inst or
+    proprules CSV --- only the visual result is reproduced here.
 
-    Strategy: for each intersection room, divide the perimeter into 4 quadrants relative to the
-    room centroid (NE/NW/SE/SW). In each quadrant, find the perimeter corner CLOSEST to the
-    centroid -- that corner is the curb corner where cars approach the intersection, which is where
-    MM2 puts a traffic light. This gives exactly 4 lights per intersection (one per approach
-    direction) and handles non-square, T-intersections, and dead-end approaches gracefully.
+    Per intersection room the perimeter is split into 4 quadrants around the centroid, and the
+    corner closest to the centroid in each is taken: that is the curb corner cars approach from.
+    Four lights per intersection, and T-junctions and dead ends fall out of it correctly.
 
-    Returns a list of banger-prop dicts [{name, offset, angle, flags}] ready for BangerEditor.
+    Returns banger-prop dicts [{name, offset, angle, flags}] ready for BangerEditor.
     """
     try:
         with open(expanded_psdl_path, "r") as f:
@@ -689,11 +604,11 @@ def intersection_traffic_lights(expanded_psdl_path: str, *, log=None) -> List[Di
             dl = math.hypot(dx, dz)
             if dl < 0.5:
                 continue
-            # MM1 traffic light arm is at mesh -X; banger aligns mesh +X to heading.
-            # angle = atan2(dz,dx)+180 -> mesh -X (arm) faces centroid = over the approaching lane.
+            # The MM2 sp_traflitsingle_f arm extends along mesh -X; the banger aligns mesh +X to the
+            # heading. angle = atan2(dz,dx)+180 -> mesh -X (arm) faces the centroid = over the lane.
             angle = math.degrees(math.atan2(dz, dx)) + 180.0
             out.append({
-                "name": Prop.TRAFFIC_LIGHT_SINGLE,
+                "name": Mm2Prop.TRAFLITSINGLE_F,
                 "offset": (px, py, pz),
                 "angle": angle,
                 "flags": BangerFlags.BREAKABLE,
