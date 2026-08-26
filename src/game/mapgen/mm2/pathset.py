@@ -10,10 +10,14 @@ propdefs/proprules CSVs (procedural, no coords). Format (angel-file-formats Path
               Point points[nPoints]; u8 type; u8 spacing; char pad[2]; }
     Point   { u32 unknown2; float x; float y; float z; }      # 16 bytes, y = world height
 
-type 0 = Single Points (one prop per point, no facing)
-type 1 = Directed Points (points are pairs: p0=pos, p1=facing target -> angle = dir(p1-p0))
-type 2 = Line Strip (props every `spacing` m along each segment, facing = segment tangent)
-spacing is in 1/4-metre units -> metres = spacing/4.
+Placement is 1:1 with MM2's dgPath::Enumerate (midtown2.exe 0x466D40, disassembled):
+type 0 = Single Points: identity matrix, m3 = point            -> angle 0 (mesh +X = world +X)
+type 1 = Directed Points: pairs (p0, p1); m0 = normalize(p1-p0 with y=0), m2 = up x m0, m3 = p0
+                          -> angle = atan2(dz, dx) of (p1-p0)  (mesh +X toward p1, as MM1 banger.cpp)
+type 2 = Line Strip: per segment d = p[i+1]-p[i], len = |d| (3-D); n = floor(len/spacing);
+                          props at p[i] + k*(d/n) for k = 0..n-1 (NONE when len < spacing); m0 = d/|d|
+                          -> angle = atan2(d.z, d.x)
+dgPath::Load: spacing = byte * 0.25 m, and a 0 byte means 5.0 m.
 
 Coords go straight into MM1 banger offset (world frame matches MM2, no mirror -- verified).
 """
@@ -21,7 +25,6 @@ import math
 import collections
 from typing import List, Dict
 
-from src.constants.mm2 import MM2_PATHSET_PROP
 from src.constants.file_formats import Magic
 from src.io.binary import read_unpack
 from .mm2_props import _build_model_map as shared_model_map
@@ -35,7 +38,8 @@ PATH_NAME_BYTES   = 32
 POINT_BYTES       = 16      # u32 unknown + 3 x f32
 MAX_SANE_POINTS   = 200000  # a corrupt count would otherwise run off the end of the file
 
-SPACING_UNITS_PER_METRE = 4.0   # the `spacing` byte is in quarter-metres
+SPACING_UNITS_PER_METRE = 4.0   # the `spacing` byte is in quarter-metres (dgPath::Load: byte * 0.25)
+DEFAULT_SPACING_M = 5.0         # dgPath::Load substitutes 5.0 m for a zero spacing
 
 
 def parse_pathset(path: str) -> List[Dict]:
@@ -70,8 +74,10 @@ def parse_pathset(path: str) -> List[Dict]:
 
             path_type, spacing = read_unpack(f, "<2B")
             f.seek(2, 1)                            # pad
+            spacing_m = spacing / SPACING_UNITS_PER_METRE
             out.append({"name": name, "type": path_type,
-                        "spacing_m": spacing / SPACING_UNITS_PER_METRE, "points": points})
+                        "spacing_m": spacing_m if spacing_m > 0.0 else DEFAULT_SPACING_M,
+                        "points": points})
 
     return out
 
@@ -81,19 +87,14 @@ def _heading_deg(dx: float, dz: float) -> float:
     return math.degrees(math.atan2(dz, dx))
 
 
-# Some line-strip props read better at a fixed step than the pathset's own spacing -- e.g. the
-# freeway railings become a CONTINUOUS wall when wall segments (~5m wide) are placed every ~4.5m.
-STEP_OVERRIDE = {"r4i_rails_f": 4.5}
-
-
 def expand_paths(paths: List[Dict]) -> List[Dict]:
     """Expand parsed paths into flat prop instances [{model, x, y, z, angle}] (model = raw MM2
-    name, still to be mapped to an MM1 placeholder). Mirrors MM2's BangerManager placement."""
+    name, still to be mapped to its converted Mm2Prop). 1:1 with dgPath::Enumerate (module doc)."""
     instances: List[Dict] = []
 
     for path in paths:
         name, path_type, points = path["name"], path["type"], path["points"]
-        step = STEP_OVERRIDE.get(name, max(1.0, path["spacing_m"]))
+        spacing = path["spacing_m"]
         if not points:
             continue
 
@@ -109,15 +110,16 @@ def expand_paths(paths: List[Dict]) -> List[Dict]:
                                   "angle": _heading_deg(target_x - x, target_z - z)})
 
         elif path_type == PATH_LINE_STRIP:
-            # Place one prop every `step` metres along each segment, facing the segment tangent.
+            # dgPath::Enumerate: n = floor(len3D / spacing) props per segment at p0 + k*(d/n), the
+            # segment END is never placed (the next segment starts there); len < spacing -> none.
             for (start_x, start_y, start_z), (end_x, end_y, end_z) in zip(points, points[1:]):
                 delta_x, delta_y, delta_z = end_x - start_x, end_y - start_y, end_z - start_z
-                segment_length = math.hypot(delta_x, delta_z)
-                if segment_length < 1e-3:
+                segment_length = math.sqrt(delta_x * delta_x + delta_y * delta_y + delta_z * delta_z)
+                if segment_length < spacing or math.hypot(delta_x, delta_z) < 1e-9:
                     continue
 
                 angle = _heading_deg(delta_x, delta_z)
-                step_count = max(1, int(segment_length / step))
+                step_count = int(segment_length / spacing)
                 for index in range(step_count):
                     fraction = index / float(step_count)
                     instances.append({"model": name,
@@ -130,24 +132,15 @@ def expand_paths(paths: List[Dict]) -> List[Dict]:
 
 
 def pathset_props(path: str, only_models=None):
-    """Parse + expand + map a city props.pathset to MM1 banger prop_list dicts ready for
-    BangerEditor: [{"name": prop_id, "offset": (x,y,z), "angle": deg, "flags": int}].
-    `only_models` = optional set of MM2 model names to keep (for a verification slice).
-    Returns (prop_list, skipped_counter). Models with no sensible MM1 placeholder
-    (railings, freeway pillars, dock cleats, banners, hotdog carts, highway exit signs) are
-    skipped -- this is the PLACEHOLDER pass (approach A): nail locations + angles first."""
-    prop_map = dict(MM2_PATHSET_PROP)
-    # UNION with the shared density-furniture model map (mm2_props._build_model_map) so pathsets from
-    # OTHER cities (NY as_sp_*, BA *bsas/_ba variants) resolve without duplicating alias tables.
-    # Pathset-specific entries above take precedence (they carry pathset-tuned flags/skips).
-    prop_map = {**shared_model_map(), **prop_map}
-    # ── DIRECTED-PROP FACING (MM2 -> MM1, log-verified) ───────────────────────────────────────────
-    # The hand-placed type-1 BENCH (sp_benchwood_f) stores p1 = the SEAT-facing target (verified: the
-    # p1-p0 vectors point ~3 m across the sidewalk toward the road). The banger matrix aligns the mesh
-    # -local +X axis to (p1-p0), but the bench seat is on the mesh's -X side (backrest at pkg +X), so
-    # without a flip the seat would face the BUILDING. Add 180 deg so the seat faces the target (road),
-    # matching the density bench (mm2_props). Long axis (pkg +Z) stays along the road either way.
-    SEAT_FLIP_MODELS = {"sp_benchwood_f"}
+    """Parsed + expanded + mapped props.pathset -> (prop_list, skipped_counter).
+
+    prop_list is BangerEditor-ready: [{"name", "offset": (x,y,z), "angle": deg, "flags"}].
+    only_models keeps just those MM2 model names, for a verification slice.
+    """
+    # The angle is the raw MM2 one, with NO per-model offset: both engines align mesh-local +X to the
+    # facing vector (banger.cpp:380 == dgPath::Enumerate) and the mesh IS the MM2 mesh, so whatever
+    # MM2 shows, MM1 shows. Skips are the documented no-mesh models only.
+    prop_map = shared_model_map()
     out = []
     skipped = collections.Counter()
 
@@ -162,9 +155,8 @@ def pathset_props(path: str, only_models=None):
             continue
 
         prop_id, flags = mapped
-        angle = instance["angle"] + (180.0 if model in SEAT_FLIP_MODELS else 0.0)
         out.append({"name": prop_id, "offset": (instance["x"], instance["y"], instance["z"]),
-                    "angle": angle, "flags": flags})
+                    "angle": instance["angle"], "flags": flags})
 
     return out, skipped
 
