@@ -130,19 +130,14 @@ def _transform(v, opt: Mm2Options):
 
 
 def _wind_up_facing(verts, uv):
-    """WINDING/UV DESYNC FIX (TEXTURES item): orient a triangle up-facing HERE, reordering its
-    verts AND their UV pairs TOGETHER so the texture corners stay glued to their vertex.
+    """Orient a triangle up-facing, reordering its verts AND their UV pairs together.
 
-    The editor's create_polygon used to do this winding (process_winding -> ensure_ccw_order,
-    planes.py:8) AFTER save_mesh had already stored the UVs in original order -> for a down-facing
-    tri it swapped verts 1<->2 but NOT the UVs -> UV slots 1<->2 desynced -> textures mirrored/
-    rotated (~half-a-tile). We now do the SAME up-facing test the editor did
-    (compute_normal(...).Dot(+Y) < 0, i.e. normal.y < 0) but swap the matching UV pair as well,
-    then emit with create_polygon(fix_winding=False) so the editor does NOT reorder again.
+    The editor winds triangles (ensure_ccw_order) after save_mesh has already stored the UVs, so a
+    down-facing tri gets verts 1<->2 swapped but not its UVs --- the pairing desyncs and the texture
+    comes out mirrored. Doing the same test here (normal.y < 0) and swapping the UV pair too lets us
+    emit with fix_winding=False so the editor does not reorder again.
 
-    For walls/up-facing tris (normal.y >= 0) this returns the input unchanged -- byte-identical to
-    before -- so positions, textures, collision planes are untouched; only down-facing UV pairing
-    changes. (This also makes the old S_JERSEY_RAIL UV band-aid unnecessary.)"""
+    Up-facing tris return unchanged, so only down-facing UV pairing is affected."""
     if compute_normal(verts[0], verts[1], verts[2]).y < 0.0:
         # down-facing: swap vert 1<->2 AND uv pair 1<->2 (keep each UV with its own vertex)
         return ([verts[0], verts[2], verts[1]],
@@ -266,15 +261,6 @@ def iter_mm2_polys(data: dict, opt: Mm2Options = Mm2Options(),
     # Pass 1: build every triangle's geometry + centroid (drop degenerate / buildings here).
     records = []   # (verts, mat, hud, tex, uv, mm2_tex, object_type, cx, cz)
     for room in data["rooms"]:
-        # Compute room centroid (transformed) once per room for facade outward-facing check below.
-        perim = room.get("perimeter", [])
-        if perim:
-            rcx = sum(p[0] for p in perim) / len(perim)
-            rcy = sum(p[1] for p in perim) / len(perim)
-            rcz = sum(p[2] for p in perim) / len(perim)
-            room_centroid = _transform((rcx, rcy, rcz), opt)
-        else:
-            room_centroid = None
         for obj in room.get("objects", []):
             object_type = obj.get("name", "")
             if opt.drop_buildings and object_type in building_types:
@@ -353,22 +339,14 @@ def iter_mm2_polys(data: dict, opt: Mm2Options = Mm2Options(),
                     if opt.mirror_x:           # mirroring flips winding -> swap two verts
                         p1, p2 = p2, p1
                         i1, i2 = i2, i1
-                    # FACADE OUTWARD-FACING FIX: PSDL facade/sliver winding is inconsistent — ~70%
-                    # of triangles face AWAY from the room interior (away from the drivable street
-                    # space), making them invisible to the player. Root cause: psdl-import's "left"/"right"
-                    # vertex ordering depends on perimeter traversal direction, which varies per room.
-                    # Fix: if the normal points away from the room centroid (= into the building, away
-                    # from the street), flip the winding so it faces the open drivable space instead.
-                    # The room perimeter encloses the open street space; centroid = street interior.
-                    # Correct orientation: normal toward centroid (visible from street).
-                    if object_type in ("facade", "sliver") and room_centroid is not None:
-                        n = compute_normal(p0, p1, p2)
-                        mx = (p0[0]+p1[0]+p2[0])/3; mz = (p0[2]+p1[2]+p2[2])/3
-                        my = (p0[1]+p1[1]+p2[1])/3
-                        dx = mx-room_centroid[0]; dy = my-room_centroid[1]; dz = mz-room_centroid[2]
-                        if n.x*dx + n.y*dy + n.z*dz > 0:  # normal away from centroid = wrong
-                            p1, p2 = p2, p1
-                            i1, i2 = i2, i1
+                    # FACADE FACING = the expander's own winding, no heuristic. wilkovatch emits
+                    # facade/sliver tris as (BL,BR,TL),(BR,TR,TL), which already faces the STREET for
+                    # 6984/7002 decidable SF facades (99.7%; London 12828/13000, BA 11419/11502).
+                    # A previous "flip when the normal points away from the room centroid" rule
+                    # assumed the room perimeter encloses the street, but a PSDL building room holds
+                    # its facade, roof AND sliver objects, so that centroid is the BUILDING interior
+                    # --- it turned 9714 of 14006 decidable SF facades inward, where they are
+                    # backface-culled (renderweb.cpp:347, CullMode CCW) and simply invisible.
                     if is_building:
                         # Use psdl-import's REAL MM2 facade/roof UVs (facade block's uRepeat/vRepeat
                         # tiling; roof = planar -0.25*x,z). A few facade blocks have a misparsed field
@@ -401,15 +379,9 @@ def iter_mm2_polys(data: dict, opt: Mm2Options = Mm2Options(),
                                     uv[5] = vmin + vmax - uv[5]
                     else:
                         uv = _tri_uvs(uvs_local, i0, i1, i2)
-                    # S_JERSEY_RAIL V-FLIP: the DDS was stored bottom-to-top (row 0 = concrete,
-                    # row N = yellow paint), but the PSDL places V=0 at the physical TOP of the
-                    # barrier where yellow should appear. Flip V so top→V=0→yellow is correct.
-                    # (The old band-aid was -u,1-v; the -u was UV-desync noise now gone; only 1-v
-                    # is the real texture-origin issue.)
-                    if gmm2 and gmm2.upper() == "S_JERSEY_RAIL":
-                        uv[1] = 1.0 - uv[1]
-                        uv[3] = 1.0 - uv[3]
-                        uv[5] = 1.0 - uv[5]
+                    # No per-texture UV band-aid: the old S_JERSEY_RAIL 1-v flip only compensated
+                    # for tex2dds writing every DDS upside down. It writes rows upright now, so UVs
+                    # go straight through 1:1 with MM2 for every texture.
                     cx = (p0[0] + p1[0] + p2[0]) / 3.0
                     cz = (p0[2] + p1[2] + p2[2]) / 3.0
                     records.append(([p0, p1, p2], mat, hud, gtex, uv, gmm2, object_type, cx, cz))
@@ -460,7 +432,7 @@ def iter_mm2_polys(data: dict, opt: Mm2Options = Mm2Options(),
         # No hard cell limit: the engine allocates CellArray dynamically and IDs beyond 199 work
         # (verified to 5000). The 1-199 / 200+ split only picks lm vs city BMS, so just log it.
         if ncells > 199:
-            print(f"[MM2] NOTE: {ncells} quadtree cells (>199; cells 200+ go into city BMS — geometry still renders)")
+            print(f"[MM2] NOTE: {ncells} quadtree cells (>199; cells 200+ go into city BMS --- geometry still renders)")
 
         def cell_for(cx, cz):
             return _leaf_bound(root, cx, cz)
