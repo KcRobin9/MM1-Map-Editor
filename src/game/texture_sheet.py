@@ -8,6 +8,10 @@ from src.ui.console import ok, item
 
 
 TEXTURESHEET_HEADER = ["name", "neighborhood", "h", "m", "l", "flags", "alternate", "sibling", "xres", "yres", "hexcolor"]
+
+# Optional per-folder sidecar of "NAME,flags" rows, giving a converted texture its
+# AgiTexParameters letters. Without it every custom texture is written with no flags.
+FLAGS_SIDECAR = "_flags.csv"
     
     
 class TextureSheet:
@@ -45,6 +49,26 @@ class TextureSheet:
         # print(f"Parsing flags {flags} to {flag_str}")  
         return flag_str
 
+    @staticmethod
+    def _read_flags_sidecars(folders) -> Dict[str, str]:
+        flags = {}
+
+        for folder in folders:
+            # Matched case-insensitively: the sidecar is written by whichever tool converted the set
+            sidecar = next((path for path in Path(folder).glob("*")
+                            if path.name.lower() == FLAGS_SIDECAR), None)
+            if sidecar is None:
+                continue
+
+            with open(sidecar, "r", newline = "") as f:
+                for row in csv.reader(f):
+                    if len(row) < 2 or not row[0].strip() or row[0].lstrip().startswith("#"):
+                        continue
+                    flags[row[0].strip().upper()] = row[1].strip()
+
+        return flags
+
+
     @classmethod
     def append_custom_textures(cls, input_file: Path, input_textures: Path, output_file: Path, set_texture_sheet: bool) -> None:
         if not set_texture_sheet:
@@ -64,6 +88,10 @@ class TextureSheet:
                 if _nm not in seen:
                     seen.add(_nm); custom_texture_names.append(_nm)
 
+        # A converted texture set can ship a FLAGS_SIDECAR to request TexSheet flags. Art that keys
+        # transparency on a colour needs 't', or it renders as a solid block of that colour.
+        custom_flags = cls._read_flags_sidecars(_dirs)
+
         added_textures = []
         
         with open(output_file, "w") as out_f: 
@@ -71,7 +99,8 @@ class TextureSheet:
                     
             for custom_tex in custom_texture_names:
                 if custom_tex not in existing_texture_names:
-                    out_f.write(f"{custom_tex},0,0,0,1,,{custom_tex},,64,64,000000\n")  # TODO: Add support for custom flags
+                    tex_flags = custom_flags.get(custom_tex.upper(), "")
+                    out_f.write(f"{custom_tex},0,0,0,1,{tex_flags},{custom_tex},,64,64,000000\n")
                     added_textures.append(custom_tex)
         
         if added_textures:
