@@ -8,7 +8,7 @@ from src.game.races.constants_2 import IntersectionType
 from src.file_formats.ai.map import BaiMap
 
 from src.USER.settings.main import MAP_FILENAME
-from src.ui.console import ok, item
+from src.ui.console import ok, sep, item
 
 
 class aiStreetEditor:
@@ -49,18 +49,34 @@ class aiStreetEditor:
         if not set_ai_streets:
             return None
         street_names = []
-        
+        total_waypoints = 0
+        multi_lane_count = 0
+        alley_count = 0
+        divided_count = 0
+        stop_light_count = 0
+
         for data in dataset:
             editor = cls(data, set_reverse_ai_streets)
             editor.write()
             street_names.append(editor.street_name)
-    
-        ok(f"Created {len(street_names)} AI street file(s)")
+            total_waypoints += sum(len(verts) for verts in editor.lanes.values())
+            if len(editor.lanes) > 1:
+                multi_lane_count += 1
+            if editor.alley != NO:
+                alley_count += 1
+            if editor.road_divided != NO:
+                divided_count += 1
+            if IntersectionType.STOP_LIGHT in editor.intersection_types:
+                stop_light_count += 1
+
+        ok(f"Created {len(street_names)} AI street file(s){sep()}{total_waypoints} waypoint(s) total")
         item(", ".join(street_names))
+        item(f"{multi_lane_count}x multi-lane, {alley_count}x alley, {divided_count}x divided, "
+             f"{stop_light_count}x stop-light-controlled")
         return BaiMap(street_names)
 
     def write(self):    
-        with open(Folder.MidtownMadness.DevCityMap / f"{self.street_name}{FileType.AI_STREET}", 'w') as f:
+        with open(Folder.MidtownMadness.DevCityMap / f"{self.street_name}{FileType.AI_STREET}", "w") as f:
             f.write(self.set_template())
 
     def set_template(self):
@@ -71,7 +87,7 @@ class aiStreetEditor:
         # TotalVertexs = fwd lanes + rev lanes (game reads same verts in reverse for rev direction)
         num_total_vertices = num_vertices * num_lanes * (2 if self.set_reverse_ai_streets else 1)
 
-        indent = "        "  # 8 spaces — inside the [ ] block
+        indent = "        "  # 8 spaces --- inside the [ ] block
         vertices = f"\n{indent}".join(
             f"{v[0]} {v[1]} {v[2]}"
             for lane_verts in self.lanes.values()
