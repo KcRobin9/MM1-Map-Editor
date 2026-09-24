@@ -56,6 +56,20 @@ Please complete all steps below.
 
 ![Preview](../.github/images/setup/verify_blender_python_libraries.png)
 
+### Open Blender with the Editor loaded (quickest)
+* Double-click `run_blender.bat` in the `MM1-Map-Editor` folder
+* Blender opens with the Map Editor scene, panels and keybindings ready
+* Leave the black console window open --- script output and any errors appear there
+* It picks your newest supported Blender automatically. To choose one yourself, run instead:
+
+```
+set BLENDER_EXE=C:\Program Files\Blender Foundation\Blender 4.3\blender.exe
+run_blender.bat
+```
+
+Use the Visual Studio Code route below instead if you want to edit the Editor's own code and
+reload it without restarting Blender.
+
 ### Connect Visual Studio Code to Blender
 * Launch Visual Studio Code as **administrator** and open `MAP_EDITOR_ALPHA_v1.py`
 * Next, click on the three-line menu icon at the top left corner. Then click on `File` and then on `Add Folder to Workspace...` 
