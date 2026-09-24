@@ -6,6 +6,7 @@ emits. Kept here, beside the other constants, so the MM2 modules stay parsing/em
 """
 from src.constants.color import Color
 from src.constants.modes import RaceMode
+from src.constants.vehicles import PlayerCar
 from src.constants.textures import Texture
 from src.constants.file_formats import Material
 
@@ -77,3 +78,29 @@ MM2_OBJECT_TYPE_DEFAULT = (Texture.ROAD_2_LANE, Material.DEFAULT, Color.ROAD)
 # MM2 prop model name -> MM1 prop: the single table lives in
 # src/constants/custom_props/mm2_props.py (MM2_PROP_MODELS) and is served by
 # src/game/mapgen/mm2/mm2_props._build_model_map() for both the pathset and the density placer.
+
+# MM2 opponent car -> the closest MM1 player car. MM2 cars with no MM1 counterpart fall back to a
+# similar class (Aston -> Panoz GTR1, Audi TT -> Fastback, VW Cup -> Beetle).
+MM2_OPPONENT_CAR = {
+    "vpbug":        PlayerCar.VW_BEETLE,
+    "vpcaddie":     PlayerCar.CADILLAC,
+    "vpcop":        PlayerCar.POLICE,
+    "vpford":       PlayerCar.FORD_F350,
+    "vpbullet":     PlayerCar.FASTBACK,
+    "vpmustang99":  PlayerCar.MUSTANG_GT,
+    "vppanoz":      PlayerCar.ROADSTER,
+    "vppanozgt":    PlayerCar.PANOZ_GTR1,
+    "vpbus":        PlayerCar.CITY_BUS,
+    "vpsemi":       PlayerCar.SEMI,
+    "vpdb7":        PlayerCar.PANOZ_GTR1,
+    "vpauditt":     PlayerCar.FASTBACK,
+    "vpvwcup":      PlayerCar.VW_BEETLE,
+    "vpcoop":       PlayerCar.VW_BEETLE,
+    "vpcoop2k":     PlayerCar.VW_BEETLE,
+    "vpcab":        PlayerCar.CADILLAC,
+    "vp4x4":        PlayerCar.FORD_F350,
+    "vpmtruck":     PlayerCar.FORD_F350,
+    "vpfer":        PlayerCar.ROADSTER,
+}
+
+MM2_OPPONENT_CAR_DEFAULT = PlayerCar.VW_BEETLE
