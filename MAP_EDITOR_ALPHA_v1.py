@@ -1480,7 +1480,12 @@ def flush_meshes(vertices: List[Vector3] = vertices, debug_meshes: bool = debug_
         is_water = base_fname.endswith(f"_A2{FileType.MESH_lowercase}")
         total_verts = sum(segment['poly'].num_verts for segment in segments)
 
-        if is_water or total_verts <= Threshold.MESH_VERTEX_BUFFER:
+        # STRICTLY under the buffer, not equal to it. 16384 is the buffer SIZE, so a mesh of
+        # exactly 16384 verts fills it with nothing to spare - and while 16383 is known to
+        # render (tracks 1 and 7 have shipped it for many builds), exactly-16384 has never
+        # been tested. A dense imported city lands on it the moment its ground fill grows, so
+        # split one vertex earlier rather than find out the hard way.
+        if is_water or total_verts < Threshold.MESH_VERTEX_BUFFER:
             write_one_mesh(cell_id, segments, vertices, target_folder, base_fname, debug_meshes)
             continue
 
@@ -1488,7 +1493,7 @@ def flush_meshes(vertices: List[Vector3] = vertices, debug_meshes: bool = debug_
         primary_segments, primary_verts = [], 0
         for segment in segments:
             segment_verts = segment['poly'].num_verts
-            if primary_segments and primary_verts + segment_verts > Threshold.MESH_VERTEX_BUFFER:
+            if primary_segments and primary_verts + segment_verts >= Threshold.MESH_VERTEX_BUFFER:
                 break
             primary_segments.append(segment)
             primary_verts += segment_verts
@@ -1610,6 +1615,17 @@ def write_per_cell_bounds(vertices: List[Vector3], polys: List[Polygon]) -> None
             output_folder = Folder.Shop.Map.BoundLandmark
         else:
             output_folder = Folder.Shop.Map.BoundCity
+
+        # A BND2 VertIndex is an i16, but the per-cell cap is expressed in QUADS, so a
+        # cell packed with dense imported geometry can pass the quad cap and still blow
+        # the index range. Indices then wrap and the cell collides against polygons
+        # stitched from unrelated vertices - invisible walls in places nothing was
+        # authored. Fail loudly instead of shipping a corrupt bound.
+        if len(local_vertices) >= Threshold.VERTEX_INDEX_COUNT:
+            raise ValueError(
+                f"BOUND{cell_id:02d}: {len(local_vertices)} vertices exceeds the BND2 "
+                f"i16 index limit ({Threshold.VERTEX_INDEX_COUNT}). Lower "
+                f"max_quads_per_cell so the quadtree splits this cell further.")
 
         output_file = output_folder / f"BOUND{cell_id:02d}{FileType.BOUND}"
         Bounds.create(output_file, local_vertices, local_polys, None, False)
@@ -3494,7 +3510,7 @@ def generate_roadnet_races(roadnet_network, roadnet_compiled) -> None:
 
 
 
-def import_mm2_races(mm2_races_dir: str) -> None:
+def import_mm2_races(mm2_races_dir: str, bai_path: str = None, one_way_mode: str = "blocked") -> None:
     """Import a city's MM2 races (blitz / checkpoint / circuit) so they are selectable in MM1 with
     the same spawn and checkpoints as MM2.
 
@@ -3508,7 +3524,8 @@ def import_mm2_races(mm2_races_dir: str) -> None:
     city_cinfo = races_dir.parent.parent / "tune" / f"{races_dir.name}{FileType.CITY_INFO}"
     blitz_names, checkpoint_names, circuit_names, _ = convert_mm2_races(
         str(races_dir), str(Folder.Shop.Map.Race),
-        cinfo_path = str(city_cinfo) if city_cinfo.exists() else "", log = item)
+        cinfo_path = str(city_cinfo) if city_cinfo.exists() else "", log = item,
+        bai_path = bai_path, one_way_mode = one_way_mode)
 
     create_map_info(Folder.Shop.Tune / f"{MAP_FILENAME}{FileType.CITY_INFO}",
                     blitz_names, circuit_names, checkpoint_names)
@@ -3683,6 +3700,10 @@ if not SKIP_AR_CREATION:
         # .road (preserves hills/one-way/curves+grades), bypassing the lossy roadnet rebuild.
         # DEFAULT OFF -> the hybrid roadnet path below stays the shipped default.
         mm2_bai_direct = bool(mm2_options.pop("bai_direct", False))
+        # One-way handling of the direct .road emitter: "blocked" (default: ambients obey the arrow,
+        # MM2 opponent routes kept 1:1), "true" (NumLanes=0, needs an engine with the one-way patch)
+        # or "phantom" (legacy 2-way). See bai_direct._columns.
+        mm2_one_way_mode = str(mm2_options.pop("one_way_mode", "blocked"))
         mm2_races_dir = mm2_options.pop("mm2_races", None)   # MM2 race folder (not an Mm2Options field)
         mm2_pathset_path = mm2_options.pop("props_pathset", None)  # MM2 props.pathset (not a Mm2Options field)
         # 1:1 PROCEDURAL FURNITURE (default): reproduce MM2's propdefs/proprules placement exactly
@@ -3711,7 +3732,10 @@ if not SKIP_AR_CREATION:
         item(", ".join(f"{t}: {c}x" for t, c in mm2_stats['textures'].items()))
 
         if mm2_races_dir:
-            import_mm2_races(mm2_races_dir)
+            # Opponents are generated over the DIRECT BAI network only (the hybrid roadnet path has a
+            # different graph -> no bai_path -> opponents stay off there, as before).
+            import_mm2_races(mm2_races_dir, bai_path = mm2_bai_path if mm2_bai_direct else None,
+                             one_way_mode = mm2_one_way_mode)
 
         # DIAGNOSTIC scaffold: a tiny roadnet AI grid so the city has an AI map (HasAIMap=true),
         # a ROAM.AIMAP and a checkpoint race + cinfo - matching what a normal/roadnet city has.
@@ -3730,7 +3754,7 @@ if not SKIP_AR_CREATION:
                 # + graded roads are kept, and NO mid-road spurious intersections (the engine
                 # regenerates intersections from pinched road endpoints). No compiled roadnet, so
                 # cops aren't seeded and procedural props fall back off (pathset props still work).
-                direct_stats = stage_bai_direct(mm2_bai, MAP_FILENAME)
+                direct_stats = stage_bai_direct(mm2_bai, MAP_FILENAME, one_way_mode = mm2_one_way_mode)
                 # PROPS: still compile the roadnet graph (cheap) purely to feed mm2_prop_net, so the
                 # pathset/furniture prop list + its texsheet sync (copy_custom_prop_assets) run EXACTLY
                 # like the default path. (Setting this None drops the custom-prop textures from
@@ -3765,10 +3789,19 @@ if not SKIP_AR_CREATION:
                 ok(f"mm2: staged REAL BAI AI ({bai_stats['edges']} roads / {len(mm2_network.nodes)} "
                    f"intersections) + AMBIENT traffic (no cops) [terrain-following AI]")
             else:
+                # A CROSS, not one segment: two nodes joined by a single road leave the
+                # engine with zero real intersections, and mmGame's cruise update does
+                #     AIMAP.Intersection(frand() * AIMAP.NumIntersections)
+                # then dereferences the result with no null check (game.cpp:1939), so
+                # NumIntersections == 0 is an access violation on boot.
                 mm2_network = RoadNetwork(name="MM2Stub")
                 mm2_network.add_node((_sx, _sz), node_id=0)
                 mm2_network.add_node((_sx + 40.0, _sz), node_id=1)
-                mm2_network.add_edge(0, 1, lanes_fwd=1, lanes_rev=1)
+                mm2_network.add_node((_sx - 40.0, _sz), node_id=2)
+                mm2_network.add_node((_sx, _sz + 40.0), node_id=3)
+                mm2_network.add_node((_sx, _sz - 40.0), node_id=4)
+                for _n in (1, 2, 3, 4):
+                    mm2_network.add_edge(0, _n, lanes_fwd=1, lanes_rev=1)
                 mm2_network.spawn_near = (_sx, _sz)
                 mm2_compiled = RoadNetworkCompiler().compile(mm2_network)
                 stage_roadnet_ai(mm2_compiled)
@@ -4158,8 +4191,9 @@ def export_mm2_city_folder() -> None:
 
 
 def write_mm2_source_manifest(destination: Path) -> None:
-    """Record which real MM2 sources this conversion came from, so the pairing stays discoverable."""
+    """Record which real sources this conversion came from, so the pairing stays discoverable."""
     options = MM2_CITY[1] if isinstance(MM2_CITY, (tuple, list)) and len(MM2_CITY) > 1 else {}
+
     manifest = {
         "note": "MM1 conversion of an MM2 city. Ground truth loads from these MM2 sources "
                 "(Map Loader N-panel -> 'Load MM2 Ground Truth (PSDL)').",
@@ -4652,7 +4686,8 @@ def emit_mm2_blender_preview() -> list:
     clear_geometry_buffers()
 
     emit_options = dict(options)
-    for key in ("min_ai", "bai_path", "bai_direct", "mm2_races", "props_pathset", "legacy_props"):
+    for key in ("min_ai", "bai_path", "bai_direct", "one_way_mode", "mm2_races", "props_pathset",
+                "legacy_props"):
         emit_options.pop(key, None)                 # not Mm2Options fields
     stats = emit_mm2_city(create_polygon, save_mesh, compute_uv, json_path,
                           Mm2Options(**emit_options), overrides = load_mm2_cell_overrides())
