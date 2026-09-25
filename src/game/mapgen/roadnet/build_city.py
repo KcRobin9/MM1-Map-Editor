@@ -11,12 +11,12 @@ Geometry is emitted as ZONED strips (carriageway / sidewalks / grass base) deriv
 SAME centreline samples + frames + lateral offsets the AI cross-section used — so the mesh
 and the AI stay in step.
 
-Usage from MAP_EDITOR_ALPHA_v1.py (mirrors the MAP_SPEC_FILE block at ~1692):
+Usage from MAP_EDITOR_ALPHA_v1.py:
 
     if ROADNET_CITY:
         from src.game.mapgen.roadnet import grid_city, RoadNetworkCompiler
         from src.game.mapgen.roadnet.build_city import emit_roadnet_city, write_roadnet_ai
-        # clear the polygon-state globals in place (see MAP_SPEC_FILE block), then:
+        # clear the polygon-state globals in place, then:
         compiled = RoadNetworkCompiler().compile(grid_city(4, 4))
         emit_roadnet_city(compiled, create_polygon, save_mesh, compute_uv)
         write_roadnet_ai(compiled, overwrite=True)      # set set_ai_streets=False!

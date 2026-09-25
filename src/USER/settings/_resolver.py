@@ -6,7 +6,7 @@ individual settings files — user values are never mutated.
 
 # ── Raw user settings ──────────────────────────────────────────────────────────
 from src.USER.settings.main import (
-    MAP_NAME, MAP_FILENAME, MAP_SPEC_FILE,
+    MAP_NAME, MAP_FILENAME,
     EXTRA_TEXTURE_DIRS,
     play_game, delete_shop,
     set_bridges, set_props, set_facades, set_physics, set_animations,

@@ -69,9 +69,6 @@ Polygons → run build** flow. (Or place `RNODE_<id>` + `RLINK_<a>_<b>` empties 
 Feed the existing build pipeline via the adapter:
 
 ```python
-from src.game.mapgen.roadnet.pipeline_adapter import to_polygon_specs, write_ai_to_devmap
-polys = to_polygon_specs(compiled)     # -> create_polygon()/save_mesh()
-write_ai_to_devmap(compiled)           # -> Folder.MidtownMadness.DevCityMap
 ```
 
 ## Build a REAL, drivable city (geometry + bounds + textures + AI)
@@ -87,7 +84,7 @@ ROADNET_CITY = (4, 4)     # a 4x4 grid city; or a RoadNetwork, or a zero-arg cal
 ```
 
 Then run the build (`MAP_EDITOR_ALPHA_v1.py`) exactly as usual. It will:
-- replace the hand-authored city (like `MAP_SPEC_FILE` does),
+- replace the hand-authored city,
 - emit zoned geometry via `create_polygon`/`save_mesh` — carriageway (`R2/R4/R6`),
   sidewalks (`SDWLK2`), grass base (`T_GRASS`); spawn on the first intersection,
 - run the normal bounds / cells / portals / HITID / TSH / `.AR` / launch steps,
@@ -122,7 +119,6 @@ The AI writer (`build_city.write_roadnet_ai`) takes `overwrite=False` to preserv
 | `emit.py` | `.road` / `.int` / `.map` text emitters (MiniParser-faithful) |
 | `validate.py` | invariant checks mirroring `read_write` |
 | `network_compiler.py` | orchestrator graph -> `CompiledNetwork` (+ mesh + cells) |
-| `pipeline_adapter.py` | bridge to `PolygonSpec` + the dev city-map folder |
 | `demo.py` | standalone demo / self-test |
 
 ## v1 scope & honest limitations

@@ -133,7 +133,7 @@ from src.constants.color import Color
 
 # USER imports
 from src.USER.settings._resolver import (
-    MAP_NAME, MAP_FILENAME, MAP_SPEC_FILE,
+    MAP_NAME, MAP_FILENAME,
     EXTRA_TEXTURE_DIRS,
     play_game, delete_shop,
     set_bridges, set_props, set_facades, set_physics, set_animations, set_texture_sheet, set_music,
